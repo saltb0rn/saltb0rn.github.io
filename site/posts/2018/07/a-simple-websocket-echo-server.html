@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2018-07-30 Mon 13:39 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Simple WebSocket Echo Server</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+
+<script type="text/javascript">
+if(/superloopy.io/.test(window.location.hostname)) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-4113456-6', 'auto');
+  ga('send', 'pageview');
+}</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+
+<div id="org-div-home-and-up">
+  <nav>
+    <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+    <ul>
+      <li><a accesskey="H" href="/"> Home </a></li>
+      <!--<li><a accesskey="a" href="/posts"> Posts </a></li>-->
+      <li><a accesskey="T" href="/tags"> Tags </a></li>
+      <li><a accesskey="A" href="/about"> About </a></li>
+    </ul>
+  </nav>
+</div>
+<div id="content">
+<h1 class="title">A Simple WebSocket Echo Server</h1>
+<div class="abstract">
+<p>
+It's time to learn WebSocket protocol by scratching a simple echo server after reading <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers">Writing WebSocket Servers</a>.
+</p>
+
+</div>
+
+<p>
+<b>An overview to the WebScoekt protocol</b>, WebSocket is upon the TCP protocol, it is a replacement to polling
+when we want to do some real-time works on Web, just like Socket. And like TCP protocol, WebSocket needs to
+handshake first then communicate with each other, client and server. During communication, either client or
+server can send data or close the connection at any time.
+</p>
+
+<ol class="org-ol">
+<li><p>
+Handshake
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/handshake.png" alt="handshake.png">
+</p>
+</div>
+
+<p>
+The request from above is very standard, it is OK to add headers like "User-Agent", "Refere", "Cookie".
+If any header is not understood or with an incorrect value, then server should send a "400 Bad
+Request" and close the socket immediately.
+</p>
+
+<p>
+If server does not understand the "Sec-WebSocket-Version" from the client, then server should tell
+client that which version it supports by sending "Sec-WebSocket-Version" back.
+</p>
+
+<p>
+As for "Sec-WebSocket-Accept" header, server must derive it from "Sec-WebSocket-Key" that client
+sent, concatenating client's Sec-WebSocket-Key and "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" together,
+then take the SHA-1 hash of the result and return the base64 encoding of the hash. If the values of
+"Sec-WebSocket-Accept" and "Sec-WebSocket-Key" are right, then we can start swapping data.
+</p>
+
+<p>
+When constructing response, <b>remember each header ends with \r\n and put an extra \r\n after the last one</b>,
+or it will raise a error like: "WebSocket connection to 'ws://xxxxxx/' failed: Invalid frame header".
+</p></li>
+
+<li><p>
+Communication
+</p>
+
+<p>
+<b>Data Frame Format</b>
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/data-frame-format.png" alt="data-frame-format.png">
+</p>
+</div>
+
+<p>
+<b>Exchanging Data Frames requires to extract information from these frames, now let's read (or decode) the fields one by one and step by step</b>:
+</p>
+
+<ol class="org-ol">
+<li>FIN field (1 bit) tells the whether it is the last message in a series:
+<ul class="org-ul">
+<li>0x0, server will keep listening</li>
+<li>0x9 and 0xA, ping and pong frames, control frames
+<ul class="org-ul">
+<li>0x9 is for pings</li>
+<li>0xA is for pongs, a pong should be sent with same Payload data of a pong when you get the pong</li>
+<li>for pings and pongs, the max payload length is 125</li>
+<li>ignore a pong without ever sending a ping;
+send only one pong if have gotten more than one ping before get the change to send a pong</li>
+</ul></li>
+<li>others, server will consider the message delivered, that is time to close the connection.</li>
+</ul></li>
+
+<li>RSV1-3 fields (3 bits) for extensions can be ignore.</li>
+
+<li>opcode field (4 bits) defines how to interpret payload data:
+<ul class="org-ul">
+<li>0x0 for continuation, that suggests the message had been split up before it was sent.</li>
+<li>0x1 for text, 0x2 for binary</li>
+<li>the others have no meaning.</li>
+</ul></li>
+
+<li>MASK field (1 bit) tells whether the message is encoded. Server excepts it to be 1, and
+disconnect from the client if the message is not encoded. When sending a frame back to the
+client, don't mask it and don't set the bit.</li>
+
+<li>Payload len field tells the length of payload so that server can know when to stop while extracting
+payload data. Decoding payload length follow 3 steps:
+<ol class="org-ol">
+<li>Read bits 9-15 (inclusive) and interpret that as an unsigned integer.
+If it's 125 or less, then that's the length; you're done. If it's 126,
+go to step 2. If it's 127, go to step 3.</li>
+<li>Read the next 16 bits (2 bytes) and interpret those as an unsigned integer. You're done.</li>
+<li>Read the next 64 bits (8 bytes )and interpret those as an unsigned integer
+(The most significant bit MUST be 0). You're done.</li>
+</ol></li>
+
+<li><p>
+Masking-key field (32 bits or 4 bytes) needs to be read if the MASK field was set (and it
+should be). We will need it to decode (or unmasking) the encoded data that is payload data
+field. The way to decode should look like
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
+<span style="color: #DCDCCC; background-color: #3F3F3F;">decoded_data</span> = <span style="color: #DCDCCC;">[]</span>
+<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #DCDCCC;">(</span>len<span style="color: #BFEBBF;">(</span>encoded_data<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   decoded_data.append<span style="color: #DCDCCC;">(</span>encoded_data<span style="color: #BFEBBF;">[</span>i<span style="color: #BFEBBF;">]</span> ^ masking_key<span style="color: #BFEBBF;">[</span>i % <span style="color: #DCDCCC; background-color: #3F3F3F;">4</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div></li>
+
+<li>Payload data field is the data exchanged. If MASK was set, it has to be decoded with
+masking key.</li>
+</ol></li>
+</ol>
+
+
+<p>
+<b>Let's code</b>
+</p>
+
+<p>
+Now that we have known how WebSocket handshakes and communicates, it is about time to code to help
+us to understand WebSocket. The plan is to build a echo server with socketserver module and to
+en/decode the frame with struct module, this websocket server is an echo server, that is, server
+responses what client sent.
+</p>
+
+<p>
+If you have not used socketserver and struct module before, please glance at <a href="https://pymotw.com/3/socketserver/index.html">this one</a> and <a href="https://pymotw.com/3/struct/index.html">this one</a>.
+</p>
+
+<p>
+I write some comments to try to make you understand easier. If you want to download the file, please
+check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>, and give me a star to let me know this article do help you.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">echo_server.py</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> argparse
+<span style="color: #F0DFAF; font-weight: bold;">import</span> base64
+<span style="color: #F0DFAF; font-weight: bold;">import</span> hashlib
+<span style="color: #F0DFAF; font-weight: bold;">import</span> socketserver
+<span style="color: #F0DFAF; font-weight: bold;">import</span> struct
+
+<span style="color: #DCDCCC; background-color: #3F3F3F;">MAGIC_STRING</span> = b<span style="color: #CC9393;">"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"</span>
+
+<span style="color: #DCDCCC; background-color: #3F3F3F;">RSP_TO_BAD_REQ</span> = <span style="color: #DCDCCC;">(</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"HTTP/1.1 400 Bad Request\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Content-Type: text/plain\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Connection: close\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Incorrect request"</span>
+<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC; background-color: #3F3F3F;">RSP_TO_COMPLETE_HANDSHAKE</span> = <span style="color: #DCDCCC;">(</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"HTTP/1.1 101 Switching Protocols\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Upgrade: websocket\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Connection: Upgrade\r\n"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Sec-WebSocket-Accept: %s\r\n\r\n"</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">EchoRequestHandler</span><span style="color: #DCDCCC;">(</span>socketserver.BaseRequestHandler<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">handle</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+    <span style="color: #CC9393;">"""</span>
+<span style="color: #CC9393;">    The plan:</span>
+<span style="color: #CC9393;">        1. handshake</span>
+<span style="color: #CC9393;">        2. if handshake successfully, then start to swap message,</span>
+<span style="color: #CC9393;">           to swap message, do it in two parts: extract payload</span>
+<span style="color: #CC9393;">           and send message back.</span>
+<span style="color: #CC9393;">        3. if handshake failed, tell client that "Bad Request"</span>
+<span style="color: #CC9393;">    """</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">is_handshake_completed</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.handshake<span style="color: #DCDCCC;">()</span>
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> is_handshake_completed:
+        <span style="color: #F0DFAF; font-weight: bold;">while</span> <span style="color: #F0DFAF; font-weight: bold;">True</span>:
+        <span style="color: #DCDCCC;">(</span>
+            fin_and_opcode,
+            payload_len_indicator,
+            payload_len,
+            decoded_payload
+        <span style="color: #DCDCCC;">)</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.extract_payload<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.request.recv<span style="color: #BFEBBF;">(</span><span style="color: #DCDCCC; background-color: #3F3F3F;">1024</span><span style="color: #BFEBBF;">)</span>.strip<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.send_back<span style="color: #DCDCCC;">(</span>fin_and_opcode, payload_len_indicator,
+                   payload_len, decoded_payload<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">handshake</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+    <span style="color: #CC9393;">"""</span>
+<span style="color: #CC9393;">    The plan:</span>
+<span style="color: #CC9393;">        1. handshake with HTTP GET request</span>
+<span style="color: #CC9393;">        2. only consider "Connection", "Upgrade" and "Sec-WebSocket-Key"</span>
+<span style="color: #CC9393;">           headers in this example.</span>
+<span style="color: #CC9393;">        3. calculate Sec-WebSocket-Accept to send to the client</span>
+<span style="color: #CC9393;">        4. return True for successful or False for failed to determine</span>
+<span style="color: #CC9393;">           whether to swap data</span>
+<span style="color: #CC9393;">    """</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">_headers</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.recv<span style="color: #DCDCCC;">(</span><span style="color: #DCDCCC; background-color: #3F3F3F;">1024</span><span style="color: #DCDCCC;">)</span>.strip<span style="color: #DCDCCC;">()</span>.split<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"\r\n"</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">headers</span> = <span style="color: #DCDCCC;">{}</span>
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> h <span style="color: #F0DFAF; font-weight: bold;">in</span> _headers:
+        <span style="color: #F0DFAF; font-weight: bold;">try</span>:
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">key</span>, <span style="color: #DCDCCC; background-color: #3F3F3F;">value</span> = h.split<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">":"</span><span style="color: #DCDCCC;">)</span>
+        <span style="color: #F0DFAF; font-weight: bold;">except</span> <span style="color: #DCDCCC; font-weight: bold;">ValueError</span>:
+        <span style="color: #7F9F7F;"># ignore lines like "GET / HTTP/1.1"</span>
+        <span style="color: #F0DFAF; font-weight: bold;">continue</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">headers</span><span style="color: #DCDCCC;">[</span>key.strip<span style="color: #BFEBBF;">(</span>b<span style="color: #CC9393;">" "</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">]</span> = value.strip<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">" "</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> headers.get<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"Connection"</span><span style="color: #DCDCCC;">)</span> == b<span style="color: #CC9393;">"Upgrade"</span> <span style="color: #F0DFAF; font-weight: bold;">and</span> \
+       headers.get<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"Upgrade"</span><span style="color: #DCDCCC;">)</span> == b<span style="color: #CC9393;">"websocket"</span>:
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">sec_websocket_key</span> = headers.get<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"Sec-WebSocket-Key"</span><span style="color: #DCDCCC;">)</span>
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #F0DFAF; font-weight: bold;">not</span> sec_websocket_key:
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #F0DFAF; font-weight: bold;">False</span>
+        <span style="color: #7F9F7F;"># to calcuate Sec-WebSocket-Accept</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">sec_websocket_key</span> += MAGIC_STRING
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">sec_websocket_key</span> = base64.standard_b64encode<span style="color: #DCDCCC;">(</span>
+        hashlib.sha1<span style="color: #BFEBBF;">(</span>sec_websocket_key<span style="color: #BFEBBF;">)</span>.digest<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
+        <span style="color: #7F9F7F;"># no problem now, then complete the handshake</span>
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.sendall<span style="color: #DCDCCC;">(</span>
+        RSP_TO_COMPLETE_HANDSHAKE % sec_websocket_key<span style="color: #DCDCCC;">)</span>
+        <span style="color: #7F9F7F;"># staring to swap data and to decode the frame</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #F0DFAF; font-weight: bold;">True</span>
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>:
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.sendall<span style="color: #DCDCCC;">(</span>RSP_TO_BAD_REQ<span style="color: #DCDCCC;">)</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #F0DFAF; font-weight: bold;">False</span>
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">extract_payload</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, frame<span style="color: #DCDCCC;">)</span>:
+    <span style="color: #CC9393;">"""</span>
+<span style="color: #CC9393;">    One thing important is: the frame from the client is</span>
+<span style="color: #CC9393;">    a bytes or bytearray and every byte equals to 8 bits.</span>
+<span style="color: #CC9393;">    When we begin to extract fields from frame, this thing</span>
+<span style="color: #CC9393;">    and data frame format will be the key to let us understand</span>
+<span style="color: #CC9393;">    how to decode frame.</span>
+
+<span style="color: #CC9393;">    When decoding, we need to think about what we will need to</span>
+<span style="color: #CC9393;">    construct a frame to send back.</span>
+
+<span style="color: #CC9393;">    The fields we will need to construct a frame are FIN and opcode,</span>
+<span style="color: #CC9393;">    payload len, decoded payload and payload len indicator which tells</span>
+<span style="color: #CC9393;">    us how to get payload len.</span>
+
+<span style="color: #CC9393;">    Once we knew that, it is time to decode frame.</span>
+<span style="color: #CC9393;">    """</span>
+    <span style="color: #7F9F7F;"># the first byte stores FIN field and opcode field.</span>
+    <span style="color: #7F9F7F;"># the second byte stores MASK field and payload_len indicator</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">fin_and_opcode</span> = frame<span style="color: #DCDCCC;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">0</span><span style="color: #DCDCCC;">]</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">payload_len_indicator</span> = frame<span style="color: #DCDCCC;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">1</span><span style="color: #DCDCCC;">]</span> - <span style="color: #DCDCCC; background-color: #3F3F3F;">128</span>
+    <span style="color: #7F9F7F;"># extract payload_len according to payload_len_indicator</span>
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> payload_len_indicator &lt;= <span style="color: #DCDCCC; background-color: #3F3F3F;">125</span>:
+        <span style="color: #7F9F7F;"># the frame use 7 bits to store payload_len</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">payload_len</span> = payload_len_indicator
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">mask_key</span> = frame<span style="color: #DCDCCC;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">2</span>:<span style="color: #DCDCCC; background-color: #3F3F3F;">6</span><span style="color: #DCDCCC;">]</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">mask_key_end</span> = <span style="color: #DCDCCC; background-color: #3F3F3F;">6</span>
+    <span style="color: #F0DFAF; font-weight: bold;">elif</span> <span style="color: #DCDCCC; background-color: #3F3F3F;">payload_len_indicator</span> == <span style="color: #DCDCCC; background-color: #3F3F3F;">126</span>:
+        <span style="color: #7F9F7F;"># the frames use 2 bytes to store payload_len</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">payload_len</span> = struct.unpack_from<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!H"</span>, frame<span style="color: #BFEBBF;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">2</span>:<span style="color: #DCDCCC; background-color: #3F3F3F;">4</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">0</span><span style="color: #DCDCCC;">]</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">mask_key</span> = frame<span style="color: #DCDCCC;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">4</span>:<span style="color: #DCDCCC; background-color: #3F3F3F;">8</span><span style="color: #DCDCCC;">]</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">mask_key_end</span> = <span style="color: #DCDCCC; background-color: #3F3F3F;">8</span>
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>:
+        <span style="color: #7F9F7F;"># the frame uses 8 bytes to store payload_len</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">payload_len</span> = struct.unpack_from<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!Q"</span>, frame<span style="color: #BFEBBF;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">2</span>:<span style="color: #DCDCCC; background-color: #3F3F3F;">10</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">0</span><span style="color: #DCDCCC;">]</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">mask_key</span> = frame<span style="color: #DCDCCC;">[</span><span style="color: #DCDCCC; background-color: #3F3F3F;">10</span>:<span style="color: #DCDCCC; background-color: #3F3F3F;">14</span><span style="color: #DCDCCC;">]</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">mask_key_end</span> = <span style="color: #DCDCCC; background-color: #3F3F3F;">14</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">encrypted_payload</span> = frame<span style="color: #DCDCCC;">[</span>
+        mask_key_end: mask_key_end+payload_len<span style="color: #DCDCCC;">]</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">decoded_payload</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
+        <span style="color: #BFEBBF;">[</span>
+        encrypted_payload<span style="color: #D0BF8F;">[</span>i<span style="color: #D0BF8F;">]</span> ^ mask_key<span style="color: #D0BF8F;">[</span>i % <span style="color: #DCDCCC; background-color: #3F3F3F;">4</span><span style="color: #D0BF8F;">]</span>
+        <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #D0BF8F;">(</span>payload_len<span style="color: #D0BF8F;">)</span>
+        <span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #DCDCCC;">(</span>fin_and_opcode, payload_len_indicator,
+        payload_len, decoded_payload<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">send_back</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, fin_and_opcode, payload_len_indicator,
+          payload_len, decoded_payload<span style="color: #DCDCCC;">)</span>:
+    <span style="color: #CC9393;">"""</span>
+<span style="color: #CC9393;">    To send back, we need to learn 3 things:</span>
+<span style="color: #CC9393;">    1. the frame to send back whose mask field MUST not be set to 1;</span>
+<span style="color: #CC9393;">    2. not consider the situation that message fragmentation here</span>
+<span style="color: #CC9393;">    3. how to construct a frame manually</span>
+<span style="color: #CC9393;">    """</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">decoded_payload</span> = decoded_payload
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> payload_len_indicator &lt;= <span style="color: #DCDCCC; background-color: #3F3F3F;">125</span>:
+        <span style="color: #7F9F7F;"># when payload_len_indicator &lt;= 125,</span>
+        <span style="color: #7F9F7F;"># the length of payload is payload_len_indicator</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">frame</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
+        <span style="color: #BFEBBF;">[</span>fin_and_opcode, payload_len<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span> + decoded_payload
+    <span style="color: #F0DFAF; font-weight: bold;">elif</span> <span style="color: #DCDCCC; background-color: #3F3F3F;">payload_len_indicator</span> == <span style="color: #DCDCCC; background-color: #3F3F3F;">126</span>:
+        <span style="color: #7F9F7F;"># unlike that the payload_len_indicator &lt;= 125,</span>
+        <span style="color: #7F9F7F;"># in this case, it is necessary to store payload_len</span>
+        <span style="color: #7F9F7F;"># in other bytes, as well as payload_len_indicator is 127</span>
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">frame</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
+        <span style="color: #BFEBBF;">[</span>fin_and_opcode, payload_len_indicator<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span> + \
+        struct.pack<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!H"</span>, payload_len<span style="color: #DCDCCC;">)</span> + decoded_payload
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>:
+        <span style="color: #DCDCCC; background-color: #3F3F3F;">frame</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
+        <span style="color: #BFEBBF;">[</span>fin_and_opcode, payload_len_indicator<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span> + \
+        struct.pack<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!Q"</span>, payload_len<span style="color: #DCDCCC;">)</span> + decoded_payload
+    <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.sendall<span style="color: #DCDCCC;">(</span>frame<span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">"__main__"</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">parser</span> = argparse.ArgumentParser<span style="color: #DCDCCC;">(</span>
+    <span style="color: #DCDCCC; background-color: #3F3F3F;">description</span>=<span style="color: #CC9393;">"Kick off a echo websocket server"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'host'</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">'IP or hostname'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'-p'</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">'Port (default=8001)'</span>,
+            <span style="color: #DCDCCC; background-color: #3F3F3F;">metavar</span>=<span style="color: #CC9393;">'port'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, <span style="color: #DCDCCC; background-color: #3F3F3F;">default</span>=<span style="color: #DCDCCC; background-color: #3F3F3F;">8001</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">args</span> = parser.parse_args<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">HOST</span>, <span style="color: #DCDCCC; background-color: #3F3F3F;">PORT</span> = args.host, args.p
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">socketserver.TCPServer.allow_reuse_address</span> = <span style="color: #F0DFAF; font-weight: bold;">True</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">server</span> = socketserver.TCPServer<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>HOST, PORT<span style="color: #BFEBBF;">)</span>, EchoRequestHandler<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   server.serve_forever<span style="color: #DCDCCC;">()</span>
+
+</pre>
+</div>
+
+<p>
+Time to try it out. To make it quickly, you better have a Chrome browser, I got a
+"Content Security Policy" problem in Firefox, but it was fine in Chrome. There is
+no any other browser on my computer, so I don't know other browsers.
+</p>
+
+<p>
+Kick off your echo server with
+</p>
+<div class="org-src-container">
+<pre class="src src-bash">python3 echo_server.py <span style="color: #CC9393;">''</span>
+</pre>
+</div>
+
+<p>
+Then fire up your Chrome console, and input these statements
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/websocket-test.png" alt="websocket-test.png">
+</p>
+</div>
+
+
+<p>
+<b>Don't panic!</b> Building a websocket server like this is not a fantasy experience.
+Fortunately, there are many tools can help you build a websocket server easily and
+quickly. One of them is the well-known Tornado. I am learning how to use Tornado
+these day. It's a simple and powerful framework, I will write an article about
+my experience of learning Tornado another days, of course, not for websocket. :).
+</p>
+
+
+<p>
+<b>What is missing?</b> There are 3 things are missing. If you like adventures, I recommend
+you to do complete these.
+</p>
+
+<ol class="org-ol">
+<li>data fragmentation and processing</li>
+<li>processing of pings and pongs</li>
+<li>cross-site checking</li>
+</ol>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_thread"></div>
+<script id="dsq-count-scr" src="//darksalt-me.com/count.js" async></script>
+
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://darksalt-me.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2018-07-26</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+</div>
+</body>
+</html>

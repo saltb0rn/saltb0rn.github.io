@@ -1,0 +1,88 @@
+
+#+title: 同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?
+#+date: 2018-07-30
+#+index: 同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?
+#+tags: Concepts
+#+options: ^:nil
+#+begin_abstract
+在网上关于synchronous(同步的), asynchronous(异步的), blocking(阻塞的)和non-blocking(非阻塞的)的概念有很多
+不同说法,如果有人想要在网上开始了解这几个东西,怕是不能短时间内明白.因为实在是说法太多了.造成这个原因最主要是同一个术
+语在不同上下文中有不同的意思,举个例子,演出的脚本跟计算机里面的脚本是一个意思吗?没错大部份人什么的时候连上下文都没有搞
+清楚就开始解释了,所以今天就整理一下(可能会错,自己看看就好).
+#+end_abstract
+
+主要是针对4个上下文,也就是所谓的概念范围,平常生活中的,计算机I/O模型中的和并行计算4个方面进行总结.
+
+*在平常生活中*
+- 同步: 就是两件或者两件以上的事件同时发生,详情请看[[https://www.merriam-webster.com/dictionary/synchronous][字典上的定义]].
+- 异步: 跟同步相反,两件或者以上的事情不是同时发生.
+
+*在计算机I/O模型中*,以《Unix Network Programming Volume 1, Third Edition》中[[http://www.masterraghu.com/subjects/np/introduction/unix_network_programming_v1.3/ch06lev1sec2.html][Chapter 6中的I/O Models为参考]].首
+先要说明一点,书中并没有把异步I/O,同步I/O拆分成同步,异步,I/O三个词.更没有提到{同步,异步} X {阻塞, 非阻塞}这些组合,当然
+它也提到"five I/O models that are available to us under Unix",那不在Unix底下呢?所以不排除还真的可以这么组合,不
+过本人经历,没有在谷歌的英文资源中找到过asynchronous blocking和asynchronous nonblocking这些组合的的I/O模型说法(
+asynchronous and nonblocking在tornado 文档上出现过一次,所以asynchronous nonblocking还好说,也能理解,没猜错的话
+就是异步I/O模型的另外一个说法,但是asynchronous blocking是什么,想象不出来,墙内的资源倒是搜索到一大堆有这种说辞的).
+
+- 先介绍总结一下5种模型,以及它们的区别,这里要配合上面的I/O models参考(其实就是大概翻译概括一下,关于阻塞这个说法,我会选用英文表达,因为这样才方便区分阻塞是动作还是状态).
+  1. 阻塞I/O模型 (Blocking I/O Model)
+
+     recvfrom的整个过程就是等待数据被准备好,并且把数据从内核(kernel)复制到进程(process),在这个过程中,
+     recvfrom这个系统调用会因为数据没到达而一直等待(blocked),也就是所说的处于阻塞状态,进程也会因为等待
+     recvfrom的返回而一直blocked,也可以说recvfrom blocks进程.
+
+  2. 非阻塞I/O模型 (Nonblocking I/O Model)
+
+     与blocking相反,把socket设置为nonblocking,这个socket叫做nonblocking descriptor.如果一直没有等到数据到来,
+     那么recvfrom就不等了,也就是说这个非阻塞,直接返回一个EWOULDBLOCK的错误,这样进程就不会因为等待recvform的返回而
+     blocked了.不过这么一来进程就不能如它所愿的处理数据了.如果想要处理数据,那么进程就需要一个循环不断调用recvform了,
+     直到收到数据为止,这种方式叫轮询(polling),会有点浪费CPU时间,这么一来,进程实际上还是进程blocked,因为它还是需要
+     等待数据复制完.
+
+  3. I/O多路复用模型 (I/O Multiplexing Model)
+
+     跟第一种不一样,这回不block recvfrom,而是block一个select或者poll的系统调用,select会一直等待socket变为readable
+     状态,然后才调用recvfrom.当等待不止一个blocking descriptor的时候,这种方法会比较适合使用.还有一种类似的模型,就是
+     把多线程和blocking I/O结合使用,一个线程一个blocking descriptor.但进程实际上还是blocked,理由跟第二个模型的一样.
+
+  4. 信号驱动I/O模型 (Signal-Driven I/O Model)
+
+     在打开socket的时候调用sigaction来安装一个signal handler,这个sigaction的system call会立刻返回,不是blocked.
+     当等到数据了,会生成一个SIGIO给signal handler,这个时候可以通过调用recvfrom来读取来自于signal handler的datagram,
+     然后通知主循环"数据准备好了,可以开始处理",或者直接通知main loop来读取数据.这个好处就是进程的main loop不会blocked,
+     main loop保持执行并且signal handler的通知.但是进程还会是blocked了,因为它总要调用recvfrom.关于main loop的概念,
+     请参考[[https://en.wikipedia.org/wiki/Event-driven_programming][这里]].
+
+  5. 异步I/O模型 (Asynchronous I/O Model)
+
+     这个模型利用特定的API来告诉内核开始执行过程(就是等待数据到数据复制完成)并且要求内核在整个过程完成后主动通知我们.这个
+     例子是调用aio_read,这个系统调用会马上返回并且不会block进程.与信号驱动I/O模型类似,不同点在于信号驱动I/O模型是在收
+     到内核通知"数据准备好了,你可以开始处理数读了"后再调用recvfrom;而异步I/O模型是在内核处理完了数据后才收到通知.也有点
+     像前者都到通知后还要自己调用recvfrom处理数据,而后者则完全交给了内核去做并且等待完成后的通知.忘了提它们的共同点,那就
+     是都涉及回调(callback).
+
+- 回到同步I/O和异步I/O,《Unix Network Programming Volume 1, Third Edition》有定义到,简单点说就是造成请求进程被阻塞
+  (blocked)的I/O操作就是同步I/O,否则就是异步I/O.根据这个定义前面4个模型都是同步I/O,异步I/O模型只有一个.那么好了,什么是同
+  步阻塞,同步非阻塞模型呢?[[https://en.wikipedia.org/wiki/Asynchronous_I/O][维基百科]]上面的页面已经提示不正确了,《Unix Network Programming Volume 1, Third Edition》上
+  也没有说到,个人猜测最可能的是同步阻塞指同步I/O中的阻塞I/O模型,同步非阻塞是指异步I/O中的非阻塞I/O模型.按照这种猜测的话,
+  那么就没有异步阻塞这种模型的说法了,从特征上来看,异步I/O模型一定是不会阻塞进程的,也就是只有非阻塞(non-blocking),所以
+  异步非阻塞其实就是指异步I/O模型,又或者异步非阻塞也是不存在的,不过asynchronous and blocking在Tornado上的文档出现过,
+  所以应该是存在的.尽管是猜测,我还是认为这是对的,因为好像没有别的解释比较合理了.而平时一般说的异步,阻塞,非阻塞,同步都是省略了
+  I/O一词的;这里所指的同步和异步实际就是根据请求进程是否blocked而定的,跟并行计算中的不一样,所以在I/O模型中不能把这几个词单
+  独解释呢.
+
+*在计算机的并行计算中*, [[https://en.wikipedia.org/wiki/Synchronization_(computer_science)#Thread_or_process_synchronization][参考]]
+- 同步(synchronization):让多线程,多进程以正确的运行时顺序运行(可能回涉及对同一个资源的访问)并且防止竞争条件(race condition)的发生.
+  有点类似于在饭堂排对打饭一样,要求一个接着一个,有序.
+- 异步:跟同步相反.无序执行,执行顺序不可测.还有跟多线程和多进程没有太大关系,多线程特性叫并发,多进程特性叫并行.
+
+*在计算机云中*, [[https://en.wikipedia.org/wiki/Synchronization_(computer_science)#Data_synchronization][参考]]
+- 同步:保持多个数据的备份相同,比如MegaSync,DropBox所提供的服务.
+- 异步:跟同步相反.
+
+*最后*,为什么写这篇文章是因为最近意外看到别的一些文章和答案,上面有一些超出我认知的东西,比如异步阻塞和异步非阻塞,而且还有很多人
+在说这东西,看得我怀疑人生:"难道我以前学得东西错了?",可能性很大,于是我就各种找书,各种查维基百科,目的是为了给自己debug.
+最后得出结论这些东西还是要结合上下文来理解,就像[[http://www.tornadoweb.org/en/stable/guide/async.html][这里]]明显就是指异步I/O模型,最后的最后,没有异步阻塞模型,涉及I/O的时候不要
+把模型名字里面的形容词拆开来理解.我猜大部份人都把并行计算中的同步异步放到I/O模型里面去理解了,所以才会有这种奇怪的组合,
+而且本身阻塞I/O模型就单独是个模型了,不知道为何衍生出同步阻塞这种说法,其它模型同理,虽然不是错的,但这样很容易让初学的人产
+生疑惑,而且用这种说法的人还有很多,十分容易让人对自己产生怀疑.特别是那个同步阻塞的说法,反正我对自己怀疑过.

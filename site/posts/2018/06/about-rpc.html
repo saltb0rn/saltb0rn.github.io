@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2018-07-26 Thu 14:49 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>网络编程笔记 RPC</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+
+<script type="text/javascript">
+if(/superloopy.io/.test(window.location.hostname)) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-4113456-6', 'auto');
+  ga('send', 'pageview');
+}</script>
+</head>
+<body>
+
+<div id="org-div-home-and-up">
+  <nav>
+    <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+    <ul>
+      <li><a accesskey="H" href="/"> Home </a></li>
+      <!--<li><a accesskey="a" href="/posts"> Posts </a></li>-->
+      <li><a accesskey="T" href="/tags"> Tags </a></li>
+      <li><a accesskey="A" href="/about"> About </a></li>
+    </ul>
+  </nav>
+</div>
+<div id="content">
+<h1 class="title">网络编程笔记 RPC</h1>
+<div class="abstract">
+<p>
+最近复习了一下网络编程,顺便学习一下有所听闻的RPC.
+</p>
+
+</div>
+
+<p>
+<b>最近</b> 又重新写起了 Python,做的第一件事情就是检查一下 Emacs 的 Elpy. 检查结果倒是没有什么问题,不过有另外一个问题.
+Elpy 到底是怎么运作的呢,它的项目代码结构表明语法解析工作是一个用 Python 写的 RPC 服务器做完成的.于是我回归 Python
+的第一件事情就是了解 RPC 的相关细节.不过此之前,我复习了网络编程的相关知识,主要是 Python Socket API 的使用以及
+TCP/UDP 的相关概念,以后有空会对这一块再进行总结的.
+</p>
+
+<p>
+<b>注意</b>
+</p>
+
+<ol class="org-ol">
+<li>这篇笔记不会涉及一句代码,就跟我看过有关于 HTTP 协议的书一样不偏重于编码,主要是 RPC 的一些概念和一些特征,
+只有这样,才能够明白别人的代码为何这么写.</li>
+<li>这篇总结我不能百分百保证没有错,但我保证肯定不是最全的,也不太可能会总结全.如果想知道冰山的其它几个角还是要去读
+"TCP/IP详解 第一卷" 这本书和相关 RPC 的书籍,比如 "Unix Network Programming 第二卷"(我也没读过就是了).</li>
+</ol>
+
+<p>
+<b>什么是RPC</b> 全名为 Remote Procedure Call, 意为"远程过程调用".是一类协议(protocols),一类模型(models),一类
+机制（mechanisms), 随便你怎么叫.跟它的名字一样, RPC 可以用来远程调用过程, RPC 服务器提供函数, RPC 客户端则是
+调用服务器提供的函数. RPC 客户端会把你想要调用哪个过程和相关参数封成一个网络报文发送到服务器上面, RPC 服务器接收
+这个报文并且对进行解析,执行服务器上的对应过程,把过程的返回值封成报文返回给 RPC 客户端.
+</p>
+
+<p>
+<b>RPC的特征</b> 这是在 "Foundations of Python Network Programming" 上列出的特征的总结.
+</p>
+
+<ol class="org-ol">
+<li>所有 RPC 服务器对传递的数据会有限制.通用的 RPC 服务器会有更多的限制,因为这类型的 RPC 服务器是服务于多种编程语言的.
+如果只是针对于特定编程语言的 RPC 服务器,可以传递的数据限制就没那么多.</li>
+<li>所有 RPC 服务器具备提示异常的能力.当 RPC 客户端调用的过程发生错误的时候, RPC 服务器要返回错误信息.就像写本地程序一样.</li>
+<li>许多 RPC 服务器提供 introspection, 也就是检查 RPC 服务器提供哪些过程.当然只是许多 RPC 服务器提供而已.</li>
+<li>所有 RPC 服务器都需要提供一些定位方案(addressing scheme), 也就是客户端是怎么跟 RPC 服务器通讯并且连接到特定的远程 API.</li>
+<li>部分 RPC 服务器支持认证机制,访问控制,甚至有的还要求不同的客户端需要不同的凭证(credentials)来访问.这些可以通过使用像 HTTP
+协议实现 RPC 来轻易的得到这些支持.这说明了 RPC 可以工作于任何协议层上.</li>
+</ol>
+
+<p>
+<b>那么RPC能用来做什么呢</b> 既然已经概了解 RPC 的能力后,就要考虑能用来做什么,由于本人也是刚接触 RPC, 所以只知道以下几个.
+</p>
+
+<ol class="org-ol">
+<li>混合编程,你可以利用 RPC 来协调 Lisp 和 Python 来进行工作, Elpy 就是其中一个例子.当然了,只要你想到的编程语言
+都可以.</li>
+<li>与不可靠协议协作,如 UDP, RPC 负责超时和重传的工作.</li>
+<li>用于分布式开发</li>
+</ol>
+
+<p>
+<b>RPC的实现</b> 这一块单纯用代码做为例子的话,可能要写很多代码,而且也不够通用.因为不同的语言有不同的工具,不同的实现可能会相
+差比较大.比如 Elpy 的 RPC Server 就没有用到一点网络编程,仅仅是靠系统的 Pipe 来实现一套 RPC 服务器和客户端.而
+Foundation of Python Network Programming 则是在 HTTP 层上实现的 RPC 服务器以及客户端.
+</p>
+
+<p>
+不过它们有一个共同点,那就是离不开 IPC. RPC 就是 IPC 的一种形式, request-response 的工作方式.HTTP 也是这种方式.
+至于 IPC, 这里就不多说了,想必读这篇笔记的人应该是能最低限度地知道什么是 <a href="https://en.wikipedia.org/wiki/Inter-process_communication">IPC</a>.
+</p>
+
+<p>
+如果想了解如何实现 RPC 的话,我个人建议,先大概了解 RPC 是做什么的,有什么特性,也就是有什么一般的约定,换句话说就是协议.
+然后根据你的惯用语言来找简单的例子来入门,假如你用 Python 的话,那么 Foundation of Python Network Programming
+3rd Edition 的第 18 章就有一些不错的例子.
+</p>
+
+<p>
+打个比方,可以想象一下一些 WEB API 的使用情况.做为客户端,发送请求到指定 URL, 在这个请求中,还可能包含一些参数;做为
+服务端,要为为这种 URL 设定返回过程,比如 Django 里面,一个 URL 对应一个函数或者方法,该过程可以返回 JSON,XML 等数
+据给客户端. RPC 也是差不多,当然协议上是不一样的,在 RPC 里面,请求的不一定是 URL, 得到可能是其它的数据格式.如果是在
+HTTP 协议层上实现的 RPC, 你可以简单的把它看做一个 Web Server. 调用的 remote procedure 也不过是一个 URL,
+返回的数据基本与 HTTP 通信所使用的数据无异, RPC Server 所做的不过就是绑定一个 URL 和 一个 Procedure 而已.
+根据不同的数据类型划分为两种协议, XML-RPC 和 JSON-RPC, 实现的时候要根据协议和结合 RPC 相关特性,这就是实现 RPC 的思路.
+</p>
+
+<p>
+<b>两个协议的链接</b>
+</p>
+<ol class="org-ol">
+<li><a href="http://www.jsonrpc.org/">JSON-RPC协议</a></li>
+<li><a href="https://en.wikipedia.org/wiki/XML-RPC">XML-RPC协议</a></li>
+</ol>
+
+<p>
+<b>一个RPC-like例子</b>
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/pseudo_jsonrpc">Pseudo JSONRPC</a>
+</p>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_thread"></div>
+<script id="dsq-count-scr" src="//darksalt-me.com/count.js" async></script>
+
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://darksalt-me.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2018-06-16</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+</div>
+</body>
+</html>

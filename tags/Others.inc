@@ -1,0 +1,1 @@
+- [[file:../posts/2018/05/hello-world.org][Hello, world!]]

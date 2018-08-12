@@ -1,0 +1,356 @@
+#+title: Coroutines in Python
+#+date: 2018-06-29
+#+index: Coroutines in Python
+#+OPTIONS: ^:nil
+#+tags: Python
+#+begin_abstract
+The first time I learned the word "Coroutines" in Python docs is about one year ago, I escaped from it
+because it is not the easy thing to understand in a quick time and didn't have enough time to understand
+it. However, I still studied it in spare time. Now, time to write down my understanding about "coroutines"
+of Python. This article is about the concept of "coroutines", not a practical article, but I will give
+you a resource to learn to how to use them.
+#+end_abstract
+
+*Generators, coroutines and yield statement*. Python supports generators as other programming languages
+do, Racket, Emacs Lisp, JavaScript, etc. We will start from generators and to get to coroutines.
+
+If you had coded with some programming languages that support generators before or understood it already,
+feel free to skip this section and go to next section.
+
+In Python, a generator is a function which returns a generator iterator, we also call it a generator function. So, what is
+the generator iterator? I am assuming you have learned about iterators in Python. The generator iterator is a iterator as
+well, you can iterate over it, like how you iterate over a list, string, etc., however, there is a thing different from
+them. I will show you the code and explain it to you later, now let's back to the generator.
+
+Sometime a generator refers to a generator function, sometime it refers to a generator iterator in some context.
+
+Actually, there are two ways to create generator iterators in Python, one is generator function and another
+one is generator expression.
+
+#+begin_src python
+#! /usr/bin/env python3
+# gen_iter.py
+# generator expression
+gen_iter_by_expr = (i for i in range(10))
+
+# generator function
+def gen_iter():
+    yield 8
+gen_iter_by_fun = gen_iter()
+
+print("Iterate over 'gen_iter_by_expr'")
+for i in gen_iter_by_expr:
+    print(i)
+
+print("Iterate over 'gen_iter_by_fun'")
+for i in gen_iter_by_fun:
+    print(i)
+#+end_src
+
+Here is the output you will see if running this code.
+#+begin_src sh
+Iterate over 'gen_iter_by_expr'
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+Iterate over 'gen_iter_by_fun'
+8
+#+end_src
+
+You might feel that generator expression has no different between list comprehension in Python. Not exactly,
+although the outputs of them will be same after replacing "gen_iter_by_expr = (i for i in range(10))" by
+"gen_iter_by_expr = [i for i in range(10)]". List comprehension creates a list, not a generator iterator. If
+you just want a object for iterating over, then use the one you like. Now I am going to show the differents
+between them.
+
+A generator iterator can be iterated over only one time. What happens if we do it again? We append one line
+to "iter.py" above, then run it. And we get nothing be printed out.
+#+begin_src python
+for i in gen_iter_by_expr: print(i)
+#+end_src
+
+Do you still remember what happens when a list used in a for-loop?
+#+begin_src sh
+>>> #! /usr/bin/env python3
+>>> items = [1, 2, 3]
+>>> for i in items:
+>>>     i
+>>> # equals to
+>>> # get the iterator
+>>> it = iter(items)
+>>> # start to iterator over
+>>> # same as it.__next__()
+>>> next(it)
+1
+>>> next(it)
+2
+>>> next(it)
+3
+>>> next(it)
+Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
+StopIteration
+>>>
+#+end_src
+
+This happens to a generator iterator as well. The generator iterator will do that easier.
+#+begin_src sh
+gen_iter_by_expr = (i for i in range(3))
+# same as next(gen_iter_by_expr) or __next__(gen_iter_by_expr)
+gen_iter_by_expr.send(None)
+0
+gen_iter_by_expr.send(None)
+1
+gen_iter_by_expr.send(None)
+2
+gen_iter_by_expr.send(None)
+Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
+StopIteration
+#+end_src
+
+There is a thing I have to tell you, you can not pass any argument other than None to the first call
+of send() method. The fact is that a generator iterator needs to start up with a call of send() method with
+None. Of course, you can use the next() or __next__() function to do that instead. And these are all the
+stuffs about generator iterator.
+
+Now you might get another problem, what are the arguments passed to send() method used for? Wait, do
+not forget I still need to explain the generator function left above to you.
+
+You will see a yield statement in the definition of gen_iter, it turns a function into a generator function.
+It returns a generator iterator when calling it. What happens when the generator iterator created by it
+calls the send() method? After all it does not look similar to a generator iterator created by the generator
+expression. Actually it is easy to understand it.
+
+That the generator iterator created by generator function calls send() method will execute in the way like how the
+function does, but something different from it. The key point is the yield statement, it is the exit or entry,
+or you can think it of a simple function delimiter. Let's rewrite the definition of gen_iter to have it
+works like in the way gen_iter_by_expr does.
+
+#+begin_src python
+#! /usr/bin/env python3
+# gen_iter.py
+# generator function
+def gen_iter():
+    yield 8
+    yield 9
+    yield 10
+gen_iter_by_fun = gen_iter()
+
+print("Iterate over 'gen_iter_by_fun'")
+for i in gen_iter_by_fun:
+    print(i)
+#+end_src
+
+How to figure out that a yield statement is a delimiter? In this example, there are 3 yield statements.
+The first yield statement split the execution into 2 part, the first part is
+#+begin_src python
+#! /usr/bin/env python3
+def gen_iter():
+    return 8
+#+end_src
+and the second part is the rest of the definition.
+
+The workflow of gen_iter:
+
+1. When the generator iterator calls send() method at the first time, it returns 8 as the result;
+2. at the second time, it returns 9 as the result;
+3. at the third time, it returns 10 as the result.
+
+Now no more execution part are left. However, the yield statement is not such a simple thing as
+I told you, they are just about "exits". I am going to tell you about "entries". Let's rewrite
+gen_iter again.
+
+#+begin_src python
+#! /usr/bin/env python3
+# gen_iter.py
+# generator function
+def gen_iter():
+    passed = yield 8
+    passed = yield passed
+    passed = yield passed
+gen_iter_by_fun = gen_iter()
+print(gen_iter_by_fun.send(None))
+print(gen_iter_by_fun.send(9))
+print(gen_iter_by_fun.send(10))
+#+end_src
+
+This time let's check the output first.
+#+begin_src sh
+8
+9
+10
+#+end_src
+
+Remember the problem we ask before? What are the arguments used for? It is clear now. Let me show you
+the workflow first.
+
+1. At the first time gen_iter_by_fun calls send() method with None, it returns 8 as result;
+2. at the second time, it calls send() method with 9, the variable "passed" in the first statement is assigned 9, and it returns "passed" as the result (the execution point moves to the right-hand-side of the second yield statement, and pauses there), 9, here;
+3. at the third time, it calls send() method with 10, the variable "passed" in the second statement is assigned 10, and it returns "passed" as the result, 10, here.
+
+Now no more execution part are left again. In short, a yield statement is one delimiter, the right hand
+side of it is the exit, the value on right hand side is for "outside" (the caller); the left hand side of
+it is entry or, more precisely, resuming point; the value passed from "outside" to "inside", is the argument
+to be passed to send() method.
+
+#+begin_src python
+def fundef():
+    entry_point = yield exit_point
+#+end_src
+That is why the yield statements can only be used in the definition of function, because of that only
+procedure has entry and exit.
+
+One more housekeeping, you can rewrite gen_iter with a loop, depending on your purpose.
+#+begin_src python
+#! /usr/bin/env python3
+# gen_iter.py
+# generator function
+def gen_iter():
+    passed = yield 8
+    times_left = 2
+    while times_left:
+	passed = yield passed
+	times_left -= 1
+
+gen_iter_by_fun = gen_iter()
+print(gen_iter_by_fun.send(None))
+print(gen_iter_by_fun.send(9))
+print(gen_iter_by_fun.send(10))
+#+end_src
+
+Oh, I almost forget one thing before heading to corounties. The yield statement has two forms:
+
+#+begin_src python
+#! /usr/bin/env python3
+yield <expr>
+yield from <expr>
+#+end_src
+
+We have already known how to use the first form, the second form provides a transparent two-way channel
+from the caller to the sub-generator. Now I define a new generator function using "yield from" statement,
+named `gen_iter_outer'.
+#+begin_src python
+#! /usr/bin/env python3
+def gen_iter_outer(g):
+    yield from g
+
+g = gen_iter_outer(gen_iter())
+print(g.send(None))
+print(g.send(6))
+print(g.send(4))
+# If call one more time, then it will raise a StopIteration
+#+end_src
+
+The output here. It has same behavior as the generator iterator created by gen_iter().
+#+begin_src python
+8
+6
+4
+#+end_src
+
+
+`gen_iter_outer' function accepts a generator iterator as the input and returns another generator iterator
+as output, the input is the so-called sub-generator, the output is the caller. It is interesting that
+when the caller calls send(6), the 6 is passed to the sub-generator. This is the meaning of "a transparent
+two-way channel from the caller to the sub-generator". And one more thing, a caller cloud have more than
+one sub-generator.
+
+#+begin_src python
+#! /usr/bin/env python3
+def count_to_ten():
+    print("Start from 1")
+    yield from (i for i in range(1, 6))
+    print()
+    print("Five numbers left")
+    yield from (i for i in range(6, 11))
+
+for i in count_to_ten():
+    print(i)
+#+end_src
+
+Here is the output.
+#+begin_src sh
+Start from 1
+1
+2
+3
+4
+5
+
+Five numbers left
+6
+7
+8
+9
+10
+#+end_src
+
+And I am not going to explain why we need yield from here. Here is [[https://stackoverflow.com/questions/9708902/in-practice-what-are-the-main-uses-for-the-new-yield-from-syntax-in-python-3][why]] if you want more.
+
+After this, you might think what is the generator used for? Now one more example is coming,
+it will shows you how to simulate threading. It is about how a scheduler schedules two tasks
+that are generator iterators and has them executed like how threading governed by operating
+systems does.
+
+#+begin_src python
+#! /usr/bin/env python3
+import time
+
+def task_generator(name, num):
+    while num > 0:
+	print("{name} {num}s left".format(name=name, num=num))
+	num -= 1
+	passed = yield num
+
+task1 = task_generator("task1", 5)
+task2 = task_generator("task2", 5)
+
+def task_scheduler(interval=1, *tasks):
+    queue = list(tasks)
+    while queue:
+	task = queue.pop(0)
+	try:
+	    task.send(None)
+	    queue.append(task)
+	    time.sleep(interval)
+	except StopIteration:
+	    pass
+
+task_scheduler(1, task1, task2)
+#+end_src
+
+If you really understood the stuffs I told you before this example, it does not need me to explain
+this example to you anymore. It is a simple example with a simple scheduler, which pops the first task
+, calls the task and push it to the tail of the queue until all the tasks are completed. That is all,
+very simple, right? In reality, we won't implement a scheduler ourselves, Python provide a module for
+us to do these works. The module is asyncio, it provides some advanced schedulers that works with, etc,
+coroutine, future or task objects. The next section is for coroutines.
+
+*Coroutines*. Time to explain what are coroutines in Python. Actually, I don't know either, or I
+am not sure I am right. "Coroutines can be entered, exited, and resumed at many different points.",
+the official docs documented. If it is that case, then we have already known what are coroutines.
+Coroutines extend from generators. You might think, coroutines are generator iterators. Not exactly.
+In the reality, generator and coroutine are two different types. According to the docs, "Generator
+-based coroutines use the yield from syntax introduced in PEP 380, instead of the original yield
+syntax.", also the asyncio module provides a function, asyncio.iscoroutine, for programmer to check
+whether a object is a coroutine object.
+
+There are two types of coroutines, generator-based coroutines and coroutine function. The coroutine
+function returns a coroutine object, may be defined with the async def statement, and may contain
+await, async for, and async with keywords (there are too many for me to explain them all). I am not
+going to explain them to you. I use Python since Python 3.4, there are too many thing had changed,
+the keywords are some of them. They are the shorthand to asyncio module which introduces the coroutines.
+That is why I prefer Racket, Python is a good language though.
+
+Coroutines take advantage of generator capabilities, changing context, like how threads and processes
+do that. We can use them to do (simulate) some asynchronous works, efficiently. Once you understand
+the concept I told you, you can read the docs of asyncio module or [[https://pymotw.com/3/concurrency.html][this]] to finish your works with
+coroutines. I am not going to copy docs here, so go and read the sources I provided to you.

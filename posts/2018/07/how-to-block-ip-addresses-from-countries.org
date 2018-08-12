@@ -1,0 +1,91 @@
+#+title: 设置Nginx禁止某些地区IP的访问
+#+date: 2018-07-04
+#+index: 设置Nginx禁止某些地区IP的访问
+#+tags: Nginx
+#+OPTIONS: ^:nil
+#+begin_abstract
+闲来无事就去玩一下Nginx
+#+end_abstract
+
+*大概两年前*,我刚开始接触Python,最先的练手项目就是爬虫.当然那个时候还没有找到一本关于这个话题的书籍,所以就到网络上找相关
+的博客,其中找到了一个叫fuckbilibili的网站,现在应该是没了.它有一段时间是可以直接访问的,后面就直接451了.忘了在哪他们说了
+为什么451,还有给出了Nginx的配置.那个时候我还没接触Nginx呢,觉得很高深.在昨天的时候,不知道为什么会想这个,于是就有折腾一下
+的想法,折腾过后发现其实不难.
+
+*最终的效果*,判断客户端IP决定是否禁止它访问,非真实IP,也就是所对于使用了代理的用户还是暂时没有办法.如果这不是你想要的效果
+的话那就节省自己的时间吧.
+
+*我的折腾环境*
+- 服务器操作系统: Debian 9,并且安装了geoip database
+- Nginx: 版本1.13.12,并且编译了ngx_http_geoip_module
+- 编辑器: Emacs (选你熟悉的就行)
+
+*假定你有一定的Ngnix使用经验下,你还可能会用这些的资料*,
+- [[https://nginx.org/en/docs/http/ngx_http_geoip_module.html][ngx_http_geoip_module文档]]
+- [[https://nginx.org/en/docs/http/ngx_http_map_module.html#map][ngx_http_map_module文档]]
+
+*操作步骤*
+
+- 确定你的Nginx已经是编译了ngx_http_geoip_module
+#+begin_src sh
+  ngnix -V			# 检查里面有没有 --with-http_geoip_module,没有就是没有支持这个模块了
+#+end_src
+
+- 确保你的服务器上有geoip database,如果没有就自己部署一个,很简单,我本人的桌面版Debian 9是自带的,服务器上没有,所以我按照桌面版的路径来放,你可以选一个没有问题的路径来放.
+#+begin_src sh
+if ! [ -d /usr/share/geoip ]; then mkdir /usr/share/geoip && \
+cd - && \
+wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz && \
+gunzip GeoIP.dat.gz ; fi
+#+end_src
+
+- 在/etc/nginx/conf.d下新建名为geoip.conf(只要是*.conf这种就可以,因为/etc/nginx/nginx.conf指定了这种include规则)的文件,并且输入以下内容.这里是根据变量geoip_country_code的值来给变量allowed_country进行绑定,allowed_country是新建的,你可以换成你想要的变量名字.下面做了相关注释,也就是说,只有当客户端访问时候的IP地区码为CN和US的时候,allowed_country才为no.请根据你的目的来赋值.
+#+begin_src sh
+geoip_country /usr/share/geoip/GeoIP.dat; # 配置geoip数据库,就是指定数据库的路径而已
+map $geoip_country_code $allowed_country {
+    default yes; # 默认情况下,allowed_country会赋值为yes
+    CN no;       # geoip_country_code为CN时,allowed_country会赋值为no;
+    US no;       # 同CN
+}
+#+end_src
+
+- 根据allowed_country的值来返回,在你的网站的配置文件,比如/etc/nginx/sites-avaliable/default,内容如下,
+#+begin_src sh
+server {
+  listen 80 default_server;
+  server_name star.yourdomain.com *.yourdomain.com;
+  root /path/to/project;
+  error_page 404 errors/404.html;
+  access_log logs/star.yourdomain.com.access.log;
+  index index.html;
+  location ~ /test/(.*) {
+       proxy_pass http://127.0.0.1:1080/$1
+  }
+ }
+#+end_src
+你可以在里面加入判断的配置,最后如下
+#+begin_src sh
+  server {
+    listen 80 default_server;
+    server_name star.yourdomain.com *.yourdomain.com;
+    root /path/to/project;
+    error_page 404 errors/404.html;
+    access_log logs/star.yourdomain.com.access.log;
+
+    if ($allowed_country = no) {
+	 return 502;		# 可以改成你想要的返回码或者页面,等等
+    }
+
+    index index.html;
+    location ~ /test/(.*) {
+	 proxy_pass http://127.0.0.1:1080/$1
+    }
+   }
+#+end_src
+重启Nginx后如果有来自中国和美国的IP进行访问,就会给他们返回502页面(自己测试的时候有可能有因为某些原因显示不了,
+我遇到过两种情况,其中一种是浏览器缓存,可以对浏览器Ctrl+F5解决,另外一种就比较难以说明,应该是本地访问的缘故吧).
+注意,你也可以针对一个location level来进行判断,把插入的代码放到location level就可以了.总之注意context就好.
+
+*最后*,看吧,挺简单的对吧,不过我在开头也说了,这种配置方法是搞不定用了梯子的访问者,所以以后我还可能还会再写一篇
+可以检测真实IP的方法.这种配置除了可以过滤掉一部分IP外,也可以用来针对不同的地区提供不同的服务,还有很多别的其他
+用途,看你的决定了.

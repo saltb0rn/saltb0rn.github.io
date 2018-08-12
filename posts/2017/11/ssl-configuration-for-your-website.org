@@ -1,0 +1,92 @@
+#+TITLE: 为你的网站配置SSL证书
+#+DATE: 2017-11-09
+#+TAGS: Linux Nginx SSL
+#+OPTIONS: ^:nil toc:nil num:nil
+#+BEGIN_EXPORT html
+#+END_EXPORT
+
+*** 背景 @@html:<a name="start">@@@@html:</a>@@
+    看着别人的博客/网站一般都支持https协议,看着自己的域名在微信上面每次点击就弹出安全提示,心理有点不平衡了.
+
+    自己给站点开启HTTPS吧!而且之前没做过,可以实践一次.
+
+*** 我的运行环境
+    - 操作系统: Linux Debian 9
+    - Web服务器: [[https://nginx.org/en/][Nginx]]
+    - 证书生成工具: [[https://certbot.eff.org/][Certbot]]([[https://letsencrypt.org/][Let's Encrypt]]官方推荐)
+    - 定时任务: crontab
+    - 远程登录: ssh
+
+#+BEGIN_QUOTE
+NOTE: Let's Encrypt的证书有效期是90天,幸运的是一旦过期可以重新获取
+#+END_QUOTE
+
+*** 需要的文档
+    - Certbot[[https://certbot.eff.org/#debianstretch-nginx][在Debian 9上的使用]]和[[https://certbot.eff.org/docs/using.html#where-are-my-certificates][关于生成的证书的相关说明]]
+    - Nginx[[https://nginx.org/en/docs/http/configuring_https_servers.html][配置HTTPS的说明]](本人是[[https://nginx.org/en/docs/http/configuring_https_servers.html#single_http_https_server][“A single HTTP/HTTPS server”]]的方式配置)
+
+*** 步骤
+    1. 在服务器上面安装certbot,输入指令@@html:<blockquote>@@apt-get update && apt-get install certbot@@html:</blockquote>@@
+
+    2. 选择插件类型(这里是standalone,你可以选择nginx来进行[[https://certbot.eff.org/docs/using.html#nginx][操作]],我是选错了,不过没关系)获取证书,@@html:<blockquote>@@certbot certonly --standalone -d darksalt.me -d www.darksalt.me@@html:</blockquote>@@其中 *-d* 指定的是想要开启HTTPS的服务器域名,可以多个 *-d* 指定.如果生成类似如下信息的话就证明成功
+       #+BEGIN_SRC shell
+    IMPORTANT NOTES:
+    - If you lose your account credentials, you can recover through
+    e-mails sent to licess@vpser.net.
+    - Congratulations! Your certificate and chain have been saved at
+    /etc/letsencrypt/live/darksalt.me/fullchain.pem. Your cert will
+    expire on 2017-XX-XX. To obtain a new version of the certificate in
+    the future, simply run Let's Encrypt again.
+    - Your account credentials have been saved in your Let's Encrypt
+    configuration directory at /etc/letsencrypt. You should make a
+    secure backup of this folder now. This configuration directory will
+    also contain certificates and private keys obtained by Let's
+    Encrypt so making regular backups of this folder is ideal.
+    - If like Let's Encrypt, please consider supporting our work by:
+
+    Donating to ISRG / Let's Encrypt: https://letsencrypt.org/donate
+    Donating to EFF: https://eff.org/donate-le
+       #+END_SRC
+
+    3. 可以 *生成的证书的相关说明* 中找到你的证书位置,我这里的就是/etc/letsencrypt/live/darksalt.me下面
+
+    4. 根据 *生成的证书的相关说明* 关于证书密钥的说明和 *Nginx配置HTTPS的说明* 可以得出以下的配置
+       #+BEGIN_SRC shell
+# 本文件路径 /etc/nginx/sites-avaliable/default,内容如下
+server {
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    ssl_certificate /etc/letsencrypt/live/darksalt.me/fullchain.pem;
+    # 指定证书位置
+    ssl_certificate_key /etc/letsencrypt/live/darksalt.me/privkey.pem;
+    # 指定证书私有密钥位置
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    # 指定SSL的协议,这个值是默认的,可以不用设置
+    ssl_ciphers "EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5";
+    # [[https://en.wikipedia.org/wiki/Cipher]]Ciphers指加密的算法,指定用什么加密算法.有默认值,这里我还是跟着别人copy了一下
+    # `ssl_protocols' 和 `ssl_ciphers' 可以用来限制链接的SSL/TLS的版本和加密算法
+    ssl_session_cache shared:SSL:10m;
+    # Nginx workpers 之间共享SSL session的时间长度
+    root /home/saltb0rn/site;
+    index index.html;
+    server_name darksalt.me www.darksalt.me;
+
+    location / {
+	try_files $uri $uri/ =404;
+    }
+}
+       #+END_SRC
+
+    5. 重启Nginx@@html:<blockquote>@@nginx -s reload@@html:</blockquote>@@
+
+    6. 自动更新证书,用crontab来实现,在/etc/crontab底部中加入一行@@html:<blockquote>@@0 0 1 * * root certbot renew@@html:</blockquote>@@这样证书就会每一个月尝试地更新更新一次.
+
+       Updated at 2018-5-29: 因为Nginx占用443端口的缘故,直接更新会失败,所以要先关闭Nginx然后更新,最后启动Nginx@@html:<blockquote>@@0 0 1 * * root service nginx stop && certbot renew && service nginx start@@html:</blockquote>@@
+
+
+
+*** 引用
+
+    [[https://www.vpser.net/build/letsencrypt-free-ssl.html][Let's Encrypt+Nginx/Apache]]

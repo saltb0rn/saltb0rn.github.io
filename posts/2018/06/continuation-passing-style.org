@@ -1,0 +1,234 @@
+#+title: Continuation Passing Style
+#+date: 2018-06-20
+#+index: Continuation Passing Style
+#+tags: CPS Racket
+#+begin_abstract
+写一写自己对CPS的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
+#+end_abstract
+
+*** 偶遇CPS
+有很久一段时间没有写Python了,语法虽好,不过语法糖实在太多,断断续续的接触了一段时间的 Lisp, 从一开始的
+Common Lisp,到现在的Emacs Lisp和Racket, 经过这段洗礼以后,有一种"不写Python了,干脆写Lisp为生算了"
+的想法(不过想生活的话,还是写Python靠谱点,都学就最好),我不是Lisp的佼佼者,不过应该也算是个Lisp fanboy了
+吧.
+
+之所以学Lisp是因为当时看了王垠的博客而有了想去了解Programming Language的欲望.刚好前一段时间大概
+的读了Semantics Engineering和EOPL 3rd,对这一块有一个大概的了解.目前还在补 EOPL 上的习题,这本书上有
+一个我挺感兴趣的内容,看到目录上有这个的时候我当场就兴奋不已,"终于找到有讲这一块的书了","这一块"就是Continuation Passing Style,简称 CPS.
+
+*** Continuation
+在讲什么是CPS之前,得先说一下什么是continuation.
+
+在Lisp的方言之一Racket的里面,它是作为一种能够把计算步骤保留下来的特性;在Semantics Engineering里面,它是一种上下文,
+称为control context.其实在读EOPL之前我还不了解这些概念的.接下来我会用Racket来讲解,放心,我会简单地讲一下要用到的一些
+forms,不会真的涉及到continuation的实际操作,只是讲它的意像.
+
+**** 简单的Lisp
+
+首先,Racket里面一般是这样定义函数的,以定义一个形式参数为a和b的整型加法函数add,和一个减法函数sub为例子.
+
+#+begin_src racket
+(define (add a b) (+ a b))
+(define (sub a b) (- a b))
+
+;; 也可以利用lambda表达式定义函数
+;; (define add (lambda (a b) (+ a b)))
+
+;; call it with 1 and 2, then returns 3 as the result
+(add 1 2)
+;; call it with 3 and 2, then returns 1 as the result
+(sub 3 2)
+
+;; if condition then true-branch else false-branch
+(if (> (sub 3 2) 0)
+    (sub 3 2)
+    (add 1 2))
+#+end_src
+
+上面注释的lambda表达式绑定给add函数,而lambda表达式有点像没有名字的函数,反映了Racket支持函数式编程.简单点说就是过程与数据有着同等地位
+,这个特性后面会用上.
+
+接下来用一个更复杂的例子,定义一个名为ans的函数,接收三个整型形参x,y,z返回结果为(add (sub x y) z).
+
+#+begin_src racket
+(define (ans x y z)
+   (add (sub x y) z))
+#+end_src
+
+**** 计算步
+好了,介绍了函数定义,可以开始讲什么是continuation了.正如上面说的,Racket里面continuation特性是可以把计算
+步骤保留下来的,在这之前,什么是计算步骤呢?以上面的ans为例子,它的计算步骤如下:
+
+1. res1 = (sub x y)
+2. res2 = (add res1 z)
+
+共两步.当然你可以直接把这个函数看做一步.后面会讲如何划分计算步骤.这里我们就看做两步.
+
+**** 如何表示一个计算步
+在清楚什么是计算步骤以后,那么就回到问题上了,怎么把计算步骤保留下来呢?其实这里还有一个问题,计算步是怎么表示的呢?
+
+每一步相当与一个过程,假设调用(ans 1 2 3),(sub 1 2)这样的话得到的就是结果-1,注意－1不是一个过程,在Racket里面,
+一个函数其实就是一个过程,所以这一步可以这样表示,
+
+#+begin_src racket
+;; 第一步,把第一步保存在first-step
+(define first-step (lambda (pre-step-res) (sub 1 2)))
+
+;; 执行第一步相当于以下,void是Racket里面的一个值
+(define res1 (first-step void))
+#+end_src
+
+第二步需要等待第一步的运算结果,
+#+begin_src racket
+;; 第二步,把第二步保存在second-step
+(define second-step (lambda (pre-step-res) (add pre-step-res 3)))
+
+;; 执行第二步
+(define res2 (second-step res1))
+#+end_src
+
+**** 如何表示一个continuation
+其实读到这里就很容易理解什么是continuation了,上面也说过,continuation是一个叫control context的上下文,有专门保存数据
+的data context,也叫environment,一般说到作用域,变量绑定都跟这个有关.Control context有点不一样,它虽然也保存数据,但
+它保存计算步,这里用step[var1=val1...]来表示,step是计算步,[var1=val1...]表示data context,所以第二步也可以表示为
+
+(lambda (pre-step-res) (add pre-step-res z))[z=3]
+
+由于Racket支持词法闭包,所以只要在保证第二步处于正确的上下文中,可以直接写成(lambda (pre-step-res) (add pre-step-res z)),
+这就是continuation.
+
+讲了这么多,你会发现"continuation不就是一个函数吗"?没错,用函数来表示continuation非常的适合,重点是不是what,而是why?
+同一个数据是可以有很多种表示的,就像同一个数可以有不同进制一样,所以请不要惊讶.
+
+相信读到这里你应该能理解continuation了吧,如果还不能理解的话,要不就是这篇文章写得烂,要不就是你还有一些概念没搞懂,比如
+函数式编程,词法绑定,上下文等.不管怎么样,接下来就要开始讲主题了.
+
+*** Continuation Passing Style
+顾名思意,CPS就是一种风格,这种风格就是把continuation作为参数传递.
+
+**** CPS的目的
+到底CPS有什么好处呢?为什么要改成CPS呢?根据EOPL的第六章描述,CPS目的是把非尾递归的递归计算行为转化成跟尾递归一样.这对于
+想无脑写递归的人来说是福音,因为递归抽象,不过这种抽象是要付出代价的,所以如果能无条件抽象地写程序,那必然是件好事.所以你可能
+听说过某某语言支持尾递归优化,其实这就是把抽象的代价减少了.
+
+**** 把ans改写成CPS程序
+
+#+begin_src racket
+(define (ans/k x y z cont)
+   (sub/k x y
+      (lambda (res1)
+	 (add/k res1 z
+	    (lambda (res2)
+	       (cont res2))))))
+#+end_src
+
+是不是有点看不懂?没事,看不懂是正常的,因为我前面只是说了continuation的概念而已,现在才是开始.来说说改写的思路,也就是
+一套把程序转换CPS程序的算法.
+
+**** Simple expression and non-simple expression
+不过分析之前要先回到上面的一个问题,怎么划分计算步呢?其实计算步,只不过是我临时想出来的一个词而已,目的是为了把simple
+expression和non-simple expression的概念推迟说明.它们两者的关系就是non-simple expression由一到多个simple
+expression(s)组成.而写CPS程序的时候有点像整理出所有simple expressions,然后按照对应的顺序把它组合起来.
+
+Simple expression有点像straight-line code,整个计算里面最基本的,不可再划分的一个单位,也就是像函数,常量,primitive
+operators(+,-,*,/,%等,不同语言会不同),和语言自带的operators的调用都是 simple expression.(其实EOPL3上不是这么
+说的,它说是"guaranteed to never contain any procedure call",实际中这有点太勉强了,所以我就把自带的operators
+的调用也划分到simple expression里面了,请见谅),举几个例子.
+
+#+BEGIN_SRC scheme
+(lambda (val) val)
+(lambda (val) ((lambda (x) x) val))
+(+ 1 2)
+(- 2 3)
+(+ 1 (- 2 3))
+-
++
+1
+'x
+null
+(or 1 2)
+#+END_SRC
+
+Non-simple expression就是非simple expression的情况,procedure call和条件语句(和上面一样,某些调用并非non-expression,
+我个人把条件语句和用户定义的函数的procedure call归类到non-simple expression里面).举几个例子
+#+BEGIN_SRC scheme
+(if (null? null) 1 2)
+((lambda (x) x) 1)
+(+ 1 (- 2 ((lambda (x) x) 1)))
+#+END_SRC
+
+Continuation选择了函数做作表示,还有simple expression和non-simple expression存在这种关系和定义是有原因的,只有
+这么作,non-simple expression就可以保证处于函数的tail position,tail position就是函数的退出的位置,也就是结束的
+地方,在这种地方的调用就是tail call,尾递归,这样的函数称为tail form(不是说tail form就是这样的函数啊).简单点,保证
+simple expression,就可以保证non-simple expression是tail form.这里可能会有点绕,一时间可能会不太理解,具体可以
+结合之后的*最后一个例子*来理解.
+
+值得注意的是,我们在*计算步*这个小节中提到的计算步并不是真正的simple expressions,它们是non-simple expressions.那么现在开始对
+它们"动刀"
+
+**** 一套把程序转化为CPS程序的算法
+其实EOPL里一句就可以总结完了,找到第一个non-simple expression并且把它改写成CPS,对于剩下的non-simple expression重复这个过程.
+
+实际中,细节不像EOPL简单这么一点.在上面ans的例子中
+1. 把(ans x y)改写(ans/k x y z cont)
+2. 找到第一个non-simple expression是(add x y),于是对它进行改写(add/k x y cont)
+3. 在(add/k x y cont)中,cont就是下一步计算过程,所以cont要改为(lambda (res1) (cont (sub res1 z)))
+4. 不过(sub res1 z)同样也是non-simple expression,于是改写为(sub/k res1 z cont),这里的cont就有点微妙了,
+   写成(lambda (res2) (cont res2))
+
+当然不要忘了把add和sub的定义也要改写,注意+和-是primitive operators,不能对它们的定义进行修改,所以它们就不用改写.
+#+begin_src racket
+(define (add/k x y cont) (cont (+ x y)))
+(define (sub/k x y cont) (cont (- x y)))
+#+end_src
+
+其实这个过程可以想的跟抽象一点,CPS就是把多个简单的计算过程组合成一个复杂的计算过程.计算这一步,得出的结果传递给下一步
+并且开始计算,如此类推,直到计算完毕.
+
+**** 最后一个例子
+分别定义累加从1到n的函数bad-acc,acc-tail和acc.
+#+begin_src racket
+;; bad acc
+(define (bad-acc n)
+    (if (= n 0)
+	0
+	(+ n (bad-acc (- n 1)))))
+
+;; tail form
+(define (acc-tail n)
+    (acc-tail-inner n 0))
+
+(define (acc-tail-inner n res)
+    (if (= n 0)
+	res
+	(acc-tail-inner (- n 1) (+ res n))))
+
+;; cps
+(define (acc n)
+    (acc/k n (lambda (val) val)))
+
+(define (acc/k n cont)
+    (if (= n 0)
+	(cont 0)
+	(acc/k (- n 1)
+	       (lambda (res) (cont (+ n res))))))
+#+end_src
+
+注意这个例子里面,acc内部调用acc/k时候传入了(lambda (val) val),这表示一个空的continuation.
+
+利用racket/trace中的trace跟踪计算过程,会发现在3者中,acc-tail和acc的计算行为是一样的,只有一步,对于bad-acc,可以明显感受到
+每一步,并且有明显的起伏.在Racket里面,acc-tail和acc的计算行为和循环是一样的,trace的跟踪都会只显示一步.所以可想而知,CPS是一
+门十分强大的"魔法".
+
+[[file:../../../files/cps.jpg]]
+
+
+然而这门"魔法"不是万能的,如果把它用在像Python和Emacs Lisp这种有”先天缺“陷的语言上面,它就失去应有的力量,就像被克制了一样.
+
+*** CPS意义何在
+这个问题我也是在探究中,最先发现CPS是在学Lisp的时候,稍微理解是在读EOPL的时候.对于解析器来说,它可能是一个十分强大的设计方式,
+对于我来说,我只接触到它的高度抽像:把多个简单的计算过程组合成一个复杂的计算过程.
+
+*** 结语
+还是觉得这篇东西有很多地方有欠缺,也说明了我对CPS的理解还不够深入.突然觉得EOPL写的很好,因为我能明白给我传达的知识,原来写一篇
+易懂的科普文是如此艰难,真的是佩服这些老前辈.

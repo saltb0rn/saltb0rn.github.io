@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2018-07-26 Thu 14:49 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regex</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+
+<script type="text/javascript">
+if(/superloopy.io/.test(window.location.hostname)) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-4113456-6', 'auto');
+  ga('send', 'pageview');
+}</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+
+<div id="org-div-home-and-up">
+  <nav>
+    <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+    <ul>
+      <li><a accesskey="H" href="/"> Home </a></li>
+      <!--<li><a accesskey="a" href="/posts"> Posts </a></li>-->
+      <li><a accesskey="T" href="/tags"> Tags </a></li>
+      <li><a accesskey="A" href="/about"> About </a></li>
+    </ul>
+  </nav>
+</div>
+<div id="content">
+<h1 class="title">Regex</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orge5dcfce">Metacharacters</a>
+<ul>
+<li><a href="#org717b666">Start and End of the Line</a></li>
+<li><a href="#org201eae5">Character Classes</a></li>
+<li><a href="#orgef49eba">Negated Character classes</a></li>
+<li><a href="#orgf049cef">Matching Any Character with Dot</a></li>
+<li><a href="#orgc05a29a">Matching any one of several subexpressions, Alternation</a></li>
+<li><a href="#org522bca6">Word Boundaries</a></li>
+<li><a href="#orgd520d6d">Quantifiers</a></li>
+<li><a href="#orga8e6f48">Parentheses and Backreferences</a></li>
+<li><a href="#orga275d7b">The Great Escape</a></li>
+</ul>
+</li>
+<li><a href="#org6307b80">Regex Modes and Match Modes</a>
+<ul>
+<li><a href="#org15d9572">Case-insensitive match mode</a></li>
+<li><a href="#org059a560">Free-spacing and comments regex mode</a></li>
+<li><a href="#org3ec25bc">Dot-matches-all match mode (a.k.a., "single-line mode")</a></li>
+<li><a href="#org5897dce">Enhanced line-anchor match mode (a.k.a., "multiline mode")</a></li>
+<li><a href="#orgdc81b65">Literal-text regex mode</a></li>
+</ul>
+</li>
+<li><a href="#org9dc3c2f">Some Features</a>
+<ul>
+<li><a href="#org13ffe66">Lookaround</a></li>
+<li><a href="#org1bdb7ad">Grouping, Capturing, Conditionals, and Control</a></li>
+</ul>
+</li>
+<li><a href="#orgac3d6c9">Concepts</a>
+<ul>
+<li><a href="#org41e8658">Regex Engine Types</a></li>
+<li><a href="#orgc8a2b3c">Regex-Directed Versus Text-Directed</a></li>
+<li><a href="#org424fe87">Backtracking, the Essence of an NFA Engine</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="abstract">
+<p>
+Well, if you always forget somethings, then you should take notes for you to remember them easily.
+Regex, regular expression, is such a powerful tool that I always forget how to use it frequently.
+It is powerful but not overwhelming, so if take it as your daily need, then there is no need to
+take notes. For me, I would rather take notes in beginning, and now it is in it.
+</p>
+
+</div>
+<p>
+I have learned regex in spare time for a long time, as what I mentioned before, easy to forget it.
+So, I decide to simplify the information from the book, "Mastering Regular Expressions". Every regex
+tool is difference, so you need to read the manual of the tool you are using carefully. Though they
+still are similar, I think it will be helpful for you to make some concepts of regex more clear.
+</p>
+
+<div id="outline-container-orge5dcfce" class="outline-2">
+<h2 id="orge5dcfce">Metacharacters</h2>
+<div class="outline-text-2" id="text-orge5dcfce">
+</div>
+<div id="outline-container-org717b666" class="outline-3">
+<h3 id="org717b666">Start and End of the Line</h3>
+<div class="outline-text-3" id="text-org717b666">
+<ul class="org-ul">
+<li>beginning-of-line: ^</li>
+<li>end-of-line: $</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org201eae5" class="outline-3">
+<h3 id="org201eae5">Character Classes</h3>
+<div class="outline-text-3" id="text-org201eae5">
+<ul class="org-ul">
+<li>[0-9A-ZR!.?], etc., matches one of the characters it lists in [], the dash will is the metacharater
+here, if it is the first character in the character class, then it is not. Besides the dash, every
+characters in a [] are literal characters.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgef49eba" class="outline-3">
+<h3 id="orgef49eba">Negated Character classes</h3>
+<div class="outline-text-3" id="text-orgef49eba">
+<ul class="org-ul">
+<li>[^&#x2026;], match characters not in the characters following ^, ^ in the character classes means negated.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgf049cef" class="outline-3">
+<h3 id="orgf049cef">Matching Any Character with Dot</h3>
+<div class="outline-text-3" id="text-orgf049cef">
+<ul class="org-ul">
+<li>. is a shorthand for a character class that matches any character.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgc05a29a" class="outline-3">
+<h3 id="orgc05a29a">Matching any one of several subexpressions, Alternation</h3>
+<div class="outline-text-3" id="text-orgc05a29a">
+<ul class="org-ul">
+<li>(exp1|exp2|exp3|&#x2026;), matches one of them</li>
+<li>differentiating from the character class, the metacharacters in it are still metacharacters.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org522bca6" class="outline-3">
+<h3 id="org522bca6">Word Boundaries</h3>
+<div class="outline-text-3" id="text-org522bca6">
+<ul class="org-ul">
+<li>\&lt;a\&gt; or \ba\b, matches a that is a single word.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgd520d6d" class="outline-3">
+<h3 id="orgd520d6d">Quantifiers</h3>
+<div class="outline-text-3" id="text-orgd520d6d">
+<ul class="org-ul">
+<li>a*: 0 or more a</li>
+<li>a+: 1 or more a</li>
+<li>a?: 0 or 1 a, or a is optional</li>
+<li>a{3,13}: matches up to 12 times if possible, but settles for three.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orga8e6f48" class="outline-3">
+<h3 id="orga8e6f48">Parentheses and Backreferences</h3>
+<div class="outline-text-3" id="text-orga8e6f48">
+<ul class="org-ul">
+<li>\b(t.*e)\b \1, for example, if the string is "the the", then match, \1 refers to what (t.*e)</li>
+</ul>
+<p>
+matches, so "the tae" does not match. \n, n refers the nth matched string.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga275d7b" class="outline-3">
+<h3 id="orga275d7b">The Great Escape</h3>
+<div class="outline-text-3" id="text-orga275d7b">
+<ul class="org-ul">
+<li>\metacharacter has metacharacter became a literal character</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6307b80" class="outline-2">
+<h2 id="org6307b80">Regex Modes and Match Modes</h2>
+<div class="outline-text-2" id="text-org6307b80">
+</div>
+<div id="outline-container-org15d9572" class="outline-3">
+<h3 id="org15d9572">Case-insensitive match mode</h3>
+<div class="outline-text-3" id="text-org15d9572">
+<ul class="org-ul">
+<li>ignores the case</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org059a560" class="outline-3">
+<h3 id="org059a560">Free-spacing and comments regex mode</h3>
+<div class="outline-text-3" id="text-org059a560">
+<ul class="org-ul">
+<li>whitespace outside the character classes are <b>mostly</b> ignored.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org3ec25bc" class="outline-3">
+<h3 id="org3ec25bc">Dot-matches-all match mode (a.k.a., "single-line mode")</h3>
+<div class="outline-text-3" id="text-org3ec25bc">
+<ul class="org-ul">
+<li>dot usually does not match a newline, but it does in single-line mode</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org5897dce" class="outline-3">
+<h3 id="org5897dce">Enhanced line-anchor match mode (a.k.a., "multiline mode")</h3>
+<div class="outline-text-3" id="text-org5897dce">
+<ul class="org-ul">
+<li>^ treats the string as multiple logical lines if the string contains in the middle, same for $,
+$ will may be more complex. For example, in multiline mode "^.*$" or ".*" matches "" of "\nb".</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgdc81b65" class="outline-3">
+<h3 id="orgdc81b65">Literal-text regex mode</h3>
+<div class="outline-text-3" id="text-orgdc81b65">
+<ul class="org-ul">
+<li>it does not recognize most of or all regex metacharacters.</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9dc3c2f" class="outline-2">
+<h2 id="org9dc3c2f">Some Features</h2>
+<div class="outline-text-2" id="text-org9dc3c2f">
+</div>
+<div id="outline-container-org13ffe66" class="outline-3">
+<h3 id="org13ffe66">Lookaround</h3>
+<div class="outline-text-3" id="text-org13ffe66">
+<ul class="org-ul">
+<li>lookhead (?=&#x2026;) and (?!&#x2026;), (?=abc) means the position at the start of "abc", (?!abc)
+means the position at the start of string that is not "abc".</li>
+<li>lookbehind (?&lt;=&#x2026;) and (?&lt;!&#x2026;), (?&lt;=abc) means the position at the end of "abc",
+(?&lt;!abc) means the position at the string that is not "abc".</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org1bdb7ad" class="outline-3">
+<h3 id="org1bdb7ad">Grouping, Capturing, Conditionals, and Control</h3>
+<div class="outline-text-3" id="text-org1bdb7ad">
+<ul class="org-ul">
+<li>capturing/grouping parentheses: (&#x2026;), \1, \2, &#x2026;</li>
+<li>grouping-only parentheses: (?:&#x2026;)</li>
+<li>named capture: (?&lt;Name&gt;&#x2026;)</li>
+<li>atomic grouping: (?&gt;&#x2026;)</li>
+<li>alternation: &#x2026;|&#x2026;|&#x2026;</li>
+<li>conditional: (? if then | else), three parts if, then and else.</li>
+<li>greedy quantifiers: *, +, ?, {min,max}</li>
+<li>lazy quantifiers: *?, +?, ??, {min,max}?</li>
+<li>possessive quantifiers: *+,++,?+,{min,max}+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgac3d6c9" class="outline-2">
+<h2 id="orgac3d6c9">Concepts</h2>
+<div class="outline-text-2" id="text-orgac3d6c9">
+<p>
+This is the most important part for me, it told me how the regex engine match, once understand this,
+there will be no problems to craft regular expression anymore (after practicing enough of course). It
+covers what "greedy" and "lazy" means, what types of regex engine, what "backtrack" is and how it does.
+</p>
+</div>
+
+<div id="outline-container-org41e8658" class="outline-3">
+<h3 id="org41e8658">Regex Engine Types</h3>
+<div class="outline-text-3" id="text-org41e8658">
+<ul class="org-ul">
+<li>DFA (awk, egrep, flex, lex, MySQL, Procmail)</li>
+<li>Traditional NFA (Emacs, Java, grep, less, more, .NET languages, PCRE library, Perl, PHP,
+Python, Ruby, sed, vi</li>
+<li>POSIX NFA (mawk, Mortice Kern Systems' utilities, Emacs (when requested)</li>
+<li>Hybrid NFA/DFA (GNU awk, GNU grep/egrep, Tcl)</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgc8a2b3c" class="outline-3">
+<h3 id="orgc8a2b3c">Regex-Directed Versus Text-Directed</h3>
+<div class="outline-text-3" id="text-orgc8a2b3c">
+<ul class="org-ul">
+<li><p>
+NFA Engine (Nondeterministic Finite Automaton): Regex-Directed.
+</p>
+
+<p>
+For example, match "to(nite|knight|night)" against "..tonight..", the first one is "t", which
+repeatelly fails until a "t" is reached in the target string. Once that happens, the "o" is
+checked against the next character, and if it matches, control moves to the next component,
+(nite|knight|night), which means "nite" or "knight" or "night", engine tries each in turn.
+Attempting the first alternative, "nite", recurs the matching behavior as before. If this fails,
+as it eventually does, the engine tries another alternative, and so on until it achieves a match
+or must report failure.
+</p></li>
+
+<li><p>
+DFA Engine (Deterministic Finite Automaton): Text-Directed
+</p>
+
+<p>
+Contrast the regex-directed NFA engine with an engine that, while scanning the string, keeps
+track of of the matches "currently in the work." In the "tonight" example, the moment the
+engine hits "t", it adds a potential match to its list of those currently in progress:
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/text-directed.png" alt="text-directed.png">
+</p>
+</div></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org424fe87" class="outline-3">
+<h3 id="org424fe87">Backtracking, the Essence of an NFA Engine</h3>
+<div class="outline-text-3" id="text-org424fe87">
+<ul class="org-ul">
+<li>There is about the decision between "make an attempt" and "skip an attempt", as with governed
+by quantifier, the engine always chooses to first make the attempt for greedy quantifiers, and
+to first skip the attempt for lazy (non-greedy) ones.</li>
+
+<li><p>
+The most recently saved option is the one returned to when a local failure forces backtracking.
+Last in first out. Saved option also called saved states, which indicates where matching can
+restart from, reflects both the position in regex and the point in the string where an untried
+option begins. If it matches then creates and save the state and go on, restart from the last
+state it saved otherwise, that is what we call Backtracking.
+</p>
+
+<p>
+A state looks like this:
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/backtracking-state.png" alt="backtracking-state.png">
+</p>
+</div></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_thread"></div>
+<script id="dsq-count-scr" src="//darksalt-me.com/count.js" async></script>
+
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://darksalt-me.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2018-07-02</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+</div>
+</body>
+</html>
