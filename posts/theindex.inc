@@ -10,6 +10,7 @@
   - [[file:2018/05/hello-world.org][Hello, world]]
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
+  - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]
 * R
   - [[file:2018/07/regex.org][Regex]]
 * 关

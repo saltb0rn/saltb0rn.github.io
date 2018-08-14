@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Index</title>
-<!-- 2018-08-14 Tue 17:41 -->
+<title>搭建ss服务器</title>
+<!-- 2018-08-14 Tue 17:17 -->
 <meta  charset="utf-8">
 <meta  name="generator" content="Org-mode">
 <meta  name="author" content="saltb0rn">
@@ -88,6 +88,7 @@
 </style>
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
+<link rel="stylesheet" type="text/css" href="../../../css/index.css"/>
 
 <script type="text/javascript">
 if(/superloopy.io/.test(window.location.hostname)) {
@@ -113,102 +114,113 @@ if(/superloopy.io/.test(window.location.hostname)) {
   </nav>
 </div>
 <div id="content">
-<h1 class="title">Index</h1>
-
+<h1 class="title">搭建ss服务器</h1>
 <div id="outline-container-sec-1" class="outline-2">
-<h2 id="sec-1">A</h2>
+<h2 id="sec-1">服务器选用</h2>
 <div class="outline-text-2" id="text-1">
-<ul class="org-ul">
-<li><a href="2018/07/a-simple-websocket-echo-server.html">A Simple WebSocket Echo Server</a>
-</li>
-<li><a href="2018/06/about-python.html">About Python</a>
-</li>
-</ul>
+<p>
+个人推荐Debian,因为容易使用,版本选9
+</p>
 </div>
 </div>
+
 <div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2">B</h2>
+<h2 id="sec-2">自己电脑上的准备</h2>
 <div class="outline-text-2" id="text-2">
-<ul class="org-ul">
-<li><a href="2018/05/blog-with-emacs.html">Blog with Emacs and Org mode</a>
+<p>
+如果你的电脑是Windows10并且支持Linux子系统的话,就用Linux子系统来使用ssh.
+又如果你的电脑上有一个能够上网的Linux虚拟机,那么就在虚拟机里面使用ssh.
+如果都不是,那么到 <a href="https://gitforwindows.org/">https://gitforwindows.org/</a> 下载一个git,打开git可以使用ssh.
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">为了避免链接到服务器的时候输入默认密码和被截取密码,推荐完成这一步</h3>
+<div class="outline-text-3" id="text-2-1">
+<ol class="org-ol">
+<li>生成登录密钥
+在(Linux/git客户端)终端输入ssh-keygen, 然后回车一次,之后会提示 Enter passphrase (empty for no passphrase):
+你可以输入你自己的口令再回车,该口令用于最后登录服务器;也可以直接回车,这样你登录就不需要输入口令了
 </li>
-</ul>
+
+<li>把公钥传送到服务器(这一步需要你输入唯一一次服务器密码)
+cat ~/.ssh/id<sub>rsa</sub>.pub | ssh user@your-server "mkdir ~/.ssh &amp;&amp; cat - &gt;&gt; ~/.ssh/authorized<sub>keys</sub>"
+
+<p>
+user是登录服务器时候的用户,your-server 是你的服务器地址,可以是ip地址,也可以是域名.
+</p>
+</li>
+</ol>
 </div>
 </div>
+</div>
+
 <div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3">C</h2>
+<h2 id="sec-3">登录服务器</h2>
 <div class="outline-text-2" id="text-3">
-<ul class="org-ul">
-<li><a href="2018/06/continuation-passing-style.html">Continuation Passing Style</a>
-</li>
-<li><a href="2018/06/coroutines.html">Coroutines in Python</a>
-</li>
-</ul>
+<p>
+ssh user@your-server
+</p>
+
+<p>
+如果没有设置口令就输入密码,然后回车.
+如果设置了口令就输入口令,然后回车.如果是空口令,就直接回车.
+</p>
 </div>
 </div>
+
 <div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4">H</h2>
+<h2 id="sec-4">登录后安装 shadowsocks</h2>
 <div class="outline-text-2" id="text-4">
-<ul class="org-ul">
-<li><a href="2018/05/hello-world.html">Hello, world</a>
-</li>
-</ul>
+<p>
+虽然是同一个终端,不过你现在已经再服务器上面了,所以注意,不要乱操作.
+</p>
+
+<p>
+apt-get install python3-pip git
+</p>
+
+<p>
+pip3 install -U git+<a href="https://github.com/shadowsocks/shadowsocks.git@master">https://github.com/shadowsocks/shadowsocks.git@master</a>
+</p>
+
+<p>
+ssserver -p 端口号 -k 密码 -m 加码方法 -d start
+</p>
+
+<p>
+端口号最好不要选443,选一个冷门一点的,以防被识别.
+密码就是之后客户端要验证的密码.
+加密方法有 aes-256-cfb, rc4-md 和其他.
+</p>
+
+<p>
+官方文档有更多的配置说明
+<a href="https://github.com/shadowsocks/shadowsocks/wiki">https://github.com/shadowsocks/shadowsocks/wiki</a>
+</p>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">开启BBR算法,可选,可以有些优化网络</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+这个链接有开启bbr的操作,如果你是选Debian 9做服务器系统的话,就直接找“开启bbr”那一节
+<a href="https://github.com/iMeiji/shadowsocks_install/wiki/%E5%BC%80%E5%90%AFTCP-BBR%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6%E7%AE%97%E6%B3%95">https://github.com/iMeiji/shadowsocks_install/wiki/%E5%BC%80%E5%90%AFTCP-BBR%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6%E7%AE%97%E6%B3%95</a>
+</p>
 </div>
 </div>
+</div>
+
+
 <div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5">M</h2>
+<h2 id="sec-5">客户端</h2>
 <div class="outline-text-2" id="text-5">
-<ul class="org-ul">
-<li><a href="2018/07/macros.html">Macro in Racket</a>
+<ol class="org-ol">
+<li>Android <a href="https://github.com/shadowsocks/shadowsocks-android/releases">https://github.com/shadowsocks/shadowsocks-android/releases</a>
 </li>
-<li><a href="2018/08/mysql-one-day-journay.html">MYSQL一日游</a>
+<li>Windows <a href="https://github.com/shadowsocks/shadowsocks-windows/releases">https://github.com/shadowsocks/shadowsocks-windows/releases</a>
 </li>
-</ul>
-</div>
-</div>
-<div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6">R</h2>
-<div class="outline-text-2" id="text-6">
-<ul class="org-ul">
-<li><a href="2018/07/regex.html">Regex</a>
-</li>
-</ul>
-</div>
-</div>
-<div id="outline-container-sec-7" class="outline-2">
-<h2 id="sec-7">关</h2>
-<div class="outline-text-2" id="text-7">
-<ul class="org-ul">
-<li><a href="2018/05/about-reading-code.html">关于阅读代码</a>
-</li>
-</ul>
-</div>
-</div>
-<div id="outline-container-sec-8" class="outline-2">
-<h2 id="sec-8">同</h2>
-<div class="outline-text-2" id="text-8">
-<ul class="org-ul">
-<li><a href="2018/07/sync-async-blocking-non-blocking.html">同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?</a>
-</li>
-</ul>
-</div>
-</div>
-<div id="outline-container-sec-9" class="outline-2">
-<h2 id="sec-9">网</h2>
-<div class="outline-text-2" id="text-9">
-<ul class="org-ul">
-<li><a href="2018/06/about-rpc.html">网络编程笔记 RPC</a>
-</li>
-</ul>
-</div>
-</div>
-<div id="outline-container-sec-10" class="outline-2">
-<h2 id="sec-10">设</h2>
-<div class="outline-text-2" id="text-10">
-<ul class="org-ul">
-<li><a href="2018/07/how-to-block-ip-addresses-from-countries.html">设置Nginx禁止某些地区IP的访问</a>
-</li>
-</ul>
+</ol>
 </div>
 </div>
 </div>

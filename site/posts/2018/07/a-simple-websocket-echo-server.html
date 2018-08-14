@@ -1,30 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<!-- 2018-07-30 Mon 13:39 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>A Simple WebSocket Echo Server</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
+<!-- 2018-08-14 Tue 17:26 -->
+<meta  charset="utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="saltb0rn">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
+  .title  { text-align: center; }
   .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
+  .done   { color: green; }
   .tag    { background-color: #eee; font-family: monospace;
             padding: 2px; font-size: 80%; font-weight: normal; }
   .timestamp { color: #bebebe; }
   .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
   .underline { text-decoration: underline; }
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
@@ -51,111 +44,27 @@
     border: 1px solid black;
   }
   pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
   pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-hledger:before { content: 'hledger'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
 
   table { border-collapse:collapse; }
   caption.t-above { caption-side: top; }
   caption.t-bottom { caption-side: bottom; }
   td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
   dt { font-weight: bold; }
-  .footpara { display: inline; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
@@ -175,7 +84,6 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
@@ -190,28 +98,48 @@ if(/superloopy.io/.test(window.location.hostname)) {
   ga('create', 'UA-4113456-6', 'auto');
   ga('send', 'pageview');
 }</script>
-<script type="text/x-mathjax-config">
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
     MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
         displayAlign: "center",
-        displayIndent: "0em",
+        displayIndent: "2em",
 
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
              }
-});
+        }
+    });
+/*]]>*///-->
 </script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
 
@@ -243,9 +171,7 @@ server can send data or close the connection at any time.
 </p>
 
 <ol class="org-ol">
-<li><p>
-Handshake
-</p>
+<li>Handshake
 
 
 <div class="figure">
@@ -274,11 +200,10 @@ then take the SHA-1 hash of the result and return the base64 encoding of the has
 <p>
 When constructing response, <b>remember each header ends with \r\n and put an extra \r\n after the last one</b>,
 or it will raise a error like: "WebSocket connection to 'ws://xxxxxx/' failed: Invalid frame header".
-</p></li>
-
-<li><p>
-Communication
 </p>
+</li>
+
+<li>Communication
 
 <p>
 <b>Data Frame Format</b>
@@ -297,58 +222,78 @@ Communication
 <ol class="org-ol">
 <li>FIN field (1 bit) tells the whether it is the last message in a series:
 <ul class="org-ul">
-<li>0x0, server will keep listening</li>
+<li>0x0, server will keep listening
+</li>
 <li>0x9 and 0xA, ping and pong frames, control frames
 <ul class="org-ul">
-<li>0x9 is for pings</li>
-<li>0xA is for pongs, a pong should be sent with same Payload data of a pong when you get the pong</li>
-<li>for pings and pongs, the max payload length is 125</li>
+<li>0x9 is for pings
+</li>
+<li>0xA is for pongs, a pong should be sent with same Payload data of a pong when you get the pong
+</li>
+<li>for pings and pongs, the max payload length is 125
+</li>
 <li>ignore a pong without ever sending a ping;
-send only one pong if have gotten more than one ping before get the change to send a pong</li>
-</ul></li>
-<li>others, server will consider the message delivered, that is time to close the connection.</li>
-</ul></li>
+send only one pong if have gotten more than one ping before get the change to send a pong
+</li>
+</ul>
+</li>
+<li>others, server will consider the message delivered, that is time to close the connection.
+</li>
+</ul>
+</li>
 
-<li>RSV1-3 fields (3 bits) for extensions can be ignore.</li>
+<li>RSV1-3 fields (3 bits) for extensions can be ignore.
+</li>
 
 <li>opcode field (4 bits) defines how to interpret payload data:
 <ul class="org-ul">
-<li>0x0 for continuation, that suggests the message had been split up before it was sent.</li>
-<li>0x1 for text, 0x2 for binary</li>
-<li>the others have no meaning.</li>
-</ul></li>
+<li>0x0 for continuation, that suggests the message had been split up before it was sent.
+</li>
+<li>0x1 for text, 0x2 for binary
+</li>
+<li>the others have no meaning.
+</li>
+</ul>
+</li>
 
 <li>MASK field (1 bit) tells whether the message is encoded. Server excepts it to be 1, and
 disconnect from the client if the message is not encoded. When sending a frame back to the
-client, don't mask it and don't set the bit.</li>
+client, don't mask it and don't set the bit.
+</li>
 
 <li>Payload len field tells the length of payload so that server can know when to stop while extracting
 payload data. Decoding payload length follow 3 steps:
 <ol class="org-ol">
 <li>Read bits 9-15 (inclusive) and interpret that as an unsigned integer.
 If it's 125 or less, then that's the length; you're done. If it's 126,
-go to step 2. If it's 127, go to step 3.</li>
-<li>Read the next 16 bits (2 bytes) and interpret those as an unsigned integer. You're done.</li>
+go to step 2. If it's 127, go to step 3.
+</li>
+<li>Read the next 16 bits (2 bytes) and interpret those as an unsigned integer. You're done.
+</li>
 <li>Read the next 64 bits (8 bytes )and interpret those as an unsigned integer
-(The most significant bit MUST be 0). You're done.</li>
-</ol></li>
+(The most significant bit MUST be 0). You're done.
+</li>
+</ol>
+</li>
 
-<li><p>
-Masking-key field (32 bits or 4 bytes) needs to be read if the MASK field was set (and it
+<li>Masking-key field (32 bits or 4 bytes) needs to be read if the MASK field was set (and it
 should be). We will need it to decode (or unmasking) the encoded data that is payload data
 field. The way to decode should look like
-</p>
 <div class="org-src-container">
+
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #DCDCCC; background-color: #3F3F3F;">decoded_data</span> = <span style="color: #DCDCCC;">[]</span>
 <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #DCDCCC;">(</span>len<span style="color: #BFEBBF;">(</span>encoded_data<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>:
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   decoded_data.append<span style="color: #DCDCCC;">(</span>encoded_data<span style="color: #BFEBBF;">[</span>i<span style="color: #BFEBBF;">]</span> ^ masking_key<span style="color: #BFEBBF;">[</span>i % <span style="color: #DCDCCC; background-color: #3F3F3F;">4</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
 </pre>
-</div></li>
+</div>
+</li>
 
 <li>Payload data field is the data exchanged. If MASK was set, it has to be decoded with
-masking key.</li>
-</ol></li>
+masking key.
+</li>
+</ol>
+</li>
 </ol>
 
 
@@ -373,6 +318,7 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">echo_server.py</span>
 <span style="color: #F0DFAF; font-weight: bold;">import</span> argparse
@@ -543,7 +489,6 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">socketserver.TCPServer.allow_reuse_address</span> = <span style="color: #F0DFAF; font-weight: bold;">True</span>
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #3F3F3F;">server</span> = socketserver.TCPServer<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>HOST, PORT<span style="color: #BFEBBF;">)</span>, EchoRequestHandler<span style="color: #DCDCCC;">)</span>
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   server.serve_forever<span style="color: #DCDCCC;">()</span>
-
 </pre>
 </div>
 
@@ -557,7 +502,8 @@ no any other browser on my computer, so I don't know other browsers.
 Kick off your echo server with
 </p>
 <div class="org-src-container">
-<pre class="src src-bash">python3 echo_server.py <span style="color: #CC9393;">''</span>
+
+<pre class="src src-bash">python3 echo_server.py ''
 </pre>
 </div>
 
@@ -587,9 +533,12 @@ you to do complete these.
 </p>
 
 <ol class="org-ol">
-<li>data fragmentation and processing</li>
-<li>processing of pings and pongs</li>
-<li>cross-site checking</li>
+<li>data fragmentation and processing
+</li>
+<li>processing of pings and pongs
+</li>
+<li>cross-site checking
+</li>
 </ol>
 </div>
 <div id="postamble" class="status">
@@ -617,7 +566,7 @@ s.setAttribute('data-timestamp', +new Date());
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-07-26</p>
-<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+<p class="creator">Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 </div>
 </body>
 </html>

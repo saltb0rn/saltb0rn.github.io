@@ -1,2 +1,1 @@
-- [[file:../posts/2018/07/regex.org][Regex]]
 - [[file:../posts/2018/08/mysql-one-day-journay.org][MYSQL一日游]]
