@@ -1,0 +1,1 @@
+- [[file:../posts/2018/08/test.org][test]]
