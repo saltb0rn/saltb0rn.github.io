@@ -1,0 +1,320 @@
+#+title: 用Docker打包Tornado项目
+#+date: 2018-08-16
+#+index: 用Docker打包Tornado羡慕
+#+tags: Docker
+#+begin_abstract
+Docker是近几年一种新的容器技术,它的应用场景实在是太广泛了,除了在产品线上使用,我还见到过用来打包GUI应用的
+[[http://fabiorehm.com/blog/2014/09/11/running-gui-apps-with-docker/][利用X11 socket与打包的Firefox通信]],还有利用同样原理对[[https://github.com/JAremko/docker-emacs][Emacs进行打包]]. 然而强大的工具都需要比较长的时间来学
+习,其实我自己也没有用过多少次,用Docker的时候大多数都是用来搭个简单的API服务器用来测试,所以这里写一篇简单
+的教程来示范如何简单的打包,如果标题所示,打包的项目是一个Tornado项目.
+#+end_abstract
+
+*前提*
+
+这篇文章适合看了官方例子和参考文档后仍然一头雾水或者不知道怎么用来打包和调试项目的任务的人群,没有看过官方
+例子的人看这篇文章也会一头雾水,所以建议去简单的过一下官方的例子再过来.如果这篇文章中的Tornado部分实在会导
+致不了解Tornado的你看不懂的话,那你有两种选择,去找其他符合你要求的教程;第二种,自行了解一下Tornado项目的运
+行方式就可以了,至于我为什么要贴出代码只是因为提供给想要动手实践的朋友一个例子,你可以不用管它写什么,跟Docker
+的关系不太大,还有一点就是Python的依赖管理问题,这是需要你去了解的一点,知道这个例子的requirements.txt是记录
+greeting.py得依赖就可以了.
+
+*目标* 打包项目并且保存项目运行时候的log文件
+
+*Tornado项目结构*
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents/greeting-docker$ tree greeting
+greeting/
+├── greeting.py
+└── requirements.txt
+
+0 directories, 2 files
+#+END_SRC
+
+其中greeting.py的代码为
+
+#+BEGIN_SRC python
+#! /usr/bin/env python3
+
+import tornado.httpserver
+import tornado.ioloop
+import tornado.options
+import tornado.web
+from tornado.options import define, options
+
+define("port", default=8000, help="run on the given port", type=int)
+
+
+def header_checker(header_name, header_value, msg=None):
+    def func_wrapper(func):
+	def wrapper(self, *args, **kwargs):
+	    content_type = self.request.headers.get(header_name)
+	    if content_type == header_value:
+		func(self, *args, **kwargs)
+	    else:
+		self.write({"error": msg or "Header is invalid"})
+	return wrapper
+    return func_wrapper
+
+
+class IndexHandler(tornado.web.RequestHandler):
+
+    def __init__(self, application, request, **kwargs):
+	super().__init__(application, request, **kwargs)
+	self._headers["Content-Type"] = "application/json"
+
+    def get(self):
+	greeting = self.get_argument('greeting', 'Hello')
+	text = tornado.escape.json_encode({"messages": greeting})
+	self.write(text)
+
+    @header_checker("Content-Type", "application/json")
+    def post(self):
+	try:
+	    data = tornado.escape.json_decode(self.request.body)
+	except tornado.escape.json.JSONDecodeError:
+	    self.write({"error": "Invalid JSON format"})
+	else:
+	    self.write(tornado.escape.json_encode(data))
+
+
+class TestHandler(tornado.web.RequestHandler):
+
+    def post(self, intro, msg):
+	self.write('%s %s' % (intro, msg))
+
+
+if __name__ == "__main__":
+    tornado.options.parse_command_line()
+    settings = {
+	"debug": True
+    }
+    app = tornado.web.Application(
+	handlers=[
+	    (r"/", IndexHandler),
+	    (r'/test/(?P<intro>[^/]+)/msg/(?P<msg>[^/]+)/', TestHandler),
+	    ],
+	**settings
+    )
+    http_server = tornado.httpserver.HTTPServer(app)
+    http_server.listen(options.port)
+    tornado.ioloop.IOLoop.instance().start()
+#+END_SRC
+
+requirements.txt就一个tornado的依赖
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents/greeting-docker$ cat greeting/requirements.txt
+tornado==5.1
+#+END_SRC
+
+*打包开始*
+
+1. 把greeting放在greeting-docker文件夹里面(这个例子已经放了,当然你也可以用别的名字做为目录名),在greeting-docker
+   的目录下编写一个Dockerfile,并且还有一个用于在容器里面启动Tornado项目的脚本docker-entrypoint.sh.整个打包用的
+   目录结构如下
+
+   #+BEGIN_SRC sh
+    salt@salt:~/Documents$ tree greeting-docker
+    greeting-docker/
+    ├── docker-entrypoint.sh
+    ├── Dockerfile
+    └── greeting
+	├── greeting.py
+	└── requirements.txt
+
+    1 directory, 4 files
+   #+END_SRC
+
+   先说说Dockerfile的内容,我会在Dockerfile里面用注释解析每一个命令的作用
+
+   #+BEGIN_SRC sh
+   FROM frolvlad/alpine-python3:latest
+   # 选择alpine-python3作为基础镜像
+   MAINTAINER saltb0rn
+   # 声明维护人的名字
+   ENV DOCKYARD_SRC=greeting
+   # ENV用于设定环境变量,相对于bash里面直接创建变量或者给变量赋值
+   # 这里DOCKYARD_SRC设定的是跟Dockerfile同级的greeting目录位置,
+   # 因为创建镜像时候需要指定Dockerfile所在的目录,所以greeting是相
+   # 对Dockerfile位置而言的.DOCKYARD_SRC不是内置的变量,所以它本身
+   # 不存在什么特殊意义,我们只是用于后面某些目的而已,下面两个变量也一样,
+   # 就不多说了
+   ENV DOCKYARD_SRVHOME=/srv
+   ENV DOCKYARD_SRVPROJ=/srv/greeting
+
+   RUN apk update
+   RUN apk add bash
+   # 这俩条RUN指令执行的是Alpine Linux的命令,第一条是更新软件源缓存;
+   # 第二个是由于之后的docker-entrypoint.sh脚本用的的是bash执行,而
+   # 这个镜像没有bash,所以第二个是用来安装bash的
+
+   WORKDIR $DOCKYARD_SRVHOME
+   # 切换当前目录为/srv/greeting
+
+   VOLUME ["$DOCKYARD_SRVHOME/logs"]
+   # 这个例子需要把日志文件保留下来,VOLUME可以把这些文件给其它容器访问,
+   # 可以对这些文件进行备份,之后再说
+
+   COPY $DOCKYARD_SRC $DOCKYARD_SRVPROJ
+   # COPY命令就是把greeting复制到容器(应该是新镜像才对)里边,如果是
+   # 在容器里边复制里面的文件,请用RUN cp file1 file2 这样的命令
+
+   RUN pip3 install -U pip
+   RUN pip3 install -r $DOCKYARD_SRVPROJ/requirements.txt
+   # 安装项目依赖
+
+   EXPOSE 8000
+   # 这个Tornado项目是监听8000端口的,EXPOSE可以让这个端口给外界访问到,
+   # 其实这个可以不用指定都可以,后面可以通过启动时候的设定随便映射端口.
+
+   WORKDIR $DOCKYARD_SRVPROJ
+   COPY ./docker-entrypoint.sh /bin/
+   # 切换当前目录,把启动脚本复制到容器的/bin目录下
+   ENTRYPOINT ["docker-entrypoint.sh"]
+   # 容器入口,启动容器就会执行ENTRYPOINT指令所指定的命令
+   #+END_SRC
+
+   #+BEGIN_SRC sh
+   #!/bin/bash
+   # docker-entrypoint.sh
+   if [ ! -d "/srv/logs" ];then
+       mkdir -p "/srv/logs"
+   fi
+   echo "Server is running ..."
+   exec python3 \
+	greeting.py \
+	--log-file-prefix="/srv/logs/greeting.log" \
+	"$@"
+   #+END_SRC
+
+   就是一个普通的脚本,有需要的情况下就创建/srv/logs目录,用来存放log文件,最后就是启动greeting.py.
+   里面的"$@"有点类似与Python里面的*args形参,表示剩下的所有参数,可以通过它来传递额外的参数.
+
+2. 执行打包命令
+
+   #+BEGIN_SRC sh
+   salt@salt:~/Documents$ sudo docker build -t saltb0rn/greeting greeting-docker
+   #+END_SRC
+
+   -t用于指定打包后的镜像tag,这里是salt0brn/greeting,你可以换一个喜欢的,最后面一个参数就是
+   指定Dockerfile所处的目录.如果文件没有准备错,那么就可以建立成功.
+
+   #+BEGIN_SRC sh
+   salt@salt:~/Documents$ sudo docker image ls
+   REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+   saltb0rn/greeting         latest              0b0472b2426f        3 seconds ago       70.2MB
+   frolvlad/alpine-python3   latest              a056c2d555fe        5 weeks ago         54.2MB
+   #+END_SRC
+
+
+*运行项目*
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker run --name greeting saltb0rn/greeting
+#+END_SRC
+
+这样就运行了一个名字叫greeting的容器了.这种方式运行会导致终端被这个进程占用,可以
+把它设为守护进程,也就是在背后运行.
+
+如果你执行的上面命令并且Ctrl-C中止了容器,想要以守护进程运行的话就得先把原来得容器删
+除掉(除非你给了容器别名字,比如 --name greeting2).由于设定了--name,所以删除很简单,
+rm指定greeting就好了.
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker container rm greeting
+#+END_SRC
+
+假如没有指定--name也没有关系,可以通过以下命令查看在运行中的容器
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker container ls
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+358973f5d79f        saltb0rn/greeting   "docker-entrypoint.sh"   13 minutes ago      Up 13 minutes       8000/tcp            greeting
+#+END_SRC
+
+这个时候如果有很多个类似的容器,那么就要自行根据信息来判断哪个容器是你想要进行操作的.
+这里面CONTAINER ID和NAMES都是唯一的.其实上面的删除命令可以根据CONTAINER ID来删除的,
+这里的话你要先停止容器再进行删除
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker container stop 358973f5d79f
+#+END_SRC
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker container rm 358973f5d79f
+#+END_SRC
+
+现在开始以守护进程模式运行
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents/$ sudo docker run -d --name greeting saltb0rn/greeting
+#+END_SRC
+
+*访问VOLUME指定的目录*
+
+上面也说过VOLUME指令是把容器那指定的目录给别的容器访问,那么可以通过使用别的容器来这个实验,就用
+frolvlad/alpine-python3来访问上面的greeting容器
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker run -i -t --volumes-from=greeting frolvlad/alpine-python3
+#+END_SRC
+
+上面的-i -t分别表示使用交互模式和使用伪终端,也就是说在执行容器里面的终端(shell),--volumes-from=greeting
+就是指访问正在运行的greeting容器.如果你执行"ls /srv/logs/greeting.log",它会执行成功,如果运行没有--volumes-from=greeting
+的话,这句命令就会失败.你可以在登录进去后利用scp,git等工具把数据备份.
+
+*改变运行时候的入口*
+
+也许你不想用frolvlad/alpine-python3作为交互使用的容器,因为它没有bash,尽管可以安装bash,但是两个镜像中,
+saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以下入口点就可以不会一运行就执行Tornado项目了.
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker run -i -t --entrypoint=/bin/bash saltb0rn/greeting
+#+END_SRC
+
+*挂载目录/文件到容器中*
+
+假设~/Documents下有一个叫Pipfile的文件,想把它放到容器里面,有两种做法,一是在新建镜像的时候COPY进去,不过
+这样不适合一种情况,如果这个文件要经常更新那就要不断重新build镜像.第二中做法才是我们想要的,把环境和数据分开
+管理,用挂载就可以了,就像外部储存设备一样,用的时候挂载.
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker run -i -t \
+			    --volume=$(pwd)/Pipfile:/srv/Pipfile \
+			    --entrypoint=/bin/bash saltb0rn/greeting
+#+END_SRC
+
+这个时候在容器里面执行"cat /srv/Pipfile"会看到与~/Documents/Pipfile一样的内容,如果这个时候在容器或者容器之外
+对Pipfile进行内容修改,两者内容会同步.可以自行执行"echo edit >> Pipfile"进行观察.
+
+*给Tornado项目传参数*
+
+比如想要给它传个--port=8001(执行python3 greeting.py --help可以看到能够传入的参数)
+
+#+BEGIN_SRC sh
+salt@salt:~/Documents$ sudo docker run --publish=8001:8001 saltb0rn/greeting --port=8001
+#+END_SRC
+
+说明一下,--publish=8001:8001,第一个8001是容器外通过8001端口对容器暴露的端口进行访问,第二个8001就是
+容器对外暴露的8001端口,如果把--port=8001去掉,在本地测试localhost:8001会连接失败,证明参数的确传到了.
+
+
+*一些关于学习Docker的个人建议*
+
+我刚开始学习使用Docker的时候会因为Dockerfile的指令抓狂,可能因为一上来就直接看参考文档(references)的缘故吧.
+没有Demo的话学一样新的东西会很吃力,因为能够看到一份文档需要的不仅是语言能力,还要对相关概念有一定的理解,或者
+说不实践一下是不懂它表达的意思,而参考文档就是在这方面不太友好.官方文档虽然也有Demo,不过不太可能能真的满足你
+的需求,所以我刚开始学的时候是参考了一篇文章[[http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/][Packaging Django applications into Docker container images]].
+这篇文章十分好,基本能满足你的需求,比如如何挂载容器外的文件,RUN命令一些常用的参数之类的.其实我这篇笔记就是参考
+它的,只不过把Django换成Tornado罢了.好像还看过打包Flask的,网上应该有不少例子,其实过了这个例子一遍以后基本上
+打包其他东西也没什么问题了.要多参考别人写得Dockerfile,你就可以写得更加熟练了.
+
+还有一个关于CMD和ENTRYPOINT指令的问题,两个都可以提供容器的入口,有什么区别呢?这是一个挺让新手困惑的问题,这里我就
+不写了,有一篇概括得还不错的[[https://www.cnblogs.com/CloudMan6/p/6875834.html][文章]]可以参考一下.
+
+*结束是另外一个开始*
+
+Docker还有很多用法,这里是写不下了(不是因为懒),比如如何把一个Django项目+Nginx+Gunicorn+数据库一起打包呢?
+如果使用Docker构建集群?如何使用Docker构建分布式?这些涉及到docker-compose和docker-swarm技术.我本人虽然用
+过一个一两次,但是对这块也不太了解.打算这个月内做一次实践然后记录下来(咕 咕 咕).
