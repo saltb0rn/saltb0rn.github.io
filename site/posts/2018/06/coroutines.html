@@ -1,23 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<!-- 2018-08-22 Wed 21:18 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Coroutines in Python</title>
-<!-- 2018-08-16 Thu 16:55 -->
-<meta  charset="utf-8">
-<meta  name="generator" content="Org-mode">
-<meta  name="author" content="saltb0rn">
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
   .todo   { font-family: monospace; color: red; }
-  .done   { color: green; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
   .tag    { background-color: #eee; font-family: monospace;
             padding: 2px; font-size: 80%; font-weight: normal; }
   .timestamp { color: #bebebe; }
   .timestamp-kwd { color: #5f9ea0; }
-  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
   .underline { text-decoration: underline; }
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
@@ -44,27 +51,111 @@
     border: 1px solid black;
   }
   pre.src:hover:before { display: inline;}
-  pre.src-sh:before    { content: 'sh'; }
-  pre.src-bash:before  { content: 'sh'; }
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
   pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-R:before     { content: 'R'; }
-  pre.src-perl:before  { content: 'Perl'; }
-  pre.src-java:before  { content: 'Java'; }
-  pre.src-sql:before   { content: 'SQL'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
 
   table { border-collapse:collapse; }
   caption.t-above { caption-side: top; }
   caption.t-bottom { caption-side: bottom; }
   td, th { vertical-align:top;  }
-  th.right  { text-align: center;  }
-  th.left   { text-align: center;   }
-  th.center { text-align: center; }
-  td.right  { text-align: right;  }
-  td.left   { text-align: left;   }
-  td.center { text-align: center; }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
   dt { font-weight: bold; }
-  .footpara:nth-child(2) { display: inline; }
-  .footpara { display: block; }
+  .footpara { display: inline; }
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
@@ -84,6 +175,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
@@ -93,7 +185,7 @@
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -188,7 +280,6 @@ one is generator expression.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator expression</span>
@@ -213,7 +304,6 @@ one is generator expression.
 Here is the output you will see if running this code.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-sh">Iterate over <span style="color: #CC9393;">'gen_iter_by_expr'</span>
 0
 1
@@ -243,7 +333,6 @@ A generator iterator can be iterated over only one time. What happens if we do i
 to "iter.py" above, then run it. And we get nothing be printed out.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> gen_iter_by_expr: <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
 </pre>
 </div>
@@ -252,7 +341,6 @@ to "iter.py" above, then run it. And we get nothing be printed out.
 Do you still remember what happens when a list used in a for-loop?
 </p>
 <div class="org-src-container">
-
 <pre class="src src-sh">&gt;&gt;&gt; <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 &gt;&gt;&gt; items = [1, 2, 3]
 &gt;&gt;&gt; for i<span style="color: #F0DFAF; font-weight: bold;"> in</span> items:
@@ -280,7 +368,6 @@ StopIteration
 This happens to a generator iterator as well. The generator iterator will do that easier.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-sh">gen_iter_by_expr = (i for i<span style="color: #F0DFAF; font-weight: bold;"> in</span> range(3))
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">same as next(gen_iter_by_expr) or __next__(gen_iter_by_expr)</span>
 <span style="color: #93E0E3;">gen_iter_by_expr.send</span>(None)
@@ -323,7 +410,6 @@ works like in the way gen_iter_by_expr does.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
@@ -344,7 +430,6 @@ How to figure out that a yield statement is a delimiter? In this example, there 
 The first yield statement split the execution into 2 part, the first part is
 </p>
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter</span><span style="color: #DCDCCC;">()</span>:
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> 8
@@ -359,12 +444,9 @@ The workflow of gen_iter:
 </p>
 
 <ol class="org-ol">
-<li>When the generator iterator calls send() method at the first time, it returns 8 as the result;
-</li>
-<li>at the second time, it returns 9 as the result;
-</li>
-<li>at the third time, it returns 10 as the result.
-</li>
+<li>When the generator iterator calls send() method at the first time, it returns 8 as the result;</li>
+<li>at the second time, it returns 9 as the result;</li>
+<li>at the third time, it returns 10 as the result.</li>
 </ol>
 
 <p>
@@ -374,7 +456,6 @@ gen_iter again.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
@@ -393,7 +474,6 @@ gen_iter again.
 This time let's check the output first.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-sh">8
 9
 10
@@ -406,12 +486,9 @@ the workflow first.
 </p>
 
 <ol class="org-ol">
-<li>At the first time gen_iter_by_fun calls send() method with None, it returns 8 as result;
-</li>
-<li>at the second time, it calls send() method with 9, the variable "passed" in the first statement is assigned 9, and it returns "passed" as the result (the execution point moves to the right-hand-side of the second yield statement, and pauses there), 9, here;
-</li>
-<li>at the third time, it calls send() method with 10, the variable "passed" in the second statement is assigned 10, and it returns "passed" as the result, 10, here.
-</li>
+<li>At the first time gen_iter_by_fun calls send() method with None, it returns 8 as result;</li>
+<li>at the second time, it calls send() method with 9, the variable "passed" in the first statement is assigned 9, and it returns "passed" as the result (the execution point moves to the right-hand-side of the second yield statement, and pauses there), 9, here;</li>
+<li>at the third time, it calls send() method with 10, the variable "passed" in the second statement is assigned 10, and it returns "passed" as the result, 10, here.</li>
 </ol>
 
 <p>
@@ -422,7 +499,6 @@ to be passed to send() method.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">fundef</span><span style="color: #DCDCCC;">()</span>:
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">entry_point</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> exit_point
 </pre>
@@ -436,7 +512,6 @@ procedure has entry and exit.
 One more housekeeping, you can rewrite gen_iter with a loop, depending on your purpose.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
@@ -459,7 +534,6 @@ Oh, I almost forget one thing before heading to corounties. The yield statement 
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #F0DFAF; font-weight: bold;">yield</span> &lt;expr&gt;
 <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> &lt;expr&gt;
@@ -472,7 +546,6 @@ from the caller to the sub-generator. Now I define a new generator function usin
 named `gen_iter_outer'.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter_outer</span><span style="color: #DCDCCC;">(</span>g<span style="color: #DCDCCC;">)</span>:
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> g
@@ -489,7 +562,6 @@ named `gen_iter_outer'.
 The output here. It has same behavior as the generator iterator created by gen_iter().
 </p>
 <div class="org-src-container">
-
 <pre class="src src-python">8
 6
 4
@@ -506,7 +578,6 @@ one sub-generator.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">count_to_ten</span><span style="color: #DCDCCC;">()</span>:
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Start from 1"</span><span style="color: #DCDCCC;">)</span>
@@ -524,7 +595,6 @@ one sub-generator.
 Here is the output.
 </p>
 <div class="org-src-container">
-
 <pre class="src src-sh">Start from 1
 1
 2
@@ -542,8 +612,63 @@ Five numbers left
 </div>
 
 <p>
-And I am not going to explain why we need yield from here. Here is <a href="https://stackoverflow.com/questions/9708902/in-practice-what-are-the-main-uses-for-the-new-yield-from-syntax-in-python-3">why</a> if you want more.
+And I am not going to explain why we need yield from here. Here is <a href="https://stackoverflow.com/questions/9708902/in-practice-what-are-the-main-uses-for-the-new-yield-from-syntax-in-python-3">why</a> if you want more. Oh,
+I almost forget that, you might see code like this
 </p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">example_func</span><span style="color: #DCDCCC;">(</span>*args, **kwargs<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> generator_from_outside<span style="color: #DCDCCC;">(</span>*args, **kwargs<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">more actions</span>
+</pre>
+</div>
+
+<p>
+If you played around with the `count_to_ten' above by assigning the result of "yield from" statement to
+a variable, you will see that can not get any value of variable but None. So, where is the value of variable
+from? Let me show you a working example below.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">accumarray</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = 0
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #DCDCCC;">(</span>1, num+1<span style="color: #DCDCCC;">)</span>:
+        <span style="color: #DFAF8F;">res</span> += i
+        <span style="color: #F0DFAF; font-weight: bold;">yield</span> res
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> res
+
+
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">yield_from_accumarray</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> accumarray<span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'result is'</span>, res<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">1+2+...+10</span>
+<span style="color: #F0DFAF; font-weight: bold;">for</span> res <span style="color: #F0DFAF; font-weight: bold;">in</span> yield_from_accumarray<span style="color: #DCDCCC;">(</span>10<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>res<span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+And here is the output, you will see the variable 'res' is 55. Yep, the value of "yield from" statement
+is the return value of the sub-generator.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">1
+3
+6
+10
+15
+21
+28
+36
+45
+55
+result is 55
+</pre>
+</div>
 
 <p>
 After this, you might think what is the generator used for? Now one more example is coming,
@@ -553,7 +678,6 @@ systems does.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 <span style="color: #F0DFAF; font-weight: bold;">import</span> time
 
@@ -597,12 +721,11 @@ the official docs documented. If it is that case, then we have already known wha
 Coroutines extend from generators. You might think, coroutines are generator iterators. Not exactly.
 In the reality, generator and coroutine are two different types. According to the docs, "Generator
 -based coroutines use the yield from syntax introduced in PEP 380, instead of the original yield
-syntax.", also the asyncio module provides a function, asyncio.iscoroutine, for programmer to check
-whether a object is a coroutine object.
+syntax."
 </p>
 
 <p>
-There are two types of coroutines, generator-based coroutines and coroutine function. The coroutine
+There are two types of coroutines, generator-based coroutines and native coroutine function. The coroutine
 function returns a coroutine object, may be defined with the async def statement, and may contain
 await, async for, and async with keywords (there are too many for me to explain them all). I am not
 going to explain them to you. I use Python since Python 3.4, there are too many thing had changed,
@@ -615,6 +738,198 @@ Coroutines take advantage of generator capabilities, changing context, like how 
 do that. We can use them to do (simulate) some asynchronous works, efficiently. Once you understand
 the concept I told you, you can read the docs of asyncio module or <a href="https://pymotw.com/3/concurrency.html">this</a> to finish your works with
 coroutines. I am not going to copy docs here, so go and read the sources I provided to you.
+</p>
+
+<p>
+<b>Continuation from Coroutines - About asyncio protocol in Python 3.5+</b>
+</p>
+
+<pre class="example">
+Written in 2018.8.22
+</pre>
+
+<p>
+If you want to use async statement in Python, then you need to understand the protocol of asyncio module.
+</p>
+
+<p>
+There are async def, async for, async with, and await, 4 statements introduced since Python 3.5. The sources
+</p>
+
+<p>
+of the below are from PEP 492.
+</p>
+
+<ul class="org-ul">
+<li><p>
+async def
+</p>
+
+<p>
+New syntax for defining coroutines, the coroutines of this type are native coroutines. The functions
+defined by "async for" are called native coroutine function.
+</p></li>
+
+<li><p>
+await
+</p>
+
+<p>
+It is used to obtain a result of coroutine execution and only accepts an awaitable. The "await" keyword
+is not allowed to be used outside "async def" function, as well as the statements, "async for" and "async
+with", you will be seeing in below.
+</p>
+
+<p>
+The awaitable (object) can be one of:
+</p>
+
+<ol class="org-ol">
+<li>a native coroutine object returned from a native coroutine function</li>
+
+<li>a generator-based coroutine object returned from a function decorated with types.coroutine()
+or which is a function decorated with asyncio.coroutine()</li>
+
+<li>an object with an <span class="underline"><span class="underline">await</span></span> method returning an iterator, the objects of this type are
+called Future-like objects.</li>
+
+<li>an object defined with CPython C API with a tp_as_async.am_await function, returning an
+iterator (similar t <span class="underline"><span class="underline">await</span></span> method).</li>
+
+<li>types.coroutine(). It allows interoperability between existing generator-based coroutines in
+asyncio and native coroutines introduced by this PEP. That is transforms a generator function
+into a coroutine function which returns a generator-base coroutine.</li>
+</ol></li>
+
+<li><p>
+async for
+</p>
+
+<p>
+It makes it possible to perform asynchronous calls in iterators. An asynchronous iterable (object) is
+able to call asynchronous code in its implementation and asynchronous iterator can call asynchronous
+code in its next method.
+</p>
+
+<p>
+The asynchronous iterable are the objects meet this conditions:
+</p>
+
+<ol class="org-ol">
+<li>to implement <span class="underline"><span class="underline">aiter</span></span> method, returnning an asynchronous iterator object.</li>
+
+<li>to implement <span class="underline"><span class="underline">anext</span></span> method, returnning an awaitable</li>
+
+<li>to stop iteration <span class="underline"><span class="underline">anext</span></span> must raise a StopAsyncIteration exception</li>
+</ol></li>
+
+<li><p>
+async with
+</p>
+
+<p>
+It peforms asynchronous calls when entering and exiting an runtime context. An asynchronous context
+manager is a context manager that is able to suspend execution in its enter and exit methods, they
+are <span class="underline"><span class="underline">aenter</span></span> and <span class="underline"><span class="underline">aexit</span></span>. Both must return an awaitable.
+</p></li>
+</ul>
+
+
+<p>
+So, how do generator-based and native coroutine look like?
+</p>
+
+<p>
+The asyncio module provides two functions to help us to determine if it is a "coroutine":
+</p>
+
+<ol class="org-ol">
+<li>asyncio.iscoroutine to check whether a object is a coroutine object.</li>
+
+<li>asyncio.iscoroutinefunction to check whether a function is a coroutine function.</li>
+
+<li>If both return True, then it is a coroutine.</li>
+</ol>
+
+<p>
+<b>Working Example about Coroutines</b>
+</p>
+
+<p>
+In this section, I will show you the difference between generator-based coroutines and native coroutines,
+as well as difference "old" code and "new" code.
+</p>
+
+<p>
+For generator-based coroutines, there are two ways to define a generator-based coroutine. In this example,
+they are "asyncio_genbase_coroutine_func" and "types_genbase_coroutine_func".
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">genbase-coroutine.py</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> asyncio
+<span style="color: #F0DFAF; font-weight: bold;">import</span> types
+
+
+<span style="color: #7CB8BB;">@asyncio.coroutine</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">asyncio_genbase_coroutine_func</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">according to official documentation, any "yield" statement</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">is not allowed here.</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">as for "yield from" statements, not all of them are allowed,</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">only "yield from &lt;awaitable&gt; are allowed.</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #DCDCCC;">[</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>num<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">]</span>
+
+
+<span style="color: #7CB8BB;">@types.coroutine</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">types_genbase_coroutine_func</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> asyncio_genbase_coroutine_func<span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">or just simple as this</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return asyncio_genbase_coroutine_func(num)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> data
+
+
+<span style="color: #DFAF8F;">task1</span> = types_genbase_coroutine_func<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
+<span style="color: #DFAF8F;">loop</span> = asyncio.get_event_loop<span style="color: #DCDCCC;">()</span>
+loop.run_until_complete<span style="color: #DCDCCC;">(</span>task1<span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+For native coroutines, only "async def" statement can define them.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">native-coroutine.py</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> asyncio
+
+
+<span style="color: #F0DFAF; font-weight: bold;">async def</span> <span style="color: #93E0E3;">native_coroutine</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #DCDCCC;">[</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>num<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">]</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">async def</span> <span style="color: #93E0E3;">native_coroutine_outer</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = <span style="color: #F0DFAF; font-weight: bold;">await</span> native_coroutine<span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> data
+
+
+<span style="color: #DFAF8F;">task1</span> = native_coroutine_outer<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
+<span style="color: #DFAF8F;">loop</span> = asyncio.get_event_loop<span style="color: #DCDCCC;">()</span>
+loop.run_until_complete<span style="color: #DCDCCC;">(</span>task1<span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+The generator-based function is the "old" style to define coroutines, "async def" and "await" statement
+is the "new" style. As you see, they look so similar, we can rewrite code from "old" to "new" by removing
+the decorator and replacing the "def" with "async def" and "yield from" with "await".
+</p>
+
+<p>
+About "async for" and "async with", someday I maybe introduce them to you just like these new sections today.
 </p>
 </div>
 <div id="postamble" class="status">
@@ -642,7 +957,7 @@ s.setAttribute('data-timestamp', +new Date());
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-06-29</p>
-<p class="creator">Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
 </div>
 </body>
 </html>

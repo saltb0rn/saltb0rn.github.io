@@ -1,23 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<!-- 2018-08-22 Wed 21:15 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>用Docker打包Tornado项目</title>
-<!-- 2018-08-16 Thu 16:55 -->
-<meta  charset="utf-8">
-<meta  name="generator" content="Org-mode">
-<meta  name="author" content="saltb0rn">
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
   .todo   { font-family: monospace; color: red; }
-  .done   { color: green; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
   .tag    { background-color: #eee; font-family: monospace;
             padding: 2px; font-size: 80%; font-weight: normal; }
   .timestamp { color: #bebebe; }
   .timestamp-kwd { color: #5f9ea0; }
-  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
   .underline { text-decoration: underline; }
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
@@ -44,27 +51,111 @@
     border: 1px solid black;
   }
   pre.src:hover:before { display: inline;}
-  pre.src-sh:before    { content: 'sh'; }
-  pre.src-bash:before  { content: 'sh'; }
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
   pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-R:before     { content: 'R'; }
-  pre.src-perl:before  { content: 'Perl'; }
-  pre.src-java:before  { content: 'Java'; }
-  pre.src-sql:before   { content: 'SQL'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
 
   table { border-collapse:collapse; }
   caption.t-above { caption-side: top; }
   caption.t-bottom { caption-side: bottom; }
   td, th { vertical-align:top;  }
-  th.right  { text-align: center;  }
-  th.left   { text-align: center;   }
-  th.center { text-align: center; }
-  td.right  { text-align: right;  }
-  td.left   { text-align: left;   }
-  td.center { text-align: center; }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
   dt { font-weight: bold; }
-  .footpara:nth-child(2) { display: inline; }
-  .footpara { display: block; }
+  .footpara { display: inline; }
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
@@ -84,6 +175,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
@@ -93,7 +185,7 @@
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -182,7 +274,6 @@ greeting.py得依赖就可以了.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents/greeting-docker$ tree greeting
 greeting/
 &#9500;&#9472;&#9472; greeting.py
@@ -197,7 +288,6 @@ greeting/
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
 
 <span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.httpserver
@@ -271,7 +361,6 @@ requirements.txt就一个tornado的依赖
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents/greeting-docker$ cat greeting/requirements.txt
 <span style="color: #DFAF8F;">tornado</span>==5.1
 </pre>
@@ -282,12 +371,13 @@ requirements.txt就一个tornado的依赖
 </p>
 
 <ol class="org-ol">
-<li>把greeting放在greeting-docker文件夹里面(这个例子已经放了,当然你也可以用别的名字做为目录名),在greeting-docker
+<li><p>
+把greeting放在greeting-docker文件夹里面(这个例子已经放了,当然你也可以用别的名字做为目录名),在greeting-docker
 的目录下编写一个Dockerfile,并且还有一个用于在容器里面启动Tornado项目的脚本docker-entrypoint.sh.整个打包用的
 目录结构如下
+</p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ tree greeting-docker
 greeting-docker/
 &#9500;&#9472;&#9472; docker-entrypoint.sh
@@ -305,7 +395,6 @@ greeting-docker/
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">FROM frolvlad/alpine-python3:latest
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#36873;&#25321;alpine-python3&#20316;&#20026;&#22522;&#30784;&#38236;&#20687;</span>
 MAINTAINER saltb0rn
@@ -354,7 +443,6 @@ ENTRYPOINT [<span style="color: #CC9393;">"docker-entrypoint.sh"</span>]
 </div>
 
 <div class="org-src-container">
-
 <pre class="src src-sh"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">!/bin/</span><span style="color: #F0DFAF; font-weight: bold;">bash</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">docker-entrypoint.sh</span>
 <span style="color: #F0DFAF; font-weight: bold;">if</span> [ <span style="color: #F0DFAF; font-weight: bold;">!</span> -d <span style="color: #CC9393;">"/srv/logs"</span> ];<span style="color: #F0DFAF; font-weight: bold;">then</span>
@@ -371,13 +459,13 @@ ENTRYPOINT [<span style="color: #CC9393;">"docker-entrypoint.sh"</span>]
 <p>
 就是一个普通的脚本,有需要的情况下就创建/srv/logs目录,用来存放log文件,最后就是启动greeting.py.
 里面的"$@"有点类似与Python里面的*args形参,表示剩下的所有参数,可以通过它来传递额外的参数.
-</p>
-</li>
+</p></li>
 
-<li>执行打包命令
+<li><p>
+执行打包命令
+</p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker build -t saltb0rn/greeting greeting-docker
 </pre>
 </div>
@@ -388,14 +476,12 @@ ENTRYPOINT [<span style="color: #CC9393;">"docker-entrypoint.sh"</span>]
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker image ls
 REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
 saltb0rn/greeting         latest              0b0472b2426f        3 seconds ago       70.2MB
 frolvlad/alpine-python3   latest              a056c2d555fe        5 weeks ago         54.2MB
 </pre>
-</div>
-</li>
+</div></li>
 </ol>
 
 
@@ -404,7 +490,6 @@ frolvlad/alpine-python3   latest              a056c2d555fe        5 weeks ago   
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker run --name greeting saltb0rn/greeting
 </pre>
 </div>
@@ -421,7 +506,6 @@ rm指定greeting就好了.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker container rm greeting
 </pre>
 </div>
@@ -431,7 +515,6 @@ rm指定greeting就好了.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker container ls
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
 358973f5d79f        saltb0rn/greeting   <span style="color: #CC9393;">"docker-entrypoint.sh"</span>   13 minutes ago      Up 13 minutes       8000/tcp            greeting
@@ -445,13 +528,11 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker container stop 358973f5d79f
 </pre>
 </div>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker container rm 358973f5d79f
 </pre>
 </div>
@@ -461,7 +542,6 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents/$ sudo docker run -d --name greeting saltb0rn/greeting
 </pre>
 </div>
@@ -476,7 +556,6 @@ frolvlad/alpine-python3来访问上面的greeting容器
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t --volumes-from=greeting frolvlad/alpine-python3
 </pre>
 </div>
@@ -497,7 +576,6 @@ saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t --entrypoint=/bin/bash saltb0rn/greeting
 </pre>
 </div>
@@ -513,7 +591,6 @@ saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t <span style="color: #CC9393;">\</span>
                             --volume=$(<span style="color: #CC9393;">pwd</span>)/Pipfile:/srv/Pipfile <span style="color: #CC9393;">\</span>
                             --entrypoint=/bin/bash saltb0rn/greeting
@@ -534,7 +611,6 @@ saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker run --publish=8001:8001 saltb0rn/greeting --port=8001
 </pre>
 </div>
@@ -599,7 +675,7 @@ s.setAttribute('data-timestamp', +new Date());
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-08-16</p>
-<p class="creator">Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
 </div>
 </body>
 </html>
