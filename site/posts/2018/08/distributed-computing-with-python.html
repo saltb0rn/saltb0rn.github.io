@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2018-08-23 Thu 14:39 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distributed Computing with Python的阅读笔记</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+
+<div id="org-div-home-and-up">
+  <nav>
+    <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+    <ul>
+      <li><a accesskey="H" href="/"> Home </a></li>
+      <!--<li><a accesskey="a" href="/posts"> Posts </a></li>-->
+      <li><a accesskey="T" href="/tags"> Tags </a></li>
+      <li><a accesskey="A" href="/about"> About </a></li>
+    </ul>
+  </nav>
+</div>
+<div id="content">
+<h1 class="title">Distributed Computing with Python的阅读笔记</h1>
+<div class="abstract">
+<p>
+最近要把一年以前没有完成的计划给完成掉,分布式就是其中一个,为了在一开始有个大概的了解,我决定选一本用指定编程语言并且
+厚度不高的书来学习,这本Distributed Computing with Python就满足了我的需求,共154页,其中第5,6两章是关于使用AWS和
+HPC来部署分布式应用,我跳过了这两章节.第2节是讲述异步编程(asynchronous/event-driven programming)的概念,这个快
+速地过了一遍,第3章是关于如何使用Python来并行.第7章给了测试与调试的一些建议.第8章是最这本书来个大概总结,可以直接跳
+过.重点是第4章,用了Celery,RabbitMQ和Redis来写例子示范如何编写分布式应用.当然这种关于大题材的薄书涵盖的点都不会很
+全面的,但我倾向于那种能够在开始给个概念和示范的书,至于更深入的细节,以后再读相关的书,这里面所有的图片都是来自于这本
+书.
+</p>
+
+</div>
+
+<p>
+<b>概念</b>
+</p>
+
+<ul class="org-ul">
+<li><p>
+<b>并行计算(Parallel computing)</b>
+</p>
+
+<p>
+同时利用多个处理器解决一个问题的叫做并行计算.
+</p>
+
+<p>
+Parallel computing is the simultaneous use of more than one processor to solve a problem.
+</p>
+
+<ul class="org-ul">
+<li><p>
+为什么需要并行计算
+</p>
+
+<p>
+性能原因:把一个长时间(long-running)的计算分成多个小块并且把它们分发到不同的处理器/处理器的核心上,可以节省大量时间.
+</p></li>
+</ul></li>
+
+<li><p>
+<b>分布式计算(Distributed computing)</b>
+</p>
+
+<p>
+同时利用多台计算机解决同一个问题叫做分布式计算.
+</p>
+
+<p>
+Distributed computing is the simultaneous use of more than one computer to solve a problem.
+</p>
+
+<p>
+当然这个概念不是完全正确的,抽象就是这样,严格上来说,它还要求这些计算机是以一台计算机工作的形式展示给用户,
+因此,要隐藏起分布式应用的分布本质.
+</p>
+
+<ul class="org-ul">
+<li>为什么需要分布式运算
+
+<ul class="org-ul">
+<li>性能原因: 解决那种不能用一台计算机可以单独解决或者不能在一个合理时间那解决的大问题,分布式就拥有这种能力.</li>
+
+<li>架构原因: 应用需要分布式系统,比如视频通话和即时聊天应用.</li>
+</ul></li>
+</ul></li>
+
+<li><p>
+<b>并行计算和分布式计算的异同</b>
+</p>
+
+<p>
+两者最大的不同可能就是低层的内存架构(underlying memory architecture)和访问模式(access patterns)了.
+</p>
+
+<ul class="org-ul">
+<li>在并行应用中,原则上,所有的部并发任务能够访问同一片内存空间,内存共享架构(shared-memory architecture).</li>
+
+<li>在分布式应用中,各种各样的并发任务不能够普通地访问同一片内容空间.因为这些计算机能够通过网络与其它计算机交流,可以想像一下,
+写一个能够把我们所有地应用统一在一个同一逻辑(unified logical, as opposed to physical)内存空间的软件(中间件/middleware).
+这种类型的中间件确实存在,叫做分布式内存共享架构.</li>
+
+<li>在现实中,使用的架构很可能是内存共享架构和分布式内存共享架构的混合.</li>
+
+<li>每种架构都有自己的优点和缺点.内存共享架构由于在同一块内存下所以优点就是快,并且编写简单;同样这也是缺点,那就是要注意条件竞争
+(race condition).分布式内存架构优点是可伸缩性高和组合成本低,并且每一台计算机的内存跟其它计算机的独立,不用担心条件竞争(也
+不是绝对,分布式共享内存还是要做处理);缺点就是需要自己实现数据之间的移动并且还要担心数据局部性(data locality)的问题.</li>
+</ul></li>
+</ul>
+
+
+<ul class="org-ul">
+<li><p>
+<b>阿达姆尔定律(Amdahl's law)</b>
+</p>
+
+<p>
+<a href="https://en.wikipedia.org/wiki/Amdahl's_law">维基链接</a>
+</p>
+
+<p>
+该定律告诉我们硬件投入越多,性能的提升也能够获得越多.但是只存在一个点的收益(加速比)是最高的,也就是说不断投入硬件会
+获得更多的性能,可是在一定程度后的性能收益就没那么高了.适用与并行,分布式和混合架构.
+</p></li>
+
+<li><p>
+<b>古斯塔夫森定律(Gustafson's law)</b>
+</p>
+
+<p>
+<a href="https://en.wikipedia.org/wiki/Gustafson's_law">维基链接</a>
+</p>
+
+<p>
+这个定律也是可以计算加速比的,不过算法不一样.
+</p></li>
+
+<li><b>I/O and CPU</b>
+<ul class="org-ul">
+<li><p>
+同步(按序执行)
+当一个任务执行它的I/O操作的时候,CPU就处于空闲状态并且等待I/O操作的完成(然后任务就重新执行接下来的计算).我们
+说任务在等待I/O并且挂起了,也就是说任务阻塞(blocking)了,如果又多个任务执行的话,其它任务就要等上一个任务执行
+完毕才可以执行下一个任务.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/synctasks.jpeg" alt="synctasks.jpeg">
+</p>
+</div></li>
+
+<li><p>
+异步
+跟同步任务不一样的是,任务在等待I/O的时候,CPU并没有处于空闲状态,而是被另外一个任务接管了.异步(事件驱动/非阻塞)
+编程是一种编程方式,可以达到异步执行的目的.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/asynctasks.jpeg" alt="asynctasks.jpeg">
+</p>
+</div></li>
+</ul></li>
+</ul>
+
+
+<ul class="org-ul">
+<li><b>多线程编程</b>
+把任务并行到多个不同的线程中,拥有与异步编程一样的效率和效果.这里有一个根本上的不同:当使用一个多线程程序,
+操作系统可以决定激活哪个线程和挂起哪个线程.而在异步编程中,每一个任务可以决定什么时候放弃CPU并且挂起它的
+执行.</li>
+
+<li><p>
+<b>竞争条件(Race condition)</b>
+程序本应该要正确地按照给定的顺序执行,这样才不会出现同一个输入有不同结果的情况出现.在多线程编程中,这是一个要注意
+的问题,对同一个资源进行访问的时候,当访问是这一系列连续操作时(非原子性)的时候,其它线程如果也刚好访问这个资源的话,
+那么就会被别的线程占据资源.也就是说的竞争(Race).
+</p>
+
+<p>
+这个概念常常和数据争用(Data race)搞混,两者也确实是有点相识,数据争用是说多个线程对一个变量同时进行读/写操作(只读
+不算).
+</p></li>
+
+<li><p>
+<b>Global Interpreter Lock (GIL)</b>
+</p>
+
+<p>
+正如名字提示的一样,GIL是一个全局锁,它的作用是让引用计(reference counting)正常工作.Python的
+多线程的确是系统级的线程(OS-native threads),不过由于GIL,Python中的线程不能想上面说的并行到
+别的CPU上,因为同一时间只能有一个线程激活.这导致了Python解析器是一个单线程的解析器,这句话并不
+完全对的.在标准的Python中,最好不用多线程去做CPU计算,多进程是一个选择.
+</p></li>
+
+<li><p>
+<b>如何在workers之间交换数据(多进程)</b>
+</p>
+
+<p>
+multiprocessing模块提供队列(Queues)和管道(Pipes)可以解决这个问题,如果是支持Python进程在不同
+的机器上运行并且通信,可以使用BaseManager或者Manager来实现.
+</p></li>
+
+<li><p>
+<b>基于Celery实现的分布式系统</b>
+</p>
+
+<p>
+Celery是一个分布式任务队列框架,它的模式是生产者和消费者模式,用它来实现分布式的话,需要先知道组成
+这个分布式系统的几个部分,
+</p>
+
+<ul class="org-ul">
+<li><p>
+master process(client or producer)
+</p>
+
+<p>
+主进程,发布任务到任务队列(task queues)和从后端(result backend)获取结果.
+</p></li>
+
+<li><p>
+broker(中间人)
+</p>
+
+<p>
+消息队列软件,掌管任务队列(task queues)和负责给worker processes传递消息.书中用的是RabbitMQ作为broker.
+</p></li>
+
+<li><p>
+worker processes(工人进程 or consumers)
+</p>
+
+<p>
+接收broker传递的信息并且完成分配的任务.
+</p></li>
+
+<li><p>
+result backend(结果后端)
+</p>
+
+<p>
+储存worker processes的任务结果, master process会在这里取结果.书中使用了RabbitMQ和Redis其中之一作为后端.
+</p></li>
+</ul>
+
+<p>
+一个典型的由Celery搭建的分布式系统的图,如下
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/typical-celery-distributed-system.jpeg" alt="typical-celery-distributed-system.jpeg">
+</p>
+</div>
+
+<p>
+通常来讲broker和result backend会运行在同一台机器中,接下来的例子中也是这么做.
+</p></li>
+</ul>
+
+<p>
+<b>Time to show you the code</b>
+</p>
+
+<ul class="org-ul">
+<li><p>
+关于该项目
+</p>
+
+<p>
+这只是一个小的/WEB的/示范项目,由于我手头上有一台VPS(Debian系统),我决定在它上运行broker和result backend,在
+我的笔记本上运行两个workers和一个master process,然后本地访问.如果读者自己也想跟着做练习,可以自备一台VPS或者
+搭虚拟机建立一个局域网.项目目录如下,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/celery-web$ tree
+<span style="color: #DCDCCC; font-weight: bold;">.</span>
+&#9500;&#9472;&#9472; config.py
+&#9500;&#9472;&#9472; master.py
+&#9500;&#9472;&#9472; requirements.txt
+&#9500;&#9472;&#9472; worker1.py
+&#9492;&#9472;&#9472; worker2.py
+
+
+0 directories, 4 files
+</pre>
+</div>
+
+<p>
+这个项目没什么功能,只是看完书后自己的一个小实践,主要是学习怎么使用Celery,书上虽然有演示项目,不过不在比较真实
+的情况下练习的话,可能会接触不了以后要解决的问题.因此本人就用真的服务器来做练习.
+</p>
+
+<p>
+这个项目使用的依赖(requirements.txt)为
+</p>
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #DFAF8F;">celery</span>==4.2.1
+<span style="color: #DFAF8F;">gevent</span>==1.3.6
+<span style="color: #DFAF8F;">redis</span>==2.10.6
+<span style="color: #DFAF8F;">tornado</span>==5.1
+</pre>
+</div></li>
+
+<li>部署准备
+
+<ol class="org-ol">
+<li><p>
+在VPS上面安装好RabbitMQ-Server和Redis-Server
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">apt-get install rabbitmq-server redis-server
+</pre>
+</div></li>
+
+<li><p>
+新建一个RabbitMQ的用户,因为默认的guest用户只能用于本地访问(当然guest用户也是可以获得远程访问权限),
+这一步对于远程访问是必须的
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">root@my-vps:~# rabbitmqctl add_user salt saltpw
+Creating user <span style="color: #CC9393;">"salt"</span>
+root@my-vps:~# rabbitmqctl set_user_tags salt administrator
+Setting tags for user <span style="color: #CC9393;">"salt"</span> to [administrator] ...
+root@my-vps:~# rabbitmqctl set_permissions -p / salt <span style="color: #CC9393;">".*"</span> <span style="color: #CC9393;">".*"</span> <span style="color: #CC9393;">".*"</span>
+Setting permissions for user <span style="color: #CC9393;">"salt"</span><span style="color: #F0DFAF; font-weight: bold;"> in</span> vhost <span style="color: #CC9393;">"/"</span> ...
+root@my-vps:~#
+</pre>
+</div>
+
+<p>
+这里是新建一个密码为saltpw的salt rabbitmq用户,并且给它设定一个叫administrator的tag(只是用来标识而已),
+最后授与了它所有权限.
+</p>
+
+<p>
+更多关于rabbitmqctl命令的使用请以下命令
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">rabbitmqctl -h
+</pre>
+</div></li>
+
+<li><p>
+对于Redis,也需要配置一下,目标是开启远程访问和配置密码
+</p>
+
+<p>
+在/etc/redis/redis.conf里面做出以下改动
+</p>
+
+<ol class="org-ol">
+<li>把bind 127.0.0.1注释掉,bind指令用于指定可以访问到本机的Redis数据库的IP,bind 127.0.0.1已是就是
+只有127.0.0.1可以访问的意思.</li>
+
+<li>加入requirepass &lt;yourpassword&gt;,&lt;yourpassword&gt;改为你想要的密码,假设这里是saltb0rn.</li>
+
+<li>把protected-mode yes改为protected-mode no</li>
+</ol></li>
+</ol></li>
+
+<li><p>
+项目代码
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">config.py</span>
+<span style="color: #DFAF8F;">BROKER_URL</span> = <span style="color: #CC9393;">'amqp://salt:saltpw@darksalt.me'</span>
+<span style="color: #DFAF8F;">CELERY_RESULT_BACKEND</span> = <span style="color: #CC9393;">'redis://:saltb0rn@darksalt.me'</span>
+<span style="color: #DFAF8F;">CELERY_IMPORTS</span> = <span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"worker1"</span>, <span style="color: #CC9393;">"worker2"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">celery&#26159;&#38656;&#35201;&#24320;&#21457;&#20154;&#21592;&#25163;&#21160;&#23548;&#20837;&#20219;&#21153;&#27169;&#22359;,&#32780;&#19988;&#19981;&#33021;&#29992;&#30456;&#23545;&#36335;&#24452;,</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#21542;&#21017;&#20219;&#21153;&#23601;&#20250;&#26159;&#26410;&#27880;&#20876;,"Received unregistered task of type 'worker1.sleep'.",</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#27169;&#22359;&#22312;&#19979;&#38754;&#32473;&#20986;.</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">master.py</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> datetime
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.gen
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.httpserver
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.ioloop
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.web
+<span style="color: #F0DFAF; font-weight: bold;">from</span> tornado.options <span style="color: #F0DFAF; font-weight: bold;">import</span> define, options
+<span style="color: #F0DFAF; font-weight: bold;">from</span> gevent <span style="color: #F0DFAF; font-weight: bold;">import</span> monkey
+
+<span style="color: #F0DFAF; font-weight: bold;">from</span> worker1 <span style="color: #F0DFAF; font-weight: bold;">import</span> sleep
+<span style="color: #F0DFAF; font-weight: bold;">from</span> worker2 <span style="color: #F0DFAF; font-weight: bold;">import</span> eat
+
+define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"port"</span>, default=8000, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run on the given port"</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span><span style="color: #DCDCCC;">)</span>
+define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"debug"</span>, default=<span style="color: #BFEBBF;">True</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run in debug mode"</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">bool</span><span style="color: #DCDCCC;">)</span>
+monkey.patch_all<span style="color: #DCDCCC;">()</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">SleepingHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #7CB8BB;">@tornado.gen.coroutine</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+        sleep.apply_async<span style="color: #DCDCCC;">(</span>args=<span style="color: #BFEBBF;">(</span>6,<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>.then<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.process_result<span style="color: #DCDCCC;">)</span>
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'sleep at {}'</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>datetime.datetime.now<span style="color: #D0BF8F;">()</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">process_result</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, result<span style="color: #DCDCCC;">)</span>:
+        <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"{}"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>result.result<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">EatingHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #7CB8BB;">@tornado.gen.coroutine</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+        eat.apply_async<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>4,<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>.then<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.process_result<span style="color: #DCDCCC;">)</span>
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'eat at {}'</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>datetime.datetime.now<span style="color: #D0BF8F;">()</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">process_result</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, result<span style="color: #DCDCCC;">)</span>:
+        <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"{}"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>result.result<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">"__main__"</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   options.parse_command_line<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">app</span> = tornado.web.Application<span style="color: #DCDCCC;">(</span>
+        handlers=<span style="color: #BFEBBF;">[</span>
+            <span style="color: #D0BF8F;">(</span>r<span style="color: #CC9393;">"/api/v1/sleep"</span>, SleepingHandler<span style="color: #D0BF8F;">)</span>,
+            <span style="color: #D0BF8F;">(</span>r<span style="color: #CC9393;">"/api/v1/eat"</span>, EatingHandler<span style="color: #D0BF8F;">)</span>,
+        <span style="color: #BFEBBF;">]</span>,
+        debug=options.debug
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">http_server</span> = tornado.httpserver.HTTPServer<span style="color: #DCDCCC;">(</span>app<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   http_server.listen<span style="color: #DCDCCC;">(</span>options.port<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   tornado.ioloop.IOLoop.instance<span style="color: #DCDCCC;">()</span>.start<span style="color: #DCDCCC;">()</span>
+</pre>
+</div>
+
+<p>
+这里的master.py使用了celery的AsyncResult的then方法,这里根据文档上的例子用了gevent打patch,
+否则then里面的回调是不会执行.
+</p>
+
+<p>
+要注意的是,一个worker为一个节点(node),不同workers跑在同一台计算机上面需要设定不同的node name
+,也就是hostname.否则最后启动的node会把同一台计算机上先启动的同名的nodes结束掉.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">worker1.py</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> argparse
+<span style="color: #F0DFAF; font-weight: bold;">import</span> time
+<span style="color: #F0DFAF; font-weight: bold;">import</span> random
+<span style="color: #F0DFAF; font-weight: bold;">from</span> celery <span style="color: #F0DFAF; font-weight: bold;">import</span> Celery
+<span style="color: #F0DFAF; font-weight: bold;">from</span> celery.<span style="color: #DCDCCC; font-weight: bold;">bin</span> <span style="color: #F0DFAF; font-weight: bold;">import</span> worker
+<span style="color: #DFAF8F;">app</span> = Celery<span style="color: #DCDCCC;">()</span>
+app.config_from_object<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'config'</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #7CB8BB;">@app.task</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">sleep</span><span style="color: #DCDCCC;">(</span>second=5<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   time.sleep<span style="color: #DCDCCC;">(</span>second<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"I get a \"{}\" from dream"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #DCDCCC;">(</span>random.randint<span style="color: #BFEBBF;">(</span>0, 255<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">'__main__'</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'-c'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=1, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"number of workers"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">args</span> = parser.parse_args<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">worker</span> = worker.worker<span style="color: #DCDCCC;">(</span>app=app<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   worker.run<span style="color: #DCDCCC;">(</span>hostname=<span style="color: #CC9393;">'worker1@%h'</span>, concurrency=args.c, loglevel=<span style="color: #CC9393;">'INFO'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">hostname &#23601;&#26159; node name</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">worker2.py</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> argparse
+<span style="color: #F0DFAF; font-weight: bold;">import</span> time
+<span style="color: #F0DFAF; font-weight: bold;">from</span> datetime <span style="color: #F0DFAF; font-weight: bold;">import</span> datetime
+<span style="color: #F0DFAF; font-weight: bold;">from</span> celery <span style="color: #F0DFAF; font-weight: bold;">import</span> Celery
+<span style="color: #F0DFAF; font-weight: bold;">from</span> celery.<span style="color: #DCDCCC; font-weight: bold;">bin</span> <span style="color: #F0DFAF; font-weight: bold;">import</span> worker
+<span style="color: #DFAF8F;">app</span> = Celery<span style="color: #DCDCCC;">()</span>
+app.config_from_object<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'config'</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #7CB8BB;">@app.task</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">eat</span><span style="color: #DCDCCC;">(</span>second=5<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   time.sleep<span style="color: #DCDCCC;">(</span>second<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"I've had enough, {} now"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #DCDCCC;">(</span>datetime.datetime.now<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">'__main__'</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'-c'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=1, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"number of workers"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">args</span> = parser.parse_args<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">worker</span> = worker.worker<span style="color: #DCDCCC;">(</span>app=app<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   worker.run<span style="color: #DCDCCC;">(</span>hostname=<span style="color: #CC9393;">'worker2@%h'</span>, concurrency=args.c, loglevel=<span style="color: #CC9393;">'INFO'</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div></li>
+
+<li><p>
+测试
+</p>
+
+<p>
+代码已经写完了,是时候开始测试了,
+</p>
+
+<ol class="org-ol">
+<li><p>
+在第一个终端
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/celery-web$ python3 worker1.py
+</pre>
+</div></li>
+
+<li><p>
+在第二个终端
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/celery-web$ python3 worker2.py
+</pre>
+</div></li>
+
+<li><p>
+在第三个终端
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/celery-web$ python3 master.py
+</pre>
+</div></li>
+</ol>
+
+<p>
+不要忘记了,例子中两个worker都是在同一台机器上面的,实际上来说,一般是一台机器一个worker,因为我手头上VPS数量
+有限,所以只能这么玩.
+</p>
+
+<p>
+每个worker运行的时候会有这样类似的output
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/worker-run-output.png" alt="worker-run-output.png">
+</p>
+</div>
+
+<p>
+当master.py收到请求的时候,worker会显示接收了什么任务
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/worker-rev-output.png" alt="worker-rev-output.png">
+</p>
+</div>
+
+<p>
+而master.py会有如下output
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/master-output.png" alt="master-output.png">
+</p>
+</div></li>
+</ul>
+
+
+<p>
+这个时候就说明成功了.你可能会疑惑,为何只启动了worker1,当时tasks里面会有worker2的任务?其实这个是因为config.py
+里面的'CELERY<sub>IMPORTS</sub> = ("worker1", "worker2")'设定为启动的时候两个workers的任务都导入了,其实两个workers
+的任务是可以全部写到一个文件里面的,然后启动的时候设定好node name之类的就可以了,这里分成两个文件只是模拟如果对
+系统的拓展,你可以想成,worker1.py是原来的功能,现在要拓展,worker2.py就是拓展的部分.
+</p>
+
+<p>
+要注意,master.py处理请求的方式是异步处理,所以代码里面定义workers的任务的时候也是异步的,异步的话就不能和回调
+脱离关系了.
+</p>
+
+<ul class="org-ul">
+<li><p>
+更多的Celery的配置
+</p>
+
+<p>
+<a href="http://docs.celeryproject.org/en/latest/userguide/configuration.html#configuration">官方文档参考</a>
+</p>
+
+<p>
+关于Celery的配置,其实就是要学会如何使用Celery所涉及到brokers,result backends.不过这些都不是一两句话就可以
+概括完的,所以我在之后学习一下RabbitMQ和Redis的使用并写下笔记,一共两篇笔记.
+</p></li>
+</ul>
+
+
+<p>
+<b>一些后话</b>
+</p>
+
+<p>
+这篇文章其实几天前就开始写了,有时间就写一下,今天终于写完了.对于分布式这个话题,其实很早之前就在我的计划表上面了,不过
+发生了很多事情,今年的运气不大好,既然运气不好就更加要努力.以上只是分布式的冰山一角罢了,如果就这么一点的话,那也就称不
+上一个话题了.学习之前对它有一种恐惧,学习之后感觉好像也没那么难,当然没那么难很有可能是我还没遇到困难.对新手而言,学习
+的时候遇到的困难那可能就是一大堆软件了.我个人在实际操作中就发现远程连接的时候就没有书本上那么简单,也就是在部署的时候
+遇到点问题,再看看Celery的配置参考时候就更加明白了学习RabbitMQ和Redis是必修课.说白了大部份时间都是花在部署上面,写代
+码其实还好.
+</p>
+
+<p>
+书上还说了,看完这本书的时候才刚刚开始踏入分布式的大门而已,还有更高级的<a href="http://dcg.ethz.ch/lectures/podc_allstars/index.html">话题</a>,反正入门的目的已经达到了,高级话题以后慢慢
+看.还有就是书上也推荐了Celery的两个替代品,Pyro和Python-RQ,后者没有印象,前者我倒是找RPC库的时候找到它,反正有时间再
+去研究一下.
+</p>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_thread"></div>
+<script id="dsq-count-scr" src="//darksalt-me.com/count.js" async></script>
+
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://darksalt-me.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2018-08-23</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+</div>
+</body>
+</html>

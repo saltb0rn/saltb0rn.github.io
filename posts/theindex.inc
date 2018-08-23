@@ -6,6 +6,8 @@
 * C
   - [[file:2018/06/continuation-passing-style.org][Continuation Passing Style]]
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
+* D
+  - [[file:2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
 * M
