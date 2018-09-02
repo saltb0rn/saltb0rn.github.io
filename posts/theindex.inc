@@ -8,15 +8,20 @@
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
 * D
   - [[file:2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
+* E
+  - [[file:2018/08/emacs-tips.org][Emacs Tips]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]
 * R
+  - [[file:2018/08/redis.org][Redis学习笔记]]
   - [[file:2018/07/regex.org][Regex]]
 * 关
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
+* 前
+  - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 * 用

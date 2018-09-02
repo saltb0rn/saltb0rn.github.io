@@ -1,2 +1,3 @@
 - [[file:../posts/2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 - [[file:../posts/2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
+- [[file:../posts/2018/08/redis.org][Redis学习笔记]]

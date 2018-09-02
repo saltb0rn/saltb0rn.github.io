@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2018-09-02 Sun 10:28 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redis学习笔记</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+
+<div id="org-div-home-and-up">
+  <nav>
+    <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+    <ul>
+      <li><a accesskey="H" href="/"> Home </a></li>
+      <!--<li><a accesskey="a" href="/posts"> Posts </a></li>-->
+      <li><a accesskey="T" href="/tags"> Tags </a></li>
+      <li><a accesskey="A" href="/about"> About </a></li>
+    </ul>
+  </nav>
+</div>
+<div id="content">
+<h1 class="title">Redis学习笔记</h1>
+<div class="abstract">
+<p>
+正如上一篇笔记所说的要做Redis的笔记.最好的参考书不是买来的,而是自己做的.这篇笔记的参考资料是The Little Redis book,
+一本免费的书,你可以很容易地在互联网上找到它.并且我的整个学习过程都在Debian下完成,不会做关于在Windows上面操作的笔记.
+并且涵盖可能不会太全面,这是可能是因为限于边幅,也就是涵盖东西太多不够精简,这种情况我会放出外部资源做补充;还可能是限于
+我个人的水平而没涵盖到,不过我以后有空会补上的,毕竟给自己做参考书不是一朝一夕的事情.给自己debug应该是每天的任务.
+</p>
+
+</div>
+
+<p>
+<b>Redis基础</b>
+</p>
+
+<p>
+使用redis-cli命令进入Redis控制台.
+</p>
+
+<ol class="org-ol">
+<li>In-memory persistent key-value store,内存持久化的键值对储存,也可以把数据写入硬盘.</li>
+
+<li>支持5种不同的数据结构,只有一种是典型的键值对结构.下面详细说.比关系型数据库普遍适用
+(one-size-fits-all)的结构体系(表格)要灵活.</li>
+
+<li>跟关系型数据库一样有相同的DATABASE的概念,DATABASE是用数字编号进行区分,默认是0.
+
+<ul class="org-ul">
+<li>SELECT &lt;NUM-INDEX&gt;</li>
+</ul></li>
+
+<li>键值对操作,GET和SET命令.每一步操作都是&lt;Command&gt; &lt;Key&gt; [Values]结构.
+
+<ul class="org-ul">
+<li>新增/更新 set &lt;key&gt; &lt;value&gt;</li>
+
+<li>获取值 get &lt;key&gt;</li>
+</ul></li>
+
+<li>查询(Querying)
+
+<ul class="org-ul">
+<li>Redis不支持通过值(value)来查询,只能用Key查询.</li>
+</ul></li>
+
+<li>储存器和持久化(Memory and Persistence)
+
+<ul class="org-ul">
+<li>持久化策略 (Persistence mode),TODO: 稍后找资料.
+
+<ol class="org-ol">
+<li>Snapshotting(RDB),默认情况下,有X个和更多个键变更了的话就每隔Y秒持久化一次,支持多个方案.</li>
+
+<li>Append-only File(AOF),任何时候,有一个键变更就会对这个AOF进行更行</li>
+
+<li>Mater-Slave,从属数据库备份对主数据库进行备份</li>
+</ol></li>
+</ul></li>
+
+<li>单线程,每一个操作都具备原子性</li>
+</ol>
+
+<p>
+<b>数据结构</b>
+</p>
+
+<ul class="org-ul">
+<li><p>
+清空数据库
+</p>
+
+<p>
+flushdb
+</p></li>
+
+<li><p>
+字符串(Strings)
+</p>
+
+<p>
+用JavaScript表示的话像这样
+</p>
+<div class="org-src-container">
+<pre class="src src-javascript">database = {
+    <span style="color: #CC9393;">"key"</span>: <span style="color: #CC9393;">"value"</span>
+}
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>最基本的数据结构</li>
+
+<li><p>
+获取键对应的字符串的长度
+</p>
+
+<p>
+strlen &lt;key&gt;
+</p></li>
+
+<li><p>
+根据指定范围内截取键对应的字符串
+</p>
+
+<p>
+getrange &lt;key&gt; &lt;start&gt; &lt;end&gt;
+</p></li>
+
+<li><p>
+把值附加到已存在的字符串,如果键不存在就创建一个新的键值对
+</p>
+
+<p>
+append &lt;key&gt; &lt;value&gt;
+</p></li>
+
+<li><p>
+针对数字字符串的自增/减命令
+</p>
+
+<p>
+incr &lt;key&gt;
+</p>
+
+<p>
+incrby &lt;key&gt; &lt;value&gt;
+</p>
+
+<p>
+decr &lt;key&gt;
+</p>
+
+<p>
+decrby &lt;value&gt;
+</p></li>
+</ul></li>
+
+<li><p>
+散列(Hashes)
+</p>
+
+<p>
+用JavaScript表示的话就像这样
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript">database = {
+    <span style="color: #CC9393;">"key"</span>: {
+        <span style="color: #CC9393;">"field"</span>: <span style="color: #CC9393;">"value"</span>,
+        <span style="color: #CC9393;">"field1"</span>: <span style="color: #CC9393;">"value1"</span>,
+        <span style="color: #CC9393;">"fieldn"</span>: <span style="color: #CC9393;">"valuen"</span>
+    }
+}
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>
+新建/获取
+</p>
+
+<p>
+hset &lt;key&gt; &lt;field&gt; &lt;value&gt;
+</p>
+
+<p>
+hget &lt;key&gt; &lt;field&gt;
+</p></li>
+
+<li><p>
+一次操作多个fields
+</p>
+
+<p>
+hmset &lt;key&gt; &lt;field1&gt; &lt;value1&gt; &lt;field2&gt; &lt;value2&gt; &#x2026; &lt;fieldn&gt; &lt;valuen&gt;
+</p>
+
+<p>
+hmget &lt;key&gt; &lt;field1&gt; &lt;field2&gt; &#x2026; &lt;fieldn&gt;
+</p></li>
+
+<li><p>
+获取所有fields的keys和values
+</p>
+
+<p>
+hgetall &lt;key&gt;
+</p></li>
+
+<li><p>
+获取所有keys
+</p>
+
+<p>
+hkeys &lt;key&gt;
+</p></li>
+
+<li><p>
+删除指定field
+</p>
+
+<p>
+hdel &lt;key&gt; &lt;field&gt;
+</p></li>
+</ul></li>
+
+<li>列表(Lists)
+
+<ul class="org-ul">
+<li><p>
+新建/更新列表
+</p>
+
+<p>
+往列表头部依次添加元素
+</p>
+
+<p>
+lpush &lt;key&gt; &lt;value1&gt; &lt;value2&gt; &#x2026; &lt;valuen&gt;
+</p>
+
+<p>
+往列表尾部依次添加元素
+</p>
+
+<p>
+rpush &lt;key&gt; &lt;value1&gt; &lt;value2&gt; &#x2026; &lt;valuen&gt;
+</p></li>
+
+<li><p>
+根据指定范围内获取键对应的列表
+</p>
+
+<p>
+lrange &lt;key&gt; &lt;start&gt; &lt;end&gt;
+</p>
+
+<p>
+0-based index, -1表示最后一个列表元素
+</p></li>
+
+<li><p>
+移除指定范围外的值
+</p>
+
+<p>
+ltrim &lt;key&gt; &lt;start&gt; &lt;end&gt;
+</p></li>
+</ul></li>
+
+<li>集合(Sets)
+
+<ul class="org-ul">
+<li><p>
+创建/添加
+</p>
+
+<p>
+sadd &lt;key&gt; &lt;value1&gt; &lt;value2&gt; &#x2026; &lt;valuen&gt;
+</p></li>
+
+<li><p>
+查看所有成员
+</p>
+
+<p>
+smembers &lt;key&gt;
+</p></li>
+
+<li><p>
+检查是否操作某个成员
+</p>
+
+<p>
+sismember &lt;key&gt; &lt;value&gt;
+</p></li>
+
+<li><p>
+检查两个集合是否有交集
+</p>
+
+<p>
+sinter &lt;key1&gt; &lt;key2&gt;
+</p></li>
+
+<li><p>
+取多个集合的并集储存在新的键中
+</p>
+
+<p>
+sinterstore &lt;newkey&gt; &lt;key1&gt; &lt;key2&gt; &#x2026; &lt;keyn&gt;
+</p></li>
+</ul></li>
+
+<li>分类集合(Stored Sets)
+
+<ul class="org-ul">
+<li><p>
+创建/新增
+</p>
+
+<p>
+zadd &lt;key&gt; &lt;score1&gt; &lt;value1&gt; &lt;score2&gt; &lt;value2&gt; &#x2026; &lt;scoren&gt; &lt;valuen&gt;
+</p></li>
+
+<li><p>
+根据范围获取元素
+</p>
+
+<p>
+zrange &lt;key&gt; &lt;start&gt; &lt;end&gt; [WITHSCORES]
+</p></li>
+
+<li>获取成员在分类集合中的次序
+
+<ul class="org-ul">
+<li><p>
+score低到高
+</p>
+
+<p>
+zrank &lt;key&gt; &lt;value&gt;
+</p></li>
+
+<li><p>
+score高到低
+</p>
+
+<p>
+zrevrank &lt;key&gt; &lt;value&gt;
+</p></li>
+</ul></li>
+</ul></li>
+
+<li>更多指令请参考文档</li>
+</ul>
+
+
+<p>
+<b>使用数据结构</b>
+</p>
+
+<p>
+这章演示了在实际开发中如何运用数据结构
+</p>
+
+<ul class="org-ul">
+<li><p>
+官方文档使用大O表示法描述命令速度
+</p>
+
+<p>
+O(1) &lt; O(log(N)) &lt; O(N) &lt; O(N^n)
+</p></li>
+
+<li><p>
+仿多关键字查询(Pseudo Multi Key Queries)
+</p>
+
+<p>
+假设要根据用户的邮箱查询用户
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #DCDCCC; font-weight: bold;">set</span> users:9001 <span style="color: #CC9393;">"{id: 9001, email: leto@dune.gov}"</span>
+hset users:lookup:email leto@dune.gov 9001
+</pre>
+</div>
+
+<p>
+最后根据"hget users:lookup:email leto@dune.gov"返回的id查询
+</p>
+
+<p>
+get users:id
+</p></li>
+
+<li>引用和索引(References and Indexes)</li>
+
+<li>数据交互和流水线(Round Trips and Pipelining)
+
+<ul class="org-ul">
+<li>与服务器频繁交互的时候应该考虑可以一次接受多个参数的命令,比如mget,lpush,hmset,sadd,zadd等等</li>
+
+<li>流水线功能,平常是客户端发送请求到Redis后要等到Redis响应后,客户端才可以发送下一个请求;使用流水
+线可以不用等待Redis响应就可以发送下一个请求.</li>
+</ul></li>
+
+<li><p>
+事任(Transactions)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">multi
+hincrby groups:1percent balance -9000000
+hincrby groups:99percent balance 9000000
+<span style="color: #F0DFAF; font-weight: bold;">exec</span>
+</pre>
+</div>
+
+<p>
+multi表示启用事务,中间的命令等待最后的exec执行,或者被最后的discard放弃.
+</p>
+
+<p>
+Redis的事务保证了
+</p>
+
+<ol class="org-ol">
+<li>事务中的命令按顺序执行</li>
+
+<li>事务将会如单个原子操作被执行,其他客户端的命令不会插入事务的命令序列中</li>
+
+<li>事务命令全部被执行,要么不执行,有命令失败了,其他命令依然会被执行</li>
+</ol>
+
+<p>
+但是多个Redis客户端进程连接同一个数据库的时候还是会有并发问题的,如果不想某个值被该其他进程改变后继续执行
+事务,那么可以使用watch命令
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #DCDCCC; font-weight: bold;">set</span> balance 99999
+watch balance
+multi
+get balance
+decrby balance 100
+<span style="color: #F0DFAF; font-weight: bold;">exec</span>
+unwatch
+</pre>
+</div>
+
+<p>
+如果有其他客户端进程改变了balance的值,那么事务就会中止.
+</p></li>
+
+<li><p>
+关键字反模式(Keys Anti-Pattern)
+</p>
+
+<p>
+keys查询所有键,缺点线性上面数据库,速度慢.一般用来构建一个本地的Bug追踪服务.
+</p>
+
+<p>
+比如现在有一个帐号1233存在bugs,bug有id和subject标识.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">keys bug:1233:*
+</pre>
+</div>
+
+<p>
+更好的解决方法还是使用hash结构
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">hset bugs:1233 1 <span style="color: #CC9393;">"{id:1, account: 1233, subject: 'balabala}"</span>
+hset bugs:1233 2 <span style="color: #CC9393;">"{id:2, account: 1233, subject: 'balabala2'}"</span>
+</pre>
+</div>
+
+<p>
+如果要把问题解决的bug删除掉可以
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">hdel bugs:1233 2
+</pre>
+</div>
+
+<p>
+如果帐号已经没有bugs了
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">del bugs:1233
+</pre>
+</div></li>
+</ul>
+
+<p>
+<b>超越数据结构</b>
+</p>
+
+<ul class="org-ul">
+<li>使用期限(Expiration)
+
+<ul class="org-ul">
+<li><p>
+在&lt;seconds&gt;秒内过期
+</p>
+
+<p>
+expire &lt;key&gt; &lt;seconds&gt;
+</p></li>
+
+<li><p>
+在&lt;unix-timestamp&gt;的时候过期
+</p>
+
+<p>
+expireat &lt;key&gt; &lt;unix-timestamp&gt;
+</p></li>
+
+<li><p>
+查看键什么还有多长时间过期
+</p>
+
+<p>
+ttl &lt;key&gt;
+</p></li>
+
+<li><p>
+把使用期限限制除掉
+</p>
+
+<p>
+persist &lt;key&gt;
+</p></li>
+
+<li><p>
+设定值的时候顺便设定过期时间
+</p>
+
+<p>
+setex &lt;key&gt; &lt;seconds&gt; &lt;value&gt;
+</p></li>
+</ul></li>
+
+<li><p>
+发布和定阅(Publication and Subscriptions)
+</p>
+
+<p>
+在其中一个Redis客户端进程
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">subscribe &lt;channel1&gt; &lt;channel2&gt; ... &lt;channeln&gt;
+</pre>
+</div>
+
+<p>
+在另外一个Redis客户端进程
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">pulish &lt;channel&gt; &lt;message&gt;
+</pre>
+</div>
+
+<p>
+unsubscribe 取消定阅
+</p></li>
+
+<li>监控和延迟日志(Monitor and Slow Log)
+
+<ul class="org-ul">
+<li><p>
+监控Redis客户端进程
+</p>
+
+<p>
+打开两个redis-cli进程,在第一个输入monitor命令,在另外一个执行命令,例如get,set和keys,在第一个里面会看到
+命令的执行和相关信息.
+</p></li>
+
+<li>记录执行时间超过指定时间的命令
+
+<ol class="org-ol">
+<li><p>
+设定记录执行时间大于0的命令,也就是记录所有命令
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">config set slowlog-log-slower-than 0
+</pre>
+</div></li>
+
+<li><p>
+执行命令后检索日志
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">slowlog get
+slowlog get 10
+slowlog len
+// &#33719;&#21462;&#26085;&#35760;&#20013;&#21629;&#20196;&#30340;&#25968;&#37327;,&#40664;&#35748;&#26368;&#22823;&#35760;&#24405;1024&#26465;&#26085;&#24535;
+</pre>
+</div></li>
+</ol></li>
+</ul></li>
+
+<li><p>
+排序(Sort)
+</p>
+
+<p>
+可以根据值对列表,集合和分类集合进行排序
+</p>
+
+<p>
+sort &lt;key&gt; [by pattern] [limit offset count] [get pattern [get pattern &#x2026;]] [asc|desc] [alpha] [store destination]
+</p>
+
+<p>
+假设有4位游戏角色的数据
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">id      character_name_{id}     character_level_{id}
+1       Primrose Azelhart       30
+2       Olberic Eisenberg       26
+3       Tressa Colozone         24
+4       Alfyn Greengrass        25
+</pre>
+</div>
+
+<p>
+现在准备数据
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">lpush id 1 2 3 4
+mset character_name_1 <span style="color: #CC9393;">"Primrose Azelhart"</span> character_name_2 <span style="color: #CC9393;">"Olberic Eisenberg"</span> character_name_3 <span style="color: #CC9393;">"Tressa Colozone"</span> character_name_4 <span style="color: #CC9393;">"Alfyn Greengrass"</span>
+mset character_level_1 30 character_level_2 26 character_level_3 24 character_level_4 25
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>
+by pattern
+</p>
+
+<p>
+sort id by character_level_*
+</p>
+
+<p>
+根据character_level_{id}排序
+</p></li>
+
+<li><p>
+limit offset count
+</p>
+
+<p>
+sort id by character_level_* limit 0 3
+</p>
+
+<p>
+根据character_level_{id}排序,并且只返回第1到3个结果
+</p></li>
+
+<li><p>
+get pattern
+</p>
+
+<p>
+sort id by character_level_* get character_name_*
+</p>
+
+<p>
+根据character_level_{id}排序,并且返回对应的character_name_{id}值
+</p></li>
+
+<li><p>
+alpha
+</p>
+
+<p>
+根据字典顺序对字符串排序,这里根据名字排序获得角色等级
+</p>
+
+<p>
+sort id by character_name_* get character_level_* alpha
+</p></li>
+
+<li><p>
+asc or desc
+</p>
+
+<p>
+升序或者降序
+</p></li>
+
+<li><p>
+store destination
+</p>
+
+<p>
+把结果存到distination &lt;key&gt;中
+</p>
+
+<p>
+sort id by character_level_* get character_name_* store names
+</p></li>
+</ul></li>
+</ul>
+
+<p>
+<b>管理</b>
+</p>
+
+<p>
+这一个章节简单提一些配置项,以及它们的作用
+</p>
+
+<ul class="org-ul">
+<li><p>
+配置
+</p>
+
+<p>
+在Debian下,Redis的配置文件在/etc/redis/redis.conf,也可以通过config set设定,
+config get获取特定配置,config get *可以获得所有配置.每当更改完配置文件后要重启生效.
+</p></li>
+
+<li><p>
+验证
+</p>
+
+<p>
+requirepass项设置登录密码,一旦验证后就可以执行所有命令,可以通过设置rename-command项来该命令的名字,
+改为混乱的字符串来获得安全性.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">requirepass saltb0rn
+rename-command CONFIG NEWCONFIG
+rename-command FLUSHALL
+</pre>
+</div>
+
+<p>
+其中最后一条把FLUSHALL命令改为空,这是为了把FLUSHALL禁用掉.
+</p></li>
+
+<li><p>
+大小限制(Size Limitations)
+</p>
+
+<p>
+&lt;To be continued&gt;
+</p></li>
+
+<li><p>
+复制(Replication)
+</p>
+
+<p>
+Master-Slaves
+</p>
+
+<p>
+&lt;To be continued&gt;
+</p></li>
+
+<li>备份文件
+
+<ul class="org-ul">
+<li><p>
+RDB快照
+</p>
+
+<p>
+dbfilename &lt;name&gt;
+</p>
+
+<p>
+dir &lt;working-path&gt;
+</p>
+
+<p>
+备份文件就的完整路径位 &lt;working-path&gt;/&lt;name&gt;
+</p>
+
+<p>
+save &lt;seconds&gt; &lt;numbers-of-keys&gt;
+</p>
+
+<p>
+是指如果改变了&lt;numbers-of-keys&gt;个键,那么每隔&lt;seconds&gt;秒发生改变
+</p>
+
+<p>
+还有一个bgsave项,save项创建快照的时候是同步的,也就是说,备份的时候需要等待,而bgsave则是异步的.两者用法一样.
+</p>
+
+<p>
+如果要关闭RDB,只要把save命令或者bgsave命令注释掉就可以了.
+</p></li>
+
+<li><p>
+AOF(Append-only File)
+</p>
+
+<p>
+相关概念
+</p>
+
+<ul class="org-ul">
+<li><p>
+AOF
+</p>
+
+<p>
+实际就是命令的日志文件
+</p></li>
+
+<li><p>
+Redis的fsync调用
+</p>
+
+<p>
+告诉操作系统马上把buffer上的数据写入硬盘,不同的操作系统有不同的反应,有些是马上写入,有些是尽快写入.
+</p></li>
+
+<li><p>
+AOF重写
+</p>
+
+<p>
+当AOF文件体积过大的时候,可以针对当前AOF文件产生一个体积优化版本,比如把多条可以合并为一条的命令进行合并.
+</p></li>
+</ul>
+
+<p>
+appendlonly &lt;yes|no&gt;
+</p>
+
+<p>
+决定是否启用AOF
+</p>
+
+<p>
+appendfilename &lt;name&gt;
+</p>
+
+<p>
+指定AOF文件名字
+</p>
+
+<p>
+appendfsync &lt;always|everysec|no&gt;,有3种模式
+</p>
+
+<ul class="org-ul">
+<li><p>
+always
+</p>
+
+<p>
+启动一个background saving process执行备份工作,每次收到命令就写入硬盘,完全持久化,性能差.一般不推荐使用.
+</p></li>
+
+<li><p>
+everysec
+</p>
+
+<p>
+启动一个background saving process执行备份工作,每秒写入一次硬盘,在性能和持久化做了折中.推荐使用.
+</p></li>
+
+<li><p>
+no
+</p>
+
+<p>
+不启动background saving process,依赖于操作系统的写入,一般30秒左右一次,性能最好,持久化保证最差.不推荐使用.
+</p></li>
+</ul>
+
+<p>
+no-appendfsync-on-rewrite &lt;yes|no&gt;
+</p>
+
+<p>
+AOF重写的时候,不进行命令追加操作,只是把它放到缓冲区里,避免和命令追加造成DISK IO上的冲突.yes表示rewrite时候
+对新写操作不调用fsync,暂时操作内存里面等rewrite完成后写入,默认为no.
+</p>
+
+<p>
+auto-aof-rewrite-percentage 100
+</p>
+
+<p>
+当前AOF文件大小是上次日志重写得到的AOF文件大小的两倍的时候,自动启动新的日志重写.
+</p>
+
+<p>
+auto-aof-rewrite-min-size 64mb
+</p></li>
+</ul></li>
+</ul>
+
+
+<ul class="org-ul">
+<li><p>
+缩放和Redis集群(Scaling and Redis Cluster)
+</p>
+
+<p>
+&lt;To be continued&gt;
+</p></li>
+</ul>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_thread"></div>
+<script id="dsq-count-scr" src="//darksalt-me.com/count.js" async></script>
+
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://darksalt-me.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2018-08-24</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.14)</p>
+</div>
+</body>
+</html>

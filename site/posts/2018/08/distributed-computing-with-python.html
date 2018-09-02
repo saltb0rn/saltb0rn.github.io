@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-08-23 Thu 18:09 -->
+<!-- 2018-09-02 Sun 10:28 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Distributed Computing with Python的阅读笔记</title>
@@ -178,8 +178,10 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
+
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -600,7 +602,7 @@ root@my-vps:~#
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">config.py</span>
 <span style="color: #DFAF8F;">BROKER_URL</span> = <span style="color: #CC9393;">'amqp://salt:saltpw@darksalt.me'</span>
 <span style="color: #DFAF8F;">CELERY_RESULT_BACKEND</span> = <span style="color: #CC9393;">'redis://:saltb0rn@darksalt.me'</span>
-<span style="color: #DFAF8F;">CELERY_IMPORTS</span> = <span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"worker1"</span>, <span style="color: #CC9393;">"worker2"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DFAF8F;">CELERY_IMPORTS</span> = (<span style="color: #CC9393;">"worker1"</span>, <span style="color: #CC9393;">"worker2"</span>)
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">celery&#26159;&#38656;&#35201;&#24320;&#21457;&#20154;&#21592;&#25163;&#21160;&#23548;&#20837;&#20219;&#21153;&#27169;&#22359;,&#32780;&#19988;&#19981;&#33021;&#29992;&#30456;&#23545;&#36335;&#24452;,</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#21542;&#21017;&#20219;&#21153;&#23601;&#20250;&#26159;&#26410;&#27880;&#20876;,"Received unregistered task of type 'worker1.sleep'.",</span>
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#27169;&#22359;&#22312;&#19979;&#38754;&#32473;&#20986;.</span>
@@ -622,45 +624,45 @@ root@my-vps:~#
 <span style="color: #F0DFAF; font-weight: bold;">from</span> worker1 <span style="color: #F0DFAF; font-weight: bold;">import</span> sleep
 <span style="color: #F0DFAF; font-weight: bold;">from</span> worker2 <span style="color: #F0DFAF; font-weight: bold;">import</span> eat
 
-define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"port"</span>, default=8000, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run on the given port"</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span><span style="color: #DCDCCC;">)</span>
-define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"debug"</span>, default=<span style="color: #BFEBBF;">True</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run in debug mode"</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">bool</span><span style="color: #DCDCCC;">)</span>
-monkey.patch_all<span style="color: #DCDCCC;">()</span>
+define(<span style="color: #CC9393;">"port"</span>, default=8000, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run on the given port"</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>)
+define(<span style="color: #CC9393;">"debug"</span>, default=<span style="color: #BFEBBF;">True</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run in debug mode"</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">bool</span>)
+monkey.patch_all()
 
 
-<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">SleepingHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">SleepingHandler</span>(tornado.web.RequestHandler):
 
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #7CB8BB;">@tornado.gen.coroutine</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
-        sleep.apply_async<span style="color: #DCDCCC;">(</span>args=<span style="color: #BFEBBF;">(</span>6,<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>.then<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.process_result<span style="color: #DCDCCC;">)</span>
-        <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'sleep at {}'</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>datetime.datetime.now<span style="color: #D0BF8F;">()</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #7CB8BB;">@tornado.gen.coroutine</span>
+    <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span>(<span style="color: #F0DFAF; font-weight: bold;">self</span>):
+        sleep.apply_async(args=(6,)).then(<span style="color: #F0DFAF; font-weight: bold;">self</span>.process_result)
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.write(<span style="color: #CC9393;">'sleep at {}'</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span>(datetime.datetime.now()))
 
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">process_result</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, result<span style="color: #DCDCCC;">)</span>:
-        <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"{}"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>result.result<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">process_result</span>(<span style="color: #F0DFAF; font-weight: bold;">self</span>, result):
+        <span style="color: #F0DFAF; font-weight: bold;">print</span>(<span style="color: #CC9393;">"{}"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span>(result.result))
 
 
-<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">EatingHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">EatingHandler</span>(tornado.web.RequestHandler):
 
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #7CB8BB;">@tornado.gen.coroutine</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
-        eat.apply_async<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>4,<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>.then<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.process_result<span style="color: #DCDCCC;">)</span>
-        <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'eat at {}'</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>datetime.datetime.now<span style="color: #D0BF8F;">()</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #7CB8BB;">@tornado.gen.coroutine</span>
+    <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span>(<span style="color: #F0DFAF; font-weight: bold;">self</span>):
+        eat.apply_async((4,)).then(<span style="color: #F0DFAF; font-weight: bold;">self</span>.process_result)
+        <span style="color: #F0DFAF; font-weight: bold;">self</span>.write(<span style="color: #CC9393;">'eat at {}'</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span>(datetime.datetime.now()))
 
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">process_result</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, result<span style="color: #DCDCCC;">)</span>:
-        <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"{}"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>result.result<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">process_result</span>(<span style="color: #F0DFAF; font-weight: bold;">self</span>, result):
+        <span style="color: #F0DFAF; font-weight: bold;">print</span>(<span style="color: #CC9393;">"{}"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span>(result.result))
 
 
 <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">"__main__"</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   options.parse_command_line<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">app</span> = tornado.web.Application<span style="color: #DCDCCC;">(</span>
-        handlers=<span style="color: #BFEBBF;">[</span>
-            <span style="color: #D0BF8F;">(</span>r<span style="color: #CC9393;">"/api/v1/sleep"</span>, SleepingHandler<span style="color: #D0BF8F;">)</span>,
-            <span style="color: #D0BF8F;">(</span>r<span style="color: #CC9393;">"/api/v1/eat"</span>, EatingHandler<span style="color: #D0BF8F;">)</span>,
-        <span style="color: #BFEBBF;">]</span>,
+    options.parse_command_line()
+    <span style="color: #DFAF8F;">app</span> = tornado.web.Application(
+        handlers=[
+            (r<span style="color: #CC9393;">"/api/v1/sleep"</span>, SleepingHandler),
+            (r<span style="color: #CC9393;">"/api/v1/eat"</span>, EatingHandler),
+        ],
         debug=options.debug
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">http_server</span> = tornado.httpserver.HTTPServer<span style="color: #DCDCCC;">(</span>app<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   http_server.listen<span style="color: #DCDCCC;">(</span>options.port<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   tornado.ioloop.IOLoop.instance<span style="color: #DCDCCC;">()</span>.start<span style="color: #DCDCCC;">()</span>
+    )
+    <span style="color: #DFAF8F;">http_server</span> = tornado.httpserver.HTTPServer(app)
+    http_server.listen(options.port)
+    tornado.ioloop.IOLoop.instance().start()
 </pre>
 </div>
 
@@ -683,23 +685,23 @@ monkey.patch_all<span style="color: #DCDCCC;">()</span>
 <span style="color: #F0DFAF; font-weight: bold;">import</span> random
 <span style="color: #F0DFAF; font-weight: bold;">from</span> celery <span style="color: #F0DFAF; font-weight: bold;">import</span> Celery
 <span style="color: #F0DFAF; font-weight: bold;">from</span> celery.<span style="color: #DCDCCC; font-weight: bold;">bin</span> <span style="color: #F0DFAF; font-weight: bold;">import</span> worker
-<span style="color: #DFAF8F;">app</span> = Celery<span style="color: #DCDCCC;">()</span>
-app.config_from_object<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'config'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DFAF8F;">app</span> = Celery()
+app.config_from_object(<span style="color: #CC9393;">'config'</span>)
 
 
 <span style="color: #7CB8BB;">@app.task</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">sleep</span><span style="color: #DCDCCC;">(</span>second=5<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   time.sleep<span style="color: #DCDCCC;">(</span>second<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"I get a \"{}\" from dream"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #DCDCCC;">(</span>random.randint<span style="color: #BFEBBF;">(</span>0, 255<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">sleep</span>(second=5):
+    time.sleep(second)
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"I get a \"{}\" from dream"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span>(random.randint(0, 255))
 
 
 <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">'__main__'</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'-c'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=1, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"number of workers"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">args</span> = parser.parse_args<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">worker</span> = worker.worker<span style="color: #DCDCCC;">(</span>app=app<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   worker.run<span style="color: #DCDCCC;">(</span>hostname=<span style="color: #CC9393;">'worker1@%h'</span>, concurrency=args.c, loglevel=<span style="color: #CC9393;">'INFO'</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">hostname &#23601;&#26159; node name</span>
+    <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser()
+    parser.add_argument(<span style="color: #CC9393;">'-c'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=1, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"number of workers"</span>)
+    <span style="color: #DFAF8F;">args</span> = parser.parse_args()
+    <span style="color: #DFAF8F;">worker</span> = worker.worker(app=app)
+    worker.run(hostname=<span style="color: #CC9393;">'worker1@%h'</span>, concurrency=args.c, loglevel=<span style="color: #CC9393;">'INFO'</span>)
+    <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">hostname &#23601;&#26159; node name</span>
 </pre>
 </div>
 
@@ -712,22 +714,22 @@ app.config_from_object<span style="color: #DCDCCC;">(</span><span style="color: 
 <span style="color: #F0DFAF; font-weight: bold;">from</span> datetime <span style="color: #F0DFAF; font-weight: bold;">import</span> datetime
 <span style="color: #F0DFAF; font-weight: bold;">from</span> celery <span style="color: #F0DFAF; font-weight: bold;">import</span> Celery
 <span style="color: #F0DFAF; font-weight: bold;">from</span> celery.<span style="color: #DCDCCC; font-weight: bold;">bin</span> <span style="color: #F0DFAF; font-weight: bold;">import</span> worker
-<span style="color: #DFAF8F;">app</span> = Celery<span style="color: #DCDCCC;">()</span>
-app.config_from_object<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'config'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DFAF8F;">app</span> = Celery()
+app.config_from_object(<span style="color: #CC9393;">'config'</span>)
 
 
 <span style="color: #7CB8BB;">@app.task</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">eat</span><span style="color: #DCDCCC;">(</span>second=5<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   time.sleep<span style="color: #DCDCCC;">(</span>second<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"I've had enough, {} now"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #DCDCCC;">(</span>datetime.datetime.now<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">eat</span>(second=5):
+    time.sleep(second)
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"I've had enough, {} now"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span>(datetime.datetime.now())
 
 
 <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">'__main__'</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'-c'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=1, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"number of workers"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">args</span> = parser.parse_args<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">worker</span> = worker.worker<span style="color: #DCDCCC;">(</span>app=app<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   worker.run<span style="color: #DCDCCC;">(</span>hostname=<span style="color: #CC9393;">'worker2@%h'</span>, concurrency=args.c, loglevel=<span style="color: #CC9393;">'INFO'</span><span style="color: #DCDCCC;">)</span>
+    <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser()
+    parser.add_argument(<span style="color: #CC9393;">'-c'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=1, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"number of workers"</span>)
+    <span style="color: #DFAF8F;">args</span> = parser.parse_args()
+    <span style="color: #DFAF8F;">worker</span> = worker.worker(app=app)
+    worker.run(hostname=<span style="color: #CC9393;">'worker2@%h'</span>, concurrency=args.c, loglevel=<span style="color: #CC9393;">'INFO'</span>)
 </pre>
 </div></li>
 
@@ -877,7 +879,7 @@ s.setAttribute('data-timestamp', +new Date());
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-08-23</p>
-<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.14)</p>
 </div>
 </body>
 </html>

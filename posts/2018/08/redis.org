@@ -1,0 +1,509 @@
+#+title: Redis学习笔记
+#+date: 2018-08-24
+#+index: Redis学习笔记
+#+tags: Redis Concepts
+#+options: ^:nil
+#+begin_abstract
+正如上一篇笔记所说的要做Redis的笔记.最好的参考书不是买来的,而是自己做的.这篇笔记的参考资料是The Little Redis book,
+一本免费的书,你可以很容易地在互联网上找到它.并且我的整个学习过程都在Debian下完成,不会做关于在Windows上面操作的笔记.
+并且涵盖可能不会太全面,这是可能是因为限于边幅,也就是涵盖东西太多不够精简,这种情况我会放出外部资源做补充;还可能是限于
+我个人的水平而没涵盖到,不过我以后有空会补上的,毕竟给自己做参考书不是一朝一夕的事情.给自己debug应该是每天的任务.
+#+end_abstract
+
+*Redis基础*
+
+使用redis-cli命令进入Redis控制台.
+
+1. In-memory persistent key-value store,内存持久化的键值对储存,也可以把数据写入硬盘.
+
+2. 支持5种不同的数据结构,只有一种是典型的键值对结构.下面详细说.比关系型数据库普遍适用
+   (one-size-fits-all)的结构体系(表格)要灵活.
+
+3. 跟关系型数据库一样有相同的DATABASE的概念,DATABASE是用数字编号进行区分,默认是0.
+
+   - SELECT <NUM-INDEX>
+
+4. 键值对操作,GET和SET命令.每一步操作都是<Command> <Key> [Values]结构.
+
+   - 新增/更新 set <key> <value>
+
+   - 获取值 get <key>
+
+5. 查询(Querying)
+
+   - Redis不支持通过值(value)来查询,只能用Key查询.
+
+6. 储存器和持久化(Memory and Persistence)
+
+   - 持久化策略 (Persistence mode),TODO: 稍后找资料.
+
+     1. Snapshotting(RDB),默认情况下,有X个和更多个键变更了的话就每隔Y秒持久化一次,支持多个方案.
+
+     2. Append-only File(AOF),任何时候,有一个键变更就会对这个AOF进行更行
+
+     3. Mater-Slave,从属数据库备份对主数据库进行备份
+
+7. 单线程,每一个操作都具备原子性
+
+*数据结构*
+
+- 清空数据库
+
+  flushdb
+
+- 字符串(Strings)
+
+  用JavaScript表示的话像这样
+  #+BEGIN_SRC javascript
+  database = {
+      "key": "value"
+  }
+  #+END_SRC
+
+  - 最基本的数据结构
+
+  - 获取键对应的字符串的长度
+
+    strlen <key>
+
+  - 根据指定范围内截取键对应的字符串
+
+    getrange <key> <start> <end>
+
+  - 把值附加到已存在的字符串,如果键不存在就创建一个新的键值对
+
+    append <key> <value>
+
+  - 针对数字字符串的自增/减命令
+
+    incr <key>
+
+    incrby <key> <value>
+
+    decr <key>
+
+    decrby <value>
+
+- 散列(Hashes)
+
+  用JavaScript表示的话就像这样
+
+  #+BEGIN_SRC javascript
+  database = {
+      "key": {
+	  "field": "value",
+	  "field1": "value1",
+	  "fieldn": "valuen"
+      }
+  }
+  #+END_SRC
+
+  - 新建/获取
+
+    hset <key> <field> <value>
+
+    hget <key> <field>
+
+  - 一次操作多个fields
+
+    hmset <key> <field1> <value1> <field2> <value2> ... <fieldn> <valuen>
+
+    hmget <key> <field1> <field2> ... <fieldn>
+
+  - 获取所有fields的keys和values
+
+    hgetall <key>
+
+  - 获取所有keys
+
+    hkeys <key>
+
+  - 删除指定field
+
+    hdel <key> <field>
+
+- 列表(Lists)
+
+  - 新建/更新列表
+
+    往列表头部依次添加元素
+
+    lpush <key> <value1> <value2> ... <valuen>
+
+    往列表尾部依次添加元素
+
+    rpush <key> <value1> <value2> ... <valuen>
+
+  - 根据指定范围内获取键对应的列表
+
+    lrange <key> <start> <end>
+
+    0-based index, -1表示最后一个列表元素
+
+  - 移除指定范围外的值
+
+    ltrim <key> <start> <end>
+
+- 集合(Sets)
+
+  - 创建/添加
+
+    sadd <key> <value1> <value2> ... <valuen>
+
+  - 查看所有成员
+
+    smembers <key>
+
+  - 检查是否操作某个成员
+
+    sismember <key> <value>
+
+  - 检查两个集合是否有交集
+
+    sinter <key1> <key2>
+
+  - 取多个集合的并集储存在新的键中
+
+    sinterstore <newkey> <key1> <key2> ... <keyn>
+
+- 分类集合(Stored Sets)
+
+  - 创建/新增
+
+    zadd <key> <score1> <value1> <score2> <value2> ... <scoren> <valuen>
+
+  - 根据范围获取元素
+
+    zrange <key> <start> <end> [WITHSCORES]
+
+  - 获取成员在分类集合中的次序
+
+    - score低到高
+
+      zrank <key> <value>
+
+    - score高到低
+
+      zrevrank <key> <value>
+
+- 更多指令请参考文档
+
+
+*使用数据结构*
+
+这章演示了在实际开发中如何运用数据结构
+
+- 官方文档使用大O表示法描述命令速度
+
+  O(1) < O(log(N)) < O(N) < O(N^n)
+
+- 仿多关键字查询(Pseudo Multi Key Queries)
+
+  假设要根据用户的邮箱查询用户
+
+  #+BEGIN_SRC sh
+  set users:9001 "{id: 9001, email: leto@dune.gov}"
+  hset users:lookup:email leto@dune.gov 9001
+  #+END_SRC
+
+  最后根据"hget users:lookup:email leto@dune.gov"返回的id查询
+
+  get users:id
+
+- 引用和索引(References and Indexes)
+
+- 数据交互和流水线(Round Trips and Pipelining)
+
+  - 与服务器频繁交互的时候应该考虑可以一次接受多个参数的命令,比如mget,lpush,hmset,sadd,zadd等等
+
+  - 流水线功能,平常是客户端发送请求到Redis后要等到Redis响应后,客户端才可以发送下一个请求;使用流水
+    线可以不用等待Redis响应就可以发送下一个请求.
+
+- 事任(Transactions)
+
+  #+BEGIN_SRC sh
+  multi
+  hincrby groups:1percent balance -9000000
+  hincrby groups:99percent balance 9000000
+  exec
+  #+END_SRC
+
+  multi表示启用事务,中间的命令等待最后的exec执行,或者被最后的discard放弃.
+
+  Redis的事务保证了
+
+  1. 事务中的命令按顺序执行
+
+  2. 事务将会如单个原子操作被执行,其他客户端的命令不会插入事务的命令序列中
+
+  3. 事务命令全部被执行,要么不执行,有命令失败了,其他命令依然会被执行
+
+  但是多个Redis客户端进程连接同一个数据库的时候还是会有并发问题的,如果不想某个值被该其他进程改变后继续执行
+  事务,那么可以使用watch命令
+
+  #+BEGIN_SRC sh
+  set balance 99999
+  watch balance
+  multi
+  get balance
+  decrby balance 100
+  exec
+  unwatch
+  #+END_SRC
+
+  如果有其他客户端进程改变了balance的值,那么事务就会中止.
+
+- 关键字反模式(Keys Anti-Pattern)
+
+  keys查询所有键,缺点线性上面数据库,速度慢.一般用来构建一个本地的Bug追踪服务.
+
+  比如现在有一个帐号1233存在bugs,bug有id和subject标识.
+
+  #+BEGIN_SRC sh
+  keys bug:1233:*
+  #+END_SRC
+
+  更好的解决方法还是使用hash结构
+
+  #+BEGIN_SRC sh
+  hset bugs:1233 1 "{id:1, account: 1233, subject: 'balabala}"
+  hset bugs:1233 2 "{id:2, account: 1233, subject: 'balabala2'}"
+  #+END_SRC
+
+  如果要把问题解决的bug删除掉可以
+
+  #+BEGIN_SRC sh
+  hdel bugs:1233 2
+  #+END_SRC
+
+  如果帐号已经没有bugs了
+
+  #+BEGIN_SRC sh
+  del bugs:1233
+  #+END_SRC
+
+*超越数据结构*
+
+- 使用期限(Expiration)
+
+  - 在<seconds>秒内过期
+
+    expire <key> <seconds>
+
+  - 在<unix-timestamp>的时候过期
+
+    expireat <key> <unix-timestamp>
+
+  - 查看键什么还有多长时间过期
+
+    ttl <key>
+
+  - 把使用期限限制除掉
+
+    persist <key>
+
+  - 设定值的时候顺便设定过期时间
+
+    setex <key> <seconds> <value>
+
+- 发布和定阅(Publication and Subscriptions)
+
+  在其中一个Redis客户端进程
+
+  #+BEGIN_SRC sh
+  subscribe <channel1> <channel2> ... <channeln>
+  #+END_SRC
+
+  在另外一个Redis客户端进程
+
+  #+BEGIN_SRC sh
+  pulish <channel> <message>
+  #+END_SRC
+
+  unsubscribe 取消定阅
+
+- 监控和延迟日志(Monitor and Slow Log)
+
+  - 监控Redis客户端进程
+
+    打开两个redis-cli进程,在第一个输入monitor命令,在另外一个执行命令,例如get,set和keys,在第一个里面会看到
+    命令的执行和相关信息.
+
+  - 记录执行时间超过指定时间的命令
+
+    1. 设定记录执行时间大于0的命令,也就是记录所有命令
+
+       #+BEGIN_SRC sh
+       config set slowlog-log-slower-than 0
+       #+END_SRC
+
+    2. 执行命令后检索日志
+
+       #+BEGIN_SRC sh
+       slowlog get
+       slowlog get 10
+       slowlog len
+       // 获取日记中命令的数量,默认最大记录1024条日志
+       #+END_SRC
+
+- 排序(Sort)
+
+  可以根据值对列表,集合和分类集合进行排序
+
+  sort <key> [by pattern] [limit offset count] [get pattern [get pattern ...]] [asc|desc] [alpha] [store destination]
+
+  假设有4位游戏角色的数据
+
+  #+BEGIN_SRC sh
+  id	character_name_{id}	character_level_{id}
+  1	Primrose Azelhart       30
+  2	Olberic Eisenberg       26
+  3	Tressa Colozone         24
+  4	Alfyn Greengrass        25
+  #+END_SRC
+
+  现在准备数据
+
+  #+BEGIN_SRC sh
+  lpush id 1 2 3 4
+  mset character_name_1 "Primrose Azelhart" character_name_2 "Olberic Eisenberg" character_name_3 "Tressa Colozone" character_name_4 "Alfyn Greengrass"
+  mset character_level_1 30 character_level_2 26 character_level_3 24 character_level_4 25
+  #+END_SRC
+
+  - by pattern
+
+    sort id by character_level_*
+
+    根据character_level_{id}排序
+
+  - limit offset count
+
+    sort id by character_level_* limit 0 3
+
+    根据character_level_{id}排序,并且只返回第1到3个结果
+
+  - get pattern
+
+    sort id by character_level_* get character_name_*
+
+    根据character_level_{id}排序,并且返回对应的character_name_{id}值
+
+  - alpha
+
+    根据字典顺序对字符串排序,这里根据名字排序获得角色等级
+
+    sort id by character_name_* get character_level_* alpha
+
+  - asc or desc
+
+    升序或者降序
+
+  - store destination
+
+    把结果存到distination <key>中
+
+    sort id by character_level_* get character_name_* store names
+
+*管理*
+
+这一个章节简单提一些配置项,以及它们的作用
+
+- 配置
+
+  在Debian下,Redis的配置文件在/etc/redis/redis.conf,也可以通过config set设定,
+  config get获取特定配置,config get *可以获得所有配置.每当更改完配置文件后要重启生效.
+
+- 验证
+
+  requirepass项设置登录密码,一旦验证后就可以执行所有命令,可以通过设置rename-command项来该命令的名字,
+  改为混乱的字符串来获得安全性.
+
+  #+BEGIN_SRC sh
+  requirepass saltb0rn
+  rename-command CONFIG NEWCONFIG
+  rename-command FLUSHALL
+  #+END_SRC
+
+  其中最后一条把FLUSHALL命令改为空,这是为了把FLUSHALL禁用掉.
+
+- 大小限制(Size Limitations)
+
+  <To be continued>
+
+- 复制(Replication)
+
+  Master-Slaves
+
+  <To be continued>
+
+- 备份文件
+
+  - RDB快照
+
+    dbfilename <name>
+
+    dir <working-path>
+
+    备份文件就的完整路径位 <working-path>/<name>
+
+    save <seconds> <numbers-of-keys>
+
+    是指如果改变了<numbers-of-keys>个键,那么每隔<seconds>秒发生改变
+
+    还有一个bgsave项,save项创建快照的时候是同步的,也就是说,备份的时候需要等待,而bgsave则是异步的.两者用法一样.
+
+    如果要关闭RDB,只要把save命令或者bgsave命令注释掉就可以了.
+
+  - AOF(Append-only File)
+
+    相关概念
+
+       - AOF
+
+	 实际就是命令的日志文件
+
+       - Redis的fsync调用
+
+	 告诉操作系统马上把buffer上的数据写入硬盘,不同的操作系统有不同的反应,有些是马上写入,有些是尽快写入.
+
+       - AOF重写
+
+	 当AOF文件体积过大的时候,可以针对当前AOF文件产生一个体积优化版本,比如把多条可以合并为一条的命令进行合并.
+
+    appendlonly <yes|no>
+
+    决定是否启用AOF
+
+    appendfilename <name>
+
+    指定AOF文件名字
+
+    appendfsync <always|everysec|no>,有3种模式
+
+       - always
+
+	 启动一个background saving process执行备份工作,每次收到命令就写入硬盘,完全持久化,性能差.一般不推荐使用.
+
+       - everysec
+
+	 启动一个background saving process执行备份工作,每秒写入一次硬盘,在性能和持久化做了折中.推荐使用.
+
+       - no
+
+	 不启动background saving process,依赖于操作系统的写入,一般30秒左右一次,性能最好,持久化保证最差.不推荐使用.
+
+    no-appendfsync-on-rewrite <yes|no>
+
+    AOF重写的时候,不进行命令追加操作,只是把它放到缓冲区里,避免和命令追加造成DISK IO上的冲突.yes表示rewrite时候
+    对新写操作不调用fsync,暂时操作内存里面等rewrite完成后写入,默认为no.
+
+    auto-aof-rewrite-percentage 100
+
+    当前AOF文件大小是上次日志重写得到的AOF文件大小的两倍的时候,自动启动新的日志重写.
+
+    auto-aof-rewrite-min-size 64mb
+
+
+- 缩放和Redis集群(Scaling and Redis Cluster)
+
+  <To be continued>
