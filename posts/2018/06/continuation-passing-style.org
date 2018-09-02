@@ -27,7 +27,7 @@ forms,不会真的涉及到continuation的实际操作,只是讲它的意像.
 
 首先,Racket里面一般是这样定义函数的,以定义一个形式参数为a和b的整型加法函数add,和一个减法函数sub为例子.
 
-#+begin_src racket
+#+begin_src scheme
 (define (add a b) (+ a b))
 (define (sub a b) (- a b))
 
@@ -50,7 +50,7 @@ forms,不会真的涉及到continuation的实际操作,只是讲它的意像.
 
 接下来用一个更复杂的例子,定义一个名为ans的函数,接收三个整型形参x,y,z返回结果为(add (sub x y) z).
 
-#+begin_src racket
+#+begin_src scheme
 (define (ans x y z)
    (add (sub x y) z))
 #+end_src
@@ -70,7 +70,7 @@ forms,不会真的涉及到continuation的实际操作,只是讲它的意像.
 每一步相当与一个过程,假设调用(ans 1 2 3),(sub 1 2)这样的话得到的就是结果-1,注意－1不是一个过程,在Racket里面,
 一个函数其实就是一个过程,所以这一步可以这样表示,
 
-#+begin_src racket
+#+begin_src scheme
 ;; 第一步,把第一步保存在first-step
 (define first-step (lambda (pre-step-res) (sub 1 2)))
 
@@ -79,7 +79,7 @@ forms,不会真的涉及到continuation的实际操作,只是讲它的意像.
 #+end_src
 
 第二步需要等待第一步的运算结果,
-#+begin_src racket
+#+begin_src scheme
 ;; 第二步,把第二步保存在second-step
 (define second-step (lambda (pre-step-res) (add pre-step-res 3)))
 
@@ -113,7 +113,7 @@ forms,不会真的涉及到continuation的实际操作,只是讲它的意像.
 
 **** 把ans改写成CPS程序
 
-#+begin_src racket
+#+begin_src scheme
 (define (ans/k x y z cont)
    (sub/k x y
       (lambda (res1)
@@ -177,7 +177,7 @@ simple expression,就可以保证non-simple expression是tail form.这里可能�
    写成(lambda (res2) (cont res2))
 
 当然不要忘了把add和sub的定义也要改写,注意+和-是primitive operators,不能对它们的定义进行修改,所以它们就不用改写.
-#+begin_src racket
+#+begin_src scheme
 (define (add/k x y cont) (cont (+ x y)))
 (define (sub/k x y cont) (cont (- x y)))
 #+end_src
@@ -187,7 +187,7 @@ simple expression,就可以保证non-simple expression是tail form.这里可能�
 
 **** 最后一个例子
 分别定义累加从1到n的函数bad-acc,acc-tail和acc.
-#+begin_src racket
+#+begin_src scheme
 ;; bad acc
 (define (bad-acc n)
     (if (= n 0)
