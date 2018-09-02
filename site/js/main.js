@@ -35,11 +35,11 @@ window.document.addEventListener('DOMContentLoaded', function() {
             post_abstract.parentNode.insertBefore(post_abstract, toc);
         }
         // TODO: 加载页面时移除评论块,之后设计一个按钮,点击的时候再把comment_clone添加回去.
-        if (comment) {
-            comment.style.display = "none";
-            comment.remove();
-            console.log(comment_clone);
-        }
+        // if (comment) {
+        //     comment.style.display = "none";
+        //     comment.remove();
+        //     console.log(comment_clone);
+        // }
     }
 
     function setup_style_for_other() {
