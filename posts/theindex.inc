@@ -9,7 +9,7 @@
 * D
   - [[file:2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
 * E
-  - [[file:2018/08/emacs-tips.org][Emacs Tips]]
+  - [[file:2018/08/emacs-tips.org][Emacs Tips(持续更新)]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
 * M
