@@ -294,6 +294,132 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
          advising函数的参数跟advised变量的持有函数要求的参数一样就可以.
 
 
+   - Emacs控制结构里面的 =Nonlocal Exits=
+
+     #+BEGIN_EXAMPLE
+     写于 2018/9/4
+     #+END_EXAMPLE
+
+     一个 =nonlocal exit= 是一个把当前程序的点的控制(control)到另外一个点(remote point)的转移过程(transfer).
+
+     在 Emacs Lisp 中, =Nonlocal exits= 可以以一个错误结果(a result of errors)的形式出现,也可以通过显式控制(explicit control)的方式使用它们.
+
+     (这里的错误和异常是同样一个意思,虽然英文中的词是不一样,但的确指同一个东西).
+
+     下面我会用别的语言特性来做类比,主要是 =C= 语言和 =Python=
+
+     - 显式控制(Catch and Throw)
+
+       实现手段是利用 =catch= 和 =throw= 两个 special forms.如何理解它们?如果对支持 =goto功能= 的语言有了解,那么这就很好理解了.
+
+       用 =C= 语言作为例子, =catch= 就相当于设置跳转点的 =label= 语句,而 =throw= 相当于执行跳转的 =goto= 语句,而跳转的目的地就是 =catch= 设置点.
+
+       最后,它们的 =while= 循环都不会被执行,并且都返回0.
+
+       #+BEGIN_SRC c
+       #include <stdio.h>
+
+       int main()
+       {
+           goto back;
+
+           while(1){
+               //do something
+               printf("%d", 1);
+           }
+
+           back: printf("You are going to exit now");
+           return 0;
+       }
+       #+END_SRC
+
+       #+BEGIN_SRC elisp
+       (defun catch-throw-example ()
+         (catch 'back
+           (progn
+             (print "You are going to exit now")
+             (throw 'back 0))
+           (while t
+             (print 1))))
+       #+END_SRC
+
+       关于 =catch= 和 =throw= 更多的示例可以在 =M-: (info "(elisp)Examples of Catch")= 找到,这里就不写了.
+
+     - 利用错误/异常(Errors)
+
+       这个就是编程语言的异常处理机制.
+
+       这里用 =Emacs Lisp= 和 =Python= 的异常处理机制对比一下,除了语法不一样以外真是十分一致.下面两个例子的变量的名字已经保持一样了.
+
+       其中, 下面的 =error= 不是平时的 =(error string &rest args)= ,这里代表所有类型的错误的"祖先"/"root",所有类型的错误直接或间接派生自它.
+
+       它与 =Python= 的 =Exception= 一样可以用于捕捉使用错误/异常(事实上, =Python= 的 =Exception= 有3个系统级别的异常捕捉不了).
+
+       #+BEGIN_SRC elisp
+       (defun err-handle-example ()
+         (condition-case err
+             (+ 1 a)
+           (error
+             (message "Error occurs")
+             err)))
+       #+END_SRC
+
+       #+BEGIN_SRC python
+       def err_handle_example():
+           try:
+               return 1 + a
+           except Exception as err:
+               print("Error occurs")
+               return err
+       #+END_SRC
+
+       =Emacs Lisp= 有3个引发异常的 special forms 和支持自定义异常.
+
+       如何引发一个异常 =M-: (info "(elisp)Signaling Errors")=
+
+       关于定义新异常和标准的异常 =M-: (info "(elisp) Error Symbols")=
+
+     - 清理(Cleanups)
+
+       通过利用 =Emacs Lisp= 的 =unwind-protect= 来确保在结束前执行动作,不论结束之前发生了什么,哪怕是发生报错.
+
+       如果问这个跟 =Python= 里面的哪样东西最像,那必然是异常捕捉的 =finally= 从语,都是不管发生前面什么事情,都会在结束前执行.
+
+       #+BEGIN_EXAMPLE
+
+       这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
+
+       当然如果 f.open() 打开失败还是不会执行以后的语句.权限不足,文件所在的目录不存在,就会发生报错的情况.
+
+       使用 Emacs Lisp 的 find-file-noselect 是不会发生这种事情,现在假定 Python 不会发生这些情况.
+
+       #+END_EXAMPLE
+
+       两个程序都是打开一个文本名叫"text.txt"并且插入"Insert content"内容,最后关闭文本.
+
+       其中, =(kill-buffer buffer)= 跟 =f.close()= 一样都是关闭文本,前者是 =Emacs Lisp= 的 =unwindform=, 后者是 =Python= 的 =finally= 从句.
+
+       而 =(insert "Insert content")= 和 =f.write("Insert content")= 都是处于异常捕捉的保护区域里面,这样两者的关系就很明了了.
+
+       #+BEGIN_SRC elisp
+       (let ((buffer (find-file-noselect "text.txt")))
+         (unwind-protect
+             (with-current-buffer buffer
+               (insert "Insert content"))
+           (kill-buffer buffer)))
+       #+END_SRC
+
+       #+BEGIN_SRC python
+       f = open('text.txt', 'w')
+       try:
+           f.write("Insert content")
+       except Exception:
+           pass
+       finally:
+           f.close()
+       #+END_SRC
+
+
 ** 个人认为不错的的一些参考资源和博客
 
    - 这篇文章给想进坑Emacs的人做思想工作
@@ -408,7 +534,3 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
      有太多方面我想不起来,总的来说它对于我来说影响实在太大了,因此我也愿意把闲余时间投入到它的身上.
 
      写这些的时候我才理解为什么有人说Emacs是一种生活态度了.
-
-** 更新日志
-
-   列出文档的改变之处.

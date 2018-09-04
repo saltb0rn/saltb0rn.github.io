@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-09-02 Sun 11:35 -->
+<!-- 2018-09-04 Tue 12:44 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emacs Tips</title>
@@ -181,6 +181,7 @@
 
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script type="text/javascript" src="http://livejs.com/live.js"></script>
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
 /*
@@ -276,7 +277,6 @@ for the JavaScript code in this tag.
 <li><a href="#org6f5533c">Emacs Lisp学习笔记</a></li>
 <li><a href="#orgc4aab25">个人认为不错的的一些参考资源和博客</a></li>
 <li><a href="#orga140130">我与Emacs的一些事情</a></li>
-<li><a href="#org5fb7b68">更新日志</a></li>
 </ul>
 </div>
 </div>
@@ -760,6 +760,190 @@ advising函数的参数跟advised变量的持有函数要求的参数一样就�
 </ul></li>
 </ul></li>
 </ul>
+
+
+<ul class="org-ul">
+<li><p>
+Emacs控制结构里面的 <code>Nonlocal Exits</code>
+</p>
+
+<pre class="example">
+     写于 2018/9/4
+</pre>
+
+<p>
+一个 <code>nonlocal exit</code> 是一个把当前程序的点的控制(control)到另外一个点(remote point)的转移过程(transfer).
+</p>
+
+<p>
+在 Emacs Lisp 中, <code>Nonlocal exits</code> 可以以一个错误结果(a result of errors)的形式出现,也可以通过显式控制(explicit control)的方式使用它们.
+</p>
+
+<p>
+(这里的错误和异常是同样一个意思,虽然英文中的词是不一样,但的确指同一个东西).
+</p>
+
+<p>
+下面我会用别的语言特性来做类比,主要是 <code>C</code> 语言和 <code>Python</code>
+</p>
+
+<ul class="org-ul">
+<li><p>
+显式控制(Catch and Throw)
+</p>
+
+<p>
+实现手段是利用 <code>catch</code> 和 <code>throw</code> 两个 special forms.如何理解它们?如果对支持 <code>goto功能</code> 的语言有了解,那么这就很好理解了.
+</p>
+
+<p>
+用 <code>C</code> 语言作为例子, <code>catch</code> 就相当于设置跳转点的 <code>label</code> 语句,而 <code>throw</code> 相当于执行跳转的 <code>goto</code> 语句,而跳转的目的地就是 <code>catch</code> 设置点.
+</p>
+
+<p>
+最后,它们的 <code>while</code> 循环都不会被执行,并且都返回0.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
+
+<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">main</span>()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">goto</span> <span style="color: #BFEBBF;">back</span>;
+
+    <span style="color: #F0DFAF; font-weight: bold;">while</span>(1){
+        <span style="color: #5F7F5F;">//</span><span style="color: #7F9F7F;">do something</span>
+        printf(<span style="color: #CC9393;">"%d"</span>, 1);
+    }
+
+    <span style="color: #BFEBBF;">back</span>: printf(<span style="color: #CC9393;">"You are going to exit now"</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> 0;
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">catch-throw-example</span> ()
+  (<span style="color: #F0DFAF; font-weight: bold;">catch</span> '<span style="color: #BFEBBF;">back</span>
+    (<span style="color: #F0DFAF; font-weight: bold;">progn</span>
+      (print <span style="color: #CC9393;">"You are going to exit now"</span>)
+      (<span style="color: #F0DFAF; font-weight: bold;">throw</span> '<span style="color: #BFEBBF;">back</span> 0))
+    (<span style="color: #F0DFAF; font-weight: bold;">while</span> t
+      (print 1))))
+</pre>
+</div>
+
+<p>
+关于 <code>catch</code> 和 <code>throw</code> 更多的示例可以在 <code>M-: (info "(elisp)Examples of Catch")</code> 找到,这里就不写了.
+</p></li>
+
+<li><p>
+利用错误/异常(Errors)
+</p>
+
+<p>
+这个就是编程语言的异常处理机制.
+</p>
+
+<p>
+这里用 <code>Emacs Lisp</code> 和 <code>Python</code> 的异常处理机制对比一下,除了语法不一样以外真是十分一致.下面两个例子的变量的名字已经保持一样了.
+</p>
+
+<p>
+其中, 下面的 <code>error</code> 不是平时的 <code>(error string &amp;rest args)</code> ,这里代表所有类型的错误的"祖先"/"root",所有类型的错误直接或间接派生自它.
+</p>
+
+<p>
+它与 <code>Python</code> 的 <code>Exception</code> 一样可以用于捕捉使用错误/异常(事实上, <code>Python</code> 的 <code>Exception</code> 有3个系统级别的异常捕捉不了).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">err-handle-example</span> ()
+  (<span style="color: #F0DFAF; font-weight: bold;">condition-case</span> err
+      (+ 1 a)
+    (<span style="color: #D0BF8F; font-weight: bold;">error</span>
+      (message <span style="color: #CC9393;">"Error occurs"</span>)
+      err)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">err_handle_example</span><span style="color: #DCDCCC;">()</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">try</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> 1 + a
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">except</span> <span style="color: #7CB8BB;">Exception</span> <span style="color: #F0DFAF; font-weight: bold;">as</span> err:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Error occurs"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> err
+</pre>
+</div>
+
+<p>
+<code>Emacs Lisp</code> 有3个引发异常的 special forms 和支持自定义异常.
+</p>
+
+<p>
+如何引发一个异常 <code>M-: (info "(elisp)Signaling Errors")</code>
+</p>
+
+<p>
+关于定义新异常和标准的异常 <code>M-: (info "(elisp) Error Symbols")</code>
+</p></li>
+
+<li><p>
+清理(Cleanups)
+</p>
+
+<p>
+通过利用 <code>Emacs Lisp</code> 的 <code>unwind-protect</code> 来确保在结束前执行动作,不论结束之前发生了什么,哪怕是发生报错.
+</p>
+
+<p>
+如果问这个跟 <code>Python</code> 里面的哪样东西最像,那必然是异常捕捉的 <code>finally</code> 从语,都是不管发生前面什么事情,都会在结束前执行.
+</p>
+
+<pre class="example">
+
+       这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
+
+       当然如果 f.open() 打开失败还是不会执行以后的语句.权限不足,文件所在的目录不存在,就会发生报错的情况.
+
+       使用 Emacs Lisp 的 find-file-noselect 是不会发生这种事情,现在假定 Python 不会发生这些情况.
+
+</pre>
+
+<p>
+两个程序都是打开一个文本名叫"text.txt"并且插入"Insert content"内容,最后关闭文本.
+</p>
+
+<p>
+其中, <code>(kill-buffer buffer)</code> 跟 <code>f.close()</code> 一样都是关闭文本,前者是 <code>Emacs Lisp</code> 的 <code>unwindform</code>, 后者是 <code>Python</code> 的 <code>finally</code> 从句.
+</p>
+
+<p>
+而 <code>(insert "Insert content")</code> 和 <code>f.write("Insert content")</code> 都是处于异常捕捉的保护区域里面,这样两者的关系就很明了了.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(<span style="color: #F0DFAF; font-weight: bold;">let</span> ((buffer (find-file-noselect <span style="color: #CC9393;">"text.txt"</span>)))
+  (<span style="color: #F0DFAF; font-weight: bold;">unwind-protect</span>
+      (<span style="color: #F0DFAF; font-weight: bold;">with-current-buffer</span> buffer
+        (insert <span style="color: #CC9393;">"Insert content"</span>))
+    (kill-buffer buffer)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #DFAF8F;">f</span> = <span style="color: #DCDCCC; font-weight: bold;">open</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'text.txt'</span>, <span style="color: #CC9393;">'w'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #F0DFAF; font-weight: bold;">try</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   f.write<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Insert content"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #F0DFAF; font-weight: bold;">except</span> <span style="color: #7CB8BB;">Exception</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">pass</span>
+<span style="color: #F0DFAF; font-weight: bold;">finally</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   f.close<span style="color: #DCDCCC;">()</span>
+</pre>
+</div></li>
+</ul></li>
+</ul>
 </div>
 </div>
 
@@ -988,15 +1172,6 @@ Emacs的时候我还用了 <code>Evil</code> 模拟VIM的按键,不过那个时�
 写这些的时候我才理解为什么有人说Emacs是一种生活态度了.
 </p></li>
 </ul>
-</div>
-</div>
-
-<div id="outline-container-org5fb7b68" class="outline-2">
-<h2 id="org5fb7b68">更新日志</h2>
-<div class="outline-text-2" id="text-org5fb7b68">
-<p>
-列出文档的改变之处.
-</p>
 </div>
 </div>
 </div>
