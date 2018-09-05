@@ -812,6 +812,8 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
    - [[https://developer.mozilla.org/en-US/docs/Web/API][Web APIs]]
 
+   - [[https://developer.mozilla.org/zh-CN/docs/Web/API/Element][Element APIs]]
+
    - [[https://developer.mozilla.org/en-US/docs/Web/API/Response][关于Response的API]]
 
    - [[https://developer.mozilla.org/en-US/docs/Web/API/Cache][Cache API]]
@@ -833,7 +835,7 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
    - [[https://developer.mozilla.org/zh-CN/docs/Web/Tutorials][MDN给出的初中高级的教程资源]]
 
 
-** 一些工具
+** 一些工具和 code snippets
 
    在合适的环境下使用合适工具也是一个开发人员的必备技能.
 
@@ -857,4 +859,76 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
      #+BEGIN_SRC html
      <script type="text/javascript" src="http://livejs.com/live.js"></script>
+     #+END_SRC
+
+   - 给所有页面元素添设定事件
+
+     #+BEGIN_EXAMPLE
+     写于 2018/9/5
+     #+END_EXAMPLE
+
+     有两种解决方法,一种就是遍历元素设定事件,这样有两个问题,性能和资源占用会有问题,另外一个问题就是新增的元素没有被设定事件.
+
+     另外一种就是利用[[https://www.w3.org/TR/DOM-Level-3-Events/#event-flow][事件流]].
+
+     浏览器处理 DOM 的事件是这样的一个过程:
+
+     当触发某一个事件的时候,比如在页面某个元素点了一下,触发了 =onclick= 事件.
+
+     1. 事件捕获阶段:事件对象通过目标的祖先元素,由 =window= 对象到目标的父元素传播.
+
+     2. 目标查找阶段:事件对象到达触发事件的目标上面后执行事件,如果事件类型指定了事件不冒泡,事件对象就会在这个阶段完成后停止.
+
+     3. 事件冒泡阶段:事件对象从目标的父元素到 =window= 进行传播,这个过程中,目标的祖先元素相应的监听事件也会执行.
+
+        比如
+
+        #+BEGIN_SRC html
+        <html>
+            <body>
+                <div class="parent">
+                    <div class="child">
+                        <p>I am the child</p>
+                    </div>
+                </div>
+                <script>
+                    var parent = document.querySelector(".parent");
+                    var child = document.querySelector(".child");
+                    parent.onclick = function() {alert("Parent");};
+                    child.onclick = function() {alert("Child");};
+                </script>
+            </body>
+        </html>
+        #+END_SRC
+
+        点击 "I am the child" 会触发两次 =alert=, 先是 =Child=, 后是 =Parent=.
+
+     现在使用事件代理( =delegate= )可以完美解决这些问题,同时取消事件冒泡.
+
+     #+BEGIN_SRC javascript
+     document.onclick = function(event) {
+         // about the interface of Event object
+         // https://dom.spec.whatwg.org/#event
+         event = event || window.event;
+         var target = event.target || event.srcElement;
+         var is_event_set = target.onclick;
+         if (target.tagName == 'DIV' && target.className == 'outline') {
+             target.onclick = function(event) {
+                 /*
+                 可以根据元素地属性判断是否你想要地元素,如果符合条件就执行动作.
+                 比如,对class为outline的div元素添加事件,这就是在需要的时候添加事件,可以节省资源
+                 */
+                 /*
+                 如果要取消冒泡,则点击事件必须要传入event对象,然后
+                 设定 event 对象的 bubbles 为 false 或者 cancelBubble 为 true.
+                  */
+                 (event.bubbles = false) || (event.cancelBubble = true);
+                 if (target.tagName == 'DIV' && target.className == 'outline') {
+                     console.log(target);
+                 }
+             };
+         }
+         // 第一次点击是设定事件,要触发就要点击第二次,为了第一次就触发要做判断
+         if(!is_event_set) target.onclick(event);
+     };
      #+END_SRC

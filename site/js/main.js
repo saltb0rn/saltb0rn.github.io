@@ -23,6 +23,23 @@ window.document.addEventListener('DOMContentLoaded', function() {
         if (validation) {
             validation.style.display = "none";
         }
+        // // delegate
+        // document.onclick = function(event) {
+        //     // about the interface of Event object
+        //     // https://dom.spec.whatwg.org/#event
+        //     event = event || window.event;
+        //     var target = event.target || event.srcElement;
+        //     is_event_set = target.onclick;
+        //     target.onclick = function(event) {
+        //         /* 阻止冒泡阶段,因为不希望祖先元素的事件被触发:
+        //            点击事件必须传入event对象,设定该对象的bubbles属性为false.
+        //          */
+        //         (event.bubbles = false) || (event.cancelBubble = true);
+        //         console.log('this is ', target);
+        //         console.log('proto is ', target.tagName);
+        //     };
+        //     if (!is_event_set) target.onclick(event);
+        // };
     }
 
     function setup_style_for_post() {
