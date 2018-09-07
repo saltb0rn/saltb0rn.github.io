@@ -383,8 +383,6 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
    - at-rule
 
-     学习中 https://developer.mozilla.org/zh-CN/docs/Web/CSS/At-rule
-
      - =@charset= 定义样式表的编码,一般是"utf-8"
 
      - =@import= 导入别的样式文件
@@ -394,6 +392,8 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
      - 嵌套@规则,既可以像上面的几个rules一样做为一个语句,也可以用在条件规则组里面.
 
        所谓条件规则组就是表达: "条件是否等于true或false,为true那么它们里面的语句就生效".
+
+       条件规则只包含 3 个, =@media, @supports 和 @document=
 
        - =@media=
 
@@ -413,14 +413,72 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
        - =@page=
 
+         打印文档时修改某些 =CSS= 属性,只能修改 margin, orphans, window 和 page breaks of documents.
+
+         (现在没用上,先跳过,日后更新)
+
        - =@font-face=
+
+         下载在线字体资源,消除对用户电脑字体的依赖.
+
+         比如,在 =http://developer.mozilla.org/@api/deki/files/2934/=VeraSeBd.ttf= 下载 =Bitstream Vera Serif Bold= 字体.
+
+         #+BEGIN_SRC css
+         @font-face {
+           font-family: "Bitstream Vera Serif Bold";
+           src: url("http://developer.mozilla.org/@api/deki/files/2934/=VeraSeBd.ttf");
+         }
+
+         body {font-framily: "Bitstream Vera Serif Bold", serif}
+         #+END_SRC
 
        - =@keyframes=
 
+         定义关键帧动画.
+
+         下面例子,鼠标停留在图片上然后播放缩放动画.
+
+         #+BEGIN_SRC css
+         @keyframes zoom-out-in {
+           from {
+             width: 10%;
+             height: 10%;
+           }
+
+           50% {
+             width: 15%;
+             height: 15%;
+           }
+
+           to {
+             width: 10%;
+             height: 10%;
+           }
+         }
+
+         img {
+           height: 10%;
+           width: 10%;
+         }
+
+         img:hover {
+           animation-name: zoom-out-in;
+           animation-duration: 3s;
+           animation-timing-function: ease-in-out;
+         }
+         #+END_SRC
+
+         其中, =from= 和 =to= 分别是 =0%= 和 =100%= 的别名,它们分别表示在 =0%= 和 =100%= 的时候的帧.
+
+         还可以设定更多帧.这个例子有设定了3个帧.然后在 =img= 元素调用这个动画,并且设定播放时间为3秒,以 =ease-in-out= 方式播放.
+
        - =@supports=
+
+         (之后补充)
 
        - =@document=
 
+         (之后补充)
 
    - 媒体查询
 
@@ -525,11 +583,113 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
      - Flex布局
 
-       TODO: 学习 https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Basic_Concepts_of_Flexbox
+       - 概念
+
+         是一个种一维的布局模型,一次只能处理一列或者一行. =Flexbox= 会涉及到两根轴(axes),主轴(main axis)和交叉轴(cross axis),交叉轴垂直于主轴.
+
+         实际开发中只能设定主轴,交叉轴就是概念上的东西.
+
+         主轴通过 CSS的 =flex-direction= 属性定义,它有4个值:
+
+         - row
+
+         - row-reverse
+
+         - column
+
+         - column-reverse
+
+       - 关于起始线和终止线
+
+         =Flexbox= 不会假设文档的书写模式(the writing mode of the document).以前的 =CSS= 布局把文档书写模式认为是水平和从左到右的书写模式.
+
+         不同语言的方向会不一样,比如英语是从左到右,阿拉伯语是从右到左.
+
+         两条轴都有起点和终点(起始线和终止线).
+
+         假如主轴的方向是 =row= ,文本是英语的话,起始线在左边,终止线在右边.如果是阿拉伯语就相反.交叉轴的起始线和终止线都一样,分别是上边和下边.
+
+       - Flex容器
+
+         #+BEGIN_SRC css
+         .elm {
+           display: flex;
+           flex-direction: row;
+           flex-basis: auto;
+           flex-wrap: nowrap;
+         }
+         #+END_SRC
+
+         上面都是一个 =flex= 容器的默认属性.
+
+         容器里面的元素从主轴的起始线开始.元素不会在主轴方向延伸,如果元素的宽度大于容器,
+
+         容器会自动缩小(缩小是有限度的).但会延伸填充交叉轴.
+
+       - 多行显示的 =flex= 容器, =flex-wrap=
+
+         如果元素太多无法一行显示,那么可以设定 =flex-wrap= 为 =wrap= 来换行.
+
+       - 其他的属性
+
+         - flex-flow
+
+           =flex-direction= 和 =flex-wrap= 的混合.
+
+           #+BEGIN_SRC css
+           .elm {
+             display: flex;
+             flex-flow: row wrap;
+           }
+           #+END_SRC
+
+         - =flex= 容器里元素的属性
+
+           =flex= 是下面前3个的 shorthand.
+
+           - =flex-grow=
+
+           - =flex-shrink=
+
+           - =flex-basis=
+
+           - =align-items=
+
+             沿着交叉轴对齐元素.
+
+             4个可选值:
+
+             1. stretch
+
+             2. flex-start
+
+             3. flex-end
+
+             4. center
+
+           - =justify-content=
+
+             沿着主轴对齐元素.
+
+             6个可选值:
+
+             1. stretch
+
+             2. flex-start
+
+             3. flex-end
+
+             4. center
+
+             5. space-around
+
+             6. space-between
 
      - Grid布局
 
-       TODO: 学习 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Grid_Layout/Basic_Concepts_of_Grid_Layout
+     TODO: 学习 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Grid_Layout/Basic_Concepts_of_Grid_Layout
+
+
 
    - 更深入盒子模型以及布局
 
@@ -834,6 +994,13 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
    - [[https://developer.mozilla.org/zh-CN/docs/Web/Tutorials][MDN给出的初中高级的教程资源]]
 
+   - [[https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/Introduction][Node]]
+
+     这不是关于前端的,这是关于如何使用 =Node.js= 和 =Express= 开发后端的.
+
+     对于非 =Node.js= 的后端人员可能会问,我都有 =Python/Racket/Common Lisp/Ruby/etc= 了,为何还要用 =JavaScript= 写后端呢?
+
+     当然是为了好玩啊. Let's rock to the sun.
 
 ** 一些工具和 code snippets
 
