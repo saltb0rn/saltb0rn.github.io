@@ -1,0 +1,6387 @@
+#+title: Racket Guide 笔记
+#+date: 2018-09-20
+#+index: Racket Guide 笔记
+#+tags: Racket
+#+options: ^:nil toc:t
+
+#+begin_abstract
+这篇笔记的最早是从 =2018-9-8= 开始写的.
+
+接触 =Racket= 有一段时间了,比 =Emacs Lisp= 要晚一点,一直没有很认真的读过官方 =Racket Guide= 手册.
+
+几个月前读了 =EOPL= 这本书之后就很喜欢这门语言了,不过空余时间不多,所以只能用碎片时间来读,顺便写写笔记.
+
+虽然"抄文档"这方式学语言"很蠢",但是十分有效,因为文档的一些描述可能不太符合自己,这种时候就需要自己把感想和重点记录下来,这样读完一遍会大有收获.
+
+其实文档还有 =Racket Reference= 的,不过个人觉得如果是概念的话还是看 =Guide= 比较好, =Reference= 主要偏向于 =APIs= 文档.
+
+我主要是整理文档上的 =working examples= 和写一些自己的 =working examples= 和感想,为了理解做笔记会涉及一些其它语言的特性来做类比,不涵盖所有章节,只写比较重要的章节.
+
+还有就是有一部分文档的内容不太明白,比如语法污染这种,之后我会花时间去了解.
+
+个人不太推荐看我这篇笔记,我主要是给自己做备忘和理解的,会有很多笔误或者理解错误.
+
+但是也要知道一件事,官方文档的错误也有不少,有些例子是不能正常运行的,比如第14章的关于给单元添加约束是有问题的,所以自己读官方文档的人要注意了.
+#+end_abstract
+
+* Th Racket Guide
+** 3 Built-in Datatypes
+
+=Racket= 的数据是有可变(mutable)与不可变(immutable)之分.
+
+可以使用 =immutable?= form 进行大概判断. =immutable?= 只能用于 =string, byte string, vector, hash table 和 box= .
+
+这些类型的数据才能返回 =#t= , =pair?= 也是 =immutable= 却返回 =#f=, 因为 =pair?= 隐含着不可变的特性.
+
+#+BEGIN_EXAMPLE
+
+Emacs Lisp 和 Common Lisp 里面有 self-evaluating form 这个概念, 在 Emacs Lisp 中的定义:
+
+A self-evaluating form is any form is not a list of symbol.
+
+Self-evaluating forms evaluate to themselves:
+
+the result of evaluation is the same object that was evaluated.
+
+Racket里面还要加上一个 pair,除了list,pair和symbol,所有数据是self-evaluating forms.
+
+比如(+ 1 2)结果为3,'(+ 1 2)就是一个列表,没有求值,所以(+ 1 2)不是一个 self-evaluating form.
+
+再比如'1就是1,'#t就是#t,这些就是是self-evaluating forms.
+#+END_EXAMPLE
+
+*** Booleans
+
+除了 =#f= , =Racket= 里面所有对象的布尔值都为 =#t= .
+
+#+BEGIN_SRC scheme
+(boolean? #t) ; #t
+(boolean? #f) ; #t
+(boolean? 1)  ; #f
+(if (void) 1 2) ; 1
+#+END_SRC
+
+*** Numbers
+
+一个 =Racket= 数字不是精确的(exact)就是不精确的(inexact).
+
+- 精确数(exact number)
+
+  - 一个任意大或者小的整数
+
+  - 一个由两个任意大或小的整数组成比例的有理数, 比如 =1/2= , =999999/2= , =-3/4= .
+
+  - 一个有实部和虚部的复数, 比如 =1+2i= , =1/2+3/4i= .
+
+- 不精确数(inexact number)
+
+  - =IEEE= 浮点数, 比如 =2.0= , =2.0+3.0i= 或 =-inf.0+nan.0i=
+
+  - 一个实部和虚部都是 =IEEE= 浮点数的复数,一个例外,实部为0和虚部为不精确数组合的复数.
+
+*** Characters
+
+一个 =Racket= 字符对应一个Unicode标量值(Unicode scalar value).粗略地说,一个标量值就是一个无符号整数,
+
+它的表示(representation)最大可以用21位(bits)进行储存,对应自然语言里面字符的概念.
+
+=Racket= 里面分可打印字符与不可打印字符.以 =#\= (或者 ='#\=)开头的字符就是可打印字符,以 =#\u= (或者 ='#\=)开头的字符就是不可打印字符.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+#\a
+'#\A
+#\u03BB
+(integer->char 17) ; #\A
+(char->integer #\A) ; 65
+(display #\A) ; A
+(char->alphabetic? #\A) ; #t
+(char-numeric? #\0) ; #t
+(char-whitespace? #\newline) ; #t
+(char-downcase #\A) ; #\a
+(char-upcase #\ß) ; #\ß
+(char=? #\a #\A) ; #f
+(char-ci=? #\a #\A) ; #t
+(eqv? #\a #\A) ; #f
+#+END_SRC
+
+*** Strings(Unicode)
+
+字符串是长度固定的字符数组.
+
+字符串使用双引号("")包围内容,字符串里面的双引号和反斜线(backslash,\)需要被反斜线反转义(escaped).
+
+它包括一些常用的字符串转义 =\n= (linefeed,换行), =\r= (carriage return,回车).
+
+
+#+BEGIN_SRC scheme
+#lang racket
+
+"Apple"
+"\u03BB" ; "λ"
+(display "Apple") ; Apple
+(write "Apple") ; "Apple"
+(print "Apple") ; "Apple"
+(string-ref "Apple" 0) ; #\A
+(make-string 5 #\.) ; "....."
+(string-set! s 2 #\λ) ; "..λ.."
+(display "\"\\\"") ; "\"
+(string<? "apple" "Banana") ; #f
+(string-ci<? "apple" "Banana") ;#t
+(string-upcase "Straße") ; "STRASSE"
+(parameterize ([current-locale "C"])
+  (string-locale-upcase "Straße")) ;"STRAßE"
+#+END_SRC
+
+*** Bytes and Byte String
+
+一个字节(byte)就是一个0到255之间的精确整数.
+
+一个字节串(byte string)就是一个字节序列.字节串是以 =#= (或者 ='#=)开头的字符串.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(byte? 0) ; #t
+(byte? 256) ;#f
+
+#"Apple"
+(bytes-ref #"Apple" 0) ; 65
+(make-bytes 3 65) ; 3 个 65, #"AAA"
+(bytes-set! (make-bytes 3 65) 0 1)
+
+(bytes->string/utf-8 #"\316\273") ; "λ"
+(bytes->string/latin-1 #"\316\273") ; "Î»"
+#+END_SRC
+
+*** Symbols
+
+符号(symbol)是一个原子值,以一个 ='= 开头的标识符(identifier)就是一个符号值.
+
+注意下面的字符不能作为标识符号的开头字符,
+
+#+BEGIN_EXAMPLE
+( ) [ ] { } " , ' ` ; # | \
+#+END_EXAMPLE
+
+实际上, ='#%= 是可以的. =.= 也不能单独作为标识符.
+
+符号分 =interned= 和 =uninterned= .除了 =gensym= 和 =string->uninterned-symbol= 生成的符号外,都是 =uninterned= 符号.
+
+符号是大小写敏感的.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(eq? 'a 'a) ; #t
+(eq? 'a (string->symbol "a")) ; #t
+(eq? 'a 'b) ; #f
+(eq? 'a 'A) ; #f
+(eq? 'a (quote a)) ; #t,'就是quote的简写.
+#ci'A       ; 'a
+(string->symbol "one, two") ; '|one, two|
+(string->symbol "6")        ; '|6|
+(define s (gensym)) ; 生成任意符号,绝对不会与系统里面的符号相同
+(write 'Apple) ; 打印 Apple
+(display 'Apple) ; 打印 Apple
+(write '|6|) ; 打印 |6|
+(display '|6|) ; 打印 6
+(eq? 'a (string->uninterned-symbol "a")) ; #f
+#+END_SRC
+
+*** Keywords
+
+关键词(keyword)值类似与一个符号(symbol),它的打印是以 =#:= (或者 ='#:=)开头.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(string->keyword "apple") ; '#apple
+(eq? '#:apple (string->keyword "apple")) ; #t
+#+END_SRC
+
+*** Pairs and Lists
+
+=pair= 和 =list= 的区别: =pair= 是一个对值, =list= 是一个列表.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(cons 1 2) ; '(1 . 2) ; 是pair,不是list,称为 non-list pairs
+(cons 1 (list 2 3)) ; '(1 2 3),是pair,也是list
+(pair? '(1 . 2)) ; #t
+(list? '(1 . 2)) ; #f
+(pair? '(1 2 3)) ; #t
+(list? '(1 2 3)) ; #t
+
+(cons 0 (cons 1 2)) ; '(0 1 . 2)
+#+END_SRC
+
+其实 =(cons 1 (list 2 3))= 等于 =(1 . (2 . (3 . ())))= .
+
+=Racket= 里面,打印 =pair= 是遵守一条规则: 使用 =.(dot)= 除非dot后面跟随着左括号(open parenthesis),并且移除匹配的左括号和右括号.
+
+这就是为什么 =(cons 0 (cons 1 2))= -> =(0 . (1 . 2))= -> =(0 1 . 2)= , =(cons 1 (list 2 3))= -> =(1 2 3)= .
+
+根据这条规则,可以这么用dot,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(+ 1 . (2)) ; 3, 相当于 (+ 1 2)
+(1 . < . 2) ; #t, 这pair相当于 (< 1 2), 这叫two-dot convention,不是Lisp的传统.
+'(1 . < . 2) ; '(< 1 2)
+
+(define p (cons 1 2)) ; 不可变版本
+(define mp (mcons 1 2)) ; 可变版本
+(mpair? mp) ; #t
+(pair? mp) ; #f
+(set-mcar! mp 0)
+(write mp) ; 打印 {0 . 2}
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+Racket的语法(Racket Syntax)不是直接根据字符流(character stream)定义的,是由 reader layer 和 expander layer 共同决定的.
+
+当运行程序的时候,过程如下:
+
+1. reader layer: 把字符流(源代码文件流或者REPL的输入流)处理成一个语法对象(syntax object,16章会讲);
+
+2. expander layer: 把这个语法对象(递归得)处理成一个完全解析好(full parsed)的语法对象,这个语法对象就是一个表达式.
+
+还是有一个 printer layer 的,但是它不决定语法,不过打印和读取的规则是一起.比如一个空列表会被打印成一对括号,读取一对括号也会产生一个列表.
+
+
+#+END_EXAMPLE
+
+*** Vectors
+
+一个 =vector= 就是一个数组(=fixed-length arrary= ,数组本来就是固定长度的),既可以是可变的(mutable)也可以是不可变的(immutable).
+
+直接写的是不可变的(下面会以这种形式展示).
+
+不像 =list= , =vector= 支持常量时间(constant-time)的访问和元素更新.
+
+=vector= 的打印是以 ='#= 开头的,要通过打印定义 =vector= 可以用 ='#= 或者 =#= 做为前缀,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+'#("a" "b" "c")
+#("a" "b" "c") ; 和上面的结果一样
+'#(name (that tune))
+#4(bladwin bruce) ; 这个特殊一点,设定了长度为4,剩余的位子由最后一个元素填充, #(bladwin bruce bruce bruce)
+(vector-ref #("a" "b" "c") 1) ; "b"
+(vector-ref #(name (that tune)) 1) ; '(that tune)
+(list->vector (vector->list #("one" "two" "three"))) ; #("one" "two" "three")
+#+END_SRC
+
+*** Hash Tables
+
+哈希表(hash table)实现了从键(keys)到值(values)的映射,键和值都可以是任何一个 =Racket= 值,访问和更新操作都是在常量时间内完成.
+
+可以使用 =equal?, eqv? 和 eq?= 来对键进行比较,这取决与哈希表是 =make-hash, make-hasheqv 或者 make-hasheq= 种的哪个创建的.
+
+3种方式得到哈希表分别叫 =equal?-based table, eqv?-based table 和 eq?-based table= ,
+
+分别前缀为 =#hash, #hasheqv 和 #hasheq= (你可以分别给它们的前面加上').
+
+哈希表是可变或者不可变的,手写的是不可变的,用上面的3个构造函数生成的是可变的.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define equal?-ht (make-hash))
+(hash) ; 不可变
+#hash()
+
+(define ht (hash "apple" 'red "banana" 'yellow))
+(hash-ref ht "apple") ; 'red
+(define ht2 (hash-set ht "orange" 'orange))
+(hash-ref ht2 "orange") ; 'orange
+(hash-count ht) ; 2
+(hash-count ht2) ; 3
+
+(define eqv?-ht (make-hasheqv))
+#hasheqv()
+
+(define eq?-ht (make-hasheq))
+#hasheq()
+
+;; 哈希表还有把key变为weak,只要key能够访问就可以访问对应的值.
+(define ht-weak-key (make-weak-hasheq))
+(hash-set! ht-weak-key (gensym) "can you see me?")
+(collect-garbage)
+(hash-count ht-weak-key) ; 0
+
+;; 但是弱哈希表的值反过来引用键的时候,gc也回收不了.
+(define ht-strong-value (make-weak-hasheq))
+(let ([g (gensym)])
+  (hash-set! ht-strong-value g (list g)))
+(collect-garbage)
+(hash-count ht-strong-value) ; 1
+
+;; 这种时候要用 ephemeron 解决
+(define ht-free-strong-value (make-weak-hasheq))
+(let ([g (gensym)])
+  (hash-set! ht-free-strong-value g (make-ephemeron g (list g))))
+(collect-garbage)
+(hash-count ht-free-strong-value) ; 0
+#+END_SRC
+
+*** Boxes
+
+=box= 既可以可变也可以不可变.像单个元素的 =vector= .
+
+可以以 =#&= 或者 ='#&= 作为打印前缀.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define b (box "apple"))
+'#&"apple"
+#&"apple"
+(unbox b)
+(set-box! b '(banana boat))
+#+END_SRC
+
+*** Void and Undefined
+
+=(void) => #<void>= , =#<void>= 是 Racket 的常量,然而在 =REPL= 调用 =void= 是不会有任何东西被打印.
+
+用 =displayln= 之类的就可以, =void= 接收任何参数并且会无视它们的值返回 =#<void>= ,
+
+如果不想被某个 =expressioin= 的返回值影响,可以把 =expression= 作为 =void= 的参数.
+
+#+BEGIN_SRC sh
+> (displayln (void))
+#<void>
+> (displayln (void 1 2 3))
+#<void>
+#+END_SRC
+
+=undefined= 也是 =Racket= 的常量,可以通过 =(require racket/undefined)= 来使用它,一般我们不会使用它,
+
+它只要在引用没有定义的值引发异常就可以了.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(require racket/undefined)
+undefined
+#+END_SRC
+
+** 4 Expressions and Definitions
+
+这个章节东西很杂,所以很多东西会跳过,挑一些重点.
+
+*** Functions
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;;; 下面是固定参数函数的定义以及调用
+
+(define func-lambda (lambda (x y) (+ x y)))
+
+(func-lambda 1 2) ; 3
+((lambda (x y) (+ x y)) 1 2) ; 匿名函数直接调用,相当于上面两句的简写
+
+(define (func-define x y) (+ x y)) ; 第一种的shorthand
+
+(func-define 1 2) ; 3
+
+#|
+柯里化定义
+func : variable -> procedure
+procedure : variable -> number
+|#
+(define ((func-curry x) y) (+ x y)) ; 这种定义方式对下面的也是可以用的
+
+((func-curry 1) 2) ; 3
+
+;; 来两个无参数的定义
+(define func-lambda-no-args (lambda () 1))
+
+(define (func-define-no-args) 1)
+
+(func-lambda-no-args) ; 1
+
+(func-define-no-args) ; 1
+
+;;; 不定长(Rest)参数函数定义
+(define func-lambda-rest (lambda x x))
+
+(func-lambda-rest 1 2 3) ; '(1 2 3)
+
+(func-lambda-rest) ; '()
+
+((lambda x (car x)) 1 2 3) ; 1
+
+(define (func-define-rest . x) x)
+
+(func-define-rest 1 2 3) ; '(1 2 3)
+
+(define func-lambda-pos-rest (lambda (x . y) (list x y)))
+
+(define (func-define-pos-rest x . y) (list x y)) ; the same
+
+(func-lambda-pos-rest 1 2 3 4) ; '(1 (2 3 4))
+
+(func-define-pos-rest 1 2 3 4) ; '(1 (2 3 4))
+
+;;; 可选(Optional)参数函数定义
+(define func-lambda-optional (lambda ([x 1]) (+ x 1)))
+
+(define (func-define-optional [x 1]) (+ x 1))
+
+(func-lambda-optional) ; 2
+
+(func-define-optional) ; 2
+
+(func-lambda-optional 2) ; 3
+
+(func-define-optional 2) ; 3
+
+(define func-lambda-pos-optional (lambda (x [y 2]) (+ x y)))
+
+(define (func-define-pos-optional x [y 2]) (+ x y))
+
+(func-lambda-pos-optional 1) ; 3
+
+(func-define-pos-optional 1) ; 3
+
+(func-lambda-pos-optional 1 1) ; 2
+
+(func-define-pos-optional 1 1) ; 2
+
+;;; 关键词(Keyword)参数函数定义
+(define func-lambda-keyword (lambda (x #:rand y) (+ x y)))
+
+#|
+(define func-lambda-keyword (lambda (#:rand y x) (+ x y)))
+; x参数顺序调换也是可以的
+|#
+
+(define (func-define-keyword x #:rand y) (+ x y))
+
+(func-lambda-keyword 1 #:rand 2) ; 3
+
+(func-lambda-keyword #:rand 2 1) ; 3
+
+(func-define-keyword 1 #:rand 2) ; 3
+
+(func-define-keyword #:rand 2 1) ; 3
+
+
+;; 给关键词设定默认值
+(define func-lambda-default-keyword (lambda (x #:rand [y 1]) (+ x y)))
+
+(define (func-define-default-keyword x #:rand [y 1]) (+ x y))
+
+(func-lambda-default-keyword 1) ; 2
+
+(func-lambda-default-keyword 1 #:rand 2) ; 3
+
+(func-define-default-keyword 1) ; 2
+
+(func-define-default-keyword 1 #:rand 2) ; 3
+
+#|
+lambda不直接支持创建接受"rest" keywords函数,
+
+为了构建一个接受所有关键词参数的函数,可以通过make-keyword-procedure解决这个问题.
+
+提供给make-keyword-procedure的函数需要3个参数,前面两个分别是关键词和关键词对应的值,
+
+最后一个就是所有的positional参数.
+|#
+
+(define (trace-wrap f)
+  (make-keyword-procedure
+   (lambda (kws kw-args . rest)
+     (printf "Called with ~s ~s ~s\n" kws kw-args rest)
+     (keyword-apply f kws kw-args rest))))
+
+((trace-wrap func-lambda-default-keyword) 1 #:rand 15) ; 打印 "Called with (#:rand) (15) (1)", 返回 16
+
+;;; 参数数量敏感(artiy-sensitive)的函数,根据参数数量来匹配函数体
+;; case-lambda 不直接支持关键词参数和可选参数
+(define f-case-lambda
+  (case-lambda
+    [(x) x]
+    [(x y) (+ x y)]
+    [(x . y) (apply + x y)]))
+
+;;; 来个位置参数(positional argument),剩余参数(rest argument),可选参数(optional argument)和关键词参数(keyword argument)的混合
+#|
+除了剩余参数要放最后一位外,其它参数的位置没什么要求.(虽然剩余参数后面还可以其它类型的参数,定义的时候没错,但这样好像取不了后面的参数值).
+|#
+(define f-lambda-mix
+  (lambda (pos [opt 0] #:key1 kopt1 #:key2 [kopt2 0] . rest) (apply + pos opt kopt1 kopt2 rest)))
+
+(define (f-define-mix pos [opt 0] #:key1 kopt1 #:key2 [kopt2 0] . rest)
+  (apply + pos opt kopt1 kopt2 rest))
+
+(f-lambda-mix 1 2 #:key1 3 #:key2 4 5 6 7) ; 28
+
+(f-define-mix 1 2 #:key1 3 #:key2 4 5 6 7) ; 28
+
+;;; 函数的调用
+#|
+上面已经有演示了,稍微说一下 apply, 至于keyword-apply,上面已经有例子了就不说
+|#
+
+;; 定义一个接收至少一个整数的函数,并且算出总和
+(define (sum-apply x . rest)
+  (apply + x rest))
+
+(sum-apply 1 2 3 4) ; 10,rest是 list?
+
+;; apply 也支持关键词参数
+(define (sum-apply-keyword #:key x . rest)
+  (apply + x rest))
+
+;; 换参数顺序也是可以的
+(apply sum-apply-keyword #:key 1 '(2 3 4)) ; 10
+(apply sum-apply-keyword '(2 3 4) #:key 1) ; 10
+
+
+#|
+你可能看到过 struct 这类操作符号的BNF语法,它们位置常数可以跟可选参数一样可选.
+要明白,它们虽然也是可以调用,但不是函数而是macros.函数是不可能定义成那样的.
+|#
+#+END_SRC
+
+*** Local Binding
+
+词法绑定
+
+#+BEGIN_SRC scheme
+#lang racket
+
+#|
+let有两种用法
+|#
+(define-values (x y) (values 3 4))
+
+;; 本地绑定变量,变量的使用只能在let的作用域里面使用,会shadow let外面的同名变量.
+(let ([x 1]
+      [y 2])
+  (+ x y)) ; 3,不是7
+
+;; 本地绑定函数,优先级与变量的一样.
+(let fac ([x 10]) ; 本地绑定了一个 fac 函数
+  (if (zero? x)
+      1
+      (* x (fac (sub1 x))))) ; 3628800
+
+#|
+也许你想这样写,的确可以把lambda表达式绑定给变量然后调用,但是下面的这例子是不行的,
+
+因为lambda表达式引用了绑定的变量,然而在lambda表达式里面的fac是不可见的,所以要用上面第二种形式.
+
+(let ([fac (lambda (x)
+             (if (zero? x)
+                 1
+                 (* x (fac (sub1 x)))))])
+  (fac 10))
+
+其实还有另外一种解决方法,等一下再说.
+|#
+
+#|
+let*类似let,不过只能绑定变量以及绑定变量之间可以相互引用
+|#
+
+(let* ([x 1]
+       [y x]) ; y 绑定了 x 的值,在 let 中是不可以这么做的
+  (+ x y)) ; 2
+
+; 相当于
+
+(let ([x 1])
+  (let ([y x])
+    (+ x y))) ; 2
+
+#|
+上面说了,let不能绑定递归函数到变量中,不过换成letrec就可以
+|#
+(letrec ([fac (lambda (x)
+                (if (zero? x)
+                    1
+                    (* x (fac (sub1 x)))))])
+  (fac 10)) ; 3628800
+
+;;; 还有各种变种,let-values,let*-values和letrec-values等等就不说了.
+#+END_SRC
+
+*** Conditionals
+
+#+BEGIN_SRC scheme
+;;; if
+(if #t 1 2) ; 1
+
+;;; when
+(when #f 1) ; void
+
+;;; unless
+(unless #f 1) ; 1
+
+;;; and or
+(and 1 2) ; 2
+(and 1 #f) ; #f
+(and #f 1) ; #f
+(or 1 2) ; 1
+(or 1 #f) ; 1
+(or #f 1) ; 1
+
+;;; cond
+;; 下面例子展示全部用法,
+(define (f-cond cond-expr)
+  (cond
+    [(number? cond-expr) (+ 1 cond-expr)]
+    [(boolean? cond-expr)]
+    [(procedure? cond-expr) => (lambda (v)               ; 这里把测试结果传入给了 => 后面的函数
+                                 (when v
+                                   (displayln (format "The cond-expr a function ~a" v))))]
+    [else (displayln "Not an value unstandable")]))      ; 如果没有一个匹配才执行
+#+END_SRC
+
+*** Sequencing
+
+=begin, begin0= 接收多个表达式,并且按顺序执行.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; if 的每个分支只能只能接受一个表达式,如果想在某一个分支按序执行多个表达式并且返回最后一个表达式的值,可以用begin
+(if (zero? 1)
+    (void)
+    (begin
+      (display "1 is not 0")
+      (newline)
+      2)) ; 2
+
+;; 还有一个begin0,与begin类似,不同在于它返回第一个表达式的值
+
+(if (zero? 1)
+    (void)
+    (begin0
+      2
+      (display "1 is not 0")
+      (newline))) ;2
+
+#|
+有很多forms,比如lambda,cond,when,unless等等不需要begin也支持按序执行,说这种form暗含一个begin form.
+
+它们都是Macro,展开的话的确有一个begin form.
+|#
+
+#+END_SRC
+
+*** Assignment: set!
+
+这自己主要是介绍什么时候用 =set!= .
+
+个人觉得,没有办法或者能更具可读性的情况下用 =set!= 是没问题的;可以不用 =set!= 的情况下用 =set!= 就有问题了.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; OK
+(define next-number!
+  (let ([n 0])
+    (lambda ()
+      (set! n (add1 n))
+      n)))
+
+(next-number!) ; 1
+(next-number!) ; 2
+(next-number!) ; 3
+
+;; Bad,因为这个可以用尾递归或者直接用(apply + arg ...)解决
+(define (sum lst)
+  (let ([s 0])
+    (for-each (lambda (i) (set! s (+ i s)))
+              lst)
+    s))
+#+END_SRC
+
+不正确使用 =set!= 有两方面的坏影响:
+
+- 性能,每次修改都需要分配空间;
+
+- 可读性,要时刻跟踪变量/对象的值,大型项目阅读起来会很不方便,模糊绑定.
+
+*** Quoting and Quasiquoting
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(quote symbol)
+'symbol       ; the same
+'(this is a list)
+
+(quasiquote symbol)
+`symbol       ; the same
+`(this is a list)
+
+#|
+quote form 的简写是 '; quasiquote form 的简写是 `.
+
+上面 quasiquote 和 quote 的结果都是相同的.
+
+不同的地方在于, quasiquote 允许使用 unquote 操作让它的参数运算以及 unquote-splicing 操作去掉list的括号.
+
+unquote form 的简写是 ,; unquote-splicing form 的简写是 ,@.
+|#
+
+(quote (This is (+ 1 2))) ; '(This is (+ 1 2))
+
+(quasiquote (This is (unquote (+ 1 2)))) ; '(This is 3)
+`(This is ,(+ 1 2)) ; the same
+
+(quasiquote ((unquote-splicing (list 1 '+ 2)) is 3)) ; '(1 + 2 is 3)
+`(,@(list 1 '+ 2) is 3)
+#+END_SRC
+
+*** Simple Dispatch: case
+
+这是跟 =Pattern Matching= 相关的 form.
+
+#+BEGIN_SRC scheme
+;; 第一个例子类似 cond 的用法
+(case (random 1 7)
+  [(1) 'one]
+  [(2) 'two]
+  [(3) 'three]
+  [(4) 'four]
+  [(5) 'five]
+  [else 'six])
+
+(case (random 1 7)
+  [(1 2 3) 'less-than-4]
+  [(4 5 6) 'bigger-than-3])
+
+;; 如果没有成功匹配的项就会报错
+#+END_SRC
+
+*** Dynamic Binding: parameterize
+
+先从语言使用者的角度来说明一下词法作用域(static scope, lexical scope or lexical binding)和动态作用域(dynamic scope or dynamic binding),
+
+(不从实现解析器的细节说,主要是我目前还没实现过动态作用域的语言,了解不深;另外一个原因照顾没有了解过解析器的读者).
+
+两者的差别在于对待自由变量方式不一样:
+
+- 词法绑定会在定义时候把环境打包进函数的定义,这里的环境就是变量的绑定表,从引用的地方向外查找自由变量的绑定.
+
+  每次调用函数的时候会根据参数和已经被打包的变量绑定表给函数定义更新绑定表,这张绑定表与全局的绑定表是互不影响,
+
+  也就是说词法绑定有多个环境(每调用一次函数产生一个).
+
+- 动态绑定就刚好相反,不维护自由变量的绑定,而是在调用的地方直接使用当前的环境,这意味着所有变量都在同一张绑定表里面,在不同地方以同样参数调用同一个函数可能会有不同结果.
+
+
+可能有点难理解,看下面例子就懂了,留意 x 的变化.
+
+#+BEGIN_SRC scheme
+;;; 词法绑定演示
+#lang racket
+
+(module mod1 racket
+  (provide get-x x next-y!)
+  (define (get-x) x)
+  (define x 0)
+  (get-x) ;
+  (set! x 1)
+  (get-x) ; 1
+
+  ;; 这个例子演示更新 next-y! 的自由变量绑定表
+  (define next-y!
+    (let ((y 0))
+      (lambda ()
+        (let ((res y))
+          (set! y (add1 y))
+          res)))))
+
+(module mod2 racket
+  (require (submod ".." mod1))
+  (provide next-y!)
+  (define x 2)
+  (get-x)) ; 结果是1不是2,因为 get-x 里面的自由变量 x 引用的是 mod1 里面的 x,
+
+(require 'mod2)
+(next-y!) ; 0
+(next-y!) ; 1
+(next-y!) ; 2
+#+END_SRC
+
+=Racket= (应该是没有真正的动态绑定的,本质上还是词法绑定) =parameterize= 可以实现动态绑定的效果,运行时候根据调用候的环境查找和决定自由变量.
+
+#+BEGIN_SRC scheme
+;;; 动态绑定
+#lang racket
+
+(module mod1 racket
+  (provide get-x x)
+  (define (get-x) (x))
+  (define x (make-parameter 1))) ; 定义一个parameter(不是传入给函数的参数,这里的parameter是用于使用动态绑定的函数,是一个种对象)
+
+(module mod2 racket
+  (require (submod ".." mod1))
+  (get-x) ; 1
+  (parameterize ([x 2])
+    (get-x)) ; 2,这里动态改变了自由变量 x 的绑定,
+  (get-x)) ; 1
+
+(require 'mod2)
+#+END_SRC
+
+=parameterize= 相对 =set!= 有不少有点:
+
+- 自动重设变量的值,可以用在异常处理中,异常发生时候可以用于还原变量.
+
+- 跟尾递归相性好.在 =APS(Accumulator passing style)= 中,可以在 =parameterize= form 计算最一个表达式.
+
+- 可以正确地跟线程工作.在当前线程的运算中用 =parameterize= form 调整值,可以避免与其它线程发生(race conditions)竞争条件.
+
+** 5 Programmer-Defined Datatypes
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; 可以通过结构体来定义新的数据类型,面向对象编程是另外一种方法定义新的数据类型,
+;; 个人感觉Racket的结构体太强大了,可以理解为什么面向对象编程在Racket中不流行.
+
+(struct posn (x y))
+;; 结构体默认没有约束,想建立约束参考第7章
+
+(define p1 (posn 1 2))
+
+(posn-x p1) ; 1
+(posn-y p1) ; 2
+
+;; struct-id          : 构造函数(constructor function),实例化结构体
+;; struct-id?         : 谓词函数(predicate function),判断结构体是否结构体类型的实例
+;; struct-id-field-id : 访问方法(accessor),获取结构体的字段的值
+;; struct:struct-id   : a structure type descriptor,一个表示结构体类型的值
+
+;;; Copying and Update
+
+(define p2 (struct-copy posn p1 [x 3])) ; p2为 (posn 3 2)
+
+;;; Structure Subtypes
+
+(struct 3d-posn posn (z))
+
+(define 3dp (3d-posn 1 2 3))
+
+(posn? 3dp) ; #t
+
+(3d-posn-z 3dp) ; 3
+
+(posn-x 3dp) ; 1, 没有3d-posn-x和3d-posn-y的选择器
+
+;;; Opaque versus Transparent Structure Types
+;; 默认是opaque,现在设定为transparent
+(struct posn-t (x y)
+  #:transparent)
+
+(define pt (posn-t 1 2)) ; 打印pt会显示(posn-t 12),如果是opaque的话会显示 #<posn-t>
+
+(struct? pt)             ; #t,(struct? p1)返回#f,对opaque使用只能返回#f
+
+(struct-info pt)         ; (values <struct-type:posn-t> #f),(struct-info p1)返回(values #f #t)
+
+;;; Structure Comparisons
+(struct glass (width height) #:transparent)
+
+(define trglass (glass 1 2))
+
+(equal? trglass (glass 1 2))     ; #t
+
+(struct lead (width height))
+
+(define slab (lead 1 2))
+
+(equal? slab slab)               ; #t
+
+(equal? slab (lead 1 2))         ; #f, 对于opaque类型的结构体来说是不能彼此之间对比
+
+
+;; 还是有可以在不把结构体变为transparent的情况下做equal?对比的.
+(struct lead-comparable (width height)
+  #:methods
+  gen:equal+hash
+  [(define (equal-proc a b equal?-recur)
+     ; compare a and b
+     ;; equal?-recur是equal?/recur,用来处理递归相等比较测试,因为数据循环是不会自动处理的.
+     (and (equal?-recur (lead-comparable-width a) (lead-comparable-width b))
+          (equal?-recur (lead-comparable-height a) (lead-comparable-height b))))
+   (define (hash-proc a hash-recur)
+     ; compute primary hash code of a
+     (+ (hash-recur (lead-comparable-width a))
+        (* 3 (hash-recur (lead-comparable-height a)))))
+   (define (hash2-proc a hash2-recur)
+     ; compute secondary hash code of a
+     (+ (hash2-recur (lead-comparable-width a))
+        (hash2-recur (lead-comparable-height a))))])
+
+(equal? (lead-comparable 1 2) (lead-comparable 1 2))
+
+(define h (make-hash))
+
+(hash-set! h (lead 1 2) 3)
+(hash-ref h (lead 1 2) (void))         ; t返回void,因为opaque结构体是不支持 hash
+
+(hash-set! h (glass 1 2) 4)
+(hash-ref h (glass 1 2))
+
+(hash-set! h (lead-comparable 1 2) 3)
+(hash-ref h (lead-comparable 1 2))
+
+;;; Structure Type Generativity
+;; 每一次运算一次 struct form 它都产生一个不同于已存在的结构体类型,哪怕其它结构体类型有着相同名字和字段
+(define (add-bigger-fish lst)
+  (struct fish (size) #:transparent)
+  (cond
+    [(null? lst) (list (fish 1))]
+    [else (cons (fish (* 2 (fish-size (car lst))))
+                lst)]))
+
+(add-bigger-fish null)
+;; (add-bigger-fish (add-bigger-fish null)) ; 这里报错,因为第二次调用的结构体已经不是fish了.
+;; 正确的做法是把结构体的定义放到函数外
+
+(struct fish (size) #:transparent)
+(define (add-bigger-fish-fixed lst)
+  (cond
+    [(null? lst) (list (fish 1))]
+    [else (cons (fish (* 2 (fish-size (car lst))))
+                lst)]))
+
+(add-bigger-fish-fixed null)
+(add-bigger-fish-fixed (add-bigger-fish-fixed null))
+
+;;; Prefab Structrue Types
+;; prefab是"previously fabricated"的缩写,一个prefab结构体是一个transparent结构体，
+;; 不过没有transparent结构体那么抽象.
+;; #s(prefab-pson 10 20)就是一个prefab结构体,它是"self-quoting"的,也就是等于'#s(prefab-pson 10 20)
+(define pre-p #s(prefab-posn 10 20))
+(struct prefab-posn (x y) #:prefab)  ; 定义prefab结构体类型要声明为#:prefab类型
+(prefab-posn-x pre-p)
+
+;; 一个prefab结构体也可以有prefab子结构体类型
+(struct sub-prefab-posn prefab-posn (z))
+(struct sub-prefab-pson-2 prefab-posn (z) #:prefab)
+
+;; 跟opaque和transparent类型相比,prefab结构体适合用于做序列化
+
+;;; More Structure Type Options
+;; struct form 的完全语法有很多选项,在structure-type level和field level都提供支持
+(struct dot (x y) #:mutable)
+(define d (dot 1 2))
+(set-dot-x! d 10) ; set-struct-id-field-id!设置方法(mutator)只能在声明了#:mutable才可以使用
+(set-dot-y! d 100)
+
+;; 假如只让某个字段可以更改
+(struct dot-mutable-x ([x #:mutable] y))
+(define d-mutable-x (dot-mutable-x 1 2))
+(set-dot-mutable-x-x! d-mutable-x 11)
+; (set-dot-mutable-x-y! d-mutable-x 12) 会报错
+
+;; auto字段和auto-value,相当于设定默认值字段.auto字段是mutable的(通过反射操作),
+;; 不过设置方法只能在指定 #:mutable 之后才能使用
+(struct posn-auto (x y [z #:auto #:mutable])
+  #:transparent
+  #:auto-value 0)
+
+(set-posn-auto-z! (posn-auto 1 2) 10)
+
+;;
+(struct thing (name)
+  #:transparent
+  ;; guard函数是一个多值函数,最后一个参数为结构体类型名字,前面的所有参数都为字段,
+  ;; 如果符合要求最后要求返回所有字段的值.
+  #:guard (lambda (name type-name)
+            (cond
+              [(string? name) name]
+              [(symbol? name) (symbol->string name)]
+              [else (error type-name
+                           "bad name: ~e"
+                           name)])))
+;; 子结构体类型会继承超结构体类型的guard函数,以前检查过的字段可以不用再次检查
+(struct person thing (age)
+  #:transparent
+  #:guard (lambda (name age type-name)
+            (if (negative? age)
+                (error type-name "bad age: ~e" age)
+                (values name age))))
+
+;; 结构体类型跟类差不多,也有自己的方法(generic interface),跟Python的__method__差不多.
+;; 比如gen:dict允许结构体类型当作字典使用;gen:custom-write允许自定义结构体如何被打印.
+
+(struct cake (candles)
+  #:methods gen:custom-write
+  [(define (write-proc cake port mode)
+     (define n (cake-candles cake))
+     (show "   ~a   ~n" n #\. port)
+     (show " .-~a-. ~n" n #\| port)
+     (show " | ~a | ~n" n #\space port)
+     (show "---~a---~n" n #\- port))
+   (define (show fmt n ch port)
+     (fprintf port fmt (make-string n ch)))])
+
+(display (cake 5))
+
+;; 关联结构体类型的属性和值,比如prop:procedure属性可以把结构体实例当作一个函数来使用
+(struct greeter (name)
+  #:property prop:procedure
+  (lambda (self other)
+    (string-append
+     "Hi " other
+     ", I'm " (greeter-name self))))
+
+(define john-greet (greeter "John"))
+
+(john-greet "Mary")
+
+;; 还有另外一种做法可以给结构体提供super-id,通过#:super设定super-type,
+;; 这种做法有一个好处就是以前的旧方法只能传入super-id(不是一个表达式,不能被运算),
+;; 而#:super可以提供一个super-expr(产生一个structure type descriptor)来设定
+
+(define (m/struct-constructor super-type)
+  (struct m/struct ()
+    #:super super-type
+    #:transparent)
+  m/struct)
+
+(define sub-posn (m/struct-constructor struct:posn))
+#+END_SRC
+
+** 6 Modules
+
+*** Module Basis
+
+**** Organizing Modules
+
+=directory= 的文件如下
+
+#+BEGIN_SRC sh
+salt@salt:~/Downloads/directory$ tree
+.
+├── mod.rkt
+└── subdir
+    ├── mod-1.rkt
+    └── mod-2.rkt
+
+1 directory, 3 files
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; mod.rkt
+#lang racket
+(require "subdir/mod-1.rkt")
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; subdir/mod-1.rkt
+#lang racket
+(provide variable)
+(define variable 1)
+(displayln variable)
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; subdir/mod-2.rkt
+#lang racket
+(require "mod-1.rkt")
+#+END_SRC
+
+=mod.rkt=, =mod-1.rkt= 和 =mod-2.rkt= 是模块,其中 =mod.rkt= 和 =mod-2.rkt= 导入 =mod-1.rkt= 模块.
+
+**** Library Collections
+
+一个库就是一个组层次分明的已安装库模块.一个库里面的模块是通过一个unquoted和没有后缀的路径引用的.
+
+#+BEGIN_SRC scheme
+#lang racket
+(require racket/trait)
+#+END_SRC
+
+上面这个例子里面的 =racket/trait= 就是一个库里面的一个模块.
+
+当 =require form= 遇到一个unquoted路径的时候会自动把它转换成文件系统的完整路径:
+
+1. 如果 =unquoted= 路径中没有 =/=, 那么 =require= 会自动添加一个 =/main= .
+
+   比如, =(require racket)= 等于 =(require racket/main)= .
+
+2. =require= 会自动给路径加上 =".rkt"= 后缀.
+
+3. 根据上面两步的结果,在库的安装路径查找模块.
+
+**** Packages and Collections
+
+包就是库的集合,这些包可以通过 =Racket package manager= 安装(或者预装)得到.
+
+**** Adding Collections
+
+上面的 =directory= 其实是一个包,是可以安装的,使用以下命令.
+
+#+BEGIN_SRC sh
+salt@salt:~/Downloads/directory$ raco pkg install
+Linking current directory as a package
+raco setup: version: 6.11
+raco setup: platform: x86_64-linux [3m]
+raco setup: installation name: 6.11
+raco setup: variants: 3m
+raco setup: main collects: /usr/share/racket/collects
+raco setup: collects paths:
+raco setup:   /home/salt/.racket/6.11/collects
+raco setup:   /usr/share/racket/collects
+raco setup: main pkgs: /usr/share/racket/pkgs
+raco setup: pkgs paths:
+raco setup:   /usr/share/racket/pkgs
+raco setup:   /home/salt/.racket/6.11/pkgs
+raco setup: links files:
+raco setup:   /usr/share/racket/links.rktd
+raco setup:   /home/salt/.racket/6.11/links.rktd
+raco setup: main docs: /usr/share/doc/racket
+raco setup: --- updating info-domain tables ---
+raco setup: --- pre-installing collections ---
+raco setup: --- installing foreign libraries ---
+raco setup: --- installing shared files ---
+raco setup: --- compiling collections ---
+raco setup: --- parallel build using 4 jobs ---
+raco setup: 3 making: <pkgs>/directory
+raco setup: 3 making: <pkgs>/directory/subdir
+raco setup: --- creating launchers ---
+raco setup: --- installing man pages ---
+raco setup: --- building documentation ---
+raco setup: --- installing collections ---
+raco setup: --- post-installing collections ---
+#+END_SRC
+
+在代码中可以这样引用这个 =collection= .
+
+#+BEGIN_SRC scheme
+#lang racket
+(require directory/mod)
+#+END_SRC
+
+实际上,你几乎可以对任何文件夹进行安装, =raco= 安装本地的包都是建立软链接引用包.
+
+利用这点,在平时开发包的时候可以先安装开发目录然后开发,这样可以边开发边测试.(这点真的是好评).
+
+测试完后别忘了移除测试包
+
+#+BEGIN_SRC sh
+salt@salt:~/Downloads/directory$ raco pkg remove directory
+Removing directory
+raco setup: version: 6.11
+raco setup: platform: x86_64-linux [3m]
+raco setup: installation name: 6.11
+raco setup: variants: 3m
+raco setup: main collects: /usr/share/racket/collects
+raco setup: collects paths:
+raco setup:   /home/salt/.racket/6.11/collects
+raco setup:   /usr/share/racket/collects
+raco setup: main pkgs: /usr/share/racket/pkgs
+raco setup: pkgs paths:
+raco setup:   /usr/share/racket/pkgs
+raco setup:   /home/salt/.racket/6.11/pkgs
+raco setup: links files:
+raco setup:   /usr/share/racket/links.rktd
+raco setup:   /home/salt/.racket/6.11/links.rktd
+raco setup: main docs: /usr/share/doc/racket
+raco setup: --- updating info-domain tables ---
+raco setup: --- pre-installing collections ---
+raco setup: --- installing foreign libraries ---
+raco setup: --- installing shared files ---
+raco setup: --- compiling collections ---
+raco setup: --- parallel build using 4 jobs ---
+raco setup: --- creating launchers ---
+raco setup: --- installing man pages ---
+raco setup: --- building documentation ---
+raco setup: --- installing collections ---
+raco setup: --- post-installing collections ---
+#+END_SRC
+
+*** Module Syntax
+
+=#lang= 用于模块文件的开头,用于声明模块名字(默认为没有文件后缀的模块文件名字)和初始的模块路径(用于初始化导入),不能用于 =REPL= 中,并且一个模块文件不能有多个 =#lang= 声明.
+
+=module= form 是 =#lang= 的简写,要手动指定模块名字,可以用在 =REPL= 中,一个文件可以有多个 =module= forms.
+
+**** The module Form
+
+把前面 =directory= 的例子改为
+
+#+BEGIN_SRC scheme
+;;; mod.rkt
+(module mod racket
+  (require "subdir/mod-1.rkt"))
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; subdir/mod-1.rkt
+(module mod-1 racket
+  (provide variable)
+  (define variable 1)
+  (displayln variable))
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; subdir/mod-2.rkt
+(module mod-2 racket
+  (require "mod-1.rkt"))
+#+END_SRC
+
+运行 =module= form 定义里面的表达式是不会运行,除非 =require= 它们.
+
+例如在 =REPL= 中运行 =mod-1= 里面的代码,
+
+#+BEGIN_SRC sh
+> (require 'mod-1)
+1
+>
+#+END_SRC
+
+**** The #lang Shorthand
+
+上面已经说的挺清楚了,不再说.
+
+**** Submodules
+
+模块里面可以嵌套模块,被嵌套的模块叫做子模块.子模块也可以嵌套子模块.同一闭合模块里面不能有相同名字的子模块.
+
+子模块可以直接被闭合(enclosing)的模块一个 =quoted name= 调用.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(module s-mod racket
+  (displayln "You are requiring the s-mod module")
+  (define mod-name 's-mod))
+
+(require 's-mod)
+(displayln mod-name)
+#+END_SRC
+
+如果不是被闭合模块引用的话,那就得用 =submod path= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(module s-mod racket
+  (displayln "You are requiring the s-mod module")
+  (define mod-name 's-mod))
+
+(module s-mod-2 racket
+  (require (submod ".." s-mod))) ; ".." 表示 s-mod-2 的上一级别模块,这里不知道上一级模块的名字才用 ".."
+
+(require 's-mod-2)
+#+END_SRC
+
+在知道上一级模块名字的情况下,
+
+#+BEGIN_SRC scheme
+#lang racket
+(module mod
+  (module s-mod racket
+    (displayln "You are requiring the s-mod module")
+    (define mod-name 's-mod)))
+
+(require (submod 'mod s-mod))
+#+END_SRC
+
+=module*= form 类似于 =module= form.区别在于:
+
+1. 通过 =module= 定义的子模块可以被它的闭合模块 =require=, 而子模块不可以 =require= 闭合模块或者词法引用闭合模块的绑定.
+
+2. 通过 =module*= 定义的子模块可以 =require= 它的闭合模块,但是闭合模块不能 =require= 子模块.
+
+   另外 =module*= from 可以指定它的的二个参数 =initial-module-path= 为 =#f=,
+
+   这样子模块可以看到它的闭合模块的所有绑定,包括没有被 =provide= 的绑定.
+
+有一个用法就是通过 =module*= 定义的子模块 =provide= 闭合模块没有导出的绑定.
+
+#+BEGIN_SRC scheme
+;;; enclose.rkt
+#lang racket
+
+(define (enclosing-function)
+  (displayln "I am defined by enclosing module but not exported"))
+
+(module* extras #f
+  (provide enclosing-function))
+#+END_SRC
+
+=require= =extras= 里面的绑定
+
+#+BEGIN_SRC sh
+> (require (submod "enclose.rkt" extras))
+#+END_SRC
+
+
+**** Main and Test Submodules
+
+上面已经演示了, =module=, =module*= 定义的模块是不会运行的,准确来说是闭合模块没有 =require= 它的子模块的情况下,子模块是不会运行的.
+
+但是有两个特殊的子模块名字是可以运行的, =main= 和 =test= . (我觉得与文件同名的子模块也是挺特殊的)
+
+#+BEGIN_SRC scheme
+;;; mod.rkt
+#lang racket
+(define mod-name 'mod)
+
+(module* main #f
+  (displayln (format "I am ~s" mod-name)))
+
+(module* test #f
+  (displayln (eq? mod-name 'mod)))
+#+END_SRC
+
+在命令行中执行,
+
+#+BEGIN_SRC sh
+salt@salt:~$ raco test mod.rkt
+raco test: (submod "mod.rkt" test)
+#t
+salt@salt:~$ racket mod.rkt
+I am mod
+#+END_SRC
+
+一般这两个子模块都是通过 =module+= 定义的,它相当于第二个参数为 =#f= 的 =module*= ,此外它支持定义多个重名的子模块,这些重名的子模块会自动合并起来.
+
+*** Module Paths
+
+=require= 或者 =module= form 里面的第二个参数 =initial-module-path= 可以使用以下几种forms:
+
+- (quote id)
+
+  引用非文件模块 (non-file module).
+
+- rel-string
+
+  相对路径字符串, =Unix-style= 规范的 =/= , =..= 和 =.= ,分别代表根目录,上一级别目录和同级目录.
+
+  =rel-string= 一定不能以 =/= 最为开头或者结尾.
+
+  如果相对路径是以 =".ss"= 结尾的,它会被转换成 =".rkt"= . 当尝试加载文件的时候,
+
+  如果实现了被引用模块的文件的确是以 =".ss"= 后缀的话,那么后缀会被变会 =".ss"= .这么做是为了兼容旧版的 Racket 文件.
+
+- id
+
+  已经安装的库的模块路径 =unquoted identifier=. =/= 用于分隔模块路径的路径元素,元素是指 collection 和 sub-collection, 而不是
+
+  目录和子目录.
+
+- (lib rel-string)
+
+  跟 =unquoted-identifier= 路径类似,不过,路径是用字符串表示的,不是 =identifier= .
+
+  #+BEGIN_SRC scheme
+  (lib "racket")
+  (lib "racket/main")
+  (lib "racket/main.rkt")
+  (lib racket)
+  #+END_SRC
+
+  这四个是一样的. =id= 是 =lib= 的简写.
+
+- =(planet id)=
+
+  通过 =PLaneT= 服务器利用 =id= 访问第三方库,第一次时候安装需要的库. =id= 的规范和上面的一样.
+
+- =(planet package-string)=
+
+  =(planet id)= 的字符串版本.
+
+- =(planet rel-string (user-string pkg-string vers ...))=
+
+  像 =lib= 一样的 =rel-string=, 不过后面还有作者,包和库的版本.
+
+- =(file string)=
+
+  想不出跟 =rel-string= 有什么区别.
+
+- =(submod base element ...+)=
+
+  子模块上面已经有例子.这里就不说了.
+
+*** Imports: require
+
+导入别的模块,大致用法.
+
+=(require require-spec ...)=
+
+以下是 =require-spec= 允许的 forms:
+
+- =module-path=
+
+  导入模块的所有绑定
+
+- =(only-in require-spec id-maybe-renamed ...)=
+
+  导入指定的模块绑定
+
+- =(except-in require-spec id ...)=
+
+  导入指定以外的模块绑定
+
+- =(rename-in require-spec [orig-id bind-id] ...)=
+
+  把导入的模块绑定重命名
+
+- =(prefix-in prefix-id require-spec)=
+
+  =rename-in= 的简写,给 =require-spec= 每个绑定添加一个 =prefix-id= 前缀.
+
+*** Exports: provide
+
+默认情况下,模块的定义都是私有的, =provide= 指定可以被别的模块 =require= 的定义.
+
+=(provide provide-spec ...)=
+
+=provide-spec= 所允许的 forms 如下:
+
+- =identifier=
+
+  指定模块内要导出的绑定
+
+- =(rename-out [orig-id export-id] ...)=
+
+  重命要导出的模块绑定
+
+- =(struct-out struct-id)=
+
+  把结构体的相关绑定全部导出(因为定义结构体也会自动产生很多对应的方法).
+
+- =(all-defined-out)=
+
+  模块内的所有绑定全部导出
+
+- =(all-from-out module-path)=
+
+  导出指定模块内所有允许导出的绑定
+
+- =(except-out provide-sepc id ...)=
+
+  导出指定以外的模块定义
+
+- =(prefix-out prefix-id provide-spec)=
+
+  给 =provide-spec= 的每个绑定添加 =prefix-id= 前缀并且导出.
+
+*** Assignment and Redefinition
+
+关于 =set!= 用在模块 =A= 内部定义的变量上,这是允许的.
+
+然而不能在导入模块 =A= 的模块 =B= 中对模块 =A= 导出的定义使用 =set!=.
+
+不过模块 =B= 可以通过使用 =define= "重新定义" 模块 =A= 中的定义.
+
+关于模块的重定义,默认是不允许的,不过可以通过 =(compile-enforce-module-constants #f)= 允许模块重新定义.
+
+*** Modules and Macros
+
+在 Macros 章节重详细讲.
+
+** 7 Contracts
+
+=contract= 的意思是协定,合同,不过我觉得翻译成约束挺合适的,所以下面就用约束这一词.
+
+*** Contracts and Boundaries
+
+是在团体之间建立一个边界,在这个边界之间执行限制检查,这就是 =Racket= 的约束.
+
+约束有两种不同的创建方式,不同方式导致不同的约束边界: =module boundaries= 和 =nested contract boundaries= .
+
+=Racket= 鼓励主要用 =module boundaries= 约束.
+
+- 模块边界
+
+  可以给别的模块提供约束,两方团体,分别是定义约束的模块和引用该模块的其他模块.
+
+  (变量在定义的模块中也是受到约束的,而函数则不会在定义的模块中受到约束.后面会有例子.)
+
+  #+BEGIN_SRC scheme
+  #lang racket
+
+  (provide (contract-out [amount positive?]))
+
+  (define amount 1)
+  #+END_SRC
+
+- 嵌套约束边界
+
+  (默认)只在内部提供约束,当然也可以 =provide= 受约束的定义给别的模块,这些定义在别的模块也是受约束的,
+
+  但是个人猜测提供给外部定义不是嵌套约束边界的目的,因为没有 =define/contract= 就很难(也许可以通过子模块来约束)
+
+  或者没有办法只约束模块内部了, =define/contract= 实际上是作为一种提供更小粒度的约束手段.
+
+  #+BEGIN_SRC scheme
+  #lang racket
+
+  (define/contract amount positive? 1)
+  #+END_SRC
+
+*** Simple Contracts on Functions
+
+=Racket= 对于函数的约束的描述采用了数学对函数描述的规范. =f : domain -> range= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+          [f-1 (-> positive-integer? any)] ; f-1函数接受一个正整数作为参数,返回任何值
+          [f-2 (positive-integer? . -> . any)] ; f-2的约束跟f-1的约束一样,写法不一样而已
+          [f-3 (-> number?)] ; f-3函数不接受参数,返回一个数字作为返回值
+          [f-void (-> void?)] ; f-void 不接受任何函数,也不返回任何值
+          [f-higher-order (-> (-> number? number? number?) number?)]
+          ;; f-higher-order函数,接受一个函数作为参数,该参数接受两个数字作为参数返回一个数字,
+          ;; 最后f-higher-order返回一个数字.
+          [f-lambda-c (-> (lambda (var) (positive? var)) positive?)] ; 使用一个匿名约束
+          [improved-f-lambda-c
+           (-> (flat-named-contract
+                'improved-f-lambda-c
+                (lambda (var) (positive? var)))
+               positive?) ]  ; 相比上面的匿名约束,这次给匿名约束提供了一个名字
+          ))
+
+
+(define (f-1 num) (+ num 1))
+
+(define (f-2 num) (+ num 1))
+
+(define (f-3) 1)
+
+(define (f-void) (void))
+
+(define (f-higher-order func) (func 1 2))
+
+(define/contract (f-1-c num)            ; 嵌套函数 f-1-c
+  (-> positive-integer? any/c)
+  (+ num 1))
+
+(f-1 -1)  ; 不会报错,可是用在别的模块这样用就报错,这就是 module boundaries, 然而 module boundaries 的变量不一样,即使在定义的模块中也会受到约束.
+
+(f-1-c 1) ; 不能
+
+;; any/c 和 any 的差别在于,any/c 限制单个任何值,any 是真的任何值(不论多个还是单个)都可以.
+;; 比如 =(values 1 2)= 符合 =any= 约束, 但是不符合 =any/c= 约束.
+;; 约束还可以定义
+
+(define (my-positive-int? var)          ; 自定义的约束,是一个函数,要求返回值是布尔类型.
+  (and (integer? var) (positive? var)))
+
+;; 利用 and/c 或者 or/c 混合约束,下面用 and/c 示范, or/c 也是一样的用法.
+(define my-positive-int/c
+  (and/c integer? positive?))
+
+;; 自定义的匿名约束报错提示信息不会完善,这需要自行完善
+;; (f-lambda-c -1) 会报错,但是提示的信息会有这么一行"expected: ???"
+(define (f-lambda-c var) var)
+
+;; 一个完善过提示信息的自定义匿名约束
+;; (improved-f-lambda-c -1) 会报错,但是提示的信息更加完善了.
+(define (improved-f-lambda-c var) var)
+
+#+END_SRC
+
+针对 module boundaries 的函数约束再补上一个例子.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(module mod racket
+  (provide
+    (contract-out
+      [ask-amount (-> positive-integer? positive-integer?)]
+      [amount positive-integer?]))
+
+  (define amount 150)            ; 无论在定义amount模块的内部/引用amount的模块,如何也不能违反amount的约束.
+  ;; (set! amount -1) or (define amount -1) 都是不行的.
+  (define (ask-amount amount) amount)
+
+  (ask-amount -1))               ; 在定义 ask-amount 的内部违反约束没事
+
+(require 'mod)
+(ask-amount -1)                  ; 在引用它的模块中使用就报错了
+#+END_SRC
+
+这是 =Racket= 一个"奇葩"的地方,不过这么设计真相应该是这样的,因为变量被别的模块 =require= 之后是不能用 =set!= 改变它的值,
+
+(在别的模块重新 =define= 导入变量就不是 =require= 的变量了.)所以要对变量约束也只有在定义的时候了.
+
+再结合 =module boundaries= 的定义"约束的范围在模块与模块之间,提供约束的模块不属于这个范围内"进行理解.
+
+这样就可以解释为何对变量和函数有不同的对待方式.
+
+当然这是个人猜测,真相只有 =Racket= 设计者知道.
+
+关于违反约束的报错信息,分类6个部分
+
+#+BEGIN_SRC sh
+# 带约束的函数名字
+improved-f-lambda-c: contract violation
+# 违反约束的的精确描述
+  expected: improved-f-lambda-c
+  given: -1
+# 完整的约束加上展示哪个方面被违反
+  in: the 1st argument of
+      (-> improved-f-lambda-c positive?)
+  # 提供约束的模块
+  contract from: (anonymous-module mod)
+  # who was blamed
+  blaming: anonymous-module
+   (assuming the contract is correct)
+  # 报错的源代码位置
+  at: unsaved-editor:13.6
+#+END_SRC
+
+*** Contracts on Functions in General
+
+=->= 是用来约束固定参数的函数的,并且输入和输出是相对独立的,
+
+对于有可选参数,关键字参数的函数就需要额外的 =->*= 和 =->i= .
+
+**** Optional Arguments
+
+#+BEGIN_SRC scheme
+#lang racket
+;; 定义一个需要两个必选参数和一个可选参数的函数 f-with-optional-arg
+
+(provide
+  (contract-out
+    [f-with-optional-an-arg
+      (->* (string? natural-number/c)   ; 必须参数两个
+           (char?)                      ; 可选参数一个
+           string?)]))                  ; 返回值
+
+(define (f-with-optional-an-arg pos-str pos-num [opt-char #\space])
+  (string-append (build-string pos-num (lambda (x) opt-char))
+                 pos-str
+                 (build-string pos-num (lambda (x) opt-char))))
+#+END_SRC
+
+
+**** Rest Arguments
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide
+  (contract-out
+    [f-with-rest-args
+      (->* (real?)                      ; 一个必要参数
+      ()                                ; 没有可选参数
+      #:rest                            ; 定义剩余参数
+      (listof real?)                    ; 剩余参数是一个 list
+      real?)]))                         ; output
+
+
+(define (f-with-rest-args n . rest)
+  (apply + n rest))
+
+(f-with-rest-args 1 2 3 4 5)
+#+END_SRC
+
+
+**** Keyword Arguments & Optional Keyword Arguments
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide
+  (contract-out
+    [f-with-an-keyword-arg
+      (-> string?
+          #:key boolean?
+          void?)]))
+
+(define (f-with-an-keyword-arg msg #:key verbose)
+  (when verbose (displayln msg)))
+
+(f-with-an-keyword-arg "Message" #:key #t)
+#+END_SRC
+
+也可以用 =->*= 声明这个约束
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide
+  (contract-out
+    [f-with-an-keyword-arg
+      (->* (string? #:key boolean?)
+           ()
+           void?)]))
+
+(define (f-with-an-keyword-arg msg #:key verbose)
+  (when verbose (displayln msg)))
+
+(f-with-an-keyword-arg "Message" #:key #t)
+#+END_SRC
+
+对于带可选的 =keyword= 参数函数,根据上面的例子修改.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide
+  (contract-out
+    [f-with-an-keyword-arg
+      (->* (string?)
+           ( #:key boolean?)
+           void?)]))
+
+(define (f-with-an-keyword-arg msg #:key [verbose #t])
+  (when verbose (displayln msg)))
+
+(f-with-an-keyword-arg "Message")
+#+END_SRC
+
+
+**** Contracts for case-lambda
+
+=case-lambda= 定义一个可以根据不同的参数执行不同的方法体的函数,对于这种函数的约束,要用 =case->= 来定义
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+           [f-case-lambda
+             (case->
+               (integer? integer? . -> . void?)
+               (string? . -> . void?))]))
+
+(define f-case-lambda
+  (case-lambda
+    [(a b) (displayln (format "~a + ~a = ~a" a b (+ a b)))]
+    [(msg) (displayln msg)]))
+
+(f-case-lambda 1 2)
+(f-case-lambda "Hello, world")
+#+END_SRC
+
+
+**** Argument and Result Dependencies
+
+=->i= 定义一个 =indy= 依赖约束(an indy dependent contract), i 表示 =indy=.
+
+=indy= 意味着责任(blame)应该给约束本身. 依赖约束意味着函数的范围(range)取决于参数的值.
+
+这里会举一个简单的例子熟悉一下,剩下的用法自己看 =reference文档= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide
+  (contract-out
+    [f-indy (->i ([num1 positive-integer?]               ; f-indy 需要两个正整数做为参数
+                  [num2 positive-integer?])
+                 [result (num1 num2)                     ; 返回值的约束依赖: num1 和 num2
+                         (lambda (res) (equal? (+ num1 num2) res))])])) ; 约束,返回值一定要等于两个参数的和
+
+(define (f-indy a b)
+  (+ a b))
+#+END_SRC
+
+
+**** Checking State Changes
+
+这里的最后一个例子经过实践发现跟文档不一样.(第一个例子不了解因此直接跳过).这有可能是一个 =bug= .
+
+
+**** Multiple Result Values
+
+对于多值函数 =multiple-value function= 的约束,可以直接用 =values= form 解决.
+
+用 =->= 定义约束,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+           [f-multi-value (-> char? positive?
+                              (values string? positive?))]))
+
+(define (f-multi-value c n)
+  (values (build-string n (lambda (x) c))
+          n))
+#+END_SRC
+
+用 =->*= 定义约束,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+          [f-multi-value (->* (char? positive?) ()
+                              (values string? positive?))]))
+
+(define (f-multi-value c n)
+  (values (build-string n (lambda (x) c))
+#+END_SRC
+
+用 =->!= 定义约束,假如要求返回的字符串一定要包含参数字符,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+          [f-multi-value (->i ([c char?]
+                               [n positive-integer?])
+                              (values
+                               [s (c n) (lambda (var) ; var 是 s 的值
+                                          (member
+                                           c
+                                           (string->list var)))]
+                               [l (n) positive-integer?]))]))
+
+(define (f-multi-value c n)
+  (values (build-string n (lambda (x) n)) n))
+#+END_SRC
+
+
+**** Fixed but Statically Unknown Arities
+
+针对那种任意函数接受对应参数的约束,比如类似 =apply= 的函数,约束应该这么写
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(module mod racket
+  (provide
+   (contract-out
+    [f-unknown-arities
+     (->i ([proc (args)                        ; proc 依赖在它之后的 args
+                 (and
+                  (unconstrained-domain->      ; unconstrained-domain-> 表示不约束 domain.
+                   (or/c false/c number?))
+                  (lambda (f) (procedure-arity-includes?
+                               f
+                               (length args))))]
+           [args (listof any/c)])
+          ()
+          any)]))
+
+  (define (f-unknown-arities proc args)
+    (apply proc args)))
+
+(require 'mod)
+
+(f-unknown-arities + '(1 2 3 4))
+#+END_SRC
+
+这个例子不能用 =->*= 定义 =proc= 的约束,第一眼可能会这么写,
+
+#+BEGIN_SRC scheme
+(->* ()
+     #:rest (listof any/c)
+     (listof any/c))
+
+#+END_SRC
+
+然而如果 =(f-unknown-arities (lambda (x) x) '(1))= 就会违反约束,因为这函数要求一个必须参数,
+
+而这个约束只是针对只有可选参数的函数.
+
+*** Contracts: A Thorough Example
+
+这章是通过一个例子来展示约束的使用的,前面我已经总结过不少了,直接跳过.
+
+*** Contracts on Structures
+
+模块处理结构体有两种方式:
+
+对待结构体定义,模块会导出结构体相关操作函数,比如创建结构体,访问字段,修改结构体和区分结构体.
+
+对待结构体(与定义不一样,类似与实例和类的区别),模块只会导出指定的结构体并且保证字段约束.
+
+**** Guarantees for a Specific Value
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+          [pos (struct/c posn number? number?)]))  ; 只导出结构体,只保证这个结构体的约束
+
+(struct posn (x y))
+
+(define pos (posn 10 20))
+#+END_SRC
+
+
+**** Guarantees for All Values
+
+上面只是确保指定的结构体的约束,下面演示保证所有 =posn= 定义的结构体受到约束.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+          [struct posn ((x number?) (y number?))]
+          [p-okay posn?]
+          [p-sick posn?]))
+(struct posn (x y))
+(define p-okay (posn 10 20))
+(define p-sick (posn 'a 'b))
+#+END_SRC
+
+这个只有在导入后并且调用 =(posn-x p-sick)= 才会违反约束.如果想要修复这个问题,那么就要用到指定特定结构体的方法.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide (contract-out
+          [struct posn ((x number?) (y number?))]
+          [p-okay posn?]
+          [p-sick (struct/c posn number? number?)]))  ; 用 struct/c 约束机构体的组成部分
+(struct posn (x y))
+(define p-okay (posn 10 20))
+(define p-sick (posn 'a 'b))
+#+END_SRC
+
+
+**** Checking Properties of Data Structures
+
+下面这个是一个二叉搜索树
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(struct node (val left right))
+
+; determines if `n' is in the binary search tree `b',
+; exploiting the binary search tree invariant
+(define (in? n b)
+  (cond
+    [(null? b) #f]
+    [else (cond
+            [(= n (node-val b))
+             #t]
+            [(< n (node-val b))
+             (in? n (node-left b))]
+            [(> n (node-val b))
+             (in? n (node-right b))])]))
+
+; a predicate that identifies binary search trees
+(define (bst-between? b low high)
+  (or (null? b)
+      (and (<= low (node-val b) high)
+           (bst-between? (node-left b) low (node-val b))
+           (bst-between? (node-right b) (node-val b) high))))
+
+(define (bst? b) (bst-between? b -inf.0 +inf.0))
+
+(provide (struct-out node))
+(provide (contract-out
+          [bst? (any/c . -> . boolean?)]
+          [in? (number? bst? . -> . boolean?)]))
+#+END_SRC
+
+
+=in?= 方法里面的 =cond= 是 =in?= 获得速度的地方: 每次递归都避免搜索整个子树.
+
+然而, =bst-between?= 却遍历了整个树,这意味者 =in?= 的提速失去意义了.
+
+=struct/dc= 像 =struct/c= 一样为结构体定义约束,它还可以把字段标记为 =lazy= ,
+
+这样就可以只有在访问字段的时候触发约束检查,不过不允许把可变字段设为 =lazy= .
+
+可以通过 =struct/dc= 来解决 =bst-between?= 的问题: 把 =bst-between?= 定义为约束 =bst-between/c= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(struct node (val left right))
+
+; determines if `n' is in the binary search tree `b'
+(define (in? n b)
+  (cond
+    [(null? b) #f]
+    [else (cond
+            [(= n (node-val b))
+             #t]
+            [(< n (node-val b))
+             (in? n (node-left b))]
+            [(> n (node-val b))
+             (in? n (node-right b))])]))
+
+; bst-between : number number -> contract
+; builds a contract for binary search trees
+; whose values are between low and high
+(define (bst-between/c low high)
+  (or/c null?
+        (struct/dc node [val (between/c low high)]
+                        [left (val) #:lazy (bst-between/c low val)]
+                        [right (val) #:lazy (bst-between/c val high)])))
+
+(define bst/c (bst-between/c -inf.0 +inf.0))
+
+(provide (struct-out node))
+(provide (contract-out
+          [bst/c contract?]                   ; contract? 表示是否是约束
+          [in? (number? bst/c . -> . boolean?)]))
+#+END_SRC
+
+即使上面是提高了效率,但是还是有很大的约束开销(constant over),所以 =contract= 库提供了一个 =define-opt/c= 解决这个问题.
+
+#+BEGIN_SRC scheme
+(define-opt/c (bst-between/c low high)
+  (or/c null?
+        (struct/dc node [val (between/c low high)]
+                        [left (val) #:lazy (bst-between/c low val)]
+                        [right (val) #:lazy (bst-between/c val high)])))
+#+END_SRC
+
+*** Abstract Contracts using #:exists and #:∃
+
+=Racket= 提供存在约束(existential contracts), =#:exists= 和 =#:∃= ,两个都一样,
+
+如果不方便输入 =#:∃= 就直接用 =#:exists= . 它可以保证约束的抽象,不把约束的细节暴露给别的模块.
+
+道理都懂,可是文档的例子没有讲明白是怎么用这个 =flag= .
+
+*** Additional Examples
+
+一堆例子,以后再看.
+
+*** Building New Contracts
+
+首先声明一下,这跟上面的组合约束的定义方式不一样.
+
+(个人觉得这一章是在讲约束的实现的,平常的组合约束已经差不多够用了,因此很多都看不太懂,留到以后理解了).
+
+约束在内部表示为一个函数,如下所示:
+
+=contract : blame-object -> projection=
+
+=projection : an-arbitrary-value -> a-value-satifies-the-corresponding-contract=
+
+但是系统约束不会使用这种 =projection = 的,真正的 =projection= 应该是这样的:
+
+=real-projection : blame-object -> projection=
+
+也就是说真正的 =projection= 就是内部表示的 =contract=. (关系有点乱,下文会用 real projection 和 projection 做为区分).
+
+一个整数 =projection= 的表示(representation)例子:
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (int-proj blame)                      ; real projection 名字为 int-proj,接受一个blame对象
+  (λ (x)                                      ; 这个lambda函数就是一个projection
+    (if (integer? x)
+        x                                     ; 这个projection会在判断成功后返回满足约束的值
+        (raise-blame-error                    ; 判断失败就报错,raise-blame-error就是约束报错的form
+         blame
+         x
+         '(expected: "<integer>" given: "~e")
+         x))))
+#+END_SRC
+
+接着上面来一个函数 =projection= 的表示例子:
+
+#+BEGIN_SRC scheme
+(define (int->int-proj blame)
+  ;; blame-swap交换两个约束的团体(parties),这里是negative party.要消耗参数对应函数的domain
+  (define dom (int-proj (blame-swap blame)))
+  ;; 这里是positive party,要返回数值对应函数的range
+  (define rng (int-proj blame))
+  (λ (f)
+    (if (and (procedure? f)
+             (procedure-arity-includes? f 1))
+        (λ (x) (rng (f (dom x))))             ; 判断成功就是返回一个函数
+        (raise-blame-error
+         blame
+         f
+         '(expected "a procedure of one argument" given: "~e")
+         f))))
+#+END_SRC
+
+对此说明一下,约束总是在两个 =parties= 之间建立的.
+
+其中一个 =party= 叫做 =server= ,根据约束会提供一些值,另外一个 =party= 叫做 =client= ,它会根据约束消费这些值.
+
+=Server= 叫做 =the positive position= 和 =client= 叫做 =the negative position= .
+
+=The positive party= 也就是 =server=, 对应的 =the negative position= 叫 =client= .
+
+
+给第二个例子作一下修改,使用 =blame-add-context= 替换 =blame-swap= ,可以完善错误提示,
+
+#+BEGIN_SRC scheme
+(define (make-simple-function-contract dom-proj range-proj)
+  (λ (blame)                                                            ; real projection
+    (define dom (dom-proj (blame-add-context blame
+                                             "the argument of"
+                                             #:swap? #t)))
+    (define rng (range-proj (blame-add-context blame
+                                               "the range of")))
+    (λ (f)                                                              ; projection
+      (if (and (procedure? f)
+               (procedure-arity-includes? f 1))
+          (λ (x) (rng (f (dom x))))
+          (raise-blame-error
+           blame
+           f
+           '(expected "a procedure of one argument" given: "~e")
+           f)))))
+#+END_SRC
+
+有一种 =late neg projection= , 这种 =projection= 接受一个不带 =negative party= 的 =blame= 对象做为参数,
+
+并且返回一个函数.这个函数接受一个对应约束的值和 =negative party= 的名字,并且返回带约束的值(有点搞不懂约束的内
+
+部运行机制了).
+
+#+BEGIN_SRC scheme
+(define (int->int-proj blame)
+  ;; projection (作为约束函数的返回值,而且也符合 projection 的定义)
+  (define dom-blame (blame-add-context blame
+                                       "the argument of"
+                                       #:swap? #t))
+  (define rng-blame (blame-add-context blame "the range of"))
+  (define (check-int v to-blame neg-party)
+    (unless (integer? v)
+      (raise-blame-error
+       to-blame #:missing-party neg-party
+       v
+       '(expected "an integer" given: "~e")
+       v)))
+  (λ (f neg-party)                                             ; 接受对应约束的值和 negative party 的名字
+    (if (and (procedure? f)
+             (procedure-arity-includes? f 1))
+        (λ (x)                                                 ; 接受带约束的值,包裹函数
+          (check-int x dom-blame neg-party)
+          (define ans (f x))
+          (check-int ans rng-blame neg-party)
+          ans)
+        (raise-blame-error
+         blame #:missing-party neg-party
+         f
+         '(expected "a procedure of one argument" given: "~e")
+         f))))
+#+END_SRC
+
+上面这种 =projection= 为 =f= 创建了一个包裹函数(wrapper function),但是这个 =equal?= 不能用在包裹函数上面,
+
+也不会让 =runtime system= 知道返回函数和输入函数 =f= 之间的关系.
+
+可以用 =chaperone-procedure= 解决这个问题.
+
+(这里有点没看懂,特别是chaperone-procedure的用法).
+
+#+BEGIN_SRC scheme
+(define (int->int-proj blame)
+  (define dom-blame (blame-add-context blame
+                                       "the argument of"
+                                       #:swap? #t))
+  (define rng-blame (blame-add-context blame "the range of"))
+  (define (check-int v to-blame neg-party)
+    (unless (integer? v)
+      (raise-blame-error
+       to-blame #:missing-party neg-party
+       v
+       '(expected "an integer" given: "~e")
+       v)))
+  (λ (f neg-party)
+    (if (and (procedure? f)
+             (procedure-arity-includes? f 1))
+        (chaperone-procedure
+         f
+         (λ (x)
+           (check-int x dom-blame neg-party)
+           (values (λ (ans)
+                     (check-int ans rng-blame neg-party)
+                     ans)
+                   x)))
+        (raise-blame-error
+         blame #:missing-party neg-party
+         f
+         '(expected "a procedure of one argument" given: "~e")
+         f))))
+
+(define int->int-contract                       ; 定义约束
+  (make-contract
+   #:name 'int->int
+   #:late-neg-projection int->int-proj))
+
+(define/contract (f x)                          ; 使用约束
+  int->int-contract
+  "not an int")
+#+END_SRC
+
+
+**** Contract Struct Properties
+
+过了一遍没看懂.以后再研究,先整理笔记.
+
+=make-chaperone-contract= 用来创建一次性(one-off)约束是没问题,然而大部份时间都会使用不同的约束来进行区分(一次性约束不适用).
+
+最好的做法是使用 =struct= 和 =prop:contract= , =prop:chaperone-contract= 和 =prop:flat-contract= 其中之一来做这种事。
+
+比如,我们想要写一个 =->= 约束的简单版本,只是一个range约束和一个domain约束.
+
+#+BEGIN_SRC scheme
+(struct simple-arrow (dom rng)
+  #:property prop:chaperone-contract
+  (build-chaperone-contract-property                ; 构造需要的监护约束属性(chaperone contract property)
+   #:name
+   (λ (arr) (simple-arrow-name arr))
+   #:late-neg-projection
+   (λ (arr) (simple-arrow-late-neg-proj arr))))
+
+;; To do the automatic coercion of values like integer? and #f into contracts,
+;; we need to call coerce-chaperone-contract (note that this rejects impersonator
+;;contracts and does not insist on flat contracts; to do either of those things,
+;;call coerce-contract or coerce-flat-contract instead).
+(define (simple-arrow-contract dom rng)
+  (simple-arrow (coerce-contract 'simple-arrow-contract dom)
+                (coerce-contract 'simple-arrow-contract rng)))
+
+;; simple-arrow-name 的定义要求只需返回一个表示约束的 s-expression 就好
+(define (simple-arrow-name arr)
+  `(-> ,(contract-name (simple-arrow-dom arr))
+       ,(contract-name (simple-arrow-rng arr))))
+
+;; 定义一个一般化的 =projection=
+(define (simple-arrow-late-neg-proj arr)
+  (define dom-ctc (get/build-late-neg-projection (simple-arrow-dom arr)))
+  (define rng-ctc (get/build-late-neg-projection (simple-arrow-rng arr)))
+  (λ (blame)
+    (define dom+blame (dom-ctc (blame-add-context blame
+                                                  "the argument of"
+                                                  #:swap? #t)))
+    (define rng+blame (rng-ctc (blame-add-context blame "the range of")))
+    (λ (f neg-party)
+      (if (and (procedure? f)
+               (procedure-arity-includes? f 1))
+          (chaperone-procedure
+           f
+           (λ (arg)
+             (values
+              (λ (result) (rng+blame result neg-party))
+              (dom+blame arg neg-party))))
+          (raise-blame-error
+           blame #:missing-party neg-party
+           f
+           '(expected "a procedure of one argument" given: "~e")
+           f)))))
+
+(define/contract (f x)
+  (simple-arrow-contract integer? boolean?)
+  "not a boolean")
+#+END_SRC
+
+
+**** With All the Bels and Whistles
+
+讲道理没有明白,以后再看.
+
+*** Gotchas
+
+**** Contracts and eq?
+
+不要把 =eq?= 用在带有约束的值上面,约束会影响判断.
+
+**** Contract boundaries and define/contract
+
+如果有两个受到约束的值要交互(比如函数A调用函数B),把它们放到不同的模块(使用模块边界)或者使用 =define/contract= 的 =#:freevar= (嵌套约束边界).
+
+**** Exists Contracts and Predicates
+
+不多说了.
+
+**** Defining Recursive Contracts
+
+#+BEGIN_SRC scheme
+(define stream/c
+  (promise/c
+   (or/c
+    null?
+    (cons/c number? (recursive-contract stream/c))))) ; 不使用recursive-contract的话会报错.
+#+END_SRC
+
+**** Mixing set! and contract-out
+
+#+BEGIN_SRC sh
+> (module server racket
+    (define (inc-x!) (set! x (+ x 1)))
+    (define x 0)
+    (provide (contract-out [inc-x! (-> void?)]
+                           [x integer?])))
+> (module client racket
+    (require 'server)
+
+    (define (print-latest) (printf "x is ~s\n" x))
+
+    (print-latest)
+    (inc-x!)
+    (print-latest))
+> (require 'client)
+x is 0
+x is 0
+#+END_SRC
+
+这里面调用了一次 =inc-x!= ,但是第二次 =x= 的值还是 0, 这是一个bug,以后会修复.
+
+还好有解决方法,那就是给 =x= 定义一个访问函数 =get-x= 并且导出它.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (get-x) x)
+(define (inc-x!) (set! x (+ x 1)))
+(define x 0)
+(provide (contract-out [inc-x! (-> void?)]
+                       [get-x (-> integer?)]))
+#+END_SRC
+** 8 Input and Output
+
+=Racket= 的 =port= 对应这 =Unix= 中 =stream= 的概念.
+
+它表示这数据源头(source)或者数据池(sink),比如文件,终端, =TCP= 连接或者一个内存内的字符串.
+
+=Input ports= 表示程序用于读取数据的数据源, =ouput ports= 表示程序用于写入数据的数据池.
+
+*** Varieties of Ports
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;;; 文件
+
+(define file-out (open-output-file "file"))
+#|
+如果文件已经存在,上面的调用就会报错
+(open-output-file "file" #:exists 'truncate),可以在已经存在的文件后面添加内容;
+(open-output-file "file" #:exists 'update),可以重写已经存在的文件
+|#
+
+(display "hello" file-out)
+(close-output-port file-out) ; 关闭 output port,适用于所有类型的 output port
+(define file-in (open-input-file "file")) ; 打开 port
+(read-line file-in) ; "hello"
+(close-input-port file-in) ; 关闭 input port,适用于所有类型 input port
+
+;; call-with-*-file 是上面的简化版本,自动关闭port
+
+(call-with-output-file "file"
+                       #:exists 'truncate
+                       (lambda (out)
+                         (display "hello" out)))
+
+(call-with-input-file "file"
+                      (lambda (in)
+                        (read-line in)))
+
+;;; 字符串
+(define string-out (open-output-string))
+(display "hello" string-out)
+(get-output-string string-out) ; "hello"
+(close-output-port string-out)
+
+(read-line (open-input-string "goodbye\nfarewell")) ; "goodbye"
+
+;; 也有call-with-*-string 版本,不过有点奇怪,所以就不演示了
+
+;;; TCP连接
+(define server (tcp-listen 12345)) ; 监听本地的12345端口
+(define-values (client-in client-out) (tcp-connect "localhost" 12345)) ; 连接到服务器并且获得客户端的input/output ports
+(define-values (server-in server-out) (tcp-accept server)) ; 服务器等待连接,获得服务器的 input/ouput ports
+(display "hello\n" client-out)
+(close-output-port client-out) ; 给服务器发送信息
+(close-input-port client-in)
+(read-line server-in) ; 读取收到的信息
+(read-line server-in)
+(tcp-abandon-port server-in)
+(tcp-abandon-port server-out)
+
+;;; 程序管道(Process Pipes)
+;; 依次返回 subprocess 和 subprocess 的 stdin, stdout 和 stderr,
+;; 注意subprocess的input就是我们的output
+(define-values (pp stdout stdin stderr)
+  (subprocess #f #f #f "/usr/bin/wc" "-w"))
+(display "a b c\n" stdin)
+(close-output-port stdin)
+(read-line stdout) ; "3"
+(close-input-port stdout)
+(close-input-port stderr)
+
+;;; 内部管道(Internal pipes)
+;; 与 OS level 的 process pipe 不一样, 内部管道是 Racket 专用的,与用在不同程序之间交流的的 OS-level 管道无关.
+(define-values (ip-in ip-out) (make-pipe))
+(display "garbage" out)
+(close-output-port out)
+(read-line in) ; "garbage"
+#+END_SRC
+
+*** Default Ports
+
+使用 =OS-level stdin, stdout 和 stderr= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(display "Hi")
+(display "Hi" (current-output-port)) ; the same
+(display "Ouch!" (current-error-port))
+(read-line (current-input-port)) ; 要求输入
+
+(let ([s (open-output-string)])
+  (parameterize ([current-error-port s])
+    (display "Ouch!" (current-error-port)))
+  (get-output-string s)) ; "Ouch!"
+#+END_SRC
+
+*** Reading and Writing Racket Data
+
+=Racket= 提供三种打印 =Racket= 值的方法.
+
+=print, write 和 display= ,分别对应 =Racket= 语法的表达式层(expression layer),读取器层(reader layer)和字符层(character layer).
+
+#+BEGIN_SRC scheme
+#lang racket
+;; 表达式           |   打印
+
+(print 1/2)            ; 1/2
+(print #\x)            ; #\x
+(print "hello")        ; "hello"
+(print #"goodbye")     ; #"goodbye"
+(print '|pea pod|)     ; '|pea pod|
+(print '("i" pod))     ; '("i" pod)
+(print write)          ; #<procedure:write>
+
+(write 1/2)            ; 1/2
+(write #\x)            ; #\x
+(write "hello")        ; "hello"
+(write #"goodbye")     ; #"goodbye"
+(write '|pea pod|)     ; |pea pod|
+(write '("i" pod))     ; ("i" pod)
+(write write)          ; #<procedure:write>
+
+(display 1/2)          ; 1/2
+(display #\x)          ; x
+(display "hello")      ; hello
+(display #"goodbye")   ; goodbye
+(display '|pea pod|)   ; pea pod
+(display '("i" pod))   ; (i pod)
+(display write)        ; #<procedure:write>
+#+END_SRC
+
+=printf= 支持格式化打印,里面的有3个格式话字符串(format string) =~a,~s和~v= 分别对应 =display,write和print= .
+
+与 =display 和 print= 相对, 使用 =write= 写入数据后,可以通过 =read= 读取回来.
+
+=print= 写入数据后也可以通过 =read= 读取,不过可能会有一个额外的 =quote form= ,因为 =display forms= 像表达式一样被读取.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-values (in out) (make-pipe))
+(write "hello" out)
+(read in)     ; "hello"
+(write '("alphabet" soup) out)
+(read in)     ; '("alphabet" soup)
+(write #hash((a . "apple") (b . "banana")) out)
+(read in)
+
+(print '("alphabet" soup) out)
+(read in)     ; ''("alphabet" soup)
+
+(display '("alphabet" soup) out)
+(read in)     ; '(alphabet soup)
+#+END_SRC
+
+从上面看出可以用 =write= 来序列化 =Racket= 数据.
+
+*** Datatypes and Serialization
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; 序列化数据
+(define-values (in out) (make-pipe))
+
+;; 内置数据类型
+(write #s(sprout bean) out)
+(read in)       ; '#s(sprout bean)
+
+;; 结构体,只能是prefab类型或者transparent类型(prefab类型也是transparent)可以读取回来,也就是这两种可以序列化
+(struct posn (x y) #:transparent)
+(write (posn 1 2) out)
+(read in)       ; '#(struct:posn 1 2)
+
+(struct prefab-posn (x y) #:prefab)
+(write (prefab-posn 1 2) out)
+(read in)       ; '#s(prefab-posn 1 2)
+
+;; 可以利用 serializable-struct 定义一种特意用于序列化的结构体
+(require racket/serialize)
+(serializable-struct se-posn (x y) #:transparent)
+(deserialize (serialize (se-posn 1 2)))  ; (se-posn 1 2)
+(write (serialize (se-posn 1 2)) out)
+(deserialize (read in)) ; (se-posn 1 2)
+#+END_SRC
+
+*** Bytes, Characters, and Encoding
+
+=read-line, read, display 和 write= 全部都是根据字符来工作的.
+
+概念上来说,它们是根据 =read-char= 和 =write-char= 来实现的.在更底层上, =ports= 读写生字节而不是字符.
+
+实际上, =read-char= 和 =write-char= 是分别根据 =read-byte= 和 =write-byte= 实现的.当字节值小于128,
+
+就使 =ASCII= 编码,其它字节就用 =UTF-8= 编码.如果想用其它编码可以使用 =reencode-input-port= 或 =reencode-output-port= ,
+
+其中 =reencode-input-port= 会把指定编码的输入流转化成 =UTF-8= 流, =read-byte= 也会看到重新编码过的数据,而不是原始的字节流.
+
+*** I/O Patterns
+
+如果想单独处理文档的每一行,可以使用 =for= 和 =in-lines= forms.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(call-with-input-file "file"
+  (lambda (in)
+    (for ([l (in-lines in)])
+      (display l)
+      (newline))))
+
+(define o (open-output-string))
+(copy-port (open-input-string "broom") o)
+(get-output-string o) ; "broom"
+#+END_SRC
+** 9 Regular Expressions
+
+=#rx= for =regexp= , =#px= for =pregexp=,
+
+和 =Python= 不一样, =Racket= 的正则表达式是先像字符串那样被处理过才能用,
+
+在 =Python= =\(a\), \\(a\\) 或者 r\(a\)= 都是可以匹配 =(a)= ,而 =Racket= 只能用 =#rx\\(a\\), #px\\(a\\) 或者 \\(a\\)= 匹配.
+
+可以发现 =Racket= 正则表达式也是像字符一样解析的,其实 =Emacs Lisp= 也是一样.这就是 =Racket= 正则表达式要注意的点.
+
+具体就不说了,每门语言的正则这东西大体是一样的.
+
+** 10 Exceptions and Control
+
+*** Exceptions
+
+捕捉异常:
+
+- =with-handlers= form
+
+引发异常:
+
+- =error=
+
+  打包错误信息并且引发异常
+
+- =raise=
+
+  以一个值做为引发异常的值
+
+[[https://docs.racket-lang.org/reference/exns.html#%28def._%28%28lib._racket%2Fprivate%2Fbase..rkt%29._exn%29%29][内置异常以及它们的继承关系]],指定异常的时候会用得上.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(with-handlers ([(lambda (v) #t)            ; (lambda (v) #t) 做为谓词(predicate)可以捕捉所有异常,
+                 (lambda (exn) 'error)])    ; exn 是异常类型,可以设定多对 predicate-expr handler-expr
+  (error "Error raised by me")) ; 返回 'error
+#+END_SRC
+
+*** Prompts and Aborts
+
+在 =REPL= 里面可以在发生异常后还能继续执行.
+
+但是 =REPL= 并不是用 =with-handlers= 实现这功能的,而是用 =prompt= (提示)实现的, =prompt= 有一个逃脱点(escape point)标记着计算上下文.
+
+如果异常没有被(=with-handlers=)捕捉就会打印异常信息,然后计算就会在最近的闭合提示(the nearest enclosing prompt)中断(abort).
+
+在 =REPL= 中,每一个次交互都是被包裹着一个 =prompt= .
+
+准确点就是每个提示都有一个提示标签(prompt tag),未捕捉异常处理器(uncaught-exception handler)会使用一个默认提示标签(default prompt tag)进行中断.
+
+说的简单点,这个有点类似于 =C= 的 =goto= 语句,跟 =Emacs Lisp= 比的话就像 =throw= 和 =catch= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (escape v)
+    (abort-current-continuation                         ; Emacs Lisp 的 throw form
+     (default-continuation-prompt-tag)                  ; Emacs Lisp throw form 的 tag
+     (lambda () v)))                                    ; Emacs Lisp throw form 的 value
+
+(+ 1 (+ 1 (+ 1 (+ 1 (+ 1 (+ 1 (escape 0)))))))          ; 0
+
+(+ 1                                                    ; 最后返回 1
+     (call-with-continuation-prompt                     ; Emacs Lisp 的 catch form,设置好prompt tag
+      (lambda ()                                        ; Emacs Lisp catch form 的 body
+        (+ 1 (+ 1 (+ 1 (+ 1 (+ 1 (+ 1 (escape 0))))))))
+      (default-continuation-prompt-tag)))               ; Emacs Lisp catch form 的 tag
+#+END_SRC
+
+自己写的另外一个例子(完全就是仿照Emacs Lisp的来写的,果然都是Lisp家族的人).
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define my-tag (make-continuation-prompt-tag))
+
+(+ 1                                                 ; 最后结果返回5
+   (call-with-continuation-prompt
+    (lambda ()
+      (+ 1
+         (abort-current-continuation
+          my-tag
+          (lambda () 4))))
+    my-tag))
+#+END_SRC
+
+*** Continuations
+
+一个续延(continuation)就是一个值,表示表达式被套用的计算上下文.
+
+=call-with-composable-continuation= 函数从当前函数调用的外层到最近的闭合 =prompt= .
+
+(每一次 =REPL= 交互都被一个看不见的 =prompt= 包裹着).
+
+
+下面这个例子只能在 =REPL= 中正常运行,
+
+#+BEGIN_SRC scheme
+(define saved-k #f)
+
+(define (save-it!)
+  (call-with-composable-continuation
+    (lambda (k)       ; k 就是被捕获的 continuation,把它保存在 saved-k
+      (set! saved-k k)
+      0)))            ; 调用 save-it! 后返回 0
+
+(+ 1 (+ 1 (+ 1 (save-it!))))
+;; 结果为 3, saved-k 现在为 (+ 1 (+ 1 (+ 1 []))), [] 就是之后填入的东西.
+;; saved-k 可以这么表示 (lambda (v) (+ 1 (+ 1 (+ 1 v))))
+
+(saved-k 0) ; 3
+
+(saved-k 10) ; 13
+
+(saved-k (saved-k 0)) ; 6
+#+END_SRC
+
+如果想要在非 =REPL= 中也能运行,就要在 save-it! 调用的地方做一下手脚,
+
+(还记得 =call-with-composable-continuation= 是怎么捕获异常的吗?)
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define saved-k #f)
+(define (save-it!)
+  (call-with-composable-continuation
+   (lambda (k) ; k is the captured continuation
+     (set! saved-k k)
+     0)))
+
+(call-with-continuation-prompt         ; 这样可以设置 call-with-composable-continuation 捕获停止的地方
+ (lambda ()
+   (+ 1 (+ 1 (+ 1 (save-it!)))))
+ (default-continuation-prompt-tag))
+
+(saved-k 0)
+
+(saved-k 10)
+
+(saved-k (saved-k 0))                  ; 结果和前面的一样
+#+END_SRC
+
+=Racket (or Scheme)= 有一个传统的 =call-with-current-continuation= 或者简写为 =call/cc= ,
+
+可以通过使用 =call/cc= 来运行,不过结果会有点不一样,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define saved-k #f)
+(define (save-it!)
+  (call/cc
+   (lambda (k) ; k is the captured continuation
+     (set! saved-k k)
+     0)
+   ))
+
+(+ 1 (+ 1 (+ 1 (save-it!))))
+
+(saved-k 0)
+
+(saved-k 10)
+
+;; 前面的结果都一样,这里结果为3,应用完第一次后就跳出了.
+;; 文档原文有一句说明了 call/cc 和 call-with-composable-continuation 的不同.
+;; It is like call-with-composable-continuation,
+;; but applying the captured continuation first aborts (to the current prompt)
+;; before restoring the saved continuation.
+(saved-k (saved-k 0))
+#+END_SRC
+
+这个例子说明了 =call-with-composable-continuation= 和 =call/cc= 还是遵守语义一致的.
+
+** 11 Iterations and Comprehensions
+
+=for family of syntactic forms= 支持等待(iteration over)序列(sequences).
+
+=Lists, vectors, strings, byte strings, input ports, 和 hash table= 都可以用作序列,并且像 =in-range= 这种构造函数提供更多类型的序列.
+
+=for= 的基本用法,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for ([i '(1 2 3)]
+      [j '(4 5 6)])
+  (displayln (format "~a" (list i j)))) ; 结果是void
+#+END_SRC
+
+=for/list= 列表推导式(list comprehension),列表推导式就是把每一次的迭代结果都累积下来成为一个列表,
+
+比如把上面的例子用 =for/list= 实践一下,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for/list ([i '(1 2 3)]
+           [j '(4 5 6)])
+  (list i j))           ; 结果是 '((1 4) (2 5) (3 6)),不是void
+#+END_SRC
+
+
+*** Sequence Constructors
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for/list ([i (in-range 4 2 -1)]) i) ; (in-range start end step),start和step都是可选的,分别是0和1.
+
+(for ([i (in-naturals)])    ; (in-naturals)会从0开始无限迭代下去,只有循环内部发生了异常或者其它逃脱的办法才可以停止
+  (if (= i 10)
+      (error "too much!")
+      (display i)))
+
+;; 用一个不引发异常的写法,
+
+(define my-tag (make-continuation-prompt-tag))
+
+(call-with-continuation-prompt
+ (lambda ()
+   (for ([i (in-naturals)])
+     (if (= i 10)
+         (abort-current-continuation
+          my-tag
+          (lambda () (void)))
+         (display i))))
+   my-tag)
+
+;; 如果平行迭代两个序列,迭代次数是序列项最少的序列项数
+(for ([i (in-naturals 1)]                          ; 无限个项
+      [chapter '("Intro" "Detials" "Conclusion")]) ; 3个项,迭代3差
+  (printf "Chapter ~a. ~a\n" i chapter))
+
+;; stop-before 和 stop-after 根据给定的序列(sequence)和谓词(predicate)构建一个新的序列
+(for ([i (stop-before "abc def ghi"
+                      char-whitespace?)])
+  (display i))
+
+;; 两者差一个 #\space
+(sequence->list (stop-before "abc def ghi")) ; '(#\a #\b #\c)
+(sequence->list (stop-after "abc def ghi"))  ; '(#\a #\b #\c #\space)
+
+;; 还有很多序列构造器,比如 in-list, in-vector 和 in-string,如果传入的值类型错误就会引发异常.
+#+END_SRC
+
+*** for and for*
+
+=for= 还支持 =#:when= 和 =#:unless= 选项筛选迭代项.
+
+=for*= 和 =for= 的用法相似,迭代多个序列的时候,它们就有差别了.
+
+=for*= 如果迭代两个序列 =m= 和 =n=,长度分别为 =lm= 和 =ln= ,那么迭代次数为 =lm * ln= ,就是嵌套 =for= .
+
+多个序列的迭代次数为 =lm * ln * lo * ... * lz= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for* ([book '("Guide" "Reference")]
+       [chapter '("Intro" "Details" "Conclusion")]
+       #:when (not (equal? chapter "Details")))  ; 当chapter不等于"Details"的时候才迭代,就是筛选掉"Details"
+  (printf "~a ~a\n" book chapter))
+
+;; 改掉书上的例子,把#:when改为#:unless
+(for ([book '("Guide" "Reference" "Notes")]
+      #:unless (equal? book "Notes")
+      [i (in-naturals 1)]
+      [chapter '("Intro" "Details" "Conclusion" "Index")]
+      #:unless (equal? chapter "Index"))
+  (printf "~a Chapter ~a. ~a\n" book i chapter))
+#+END_SRC
+
+*** for/list and for*/list
+
+与 =for and for*= 的差不多,只不过 =for/list 和 for*/list= 是推导式,把上面的例子改一改,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for*/list ([book '("Guide" "Reference")]
+       [chapter '("Intro" "Details" "Conclusion")]
+       #:when (not (equal? chapter "Details")))  ; 当chapter不等于"Details"的时候才迭代,就是筛选掉"Details"
+  (format "~a ~a\n" book chapter))
+
+;; 改掉书上的例子,把#:when改为#:unless
+(for/list ([book '("Guide" "Reference" "Notes")]
+      #:unless (equal? book "Notes")
+      [i (in-naturals 1)]
+      [chapter '("Intro" "Details" "Conclusion" "Index")]
+      #:unless (equal? chapter "Index"))
+  (format "~a Chapter ~a. ~a\n" book i chapter))
+#+END_SRC
+
+*** for/vector and for*/vector
+
+与 =for/list and for*/list= 语法一样,差别在于推导式结果式一个 =vector= 不是 =list= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for*/vector ([book '("Guide" "Reference")]
+       [chapter '("Intro" "Details" "Conclusion")]
+       #:when (not (equal? chapter "Details")))  ; 当chapter不等于"Details"的时候才迭代,就是筛选掉"Details"
+  (format "~a ~a\n" book chapter))
+
+;; 改掉书上的例子,把#:when改为#:unless
+(for/vector ([book '("Guide" "Reference" "Notes")]
+      #:unless (equal? book "Notes")
+      [i (in-naturals 1)]
+      [chapter '("Intro" "Details" "Conclusion" "Index")]
+      #:unless (equal? chapter "Index"))
+  (format "~a Chapter ~a. ~a\n" book i chapter))
+#+END_SRC
+
+*** for/and and for/or
+
+遍历每个元素,并且每遍历一个就用 =and= 或者 =or= 计算运算结果, =and= 一旦遇到 =#f=, =or= 一旦遇到 =#t= 就停止迭代并且返回布尔值.
+
+还有嵌套版本的 =for*/and= 和 =for*/or= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for/and ([i '(1 2 3 "x")])
+  (i . < . 3))               ; #f
+
+(for/and ([i '(1 2 3 4)])
+  i)                         ; 4
+
+(for/or ([i '(1 2 3 "x")])
+  (i . < . 3))               ; #t
+
+(for/or ([i '(1 2 3 4)])
+  i)                         ; 1
+#+END_SRC
+
+*** for/first and for/last
+
+分别返回第一次和最后一次迭代的运算结果.当然也有 =for*/first= 和 =for*/last= 版本.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for/first ([chapter '("Intro" "Details" "Conclusion" "Index")]
+            #:when (not (equal? chapter "Intro")))
+  (displayln chapter)
+  chapter)  ; 返回"Details",只是迭代一次,如果一次也没有迭代过返回#f
+
+
+(for/last ([chapter '("Intro" "Details" "Conclusion" "Index")]
+           #:when (not (equal? chapter "Index")))
+  (displayln chapter)
+  chapter)  ; "Conclusion",全部迭代完,返回最后一次的迭代结果,如果一次也没有迭代过返回#f
+
+(for*/first ([book '("Guide" "Reference")]
+             [chapter '("Intro" "Details" "Conclusion" "Index")]
+             #:when (not (equal? chapter "Intro")))
+  (list book chapter))  ; '("Guide" "Details")
+
+(for*/last ([book '("Guide" "Reference")]
+            [chapter '("Intro" "Details" "Conclusion" "Index")]
+            #:when (not (equal? chapter "Index")))
+  (list book chapter))  ; '("Reference" "Conclusion")
+#+END_SRC
+
+*** for/fold and for*/fold
+
+类似其它语言的 =while= 循环,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for/fold ([prev #f]
+           [counter 1])  ; 设定迭代要用到变量
+          ([chapter '("Intro" "Details" "Details" "Conclusion")] ; 用遍历的序列
+           #:when (not (equal? chapter prev)))
+  (printf "~a. ~a\n" counter chapter)
+  (values chapter (add1 counter)))
+
+;; 打印如下:
+;; 1. Intro
+;; 2. Details
+;; 3. Conclusion
+;; 返回结果:
+;; "Conclusion"
+;; 4
+
+(for*/fold ([prev #f]
+            [counter 1])  ; 设定迭代要用到变量
+           ([book '("Guide" "Reference")]
+            [chapter '("Intro" "Details" "Details" "Conclusion")] ; 用遍历的序列
+            #:when (not (equal? chapter prev)))
+  (printf "~a ~a\n" book chapter)
+  (printf "~a. ~a\n" counter chapter)
+  (values chapter (add1 counter)))
+
+;; 打印如下:
+;; Guide Intro
+;; 1. Intro
+;; Guide Details
+;; 2. Details
+;; Guide Conclusion
+;; 3. Conclusion
+;; Reference Intro
+;; 4. Intro
+;; Reference Details
+;; 5. Details
+;; Reference Conclusion
+;; 6. Conclusion
+;; 结果如下:
+;; "Conclusion"
+;; 7
+#+END_SRC
+
+*** Multiple-Valued Sequences
+
+对于多值序列,比如 =hash table= ,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for ([(k v) #hash(("apple" . 1) ("banana" . 3))])
+  (printf "~a count: ~a\n" k v))
+
+;; 打印如下:
+;; apple count: 1
+;; banana count: 3
+
+(for*/list ([(k v) #hash(("apple" . 1) ("banana" . 3))]
+            [(i) (in-range v)])
+  (display i)
+  k) ; '("apple" "banana" "banana" "banana")
+#+END_SRC
+
+*** Breaking and Iteration
+
+有两种方式可以打断(break)迭代, =#:break 和 #:finally= .
+
+两者的差别在于 =#:break= 判断成功会马上停止,而 =#:finally= 判断成功后会把当前的一次迭代(一次完整的迭代包括条件判断和循环体执行)执行完才停止.
+
+(可以结合其它语言 =while= 语句来理解).
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(for ([book '("Guide" "Story" "Reference")]
+      #:break (equal? book "Story")
+      [chapter '("Intro" "Details" "Conclusion")])
+  (printf "~a ~a\n" book chapter))
+
+(for* ([book '("Guide" "Story" "Reference")]
+       [chapter '("Intro" "Details" "Conclusion")])
+  #:break (and (equal? book "Story")
+               (equal? chapter "Conclusion"))
+  (printf "~a ~a\n" book chapter))
+
+(for ([book '("Guide" "Story" "Reference")]
+      #:final (equal? book "Story")
+      [chapter '("Intro" "Details" "Conclusion")])
+  (printf "~a ~a\n" book chapter))
+
+(for* ([book '("Guide" "Story" "Reference")]
+       [chapter '("Intro" "Details" "Conclusion")])
+  #:final (and (equal? book "Story")
+               (equal? chapter "Conclusion"))
+  (printf "~a ~a\n" book chapter))
+#+END_SRC
+
+*** Iteration Performance
+
+=Racket= 除了上面这些迭代方法就只剩手写循环(=hand-written loop=)就是递归函数调用(=recursive-function invocation=)了.
+
+两种方法的效率都是一样的,然而后者一般只针对特定数据,前者有很多种针对对应数据的迭代器.(这里自己看文档吧).
+
+** 12 Pattern Matching
+
+=match= form 可以匹配任何 =Racket= 值,与只能用正则对比字节和字符序列的 =regexp-match= 相对.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(match 2
+  [1 'one]
+  [2 'two]
+  [3 'three]) ; 2,如果没有匹配到就会报错
+
+(match 2
+  [1 'one]
+  [_ 'other]) ; 'other,为了避免报错,如果没有匹配到就返回 _ 分支的值
+
+(match 2
+  [1 'one]
+  [else 'other]) ; 'other,用 else 改写上面的例子也可以得到一样的结果
+
+#|
+像cons,list和vector这些构造器可以用来创建匹配pairs,lists和vectors.
+|#
+(match '(1 2)
+  [(list 0 1) 'one]
+  [(list 1 2) 'two]) ; 'two
+
+(match '(1 . 2)
+  [(list 1 2) 'list]
+  [(cons 1 2) 'pair]) ; 'pair
+
+(match #(1 2)
+  [(list 1 2) 'list]
+  [(vector 1 2) 'vector]) ; 'vector
+
+(struct posn (x y)) ; 现在 posn 也是构造器了
+
+(match (posn 1 2)
+  [(posn 0 2) 'posn-0-2]
+  [(posn 1 2) 'posn-1-2]) ; 'posn-1-2
+
+#|
+pattern里面的unquoted,non-constructor标示符是pattern变量,(除了_)匹配成功后会和结果进行绑定.
+
+... (ellipsis),就像正则表达式里面的 * 量词一样,被修饰的元素出现任意次
+|#
+
+(match '(1 1 1)
+  [(list 1 ...) 'one]
+  [else 'other]) ; 'one
+
+(match '(1 1 2)
+  [(list 1 ...) 'one]
+  [else 'other]) ; 'other,因为第一个pattern匹配任意个1
+
+(match '(1 1 2)
+  [(list 1 x ...) x]
+  [else 'other]) ; '(1 2), 成功匹配第一个pattern并且绑定 pattern 变量 x
+
+(match '((! 1) (! 2 2) (! 3 3 3))
+  [(list (list '! x ...) ...) x]) ; '((1) (2 2) (3 3 3))
+
+
+;; quasiquote也是可以用作为pattern
+(match `{with {x 2} {+ x 1}}
+  [`{with {,id ,rhs} ,body}
+   `{{lambda {,id} ,body} ,rhs}]) ;'((lambda (x) (+ x 1)) 2)
+
+;; 还有很多其它forms
+(match-let ([(list x y z) '(1 2 3)])
+  (list z y x))
+#+END_SRC
+
+** 13 Classes and Objects
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; 复习一下Racket中成员的访问等级,以Java为例子(不讨论default等级)
+;; 1. public : 可以给本类,同一个package中的子类,不同package中的子类以及不同包的非子类访问.
+;; 2. protected : 可以本类,同一个package中的子类和,不同package中的子类访问.
+;; 3. private : 只能给本类(内部)访问.
+
+(define new-object%
+
+  (class object%     ; 父类为 object%, object% 是 built-in root class.
+
+    (init arg) ; 初始/实例化需要的参数,只能在实例化时候使用,不能在后续访问.
+
+    (define private-field (void))
+    ;; 私有字段,define 和 define-values 定义的都是私有字段,不能直接访问,可以通过
+    ;; 方法(methods)访问.私有成员只能在本类内部使用,在子类以及外部不能使用.
+
+    (field           ; 定义公有字段,就可以通过方法访问,也可以直接访问.
+      [public-field-1 arg]
+      [public-field-2 arg])
+
+    (super-new) ; 初始/实例化父类,一定要执行该调用,因为一个类必须要唤醒它的父类初始/实例化
+
+    (define/public (public-method value) ; 定义公有方法 public-method
+      (set! private-field value)             ; 给私有字段赋值
+      (set-field! public-field-1 this value) ; 给公有字段赋值,这里面的this表示实例化对象.
+      (set-field! public-field-2 this value))))
+
+(define ins (new new-object% [arg 10])) ; 初始化一个实例
+
+;;; 13.1 Methods
+
+(send ins public-method 12)             ; 调用公有方法要用send操作符.
+
+(define newer-than-new-object%          ; 继承 new-object% 类
+  (class new-object%
+    (super-new)
+    (inherit public-method)             ; 声明继承公有方法 public-method.可以不用此声明,写法如下
+    (define/public (new-public-method value)
+      (public-method value))))
+
+(define newer-than-new-object-without-inherit%
+  ;; 不用 inherit 声明继承 public-method 方法,那么每次调用 public-method 方法就得用 (send this public-method args ...) 这种写法.
+  ;; 这种写法有两个缺点:
+  ;; 如果父类没有提供 public-method 方法,除非子类实例调用了 new-public-method 方法,否则错误不会引发;
+  ;; 另外一个就是效率问题,它需要在运行时查找目标对象的类,而 inherit-based 方法利用在类方法表的 offset 查找,这个offset 是在类创建时候计算的.
+  (class new-object%
+    (super-new)
+    (define/public (new-public-method value)
+      (send this public-method value))))
+
+(define new-ins (new newer-than-new-object% [arg 11]))
+(get-field public-field-1 new-ins)
+
+;; 把类方法 public-method 转化成 generic,这样使用 send-generic 调用方法就可以达到与 inherit-based 一样效率.
+(define generic-public-method (generic new-object% public-method))
+
+(send-generic new-ins generic-public-method 12)
+(get-field public-field-1 new-ins)
+
+;; 重载 public-method
+(define newer-than-new-object-with-override%
+  (class new-object%
+    (super-new)
+    (define/override (public-method) ; 如果用define/public定义public-method会引发一个错误.
+      (displayln "Doing nothing"))))
+
+(define override-ins (new newer-than-new-object-with-override% [arg 9]))
+(send override-ins public-method)
+
+;;; 13.2 Initialization Arguments
+;; 当子类没有声明初始化/实例化字段的时候,子类就会调用父类的声明的初始化/实例化字段
+;; 其实上面的例子都可以改成初始化的字段可选
+(define newer-object-with-optional-arg%
+  (class new-object%
+    (init [arg 10])                     ; 设定默认值为10
+    (super-new [arg arg])))             ; 初始化父类时候传入值
+
+(define optional-ins-1 (new newer-object-with-optional-arg%))
+(define optional-ins-2 (new newer-object-with-optional-arg% [arg 15]))
+
+;;; 13.3 Internal and External Names
+;; 内部与外部名字,并不是简单根据公有和私有来区分,而是根据使用的上下文/作用域区分
+;; new-object%实例化的时候 public-method有internal name.
+(define inherit-ins (new newer-than-new-object% [arg 50]))
+;; 在实例调用的时候有external name,就是说public-method既有internal name也有external name.
+;; 相反arg和private-field只有internal name.
+(send inherit-ins public-method 60)
+
+;;; 13.4 Interfaces
+;; 定义接口
+(define object-interface (interface () interface-method-1 interface-method-2))
+;; 定义使用接口的类
+(define klass-with-interface%
+  (class* object%
+    (object-interface)
+    (super-new)
+    (define/public (interface-method-1)
+      (displayln "interface-method-1 has been implemented"))
+    (define/public (interface-method-2)
+      (displayln "interface-method-2 is not allowed to be implemented as an private method or error raised"))))
+
+(define kls-ins (new klass-with-interface%))
+(send kls-ins interface-method-1)
+(send kls-ins interface-method-2)
+
+;; 判断实例是否某个类或者被派生的类的实例
+(is-a? kls-ins klass-with-interface%)
+(is-a? kls-ins object%)
+(is-a? (new object%) klass-with-interface%)
+(is-a? kls-ins newer-object-with-optional-arg%)
+
+;; 判断类是否实现相应接口
+(implementation? klass-with-interface% object-interface)
+(implementation? object% object-interface)
+
+;;; 13.5 Final, Augment, and Inner
+;; 在Java中,final方法不能被子类重载(overridden).Racket也是一样.
+
+(define klass-final%
+  (class object%
+    (super-new)
+    (define (get-info) (displayln "No any info"))
+    (define (get-position) (displayln "What position")) ; define 定义的成员只能在类里面使用
+    ;; 经过 public-final 声明过后就是公有(public)和final了
+    (public-final get-info
+                  [get-position get-position-final]) ; get-position 重命名为 get-position-final,重名后就不能再访问 get-position 了.
+    ))
+
+(define final-ins (new klass-final%))
+(send final-ins get-info)
+(send final-ins get-position-final)
+
+;; 你不可以用这段代码,因为final方法是不能进行重载的
+;; (define subclass-klass-final%
+;;   (class klass-final%
+;;     (super-new)
+;;     (define/override (get-info)
+;;       (displayln "Now I am get-info in subclass"))
+;;     (define/override (get-position-final)
+;;       (displayln "Now I am get-position-final in subclass"))))
+
+;; 上面的例子可以改用 override-final
+(define klass-v2%
+  (class object%
+    (super-new)
+    (define/public (get-info)
+      (displayln "Still nothing"))
+    (define/public (get-position)
+      (display "Where am I?"))))
+
+(define subklass-v2%
+  (class klass-v2%
+    (super-new)
+    (define (get-info)
+      (displayln "Super call get-info")
+      (super get-info) ; 调用父类的get-info方法,super调用,稍后讲解跟它相反的inner调用
+      (displayln "Super call"))
+    (define (get-position)
+      (displayln "Super call get-position")
+      (super get-position)
+      (displayln "Super call"))
+    (override-final get-info get-position)))
+;; 由于 klass-v2% 没有 get-position-final 的方法,所以 get-position 不能够重命名为 get-positioin-final
+;; public-final 和 override-final 的区别就是就是把已经定义的方法声明为final方法,另外一个是重载父类已经定义的方法为final.
+;; 同样不能在subklass-v2%的子类中重载 get-info 和 get-position 方法.
+
+(define subklass-ins (new subklass-v2%))
+
+;; 一般来说子类可以定义与父类方法同名方法的时候调用父类的同名方法,
+;; (父类用define/public定义方法,子类用define定义方法),在Python就是super call,
+;; 可以在被调用的父类方法前后做一些动作,这样就可以在父类方法的基础上进行增强(augment).
+;; Racket也支持super call,也支持另外一种风格(beta-style)的拓展方法,叫做inner call,
+;; 跟super call在父类方法的基础上进行前后拓展不一样,inner call是在父类方法的基础上进行内部拓展.
+;; http://www.cs.utah.edu/plt/publications/oopsla04-gff.pdf
+;; 注意,在Racket里面,重载和增强不是同一个东西.
+;; 看代码比较明了.
+
+(define extra-klass-v2%
+  (class klass-v2%
+    (super-new)
+    (define (get-info)
+      (displayln "Inner call starts")
+      (inner (void) get-info)           ; 如果找不到get-info的增强方法,那么就返回(void)
+      (displayln "Inner call ends"))
+    (overment get-info)))               ; overment操作符号声明get-info为可在子类中被增强
+
+(define inner-for-extra-klass-v2%
+  (class extra-klass-v2%
+    (super-new)
+    (define/augment (get-info)          ; 把get-info定义为增强方法
+      (displayln "Augment for get-info of extra-klass-v2%"))))
+
+(define extra-ins (new extra-klass-v2%))
+(define inner-ins (new inner-for-extra-klass-v2%))
+(send extra-ins get-info)
+(send inner-ins get-info)
+
+;;; 13.6 Controlling the Scope of External Names
+;; Racket是通过词法作用域(lexical scope)而不是继承层级(inheritance hierarchy)来控制外部名字(external names)的作用域的.
+;; 内部名字(Internal names)的作用域是local scope,而外部名字的作用域默认情况下是global scope.
+;; 一般来说成员(a member of class)不会绑定一个外部名字.
+;; 相反,当成员名字已经绑定到一个成员键(member key),成员会引用一个已经存在的外部名字.
+;; 最终一个类会映射(maps)成员键到方法,字段和初始参数.
+;; 内部名字是与Racket的名字分开的,只能用于send,new和成员定义中.
+
+(define-values (klass-1% klass-2%)
+  (let ()
+    (define-member-name get-info (generate-member-key)) ; 类似于 Java 的 protected,不过是限定于词法作用域内
+
+    (define klass-1%
+      (class object%
+        (super-new)
+        (define kls-2-ins (new klass-2%))
+        (define my-info (send kls-2-ins get-info))))
+
+    (define klass-2%
+      (class object%
+        (super-new)
+        (define/public (get-info) "This is the info of instances of klass-1%")))
+
+    (displayln (format "Member key is ~a" (member-name-key get-info))) ; 获取 get-info 的 method key,这个 method key 可以在其它作用域使用
+
+    (values klass-1% klass-2%)))
+
+;; 这个表达式会报错,因为get-info只能在上面的词语作用域里面使用
+;; (send (new klass-2%) get-info)
+
+
+;;; 13.7 Mixins
+;; 所谓 mixin 就是一个根据超类(superclass)进行参数化的类拓展.
+
+(define (klass-mixin %)                 ; % 就是要传入的 superclass
+  (class %
+    (super-new)
+    (define/override (get-info)
+      (displayln "get-info get itself overridden in mixin"))))
+
+;; 如果 superclass 没有 get-info 方法就会报错.
+
+(define new-klass% (klass-mixin klass-v2%));;
+
+;; The mixin form
+(define status-interface (interface () alive?))
+(define action-interface (interface () eat))
+(define human-mixin
+  ;; 要参数化的superclass要求实现了status-interface接口,最后返回一个subclass,这个subclass要求实现action-interface.
+  (mixin (status-interface) (action-interface)
+    (inherit alive?)
+    (super-new)
+    (define/public (eat x)
+      (if (alive?)
+          (displayln (format "I am eating ~a" x))
+          (displayln "I am not alive so can not eat anything.")))))
+
+(define human%
+  (class* object% (status-interface)
+    (init-field [alive #t])
+    (super-new)
+    (define/public (alive?)
+      alive)))
+
+(define hungry-human% (human-mixin human%))
+(define eater (new hungry-human%))
+(define dead-people (new hungry-human% [alive #f]))
+(send eater eat "Banana")
+(send dead-people eat "Banana")
+
+;; Parameterized Mixins
+;; 根据方法进行参数化
+(define my-from-interface (interface () get-info))
+(define (make-mixin-with-method method-key)
+  (define-member-name get-info method-key)
+  (mixin (my-from-interface) ()
+    (super-new)
+    (inherit get-info)
+    ;; NOTE 这个inherit貌似是针对于第一个interface集合的,所以不能像指南中的例子一样
+    ;; mixin: method was referenced in definition, but is not in any of the from-interfaces method name:  member34476
+    ;; 或者把(inherit get-info)去掉,采用(send this get-info)这种方式调用
+    (define/public (return-info)
+      (get-info)
+      (displayln "Mixin cal"))))
+
+(define temp-klass%
+  (class* object% (my-from-interface)
+    (super-new)
+    (define/public (get-info)
+      (displayln "Temp-klass"))))
+
+(send (new ((make-mixin-with-method (member-name-key get-info))
+            temp-klass%))
+      return-info)
+
+;;; 13.8 Traits
+;; Trait类似于mixin,都是一个用来拓展类上的方法集合.
+;; Traits的表示(representation)是一个association lists(Emacs Lisp中叫a-list),列表的每个项目为"名字-方法",一个mixin.
+;; Traits不同于mixins在于 traits支持trait之间合并(trait-sum)),移除(trait-exclude),赋予方法别名(trait-alias)这样的操作.
+(require racket/trait)
+
+;; 定义两个traits
+(define a-trait
+  (trait
+   (define/public (get-a) 'A)
+   (define/public (pp-get-a) (format "You got a ~a" (get-a)))))
+
+(define b-trait
+  (trait
+   (define/public (get-b) 'B)))
+
+(define a+b-trait
+  (trait-sum                            ; 合并两个traits, a-trait 和 b-trait.
+   ;; 重命名 a-trait 的 get-a 为 get-to-a 以及 b-trait 的 get-b 为 get-to-b
+   ;; 然后把 get-a 和 get-b 移除,别名操作相当于重新克隆了一份并给了另外一个名字.
+   (trait-exclude (trait-alias a-trait
+                               get-a get-to-a)
+                  get-a)
+   (trait-exclude (trait-alias b-trait
+                               get-b get-to-b)
+                  get-b)
+   (trait
+    (inherit get-to-a get-to-b)         ; 支持inherit操作
+    (define/public (get-points)
+      (list (get-to-a) (get-to-b))))))
+
+(define trait-with-traits%
+  ((trait->mixin a+b-trait)
+   (class object%
+     (super-new)
+     ;; 必须提供,get-a和get-b,否则会报错
+     ;; class*: superclass does not provide an expected method for inherit
+     ;;  inherit name: get-a
+     (define/public (get-a)
+       'trait-with-traits-get-a)
+     (define/public (get-b)
+       'trait-with-traits-get-b)
+     (define/public (get-class-name)
+       'trait-with-traits%))))
+
+(send (new trait-with-traits%) get-a)
+(send (new trait-with-traits%) get-to-a)
+
+
+;;; 13.9 Class Contracts
+;; 类约束的概念跟第七章的概念一样,这里大概写几个示例.类的约束主要分两类.
+;; 外部和内部约束,区别就是对继承关系的约束力度,前者比后者弱,下面会说到外部约束的缺点.
+;; External Class Contracts
+;; object
+(define edible/c (object/c (field [size positive-integer?])))
+
+(define/contract external-animal%
+  (class/c
+   (field [size positive-integer?])     ; 要求size字段不能小于等于0
+   [eat (->m                            ; eat方法,要求一个参数,参数要为一个size字段为正整数的对象,返回void.
+         edible/c
+         void?)])
+  (class object%
+    (super-new)
+    (init-field [size 10])
+    (define/public (eat animal)
+      (if (> size (get-field size animal))
+          (set! size (+ size (get-field size animal)))
+          (displayln "This animal is not edible")))))
+
+(define tigger (new external-animal%))
+(define rabbit (new external-animal% [size 2]))
+;; 初始化参数size为不能小于等于0的正整数,否则报错,就算子类对象也不能打破约束.
+(send tigger eat rabbit)
+(get-field size tigger)
+
+;; 外部类约束有两个缺点
+;; 1. 当动态适配的目标(target of dynamic dispatch)是受约束类的方法实现,那么约束有效,
+;;    如果改变了动态适配目标,约束(external method contracts)就会失效.
+;;    External field contract总是生效,因为字段不能被重载和遮掩(shadowed)
+;; 2. 约束不限制被约束类的子类.使用继承的字段和方法是不会触发这些约束的检测,
+;;    通过super调用超类(superclass)的方法也不会触发检测.
+
+;; Internal Class Contracts
+;; 直接把文档上的例子copy上来
+(define animal%
+  (class object%
+    (super-new)
+    (field [size 10])
+    (define/public (eat food)
+      (set! size (+ size (get-field size food))))))
+
+(define/contract internal-animal%
+  (class/c [eat (->m edible/c edible/c)])
+  (begin
+    (define/contract glutton%
+      (class/c (override [eat (->m edible/c void?)]))
+      ;; override 只会影响在子类使用超类中的调用(方法).这个例子中继承了animal%类的eat方法,
+      ;; eat方法在internal-animal%中被重载了,当internal-animal%的实例调用eat方法的时候
+      ;; 就使用重载过的eat方法,当调用gulp方法,gulp就会调用glutton%继承animal%的eat方法.
+      ;; 这表达式的意思就是glutton%类的约束为(->m edible/c void?),子类重载后的eat属于自己,
+      ;; 子类可以调用两个不同的eat方法,但是通过调用gulp方法调用eat方法会违反跟glutton%的约束.
+      (class animal%
+        (super-new)
+        (inherit eat)
+        (define/public (gulp food-list)
+          (for ([f food-list])
+            (eat f)))))
+    (class glutton%
+      (super-new)
+      (inherit-field size)
+      (define/override (eat f)
+        (let ([food-size (get-field size f)])
+          (set! size (/ food-size 2))
+          (set-field! size f (/ food-size 2))
+          f)))))
+
+(define pig (new internal-animal%))
+(define slop1 (new animal%))
+(define slop2 (new animal%))
+(define slop3 (new animal%))
+(send pig eat slop1)
+(get-field size slop1)
+;; (send pig gulp (list slop1 slop2 slop3))
+;; 这句会报错,上面说了,调用gulp会调用animal%的eat方法,它的约束跟internal-animal%重载过的eat方法的约束不一样.
+
+
+;; 写一个不使用 override 声明的反例
+(define/contract animal-t%
+  (class/c (field [size positive-integer?])
+           [eat (->m edible/c void?)])
+  (class object%
+    (super-new)
+    (field [size 10])
+    (define/public (eat food)
+      (set! size (+ size (get-field size food))))
+    (define/public (before-eat food)
+      (eat food))))
+
+
+(define large-animal%
+  (class animal-t%
+    (super-new)
+    (inherit-field size)
+    (set! size 'large)
+    (define/override (eat food)
+      (display "Nom nom nom") 1)))
+
+(define elephant (new large-animal%))
+(send elephant before-eat (new large-animal%))
+
+#+END_SRC
+
+** 14 Units (Components)
+
+单元(Units)把一个程序分为可编译(=compiable=)和可重用(=reusable=)组件.
+
+一个单元和一个函数(procedure)类似,都是用于抽象的第一类对象值(first-class values).
+
+函数抽象出表达式的值,单元抽象定义集合的名字.
+
+正如调用一个函数是根据所给的实际参数运算它的的表达式,调用一个单元是根据所给的导入变量(imported variable)的引用来运算它的定义.
+
+不像一个函数,一个单元的导入变量可以被另外一个处于调用前的(prior bto invocation)单元的导出变量进行部分链接.
+
+链接合并多个单元为一个组合单元.组合单元自身会导入用于传播(propagated)到(被)链接单元里面未解析(unresolved)的导入变量,并且未以后的链接而重新导入被链接单元的部分变量.
+
+*** Signatures and Units
+
+单元的接口是根据签名(signatures)来描述的.每个签名都是(正常来说,在模块内部)使用 =define-signature= 定义.
+
+根据惯例,签名的名字都是以 =^= 结尾的.
+
+#+BEGIN_SRC scheme
+;;; factory-sig.rkt
+#lang racket
+
+(provide factory^)
+
+(define-signature factory^
+  (build-products ; (integer? . -> . (listof product?))
+   product?       ; (any/c . -> . boolean?)
+   rebuild        ; (-> product? symbol? any/c product?)
+   product-info)) ; (product? . -> . hash?)
+#+END_SRC
+
+实现 =factory^= 的单元需要通过 =define-unit= form 中的 =export= 从句指定 =factory^= .
+
+根据惯例,单元的名字要用 =@= 结尾,
+
+#+BEGIN_SRC scheme
+;;; factory-unit.rkt
+#lang racket
+
+(require "factory-sig.rkt")
+(provide factory@)
+
+(define-unit factory@
+  (import)
+  (export factory^)
+
+  (printf "Factory started.\n")
+
+  (define-struct product (info) #:transparent)
+
+  (define (build-products n)
+    (for/list ([i (in-range n)])
+      (make-product (make-hash))))
+
+  (define (rebuild p s v)
+    (make-product (hash-set (product-info p) s v))))
+#+END_SRC
+
+=factory^= 签名也可以被一个需要使用 =factory@= 实现一些功能的单元使用,
+
+#+BEGIN_SRC scheme
+;;; store-sig.rkt
+#lang racket
+
+(provide store^)
+
+(define-signature store^
+  (set-stock!           ; (-> integer? void?)
+   get-stock            ; (-> integer?)
+   rebuild-them))       ; (-> (listof product?) s v (listof product?))
+#+END_SRC
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(require "store-sig.rkt"
+         "factory-sig.rkt")
+(provide store@)
+
+(define-unit store@
+  (import factory^)
+  (export store^)
+
+  (define inventory null)
+
+  (define (get-inventory) inventory)
+
+  (define (rebuild-them products s v)
+    (set! inventory (map (lambda (p) (rebuild p s v)) products)))
+
+  (define (get-stock) (length inventory))
+
+  (define (set-stock! n)
+    (set! inventory
+          (append inventory (build-products n)))))
+#+END_SRC
+
+有两件事情文档上没有说到:
+
+- 如果单元里面存在签名里面没有的定义,那么这中定义之后值不能在单元外可用的,比如上面的 =get-inventory= .
+
+- 只要单元没有实现签名里面的任意一个接口都会发生报错.
+
+个人感觉来说实话签名有点像抽象类/Java中的接口,而单元就像实现这些东西的类.
+
+*** Invoking Units
+
+=factory@= 没有任何 =imports= (import从句为空),它可以直接通过 =invoke-unit= 启动,不过它的定义是不可用的.
+
+=define-values/invoke-unit/infer= form 从实现了接口的单元中推断出定义并且把签名的标识符绑定到这些定义上.
+
+由于 =store@= 导入了 =factory^= 签名,所以需要先完成 =factory@= 的 =invoking= 之后才可以 =invoke store@= .
+
+#+BEGIN_SRC scheme
+(require "factory-unit.rkt"
+         "store-unit.rkt")
+(invoke-unit factory@)                     ; 启动单元,但是定义不可用
+
+(define-values/invoke-unit/infer factory@) ; 启动单元,推断定义,绑定定义
+
+;; 现在可以对 store 单元做同样的事情
+(define-values/invoke-unit/infer store@)
+#+END_SRC
+
+*** Linking Units
+
+把两个单元合并,以下例子定义一个专门为指定店生产产品,
+
+#+BEGIN_SRC scheme
+;;; store-specific-factory-unit.rkt
+#lang racket
+
+(require "factory-sig.rkt"
+         "store-sig.rkt"
+         "store-unit.rkt")
+(provide
+ store^
+ factory^
+ store@
+ store-specific-factory@
+ store+factory@)
+
+(define-unit store-specific-factory@
+  (import store^)
+  (export factory^)
+
+  (define-struct product (info) #:transparent)
+
+  (define (build-products n)
+    (for/list ([i (in-range n)])
+      (make-product (make-hash
+                     (list (cons 'store-name "new-type"))))))
+
+  (define (rebuild p s v)
+    (unless (equal? 'store-name s)
+      (make-product (hash-set (product-info p) s v)))))
+
+#|
+启动 store-specific-factory@ 单元需要给它提供 store^ 的绑定,
+然而 store^ 的绑定需要启动 store@, 而 store@ 需要 factory^ 的绑定.
+它们是相互依赖的,因此不能够在任何一个之前启动对方的依赖.
+|#
+
+;; 唯一办法就是把单元连接起来
+
+(define-compound-unit/infer store+factory@
+  (import)
+  (export factory^ store^)
+  (link store-specific-factory@
+        store@))
+#+END_SRC
+
+*** First-Class Units
+
+=define-unit= form 是 =define= 和 =unit= 的混合,并且给定义的标识符号附加静态信息.
+
+静态信息是用于给 =define-values/invoke-unit/infer= 这样的 =/infer= forms 根据标识符推断签名的接口.
+
+如果单元没有静态信息就不能用 =define-values/invoke-unit/infer= 启动了.
+
+#+BEGIN_SRC scheme
+;;; factory-maker.rkt
+#lang racket
+
+(require "factory-sig.rkt")
+(provide factory@-maker)
+
+(define factory@-maker
+  (lambda (pinfo)
+    (unit
+      (import)
+      (export factory^)
+
+      (printf "Factory started.\n")
+
+      (define-struct product (info) #:transparent)
+
+      (define (build-products n)
+        (for/list ([i (in-range n)])
+          (make-product pinfo)))
+
+      (define (rebuild p s v)
+        (make-product (hash-set (product-info p) s v))))))
+
+(define u (factory@-maker (make-hash (list (cons 'name "711")))))
+
+(define-values/invoke-unit u
+  (import)               ; 如果有给定的签名,就从上下文中查找符合给定签名的名字/接口
+  (export factory^))     ; 指定导出的签名, u 实现了 factory^, 所以这里是 factory^.
+
+(define products (build-products 5))
+#+END_SRC
+
+=define-compound-unit/infer= 也可以拆开为 =define= , =compound-unit= 以及附加静态信息 3 个动作,现在定义一个新的 =new-store-factory@= .
+
+#+BEGIN_SRC scheme
+#lang racket
+(require "store-specific-factory-unit.rkt")
+(define new-store+factory@
+  (compound-unit
+    (import)
+    (export F S) ; F S 分别是绑定 factory^ 和 store^ 的标识符,在后面进行绑定
+    (link [((F : factory^)) store-specific-factory@ S]
+          [((S : store^)) store@ F])))
+#+END_SRC
+
+*** Whole-module Signatures and Units
+
+把上面的 =factory^= 和 =factory@= 分别改为模块,
+
+#+BEGIN_SRC scheme
+;;; factory-sig.rkt
+#lang racket/signature
+
+build-products ; (integer? . -> . (listof product?))
+product?       ; (any/c . -> . boolean?)
+rebuild        ; (-> product? symbol? any/c product?)
+product-info   ; (product? . -> . hash?)
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; factory-unit.rkt
+#lang racket/unit
+
+(require "factory-sig.rkt")
+
+(import)
+(export factory^)
+
+(printf "Factory started.\n")
+
+(define-struct product (info) #:transparent)
+
+(define (build-products n)
+  (for/list ([i (in-range n)])
+    (make-product (make-hash))))
+
+(define (rebuild p s v)
+  (make-product (hash-set (product-info p) s v)))
+#+END_SRC
+
+签名 =factory^= 和单元 =factory@= 分别自动被模块提供, =Racket= 会通过替换它们的文件名后缀来推断,
+
+比如替换 =factory-sig.rkt= 的 =-sig.rkt= 为 =^= , =factory-unit.rkt= 的 =-unit.rkt= 为 =@= .
+
+*** Contracts for Units
+
+**** Adding Contracts to Signatures
+
+给签名添加约束,(文档上的例子是有问题的,只能改称这样).
+
+#+BEGIN_SRC scheme
+;;; factory-sig.rkt
+#lang racket
+
+(provide factory^
+         product
+         product-info)
+
+(define-struct product (info) #:transparent)
+
+(define-signature factory^
+  ((contracted
+    [build-products  (-> integer? (listof product?))]
+    [product?        (-> any/c boolean?)]
+    [rebuild         (-> product? symbol? any/c product?)]
+    [product-info    (-> product? hash?)])))
+#+END_SRC
+
+然后单元和平常一样使用.
+
+
+**** Adding Contracts to Units
+
+除了给签名添加约束,也可以通过对单元添加约束,
+
+#+BEGIN_SRC scheme
+;;; factory-unit.rkt
+#lang racket
+
+(require "factory-sig.rkt")
+(provide factory@)
+
+(define-unit/contract factory@
+  (import)
+  (export (factory^
+           [build-products  (-> integer? (listof product?))]
+           [product?        (-> any/c boolean?)]
+           [rebuild         (-> product? symbol? any/c product?)]
+           [product-info    (-> product? hash?)]))
+
+  (printf "Factory started.\n")
+
+  (define-struct product (info) #:transparent)
+
+  (define (build-products n)
+    (for/list ([i (in-range n)])
+      (make-product (make-hash))))
+
+  (define (rebuild p s v)
+    (make-product (hash-set (product-info p) s v))))
+#+END_SRC
+
+对于第一类对象值的单元,可以用 =unit/c= .
+
+*** unit versus module
+
+两者都是 =Racket= 的模块化(=modularity=) 功能, =unit= 补全了 =module= .
+
+- =module= 主要用来管理一个统一的命名空间(=universal namespace=).
+
+- =unit= 主要用于关于大多数任何运行时的值来参数化代码片断(=code fragment=).
+
+=unit= 把定义和实现分开(运行时部分),当需要参数化函数,数据类型和类的时候就可以使用 =unit= ,而 =module= 不能把定义和实现分开.
+
+** 15 Reflection and Dynamic Evaluation
+
+=Racket= 是一门动态语言,提供很多(numerous)用来加载(loading),编译(compiling)甚至是在运行时构建新的代码(constructing new code at run time)的功能.
+
+下面的例子都只能在交互环境中使用,等一下说明原因.
+
+*** Eval
+
+=eval= form 接受"quoted" form或者语法对象(syntax object)作为要运算的表达式.
+
+=REPL= 是读取用户输入的表达式然后用 =eval= 来运算它们.
+
+#+BEGIN_SRC sh
+> (eval '(+ 1 2))
+3
+> (define (eval-formula formula)
+    (eval `(let ([x 2]
+                 [y 3])
+             ,formula)))
+> (eval-formula '(+ x y))
+5
+> (eval-formula '(+ (* x y) y))
+9
+#+END_SRC
+
+=eval= 经常被直接和着间接使用在整个模块上.比如一个程序可以通过使用 =dynamic-require= 按照要求加载模块,=dynamic-require= 就是一个包裹着 =eval= 的 wrapper.
+
+**** Local Scopes
+
+当使用 =eval= 运算的时候是不能看到上下文里面的本地绑定(local bindings).因为 =eval= 是一个函数,并且 =Racket= 是一个门采用词法绑定的,是不可能看到运行上下文中的本地绑定.
+
+下面这个例子定义了两个函数是不行的,证实了上面的说法.
+
+#+BEGIN_SRC sh
+> (define (broken-eval-formula formula)
+    (let ([x 2]
+          [y 3])
+      (eval formula)))
+> (broken-eval-formula '(+ x y))
+> (define x 1)
+> (define y 2)
+> (define (eval-formula-z z)
+    (eval '(+ x y z)))
+> (eval-formula-z 3)
+#+END_SRC
+
+**** Namespaces
+
+=Racket= 里面的命名空间(=namespace=)是指动态判断可用的绑定,不能像其它语言一样跟 =environment= 或者 =scope= 交替使用,不应该和静态词法(static lexical)概念搞混.
+
+=Racket= 的命名空间是一个囊括可用于动态运算的绑定的第一类(first-class)值. =eval= 接受一个可选参数,那就是命名空间,默认使用当前的命名空间.
+
+在 =REPL= 中使用 =eval= 的时候就是使用 =REPL= 的命名空间.
+
+上面之所以会说不能在交互模式以外的地方运行例子,是因为初始的当前模块为空.
+
+总的来说,不管是否安装命名空间的情况下 =eval= 不是一个好主意.显式创建一个命名空间来调用 =eval= 才是好办法.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; (eval '(cons 1 2)) ; not work
+
+(define ns (make-base-namespace)) ; 创建一个拥有 racket/base 绑定的命名空间.
+
+(eval '(cons 1 2) ns) ; works
+#+END_SRC
+
+**** Namespaces and Modules
+
+=Racket= 可以把模块(module)反射(reflect)进一个命名空间内.
+
+#+BEGIN_SRC sh
+> (module m racket/base
+    (define x 11))
+> (require 'm)
+> (define ns (module->namespace ''m))
+> (eval 'x ns)
+11
+#+END_SRC
+
+=module->namespace= 的参数是一个带引号的模块路径(quoted module path), ='m= 是模块路径,所以实参是 =''m= .
+
+=module->namespace= 根据路径把模块的定义加载到命名空间里面.
+
+上面的例子是在模块外使用的,在外部可以知道模块全名,但是在内部是不太可能的,因为这需要在加载的时候知道模块的源在哪.
+
+在模块内把模块加载进命名空间,就要用 =define-namespace-anchor= 定义一个钩子和用 =namespace-anchor->namespace= 在模块的命名空间拉取(reel).
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-namespace-anchor a)
+(define ns (namespace-anchor->namespace a))
+
+(define x 1)
+(define y 2)
+
+(eval '(cons x y) ns) ; '(1 .2)
+#+END_SRC
+
+*** Manipulating Namespaces
+
+一个命名空间囊括两块信息:
+
+- 标识符(identifiers)到绑定(bindings)的映射(mapping).
+
+  比如一个命名空间可以映射标识符 =lambda= 到 =lambda= form.
+
+  一个空的命名空间把每一个标识符映射到一个位初始化的 top-level 变量.
+
+- 模块名字(module names)到模块声明(declarations)和实例(instances).
+
+  是的,模块也是需要像类一样实例化的.在讲到 =macro= 的 =phase= 问题时候会提及到.
+
+
+第一个映射用在在 top-level 上下文中运算表达式的时候,比如 =(eval '(lambda (x) (+ x 1)))= ,叫标识符映射.
+
+第二个映射,比如被 =dynamic-require= 用于定位模块,叫模块映射.
+
+一次使用两个映射,比如 =(eval '(require racket/base))= .标识符映射决定 =require= 的绑定,同时 =require= 用来定位 =racket/base= 模块.
+
+=Racket= 的核心运行时系统里面,所有运算都是可反射(reflective)的.
+
+**** Creating and Installing Namespaces
+
+下面这个例子就是利用反射的方式从 =racket/serialize= 获得 =serialize= 函数.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (get-binding-from-serialize)
+  #|
+  还有一个 make-empty-namespace 创建空命名空间,但是它不包括Racket建立的基本模块,时不可用的命名空间.
+  make-base-empty-namespace 创建的命名空间 = 空的命名空间 + racket/base模块,命名空间还是空的,
+  因为标识符映射还是空的,只有模块映射没空.
+  parameterize 是不会影响体内的 namespace-require 这种来自闭合上下文(这里是整个模块)标识符的定义和使用,
+  只影响动态(dynamic)运算相关的表达式,比如(load "file"),(eval 'x)这种.
+
+  还有一个微妙的地方在于使用(namespace-require 'racket/serialize)而不是(eval '(require racket/serialize)),
+  因为 make-base-empty-namespace 创建的命名空间的标识符映射是空的,所以不能使用require form,
+  而namespace-require函数直接导入指定模块到当前的命名空间.
+  |#
+  (parameterize ([current-namespace (make-base-empty-namespace)])
+    (namespace-require 'racket/serialize)
+    (eval 'serialize)))
+
+(get-binding-from-serialize) ; #<procedure:serialize>
+
+(define serialize (get-binding-from-serialize))
+#+END_SRC
+
+**** Sharing Data and Code Across Namespaces
+
+如果模块没有被附加(attached)到新的命名空间上,当运算(evaluation)需要它们的时候,它们就会被加载(loaded)和重新实例化(instantiated).
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(require racket/class)
+(class? object%)       ; #t
+(class?
+  (parameterize ([current-namespace (make-base-empty-namespace)])
+    ;; racket/class没有附加到新的命名空间上,再次加载和重新实例化,生成一个不同的类数据类型
+    (namespace-require 'racket/class)
+    (eval 'object%)))  ; #f
+#+END_SRC
+
+如果想要共享当前上下文的数据到别的命名空间,那就要用 =namespace-attach-module= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(require racket/class)
+
+(class?
+  (let ([ns (make-base-empty-namespace)])
+     ;; 从指定命名空间抽取模块到别的命名空间上
+     (namespace-attach-module (current-namespace)  ; 源命名空间
+                              'racket/class        ; 要抽取的模块
+                              ns)                  ; 新命名空间
+     (parameterize ([current-namespace ns])
+        (namespace-require 'racket/class)
+        (eval 'object%))))         ; #t
+
+
+;; 在模块内部,用 define-namespace-anchor 和 namespace-anchor->empty-namespace 会更好
+
+(define-namespace-anchor a)
+(class?
+ (let ([ns (make-base-empty-namespace)])
+   ;; 连接被加载模块的命名空间运行时,可能会与当前命名空间不一样,
+   ;; namespace-nachor->empty-namespace 返回 racket/class 的实例,这个实例与 (require racket/class) 导入的是同一个.
+   (namespace-attach-module (namespace-anchor->empty-namespace a)
+                            'racket/class
+                            ns)
+   (parameterize ([current-namespace ns])
+     (namespace-require 'racket/class)
+     (eval 'object%))))            ; #t
+#+END_SRC
+
+*** Scripting Evaluation and Using load
+
+由于历史原因, =Lisp= 的实现不提供模块系统.相反大的程序都是以在 =REPL= 按照特定的顺序运行程序片断的方式写脚本完成的.
+
+即使现在有了模块系统,这种方式有时候还是挺有用的.
+
+这次的主角是 =load= , =load= 通过 =read= 一行一行的从源代码文件读取 S-expressions 并且把它们交给 =eval= 进行运算.
+
+因此, =load= 需要注意和 =eval= 一样的命名空间问题.但是和 =eval= 不一样, =load= 不接受命名空间做为函数.
+
+
+#+BEGIN_SRC scheme
+;;; here.rkt
+;; 不需要声明语言,也不需要provide
+(define here "Morporkia")
+(define (go!) (set! here there))
+#+END_SRC
+
+演示如何使用 =load= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define there "Utopia")
+
+(define-namespace-anchor a)
+(parameterize ([current-namespace (namespace-anchor->namespace a)])
+  (load "here.rkt")
+  (eval '(go!))
+  (eval '(displayln here)))    ; 打印 Utopia
+#+END_SRC
+
+=Racket= 提供了 =racket/load= 语言,它的 =load= 可以把模块的所有内容看做是动态的,把它们全部交给 =eval= 运算,
+
+=eval= 使用的命名空间是以 =racket= 基础初始化的,结果就是模块里面可以看到动态命名空间内的绑定.
+
+#+BEGIN_SRC scheme
+#lang racket/load
+
+(define there "Utopia")
+(load "here.rkt")
+(go!)
+(printf "~a\n" here)
+#+END_SRC
+
+** 16 Macros
+
+宏(macro)是与转换器(transformer)关联的 =syntactic form= ,转换器会把原来的 =form= 展开为已经存在的 =forms= .
+
+简单来说,宏是 =Racket compiler= 的拓展.
+
+(如果你明白编译器的主要工作就是把语言A翻译成语言B的话,你就能理解了,差别就在于宏把语言A的东西翻译成语言A里面的另外一种说法).
+
+*** Pattern-Based Macros
+
+所谓 =pattern-based macros= 就是根据 =patten= 匹配语法然后根据模板(template)进行展开(expansion).
+
+=macro pattern= 类似 =Pattern Matching= 提到的 =pattern= .
+
+**** define-syntax-rule
+
+创建宏的最简单方法就是用 =define-syntax-rule= form.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-syntax-rule (swap x y)  ; pattern
+  (let ([tmp x])                ; template
+    (set! x y)
+    (set! y tmp)))
+
+(define-values (a b) (values 1 2))
+
+(swap a b)
+
+#|
+a 和 b 的值交换了,如果 swap 是函数的话就不行了.
+因为词法作用域的缘故是不能看到外面的绑定的,也就是说作为函数参数传入的a和b只是值传递而已.
+|#
+(printf "a is ~s, b is ~s\n" a b)
+#+END_SRC
+
+**** Lexical Scope
+
+词法作用域名是不会影响宏的运作的. =Racket= 的 =pattern-based macros= 会自动维护词法作用域名,推理宏中变量的引用,这样能够和函数一样使用.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(let ([tmp 5]
+      [other 6])
+  (swap tmp other)
+  (list tmp other)) ; 结果是 '(6 5)
+#+END_SRC
+
+在运行的时候宏会被展开,但是不会展开成这样,否则结果就是 ='(5 6)= 了.
+
+#+BEGIN_SRC scheme
+(let ([tmp 5]
+      [other 6])
+  (let ([tmp tmp])
+    (set! tmp other)
+    (set! other tmp))
+  (list tmp other))
+#+END_SRC
+
+正确应该是展开成类似这样,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(let ([tmp 5]
+      [other 6])
+  (let ([tmp_1 tmp])
+    (set! tmp other)
+    (set! other tmp_1))
+  (list tmp other))
+#+END_SRC
+
+还有一个例子,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(let ([set! 5]
+      [other 6])
+  (swap set! other)
+  (list set! other))
+#+END_SRC
+
+展开时自动推理出 =set!= 的引用,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(let ([set!_1 5]
+      [other 6])
+  (let ([tmp_1 set!_1])
+    (set! set!_1 other)
+    (set! other tmp_1))
+  (list set!_1 other))
+#+END_SRC
+
+**** define-syntax and syntax-rules
+
+=define-syntax-rule= 只能定义一个 =pattern= ,如果要定义多个 =pattern= 就要用到 =define-syntax= 和 =syntax-rules= .
+
+#+BEGIN_SRC scheme
+;;; 接着上面的 swap
+(define-syntax rotate
+  (syntax-rules ()
+    [(rotate a b) (swap a b)]
+    [(rotate a b c) (begin
+                     (swap a b)
+                     (swap b c))]))
+
+(define c 3)
+(rotate a b c)
+(printf "a: ~s, b: ~s, c: ~a" a b c) ; a: 1, b: 3, c: 2
+#+END_SRC
+
+**** Matching Sequences
+
+演示如何在 =pattern= 和 =template= 中使用 =...= 进行匹配和展开 .
+
+改一下 =rotate= 的定义,让它支持接受2或者以上个参数.
+
+#+BEGIN_SRC scheme
+(define-syntax rotate
+  (syntax-rules ()
+    [(rotate a b) (swap a b)]
+    [(rotate a b c ...) (begin
+                          (swap a b)
+                          (rotate b c ...))]))
+#+END_SRC
+
+这个例子就是把从一位一直交还到最后一个位,这样的效率不友好,改写一下,
+
+#+BEGIN_SRC scheme
+(define-syntax rotate
+  (syntax-rules ()
+    [(rotate a b ...)
+     (shift-to (b ... a) (a b ...))]))
+
+(define-syntax shift-to
+  (syntax-rules ()
+    [(shift-to (from0 from ...) (to0 to ...))
+     (let ([tmp from0])
+       (set! to from) ... ; 展开为多次赋值操作, to 和 from 的数量要相同,否则会报错.
+       (set! to0 tmp))]))
+#+END_SRC
+
+**** Identifier Macros
+
+上面定义的宏必须紧跟左括号后面,否则语法错误.
+
+还有一种叫做标识符宏(identifier macro),是一种可以不用需要括号就可以使用的 =pattern-matching= 宏.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-syntax val
+  (lambda (stx)
+    ; syntax 会尝试匹配val产生的语法对象,这里定义为成功匹配一个val判断它是否标识符,
+   ; 是的话就是返回 (get-val) 的语法对象.之后会讲语法对象和,syntax-case的用法.
+    (syntax-case stx ()
+      [val (identifier? (syntax val)) (syntax (get-val))])))
+
+(define-values (get-val put-val!)
+  (let ([private-val 0])
+    (values (lambda () private-val)
+            (lambda (v) (set! private-val v)))))
+
+val ; 0
+(+ val 3) ; 3
+#+END_SRC
+
+**** set! Transformers
+
+上面的 =val= 是不可以使用 =set!= 修改的,虽然上面可以用 =put-val!= 修改,不过太麻烦了,用 =make-set!-transformer= 定义一个可以用 =set!= 修改的宏.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-values (get-val put-val!)
+  (let ([private-val 0])
+    (values (lambda () private-val)
+            (lambda (v) (set! private-val v)))))
+
+(define-syntax val2
+  (make-set!-transformer
+   (lambda (stx)
+     (syntax-case stx (set!)
+       [val2 (identifier? (syntax val2)) (syntax (get-val))]
+       [(set! val2 e) (syntax (put-val! e))]))))
+
+val2 ; 0
+(+ val2 3) ; 3
+(set! val2 10) ; val2 is 10 now
+#+END_SRC
+
+**** Macro-Generating Macros
+
+如果不想像 =val= 和 =val2= 那样有一大堆 =accessor= 和 =mutator= 函数,可以这样改,用宏来产生宏.
+
+这种宏叫做 =macro-generating macro= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-values (get-val put-val!)
+  (let ([private-val 0])
+    (values (lambda () private-val)
+            (lambda (v) (set! private-val v)))))
+
+(define-syntax-rule (define-get/put-id id get put!)
+  (define-syntax id
+    (make-set!-transformer
+      (lambda (stx)
+        (syntax-case stx (set!)
+          [id (identifier? (syntax id)) (syntax (get))]
+          [(set! id e) (syntax (put! e))])))))
+
+(define-get/put-id val3 get-val put-val!)
+
+(set! val3 10)
+val3 ; 10
+#+END_SRC
+
+再补一个简单的例子,重新定义一个自己的 =define= form(一般不是这么定义的),
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-syntax-rule (mydefine (id arg ...) body ...)
+  (define-syntax id
+    (syntax-rules ()
+      [(id arg ...)
+       (begin body ...)])))
+
+(mydefine (f x y)
+          (+ x y) (+ y 1))
+
+(define res (f 1 0))
+res ; 1
+#+END_SRC
+
+**** Extended Example: Call-by-Reference Functions
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-syntax-rule (swap x y)
+  (let ([tmp x])
+    (set! x y)
+    (set! y tmp)))
+
+(define-syntax-rule (define-get/put-id id get put!)
+  (define-syntax id
+    (make-set!-transformer
+     (lambda (stx)
+       (syntax-case stx (set!)
+         [id (identifier? (syntax id)) (syntax (get))]
+         [(set! id e) (syntax (put! e))])))))
+
+(define (do-f get-a get-b put-a! put-b!)
+  (define-get/put-id a get-a put-a!)
+  (define-get/put-id b get-b put-b!)
+  (swap a b))
+
+(define-syntax-rule (define-cbr (id arg ...) body)
+  (begin
+    (define-syntax id
+      (syntax-rules ()
+        [(id actual (... ...))
+         (do-f (lambda () actual)
+               (... ...)
+               (lambda (v)
+                 (set! actual v))
+               (... ...))]))
+    (define-for-cbr do-f (arg ...)
+      ()
+      body)))
+
+(define-syntax define-for-cbr
+  (syntax-rules ()
+    [(define-for-cbr do-f (id0 id ...)
+       (gens ...) body)
+     (define-for-cbr do-f (id ...)
+       (gens ... (id0 get put)) body)]
+    [(define-for-cbr do-f ()
+       ((id get put) ...) body)
+     (define (do-f get ... put ...)
+       (define-get/put-id id get put) ...
+       body)]))
+
+(define-cbr (f a b)
+  (swap a b))
+
+(let ([x 1] [y 2])
+  (f x y)
+  (list x y))
+#+END_SRC
+*** General Macro Transformers
+
+=define-syntax= 为一个标识符创建一个转换器绑定(transformer binding),它可以用在编译时展开,而展开后的表达式会在运行时运算.
+
+与转换器关联的运行时的(compile-time)值可以是任何值,如果是一个接受只一个参数的函数,那么这个绑定就是一个宏(macro),这个函数就是宏转换器(macro transformer).
+
+**** Syntax Objects
+
+一个语法对象(Syntax object)由一个quoted表达式(quoted form of expression),源位置信息(source-location information)以及 =form= 每一部分的词法绑定信息(lexical-binding information).
+
+quoted表达式就是语法对象对应的form,源位置信息使用于报错的时候提示错误位置,词法绑定信息是给宏维护词法作用域.
+
+一个 macro transformer 的 =input= 和 =output= 都是 =syntax objects= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(syntax (+ 1 2))
+#'(+ 1 2)       ; the same
+(identifier? #'car) ; #t
+(identifier? #'(+ 1 2)) ; #f
+(free-identifier=? #'car #'cdr)  ;#f
+(free-identifier=? #'car #'car)  ;#t
+(require (only-in racket/base [car also-car]))
+(free-identifier=? #'car #'aslo-car) ;#t
+(syntax->datum #'(+ 1 2)) ; '(+ 1 2), syntax->datum 返回语法对象的form
+;; '(.#<syntax:14:13 +> .#<syntax:14:15 1> .#<syntax:14:17 2>)
+;; 类似于 syntax->datum,不过只是去掉一层源位置和词法绑定信息.
+(syntax-e #'(+ 1 2))
+(datum->syntax #'lex '(+1 2) #'srcloc) ; 把datum 转为语法对象,#'lex是词法绑定,#'srcloc是源位置.
+#+END_SRC
+
+**** Macro Transformer Procedures
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; syntax-rule 返回的也是一个宏转换器
+(syntax-rules () [(nothing) something]) ; #<procedure>
+
+;; 用 define-syntax 和 lambda 写一个
+(define-syntax self-as-string-lambda
+  (lambda (stx)
+    (datum->syntax stx
+                   (format "~s" (syntax->datum stx)))))
+
+;; 也可以用define一样的shortcut
+(define-syntax (self-as-string stx)
+  (datum->syntax stx
+                 (format "~s" (syntax->datum stx))))
+#+END_SRC
+
+**** Mixing Patterns and Expressions: syntax-case
+
+由 =syntax-rules= 产生的函数内部使用 =syntax-e= 解构(deconstruct)指定的语法对象(syntax object),然后用 =datum->syntax= 构造(construct)结构.
+
+=syntax-case= 可以让你混合模式匹配(pattern matching),模板构建(template construction)和任意表达式(arbitrary expressions).
+
+=syntax-rules= 是不能混合表达式的,因此 =syntax-case= 更灵活.
+
+不像 =syntax-rules= 那样生成函数,而是根据语法表达式(stx-expr)和 =pattern= 判断语法对象,
+
+每一个 =syntax-case= 从句都由一个模式(pattern)和表达式(expr),而不是模式和模板(template),表达式是一个语法对象,它会切换到之后的模板构造模式(template-construction mode).
+
+下面这个例子把模式和表达式混合在一起, =swap= 里面的语法对象就是模板, 即使 =#'x 和 #'y= 不会作为 =macro transformer= 的结果.
+
+注意的是模式变量(pattern variable)在表达式里面使用的时候一定要是语法对象,这也是跟 =syntax-rules= 和 =define-syntax-rule= 不同的地方,看起来不像定义函数的写法.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-syntax (swap stx)
+  (syntax-case stx ()
+    [(swap x y)
+     (if (and (identifier? #'x)
+              (identifier? #'y))
+         #'(let ([tmp x])
+             (set! x y)
+             (set! y tmp))
+         (raise-syntax-error #f
+                             "not an identifier"
+                             stx
+                             (if (identifier? #'x)
+                                 #'y
+                                 #'x)))]))
+#+END_SRC
+
+**** with-syntax and generate-temporaries
+
+上面的 =Call-by-Reference Functions= 的 =define-for-cbr= 可以用 =syntax-case= 简化.
+
+#+BEGIN_SRC scheme
+;;; 接着 Call-by-Reference Functions= 中的例子
+
+(define-syntax (define-for-cbr/v2 stx)
+  (syntax-case stx ()
+    [(_ do-f (id ...) body)
+     ;; with-syntax 相当于模板变量版本的 let,
+     ;; generate-temporaries 把一个标识符序列转化为生成标识符序列
+     (with-syntax ([(get ...) (generate-temporaries #'(id ...))]
+                   [(put ...) (generate-temporaries #'(id ...))])
+       #'(define (do-f get ... put ...)
+           (define-get/put-id id get put) ...
+           body))]))
+#+END_SRC
+
+再用一个简单的例子看一下 =generate-temporaries= 产生的结果是怎么样的,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define-syntax (print-generated-temporaries stx)
+  (syntax-case stx ()
+      [(_ (id ...))
+       (with-syntax ([(nid ...) (generate-temporaries #'(id ...))])
+         #'(quote (nid ...)))]))
+
+(print-generated-temporaries (a b c))  ; '(a1 b2 c3)
+#+END_SRC
+
+**** Compile and Run-Time Phases
+**** General Phase Levels
+
+由于之前已经写过关于 phase levels 的[[../07/macros.html][笔记]]了,所以这两个章节就不写了.
+
+**** Syntax Taints
+
+不太理解语法污染时做什么的,之后再研究.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide go)
+(define (unchecked-go n x)
+  ; to avoid disaster, n must be a number
+  (+ n 17))
+
+(define-syntax (go stx)
+  (syntax-case stx ()
+    [(_ x)
+     ; (syntax-protect #'(unchecked-go 8 x))
+     #'(unchecked-go 8 x)
+     ]))
+#+END_SRC
+
+如果 =unchecked-go= 的引用是从 =(go 'a)= 的展开提取出来的,,那么它有可能被会插入到一个新 =(unchecked-go #f 'a)= 的表达式中,执行导致上面说的灾难.
+
+为了阻止对 =unchecked-go= 的滥用,可以用 =syntax-protect= 污染从 =go= 提取出来的语法对象,
+
+宏展开器(=macro expander=)会拒绝受污染的标识符,所以试图从 =(go 'a)= 提取 =unchecked-go= 会产生一个不能用于构建新表达式的标识符.
+
+=syntax-rules, syntax-id-rule 和 define-syntax-rule= forms 会自动保护它们的展开式结果.
+
+准确来说, =syntax-protect= 会给语法对象装备一个染色包(dye pack),如果一个语法对象被装备,那么 syntax-e 会污染结果里面的任何语法对象.
+
+类似的,当 =datum->syntax= 的第一个参数装备了染色包,那么它的结果就被污染.一个 =quoted= 语法对象的任何一个部分被污染了,
+
+那么结果的对应部分也是受到污染的.
+
+当然宏展开器自身是可以解除一个语法对象的污染,因此它可以展开一个表达式或者它的子表达式.
+
+受到污染的语法对象的染色包都是和一个可以用来解除装备染色包的检查器(inspector).
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(syntax-protect stx)
+(syntax-arms stx #f #t)
+#+END_SRC
+*** Module Instantiations and Visits
+
+模块的声明(declaration)和初始化(instantiation)是分开的,第6章有提到过.也不打算详细写.
+
+**** Declaration versus Instantiation
+
+这里主要涉及3个forms.
+
+=module= form 定义模块; =require= 导入模块,触发初始化,这个时候 =module= 定义的代码才运行,并且加载命名空间;
+
+ =dynamic-require= 会在 =module= 没有被初始化的情况下初始化, =dynamic-require= 的第二个参数为 =#f= 的时候可以只触发初始化的副作用(不加载命名空间).
+
+#+BEGIN_SRC sh
+> (module mod racket
+  (provide pa)
+  (define (pa)
+    (displayln "Print a"))
+  (pa))
+> (dynamic-require ''mod #f)
+Print a
+> pa
+pa: undefined;
+cannot reference an identifier before its definition
+#+END_SRC
+
+还有使用 =require= 的模块初始化是可传递的.也就是说,如果 =require= 的模块A被初始化了,那么被模块A =require= 的模块 =B, C= 等等(如果没有初始化过的话)也会被初始化.
+
+**** Compile-Time Instantiation
+
+(没写完)
+
+声明一个模块会展开和编译模块.如果一个模块通过 =(require (for-syntax ...))= 导入另外一个模块,那么被导入的模块一定要在展开的时候初始化.
+
+** 17 Creating Languages
+
+宏的功能在两个方面受限:
+
+- 宏不能严格限制上下文中可用的语法或者改变改变周围的 =forms= 的定义.
+
+- 一个宏只能在语言的词法规范的参数(parameters)拓展语言的语法,比如使用括号给宏名和它的 =subforms= 分组,以及使用标识符,关键词和字面值的核心语法.
+
+也就是说,宏只能拓展语言,并且只能在展开器层(=expander layer=)完成. =Racket= 提供额外的功能用,在展开器层的定义一个起点,
+
+拓展读取器层(=reader layer=),在读取器层定义一个起点以及打包读取器和展开器的起点打包进一门有着规范命名的语言中.
+
+*** Module Languages
+
+因为初始导入的模块(initial-import module)提供着最基础的绑定,所以初始导入可以被称为模块语言(module language).
+
+常见的模块语言有 =racket= 或者 =racket/base= .也可以根据这些语言修改绑定来定义一门自己的模块语言.
+
+#+BEGIN_SRC sh
+> (module mylang racket
+    (provide (except-out (all-from-out racket) lambda)
+             (rename-out [lambda function])))
+> (module client 'mylang
+    ((function () "I am the mylang language")))
+> (require 'client)
+"I am the mylang language"
+#+END_SRC
+
+**** Implicit Form Bindings
+
+定义一门模块语言必须提供 =#%module-begin= 这个 =implicit form binding= ,它是用来包裹(wraps)模块体的.
+
+其它的这类 =implicit form binding= ,还有 =#%app, #%datum, #%top= 等等,这三个分别是用于函数调用,字面值和没有绑定的标识符.
+
+定义一门新的模块语言横扫重新定义(redefine) =#%app, #%datum 和 #%top= ,重新定义 =#%module-begin= 会更加有用.
+
+比如定义一门 =html= 的模块语言,
+
+#+BEGIN_SRC scheme
+;;; html.rkt
+(module html racket
+  (require racket/date)
+  (provide (except-out (all-from-out racket)
+                       #%module-begin)
+           (rename-out [module-begin #%module-begin])
+           now)
+
+  (define-syntax-rule (module-begin expr ...)
+    (#%module-begin
+     (define page `(html expr ...))
+     (provide page)))
+
+  (define (now)
+    (parameterize ([date-display-format 'iso-8601])
+      (date->string (seconds->date (current-seconds))))))
+#+END_SRC
+
+#+BEGIN_SRC sh
+> (module client "html.rkt"
+    (title "Killer Queen")
+    (p "Updated: " ,(now)))
+> (require 'client)
+> page
+'(html (title "Killer Queen") (p "Updated: " "2018-09-18"))
+#+END_SRC
+
+**** Using #lang s-exp
+
+用 =#lang= 定义模块语言比用 =module= 定义要复杂一点,因为它有更多的控制;两者用法比较如下,
+
+#+BEGIN_SRC scheme
+#lang s-exp module-name
+form ...
+#+END_SRC
+
+#+BEGIN_SRC scheme
+(module name module-name
+  form ...)
+#+END_SRC
+
+=s-exp= 语言就像用于使用一门提供 =#lang shorthand= 的元语言(meta-language),是"S-expression"的简写,
+
+它是 =Racket= 的读取级别(reader-level)的词法规范的传统名字,这些规范包括括号,标识符,数字,双带引号字符串,等等.
+
+使用 =#lang s-exp= 和 =html.rkt= ,
+
+#+BEGIN_SRC scheme
+#lang s-exp "html.rkt"
+
+(title "Killer Queen")
+(p "Updated: " ,(now))
+#+END_SRC
+
+*** Reader Extensions
+
+=Racket= 的读取器层(reader layer)可以通过 =#reader form= 拓展.一个读取器拓展以模块的形式形式,模块名字跟在 =#reader= 后面.
+
+这个模块导出解析生字符为一个可以被展开器层(expander layer)消费的 =form= .
+
+=#reader= 的语法:
+
+#+BEGIN_EXAMPLE
+#reader ‹module-path› ‹reader-specific›
+
+<module-path> 是提供read和read-syntax函数的模块,也就是reader.
+
+<reader-specific> 是被reader的reader和read-syntax解析的字符序列.
+#+END_EXAMPLE
+
+一个简单的例子,定义一个叫"five"简单的reader,
+
+#+BEGIN_SRC scheme
+;;; five.rkt
+(module five racket/base
+  (provide read read-syntax)
+  (define (read in)
+    (list (read-string 5 in)))
+  (define (read-syntax src in)
+    (list (read-string 5 in))))
+#+END_SRC
+
+然后客户程序,
+
+#+BEGIN_SRC scheme
+#lang racket/base
+'(1 #reader "five.rkt" 234 56) ; '(1 (" 234 ") 56)
+'(1 #reader"five.rkt"234 56) ; '(1 ("234 5") 6)
+#+END_SRC
+
+**** Source Locations
+
+=read= 和 =read-syntax= 的不同之处在于, =read= 是用来读取数据,而 =read-syntax= 是用来解析整个程序.
+
+准确点说,当调用调用 =Racket= 的 =read= 或者 =read-syntax= , 就会分别调用 =reader= 提供的 =read= 和 =read-syntax= .
+
+不要求 =read= 和 =read-syntax= 一定要以同样的方式解析输入,不过以不同的方式实现会困惑程序员和工具.
+
+=read-syntax= 返回的值最好是语法对象,因为语法对象包含表达式的源位置信息;然后 =read= 可以去掉 =read-syntax= 返回的语法对象的信息得到一个生结果(raw result).
+
+实现一个处理数学算术的reader, ="arith.rkt"= .
+
+#+BEGIN_SRC scheme
+;;; arith.rkt
+(module arith racket
+  (require syntax/readerr)
+  (provide read read-syntax)
+
+  (define (read in)
+    (syntax->datum (read-syntax #f in)))
+
+  (define (read-syntax src in)
+    (skip-whitespace in)
+    (read-arith src in))
+
+  (define (skip-whitespace in)
+    (regexp-match #px"^\\s*" in))
+
+  (define (read-arith src in)
+    (define-values (line col pos) (port-next-location in))
+
+    (define expr-match
+      (regexp-match
+       #px"^([a-z]|[0-9]+)(?:[-+*/]([a-z]|[0-9]+))*(?![-+*/])"
+       in))
+
+    (define (to-syntax v delta span-str)
+      (datum->syntax #f v (make-srcloc delta span-str)))
+    (define (make-srcloc delta span-str)
+      (and line
+           (vector src line (+ col delta) (+ pos delta)
+                   (string-length span-str))))
+
+    (define (parse-expr s delta)
+      (match (or (regexp-match #rx"^(.*?)([+-])(.*)$" s)
+                 (regexp-match #rx"^(.*?)([*/])(.*)$" s))
+        [(list _ a-str op-str b-str)
+         (define a-len (string-length a-str))
+         (define a (parse-expr a-str delta))
+         (define b (parse-expr b-str (+ delta 1 a-len)))
+         (define op (to-syntax (string->symbol op-str)
+                               (+ delta a-len) op-str))
+         (to-syntax (list op a b) delta s)]
+        [_ (to-syntax (or (string->number s)
+                          (string->symbol s))
+                      delta s)]))
+
+    (unless expr-match
+      (raise-read-error "bad arithmetic syntax"
+                        src line col pos
+                        (and pos (- (file-position in) pos))))
+    (parse-expr (bytes->string/utf-8 (car expr-match)) 0)))
+#+END_SRC
+
+客户程序
+
+#+BEGIN_SRC scheme
+#reader "arith.rkt" 1*2+3 ; 5
+'#reader "arith.rkt" 1*2+3 ; '(+ (* 1 2) 3)
+#+END_SRC
+
+**** Readtables
+
+=Racket= 通过宏拓展展开器层,通过读取表(=readtable=)拓展读取器层.
+
+=Racket= 读取器是一个递归向下的解析器(a recursive-descent parser), 读取表映射字符到解析处理器(parsing handlers).
+
+=current-readtable paremeter= 决定被 =read= 或者 =read-syntax= 使用的读取表.然后 =Racket= 直接解析生字符,
+
+一个读取器拓展可以安装一个被拓展拖的读取表,并且链到 =read= 或者 =read-syntax= .
+
+=make-readtable= 函数可以在现有读取表的基础上创建一个新的读取表.
+
+新建一个 =dollar= 读取器,做为使用 =readtable= 的演示,
+
+#+BEGIN_SRC scheme
+;;; dollar.rkt
+(module dollar racket
+
+  (require syntax/readerr
+           (prefix-in arith: "arith.rkt"))
+
+  (provide (rename-out [$-read read]
+                       [$-read-syntax read-syntax]))
+
+  (define ($-read in)
+    (parameterize ([current-readtable (make-$-readtable)])
+      (read in)))
+
+  (define ($-read-syntax src in)
+    (parameterize ([current-readtable (make-$-readtable)])
+      (read-syntax src in)))
+
+  (define (make-$-readtable)
+    (make-readtable (current-readtable)
+                    #\$ 'terminating-macro read-dollar))  ; 把 #\s 作为分隔符,遇到 #\s 就触发
+
+  (define read-dollar
+    (case-lambda
+      [(ch in)
+       (check-$-after (arith:read in) in (object-name in))]
+      [(ch in src line col pos)
+       (check-$-after (arith:read-syntax src in) in src)]))
+
+  (define (check-$-after val in src)
+    (regexp-match #px"^\\s*" in) ; skip whitespace
+    (let ([ch (peek-char in)])
+      (unless (equal? ch #\$) (bad-ending ch src in))
+      (read-char in))
+    val)
+
+  (define (bad-ending ch src in)
+    (let-values ([(line col pos) (port-next-location in)])
+      ((if (eof-object? ch)
+           raise-read-error
+           raise-read-eof-error)
+       "expected a closing `$'"
+       src line col pos
+       (if (eof-object? ch) 0 1)))))
+#+END_SRC
+
+客户程序,
+
+#+BEGIN_SRC scheme
+#reader"dollar.rkt" (let ([a $1*2+3$] [b $5/6$]) $a+b$) ; 35/6
+#+END_SRC
+
+*** Defining new #lang Languages
+
+**** Designating a #lang Language
+
+=#lang 协议=
+
+- 语言的名字只能由 =a-z, A-Z, 0-9= (不能用于开头或者结尾), =_, - 和 += 字符组成.
+
+  因为 =#lang= 只能接受 =racket, racket/base= 这种标识符模块路径.
+
+- 不过也提供了另外一个更自然的方法,比如 =#lang s-exp= ,它可以时候通用的模块路径,比如字符串路径,同时负责语言的读取器级.
+
+  =s-exp= 不能像 =racket= 那样作为 =require= 的参数.
+
+- =#lang language= 不是直接作为模块路径的,首先会寻找语言主模块的读取器子模块(=reader submodule=),
+
+  如果它不是合法的模块路径,那么语言就会加上 =/lang/reader= 后缀,如果还不是一个合法的模块路径就引发一个错误.
+
+**** Using #lang reader
+
+=#lang= 的 =reader= 类似于 =s-exp= ,它是作为一种元语言(meta language).
+
+=s-exp= 让程序员在解析的展开器层上指定一个门模块语言(也就是指#reader的使用位置), =reader= 让程序员在读取器级上指定一门语言(影响整个程序).
+
+=#lang reader= 后面一定要跟着一个模块路径,并且提供的模块必须要和 =#reader= 的协议一样提供 =read= 和 =read-syntax= 函数.
+
+不同的是 =#lang reader= 指定模块提供的 =read= 和 =read-syntax= 函数必须要返回一个基于模块输入文件剩余部分的 =module form= .
+
+比如,实现一门能够把代码文件的文本导出到一个变量上面:
+
+#+BEGIN_SRC scheme
+;;; literal.rkt
+(module literal racket
+  (require syntax/strip-context)
+
+  (provide (rename-out [literal-read read]
+                       [literal-read-syntax read-syntax]))
+
+  (define (literal-read in)
+    (syntax->datum
+      (literal-read-syntax #f in)))
+
+  (define (literal-read-syntax src in)
+    (with-syntax ([str (port->string in)])
+      (strip-context
+        #'(module anything racket    ; module form 是需要的,与 #reader协议的区别
+            (provide data)
+            (define data 'str))))))
+#+END_SRC
+
+在客户程序中,
+
+#+BEGIN_SRC scheme
+#lang reader "literal.rkt"
+Hello
+Hi
+#+END_SRC
+
+**** Using #lang s-exp syntax/module-reader
+
+解析模块体不会像 ="literal.rkt"= 那样普通.一个典型的模块解析器一定会遍历模块体的多个 =forms= .
+
+一门语言也可能是通过 =readtable= 而不是替换 =Racket= 语法来拓展 =Racket= 语法.
+
+=syntax/module-reader= 模块语言抽象了语言的常见实现部分来简化一门语言的创建,它使用的读取器层与 =Racket= 的一样.
+
+例子一,实现 =raquet= 语言,把 =lambda= 换成 =function= .
+
+#+BEGIN_SRC scheme
+;;; raquet-mlang.rkt
+#lang racket
+(provide (except-out (all-from-out racket) lambda)
+         (rename-out [lambda function]))
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; raquet.rkt
+#lang s-exp syntax/module-reader
+"raquet-mlang.rkt"
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; client.rkt
+#lang reader "raquet.rkt"
+(define identify (function (x) x))
+(provide identity)
+#+END_SRC
+
+例子二,基于上面的 =dollar.rkt= (使用了 =readtables=) 的 =#reader= 提供的 =read= 和 =read-syntax= 实现一门 =dollar-racket= 语言,
+
+#+BEGIN_SRC scheme
+;;; dollar-racket.rkt
+#lang s-exp syntax/module-reader
+racket
+#:read $-read
+#:read-syntax $-read-syntax
+
+#|
+#:read 和 #:read-syntax 分别用于设定别的 =read= 和 =read-syntax= .
+|#
+;; syntax/module-reader 的配置一定要出现在任何导入或者定义前面.
+(require (prefix-in $- "dollar.rkt"))
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; store.rkt
+#lang reader "dollar-racket.rkt"
+
+(provide cost)
+
+(define (cost n h)
+  $n*107/100+h$)
+#+END_SRC
+
+**** Installing a Language
+
+安装语言,也就是打成包.
+
+用上面的 =literal= 为例子,新建一个 =literal= 目录,把 =literal.rkt= 移到这个目录下并且改名为 =main.rkt= ,修改 =main.rkt= 如下,
+
+#+BEGIN_SRC scheme
+;;; literal/main.rkt
+#lang racket
+
+(module reader racket
+  (require syntax/strip-context)
+
+  (provide (rename-out [literal-read read]
+                       [literal-read-syntax read-syntax]))
+
+  (define (literal-read in)
+    (syntax->datum
+     (literal-read-syntax #f in)))
+
+  (define (literal-read-syntax src in)
+    (with-syntax ([str (port->string in)])
+      (strip-context
+       #'(module anything racket
+           (provide data)
+           (define data 'str))))))
+#+END_SRC
+
+安装包可以参考 =Modules= 那一章.
+
+**** Source-Handling Configuration
+
+这个章节是介绍如何根据模块的源文本(source text)为语言配置 =DrRacket= IDE 环境的,比如配置语法着色,IDE工具条,等等,拓展上面的 =main.rkt= ,
+
+#+BEGIN_SRC scheme
+;;; literal/main.rkt
+#lang racket
+
+(module reader racket
+  (require syntax/strip-context)
+
+  (provide (rename-out [literal-read read]
+                       [literal-read-syntax read-syntax])
+           get-info)
+
+  (define (literal-read in)
+    (syntax->datum
+     (literal-read-syntax #f in)))
+
+  (define (literal-read-syntax src in)
+    (with-syntax ([str (port->string in)])
+      (strip-context
+       #'(module anything racket
+           (provide data)
+           (define data 'str)))))
+
+  #| 如果提供了 get-info, DrRacket会调用这个函数,
+     get-info 的返回值是一个2个参数函数,第一个是语言的工具请求,第二个是语言不认识这个请求时候返回默认值.
+     下面这个例子就是查询'color-lexer工具,是一个语法着色工具,还有很多其它类型的查询,比如,'drracket:toolbar-buttons,
+     判断按钮是否可用.
+   |#
+
+  (define (get-info in mod line col pos)
+    (lambda (key default)
+      (case key
+        [(color-lexer)
+         (dynamic-require 'syntax-color/default-lexer
+                          'default-lexer)]
+        [else default]))))
+#+END_SRC
+
+=syntax/module-reader= 可以让你通过 =#:info= 指定 =get-info= 函数.
+
+**** Module-Handling Configuration
+
+如你所知, =Racket= 编译器除了 =racket= 还支持 =scheme= ,两门语言的语法差不多可以兼容,
+
+比如 =scheme= 实现的模块可以导入 =racket= 实现的模块,反过来也一样.
+
+不过有一些特性只有 =racket= 才支持的,下面两个例子作对比,
+
+#+BEGIN_SRC scheme
+;;; list-by-racket.rkt
+#lang racket
+(list "A" "list" "constructed" "by" "the" "list" "form")
+#+END_SRC
+
+运行 =list-by-racket.rkt= ,返回 ='("A" "list" "constructed" "by" "the" "list" "form")= .
+
+#+BEGIN_SRC scheme
+;;; list-by-scheme.rkt
+#lang scheme
+(require "list-by-racket.rkt")
+#+END_SRC
+
+运行 =list-by-scheme.rkt= 返回 =("A" "list" "constructed" "by" "the" "list" "form")= ,少 =list-by-racket.rkt= 结果一个 =quote= .
+
+除了上面的结果显示风格以外,还有一个例子就是 =REPL= 的行为,这些特性是语言的 =run-time configuration= 的一部分.
+
+与代表模块源文本(source text)的属性(比如上文提到的语法着色)相对, =run-time configuration= 是每一个模块的属性.
+
+因为这个原因,即使模块被编译成字节码形式并且源文件不可用,模块的 =run-time configuration= 也要可用.
+
+因此 =run-time configuration= 是不能通过语言 =parser= 模块提供的  =get-info= 函数(运行时中)处理.
+
+相反它可以被需要解析的模块的 =configure-runtime= 子模块处理.当一个模块直接通过 =racket= 命令运行,
+
+=racket= 命令就会查找模块里面的 =configure-runtime= 子模块,如果存在 =racket= 才会运行这个子模块;
+
+如果这个模块被导入到别的模块中, =configure-runtime= 子模块就会被忽略.
+
+也就是说 =configure-runtime= 子模块可以用来处理一些在直接运行模块时候的特别的配置任务.
+
+回到上面的 =literal= 语言,可以调整它直接运行一个 =literal= 模块的时候会打印出它的字符串,而用于大型程序中就只是返回数据不打印.
+
+下面给 =literal= 新增一个 =show.rkt= 来做为它的子模块.
+
+=literal/show.rkt= 提供 =show= 函数用于打印 =literal= 模块的字符串内容,并且提供一个 =show-enabled parameter= 控制 =show= 是否打印结果.
+
+#+BEGIN_SRC scheme
+;;; literal/main.rkt
+#lang racket
+
+(module reader racket
+  (require syntax/strip-context)
+
+  (provide (rename-out [literal-read read]
+                       [literal-read-syntax read-syntax])
+           get-info)
+
+  (define (literal-read in)
+    (syntax->datum
+     (literal-read-syntax #f in)))
+
+  (define (literal-read-syntax src in)
+    (with-syntax ([str (port->string in)])
+      (strip-context
+       #'(module anything racket
+           (module configure-runtime racket
+             (require literal/show)
+             (show-enabled #t))
+           (require literal/show)
+           (provide data)
+           (define data 'str)
+           (show data)))))
+
+  (define (get-info in mod line col pos)
+    (lambda (key default)
+      (case key
+        [(color-lexer)
+         (dynamic-require 'syntax-color/default-lexer
+                          'default-lexer)]
+        [else default]))))
+#+END_SRC
+
+#+BEGIN_SRC scheme
+;;; literal/show.rkt
+#lang racket
+
+(provide show show-enabled)
+
+(define show-enabled (make-parameter #f))
+
+(define (show v)
+  (when (show-enabled)
+    (display v)))
+#+END_SRC
+
+客户程序,
+
+#+BEGIN_SRC scheme
+;;; client.rkt
+#lang literal
+Hello!
+Hi!
+#+END_SRC
+
+直接运行这个模块会把结果打印出来.然而当这个模块被别的模块导入就不会打印.
+
+** 18 Concurrency and Synchronization
+
+=Racket= 以 =线程(thread)= 的形式提供并发(concurrency),并且也提供这常规的同步函数(sync function),
+
+用来同步线程和其它含蓄形式的并发,比如 =ports= .
+
+*** Threads
+
+并发地执行一个程序(procedure),使用 =thread= form 创建新线程.
+
+这个例子的线程预定会无限执行,在运行2.5秒后杀掉进程.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(displayln "This is the original thread")
+
+(define worker (thread (lambda ()
+                         (let loop ()
+                           (displayln "Working...")
+                           (sleep 0.2)
+                           (loop)))))
+(sleep 2.5)
+(kill-thread worker)
+#+END_SRC
+
+这个例子会运行大概100秒,主线程会等待它执行完毕然后退出.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(displayln "This is the original thread")
+
+(define worker (thread
+                 (lambda ()
+                   (for ([i 100])
+                     (sleep 1)
+                     (printf "Working hard... ~a~n" i)))))
+(thread-wait worker)  ; 等待线程执行完毕.
+(displayln "Worker finished")
+#+END_SRC
+
+*** Thread Mailboxes
+
+每个线程都有一个邮箱(mailbox)用来接受消息.
+
+用 =thread-send= 给另外一个线程发消息,另外一个线程用 =thread-receive= 接受消息.
+
+这个例子发送二十个数字给另外一个线程 =worker-thread= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define worker-thread (thread
+                       (lambda ()
+                         (let loop ()
+                           ;; thread-receive返回结果是别的线程发送的消息,
+                           ;; 它的数据类型是与发送过来的消息的数据类型是一致的,
+                           ;; 也就是说发送过来消息是什么,(thread-receive)就是什么.
+                           (match (thread-receive)
+                             [(? number? num)
+                              (printf "Processing ~a~n" num)
+                              (loop)]
+                             ['done
+                              (printf "Done~n")])))))
+
+(for ([i 20])                          ; 主线程发送数字给worker-thread线程
+  (sleep 1)
+  (thread-send worker-thread i))
+(thread-send worker-thread 'done)
+(thread-wait worker-thread)
+#+END_SRC
+
+在这个例子中,主线程发送 =rator= , =rand= 和当前线程给算术线程;算术线程根据接受的线程发送运算结果.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (make-arithmetic-thread operation)
+  (thread (lambda ()
+            (let loop ()
+              (match (thread-receive)
+                [(list oper1 oper2 result-thread)
+                 (thread-send result-thread
+                              (format "~a + ~a = ~a"
+                                      oper1
+                                      oper2
+                                      (operation oper1 oper2)))
+                 (loop)])))))
+
+(define addition-thread (make-arithmetic-thread +))
+(define subtraction-thread (make-arithmetic-thread -))
+
+(define worklist '((+ 1 1) (+ 2 2) (- 3 2) (- 4 1)))
+(for ([item worklist])
+  (match item
+    [(list '+ o1 o2)
+     (thread-send addition-thread
+                  (list o1 o2 (current-thread)))]           ; current-thread返回当前线程.这里是主线程.
+    [(list '- o1 o2)
+     (thread-send subtraction-thread
+                  (list o1 o2 (current-thread)))]))
+
+(for ([i (length worklist)])
+  (displayln (thread-receive)))
+#+END_SRC
+
+*** Semaphores
+
+信号量(semaphores)实现同步访问任意共享资源.当多个线程要对同一个资源执行非原子(non-atomic)操作的时候使用信号量.
+
+不使用信号量,输出结果会一团乱.
+
+#+BEGIN_SRC scheme
+#lang racket
+(define (make-thread name)
+  (thread (lambda ()
+            (for [(i 10)]
+              (printf "thread ~a: ~a~n" name i)))))
+
+(define threads
+  (map make-thread '(A B C)))
+(for-each thread-wait threads)
+#+END_SRC
+
+使用信号量实现互斥,保证输出同步.
+
+#+BEGIN_SRC scheme
+#lang racket
+(define output-semaphore (make-semaphore 1))
+(define (make-thread name)
+  (thread (lambda ()
+            (for [(i 10)]
+              (semaphore-wait output-semaphore)
+              (printf "thread ~a: ~a~n" name i)
+              (semaphore-post output-semaphore)
+              ))))
+(define threads
+  (map make-thread '(A B C)))
+(for-each thread-wait threads)
+#+END_SRC
+
+使用 =call-with-semaphore= 简化上面的代码,就像 =Python= 的上下文管理器.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define output-semaphore (make-semaphore 1))
+(define (make-thread name)
+  (thread (lambda ()
+            (for [(i 10)]
+              (call-with-semaphore
+               output-semaphore
+               (lambda ()
+                (printf "thread ~a: ~a~n" name i)))))))
+
+(define threads
+  (map make-thread '(A B C)))
+(for-each thread-wait threads)
+#+END_SRC
+
+信号量是一种 low-level 技术.最好的解决方法是限制资源只能由一个线程访问.
+
+比如用专门线程去管理 =output= 比同步访问 =output= 好.
+
+*** Channels
+
+当一个值被一个线程传入到另外一个线程,可以使用channels同步两个线程.
+
+跟邮箱不一样,一个channel可以给多个线程发送消息, =Racket= 的 =channel= 就是同步队列.
+
+下面这个例子,使用两个 =channels= ,一个是用于储存任务,一个是用于储存结果.
+
+由于是同步队列, =channel-get= 会等待 =channel-put= 执行后才会执行,同样 =channel-put= 执行后需要等待 =channel-get= 执行完才能 =put= 下一个消息.
+
+#+BEGIN_SRC scheme
+(define result-channel (make-channel))                     ; make-channel 返回一个 channel
+(define result-thread
+        (thread (lambda ()
+                  (let loop ()
+                    (displayln (channel-get result-channel)) ; channel-get 获取 channel 的任务
+                    (loop)))))
+
+(define work-channel (make-channel))
+(define (make-worker thread-id)
+  (thread
+   (lambda ()
+     (let loop ()
+       (define item (channel-get work-channel))               ; 获取 work-channel 的任务,并且完成任务
+       (case item
+         [(DONE)
+          (channel-put result-channel                         ; 完成任务后给 result-channel 发送结果.
+                       (format "Thread ~a done" thread-id))]
+         [else
+          (channel-put result-channel
+                       (format "Thread ~a processed ~a"
+                               thread-id
+                               item))
+          (loop)])))))
+(define work-threads (map make-worker '(1 2)))
+(for ([item '(A B C D E F G H DONE DONE)])
+  (channel-put work-channel item))                           ; 给 work-channel 发送任务
+(for-each thread-wait work-threads)
+#+END_SRC
+
+*** Buffered Asynchronous Channels
+
+上面的是同步队列, =Racket= 也有异步队列.
+
+异步队列的 =async-channel-put= 不需要等待 =async-channel-get= 执行才能 =put= 下一个消息,除非 =channel= 设定了缓存区限制(buffer limit)并且达到限制.
+
+(注意, =async-channel-get= 需要等到队列有消息才可以执行,否则block.)
+
+下面这个例子,主线程给 =work channel= 发送消息, =work channel= 最大消息数量限制为3, =worker= 线程从 =work channel= 获取消息并且处理.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(require racket/async-channel)
+
+(define print-thread
+  (thread (lambda ()
+            (let loop ()
+              (displayln (thread-receive))
+              (loop)))))
+
+(define (safer-printf . items)
+  (thread-send print-thread
+               (apply format items)))
+
+(define work-channel (make-async-channel 3))    ; 创建channel,设定限制为3
+(define (make-worker-thread thread-id)
+  (thread
+   (lambda ()
+     (let loop ()
+       (define item (async-channel-get work-channel))
+       (safer-printf "Thread ~a processing item: ~a" thread-id item)
+       (loop)))))
+
+(for-each make-worker-thread '(1 2 3))
+(for ([item '(a b c d e f g h i j k l m)])
+  (async-channel-put work-channel item))
+#+END_SRC
+
+*** Synchronizable Events and sync
+
+除了上面介绍的线程同步方法,还有可以使用 =sync= 函数让线程之间通过同步事件(synchronizable events)来协调.
+
+#+BEGIN_EXAMPLE
+
+事件是多种类型的值(这些值自身也是事件)的组合,包括 =channels, ports, threads 和 alarms= .
+
+这允许实现一套使用不同类型的值来同步线程的统一方法.
+
+事件的状态有两种, 同步就绪(ready for synchronization)和同步还没就绪.
+
+这取决于事件的类型以及它是怎么被其它线程使用的,一个事件可以在任何时候切换状态.
+
+如果一个线程通过一个同步就绪的事件来同步,那么事件就会产生一个同步结果(synchronization result).
+
+#+END_EXAMPLE
+
+这个小节展示如何通过组合 =events, threads 和 sync= 来实现一套任意复杂的通信协议(arbitrarily sophisticated communication protocols)来协调一个程序的并发部分.
+
+这个例子将会用 =channel= 和 =alarm= 组合来做为同步事件: 设定一个 =alarm= 事件
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define main-thread (current-thread))
+(define alarm (alarm-evt (+ 3000 (current-inexact-milliseconds)))) ; 设定alarm事件在3000毫秒(3秒)后激活(也就是变成就绪状态).
+(define channel (make-channel))
+(define (make-worker-thread thread-id)
+  (thread
+   (lambda ()
+     (define evt (sync channel alarm))   ; sync 返回一个Event对象,这里把channel和alarm 组合成一个Event了
+     (cond
+       ;; 当 alarm 事件触发的时候就会给主线程发送消息,然后主线程结束.
+       ;; 这要求worker线程数量要比channel的项多一个,多出来的worker给主线程发送alarm的消息.
+       [(equal? evt alarm)
+        (thread-send main-thread 'alarm)]
+       [else
+        (thread-send main-thread
+                     (format "Thread ~a received ~a"
+                             thread-id
+                             evt))]))))
+(make-worker-thread 1)
+(make-worker-thread 2)
+(make-worker-thread 3)
+(channel-put channel 'A)
+(channel-put channel 'B)
+(let loop ()
+  (match (thread-receive)
+    ['alarm
+     (displayln "Done")]
+    [result
+     (displayln result)
+     (loop)]))
+#+END_SRC
+
+下面这个例子用一个 TCP echo server 来做演示.
+
+#+BEGIN_SRC scheme
+;;; server
+#lang racket
+
+(define (serve in-port out-port)
+  (let loop []
+    (define evt (sync/timeout 2                            ; 指定等待事件的最大时间
+                              (read-line-evt in-port 'any) ; read-line-evt 返回一个事件等待指定的input port有input.
+                              (thread-receive-evt)))       ; 当thread-receive没有block的时候(thread-receive-evt)的结果就会就绪
+    (cond
+      [(not evt)
+       (displayln "Timed out, exiting")
+       (tcp-abandon-port in-port)            ; 关闭 in-port
+       (tcp-abandon-port out-port)]          ; 关闭 out-port
+      [(string? evt)
+       (fprintf out-port "~a~n" evt)
+       (flush-output out-port)
+       (loop)]
+      [else
+       (printf "Received a message in mailbox: ~a~n"
+               (thread-receive))
+       (loop)])))
+
+(define port-num 4321)
+(define (start-server)
+  (define listener (tcp-listen port-num))
+  (thread
+    (lambda ()
+      (define-values [in-port out-port] (tcp-accept listener))
+      (serve in-port out-port))))
+
+(start-server)
+
+;;; client
+(define client-thread
+  (thread
+   (lambda ()
+     (define-values [in-port out-port] (tcp-connect "localhost" port-num))
+     (display "first\nsecond\nthird\n" out-port)
+     (flush-output out-port)
+     ; copy-port will block until EOF is read from in-port
+     (copy-port in-port (current-output-port)))))
+
+(thread-wait client-thread)
+#+END_SRC
+
+还可以给事件添加回调.
+
+下一个例子利用3个 =channels= 进行线程同步,每一个 =channel= 处理工作都不一样.
+
+其中 =handle-evt= 可以关联一个指定事件和回调(callback),当 =sync= 选择了指定事件就会调用回调产生同步结果,
+
+而不是使用事件的同步结果.因为事件是在回调里面被处理的,所以没有必要适配(dispatch) =sync= 返回的值.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define add-channel (make-channel))
+(define multiply-channel (make-channel))
+(define append-channel (make-channel))
+
+(define (work)
+  (let loop ()
+    (sync (handle-evt add-channel
+                      (lambda (list-of-numbers)
+                        (printf "Sum of ~a is ~a~n"
+                                list-of-numbers
+                                (apply + list-of-numbers))))
+          (handle-evt multiply-channel
+                      (lambda (list-of-numbers)
+                        (printf "Product of ~a is ~a~n"
+                                list-of-numbers
+                                (apply * list-of-numbers))))
+          (handle-evt append-channel
+                      (lambda (list-of-strings)
+                        (printf "Concatenation of ~s is ~s~n"
+                                list-of-strings
+                                (apply string-append list-of-strings)))))
+    (loop)))
+
+(define worker (thread work))
+(channel-put add-channel '(1 2))
+(channel-put multiply-channel '(3 4))
+(channel-put multiply-channel '(5 6))
+(channel-put add-channel '(7 8))
+(channel-put append-channel '("a" "b"))
+#+END_SRC
+
+由于 =handle-evt= 会根据 =sync= 在尾部位置(tail position)唤醒回调,所以使用递归是没有问题的.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define control-channel (make-channel))
+(define add-channel (make-channel))
+(define subtract-channel (make-channel))
+(define (work state)
+  (printf "Current state: ~a~n" state)
+  (sync (handle-evt add-channel
+                    (lambda (number)
+                      (printf "Adding: ~a~n" number)
+                      (work (+ state number))))
+        (handle-evt subtract-channel
+                    (lambda (number)
+                      (printf "Subtracting: ~a~n" number)
+                      (work (- state number))))
+        (handle-evt control-channel
+                    (lambda (kill-message)
+                      (printf "Done~n")))))
+
+(define worker (thread (lambda () (work 0))))
+(channel-put add-channel 2)
+(channel-put subtract-channel 3)
+(channel-put add-channel 4)
+(channel-put add-channel 5)
+(channel-put subtract-channel 1)
+(channel-put control-channel 'done)
+(thread-wait worker)
+#+END_SRC
+
+=wrap-evt= 像 =handle-evt= 一样,除了回调不会根据 =sync= 在尾部位置调用,还有 =wrap-evt= 在调用回调时候禁用了break exceptions.
+
+*** Building Your Own Synchronization Patterns
+
+事件还允许在一个程序不同的并发部分实现通信模式(communication patterns).
+
+其中一个常用的模式就是生产者-消费者(producer-consumer).
+
+接下来还有上面例子的做法去实现一个变种的生产者-消费者模型.
+
+具体做法就是利用 =sync= 实现一个等待输入然后处理的 =server loops= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define/contract (produce x)
+  (-> any/c void?)
+  (channel-put producer-chan x))
+
+
+(define/contract (consume)
+  (-> any/c)
+  (channel-get consumer-chan))
+
+
+; private state and server loop
+
+
+(define producer-chan (make-channel))
+(define consumer-chan (make-channel))
+(void
+ (thread
+  (λ ()
+    ; the items variable holds the items that
+    ; have been produced but not yet consumed
+    (let loop ([items '()])
+      (sync
+
+       ; wait for production
+       (handle-evt
+        producer-chan
+        (λ (i)
+          ; if that event was chosen,
+          ; we add an item to our list
+          ; and go back around the loop
+          (loop (cons i items))))
+
+       ; wait for consumption, but only
+       ; if we have something to produce
+       (handle-evt
+        (if (null? items)
+            never-evt
+            (channel-put-evt consumer-chan (car items)))
+        (λ (_)
+          ; if that event was chosen,
+          ; we know that the first item item
+          ; has been consumed; drop it and
+          ; and go back around the loop
+          (loop (cdr items)))))))))
+
+(void
+   (thread (λ () (sleep (/ (random 10) 100)) (produce 1)))
+   (thread (λ () (sleep (/ (random 10) 100)) (produce 2))))
+
+(list (consume) (consume))
+#+END_SRC
+
+一个更加复杂的例子(官方文档都已经有很详细的注释了,直接看代码就好)
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define/contract (produce x)
+  (-> any/c void?)
+  (channel-put producer-chan x))
+
+(define/contract (consume)
+  (-> any/c)
+  (channel-get consumer-chan))
+
+(define/contract (wait-at-least n)
+  (-> natural? void?)
+  (define c (make-channel))
+  ; we send a new channel over to the
+  ; main loop so that we can wait here
+  (channel-put wait-at-least-chan (cons n c))
+  (channel-get c))
+
+
+(define producer-chan (make-channel))
+(define consumer-chan (make-channel))
+(define wait-at-least-chan (make-channel))
+(void
+ (thread
+  (λ ()
+    (let loop ([items '()]
+               [total-items-seen 0]
+               [waiters '()])
+      ; instead of waiting on just production/
+      ; consumption now we wait to learn about
+      ; threads that want to wait for a certain
+      ; number of elements to be reached
+      (apply
+       sync
+       (handle-evt
+        producer-chan
+        (λ (i) (loop (cons i items)
+                     (+ total-items-seen 1)
+                     waiters)))
+       (handle-evt
+        (if (null? items)
+            never-evt
+            (channel-put-evt consumer-chan (car items)))
+        (λ (_) (loop (cdr items) total-items-seen waiters)))
+
+       ; wait for threads that are interested
+       ; the number of items produced
+       (handle-evt
+        wait-at-least-chan
+        (λ (waiter) (loop items total-items-seen (cons waiter waiters))))
+
+       ; for each thread that wants to wait,
+       (for/list ([waiter (in-list waiters)])
+         ; we check to see if there has been enough
+         ; production
+         (cond
+           [(>= (car waiter) total-items-seen)
+            ; if so, we send a mesage back on the channel
+            ; and continue the loop without that item
+            (handle-evt
+             (channel-put-evt
+              (cdr waiter)
+              (void))
+             (λ (_) (loop items total-items-seen (remove waiter waiters))))]
+           [else
+            ; otherwise, we just ignore that one
+            never-evt])))))))
+
+
+; an example (non-deterministic) interaction
+(define thds
+  (for/list ([i (in-range 10)])
+    (thread (λ ()
+              (produce i)
+              (wait-at-least 10)
+              (display (format "~a -> ~a\n" i (consume)))))))
+
+(for ([thd (in-list thds)])
+  (thread-wait thd))
+#+END_SRC
+
+** 19 Performance
+
+*** Performance in DrRacket
+
+关于如何正确使用 Racket 提供的工具.
+
+=DrRacket= 的很多功能,包括,调试器(=debugger=)和栈跟踪(=stacktrace=)的会影响性能.
+
+把在两个禁用后性能会比较接近原本的 =racket= 命令行.
+
+=racket= 和 =DrRacket= 都是用同一个 =Racket virtual machine= ,
+
+所以在 =DrRacket= 运行程序时候,垃圾回收次数会比直接在 =racket= 运行时的回收次数要多,
+
+并且 =Racket= 会阻止和延迟线程的执行,为了可靠的结果应该采用 =racket= 命令行部署.
+
+还有就是使用 =non-interactive= 模式从模块系统中获益,而不是使用 =REPL= .
+
+*** The Bytecode and Just-in-Time (JIT) Compilers
+
+=Racket= 的每一样能够运行的定义或者表达式都可以被编译成内部的字节码格式.
+
+在 =interactive= 模式中,编译(compilation)会自动启用并且不间断地执行(on-the-fly).
+
+=raco make= 和 =raco setup= 命令可以把字节码编译成文件,这么运行程序的时候就不需要每次都编译了.
+
+事实上大部份需要编译的都是在宏展开(macro expansion)的时候,从完全展开的代码中生成字节码时相当快的.
+
+字节编译器会使用所有标准的优化,比如常量传播(constant propagation),常量折叠(constant folding),
+
+内联(inline)和死代码消除(dead-code elimination):
+
+- 常量传播就是能够计算出结果的变量替换为常量;
+
+- 常量折叠就是在多个变量进行计算并且能够计算出的时候,把结果替换为常量.
+
+- 内联就是函数调用变成函数的定义内嵌,有点像 =macro= 展开.
+
+- 死代码消除就是把不可能运行到的代码消除掉.
+
+
+在一些平台上面还会使用 =JIT(just-in-time)= 编译器把字节码编译成机器码(native code).
+
+=JIT= 编译器大量的加速了程序执行密集循环(tight loops),小的整数和不精确实数的运算.
+
+可以通过 =eval-jit-enabled= form 或者 =--no-jit/-j=  racket命令参数禁用 =JIT= 编译器.
+
+
+随着函数调用增多, =JIT= 编译器的工作量也会增多,不过当编译函数的时候 =JIT= 编译器会有限的运行时信息(run-time information),
+
+也就是使用有限资源,因为模块体(module body)的代码或者 =lambda= 抽象只会编译一次.
+
+=JIT= 编译器的编译粒度(granularity of compilation)是函数体(a single procedure body),不算词法嵌套函数.
+
+=JIT= 编译的开销(overhead)很小所以很难检测到.
+
+*** Modules and Performance
+
+模块系统(module system)通过保证标识符有正常绑定来协助优化.
+
+比如, =racket/base= 提供的 =+= 会被编译器识别并且被内联.相反,在传统的交互(interactive) =Scheme= 系统里,
+
+=top-level= 的 =+= 绑定可能会被重定义,因此编译器不能认为它是原来(固定)的 =+= .
+
+在 =top-level= 环境里面通过 =require= 就可以启用一些内联优化.
+
+在模块里面,内联和常量传播优化充分利用了"如果编译时模块没有 =set!= 操作,模块里的定义就不会被修改"这一个特点.
+
+在 =top-level= 环境这些优化是不支持的.
+
+即使做出了优化,但是它也防碍了交互式的开发和探索,比如模块不能重新定义 =module= ,不过可以通过使用 =compile-enforce-module-constants= 禁用 =JIT= 编译器的这一特性.
+
+编译器可能会在模块边界中内联函数或者传播常量.为了避免因为函数内联而产生太多代码,编译器会在选择函数进行跨模块内联(cross-module)的时候变得保守.下面小节会说.
+
+*** Function-Call Optimizations
+
+当编译器检测到一个对一个可见函数进行调用,它就会生成更加有效率的代码而不是一般的调用,特别是尾递归.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(letrec ([odd (lambda (x)
+                (if (zero? x)
+                    #f
+                    (even (sub1 x))))]
+         [even (lambda (x)
+                 (if (zero? x)
+                     #t
+                     (odd (sub1 x))))])
+  (odd 40000000))
+#+END_SRC
+
+编译器会检测到 =odd-even= 的循环并且通过展开循环和相关优化的方式产生可以运行的更快的代码.
+
+如果在同一个模块内分别定义 =odd= 和 =even=, 如下
+
+#+BEGIN_SRC scheme
+;;; mod.rkt
+#lang racket
+
+(define (odd x)
+  (if (zero? x)
+      #f
+      (even (sub1 x))))
+
+(define (even x)
+  (if (zero? x)
+      #t
+      (odd (sub1 x))))
+
+(odd 40000000)
+#+END_SRC
+
+在同一模块内定义的变量就像在 =letrec= 一样的词法作用域一样,一个模块内的定义允许调用优化,所以上面两个例子的性能是一样的.
+
+对于有关键词(keyword)参数的函数调用,编译器会检查静态地关键词参数然后产生一个无关键词(non-keyword)的变种函数进行调用,这样可以减少运行时的检测关键词的开销.
+
+这个优化只会引用于通过 =define= 绑定的 =keyword-accepting= 函数.
+
+如果调用的函数足够小,编译器会通过把替换调用的函数体来内联函数.
+
+除了目标函数体的大小以外,编译器的策略(heuristics)会考虑(take into)调用位置的已执行内联数量,不管被调用的函数自己是否调用函数而不是简单的原生的(=primitive=)操作.
+
+当编译模块的时候,定义在 =module level= 的函数才会被考虑内联到其它模块;一般来说,只有琐碎的(trivial)函数才会被考虑跨模块内联,
+
+不过程序员可以用 =begin-encourage-inline= 包裹一个函数的定义来促进函数的内联.
+
+像 =pair?, car?= 和 =cdr= 的原生操作是被 =JIT= 编译器内联在 =machine-code level= .
+
+*** Mutation and Performance
+
+用 =set!= 修改一个变量会降低性能.
+
+#+BEGIN_SRC scheme
+#lang racket/base
+
+(define (subtract-one-set! x)
+  (set! x (sub1 x))
+  x)
+
+(define (subtract-one-without-set! x)
+  (sub1 x))
+
+(time
+  (let loop ([n 4000000])
+    (if (zero? n)
+        'done
+        (loop (subtract-one-set! n)))))
+
+
+(time
+  (let loop ([n 4000000])
+    (if (zero? n)
+        'done
+        (loop (subtract-one-without-set! n)))))
+#+END_SRC
+
+运行后结果是没有 =set!= 的 =subtract-one-without-set!= 回会快一点,
+
+因为 =subtract-one-set!= 会在每一次迭代的时候为 =x= 分配一个新的位置,这导致了性能不好.
+
+一个聪明的编译器会取消(unravel) =subtract-one-set!= 里面 =set!= 的使用,不过修改(mutation)是不鼓励的做法.
+
+除此以外,修改会在内联和常量传播模糊的时候(obscure)绑定.
+
+*** letrec Performance
+
+=letrec= 可以用来词法绑定函数和变量,编译器会以最优的方式对待这些绑定.
+
+然而,当其它类型的绑定于函数绑定混合在一起的时候,编译器就难以确定控制流(control flow).
+
+#+BEGIN_SRC scheme
+#lang racket
+
+;; 低效版本
+#|
+编译器很可能不知道display不会调用loop.
+如果调用了loop,那么loop有可能在绑定可用之前引用next.
+|#
+(letrec ([loop (lambda (x)
+                (if (zero? x)
+                    'done
+                    (loop (next x))))]
+         [junk (display loop)]
+         [next (lambda (x) (sub1 x))])
+  (loop 40000000))
+
+;; 高效版本
+(letrec ([loop (lambda (x)
+                (if (zero? x)
+                    'done
+                    (loop (next x))))]
+         [next (lambda (x) (sub1 x))])
+  (loop 40000000))
+#+END_SRC
+
+这个 =letrec= 的警告(caveat)同样适用于(不管是否在模块内的)函数的定义和作为常量的内部定义.
+
+模块体的定义次序类似于 =letrec= 的绑定次序,并且模块体内的非常量表达式会干涉(interfere)之后绑定的优化.
+
+*** Fixnum and Flonum Optimizations
+
+=Fixnum= 是小的精确整数."小"取决于平台.在32位机器上,数字可以用30位加上一个标记(sign)位表示 =fixnums= ;在64位机器上,则是62位加上一个标记位.
+
+=Flonum= 用所有非精确数.在所有平台上都对应64位的IEEE标准浮点数.
+
+内联 =fixnum= 和 =flonum= 运算操作是 =JIT= 编译器重要的优势之一.比如 =+= 的参数都是 =fixnums= 或者都是 =flonums= 则直接用机器的运算操作.
+
+=Flonums= 通常被称为 =boxed= ,它的意思是分配内存去存放每个 =flonum= 计算的结果.
+
+幸好新一代的垃圾回收器(generational garbage collector)会让那些给 =short-lived= 结果的分配变得合理便宜.
+
+相反 =fixnums= 绝对不是 =boxed= 的,所以可以正常使用.
+
+=racket/flonum= 库提供特定的 =flonum= 操作和 =flonum= 操作的组合(combinations)来允许 =JIT= 编译器生成可以避免 =boxing= 和 =unboxing= 中间结果的代码.
+
+除了当前组合里面的结果外,用 =let= 绑定并且被之后 =flonum-specific= 操作消耗的  =flonum-specific= 结果会在临时储存里面 =unboxed= .
+
+最后编译器会检测到一些 =flonum-valued= 循环累加器 (=flonum-valued loop accmulators=)并且避免累加器的 =boxing= .
+
+字节码反编译器器(=the bytecode decompiler=)会用 =%flonum, #%as-flonum 和 #%from-flonum= 标记 =JIT= 可以避免 =boxes= 组合的地方.
+
+
+=racket/unsafe/ops= 库提供 =unchecked fixnum- 和 flonum-specific= 操作.
+
+=Unchecked flonum-specific= 操作允许 =unboxing= 和有时候允许编译器重排(reorder)表达式来提高性能.
+
+*** Unchecked, Unsafe Operations
+
+=racket/unsafe/ops= 提供类似于 =racket/base= 提供的函数,这些函数认为(不是检查)输入的参数的类型是正确的.
+
+比如 =unsafe-vector-ref= 就是 =vector-ref= 的 =unchecked= 版本,根据索引访问 =vector= 的元素,
+
+然而 =unsafe-vector-ref= 不会检查索引是否在访问的 =vector= 的边界内.
+
+在密集型的循环里面使用 =unchecked= 版本的函数可以提高计算速度,不过不同的 =unchecked= 函数和不同的上下文中效果不一样.
+
+如它的名字"unsafe"所说,错误使用这些函数会导致崩溃(crashes)或者内存损坏(memory corruption).
+
+*** Foreign Pointers
+
+=ffi/unsafe= 库提供函数用来不安全的读写任意的指针值(pointer values).
+
+=JIT= 会认识 =ptr-ref= 和 =ptr-set!= 的使用,它们的第二个参数是以下内置C types= 之一的直接引用:
+
+=_int8, _int16, _int32, _int64, _double, _float 和 _pointer= .
+
+第一个参数是一个 =C= 指针(pointer, not a byte string),然后指针的读写操作将会在生成的代码里内联执行.
+
+字节码编译器会优化整数缩写(integer abbreviation),比如 =_int32= 会缩写成 =_int= ,在跨平台的时候它们是常量,并且 =JIT= 可以很方便地访问这些 =C types= .
+
+=_long 或者 _inptr= 当前还不能被 =JIT= 识别,因为它们在跨平台地时候不是常量. =_float 和 _double= 当前不是 unboxing 优化的主题.
+
+*** Regular Expression Performance
+
+当一个字符串或者字节串提供给像 =regexp-match= 的函数时候,它就会被编译成一个 =regexp= 值.
+
+最好先用 =regexp, byte-regexp, pregexp 或者 byte-pregexp= 把它编译成 =regexp= 再传入 =regexp-match= .
+
+如果是常量字符串或者字节串,可以通过 =#rx= 或者 =#px= 前缀来构建 =regexp= 值.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (slow-matcher str)
+  (regexp-match? "[0-9]+" str))
+
+(define (fast-matcher str)
+  (regexp-match? #rx"[0-9]+" str))
+
+(define (make-slow-matcher pattern-str)
+  (lambda (str)
+    (regexp-match? pattern-str str)))
+
+(define (make-fast-matcher pattern-str)
+  (define pattern-rx (regexp pattern-str))
+  (lambda (str)
+    (regexp-match? pattern-rx str)))
+#+END_SRC
+
+*** Memory Management
+
+=Racket= 有3种变种实现: =3m, CGC 和 CS= .
+
+=3m 和 CS= 变种使用一个现代,新世代(generational)垃圾回收器,这种回收器对 short-lived 对象的分配变得便宜.
+
+=CGC= 变种使用一个保守的(conservative)垃圾回收器,这种回收器以一个精确和有速度保证的费用来与 =C= 的交互.
+
+=3m= 是当前的标准.
+
+即便内存分配便宜合理,但是避免大量分配会快更多.闭包内是一个避免分配的好地方,因为它包含自由变量.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(let loop ([n 40000000] [prev-thunk (lambda () #f)])
+  (if (zero? n)
+      (prev-thunk)
+      (loop (sub1 n)
+            (lambda () n)))) ; 每次迭代为 n 分配一个闭包(closure),(lambda () n).
+
+#|
+编译器可以自动消除大量闭包,下面这个例子中没有为 prev-thunk 创建过闭包(就是外层let),
+因为它的调用是可见,所以它是内嵌的.
+|#
+(let loop ([n 40000000] [prev-val #f])
+  (let ([prev-thunk (lambda () n)])
+    (if (zero? n)
+        prev-val
+        (loop (sub1 n) (prev-thunk)))))
+
+#|
+这个例子类似上面的例子,定义 m-loop的 let form 的展开式涉及了一个包含 n 的闭包,
+不过编译器会自动把闭包转换然后把n作为参数传入.
+|#
+(let n-loop ([n 400000])
+  (if (zero? n)
+      'done
+      (let m-loop ([m 100])
+        (if (zero? m)
+            (n-loop (sub1 n))
+            (m-loop (sub1 m))))))
+#+END_SRC
+
+*** Reachability and Garbage Collection
+
+总的来说,当 =GC(garbage collector)= 可以证明某个对象不能从别的值到达,那么 =Racket= 就会重新使用(re-use)这个储存对象的空间.
+
+=Reachability= 是一个低层(low-level),抽象概念(abstraction breaking concept,怎么翻译),
+
+因此需要理解很多关于运行时系统如何精确判断值是否从可以另外一个值可以到达(reachable)的实现细节,
+
+简单来说,如果有一些操作可以从另一个值B恢复A原本的值,那么A就是可以到达的.
+
+=Racket= 提供 =make-weak-box= 和 =weak-box-value= ,分别是 =GC= 特别对待的结构体的 =creator= 和 =accessor= .
+
+=weak box= 里面对象不能到达的时候, =weak-box-value= 就会返回 =#f= .
+
+除非垃圾回收发生了,否则即使值不可以到达, =weak box= 里面的值还会在.
+
+#+BEGIN_SRC scheme
+#lang racket
+(struct fish (weight color) #:transparent)
+(define f (fish 7 'blue))
+(define b (make-weak-box f))
+(printf "b has ~s\n" (weak-box-value b)) ; 打印 b has #(struct:fish 7 blue)
+(collect-garbage)
+(printf "b has ~s\n" (weak-box-value b)) ; 打印 b has #(struct:fish 7 blue)
+
+(set! f #t)                              ; 虽然 fish 的值还在,但是 f 的值变了,不能从 b 引用 fish 了.
+(collect-garbage)
+(printf "b has ~s\n" (weak-box-value b)) ; 打印 b has #f
+#+END_SRC
+
+所有 =Racket= 的值一定需要分配并且和 =fish= 有着类似的行为,除了以下几个:
+
+- =Fixnum?= 在无须分配的情况下可用的.
+
+- =Procedures= ,可以被编译器看到的调用地址(call sites)的函数绝对不需要分配空间(因为内联,也就是说函数调用可见的话就会发生内联).其它类型的值也一样.
+
+- =Intered symbols= ,每个地方只会分配一次内部符号. =Racket= 里面有一种表用来跟踪它们的分配,所以它们不可能称为垃圾.
+
+- =Reachability= 接近 =CGC= 回收器,也就是如果值对于回收器来说是可以到达的,那么就是可以到达,没有别的方式可以到达.
+
+*** Weak Boxes and Testing
+
+=weak boxes= 一个重要用法就是是判断有没有释放那些不再需要的数据的空间.
+
+下面两个例子作为对比,
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(struct fish (weight color) #:transparent)
+
+(let* ([fishes (list (fish 8 'red)
+                     (fish 7 'blue))]
+       [wb (make-weak-box (list-ref fishes 0))])
+  (collect-garbage)
+  (printf "still there? ~s\n" (weak-box-value wb))) ; 打印 "still there? #f"
+#+END_SRC
+
+#+BEGIN_SRC scheme
+#lang racket
+(let* ([fishes (list (fish 8 'red)
+                     (fish 7 'blue))]
+       [wb (make-weak-box (list-ref fishes 0))])
+  (collect-garbage)
+  (printf "still there? ~s\n" (weak-box-value wb)) ; 打印 still there? #(struct:fish 8 red)
+  (printf "fishes is ~s\n" fishes))
+#+END_SRC
+
+差别在于第二个例子引用了一次 =fishes= ,在第一个例子里面, =fishes= 但是不可以到达,因为被 =(collect-garbage)= 回收了.
+
+第二个例子最后引用就构成了一个对 =fishes= 引用(constitutes),保证了 =fished= 不会被 =(collect-garbage)= 回收.
+
+*** Reducing Garbage Collection Pauses
+
+=Racket= 有两种检测回收的方案, =frequent minor collections 和 infrequent major collections= ,前者只检测最近分配的对象,后者会重新检测所有内存.
+
+两种方案的停顿时间不一样,前者会在一阵短暂停顿后重新检测,后者的停顿就很长.
+
+对于一些应用来说, 比如动画和游戏, =major collection= 的长时间间隔是不能接受的.
+
+为了减少这个间隔, =Racket= 的垃圾回收器支持增量垃圾回收模式(incremental garbage collection mode).
+
+在这个模式里面,可以利用 =minor collections= 为(toward)下一次 =major collection= 执行额外的工作来给 =minor collections= 增加停顿时间(然而还是比较短).
+
+如果一切都没有问题,那么 =major collection= 的大部份工作都会被 =minor collection= 在 =major collection= 需要时间内完成,所以 =major collection= 的停顿和 =minor collection= 的一样短.
+
+总的来看,在这个模式中程序会运行更慢,却有着更为一致的实时行为.
+
+有两种方法可以启用这个模式:
+
+1. 在程序启动之前把环境变量 =PLT_INCREMENTAL_GC= 的值设定为以 =1/y/Y= 开头的值.
+
+2. 对于特定程序或者程序的特定部分,可以使用 =(collect-garbage 'incremental)= 启动.
+
+第二种方法不会马上执行垃圾回收,而是请求每次 =minor collection= 执行增量的工作直到下一次 =major collection= 发生.
+
+请求会在下一次 =major collection= 中过期.在程序的任何一个重复的任务中调用 =(collect-garbage 'incremental)= 需要实时响应.
+
+在初始的 =(collect-garbage 'incremental)= 调用 =(collect-garbage)= 强迫发生一次全面回收.
+
+检查增量模式是否在使用和它使怎么影响停顿时间,可以用下面命令,
+
+#+BEGIN_SRC sh
+racket -W "debug@GC error" code.rkt
+#+END_SRC
+
+输出如下,
+
+#+BEGIN_SRC sh
+GC: 0:min @ 1,483K(+148K)[+192K]; free 1,037K(-5,133K) 1ms @ 15
+GC: 0:min @ 1,783K(+3,944K)[+216K]; free 585K(-1,881K) 1ms @ 19
+GC: 0:min @ 4,180K(+3,579K)[+232K]; free 1,535K(-1,535K) 1ms @ 24
+GC: 0:min @ 4,914K(+2,845K)[+236K]; free 1,164K(-6,556K) 3ms @ 31
+GC: 0:min @ 7,572K(+6,059K)[+264K]; free 1,981K(-3,277K) 3ms @ 42
+GC: 0:min @ 9,758K(+5,537K)[+304K]; free 2,423K(-3,719K) 3ms @ 50
+GC: 0:min @ 12,838K(+4,121K)[+320K]; free 2,849K(-12,337K) 5ms @ 65
+GC: 0:min @ 17,518K(+9,937K)[+336K]; free 4,292K(-9,684K) 4ms @ 83
+GC: 0:min @ 20,980K(+11,867K)[+452K]; free 4,648K(-7,240K) 7ms @ 108
+GC: 0:min @ 26,297K(+10,310K)[+928K]; free 5,760K(-8,352K) 9ms @ 145
+GC: 0:min @ 32,428K(+6,771K)[+1,272K]; free 7,464K(-26,440K) 11ms @ 184
+GC: 0:min @ 40,609K(+18,206K)[+1,684K]; free 9,757K(-13,645K) 16ms @ 236
+GC: 0:MAJ @ 46,020K(+16,683K)[+2,404K]; free 18,156K(-18,156K) 34ms @ 304
+GC: 0:MAJ @ 27,866K(+34,837K)[+2,404K]; free 9K(+4,726K) 46ms @ 338
+GC: 0:atexit peak 46,020K; alloc 89,545K; major 2; minor 12; 144ms
+#+END_SRC
+
+=min= 行表示 =minor collections= , =mIn= 行表示 =increment mode minor= , =MAJ= 行表示 =major collections= .
+
+** 20 Parallelism
+
+=Racket= 提供两种并行形式: =futures= 和 =places= .在一个提供多处理器的平台上,并行可以提高一个程序的运行时性能.
+
+*** Parallelism with Futures
+
+=racket/future= 提供 =future= 和 =touch= 函数,可以用于实现并行提高性能.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (any-double? l)
+  (for/or ([i (in-list l)])
+    (for/or ([i2 (in-list l)])
+      (= i2 (* 2 i)))))
+
+(define l1 (for/list ([i (in-range 5000)])
+             (+ (* 2 i) 1)))
+
+(define l2 (for/list ([i (in-range 5000)])
+             (- (* 2 i) 1)))
+
+;;; 效率很低
+(or (any-dobule? l1)
+    (any-double? l2))
+
+;;; 并行运算,在多处理器的机器上的运行时间会减少一半.
+(let ([f (future (lambda () (any-double? l2)))]) ; 把l2的运算封装成future
+  (or (any-double? l1)
+      (touch f)))                                ; touch启动future
+#+END_SRC
+
+只要可以保证 =future safe= =future= 可以并行, =future safe= 和 =future unsafe= 不是那么表面的概念.
+
+下面通过使用 =future-visualizer= 和计算曼德勃洛特集合(Mandelbrot set)来展示它们的区别.
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(define (mandelbrot iterations x y n)
+  (let ([ci (- (/ (* 2.0 y) n) 1.0)]
+        [cr (- (/ (* 2.0 x) n) 1.5)])
+    (let loop ([i 0] [zr 0.0] [zi 0.0])
+      (if (> i iterations)
+          i
+          (let ([zrq (* zr zr)]
+                [ziq (* zi zi)])
+            (cond
+              [(> (+ zrq ziq) 4) i]
+              [else (loop (add1 i)
+                          (+ (- zrq ziq) cr)
+                          (+ (* 2 zr zi) ci))]))))))
+
+;;; 非常慢
+(list (mandelbrot 10000000 62 500 1000)
+      (mandelbrot 10000000 62 501 1000))
+
+;;; 然而这次使用 future 并没有提高性能
+(let ([f (future (lambda () (mandelbrot 10000000 62 501 1000)))])
+  (list (mandelbrot 10000000 62 500 1000)
+        (touch f)))
+
+#| 使用future-visualizer可视化
+执行打开一个跟踪计算的图形视图,顶部时执行timeline.
+每一行代表这一个OS-level线程,颜色点代表执行过程中重要的事情.
+蓝色表示future创建的时间,绿色条(green bar)表示future执行时间,红色点代表阻塞操作,橙色点代表同步操作.
+|#
+;; 这个例子中future只执行了一下就暂停给运行时线程执行future-unsafe操作.
+(require future-visualizer)
+(visualize-futures
+ (let ([f (future (lambda () (mandelbrot 10000000 62 501 1000)))])
+   (list (mandelbrot 10000000 62 500 1000)
+         (touch f))))
+#+END_SRC
+
+在 =Racket= 的实现中, =future-unsafe= 操作分成两类: 阻塞操作(blocking operation)和同步操作(synchronized operation).
+
+相同的,两者都会暂停(halt) =future= 的运算,
+
+不同在于前者可以通过 =touch= 让它继续执行,在 =touch= 内的操作完成之后, =future= 剩下的工作就会被运行时线程执行;
+
+而在后者中,运行时线程可能会在任何点(time end)执行操作,只有操作完成后 =future= 才会继续并行运行,内存分配和 =JIT= 编译就是两个常见的同步操作例子.
+
+把鼠标移动到点上就可以看到导致阻塞或者同步的操作,绝大部分都是因为不精确数的大量使用导致频繁分配和 =*= 操作符号问题.
+
+优化后如下(这个程序需要用 =racket= 运行才是真正的并行),
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(require racket/flonum)
+
+(define (mandelbrot iterations x y n)
+  (let ([ci (fl- (fl/ (* 2.0 (->fl y)) (->fl n)) 1.0)]
+        [cr (fl- (fl/ (* 2.0 (->fl x)) (->fl n)) 1.5)])
+    (let loop ([i 0] [zr 0.0] [zi 0.0])
+      (if (> i iterations)
+          i
+          (let ([zrq (fl* zr zr)]
+                [ziq (fl* zi zi)])
+            (cond
+              [(fl> (fl+ zrq ziq) 4.0) i]
+              [else (loop (add1 i)
+                          (fl+ (fl- zrq ziq) cr)
+                          (fl+ (fl* 2.0 (fl* zr zi)) ci))]))))))
+
+(require future-visualizer)
+(visualize-futures
+ (let ([f (future (lambda () (mandelbrot 10000000 62 501 1000)))])
+   (list (mandelbrot 10000000 62 500 1000)
+         (touch f))))
+#+END_SRC
+
+*** Parallelism with Places
+
+=racket/place= 库提供 =place= form 来实现并行提高性能. =place= 创建一个 =place= 对象,就是并行版的 =channel= .
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(provide main)
+
+(define (any-double? l)
+  (for/or ([i (in-list l)])
+    (for/or ([i2 (in-list l)])
+      (= i2 (* 2 i)))))
+
+(define (main)
+  (define p
+    (place ch                           ; ch 是绑定 place channel 的标识符, place体就是一个新 place,并且place体的表达式通过 =ch= 来和其它 place 交流.
+      (define l (place-channel-get ch))
+      (define l-double? (any-double? l))
+      (place-channel-put ch l-double?)))
+
+  (place-channel-put p (list 1 2 4 8))
+
+  (place-channel-get p))
+#+END_SRC
+
+=place form= 有两个微妙的特性.
+
+第一,它将place体提升为一个匿名的模块级的函数,这意味着place体的引用任何绑定都必须在模块的 =top level= 可用.
+
+第二, =place form= 在新创建的 =place= 动态加载(dynamic-require)闭合模块,
+
+作为 =dynamic-require= 的一部分,当前模块体会在新的 =place= 运算.
+
+第二个特性的后果是, place 不应该直接出现模块中或在模块 =top-level= 调用的函数中,否则调用模块将在一个新 =place= 中调用相同的模块,
+
+这触发一系列的 place 创建行为从而很快耗尽内存.
+
+*** Distributed Places
+
+=racket/place/distributed= 提供分布式编程的支持,直接看文档的例子,没什么好记录的.
