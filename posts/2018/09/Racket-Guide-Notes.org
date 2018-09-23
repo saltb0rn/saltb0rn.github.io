@@ -3207,6 +3207,34 @@ pattern里面的unquoted,non-constructor标示符是pattern变量,(除了_)匹�
 ;; 相反arg和private-field只有internal name.
 (send inherit-ins public-method 60)
 
+;; 其次,internal name 和 external name 的使用方式是不一样的
+
+(define demo-for-usage-of-name%
+  (class object%
+    (super-new)
+    (field [kfield #f])
+    (define pfield #t)
+    (define/private (kmethod-1 msg) ;; kmethod-1 是私有,所以只有 internal name.
+      (printf "pfield have only internal name because it is private\n")
+      (printf "~a\n" msg))
+
+    (define/public (kmethod-2)
+      (kmethod-1 "the usage of internal name of methods")
+      ;; (send this kmethod-1 "the usage of external name of methods")
+      ;; 因为只有 internal name,所以不能这么用.
+      (set! kfield #t)
+      (set! pfield #f)
+      ;; 在内部也是可以用访问external name的方式访问字段.
+      ;; (set-field! pfield this #f)
+      ;; 但是不可以用访问internal name的方式访问字段.
+      (set-field! kfield this #f))))
+
+(define demo-for-usage-of-name-obj
+  (new demo-for-usage-of-name%))
+(get-field kfield demo-for-usage-of-name-obj) ; 在外部只能这样访问公有字段,不能访问 pfield
+(send demo-for-usage-of-name-obj kmethod-2) ; 在外部只能这样访问公有方法
+
+
 ;;; 13.4 Interfaces
 ;; 定义接口
 (define object-interface (interface () interface-method-1 interface-method-2))
