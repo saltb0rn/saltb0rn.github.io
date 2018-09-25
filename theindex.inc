@@ -1,3 +1,15 @@
+*** [[file:posts/2018/09/design-patterns.html][设计模式总结]]
+参考 "Mastering Python Design Patterns",这本书的优点就是讲的通俗易懂,缺点就是模式不全(一共16种)和代码实例不够好(代码方面有些用了第三方库).
+
+用 =Python= 实现了解析器模式以外的模式, 用 =Racket= 实现了原型模式和解析器模式以外的模式.
+
+之所以没有实现解析器模式是因为解析器是一个大话题,不能三言两语讲清楚(真的不是我懒),至于 =Racket= 原型模式是因为我没有办法.
+
+其中练习的时候参考了 [[https://www.cnblogs.com/Liqiongyu/p/5916710.html][二十三种设计模式及其python实现]] 这篇博客.之后会把剩下的6种补上(不算解析器模式,除去书中的 =MVC= 模式).
+
+P.S: 感觉实现设计模式可以做为一门新语言的上手练习.
+
+	
 *** [[file:posts/2018/09/Racket-Guide-Notes.html][Racket Guide 笔记]]
 这篇笔记的最早是从 =2018-9-8= 开始写的.
 

@@ -1,1 +1,2 @@
 - [[file:../posts/2018/05/hello-world.org][Hello, world!]]
+- [[file:../posts/2018/09/design-patterns.org][设计模式总结]]
