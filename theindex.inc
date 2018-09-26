@@ -1,4 +1,5 @@
 *** [[file:posts/2018/09/design-patterns.html][设计模式总结]]
+
 参考 "Mastering Python Design Patterns",这本书的优点就是讲的通俗易懂,缺点就是模式不全(一共16种)和代码实例不够好(代码方面有些用了第三方库).
 
 用 =Python= 实现了解析器模式以外的模式, 用 =Racket= 实现了原型模式和解析器模式以外的模式.
