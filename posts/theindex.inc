@@ -17,6 +17,7 @@
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]
 * R
   - [[file:2018/09/Racket-Guide-Notes.org][Racket Guide 笔记]]
+  - [[file:2018/10/react-journay.org][React学习之旅]]
   - [[file:2018/08/redis.org][Redis学习笔记]]
   - [[file:2018/07/regex.org][Regex]]
 * 关

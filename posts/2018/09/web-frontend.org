@@ -1,7 +1,7 @@
 #+title: 前端学习笔记整理(持续更新)
 #+date: 2018-09-01
 #+index: 前端学习笔记整理(持续更新)
-#+tags: WEB-Frontnd
+#+tags: WEB-Frontend
 #+options: ^:nil toc:t
 
 #+begin_abstract
@@ -850,11 +850,124 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
    - 画图
 
-     先跳过了,之后再研究
+     教程就要是围绕 =canvas= 的 =2D apis= 来绘图和做动画,还有使用 =three.js= 做 =3D= 动画的教程.
+
+     整个教程十分长,所以具体不怎么贴代码,大概总结一下 =api= 就可以,还有关于 =three.js= 的使用可能需要一点 =OpenGL= 的概念,
+
+     由于我学这个教程之前了解过 =WebGL= 渲染线管的概念,所以学起来还是挺自然的,但是由于 =3D= 这一块是大话题并且教程使用的不是原生 =WebGL=,
+
+     所以 =3D= 这块我不在这里总结,我目前也在准备学 =OpenGL= (等我复习一下C++),以后我会单独做笔记.
+
+     - 获取页面上的 =canvas= 并且生成 =2D= 上下文
+
+       #+BEGIN_SRC javascript
+       var canvas = document.querySelector(".myCanvas");
+       var ctx = canvas.getContent('2d');
+       #+END_SRC
+
+     - 简单的矩形
+
+       #+BEGIN_SRC javascript
+       ctx.fillStyle = 'rgb(0, 0, 0)'; // 设置填充样式,rgb或者rgba
+       ctx.fillRect(x, y, width, height); // 以(x,y)坐标左上角顶点绘制宽为width和高为height的矩形
+       ctx.clearReact(x, y, width, height); // 清除刚刚绘制的矩形
+       #+END_SRC
+
+     - 笔划和线条宽度
+
+       #+BEGIN_SRC javascript
+       ctx.strokeStyle = 'rgb(255, 255, 255)'; // 设置笔划线(内部不是实体的线条)的样式
+       ctx.strokeRect(x, y, width, height); // 用笔划线绘制矩形
+       ctx.lineWidth = 5; // 设置线条的宽度
+       #+END_SRC
+
+     - 绘制路径
+
+       #+BEGIN_SRC javascript
+       ctx.beginPath();  // 设置画笔当前的点为绘画起点,新canvas的坐标是(0,0)
+       ctx.moveTo(x, y); // 把画笔移动大别的点上
+       ctx.lineTo(z, y); // 在(x,y)到(z,y)之间连接一条线
+       ctx.fill();       // 根据前面的连线进行绘制,如果想用笔划线绘制,可以用 ctx.stroke();
+
+       #+END_SRC
+
+     - 绘制圆
+
+       #+BEGIN_SRC javascript
+       ctx.beginPath();
+       // (x,y)做为起点,r是半径,0是开始的角度,1*Math.PI是结束时候的角度,两者都是用弧度表示,true表示以逆时针方向绘画
+       // 得到的路径是上半边的圆弧
+       ctx.arc(x, y, r, 0, 1*Math.PI, true);
+       ctx.lineTo(2*r+x, y); // 把半圆弧底部连接起来
+       ctx.stroke();         // 如果是 ctx.fill();那么半圆就会变成实体
+       #+END_SRC
+
+     - 绘制文本
+
+       #+BEGIN_SRC javascript
+       ctx.strokeStyle = "white"; // 设置笔划线样式,实体线 ctx.fillStyle = "white";
+       ctx.lineWidth = 2;
+       ctx.font = "36px arial";   // 设置字体
+       // 在(x,y)上用笔划线绘制 "Canvas text" 字样, 实体线 ctx.fillText('Canvas Text', x, y);
+       ctx.strokeText('Canvas text', x, y);
+       #+END_SRC
+
+     - 在画布上绘制图像
+
+       #+BEGIN_SRC javascript
+       var image = new Image();
+       image.src = 'image.png';
+       image.onload = function() {
+           // 第二个到第五个参数设定截取源图片的起点坐标和长宽
+           // 最后四个参数设定截取后的图片放置的起点和长宽
+           ctx.drawImage(image, 20, 20, 300, 400, 0, 0, 300, 400);
+           // drawImage方法还有其它用法的,自己看文档
+
+       };
+       #+END_SRC
+
+       这个可以用来实现截图.
+
+     - 循环和动画
+
+       主要是讲了制作二维动画的原理:循环和重新绘图.具体看文档,提一下 =api= .
+
+       里面用到的 =api= 有:
+
+       1. =ctx.rotate(1*Math.PI)=
+
+          180度旋转画布.
+
+       2. =ctx.translate(-(width/2), -(height/2))=
+
+          移动坐标轴系统, =x轴= 移动 =-(width/2)= 距离, =y轴= 移动 =-(height/2)=.
+
+       3. =window.requestAnimationFrame(draw)=
+
+          =draw= 是绘图的函数,它里面调用 =window.requestAnimationFrame(draw)=,递归形成循环播放.
+
+          =window.requestAnimationFrame= 的作用就是执行动画,它接受一个绘图函数来更新(重新绘制)动画的下一帧.
+
+          不用这个方法的画是没有动画效果的,所以不能把它改成 =draw()=.
+
 
    - 视频与音频API
 
-     先跳过了,之后再研究
+     主要演示如何利用 =window.HTMLMediaElement= 对象的 =API= 自定义视频的播放控制板,实现快进和快退.
+
+     页面的视频元素 =<video>= 和 =<audio>= 就是整个项目的上下文.
+
+     还演示了 =setInterval= 和 =clearInterval= 两个函数分别用于设置定时循环事件和取消事件.
+
+     #+BEGIN_SRC javascript
+     // 200 毫秒执行一次
+     var id = setInterval(
+            function(){var date = new Date(); console.log(date.toTimeString());}, 200);
+     // 取消事件
+     clearInterval(id);
+     #+END_SRC
+
+     还有一个值得一提的事件 =timeupdate= ,可以用于 =<video>= 或者 =<audio>= 监听当前播放时间的变化.
 
    - 客户端储存
 
@@ -869,7 +982,7 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
        window.document.cookie
        #+end_src
 
-     - 新流派: Web Storage 和 IndexedDB
+     - 新流派: =Web Storage= 和 =IndexedDB=
 
        - Web Storage API
 
@@ -892,7 +1005,7 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
        - IndexedDB API
 
-         IndexedDB是一个完整的数据库,按照分类来说是NoSQL数据库.
+         =IndexedDB= 是一个完整的数据库,按照分类来说是 =NoSQL= 数据库.
 
          用法不是一两句代码可以演示完,所以直接给出官方文档教程链接.
 
@@ -1002,100 +1115,102 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
      当然是为了好玩啊. Let's rock to the sun.
 
+
 ** 一些工具和 code snippets
 
    在合适的环境下使用合适工具也是一个开发人员的必备技能.
 
-   - 让更改后的静态文件自动更新
 
-     #+BEGIN_EXAMPLE
-     写于 2018/9/4
-     #+END_EXAMPLE
+*** 让更改后的静态文件自动更新
 
-     由于浏览器的缓存问题,静态文件每次修改后都要 =Ctrl-F5= 强制刷新浏览器才会更新,
+#+BEGIN_EXAMPLE
+写于 2018/9/4
+#+END_EXAMPLE
 
-     这有一个问题那就是用户不知道静态文件更新了,不能指望用户会及时 =Ctrl-F5=.
+由于浏览器的缓存问题,静态文件每次修改后都要 =Ctrl-F5= 强制刷新浏览器才会更新,
 
-     可以在静态文件的资源地址加上事件戳或者别的东西让浏览器认为这是新资源从而进行请求,
+这有一个问题那就是用户不知道静态文件更新了,不能指望用户会及时 =Ctrl-F5=.
 
-     然而这由有一个问题,爬虫也会认为这是新的链接,对于搜索引擎的爬虫就不太友好.
+可以在静态文件的资源地址加上事件戳或者别的东西让浏览器认为这是新资源从而进行请求,
 
-     最近找到一个不错的工具 =live.js=, 只要在 =<head>= 元素中加入以下就可以自动更新静态文件,
+然而这由有一个问题,爬虫也会认为这是新的链接,对于搜索引擎的爬虫就不太友好.
 
-     现改现更新,不用刷新,而且该脚本的代码量不大,想自己研究原理也不难.
+最近找到一个不错的工具 =live.js=, 只要在 =<head>= 元素中加入以下就可以自动更新静态文件,
 
-     #+BEGIN_SRC html
-     <script type="text/javascript" src="http://livejs.com/live.js"></script>
-     #+END_SRC
+现改现更新,不用刷新,而且该脚本的代码量不大,想自己研究原理也不难.
 
-   - 给所有页面元素添设定事件
+#+BEGIN_SRC html
+<script type="text/javascript" src="http://livejs.com/live.js"></script>
+#+END_SRC
 
-     #+BEGIN_EXAMPLE
-     写于 2018/9/5
-     #+END_EXAMPLE
+*** 给所有页面元素添设定事件
 
-     有两种解决方法,一种就是遍历元素设定事件,这样有两个问题,性能和资源占用会有问题,另外一个问题就是新增的元素没有被设定事件.
+#+BEGIN_EXAMPLE
+写于 2018/9/5
+#+END_EXAMPLE
 
-     另外一种就是利用[[https://www.w3.org/TR/DOM-Level-3-Events/#event-flow][事件流]].
+有两种解决方法,一种就是遍历元素设定事件,这样有两个问题,性能和资源占用会有问题,另外一个问题就是新增的元素没有被设定事件.
 
-     浏览器处理 DOM 的事件是这样的一个过程:
+另外一种就是利用[[https://www.w3.org/TR/DOM-Level-3-Events/#event-flow][事件流]].
 
-     当触发某一个事件的时候,比如在页面某个元素点了一下,触发了 =onclick= 事件.
+浏览器处理 DOM 的事件是这样的一个过程:
 
-     1. 事件捕获阶段:事件对象通过目标的祖先元素,由 =window= 对象到目标的父元素传播.
+当触发某一个事件的时候,比如在页面某个元素点了一下,触发了 =onclick= 事件.
 
-     2. 目标查找阶段:事件对象到达触发事件的目标上面后执行事件,如果事件类型指定了事件不冒泡,事件对象就会在这个阶段完成后停止.
+1. 事件捕获阶段:事件对象通过目标的祖先元素,由 =window= 对象到目标的父元素传播.
 
-     3. 事件冒泡阶段:事件对象从目标的父元素到 =window= 进行传播,这个过程中,目标的祖先元素相应的监听事件也会执行.
+2. 目标查找阶段:事件对象到达触发事件的目标上面后执行事件,如果事件类型指定了事件不冒泡,事件对象就会在这个阶段完成后停止.
 
-        比如
+3. 事件冒泡阶段:事件对象从目标的父元素到 =window= 进行传播,这个过程中,目标的祖先元素相应的监听事件也会执行.
 
-        #+BEGIN_SRC html
-        <html>
-            <body>
-                <div class="parent">
-                    <div class="child">
-                        <p>I am the child</p>
-                    </div>
-                </div>
-                <script>
-                    var parent = document.querySelector(".parent");
-                    var child = document.querySelector(".child");
-                    parent.onclick = function() {alert("Parent");};
-                    child.onclick = function() {alert("Child");};
-                </script>
-            </body>
-        </html>
-        #+END_SRC
+比如
 
-        点击 "I am the child" 会触发两次 =alert=, 先是 =Child=, 后是 =Parent=.
+#+BEGIN_SRC html
+<html>
+    <body>
+        <div class="parent">
+            <div class="child">
+                <p>I am the child</p>
+            </div>
+        </div>
+        <script>
+            var parent = document.querySelector(".parent");
+            var child = document.querySelector(".child");
+            parent.onclick = function() {alert("Parent");};
+            child.onclick = function() {alert("Child");};
+        </script>
+    </body>
+</html>
+#+END_SRC
 
-     现在使用事件代理( =delegate= )可以完美解决这些问题,同时取消事件冒泡.
+点击 "I am the child" 会触发两次 =alert=, 先是 =Child=, 后是 =Parent=.
 
-     #+BEGIN_SRC javascript
-     document.onclick = function(event) {
-         // about the interface of Event object
-         // https://dom.spec.whatwg.org/#event
-         event = event || window.event;
-         var target = event.target || event.srcElement;
-         var is_event_set = target.onclick;
-         if (target.tagName == 'DIV' && target.className == 'outline') {
-             target.onclick = function(event) {
-                 /*
-                 可以根据元素地属性判断是否你想要地元素,如果符合条件就执行动作.
-                 比如,对class为outline的div元素添加事件,这就是在需要的时候添加事件,可以节省资源
-                 */
-                 /*
-                 如果要取消冒泡,则点击事件必须要传入event对象,然后
-                 设定 event 对象的 bubbles 为 false 或者 cancelBubble 为 true.
-                  */
-                 (event.bubbles = false) || (event.cancelBubble = true);
-                 if (target.tagName == 'DIV' && target.className == 'outline') {
-                     console.log(target);
-                 }
-             };
-         }
-         // 第一次点击是设定事件,要触发就要点击第二次,为了第一次就触发要做判断
-         if(!is_event_set) target.onclick(event);
-     };
-     #+END_SRC
+现在使用事件代理( =delegate= )可以完美解决这些问题,同时取消事件冒泡.
+
+#+BEGIN_SRC javascript
+document.onclick = function(event) {
+    // about the interface of Event object
+    // https://dom.spec.whatwg.org/#event
+    event = event || window.event;
+    var target = event.target || event.srcElement;
+    var is_event_set = target.onclick;
+    if (target.tagName == 'DIV' && target.className == 'outline') {
+         target.onclick = function(event) {
+         /*
+           可以根据元素地属性判断是否你想要地元素,如果符合条件就执行动作.
+           比如,对class为outline的div元素添加事件,这就是在需要的时候添加事件,可以节省资源
+         */
+         /*
+           如果要取消冒泡,则点击事件必须要传入event对象,然后
+           设定 event 对象的 bubbles 为 false 或者 cancelBubble 为 true.
+         */
+             (event.bubbles = false) || (event.cancelBubble = true);
+             if (target.tagName == 'DIV' && target.className == 'outline') {
+                 console.log(target);
+             }
+         };
+    }
+    // 第一次点击是设定事件,要触发就要点击第二次,为了第一次就触发要做判断
+    if(!is_event_set) target.onclick(event);
+};
+#+END_SRC

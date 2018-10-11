@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-09-26 Wed 17:27 -->
+<!-- 2018-10-11 Thu 18:13 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emacs Tips(持续更新)</title>
@@ -275,7 +275,57 @@ for the JavaScript code in this tag.
 <li><a href="#org56b2dd5">使用Emacs的一些tips</a></li>
 <li><a href="#org69937e2">使用配置的一些优化</a></li>
 <li><a href="#orgf1708fc">写Elisp时候遇到的一些问题</a></li>
-<li><a href="#org69312b7">Emacs Lisp学习笔记</a></li>
+<li><a href="#org69312b7">Emacs Lisp学习笔记</a>
+<ul>
+<li><a href="#org3aed084">数据类型 (Lisp Data Types)</a>
+<ul>
+<li><a href="#orgbe4492f">打印显示和读取语法</a></li>
+<li><a href="#org79c3760">Emacs Lisp 数据类型概览</a></li>
+<li><a href="#orgd8f29a4">环状对象 (Circular Objects)</a></li>
+</ul>
+</li>
+<li><a href="#org14086de">函数 (Functions)</a>
+<ul>
+<li><a href="#org1df7848">Advising Functions, Emacs 的 Advising 系统用法总结</a></li>
+</ul>
+</li>
+<li><a href="#org2a1317c">字节编码 (Byte Compilation)</a>
+<ul>
+<li><a href="#org996a610">编译字节函数 (Byte-Compilation Functions)</a></li>
+<li><a href="#org547c01c">文档字符串和编译 (Documentation Strings and Compilation)</a></li>
+<li><a href="#orgc93cdf9">动态加载个别函数 (Dynamic Loading of Individual Functions)</a></li>
+<li><a href="#orgb0ccb90">编译时运行 (Evaluation During Compilation)</a></li>
+<li><a href="#org75d16b6">编译器错误 (Compiler Errors)</a></li>
+<li><a href="#org44bc6b8">字节码函数对象 (Byte-Code Function Objects)</a></li>
+<li><a href="#orgc1e9ec5">反汇编字节码(Disassembled Byte-Code)</a></li>
+</ul>
+</li>
+<li><a href="#org0e1dba3">控制结构 (Control Structures)</a>
+<ul>
+<li><a href="#org5912b89">按序计算 (Sequencing)</a></li>
+<li><a href="#org00b0a7e">条件判断 (Conditionals)</a></li>
+<li><a href="#org85af48e">混合条件 (Constructs for Combining Conditions)</a></li>
+<li><a href="#org7c3a3a5">迭代器 (Iteration)</a></li>
+<li><a href="#org4c48e1d">生成器 (Generators)</a></li>
+<li><a href="#orge1f8520">非本地退出 (Nonlocal Exits)</a></li>
+</ul>
+</li>
+<li><a href="#org413727a">变量 (Variables)</a>
+<ul>
+<li><a href="#orgebe6879">变量作用域 (Variable Scoping)</a></li>
+<li><a href="#orgdf0c4d2">全局变量 (Global Variables)</a></li>
+<li><a href="#org66ac1f6">永远不会改变的变量 (Variables that Never Change)</a></li>
+<li><a href="#org29f4bf1">Local Variables</a></li>
+<li><a href="#orgad44f65">当变量为Void (When a Variable is Void)</a></li>
+<li><a href="#orge566f70">定义全局变量 (Defining Global Variables)</a></li>
+<li><a href="#org31e979e">Tips for Defining Variables Robustly</a></li>
+<li><a href="#orge412bd1">访问变量的值 (Accessing Variable Values)</a></li>
+<li><a href="#orgd7d9a49">设定变量的值 (Setting Variable Values)</a></li>
+</ul>
+</li>
+<li><a href="#org9759177">命令循环 (Command Loop)</a></li>
+</ul>
+</li>
 <li><a href="#org91f46bd">个人认为不错的的一些参考资源和博客</a></li>
 <li><a href="#org9560e98">我与Emacs的一些事情</a></li>
 </ul>
@@ -314,6 +364,9 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 <p>
 很多人,包括我,都很好奇写Emacs Lisp的高人是如何知道那么多奇怪的功能,而且这些功能文档上又没提到.
+</p>
+
+<p>
 现在有答案了,以下提示可以帮助你快速浏览这些奇怪的功能.
 </p>
 
@@ -500,6 +553,18 @@ sudo修改文件
 <code>C-x C-f</code> 输入 <code>/sudo::/path/to/file</code>, 这样打开 <code>/path/to/file</code> 的时候就会提示输入密码了
 </p></li>
 </ol></li>
+
+<li><p>
+<code>Emacs Lisp</code> 的交互式编程
+</p>
+
+<p>
+和很多解析型语言一样, <code>Emacs Lisp</code> 也支持 <code>REPL</code>,不过这个功能藏得挺深得, <code>M-x ielm</code>.
+</p>
+
+<p>
+<code>ielm</code> 全称 <code>Inferior Emacs Lisp Mode</code>. <code>Inferior Modes</code> 是个好东西.
+</p></li>
 </ul>
 </div>
 </div>
@@ -598,11 +663,450 @@ sudo有一个sudoers policy缓存凭证15分钟,除非重写了凭证,否则在�
 <div id="outline-container-org69312b7" class="outline-2">
 <h2 id="org69312b7">Emacs Lisp学习笔记</h2>
 <div class="outline-text-2" id="text-org69312b7">
-<ul class="org-ul">
-<li><p>
-Emacs的advising系统用法总结
+<pre class="example">
+这段话写于 2018/9/30
+</pre>
+
+<p>
+我认为想要提高编写 <code>Emacs Lisp</code> 的能力就得通读一遍 <code>Reference</code> 文档,这可以让你跳出盲人摸象的困境.
 </p>
 
+<p>
+事实上我很少在不写代码的情况下看 <code>Reference</code>,因为我看来 <code>Reference</code> 一般用于查阅 <code>API</code>,
+</p>
+
+<p>
+然而 <code>Emacs Lisp</code> 不像 <code>Racket</code> 那样有个友好而且涉及的点齐全到可以当作语言概览的 <code>Guide</code>.
+</p>
+
+<p>
+除了 <code>Reference</code>, <code>Emacs Lisp</code> 没有别的东西可以当作语言的概览来给你入门.
+</p>
+
+<p>
+既然没有 <code>Guide</code>,那么我就给自己写个 <code>Guide</code>.具体就是用自己的话把文档的重点记录下来.
+</p>
+
+<p>
+这不是教程,也不是文档的翻译,只是单纯是给我个人看的笔记,我只会对我不熟悉的地方做笔记,
+</p>
+
+<p>
+有兴趣的话可以读一读,但是开发参考和学习请以 <code>Reference</code> 为准.
+</p>
+</div>
+
+<div id="outline-container-org3aed084" class="outline-3">
+<h3 id="org3aed084">数据类型 (Lisp Data Types)</h3>
+<div class="outline-text-3" id="text-org3aed084">
+<p>
+很难想像数据类型就是 <code>Emacs Lisp</code> 的核心部分,读了 <code>Reference</code> 文档的 <code>Lisp Data Type</code> 章节就会发现有多重要.
+</p>
+
+<p>
+<code>Emacs Lisp</code> 的数据类型分为两类, <code>Primitive types</code> (或者叫 <code>Programming Types</code>) 和 <code>Editing Types</code> .
+</p>
+
+<p>
+前者就是大部份 <code>Lisp</code> 实现都有的数据类型,后者是 <code>Emacs Lisp</code> 特有的数据类型,用于处理编辑器.
+</p>
+</div>
+
+<div id="outline-container-orgbe4492f" class="outline-4">
+<h4 id="orgbe4492f">打印显示和读取语法</h4>
+<div class="outline-text-4" id="text-orgbe4492f">
+<p>
+跟其它 <code>Lisp</code> 方言一样 <code>Emacs Lisp</code> 的对象也是有打印表示(printed representation)和读取语法(read syntax)的概念.
+</p>
+
+<p>
+前者是 <code>Lisp printer</code> (<code>prin1</code> 函数)输出对象的格式,后者是 <code>Lisp reader</code> (<code>read</code> 函数)接受读取的对象的语法.
+</p>
+
+<p>
+每种类型的数据都有一种独一无二的打印表示,大部份对象类型有多于一种的读取语法.
+</p>
+
+<p>
+大部份情况下对象的打印表示和{{{read syntax}}}是一样的.
+</p>
+
+<p>
+有些对象是没有读取语法的,因为在以常量的形式访问这些对象是不合理的.这些对象的打印表示是以 <code>#&lt;</code> 开头和 <code>&gt;</code> 结尾,这种格式叫做哈希标记.
+</p>
+
+<p>
+其实根据文档可以发现,没有读取语法的对象 <b>基本</b> 都是 <code>Editing Types</code> 对象.
+</p>
+
+<p>
+与其他语言不一样的地方在于,其它语言的表达式是文本,并且没有其它形式.而(大部份)的 <code>Lisp</code> 的表达式首先基本上上就是一个 <code>Lisp</code> 对象,其次是对象的读取语法,没有必要强调两者的不同,但是要记住这一点.
+</p>
+
+<p>
+交互式地运算一个表达式其实就是(1)读取表达式文本表示并且产生 <code>Lisp</code> 对象,(2)最后运算这个对象的一个过程.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org79c3760" class="outline-4">
+<h4 id="org79c3760">Emacs Lisp 数据类型概览</h4>
+<div class="outline-text-4" id="text-org79c3760">
+<p>
+有 <code>strike-through</code> 的数据类型都是很简单的或者话题太大只能以后单独总结,不多做笔记,并且一些有联系的类型,我会用缩进表示了它们的关系.
+</p>
+
+<ul class="org-ul">
+<li><code>Primitive types</code>
+
+<ul class="org-ul">
+<li><del>Integer Type</del></li>
+
+<li><del>Floating-Point Type</del></li>
+
+<li><p>
+Character Type
+</p>
+
+<p>
+?c   =&gt; 99
+?\^c  =&gt; 3
+?\C-c =&gt; 3
+?\M-x =&gt; 134217848
+</p>
+
+<p>
+字符类型在 <code>Emacs Lisp</code> 中是以整数表示的.比如 <code>A</code> 是65,这些整数也叫字符码(Character Codes),范围由 0 到 4194303.
+</p>
+
+<p>
+字符的在 <code>Emacs Lisp</code> 随处可见,看到有文档,看不到的有 <code>key map</code> .
+</p>
+
+<p>
+字符类型根据不同的用途分为不同类型,详细查看文档 <code>M-: (info "(elisp) Character Type")</code> .
+</p></li>
+
+<li><del>Symbol Type</del></li>
+
+<li><p>
+Sequence Type
+</p>
+
+<p>
+<code>Emacs Lisp</code> 有两种序列, <code>list</code> 和 <code>array</code> .
+</p>
+
+<ul class="org-ul">
+<li><p>
+Cons Cell Type
+</p>
+
+<p>
+一个 <code>cons cell</code> 或者 <code>cons</code> 是由两个槽(slots)构成的对象,分别是 <code>CAR slot</code> 和 <code>CDR slot</code>,每个槽可以放任何类型的值.
+</p>
+
+<p>
+<code>cons</code> 还有一个旧名字叫做 <code>pair</code>,在 <code>Racket</code> 中有这个操作符号, <code>Emacs Lisp</code> 没有(我忘了 <code>Common Lisp</code> 有没有).
+</p>
+
+<p>
+与 <code>Racket</code> 不同的除了 <code>pair</code> 操作符号,还有两者对 <code>list</code> 的定义不一样, <code>Racket</code> 的 <code>list</code> 是 <code>cons</code> 的子集, <code>list</code> 的 <code>CDR slot</code> 必须存放 <code>cons</code> .
+</p>
+
+<p>
+比如 <code>'(1 2 . 3)</code> 不是 <code>list</code>,是 <code>cons</code>, <code>'(1 2 3)</code> 是 <code>list</code> 也是 <code>cons</code>,而在 <code>Emacs Lisp</code> 看来,两者都是 <code>list</code> 或者 <code>cons</code>.当然 <code>list</code> 也是分很多种类型.
+</p>
+
+<p>
+所以 <code>list type</code> 也就是 <code>cons cell type</code> .
+</p></li>
+
+<li><p>
+Array Type
+</p>
+
+<p>
+和 <code>list</code> 不同的是所有类型的 <code>array</code> 的长度固定,并且个别类型的 <code>array</code> 存放的对象有类型要求.
+</p>
+
+<ul class="org-ul">
+<li><p>
+String Type
+</p>
+
+<p>
+所有存放的对象必须是字符.
+</p></li>
+
+<li><p>
+Vector Type
+</p>
+
+<p>
+可以存放任何类型的对象.
+</p></li>
+
+<li><p>
+Char-Table Type
+</p>
+
+<p>
+跟 <code>Vector Type</code> 类似,不同在于 <code>Char-Table Type</code> 是用字符码来做索引的. <code>Modifers</code> 以外的任何字符都可以做 char-table 里面的索引.
+</p>
+
+<p>
+格式像是以 <code>#^</code> 开头的 <code>vector</code>.
+</p></li>
+
+<li><p>
+Bool-Vector Type
+</p>
+
+<p>
+和 <code>Vector</code> 类似,不同在于所存的对象必须为布尔类型.
+</p></li>
+</ul></li>
+</ul></li>
+
+<li><del>Hash Table Type</del></li>
+
+<li><p>
+Function Type
+</p>
+
+<p>
+<code>Lisp</code> 有两个系, <code>Lisp-1</code> 和 <code>Lisp-2</code>,分别代表是 <code>Scheme</code> 和 <code>Common Lisp</code>,其中 <code>Racket</code> 是 <code>Scheme</code> 的后继者,而 <code>Emacs Lisp</code> 看起来很像 <code>Common Lisp</code>.
+</p>
+
+<p>
+<code>Lisp-1</code> 和 <code>Lisp-2</code> 也分别叫做 <code>Scheme model</code> 和 <code>Common Lisp model</code>.
+</p>
+
+<p>
+区别就是是否分离变量名字和函数的命名空间.通俗地说就是函数和变量能否用同一个名字并且不会冲突,如果冲突了就是 <code>Lisp-1</code>,否则就是 <code>Lips-2</code>.
+</p>
+
+<p>
+而 <code>Emacs Lisp</code> 跟它的偶像一样是 <code>Lisp-2</code>.
+</p></li>
+
+<li><p>
+Macro Type
+</p>
+
+<p>
+<code>Emacs Lisp</code> 中有 <code>Lisp</code> 宏(macro)和键盘宏(keyboard macro).两种是不一样的.
+</p></li>
+
+<li><p>
+Primitive Function Type
+</p>
+
+<p>
+由 <code>C</code> 语言编写并且可以由 <code>Emacs Lisp</code> 调用的函数.这种类型也叫做 <code>subr=/=subroutine</code> 或者 <code>built-in function</code>.
+</p>
+
+<p>
+这类型的数据是没有读取语法的.
+</p></li>
+
+<li><del>Byte-Code Type</del></li>
+
+<li><del>Autoload Type</del></li>
+
+<li><p>
+Finalizer Type
+</p>
+
+<p>
+一个清理器对象(<code>finalizer object</code>)会清理不可到达的对象.一个 清理器 拥有一个函数对象.
+</p>
+
+<p>
+当清理器对象在 <code>GC</code> 后不可到达,=Emacs= 就会调用它关联的函数对象来清理它自己.
+</p>
+
+<p>
+当断定一个清理器是否可以到达,=Emacs= 是不会计算清理器对象的引用,
+</p>
+
+<p>
+这允许你在不同担心意外捕获被清理对象的情况下使用清理器.
+</p></li>
+</ul></li>
+
+<li><code>Editing Types</code>
+
+<ul class="org-ul">
+<li><p>
+Buffer Type
+</p>
+
+<p>
+一个缓冲区对应一个文本,大部份缓冲区拥有硬盘文件的内容,这样可以编辑它们,也有一些是用于其它目的.
+</p>
+
+<p>
+有一种间接缓冲区(indirect buffer)用于和其它缓冲区共享文本,不过文本显示起来不一样.
+</p>
+
+<p>
+每一个缓冲区都会关联以下几个数据结构:
+</p>
+
+<ul class="org-ul">
+<li><p>
+Marker Type
+</p>
+
+<p>
+marker表示特定缓冲区里面一个位置.它有两个组件:缓冲区和位置(position).
+</p>
+
+<p>
+改变缓冲区的文本会自动重新定位marker的位置.
+</p></li>
+
+<li><p>
+Overlay Type
+</p>
+
+<p>
+用来指定缓冲区的某个部分/特定范围的属性,包含一个属性列表.
+</p></li>
+
+<li>Keymap Type</li>
+
+<li>一个本地的语法表(syntax table)</li>
+
+<li>一个缓冲区本地的变量绑定列表</li>
+
+<li>缓冲区文本的文本属性</li>
+</ul></li>
+
+<li><p>
+Window Type
+</p>
+
+<p>
+窗口是用来显示缓冲区的对象.一个窗口显示一个缓冲区.
+</p>
+
+<p>
+缓冲区可以出现在一个窗口,几个窗口或者不出现在窗口上.
+</p>
+
+<p>
+而一个窗口只能关联一个缓冲区,同一时刻只能有一个窗口被选中.
+</p></li>
+
+<li><p>
+Frame Type
+</p>
+
+<p>
+frame是一个屏幕区域,包含一个或者多个 <code>Emacs</code> 窗口.
+</p></li>
+
+<li><p>
+Terminal Type
+</p>
+
+<p>
+终端可以显示一个或者多个 <code>Emacs</code> frame的设备.
+</p></li>
+
+<li><p>
+Window Configuration Type
+</p>
+
+<p>
+储存一个frame里面所有窗口的位置大小信息和内容.
+</p></li>
+
+<li><p>
+Frame Configuration Type
+</p>
+
+<p>
+储存所有frame里面所有窗口的位置大小信息和内容.
+</p></li>
+
+<li><p>
+Process Type
+</p>
+
+<p>
+进程是由 <code>Emacs</code> 进程创建的子进程(<code>subprocesses</code>).
+</p>
+
+<p>
+子进程接受文本输入并且返回文本输出给 <code>Emacs</code> 用于以后的操作.
+</p>
+
+<p>
+<code>Emacs</code> 也可以给子进程发送信息(signal).
+</p></li>
+
+<li><p>
+Stream Type
+</p>
+
+<p>
+流对象可以用于当作字符的源(source)或者水槽(sink),给输入提供字符或者接收它们作为输出.
+</p>
+
+<p>
+不同类型的数据可以以这种方式使用,marker,缓冲区,字符和函数.
+</p>
+
+<p>
+通常来说,输入流从键盘/缓冲区/文件获取字符,输出流发送字符给缓冲区/文件.
+</p></li>
+
+<li><p>
+Font Type
+</p>
+
+<p>
+指定如何显示图形终端上的文本. <code>Emacs</code> 字体由3个种对象组成: 字体对象(font object),字体规格(font spec)和字体实体(font entities).
+</p></li>
+</ul></li>
+</ul>
+
+<p>
+可以通过 <code>type-of</code> 来获取对象的类型.对于特定类型判断可以用 <code>M-: (info "(elisp) Type Predicates")</code>.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgd8f29a4" class="outline-4">
+<h4 id="orgd8f29a4">环状对象 (Circular Objects)</h4>
+<div class="outline-text-4" id="text-orgd8f29a4">
+<p>
+环状对象就是内部循环引用的数据结构.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">#N= &#34920;&#31034;&#35201;&#33719;&#21462;&#21518;&#38754;&#23545;&#35937;&#30340;&#31532;N&#20010;&#24341;&#29992;, #2# &#34920;&#31034;&#20351;&#29992;&#21069;&#38754;&#33719;&#21462;&#24341;&#29992;.</span>
+(#2=(a b) b #2#)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org14086de" class="outline-3">
+<h3 id="org14086de">函数 (Functions)</h3>
+<div class="outline-text-3" id="text-org14086de">
+</div>
+<div id="outline-container-org1df7848" class="outline-4">
+<h4 id="org1df7848">Advising Functions, Emacs 的 Advising 系统用法总结</h4>
+<div class="outline-text-4" id="text-org1df7848">
 <p>
 P.S: 之前一直误会了add-function的用法,直到认真地读了一下<a href="https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html">文档</a>.
 </p>
@@ -759,17 +1263,411 @@ advising已经存在的函数,就是组合函数,想想钩子(hooks)
 advising函数的参数跟advised变量的持有函数要求的参数一样就可以.
 </p></li>
 </ul></li>
-</ul></li>
 </ul>
+</div>
+</div>
+</div>
 
+
+<div id="outline-container-org2a1317c" class="outline-3">
+<h3 id="org2a1317c">字节编码 (Byte Compilation)</h3>
+<div class="outline-text-3" id="text-org2a1317c">
+<p>
+<code>Emacs</code> 拥有两个解析器和一个编译器,编译器可以把 <code>Emacs Lisp</code> 代码编译成字节码(byte-code),
+</p>
+
+<p>
+然后由 <code>Emacs</code> 的字节解析器(byte-code interpreter)运行.字节码解析器和平常的 <code>Emacs Lisp</code> 解析器不是同一个解析器.
+</p>
+
+<p>
+由于字节码不是由真正的硬件运算,所以不可能像真正的字节码一样快,正是因为这样,字节码可以在无需重新编译的情况下在转移于不同机器之间.
+</p>
+
+<p>
+任何版本的 <code>Emacs</code> 可以运行旧版本 <code>Emacs</code> 产生的字节码,但是反过来不行.
+</p>
+
+<p>
+可以通过设定文件变量(file-local variable)来让阻止 <code>Lisp</code> 文件编译.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">-*-no-byte-compile: t; -*-</span>
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org996a610" class="outline-4">
+<h4 id="org996a610">编译字节函数 (Byte-Compilation Functions)</h4>
+<div class="outline-text-4" id="text-org996a610">
+<p>
+可以针对函数(byte-compile-function),文件(byte-compile-file)和目录(byte-compile-file)3个等级进行编译.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org547c01c" class="outline-4">
+<h4 id="org547c01c">文档字符串和编译 (Documentation Strings and Compilation)</h4>
+<div class="outline-text-4" id="text-org547c01c">
+<p>
+加载编译后的文件是不会把函数和变量的文档加载进内存的,目的是为节省内存以及加快加载速度,只有在有需要的时候才会加载.
+</p>
+
+<p>
+这叫做动态加载(dynamical loading)/惰性加载(lazy loading),不过有一个坏处,如果编译文件被删除/移动/修改(比如重新编译)了就不能访问之前加载函数/变量的文档了.
+</p>
+
+<p>
+有两种方法可以解决,一是编译时候把 <code>byte-compile-dynamic-docstrings</code> 变量设置为 <code>nil</code>,二是重新编译文件.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc93cdf9" class="outline-4">
+<h4 id="orgc93cdf9">动态加载个别函数 (Dynamic Loading of Individual Functions)</h4>
+<div class="outline-text-4" id="text-orgc93cdf9">
+<p>
+其实函数也可以动态加载的,加载文件的时候会给函数的定义留下一个 <code>place-holder</code>,这个 <code>place-holder</code> 引用定义它的(编译)文件,只有在第一次调用的时候才读取函数的定义并且替换掉 <code>place-holder</code>.
+</p>
+
+<p>
+它的优缺点和上面数的动态加载文档一样,解决方法也很相似,一是编译时候设定 <code>byte-compile-dynamic</code> 为 <code>nil</code>,而是重新编译.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb0ccb90" class="outline-4">
+<h4 id="orgb0ccb90">编译时运行 (Evaluation During Compilation)</h4>
+<div class="outline-text-4" id="text-orgb0ccb90">
+<p>
+要清楚编译时和运行时是不同的两个阶段, <code>eval-and-compile</code> 可以让 <code>body</code> 在运行或者编译时候运行, <code>eval-when-compile</code> 则是在编译时候而不是加载时候运行 <code>body</code>,注意它们都不是用于产生字节码的.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org75d16b6" class="outline-4">
+<h4 id="org75d16b6">编译器错误 (Compiler Errors)</h4>
+<div class="outline-text-4" id="text-org75d16b6">
+<p>
+编译时候产生的错误和警告信息会输出到 <code>*Compile-Log*</code> 缓冲区上面,这些信息包括文件名字和问题发生位置的行数.
+</p>
+
+<p>
+当引发语法错误,字节编译器可能会不知道错误的实际位置,这个时候可以到 <code>" *Compiler Input*"</code> 缓冲区查看(注意有个空格).
+</p>
+
+<p>
+这个缓冲区包含编译后的程序并且指出字节编译器能够读取到多远,问题可能就在附近.
+</p>
+
+<p>
+一个常见的警告类型是使用的函数和变量没有定义,这些警告会报告文件最后的行号,不是使用的函数或者变量丢失的位置,只能手动搜索文档.
+</p>
+
+<p>
+如果要消除这些警告,有以下手段:
+</p>
+
+<ol class="org-ol">
+<li>通过 <code>fboundp/boundp</code> 判断 <code>函数/变量</code> 确实定义后才使用;</li>
+
+<li>在定义面可以通过 <code>declare-function声明函数/defvar定义没有初始值的变量</code> 告诉字节编译器它们已经定义;</li>
+
+<li>把不想提示错误和警告表达式放到 <code>with-no-warnings</code> 里面;</li>
+
+<li>通过设置 <code>byte-compile-warnings</code> 做更精确的控制.</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org44bc6b8" class="outline-4">
+<h4 id="org44bc6b8">字节码函数对象 (Byte-Code Function Objects)</h4>
+<div class="outline-text-4" id="text-org44bc6b8">
+<p>
+编译器函数后会产生一个 <code>byte-code function object</code>,看起来就像一个以 <code>#[</code> 开头的 <code>vector</code>,只要有4个元素,没有最大个数,
+</p>
+
+<p>
+只有前面6个是有正常作用的:
+</p>
 
 <ul class="org-ul">
 <li><p>
-Emacs控制结构里面的 <code>Nonlocal Exits</code>
+ARGDESC
 </p>
 
+<p>
+参数的描述符(descriptor),可以是一个参数列表(argument list)或者必要一个表示参数个数的整数.
+</p>
+
+<p>
+后者中描述器的值在0到6位中指定参数的最小个数,在8到14位指定函数的最大个数,如果参数中有 <code>&amp;rest</code> ,那么就会设定第7位.
+</p>
+
+<p>
+如果 <code>ARGDESC</code> 是一个列表,那么在执行字节码之前动态绑定参数;如果是整数,在执行直接码之前,参数就会被压到字节码解析器的 <code>stack</code> 中.
+</p></li>
+
+<li><p>
+BYTE-CODE
+</p>
+
+<p>
+包含字节码指令(byte-code instructions)的字符串.
+</p></li>
+
+<li><p>
+CONSTANTS
+</p>
+
+<p>
+字节码引用的对象的 <code>Vector</code>,包含用于函数和变量对应的 <code>symbols</code>.
+</p></li>
+
+<li><p>
+STACKSIZE
+</p>
+
+<p>
+函数需要的最大 <code>stack</code> 大小.
+</p></li>
+
+<li><p>
+DOCSTRING
+</p>
+
+<p>
+函数的文档字符串(如果有的话),否则为空.如果有文档字符串,那么它可以是一个数字或者列表.
+</p>
+
+<p>
+可以通过 <code>documentation</code> 函数获取真正的字符串.
+</p></li>
+
+<li><p>
+INTERACTIVE
+</p>
+
+<p>
+交互配置(interactive spec)(如果有的话).它可以是一个字符串或者一个 <code>Lisp</code> 表达式.
+</p></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">backward-sexp &#30340;&#23383;&#33410;&#30721;</span>
+
+#[256                                   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">ARGDESC</span>
+  <span style="color: #CC9393;">"\211\204^G^@\300\262^A\301^A[!\207"</span>  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">BYTE-CODE</span>
+  [1 forward-sexp]                      <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">CONSTANTS</span>
+  3                                     <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">STACKSIZE</span>
+  1793299                               <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">DOCSTRING</span>
+  <span style="color: #CC9393;">"^p"</span>]                                 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">INTERACTIVE</span>
+</pre>
+</div>
+
+<p>
+可以通过 <code>make-byte-code</code> 创建一个字节码对象,不过我们不应该手动编写字节码,因为很容易会不一致而导致程序崩溃.
+</p>
+
+<p>
+不过总有人想走不同的路,这里有一篇很不错的<a href="https://nullprogram.com/blog/2014/01/04/">文章</a>教你手写字节码.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc1e9ec5" class="outline-4">
+<h4 id="orgc1e9ec5">反汇编字节码(Disassembled Byte-Code)</h4>
+<div class="outline-text-4" id="text-orgc1e9ec5">
+<p>
+字节码编译器是一个简单的 <code>stack machine</code>.它是这么工作的:
+</p>
+
+<ol class="org-ol">
+<li>把值/引用压 <code>stack</code> 中;</li>
+
+<li>当需要使用这些值计算的时候弹出(pop)它们/当调用函数计算,把计算结果压进 <code>stack</code> 中.</li>
+
+<li>当函数返回的时候弹出 <code>stack</code> 里面的一个值并且把它作为函数的返回值.</li>
+</ol>
+
+<p>
+<code>Stack machine</code> 把值压进(push) <code>stack</code> 中,在需要使用这些值计算的时候把它们弹出(pop),把计算后的返回值压进 <code>stack</code> 中.
+</p>
+
+<p>
+文档同过例子很好地告诉你怎么看汇编了,可以直接看 <code>M-: (info "(elisp) Disassembly")</code>.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org0e1dba3" class="outline-3">
+<h3 id="org0e1dba3">控制结构 (Control Structures)</h3>
+<div class="outline-text-3" id="text-org0e1dba3">
+</div>
+<div id="outline-container-org5912b89" class="outline-4">
+<h4 id="org5912b89">按序计算 (Sequencing)</h4>
+<div class="outline-text-4" id="text-org5912b89">
+<p>
+按照顺序计算,基本所有 <code>Lisp</code> 方言差不多,和 <code>Racket</code> 对比的话,
+</p>
+
+<p>
+<code>progn</code> 相当于 <code>Racket</code> 的 <code>begin</code>, <code>prog1</code> 相当于 <code>begin0</code>, <code>prog2</code> 是 <code>prog1</code> 的变种.
+</p>
+
+<p>
+三者都是按照顺序计算表达式,差别在于返回值不一样, <code>progn</code> 返回最后一个表达式的值, <code>prog1</code> 返回第一个表达式的值, <code>prog2</code> 返回第二个表达式的值.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org00b0a7e" class="outline-4">
+<h4 id="org00b0a7e">条件判断 (Conditionals)</h4>
+<div class="outline-text-4" id="text-org00b0a7e">
+<p>
+做条件判断的就是这4个 <code>if, when, unless, cond</code>.
+</p>
+
+<p>
+<code>Emacs Lisp</code> 和很多元编程语言(meta programming language)一样,也有 <code>Pattern Matching</code>,也就是设计模式里面那别扭的访问者模式(visitor pattern).
+</p>
+
+<p>
+具体不写了,看文档 <code>M-: (info "(elisp) Pattern matching case statement")</code>,如果不懂 <code>Pattern Matching</code> 的概念可以看关于这一块的 <code>Racket Guide</code> 文档.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org85af48e" class="outline-4">
+<h4 id="org85af48e">混合条件 (Constructs for Combining Conditions)</h4>
+<div class="outline-text-4" id="text-org85af48e">
+<p>
+<code>and, or, not</code> 逻辑运算三兄弟就不说了.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7c3a3a5" class="outline-4">
+<h4 id="org7c3a3a5">迭代器 (Iteration)</h4>
+<div class="outline-text-4" id="text-org7c3a3a5">
+<p>
+<code>Emacs Lisp</code> 中迭代的方式有 <code>while</code>, <code>dolist</code> 和 <code>dotimes</code>.用法很简单,查文档就可以了.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4c48e1d" class="outline-4">
+<h4 id="org4c48e1d">生成器 (Generators)</h4>
+<div class="outline-text-4" id="text-org4c48e1d">
+<p>
+迭代器的就是一个产生潜能无限(potentially-infinite)的数值流的函数,每次产生一个值然后挂起自己,等待调用者(caller)请求下一个值.
+</p>
+
+<p>
+如果你接触过其它编程语言的迭代器,比如 <code>Python</code>, <code>JavaScript</code>, <code>Racket</code> 等等,那么 <code>Emacs Lisp</code> 的迭代器对于你而言会很熟悉.
+</p>
+
+<p>
+<b>要在 <code>Emacs Lisp</code> 使用迭代器就需要使用 <code>generator</code> 库并且开启 <code>lexical-binding</code>.</b>
+</p>
+
+<p>
+拿 <code>Python</code> 的迭代器来做类比,说真的我很惊讶它们的迭代器是如此相似,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen</span><span style="color: #DCDCCC;">(</span>x<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> x &gt; 0:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"%s was passed\n"</span> % <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">yield</span> x<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">x</span> = x - 1
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> -1          <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#24341;&#21457; StopIteration &#24322;&#24120;&#26102;&#20505;&#30340;&#36820;&#22238;&#20540;</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">client</span><span style="color: #DCDCCC;">(</span>n<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">g1</span> = gen<span style="color: #DCDCCC;">(</span>n<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   g1.send<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">None</span><span style="color: #DCDCCC;">)</span>      <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#31561;&#20110; next(g1)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> 1:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">try</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = g1.send<span style="color: #DCDCCC;">(</span>100<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"The return value %s from generator"</span> % res<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">except</span> <span style="color: #7CB8BB;">StopIteration</span> <span style="color: #F0DFAF; font-weight: bold;">as</span> e:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> e.value
+
+
+client<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DFAF8F;">g1</span> = gen<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">g1.send(None)</span>
+g1.close<span style="color: #DCDCCC;">()</span>
+
+<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> gen<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"value is %s"</span> i<span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">subgen_wrapper</span><span style="color: #DCDCCC;">(</span>n<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> gen<span style="color: #DCDCCC;">(</span>n<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"result is %s"</span> % res<span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> subgen_wrapper<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">require</span> '<span style="color: #BFEBBF;">generator</span>)
+(<span style="color: #F0DFAF; font-weight: bold;">setq</span> lexical-binding t)
+
+(iter-defun gen (x)
+  (<span style="color: #F0DFAF; font-weight: bold;">while</span> (&gt; x 0)
+    (message (format <span style="color: #CC9393;">"return yes %s\n"</span> (iter-yield x)))
+    (<span style="color: #F0DFAF; font-weight: bold;">setq</span> x (1- x)))
+  -1)
+
+(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">client</span> (n)
+  (<span style="color: #F0DFAF; font-weight: bold;">let</span> ((g1 (gen n)))
+    (<span style="color: #F0DFAF; font-weight: bold;">condition-case</span> e
+        (<span style="color: #F0DFAF; font-weight: bold;">while</span> t
+          (message (format <span style="color: #CC9393;">"the return value %s from generator\n"</span> (iter-next g1 100))))
+      (iter-end-of-sequence
+       (print (cdr e))))))
+
+(client 5)
+
+(<span style="color: #F0DFAF; font-weight: bold;">setq</span> g1 (gen 5))
+(iter-close g1)
+
+(<span style="color: #F0DFAF; font-weight: bold;">setq</span> res (iter-do (i (gen 5))
+            (message (format <span style="color: #CC9393;">"value is %s\n"</span> i))))  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">res &#20026; -1</span>
+
+(iter-defun subgen-wrapper (n)
+  (message (format <span style="color: #CC9393;">"result is %s"</span> (iter-yield-from (gen n)))))
+
+(<span style="color: #F0DFAF; font-weight: bold;">setq</span> res (iter-do (i (subgen-wrapper 5))
+            (message (format <span style="color: #CC9393;">"value is %s\n"</span> i))))
+</pre>
+</div>
+
+<p>
+最后要注意 <code>iter-yield</code>, <code>iter-yield-from</code> 只能出现在 <code>iter-defun</code> 之中, <code>unwind-protect</code> 之外.
+</p>
+
+<p>
+除了上面例子中的 <code>forms</code>,还有一个 <code>iter-lambda</code> 是 <code>iter-defun</code> 的匿名版.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge1f8520" class="outline-4">
+<h4 id="orge1f8520">非本地退出 (Nonlocal Exits)</h4>
+<div class="outline-text-4" id="text-orge1f8520">
 <pre class="example">
-     写于 2018/9/4
+ 写于 2018/9/4
 </pre>
 
 <p>
@@ -813,12 +1711,12 @@ Emacs控制结构里面的 <code>Nonlocal Exits</code>
     <span style="color: #F0DFAF; font-weight: bold;">goto</span> <span style="color: #BFEBBF;">back</span>;
 
     <span style="color: #F0DFAF; font-weight: bold;">while</span>(1){
-        <span style="color: #5F7F5F;">//</span><span style="color: #7F9F7F;">do something</span>
+    <span style="color: #5F7F5F;">//</span><span style="color: #7F9F7F;">do something</span>
         printf(<span style="color: #CC9393;">"%d"</span>, 1);
     }
 
     <span style="color: #BFEBBF;">back</span>: printf(<span style="color: #CC9393;">"You are going to exit now"</span>);
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> 0;
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> 0;
 }
 </pre>
 </div>
@@ -826,11 +1724,11 @@ Emacs控制结构里面的 <code>Nonlocal Exits</code>
 <div class="org-src-container">
 <pre class="src src-elisp">(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">catch-throw-example</span> ()
   (<span style="color: #F0DFAF; font-weight: bold;">catch</span> '<span style="color: #BFEBBF;">back</span>
-    (<span style="color: #F0DFAF; font-weight: bold;">progn</span>
-      (print <span style="color: #CC9393;">"You are going to exit now"</span>)
-      (<span style="color: #F0DFAF; font-weight: bold;">throw</span> '<span style="color: #BFEBBF;">back</span> 0))
-    (<span style="color: #F0DFAF; font-weight: bold;">while</span> t
-      (print 1))))
+     (<span style="color: #F0DFAF; font-weight: bold;">progn</span>
+       (print <span style="color: #CC9393;">"You are going to exit now"</span>)
+         (<span style="color: #F0DFAF; font-weight: bold;">throw</span> '<span style="color: #BFEBBF;">back</span> 0))
+       (<span style="color: #F0DFAF; font-weight: bold;">while</span> t
+         (print 1))))
 </pre>
 </div>
 
@@ -904,11 +1802,11 @@ Emacs控制结构里面的 <code>Nonlocal Exits</code>
 
 <pre class="example">
 
-       这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
+   这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
 
-       当然如果 f.open() 打开失败还是不会执行以后的语句.权限不足,文件所在的目录不存在,就会发生报错的情况.
+   当然如果 f.open() 打开失败还是不会执行以后的语句.权限不足,文件所在的目录不存在,就会发生报错的情况.
 
-       使用 Emacs Lisp 的 find-file-noselect 是不会发生这种事情,现在假定 Python 不会发生这些情况.
+   使用 Emacs Lisp 的 find-file-noselect 是不会发生这种事情,现在假定 Python 不会发生这些情况.
 
 </pre>
 
@@ -943,8 +1841,231 @@ Emacs控制结构里面的 <code>Nonlocal Exits</code>
 <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   f.close<span style="color: #DCDCCC;">()</span>
 </pre>
 </div></li>
-</ul></li>
 </ul>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org413727a" class="outline-3">
+<h3 id="org413727a">变量 (Variables)</h3>
+<div class="outline-text-3" id="text-org413727a">
+</div>
+<div id="outline-container-orgebe6879" class="outline-4">
+<h4 id="orgebe6879">变量作用域 (Variable Scoping)</h4>
+</div>
+
+<div id="outline-container-orgdf0c4d2" class="outline-4">
+<h4 id="orgdf0c4d2">全局变量 (Global Variables)</h4>
+<div class="outline-text-4" id="text-orgdf0c4d2">
+<p>
+影响整个 <code>Lisp</code> 系统的变量,一个时间点只能有一个值,全局变量的值会一直保持直到重新定义或者改变它们.用 <code>setq</code> 定义或者改变一个全局变量.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org66ac1f6" class="outline-4">
+<h4 id="org66ac1f6">永远不会改变的变量 (Variables that Never Change)</h4>
+<div class="outline-text-4" id="text-org66ac1f6">
+<p>
+包括 <code>nit, t</code> 和关键字(keyword),也就是 <code>:</code> 开头的 <code>symbol</code>,不可以重新绑定,也不可以改变它们的值,
+</p>
+
+<p>
+它们是真正意义上的常量,一旦试图改变它们的值就会引发 <code>setting-constant</code> 的错误.
+</p>
+
+<p>
+不过 <code>Emacs Lisp</code> 所指的常量是由 <code>defconst</code> 定义的,它们的值是可以改变的,它们的"常量"的意思是告诉人们不应该修改它们的值,
+</p>
+
+<p>
+而不是不能修改.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org29f4bf1" class="outline-4">
+<h4 id="org29f4bf1">Local Variables</h4>
+<div class="outline-text-4" id="text-org29f4bf1">
+<p>
+跟全局变量相对,局部变量的值只影响 <code>Lisp</code> 程序的一部分,比如 <code>let绑定的变量</code> 和 <code>函数的参数</code>.可以同时存在同名的全局和局部变量,
+</p>
+
+<p>
+最内层的变量会遮掩(shadows)外层变量,也就是局部变量遮掩全局变量.实际上每个编程语言读需要一个作用域规则(scoping rule)来判断发生作用的局部绑定.
+</p>
+
+<p>
+<code>Emacs Lisp</code> 默认是 <code>dynamic scoping</code>: 程序当前执行点上的绑定就是为仍然存在的变量最新创建的绑定. <code>Emacs Lisp</code> 还可以启用 <code>lexical scoping</code>.
+</p>
+
+<p>
+创建局部变量的方法有 <code>let, let*, 函数调用, 宏调用, condition-case异常处理</code>.局部变量还有 <code>file-local</code>, <code>buffer-local</code>, <code>diretory-local</code> 和 <code>terminal-local</code>.
+</p>
+
+<p>
+<code>max-specpdl-size</code> 定义了局部变量的和 <code>unwind-protect</code> 清理(cleanup)的总数量,默认值是1300,如果突破这个数量就会引发一个错误.
+</p>
+
+<p>
+进入 <code>Lisp debugger</code> 的时候会增加这个值.这个值的作用是避免不良定义的函数无限递归.解决这个问题还可以通过设置 <code>max-lisp-eval-depth</code> 限制递归层数.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgad44f65" class="outline-4">
+<h4 id="orgad44f65">当变量为Void (When a Variable is Void)</h4>
+<div class="outline-text-4" id="text-orgad44f65">
+<p>
+未赋值的变量和赋值为 <code>nil</code> 的变量是不一样的,前者是未绑定的,所以前者情况中的变量为 <code>void</code>.
+</p>
+
+<p>
+可以通过 <code>makeunbound</code> 解绑当前变量的绑定; <code>boundp</code> 判断当前变量是否绑定.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge566f70" class="outline-4">
+<h4 id="orge566f70">定义全局变量 (Defining Global Variables)</h4>
+<div class="outline-text-4" id="text-orge566f70">
+<p>
+还可以通过 <code>defvar, defconst 和 defcustom</code> 定义全局变量.
+</p>
+
+<p>
+一个变量的定义有3个目的:
+</p>
+
+<ol class="org-ol">
+<li>告知读代码的人们变量的意图.</li>
+
+<li>告知 <code>Lisp</code> 系统,并且可选的给变量提供初始值和文档字符串.</li>
+
+<li>给类似 <code>etags</code> 这样的编程工具提供信息,允许它们找出变量定义的位置.</li>
+</ol>
+
+<p>
+<code>defvar</code> 只有在变量为 <code>void</code> 的情况下初始变量,而 <code>defconst</code> 是无条件初始变量; <code>defcustom</code> 则是使用了 <code>defvar</code> 做为子程序,也是在变量为 <code>void</code> 才初始化变量.
+</p>
+
+<p>
+然而还是有些特殊情况,
+</p>
+
+<ul class="org-ul">
+<li><code>defvar</code>
+
+<ol class="org-ol">
+<li>如果 <code>symbol</code> 在当前缓冲区有一个 <code>buffer-local</code> 绑定,那么 <code>defvar</code> 设定的就是全局变量/动态绑定.</li>
+
+<li>如果 <code>symbol</code> 早就被词法绑定(由=let=或者函数参数获得),那么 <code>defvar</code> 就设定变量的动态值.</li>
+
+<li>如果在 <code>Emacs Lisp mode</code> 下通过 <code>C-M-x</code> (<code>eval-defun</code>) 运算 <code>defvar</code> 表达式,它会无条件设置变量,不管变量是否为 <code>void</code>.</li>
+</ol></li>
+
+<li><code>defconst</code>
+
+<ol class="org-ol">
+<li>如果 <code>symbol</code> 在当前缓冲区有一个 <code>buffer-local</code> 绑定,那么 <code>defconst</code> 设定的就是全局变量/动态绑定.</li>
+
+<li>如果 <code>symbol</code> 早就被词法绑定(由=let=或者函数参数获得),那么 <code>defconst</code> 设定的就是局部变量的值.</li>
+</ol></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">let</span> ((d 0))
+  (<span style="color: #F0DFAF; font-weight: bold;">defconst</span> <span style="color: #DFAF8F;">d</span> 4)
+  d) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt; 4</span>
+
+d    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt; void,&#25253;&#38169;</span>
+
+(<span style="color: #F0DFAF; font-weight: bold;">let</span> ((e 0))
+  (<span style="color: #F0DFAF; font-weight: bold;">defvar</span> <span style="color: #DFAF8F;">e</span> 5)
+  e) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt; 0</span>
+
+e    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt; 5</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org31e979e" class="outline-4">
+<h4 id="org31e979e">Tips for Defining Variables Robustly</h4>
+<div class="outline-text-4" id="text-org31e979e">
+<p>
+一些定义变量的规范和正确做法.规范自己看,正确做法现在总结.
+</p>
+
+<p>
+当定义和初始话一个变量来保存复杂的值,最好的做法就是把整个值的计算放到 <code>defvar</code> 里面.
+</p>
+
+<p>
+这样有三个好处和一个坏处:
+</p>
+
+<ul class="org-ul">
+<li>好处
+
+<ol class="org-ol">
+<li><p>
+如果加载文件的时候被用户中断,变量只有未初始化和已经正确初始化两种情况.
+</p>
+
+<p>
+如果没有加载,重新加载会正确初始化它.
+</p></li>
+
+<li>一旦变量已经初始化,重新加载文件是不会修改变量.</li>
+
+<li>可以通过 <code>eval-defun</code> (默认 <code>C-M-x</code>)完全重新初始化变量.</li>
+</ol></li>
+
+<li><p>
+坏处
+</p>
+
+<p>
+<code>defvar</code> 的设定文档字符串的行和命名变量的行离得远.(这也是坏处吗?)可以初始化变量为 <code>nil</code>,然后再设定值,
+</p>
+
+<p>
+不过如果要重新初始化变量就得运行 <code>eval-defun</code> 两次.
+</p></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orge412bd1" class="outline-4">
+<h4 id="orge412bd1">访问变量的值 (Accessing Variable Values)</h4>
+<div class="outline-text-4" id="text-orge412bd1">
+<p>
+通常引用一个变量就是写下用来命名变量的 <code>symbol</code>.
+</p>
+
+<p>
+如果想要引用一个只能在运行时才能知道 <code>symbol</code> 或者名字的变量,也就是不能在代码中确定它的名字.
+</p>
+
+<p>
+可以使用 <code>symbol-value</code> 来获取 <code>symbol</code> 当前绑定的值.
+</p>
+
+<p>
+如果该变量没有局部绑定,那么就是全局的值.如果变量为 <code>void</code>,就会报错.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd7d9a49" class="outline-4">
+<h4 id="orgd7d9a49">设定变量的值 (Setting Variable Values)</h4>
+</div>
+</div>
+
+<div id="outline-container-org9759177" class="outline-3">
+<h3 id="org9759177">命令循环 (Command Loop)</h3>
 </div>
 </div>
 
@@ -1173,6 +2294,10 @@ Emacs的时候我还用了 <code>Evil</code> 模拟VIM的按键,不过那个时�
 写这些的时候我才理解为什么有人说Emacs是一种生活态度了.
 </p></li>
 </ul>
+
+<p>
+p
+</p>
 </div>
 </div>
 </div>

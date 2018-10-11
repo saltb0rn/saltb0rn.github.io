@@ -1,0 +1,357 @@
+#+title: React学习之旅
+#+date: 2018-10-10
+#+index: React学习之旅
+#+tags: React WEB-Frontend
+#+options: ^:nil toc:t
+#+begin_abstract
+因为各种原因我打算去做前端了,所以最近一直在学习,花了两到三天的事件调教出一份可以复用的 =Webpack= 配置(已经在 =GitHub= 上了),
+
+然后又花了两天来学习 =React= 的基本用法,接下来就是恶补 =CSS= 的东西了,不过在此之前我要先写一写学习 =React= 时候的笔记.
+
+这不是教程,只是笔记.官方文档已经很好了,想学的话自己看教程比较好.
+#+end_abstract
+
+** 什么是React
+
+=React= 是一个前端开发人员用来开发界面用的 =JavaScript= 库, =made in Facebook=,同类中比较有名的还有 =Angular= 和 =Vue=.
+
+我认识的一些前端开发人员有不少是用 =Vue= 的,通常 =React= 和 =Angular= 用得比较少. =Vue= 和 =Angular= 我都没用过,所以没有办法做对比:谁好.
+
+应用架构模式是 =MVC=,如果不了解 =MVC= 的话可以去看一下我学习设计模式时候写的 =MVC= 模式(注意它不是真的设计模式).
+
+如果用过一些后端的模板引擎,你会发现 =React= 的用法和之前用过的模板引擎很接近,对于前端开发人员甚至会有一种后者所没有的快感.
+
+和模板引擎一样, =React= 有自己的"模板语言",用了这种语言的代码文件叫做 =JSX= (=X= 在欧美有着牛掰的含意),一般环境下是不能够跑这种代码的,
+
+所以需要借助编译工具来编译成一般环境可以跑的 =JS= 代码,等一下会说.毕竟是语法糖,官方也给出如何在用于编写 =JS= 的环境下使用 =React=.
+
+*** 开发环境的要求
+
+当我从朋友身上了解了一些业内情况的时候得知, =React= 是需要一套特定的开发环境的,这让我担心这个特定的开发环境(某种IDE)需要在 =Windows= 下才能跑,而我用的是 =Linux=.
+
+然而当我配置完 =Webpack= 之后学习 =React=,"没有这种问题啊?"(看来国外挺喜欢 =Linux= 的嘛).其实可以直接通过浏览器去学习 =React= 的,不过源文件不好管理,所以还是要用自己配置的开发环境比较好.
+
+上面说了,编写 =JSX= 需要借助编译工具,我选的是 =Babel= (反正我也不清楚还有什么选择),大家应该知道浏览器还没跟上 =JavaScript= 的标准,所以如果想使用 =ES2015/ES6+= 的语法,
+
+除了编译成浏览器可以跑的代码外别无它法.其中, =Babel= 是可以编译 =JSX= 的.说个题外话, =Babel= 还有一个重要的作用,那就是做 =JavaScript= 的兼容工作,有了它你就不用担心这个问题了.
+
+我的开发环境是由 =Linux= + =Emacs= + =Node= + =Webpack=, =Emacs= 负责编辑代码和生成 =Webpack= 配置文件,其中配置文件就配置了 =Babel= 作为编译工具.
+
+有机会的话我会写一篇 =Webpack= 的教程(事实上我也不知道写不写,它迭代实在太快了,二手信息容易失效只能通过官方文档解决,而且官方文档真的很不错,大概没有写的必要,维护一份配置文档就好了).
+
+由于我也是刚接触前端不久,并且前端的开发工具十分多,没有办法给出一个比较好的搭配方案,这个根据自己的喜好来就可以了.下面不会再提到搭建环境的问题.
+
+** 怎么使用React
+
+官方文档给出了两个不同学习风格的文档,一个是 =概念 + 实践=, 一个是直接做一个小项目.我选了前者, =WHAT HOW WHY= 才是我学习的方式.
+
+学习之后的感受就是 [[https://reactjs.org/docs/thinking-in-react.html][Thinking In React]] 这篇实在太重要,通过一个简单的项目讲述了用 =React= 实现一个应用具体的思路.
+
+在读之前还是要求先掌握基本用法的.
+
+*** 元素 (element)
+
+#+BEGIN_SRC javascript
+var name = "world";
+var element = <h1>Hello, {name}</h1>;
+#+END_SRC
+
+={}= 里面可以使用各种 =JavaScript= 表达式.
+
+*** 渲染元素到DOM上
+
+#+BEGIN_SRC javascript
+import React from 'react';
+import ReactDOM from 'react-dom';
+ReactDOM.render(element, document.querySelector('#root'));
+#+END_SRC
+
+意思是在 =id= 为 =root= 的元素的添加元素 =element=.如果再次在 =root= 渲染其它的元素就会覆盖先前渲染的 =element=.
+
+=React DOM= 使用的属性的名字需要遵守驼峰命名法(camelCase)规范,而不是单纯的 =HTML= 属性名字.
+
+比如 =class= 变成 =className=, =tabindex= 变成 =tabIndex=.
+
+*** 组件(Components)
+
+有两种类型的组件, =Function= 类型和 =Class= 类型,分别是:
+
+#+BEGIN_SRC javascript
+function Kompoment(props) {
+    return <h1>Hello, {props.name}</h1>;
+}
+#+END_SRC
+
+#+BEGIN_SRC javascript
+class Komponent extends React.Component {
+    render() {
+        return <h1>Hello, {this.props.name}</h1>;
+    }
+}
+#+END_SRC
+
+要注意的是组件的名字首个字母要大写,否则报错.
+
+两者的渲染出来都是一样的,不同之处在于类形式的组件可以有更多的特性(features)可以使用.
+
+=props= 表示组件的任意输入,比如在下面的例子中, =name= 就是 =props.name=, =props= 是只读的.
+
+*** 渲染组件到DOM上
+
+#+BEGIN_SRC javascript
+ReactDOM.render(<Komponent name="world" />, document.querySelector('#root'));
+#+END_SRC
+
+组件和元素可以随意相互嵌套或者随意组合.
+
+*** 状态 (state)
+
+组件有一个状态属性(state)可以用来保存状态信息,不过只能在类形式的组件中使用.
+
+#+BEGIN_SRC javascript
+class Komponent extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {times: 0};
+    }
+
+    render() {
+        return <h1>How many times: {this.state.times}</h1>;
+    }
+}
+#+END_SRC
+
+其中 =state= 属性只能在类的 =constructor= 里面初始化,并且不能在这以外的地方直接通过 =this.state = null;= 这种方式更新属性.
+
+只能在组件渲染后通过调用组件类的 =setState= 方法更新状态,并且一旦更新状态,组件就会重新渲染.
+
+更行状态时候要注意,由于 =state= 属性和 =props= 可能会被异步更新,所以 *如果依赖它们的值来更新状态*,请这样做,
+
+给 =setState= 传入函数做为参数,而不是直接传入对象.
+
+#+BEGIN_SRC javascript
+// Correct
+this.setState((state, props) => ({
+  counter: state.counter + props.increment
+}));
+#+END_SRC
+
+#+BEGIN_SRC javascript
+this.setState({
+  counter: this.state.counter + this.props.increment,
+});
+#+END_SRC
+
+*** 自顶向下的数据流 (Top-Down/Unidirectional Data Flow)
+
+父节点和子节点都不知道某个确切的组件是有状态还是无状态的,并且它们也不应该担心它是函数形式还是类形式的组件.
+
+可以根据自己的需求让高层元素的状态影响低层元素的状态,这叫做 =top-down data flow=;当然可以让它们各自状态独立.
+
+*** 生命周期 (lifecycle)
+
+生命周期就是组件从渲染至 =DOM= (mounting) 到从 =DOM= 上移除 (unmounting) 的整个过程,渲染后中间可能还有更新(updating).
+
+我们要了解的是这中间有什么事情发生,什么时候调用哪个方法,方法的调用边界在哪里.具体可以看[[http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/][这图]].理解这张图就理解为什么不能在 =componentDidMount= 同步调用 =setState=.
+
+*** 事件处理
+
+=React= 也可以像 =HTML= 那样处理事件,不同之处在于 =React= 的事件名字遵守 =camelCase= 规范,传入事件处理器(event handler)的时候只能是函数,不能是字符串.
+
+#+BEGIN_SRC html
+<a href="http://www.google.com" onclick="console.log('The link was clicked.'); return false;">
+   Click me
+</a>
+#+END_SRC
+
+#+BEGIN_SRC javascript
+function ActionLink() {
+  function handleClick(e) {
+    e.preventDefault();
+    console.log('The link was clicked.');
+  }
+
+  return (
+    <a href="#" onClick={handleClick}>
+      Click me
+    </a>
+  );
+}
+
+ReactDOM.render(<ActionLink />, document.querySelector('#root'));
+#+END_SRC
+
+上面例子中的 =e= 是 =React= 的 =synthetic events=,它们是包装了浏览器的原生事件,和浏览器的原生事件有相同的接口,并且已经做好了跨浏览器的工作,具体参考可以看[[https://reactjs.org/docs/events.html][这里]].
+
+关于事件监听器(event listener),一般不应该在渲染到 =DOM= 之后调用 =addEventListener= 来添加事件监听器,应该在渲染的初始阶段添加监听器.
+
+还有注意的是,如果定义的事件需要访问组件本身,比如点击获取按钮本身,那么处理点击的方法要把 =this= 绑定事件里面,因为类不会自动处理这件事情.
+
+方法一:
+
+#+BEGIN_SRC javascript
+class Button extends React.Component {
+  constructor(props) {
+    super(props);
+    // This binding is necessary to make `this` work in the callback
+    this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    console.log('this is:', this);
+  }
+
+  render() {
+    // This syntax ensures `this` is bound within handleClick
+    return (
+      <button onClick={(e) => this.handleClick(e)}>
+        Click me
+      </button>
+    );
+  }
+}
+#+END_SRC
+
+方法二:
+
+#+BEGIN_SRC javascript
+class Button extends React.Component {
+  handleClick() {
+    console.log('this is:', this);
+  }
+
+  render() {
+    // This syntax ensures `this` is bound within handleClick
+    return (
+      <button onClick={(e) => this.handleClick(e)}>
+        Click me
+      </button>
+    );
+  }
+}
+#+END_SRC
+
+其实还有方法三,不过那是实验阶段的功能,就不写了.
+
+*** 根据条件渲染 (Conditional Rendering)
+
+可以配合 =JavaScript= 的条件语句根据情况进行渲染.
+
+*** 列表和键 (Lists and Keys)
+
+简单点说就是如何利用循环来渲染元素,文档给出的例子是用数组/列表的 =map= 方法生成 =<li>= 元素数组再渲染.
+
+注释就是我之前做的一些笔记,主要是关于 =keys= 的使用问题,就不重复了.
+
+#+BEGIN_SRC javascript
+function NumberList(props) {
+    // NOTE: If you dont assign a key to each item, there will be a warning.
+    // The keys help React identify which items have changed, are added or are removed.
+    // Keys should be given to the elements inside the array to give the elements a stable identity.
+    const listItems = props.numbers.map(
+        // There is an index of every item, but we should not use it as the key
+        // why not index: https://medium.com/@robinpokorny/index-as-a-key-is-an-anti-pattern-e0349aece318
+        // why keys are necessary: https://reactjs.org/docs/reconciliation.html#recursing-on-children
+        (number, index) => (
+            <div key={index}>
+              {number + 1}
+            </div>
+        )
+    );
+
+    return (
+        <div>{listItems}</div>
+    );
+}
+
+// Not every array should keep keys for elements, as the array which has only one list element.
+// If there are more than one list element, you should use keys.
+#+END_SRC
+
+*** 受控制组件 (Controlled Components)
+
+假设有一个用于提交名字的表单如下,
+
+#+BEGIN_SRC html
+<form>
+  <label>
+    Name:
+    <input type="text" name="name" />
+  </label>
+  <input type="submit" value="Submit" />
+</form>
+#+END_SRC
+
+现在想在提交的时候对它的提交(submission)进行处理,比如在 =React= 中可以这么做,
+
+#+BEGIN_SRC javascript
+/*
+HTML form, input, textarea and select elements work a little bit differently from
+other DOM elements in React, because form elements naturally keep some internal state.
+*/
+class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: ''};
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    alert('A name was submitted: ' + this.state.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          Name:
+          <input type="text" value={this.state.value} onChange={this.handleChange} />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+    );
+  }
+}
+#+END_SRC
+
+值受到 =React= 控制的 =form= 元素叫做 "controlled component".这可以用来处理表单验证.
+
+本身带 =value= 属性的元素有 =form=, =input=, =textare= 以及 =select=,可以用来实现成受控制组件,有一个需要注意的是,
+
+#+BEGIN_SRC javascript
+<input type="file" />
+#+END_SRC
+
+是不受控制组件(uncontrolled components),因为它的值只能被用户设定,不能通过编程控制,因为它的值是 =read-only= 的,想要对它的值进行处理,只能通过 =File API= 进行交互.
+
+受控制组件有一个缺点,就是把一份已经存在的(不是用 =React= 开发的)代码转换为 =React= 或者集成一个 =React= 应用和一个 =non-React= 的库,用受控制组件就会很烦人.这个时候可以用不受控制组件来替代.
+
+如果是利用受控制组件验参,可以看[[https://jaredpalmer.com/formik][这个]].
+
+*** 组合/包含其它元素的组件 (Composition vs Inheritance)
+
+关于如何利用 =props.children= 这个特别的属性实现可以包含其它元素/组件的组件.
+
+#+BEGIN_SRC javascript
+function Komponent(props) {
+    return (
+        <div className={props.class ? props.class : 'Default'}>{props.children}</div>
+    );
+}
+
+ReactDOM.render(
+    <Komponent class="MyClass"><p>This is assigned to props.children.</p></Komponent>,
+    document.querySelector('#root')
+);
+#+END_SRC
+
+*** Not Over Yet
+
+高级指南(Advanced Guides)部分我还没有读,之后一点一点地读完并且笔记.

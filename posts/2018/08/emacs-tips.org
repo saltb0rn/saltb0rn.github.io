@@ -3,6 +3,22 @@
 #+options: ^:nil toc:t
 #+index: Emacs Tips(持续更新)
 #+tags: Emacs
+
+#+macro: printed-representation 打印表示
+#+macro: read-syntax 读取语法
+#+macro: hash-notation 哈希标记
+#+macro: macro 宏
+#+macro: finalizer 清理器
+#+macro: buffer 缓冲区
+#+macro: marker marker
+#+macro: window 窗口
+#+macro: overlay overlay
+#+macro: frame frame
+#+macro: terminal 终端
+#+macro: process 进程
+#+macro: stream 流
+#+macro: font 字体
+
 #+begin_abstract
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
@@ -20,6 +36,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
    - 如何快速了解Emacs内置库和内置功能的用法
 
      很多人,包括我,都很好奇写Emacs Lisp的高人是如何知道那么多奇怪的功能,而且这些功能文档上又没提到.
+
      现在有答案了,以下提示可以帮助你快速浏览这些奇怪的功能.
 
      1. =C-h p= ,根据分类浏览,缺点里面会混杂一些非内置的库并且貌似不全
@@ -126,6 +143,12 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
         =C-x C-f= 输入 =/sudo::/path/to/file=, 这样打开 =/path/to/file= 的时候就会提示输入密码了
 
+   - =Emacs Lisp= 的交互式编程
+
+     和很多解析型语言一样, =Emacs Lisp= 也支持 =REPL=,不过这个功能藏得挺深得, =M-x ielm=.
+
+     =ielm= 全称 =Inferior Emacs Lisp Mode=. =Inferior Modes= 是个好东西.
+
 
 ** 使用配置的一些优化
 
@@ -182,242 +205,831 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 ** Emacs Lisp学习笔记
 
-   - Emacs的advising系统用法总结
+#+BEGIN_EXAMPLE
+这段话写于 2018/9/30
+#+END_EXAMPLE
 
-     P.S: 之前一直误会了add-function的用法,直到认真地读了一下[[https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html][文档]].
+我认为想要提高编写 =Emacs Lisp= 的能力就得通读一遍 =Reference= 文档,这可以让你跳出盲人摸象的困境.
 
-     - advising已经存在的函数,就是组合函数,想想钩子(hooks)
+事实上我很少在不写代码的情况下看 =Reference=,因为我看来 =Reference= 一般用于查阅 =API=,
 
-        =defadvice= 和 =advice-add=
+然而 =Emacs Lisp= 不像 =Racket= 那样有个友好而且涉及的点齐全到可以当作语言概览的 =Guide=.
 
-        比如,在display-buffer命令执行之后提示buffer的名字,用display-buffer做实验是因为一旦出错了minibuffer都用不了,反馈快速.
+除了 =Reference=, =Emacs Lisp= 没有别的东西可以当作语言的概览来给你入门.
 
-       - 老风格 =defadvice=
+既然没有 =Guide=,那么我就给自己写个 =Guide=.具体就是用自己的话把文档的重点记录下来.
 
-         #+begin_src elisp
-         (defadvice display-buffer (after after-display-buffer
-                                     (buffer-or-name &optional action frame)
-                                     activate)
+这不是教程,也不是文档的翻译,只是单纯是给我个人看的笔记,我只会对我不熟悉的地方做笔记,
+
+有兴趣的话可以读一读,但是开发参考和学习请以 =Reference= 为准.
+
+*** 数据类型 (Lisp Data Types)
+
+很难想像数据类型就是 =Emacs Lisp= 的核心部分,读了 =Reference= 文档的 =Lisp Data Type= 章节就会发现有多重要.
+
+=Emacs Lisp= 的数据类型分为两类, =Primitive types= (或者叫 =Programming Types=) 和 =Editing Types= .
+
+前者就是大部份 =Lisp= 实现都有的数据类型,后者是 =Emacs Lisp= 特有的数据类型,用于处理编辑器.
+
+**** 打印显示和读取语法
+
+跟其它 =Lisp= 方言一样 =Emacs Lisp= 的对象也是有{{{printed-representation}}}(printed representation)和{{{read-syntax}}}(read syntax)的概念.
+
+前者是 =Lisp printer= (=prin1= 函数)输出对象的格式,后者是 =Lisp reader= (=read= 函数)接受读取的对象的语法.
+
+每种类型的数据都有一种独一无二的{{{printed-representation}}},大部份对象类型有多于一种的{{{read-syntax}}}.
+
+大部份情况下对象的{{{printed-representation}}}和{{{read syntax}}}是一样的.
+
+有些对象是没有{{{read-syntax}}}的,因为在以常量的形式访问这些对象是不合理的.这些对象的{{{printed-representation}}}是以 =#<= 开头和 =>= 结尾,这种格式叫做{{{hash-notation}}}.
+
+其实根据文档可以发现,没有{{{read-syntax}}}的对象 *基本* 都是 =Editing Types= 对象.
+
+与其他语言不一样的地方在于,其它语言的表达式是文本,并且没有其它形式.而(大部份)的 =Lisp= 的表达式首先基本上上就是一个 =Lisp= 对象,其次是对象的{{{read-syntax}}},没有必要强调两者的不同,但是要记住这一点.
+
+交互式地运算一个表达式其实就是(1)读取表达式文本表示并且产生 =Lisp= 对象,(2)最后运算这个对象的一个过程.
+
+
+**** Emacs Lisp 数据类型概览
+
+有 =strike-through= 的数据类型都是很简单的或者话题太大只能以后单独总结,不多做笔记,并且一些有联系的类型,我会用缩进表示了它们的关系.
+
+- =Primitive types=
+
+  - +Integer Type+
+
+  - +Floating-Point Type+
+
+  - Character Type
+
+    ?c   => 99
+    ?\^c  => 3
+    ?\C-c => 3
+    ?\M-x => 134217848
+
+    字符类型在 =Emacs Lisp= 中是以整数表示的.比如 =A= 是65,这些整数也叫字符码(Character Codes),范围由 0 到 4194303.
+
+    字符的在 =Emacs Lisp= 随处可见,看到有文档,看不到的有 =key map= .
+
+    字符类型根据不同的用途分为不同类型,详细查看文档 =M-: (info "(elisp) Character Type")= .
+
+  - +Symbol Type+
+
+  - Sequence Type
+
+    =Emacs Lisp= 有两种序列, =list= 和 =array= .
+
+    - Cons Cell Type
+
+      一个 =cons cell= 或者 =cons= 是由两个槽(slots)构成的对象,分别是 =CAR slot= 和 =CDR slot=,每个槽可以放任何类型的值.
+
+      =cons= 还有一个旧名字叫做 =pair=,在 =Racket= 中有这个操作符号, =Emacs Lisp= 没有(我忘了 =Common Lisp= 有没有).
+
+      与 =Racket= 不同的除了 =pair= 操作符号,还有两者对 =list= 的定义不一样, =Racket= 的 =list= 是 =cons= 的子集, =list= 的 =CDR slot= 必须存放 =cons= .
+
+      比如 ='(1 2 . 3)= 不是 =list=,是 =cons=, ='(1 2 3)= 是 =list= 也是 =cons=,而在 =Emacs Lisp= 看来,两者都是 =list= 或者 =cons=.当然 =list= 也是分很多种类型.
+
+      所以 =list type= 也就是 =cons cell type= .
+
+    - Array Type
+
+      和 =list= 不同的是所有类型的 =array= 的长度固定,并且个别类型的 =array= 存放的对象有类型要求.
+
+      - String Type
+
+        所有存放的对象必须是字符.
+
+      - Vector Type
+
+        可以存放任何类型的对象.
+
+      - Char-Table Type
+
+        跟 =Vector Type= 类似,不同在于 =Char-Table Type= 是用字符码来做索引的. =Modifers= 以外的任何字符都可以做 char-table 里面的索引.
+
+        格式像是以 =#^= 开头的 =vector=.
+
+      - Bool-Vector Type
+
+        和 =Vector= 类似,不同在于所存的对象必须为布尔类型.
+
+  - +Hash Table Type+
+
+  - Function Type
+
+    =Lisp= 有两个系, =Lisp-1= 和 =Lisp-2=,分别代表是 =Scheme= 和 =Common Lisp=,其中 =Racket= 是 =Scheme= 的后继者,而 =Emacs Lisp= 看起来很像 =Common Lisp=.
+
+    =Lisp-1= 和 =Lisp-2= 也分别叫做 =Scheme model= 和 =Common Lisp model=.
+
+    区别就是是否分离变量名字和函数的命名空间.通俗地说就是函数和变量能否用同一个名字并且不会冲突,如果冲突了就是 =Lisp-1=,否则就是 =Lips-2=.
+
+    而 =Emacs Lisp= 跟它的偶像一样是 =Lisp-2=.
+
+  - Macro Type
+
+    =Emacs Lisp= 中有 =Lisp= {{{macro}}}(macro)和键盘{{{macro}}}(keyboard macro).两种是不一样的.
+
+  - Primitive Function Type
+
+    由 =C= 语言编写并且可以由 =Emacs Lisp= 调用的函数.这种类型也叫做 =subr=/=subroutine= 或者 =built-in function=.
+
+    这类型的数据是没有{{{read-syntax}}}的.
+
+  - +Byte-Code Type+
+
+  - +Autoload Type+
+
+  - Finalizer Type
+
+    一个{{{finalizer}}}对象(=finalizer object=)会清理不可到达的对象.一个 {{{finalizer}}} 拥有一个函数对象.
+
+    当{{{finalizer}}}对象在 =GC= 后不可到达,=Emacs= 就会调用它关联的函数对象来清理它自己.
+
+    当断定一个{{{finalizer}}}是否可以到达,=Emacs= 是不会计算{{{finalizer}}}对象的引用,
+
+    这允许你在不同担心意外捕获被清理对象的情况下使用{{{finalizer}}}.
+
+- =Editing Types=
+
+  - Buffer Type
+
+    一个{{{buffer}}}对应一个文本,大部份{{{buffer}}}拥有硬盘文件的内容,这样可以编辑它们,也有一些是用于其它目的.
+
+    有一种间接{{{buffer}}}(indirect buffer)用于和其它{{{buffer}}}共享文本,不过文本显示起来不一样.
+
+    每一个{{{buffer}}}都会关联以下几个数据结构:
+
+    - Marker Type
+
+      {{{marker}}}表示特定{{{buffer}}}里面一个位置.它有两个组件:{{{buffer}}}和位置(position).
+
+      改变{{{buffer}}}的文本会自动重新定位{{{marker}}}的位置.
+
+    - Overlay Type
+
+      用来指定{{{buffer}}}的某个部分/特定范围的属性,包含一个属性列表.
+
+    - Keymap Type
+
+    - 一个本地的语法表(syntax table)
+
+    - 一个{{{buffer}}}本地的变量绑定列表
+
+    - {{{buffer}}}文本的文本属性
+
+  - Window Type
+
+    {{{window}}}是用来显示{{{buffer}}}的对象.一个{{{window}}}显示一个{{{buffer}}}.
+
+    {{{buffer}}}可以出现在一个{{{window}}},几个{{{window}}}或者不出现在{{{window}}}上.
+
+    而一个{{{window}}}只能关联一个{{{buffer}}},同一时刻只能有一个{{{window}}}被选中.
+
+  - Frame Type
+
+    {{{frame}}}是一个屏幕区域,包含一个或者多个 =Emacs= {{{window}}}.
+
+  - Terminal Type
+
+    {{{terminal}}}可以显示一个或者多个 =Emacs= {{{frame}}}的设备.
+
+  - Window Configuration Type
+
+    储存一个{{{frame}}}里面所有{{{window}}}的位置大小信息和内容.
+
+  - Frame Configuration Type
+
+    储存所有{{{frame}}}里面所有{{{window}}}的位置大小信息和内容.
+
+  - Process Type
+
+    {{{process}}}是由 =Emacs= 进程创建的子进程(=subprocesses=).
+
+    子进程接受文本输入并且返回文本输出给 =Emacs= 用于以后的操作.
+
+    =Emacs= 也可以给子进程发送信息(signal).
+
+  - Stream Type
+
+    {{{stream}}}对象可以用于当作字符的源(source)或者水槽(sink),给输入提供字符或者接收它们作为输出.
+
+    不同类型的数据可以以这种方式使用,{{{marker}}},{{{buffer}}},字符和函数.
+
+    通常来说,输入{{{stream}}}从键盘/{{{buffer}}}/文件获取字符,输出{{{stream}}}发送字符给{{{buffer}}}/文件.
+
+  - Font Type
+
+    指定如何显示图形终端上的文本. =Emacs= {{{font}}}由3个种对象组成: {{{font}}}对象(font object),{{{font}}}规格(font spec)和{{{font}}}实体(font entities).
+
+可以通过 =type-of= 来获取对象的类型.对于特定类型判断可以用 =M-: (info "(elisp) Type Predicates")=.
+
+
+**** 环状对象 (Circular Objects)
+
+环状对象就是内部循环引用的数据结构.
+
+#+BEGIN_SRC emacs-lisp
+;; #N= 表示要获取后面对象的第N个引用, #2# 表示使用前面获取引用.
+(#2=(a b) b #2#)
+#+END_SRC
+
+
+*** 函数 (Functions)
+
+**** Advising Functions, Emacs 的 Advising 系统用法总结
+
+ P.S: 之前一直误会了add-function的用法,直到认真地读了一下[[https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html][文档]].
+
+ - advising已经存在的函数,就是组合函数,想想钩子(hooks)
+
+   =defadvice= 和 =advice-add=
+
+   比如,在display-buffer命令执行之后提示buffer的名字,用display-buffer做实验是因为一旦出错了minibuffer都用不了,反馈快速.
+
+   - 老风格 =defadvice=
+
+     #+begin_src elisp
+     (defadvice display-buffer (after after-display-buffer
+                                 (buffer-or-name &optional action frame)
+                                 activate)
+        (message "buffer is named %S" (if (bufferp buffer-or-name)
+                                          (buffer-name buffer-or-name)
+                                        buffer-or-name)))
+     (ad-deactivate #'display-buffer)
+     #+end_src
+
+     可以以 =:around= 来执行,不过写法稍微有点不太一样,around是直接把advised函数给包裹起来
+
+     #+begin_src elisp
+     (defadvice display-buffer (around around-display-buffer
+                                 (buffer-or-name &optional action frame)
+                                 activate)
+        (interactive (list (read-buffer "Display buffer: " (other-buffer))
+                           (if current-prefix-arg t)))
+        (if (called-interactively-p)
+            (progn
+              (message "buffer is named %S" (if (bufferp buffer-or-name)
+                                                (buffer-name buffer-or-name)
+                                              buffer-or-name))
+              (funcall-interactively (ad-get-orig-definition 'display-buffer)
+                                     buffer-or-name action frame))
+          (progn
+            (funcall-interactively (ad-get-orig-definition 'display-buffer)
+                                    buffer-or-name action frame)
+            (funcall (ad-get-orig-definition 'display-buffer) buffer-or-name action frame))))
+     #+end_src
+
+   - 新写法 =advice-add= 和 =advice-remove=
+
+     #+begin_src elisp
+     (defun after-display-buffer (buffer-or-name &optional action frame)
+       (message "buffer is named %S" (if (bufferp buffer-or-name)
+                                         (buffer-name buffer-or-name)
+                                       (buffer-or-name))))
+     (advice-add 'display-buffer :after #'after-display-buffer)
+     (advice-remove 'display-buffer #'after-display-buffer)
+     #+end_src
+
+     对于 =:around= 位置可以这么写
+
+     #+begin_src elisp
+     (defun around-display-buffer (orig-fun buffer-or-name &optional action frame)
+        (interactive (list (read-buffer "Display buffer: " (other-buffer))
+                           (if current-prefix-arg t)))
+        (if (called-interactively-p)
+            (progn
+              (message "buffer is named %S" (if (bufferp buffer-or-name)
+                                                (buffer-name buffer-or-name)
+                                              buffer-or-name))
+              (funcall-interactively orig-fun buffer-or-name action frame))
+          (progn
             (message "buffer is named %S" (if (bufferp buffer-or-name)
                                               (buffer-name buffer-or-name)
-                                            buffer-or-name)))
-         (ad-deactivate #'display-buffer)
-         #+end_src
+                                            buffer-or-name))
+            (funcall orig-fun buffer-or-name action frame))))
+     (advice-add 'display-buffer :around #'around-display-buffer)
+     #+end_src
 
-         可以以 =:around= 来执行,不过写法稍微有点不太一样,around是直接把advised函数给包裹起来
+     注意到 =around-display-buffer= 跟 =after-display-buffer= 相比多了一个 =orig-fun= 了吗?
 
-         #+begin_src elisp
-         (defadvice display-buffer (around around-display-buffer
-                                     (buffer-or-name &optional action frame)
-                                     activate)
-            (interactive (list (read-buffer "Display buffer: " (other-buffer))
-                               (if current-prefix-arg t)))
-            (if (called-interactively-p)
-                (progn
-                  (message "buffer is named %S" (if (bufferp buffer-or-name)
-                                                    (buffer-name buffer-or-name)
-                                                  buffer-or-name))
-                  (funcall-interactively (ad-get-orig-definition 'display-buffer)
-                                         buffer-or-name action frame))
-              (progn
-                (funcall-interactively (ad-get-orig-definition 'display-buffer)
-                                        buffer-or-name action frame)
-                (funcall (ad-get-orig-definition 'display-buffer) buffer-or-name action frame))))
-         #+end_src
+     它表示advised函数,最后还要注意剩下的参数要与advised函数的参数兼容.
 
-       - 新写法 =advice-add= 和 =advice-remove=
+     其它位置 =:before=, =:after= ,advising函数的参数格式不能这么定义,要把表示advised函数的 =orig-fun= 去掉,否则参数会错位.
 
-         #+begin_src elisp
-         (defun after-display-buffer (buffer-or-name &optional action frame)
-           (message "buffer is named %S" (if (bufferp buffer-or-name)
-                                             (buffer-name buffer-or-name)
-                                           (buffer-or-name))))
-         (advice-add 'display-buffer :after #'after-display-buffer)
-         (advice-remove 'display-buffer #'after-display-buffer)
-         #+end_src
+     *上面的例子,特别是around-display-buffer,最好不要用,因为一旦Emacs的display-buffer发生了改变就很可能报错了,总的来说defadvice是挺危险的,不太推荐使用*
 
-         对于 =:around= 位置可以这么写
+ - advising那些持有函数值(function value)的进程(process filters)/变量(variables)/对象(objects)
 
-         #+begin_src elisp
-         (defun around-display-buffer (orig-fun buffer-or-name &optional action frame)
-            (interactive (list (read-buffer "Display buffer: " (other-buffer))
-                               (if current-prefix-arg t)))
-            (if (called-interactively-p)
-                (progn
-                  (message "buffer is named %S" (if (bufferp buffer-or-name)
-                                                    (buffer-name buffer-or-name)
-                                                  buffer-or-name))
-                  (funcall-interactively orig-fun buffer-or-name action frame))
-              (progn
-                (message "buffer is named %S" (if (bufferp buffer-or-name)
-                                                  (buffer-name buffer-or-name)
-                                                buffer-or-name))
-                (funcall orig-fun buffer-or-name action frame))))
-         (advice-add 'display-buffer :around #'around-display-buffer)
-         #+end_src
+   - =add-function= 和 =remove-function-=
 
-         注意到 =around-display-buffer= 跟 =after-display-buffer= 相比多了一个 =orig-fun= 了吗?
+     比如定义一个赋值了函数的变量 =my-func-var=,现在用 =my-tracing-function= 包裹它
 
-         它表示advised函数,最后还要注意剩下的参数要与advised函数的参数兼容.
+     #+begin_src elisp
+     (setq my-func-var
+      (lambda (arg)
+      (1+ arg)))
 
-         其它位置 =:before=, =:after= ,advising函数的参数格式不能这么定义,要把表示advised函数的 =orig-fun= 去掉,否则参数会错位.
+     (defun my-tracing-function (orig-variable arg)
+       (message (format "Result is %S" (funcall orig-variable arg))))
 
-         *上面的例子,特别是around-display-buffer,最好不要用,因为一旦Emacs的display-buffer发生了改变就很可能报错了,总的来说defadvice是挺危险的,不太推荐使用*
+     (add-function :around my-func-var #'my-tracing-function)
+     (funcall my-func-var 1)
+     (remove-function my-func-var #'my-tracing-function)
+     #+end_src
 
-     - advising那些持有函数值(function value)的进程(process filters)/变量(variables)/对象(objects)
+     其他位置也可以是一样的参数格式, =:around= 位置是必须这种参数格式,
 
-       - =add-function= 和 =remove-function-=
+     如果advised变量的持有函数需要一个参数,那么advising函数就要有两个参数,
 
-         比如定义一个赋值了函数的变量 =my-func-var=,现在用 =my-tracing-function= 包裹它
+     第一个表示advised变量,剩下的表示advised变量的持有函数所需要的参数.
 
-         #+begin_src elisp
-         (setq my-func-var
-          (lambda (arg)
-          (1+ arg)))
+     其它位置如 =:before=, =:after= 可以不按照这种参数格式,区别就是把表示advised变量的参数去掉就好,
 
-         (defun my-tracing-function (orig-variable arg)
-           (message (format "Result is %S" (funcall orig-variable arg))))
-
-         (add-function :around my-func-var #'my-tracing-function)
-         (funcall my-func-var 1)
-         (remove-function my-func-var #'my-tracing-function)
-         #+end_src
-
-         其他位置也可以是一样的参数格式, =:around= 位置是必须这种参数格式,
-
-         如果advised变量的持有函数需要一个参数,那么advising函数就要有两个参数,
-
-         第一个表示advised变量,剩下的表示advised变量的持有函数所需要的参数.
-
-         其它位置如 =:before=, =:after= 可以不按照这种参数格式,区别就是把表示advised变量的参数去掉就好,
-
-         advising函数的参数跟advised变量的持有函数要求的参数一样就可以.
+     advising函数的参数跟advised变量的持有函数要求的参数一样就可以.
 
 
-   - Emacs控制结构里面的 =Nonlocal Exits=
+*** 字节编码 (Byte Compilation)
 
-     #+BEGIN_EXAMPLE
-     写于 2018/9/4
-     #+END_EXAMPLE
+=Emacs= 拥有两个解析器和一个编译器,编译器可以把 =Emacs Lisp= 代码编译成字节码(byte-code),
 
-     一个 =nonlocal exit= 是一个把当前程序的点的控制(control)到另外一个点(remote point)的转移过程(transfer).
+然后由 =Emacs= 的字节解析器(byte-code interpreter)运行.字节码解析器和平常的 =Emacs Lisp= 解析器不是同一个解析器.
 
-     在 Emacs Lisp 中, =Nonlocal exits= 可以以一个错误结果(a result of errors)的形式出现,也可以通过显式控制(explicit control)的方式使用它们.
+由于字节码不是由真正的硬件运算,所以不可能像真正的字节码一样快,正是因为这样,字节码可以在无需重新编译的情况下在转移于不同机器之间.
 
-     (这里的错误和异常是同样一个意思,虽然英文中的词是不一样,但的确指同一个东西).
+任何版本的 =Emacs= 可以运行旧版本 =Emacs= 产生的字节码,但是反过来不行.
 
-     下面我会用别的语言特性来做类比,主要是 =C= 语言和 =Python=
+可以通过设定文件变量(file-local variable)来让阻止 =Lisp= 文件编译.
 
-     - 显式控制(Catch and Throw)
+#+BEGIN_SRC emacs-lisp
+;; -*-no-byte-compile: t; -*-
+#+END_SRC
 
-       实现手段是利用 =catch= 和 =throw= 两个 special forms.如何理解它们?如果对支持 =goto功能= 的语言有了解,那么这就很好理解了.
+**** 编译字节函数 (Byte-Compilation Functions)
 
-       用 =C= 语言作为例子, =catch= 就相当于设置跳转点的 =label= 语句,而 =throw= 相当于执行跳转的 =goto= 语句,而跳转的目的地就是 =catch= 设置点.
+可以针对函数(byte-compile-function),文件(byte-compile-file)和目录(byte-compile-file)3个等级进行编译.
 
-       最后,它们的 =while= 循环都不会被执行,并且都返回0.
+**** 文档字符串和编译 (Documentation Strings and Compilation)
 
-       #+BEGIN_SRC c
-       #include <stdio.h>
+加载编译后的文件是不会把函数和变量的文档加载进内存的,目的是为节省内存以及加快加载速度,只有在有需要的时候才会加载.
 
-       int main()
-       {
-           goto back;
+这叫做动态加载(dynamical loading)/惰性加载(lazy loading),不过有一个坏处,如果编译文件被删除/移动/修改(比如重新编译)了就不能访问之前加载函数/变量的文档了.
 
-           while(1){
-               //do something
-               printf("%d", 1);
-           }
+有两种方法可以解决,一是编译时候把 =byte-compile-dynamic-docstrings= 变量设置为 =nil=,二是重新编译文件.
 
-           back: printf("You are going to exit now");
-           return 0;
+**** 动态加载个别函数 (Dynamic Loading of Individual Functions)
+
+其实函数也可以动态加载的,加载文件的时候会给函数的定义留下一个 =place-holder=,这个 =place-holder= 引用定义它的(编译)文件,只有在第一次调用的时候才读取函数的定义并且替换掉 =place-holder=.
+
+它的优缺点和上面数的动态加载文档一样,解决方法也很相似,一是编译时候设定 =byte-compile-dynamic= 为 =nil=,而是重新编译.
+
+**** 编译时运行 (Evaluation During Compilation)
+
+要清楚编译时和运行时是不同的两个阶段, =eval-and-compile= 可以让 =body= 在运行或者编译时候运行, =eval-when-compile= 则是在编译时候而不是加载时候运行 =body=,注意它们都不是用于产生字节码的.
+
+**** 编译器错误 (Compiler Errors)
+
+编译时候产生的错误和警告信息会输出到 =*Compile-Log*= {{{buffer}}}上面,这些信息包括文件名字和问题发生位置的行数.
+
+当引发语法错误,字节编译器可能会不知道错误的实际位置,这个时候可以到 =" *Compiler Input*"= {{{buffer}}}查看(注意有个空格).
+
+这个{{{buffer}}}包含编译后的程序并且指出字节编译器能够读取到多远,问题可能就在附近.
+
+一个常见的警告类型是使用的函数和变量没有定义,这些警告会报告文件最后的行号,不是使用的函数或者变量丢失的位置,只能手动搜索文档.
+
+如果要消除这些警告,有以下手段:
+
+1. 通过 =fboundp/boundp= 判断 =函数/变量= 确实定义后才使用;
+
+2. 在定义面可以通过 =declare-function声明函数/defvar定义没有初始值的变量= 告诉字节编译器它们已经定义;
+
+3. 把不想提示错误和警告表达式放到 =with-no-warnings= 里面;
+
+4. 通过设置 =byte-compile-warnings= 做更精确的控制.
+
+**** 字节码函数对象 (Byte-Code Function Objects)
+
+编译器函数后会产生一个 =byte-code function object=,看起来就像一个以 =#[= 开头的 =vector=,只要有4个元素,没有最大个数,
+
+只有前面6个是有正常作用的:
+
+- ARGDESC
+
+  参数的描述符(descriptor),可以是一个参数列表(argument list)或者必要一个表示参数个数的整数.
+
+  后者中描述器的值在0到6位中指定参数的最小个数,在8到14位指定函数的最大个数,如果参数中有 =&rest= ,那么就会设定第7位.
+
+  如果 =ARGDESC= 是一个列表,那么在执行字节码之前动态绑定参数;如果是整数,在执行直接码之前,参数就会被压到字节码解析器的 =stack= 中.
+
+- BYTE-CODE
+
+  包含字节码指令(byte-code instructions)的字符串.
+
+- CONSTANTS
+
+  字节码引用的对象的 =Vector=,包含用于函数和变量对应的 =symbols=.
+
+- STACKSIZE
+
+  函数需要的最大 =stack= 大小.
+
+- DOCSTRING
+
+  函数的文档字符串(如果有的话),否则为空.如果有文档字符串,那么它可以是一个数字或者列表.
+
+  可以通过 =documentation= 函数获取真正的字符串.
+
+- INTERACTIVE
+
+  交互配置(interactive spec)(如果有的话).它可以是一个字符串或者一个 =Lisp= 表达式.
+
+#+BEGIN_SRC emacs-lisp
+
+;; backward-sexp 的字节码
+
+#[256                                   ;; ARGDESC
+  "\211\204^G^@\300\262^A\301^A[!\207"  ;; BYTE-CODE
+  [1 forward-sexp]                      ;; CONSTANTS
+  3                                     ;; STACKSIZE
+  1793299                               ;; DOCSTRING
+  "^p"]                                 ;; INTERACTIVE
+#+END_SRC
+
+可以通过 =make-byte-code= 创建一个字节码对象,不过我们不应该手动编写字节码,因为很容易会不一致而导致程序崩溃.
+
+不过总有人想走不同的路,这里有一篇很不错的[[https://nullprogram.com/blog/2014/01/04/][文章]]教你手写字节码.
+
+**** 反汇编字节码(Disassembled Byte-Code)
+
+字节码编译器是一个简单的 =stack machine=.它是这么工作的:
+
+1. 把值/引用压 =stack= 中;
+
+2. 当需要使用这些值计算的时候弹出(pop)它们/当调用函数计算,把计算结果压进 =stack= 中.
+
+3. 当函数返回的时候弹出 =stack= 里面的一个值并且把它作为函数的返回值.
+
+=Stack machine= 把值压进(push) =stack= 中,在需要使用这些值计算的时候把它们弹出(pop),把计算后的返回值压进 =stack= 中.
+
+文档同过例子很好地告诉你怎么看汇编了,可以直接看 =M-: (info "(elisp) Disassembly")=.
+
+
+*** 控制结构 (Control Structures)
+
+**** 按序计算 (Sequencing)
+
+按照顺序计算,基本所有 =Lisp= 方言差不多,和 =Racket= 对比的话,
+
+ =progn= 相当于 =Racket= 的 =begin=, =prog1= 相当于 =begin0=, =prog2= 是 =prog1= 的变种.
+
+三者都是按照顺序计算表达式,差别在于返回值不一样, =progn= 返回最后一个表达式的值, =prog1= 返回第一个表达式的值, =prog2= 返回第二个表达式的值.
+
+**** 条件判断 (Conditionals)
+
+做条件判断的就是这4个 =if, when, unless, cond=.
+
+=Emacs Lisp= 和很多元编程语言(meta programming language)一样,也有 =Pattern Matching=,也就是设计模式里面那别扭的访问者模式(visitor pattern).
+
+具体不写了,看文档 =M-: (info "(elisp) Pattern matching case statement")=,如果不懂 =Pattern Matching= 的概念可以看关于这一块的 =Racket Guide= 文档.
+
+**** 混合条件 (Constructs for Combining Conditions)
+
+=and, or, not= 逻辑运算三兄弟就不说了.
+
+**** 迭代器 (Iteration)
+
+=Emacs Lisp= 中迭代的方式有 =while=, =dolist= 和 =dotimes=.用法很简单,查文档就可以了.
+
+**** 生成器 (Generators)
+
+迭代器的就是一个产生潜能无限(potentially-infinite)的数值流的函数,每次产生一个值然后挂起自己,等待调用者(caller)请求下一个值.
+
+如果你接触过其它编程语言的迭代器,比如 =Python=, =JavaScript=, =Racket= 等等,那么 =Emacs Lisp= 的迭代器对于你而言会很熟悉.
+
+*要在 =Emacs Lisp= 使用迭代器就需要使用 =generator= 库并且开启 =lexical-binding=.*
+
+拿 =Python= 的迭代器来做类比,说真的我很惊讶它们的迭代器是如此相似,
+
+#+BEGIN_SRC python
+#!/usr/bin/env python3
+def gen(x):
+    while x > 0:
+        print("%s was passed\n" % (yield x))
+        x = x - 1
+    return -1          # 引发 StopIteration 异常时候的返回值
+
+
+def client(n):
+    g1 = gen(n)
+    g1.send(None)      # 等于 next(g1)
+    while 1:
+        try:
+            res = g1.send(100)
+            print("The return value %s from generator" % res)
+        except StopIteration as e:
+            return e.value
+
+
+client(5)
+
+g1 = gen(5)
+# g1.send(None)
+g1.close()
+
+for i in gen(5):
+    print("value is %s" i)
+
+
+def subgen_wrapper(n):
+    res = yield from gen(n)
+    print("result is %s" % res)
+
+
+for i in subgen_wrapper(5):
+    print(i)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(require 'generator)
+(setq lexical-binding t)
+
+(iter-defun gen (x)
+  (while (> x 0)
+    (message (format "return yes %s\n" (iter-yield x)))
+    (setq x (1- x)))
+  -1)
+
+(defun client (n)
+  (let ((g1 (gen n)))
+    (condition-case e
+        (while t
+          (message (format "the return value %s from generator\n" (iter-next g1 100))))
+      (iter-end-of-sequence
+       (print (cdr e))))))
+          
+(client 5)
+
+(setq g1 (gen 5))
+(iter-close g1)
+
+(setq res (iter-do (i (gen 5))
+            (message (format "value is %s\n" i))))  ;; res 为 -1
+
+(iter-defun subgen-wrapper (n)
+  (message (format "result is %s" (iter-yield-from (gen n)))))
+
+(setq res (iter-do (i (subgen-wrapper 5))
+            (message (format "value is %s\n" i))))
+#+END_SRC
+
+最后要注意 =iter-yield=, =iter-yield-from= 只能出现在 =iter-defun= 之中, =unwind-protect= 之外.
+
+除了上面例子中的 =forms=,还有一个 =iter-lambda= 是 =iter-defun= 的匿名版.
+
+**** 非本地退出 (Nonlocal Exits)
+
+ #+BEGIN_EXAMPLE
+ 写于 2018/9/4
+ #+END_EXAMPLE
+
+ 一个 =nonlocal exit= 是一个把当前程序的点的控制(control)到另外一个点(remote point)的转移过程(transfer).
+
+ 在 Emacs Lisp 中, =Nonlocal exits= 可以以一个错误结果(a result of errors)的形式出现,也可以通过显式控制(explicit control)的方式使用它们.
+
+ (这里的错误和异常是同样一个意思,虽然英文中的词是不一样,但的确指同一个东西).
+
+ 下面我会用别的语言特性来做类比,主要是 =C= 语言和 =Python=
+
+ - 显式控制(Catch and Throw)
+
+   实现手段是利用 =catch= 和 =throw= 两个 special forms.如何理解它们?如果对支持 =goto功能= 的语言有了解,那么这就很好理解了.
+
+   用 =C= 语言作为例子, =catch= 就相当于设置跳转点的 =label= 语句,而 =throw= 相当于执行跳转的 =goto= 语句,而跳转的目的地就是 =catch= 设置点.
+
+   最后,它们的 =while= 循环都不会被执行,并且都返回0.
+
+   #+BEGIN_SRC c
+   #include <stdio.h>
+
+   int main()
+   {
+       goto back;
+
+       while(1){
+       //do something
+           printf("%d", 1);
        }
-       #+END_SRC
 
-       #+BEGIN_SRC elisp
-       (defun catch-throw-example ()
-         (catch 'back
-           (progn
-             (print "You are going to exit now")
-             (throw 'back 0))
-           (while t
-             (print 1))))
-       #+END_SRC
+       back: printf("You are going to exit now");
+           return 0;
+   }
+   #+END_SRC
 
-       关于 =catch= 和 =throw= 更多的示例可以在 =M-: (info "(elisp)Examples of Catch")= 找到,这里就不写了.
+   #+BEGIN_SRC elisp
+   (defun catch-throw-example ()
+     (catch 'back
+        (progn
+          (print "You are going to exit now")
+            (throw 'back 0))
+          (while t
+            (print 1))))
+   #+END_SRC
 
-     - 利用错误/异常(Errors)
+   关于 =catch= 和 =throw= 更多的示例可以在 =M-: (info "(elisp)Examples of Catch")= 找到,这里就不写了.
 
-       这个就是编程语言的异常处理机制.
+ - 利用错误/异常(Errors)
 
-       这里用 =Emacs Lisp= 和 =Python= 的异常处理机制对比一下,除了语法不一样以外真是十分一致.下面两个例子的变量的名字已经保持一样了.
+   这个就是编程语言的异常处理机制.
 
-       其中, 下面的 =error= 不是平时的 =(error string &rest args)= ,这里代表所有类型的错误的"祖先"/"root",所有类型的错误直接或间接派生自它.
+   这里用 =Emacs Lisp= 和 =Python= 的异常处理机制对比一下,除了语法不一样以外真是十分一致.下面两个例子的变量的名字已经保持一样了.
 
-       它与 =Python= 的 =Exception= 一样可以用于捕捉使用错误/异常(事实上, =Python= 的 =Exception= 有3个系统级别的异常捕捉不了).
+   其中, 下面的 =error= 不是平时的 =(error string &rest args)= ,这里代表所有类型的错误的"祖先"/"root",所有类型的错误直接或间接派生自它.
 
-       #+BEGIN_SRC elisp
-       (defun err-handle-example ()
-         (condition-case err
-             (+ 1 a)
-           (error
-             (message "Error occurs")
-             err)))
-       #+END_SRC
+   它与 =Python= 的 =Exception= 一样可以用于捕捉使用错误/异常(事实上, =Python= 的 =Exception= 有3个系统级别的异常捕捉不了).
 
-       #+BEGIN_SRC python
-       def err_handle_example():
-           try:
-               return 1 + a
-           except Exception as err:
-               print("Error occurs")
-               return err
-       #+END_SRC
+   #+BEGIN_SRC elisp
+   (defun err-handle-example ()
+     (condition-case err
+         (+ 1 a)
+       (error
+         (message "Error occurs")
+         err)))
+   #+END_SRC
 
-       =Emacs Lisp= 有3个引发异常的 special forms 和支持自定义异常.
-
-       如何引发一个异常 =M-: (info "(elisp)Signaling Errors")=
-
-       关于定义新异常和标准的异常 =M-: (info "(elisp) Error Symbols")=
-
-     - 清理(Cleanups)
-
-       通过利用 =Emacs Lisp= 的 =unwind-protect= 来确保在结束前执行动作,不论结束之前发生了什么,哪怕是发生报错.
-
-       如果问这个跟 =Python= 里面的哪样东西最像,那必然是异常捕捉的 =finally= 从语,都是不管发生前面什么事情,都会在结束前执行.
-
-       #+BEGIN_EXAMPLE
-
-       这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
-
-       当然如果 f.open() 打开失败还是不会执行以后的语句.权限不足,文件所在的目录不存在,就会发生报错的情况.
-
-       使用 Emacs Lisp 的 find-file-noselect 是不会发生这种事情,现在假定 Python 不会发生这些情况.
-
-       #+END_EXAMPLE
-
-       两个程序都是打开一个文本名叫"text.txt"并且插入"Insert content"内容,最后关闭文本.
-
-       其中, =(kill-buffer buffer)= 跟 =f.close()= 一样都是关闭文本,前者是 =Emacs Lisp= 的 =unwindform=, 后者是 =Python= 的 =finally= 从句.
-
-       而 =(insert "Insert content")= 和 =f.write("Insert content")= 都是处于异常捕捉的保护区域里面,这样两者的关系就很明了了.
-
-       #+BEGIN_SRC elisp
-       (let ((buffer (find-file-noselect "text.txt")))
-         (unwind-protect
-             (with-current-buffer buffer
-               (insert "Insert content"))
-           (kill-buffer buffer)))
-       #+END_SRC
-
-       #+BEGIN_SRC python
-       f = open('text.txt', 'w')
+   #+BEGIN_SRC python
+   def err_handle_example():
        try:
-           f.write("Insert content")
-       except Exception:
-           pass
-       finally:
-           f.close()
-       #+END_SRC
+           return 1 + a
+       except Exception as err:
+           print("Error occurs")
+           return err
+   #+END_SRC
+
+   =Emacs Lisp= 有3个引发异常的 special forms 和支持自定义异常.
+
+   如何引发一个异常 =M-: (info "(elisp)Signaling Errors")=
+
+   关于定义新异常和标准的异常 =M-: (info "(elisp) Error Symbols")=
+
+ - 清理(Cleanups)
+
+   通过利用 =Emacs Lisp= 的 =unwind-protect= 来确保在结束前执行动作,不论结束之前发生了什么,哪怕是发生报错.
+
+   如果问这个跟 =Python= 里面的哪样东西最像,那必然是异常捕捉的 =finally= 从语,都是不管发生前面什么事情,都会在结束前执行.
+
+   #+BEGIN_EXAMPLE
+
+   这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
+
+   当然如果 f.open() 打开失败还是不会执行以后的语句.权限不足,文件所在的目录不存在,就会发生报错的情况.
+
+   使用 Emacs Lisp 的 find-file-noselect 是不会发生这种事情,现在假定 Python 不会发生这些情况.
+
+   #+END_EXAMPLE
+
+   两个程序都是打开一个文本名叫"text.txt"并且插入"Insert content"内容,最后关闭文本.
+
+   其中, =(kill-buffer buffer)= 跟 =f.close()= 一样都是关闭文本,前者是 =Emacs Lisp= 的 =unwindform=, 后者是 =Python= 的 =finally= 从句.
+
+   而 =(insert "Insert content")= 和 =f.write("Insert content")= 都是处于异常捕捉的保护区域里面,这样两者的关系就很明了了.
+
+   #+BEGIN_SRC elisp
+   (let ((buffer (find-file-noselect "text.txt")))
+     (unwind-protect
+         (with-current-buffer buffer
+           (insert "Insert content"))
+       (kill-buffer buffer)))
+   #+END_SRC
+
+   #+BEGIN_SRC python
+   f = open('text.txt', 'w')
+   try:
+       f.write("Insert content")
+   except Exception:
+       pass
+   finally:
+       f.close()
+   #+END_SRC
+
+
+*** 变量 (Variables)
+
+**** 变量作用域 (Variable Scoping)
+
+**** 全局变量 (Global Variables)
+
+影响整个 =Lisp= 系统的变量,一个时间点只能有一个值,全局变量的值会一直保持直到重新定义或者改变它们.用 =setq= 定义或者改变一个全局变量.
+
+**** 永远不会改变的变量 (Variables that Never Change)
+
+包括 =nit, t= 和关键字(keyword),也就是 =:= 开头的 =symbol=,不可以重新绑定,也不可以改变它们的值,
+
+它们是真正意义上的常量,一旦试图改变它们的值就会引发 =setting-constant= 的错误.
+
+不过 =Emacs Lisp= 所指的常量是由 =defconst= 定义的,它们的值是可以改变的,它们的"常量"的意思是告诉人们不应该修改它们的值,
+
+而不是不能修改.
+
+**** Local Variables
+
+跟全局变量相对,局部变量的值只影响 =Lisp= 程序的一部分,比如 =let绑定的变量= 和 =函数的参数=.可以同时存在同名的全局和局部变量,
+
+最内层的变量会遮掩(shadows)外层变量,也就是局部变量遮掩全局变量.实际上每个编程语言读需要一个作用域规则(scoping rule)来判断发生作用的局部绑定.
+
+=Emacs Lisp= 默认是 =dynamic scoping=: 程序当前执行点上的绑定就是为仍然存在的变量最新创建的绑定. =Emacs Lisp= 还可以启用 =lexical scoping=.
+
+创建局部变量的方法有 =let, let*, 函数调用, 宏调用, condition-case异常处理=.局部变量还有 =file-local=, =buffer-local=, =diretory-local= 和 =terminal-local=.
+
+=max-specpdl-size= 定义了局部变量的和 =unwind-protect= 清理(cleanup)的总数量,默认值是1300,如果突破这个数量就会引发一个错误.
+
+进入 =Lisp debugger= 的时候会增加这个值.这个值的作用是避免不良定义的函数无限递归.解决这个问题还可以通过设置 =max-lisp-eval-depth= 限制递归层数.
+
+**** 当变量为Void (When a Variable is Void)
+
+未赋值的变量和赋值为 =nil= 的变量是不一样的,前者是未绑定的,所以前者情况中的变量为 =void=.
+
+可以通过 =makeunbound= 解绑当前变量的绑定; =boundp= 判断当前变量是否绑定.
+
+**** 定义全局变量 (Defining Global Variables)
+
+还可以通过 =defvar, defconst 和 defcustom= 定义全局变量.
+
+一个变量的定义有3个目的:
+
+1. 告知读代码的人们变量的意图.
+
+2. 告知 =Lisp= 系统,并且可选的给变量提供初始值和文档字符串.
+
+3. 给类似 =etags= 这样的编程工具提供信息,允许它们找出变量定义的位置.
+
+=defvar= 只有在变量为 =void= 的情况下初始变量,而 =defconst= 是无条件初始变量; =defcustom= 则是使用了 =defvar= 做为子程序,也是在变量为 =void= 才初始化变量.
+
+然而还是有些特殊情况,
+
+- =defvar=
+
+  1. 如果 =symbol= 在当前{{{buffer}}}有一个 =buffer-local= 绑定,那么 =defvar= 设定的就是全局变量/动态绑定.
+
+  2. 如果 =symbol= 早就被词法绑定(由=let=或者函数参数获得),那么 =defvar= 就设定变量的动态值.
+
+  3. 如果在 =Emacs Lisp mode= 下通过 =C-M-x= (=eval-defun=) 运算 =defvar= 表达式,它会无条件设置变量,不管变量是否为 =void=.
+
+- =defconst=
+
+  1. 如果 =symbol= 在当前{{{buffer}}}有一个 =buffer-local= 绑定,那么 =defconst= 设定的就是全局变量/动态绑定.
+
+  2. 如果 =symbol= 早就被词法绑定(由=let=或者函数参数获得),那么 =defconst= 设定的就是局部变量的值.
+
+#+BEGIN_SRC emacs-lisp
+(let ((d 0))
+  (defconst d 4)
+  d) ;; => 4
+
+d    ;; => void,报错
+
+(let ((e 0))
+  (defvar e 5)
+  e) ;; => 0
+
+e    ;; => 5
+#+END_SRC
+
+**** Tips for Defining Variables Robustly
+
+一些定义变量的规范和正确做法.规范自己看,正确做法现在总结.
+
+当定义和初始话一个变量来保存复杂的值,最好的做法就是把整个值的计算放到 =defvar= 里面.
+
+这样有三个好处和一个坏处:
+
+- 好处
+
+  1. 如果加载文件的时候被用户中断,变量只有未初始化和已经正确初始化两种情况.
+
+     如果没有加载,重新加载会正确初始化它.
+
+  2. 一旦变量已经初始化,重新加载文件是不会修改变量.
+
+  3. 可以通过 =eval-defun= (默认 =C-M-x=)完全重新初始化变量.
+
+- 坏处
+
+  =defvar= 的设定文档字符串的行和命名变量的行离得远.(这也是坏处吗?)可以初始化变量为 =nil=,然后再设定值,
+
+  不过如果要重新初始化变量就得运行 =eval-defun= 两次.
+
+**** 访问变量的值 (Accessing Variable Values)
+
+通常引用一个变量就是写下用来命名变量的 =symbol=.
+
+如果想要引用一个只能在运行时才能知道 =symbol= 或者名字的变量,也就是不能在代码中确定它的名字.
+
+可以使用 =symbol-value= 来获取 =symbol= 当前绑定的值.
+
+如果该变量没有局部绑定,那么就是全局的值.如果变量为 =void=,就会报错.
+
+**** 设定变量的值 (Setting Variable Values)
+
+*** 命令循环 (Command Loop)
 
 
 ** 个人认为不错的的一些参考资源和博客
@@ -534,3 +1146,5 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
      有太多方面我想不起来,总的来说它对于我来说影响实在太大了,因此我也愿意把闲余时间投入到它的身上.
 
      写这些的时候我才理解为什么有人说Emacs是一种生活态度了.
+
+p
