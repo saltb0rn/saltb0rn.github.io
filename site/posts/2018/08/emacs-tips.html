@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-10-17 Wed 23:24 -->
+<!-- 2018-10-21 Sun 23:58 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emacs Tips(持续更新)</title>
@@ -178,8 +178,6 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
-
-<meta name="google-site-verification" content="GSgfDkJS4wqhz_cK-gCQQzcDkrjqVixtO24NDjAjNtQ" />
 <link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <script type="text/javascript" src="../../../js/live.js" defer></script>
@@ -254,17 +252,15 @@ for the JavaScript code in this tag.
         src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
-
 <div id="org-div-home-and-up">
-  <nav>
-    <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
-    <ul>
-      <li><a accesskey="H" href="/"> Home </a></li>
-      <!--<li><a accesskey="a" href="/posts"> Posts </a></li>-->
-      <li><a accesskey="T" href="/tags"> Tags </a></li>
-      <li><a accesskey="A" href="/about"> About </a></li>
-    </ul>
-  </nav>
+    <nav>
+        <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="/"> Home </a></li>
+            <li><a accesskey="T" href="/tags"> Tags </a></li>
+            <li><a accesskey="A" href="/about"> About </a></li>
+        </ul>
+    </nav>
 </div>
 <div id="content">
 <h1 class="title">Emacs Tips(持续更新)</h1>
@@ -274,7 +270,13 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#org56b2dd5">使用Emacs的一些tips</a></li>
 <li><a href="#org69937e2">使用配置的一些优化</a></li>
-<li><a href="#orgf1708fc">写Elisp时候遇到的一些问题</a></li>
+<li><a href="#orgf1708fc">写Elisp时候遇到的一些问题</a>
+<ul>
+<li><a href="#org7ee52d7">如何解决写Elisp时候遇到的一些需要密码认证的命令行操作</a></li>
+<li><a href="#org295a15f">如何让调试器可以调试user-error?</a></li>
+<li><a href="#org13d1575">Autoload函数引用未被require的变量,修改该变量后无法读取变量?</a></li>
+</ul>
+</li>
 <li><a href="#org69312b7">Emacs Lisp学习笔记</a>
 <ul>
 <li><a href="#org3aed084">数据类型 (Lisp Data Types)</a>
@@ -321,6 +323,16 @@ for the JavaScript code in this tag.
 <li><a href="#org31e979e">Tips for Defining Variables Robustly</a></li>
 <li><a href="#orge412bd1">访问变量的值 (Accessing Variable Values)</a></li>
 <li><a href="#orgd7d9a49">设定变量的值 (Setting Variable Values)</a></li>
+</ul>
+</li>
+<li><a href="#org6ff8199">调试 (Debugging)</a>
+<ul>
+<li><a href="#orgd17b4ed">Debugger</a></li>
+<li><a href="#orgb7512b5">Edebug</a></li>
+<li><a href="#org5ea6c9c">Syntax Errors</a></li>
+<li><a href="#org04fa5e5">Test Coverage</a></li>
+<li><a href="#org1698069">Profilling</a></li>
+<li><a href="#orgb0a1ab2">ERT: Emacs Lisp Regression Testing</a></li>
 </ul>
 </li>
 <li><a href="#org9759177">命令循环 (Command Loop)</a></li>
@@ -599,11 +611,10 @@ sudo修改文件
 <div id="outline-container-orgf1708fc" class="outline-2">
 <h2 id="orgf1708fc">写Elisp时候遇到的一些问题</h2>
 <div class="outline-text-2" id="text-orgf1708fc">
-<ul class="org-ul">
-<li><p>
-如何解决写Elisp时候遇到的一些需要密码认证的命令行操作
-</p>
-
+</div>
+<div id="outline-container-org7ee52d7" class="outline-3">
+<h3 id="org7ee52d7">如何解决写Elisp时候遇到的一些需要密码认证的命令行操作</h3>
+<div class="outline-text-3" id="text-org7ee52d7">
 <p>
 以在个人版的Debian上面安装nodejs为例子.
 </p>
@@ -654,8 +665,102 @@ sudo有一个sudoers policy缓存凭证15分钟,除非重写了凭证,否则在�
 <p>
 优点是简单,但还是没有凭证管理.
 </p></li>
-</ol></li>
-</ul>
+</ol>
+</div>
+</div>
+
+
+<div id="outline-container-org295a15f" class="outline-3">
+<h3 id="org295a15f">如何让调试器可以调试user-error?</h3>
+<div class="outline-text-3" id="text-org295a15f">
+<pre class="example">
+写于 2018/10/21
+</pre>
+
+<p>
+Drew已经在这<a href="https://superuser.com/questions/782313/emacs-make-debug-on-error-catch-errors/782365">里面</a>进行回答了,文档上只是做了暗示,之所以调试器不能调试 <code>user-error</code>,那么是因为 <code>debug-ignored-errors</code> 这个变量有 <code>user-error</code> 这个变量,
+</p>
+
+<p>
+<code>debug-ignored-errors</code> 是告诉 <code>Emacs Debugger</code> 忽略哪些错误,所以只需要把 <code>debug-ignored-errors</code> 里面的 <code>user-error</code> 条目清空掉就可以了.也就是说 <code>user-error</code> 实际上还是可以唤醒 <code>debugger</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">setq</span> debug-ignored-errors
+      (remove-if
+       (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (item) (eq item 'user-error))
+       debug-ignored-errors))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org13d1575" class="outline-3">
+<h3 id="org13d1575">Autoload函数引用未被require的变量,修改该变量后无法读取变量?</h3>
+<div class="outline-text-3" id="text-org13d1575">
+<pre class="example">
+写于 2018/10/21
+</pre>
+
+<p>
+注意: <b>该问题虽然已经解决了,但是途中遇到一个奇怪现象我没有办法解释,以后还是会更新</b>.
+</p>
+
+<p>
+解决问题时候的 <code>org-mode</code> 版本为 <code>org-plus-contrib-20181015</code>.
+</p>
+
+<p>
+实际情况就是: 写了一个函数 <code>publish-all-posts</code> 需要使用 <code>org-publish</code> 作为 <code>subroutine</code>, 主要是利用 <code>Emacs Lisp</code> 的动态作用域名来临时绑定全局变量,特别是 <code>org-publish-project-alist</code> 并且调用 <code>org-publish</code>.
+</p>
+
+<p>
+目的是为了不污染全局变量和环境,然而有一个问题, <code>org-publish</code> 是 <code>Autoload</code> 函数,可是我并没有 <code>require</code> 它引用的变量 <code>org-publish-project-alist</code>,就在我用 <code>let</code> 进行绑定的时候发生了一个奇怪现象.
+</p>
+
+<p>
+第一次执行函数 <code>publish-all-posts</code> 的时候报错了: "Unknown component static in project DarkSalt",引发错误的函数是 <code>org-publish-expand-projects</code>, 这还是可以理解,因为 <code>org-publish-project-alist</code> 并没有进行全局绑定默认是 <code>nil</code> 所以引发异常.
+</p>
+
+<p>
+我不能理解的地方就在于接下来函数A的调用居然正常,没有发生报错.我读了一下 <code>org-publish, org-publish-projects 和 org-publish-expand-projects</code> 这3个函数的源代码并没发现在哪里给 <code>org-publish-project-alist</code> 进行赋值.
+</p>
+
+<p>
+不过我还是带着疑惑把<a href="https://github.com/saltb0rn/emacs.d/commit/b146dffaa096683e1f1eee171d6e292af719cdb1#diff-64ed6d0a7a4f2eaf33cacc2454a19cff">报错解决</a>了, <code>require</code> <code>ox-publish</code> (也就是 <code>org-publish-project-alist</code> 的定义文件) 就可以解决问题,不过还是不明白这个奇怪现象的原因,有可能是我没有读透代码,所以这个问题不能算是完全解决.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">publish-all-posts</span> (project <span style="color: #7CB8BB;">&amp;optional</span> force async)
+  <span style="color: #9FC59F;">"Now the project of blog is isolated from `</span><span style="color: #BFEBBF;">org-publish-project-alist</span><span style="color: #9FC59F;">'.</span>
+<span style="color: #9FC59F;">That is, when calling `</span><span style="color: #BFEBBF;">org-publish-project</span><span style="color: #9FC59F;">' or `</span><span style="color: #BFEBBF;">org-publish</span><span style="color: #9FC59F;">' would not</span>
+<span style="color: #9FC59F;">see any project of blog, vice versa."</span>
+  (<span style="color: #F0DFAF; font-weight: bold;">interactive</span>
+   (list (assoc (completing-read <span style="color: #CC9393;">"Publish project: "</span>
+                                 blog-alist nil t)
+                blog-alist)
+         current-prefix-arg))
+  (create-project-directory-if-necessary)
+  (write-posts-to-tag-inc)
+  (rewrite-theindex-inc)
+  (<span style="color: #F0DFAF; font-weight: bold;">let</span> ((org-publish-project-alist blog-alist)
+        (org-html-home/up-format (ht-get home/up-formats 'blog))
+        (org-html-head (ht-get html-heads 'blog))
+        (org-html-preamble nil)
+        (org-html-doctype <span style="color: #CC9393;">"html5"</span>)
+        (org-html-link-home <span style="color: #CC9393;">"/"</span>)
+        (org-html-link-up <span style="color: #CC9393;">"/"</span>)
+        (org-export-with-toc nil)
+        (org-export-with-author t)
+        (org-export-with-email nil)
+        (org-export-with-creator nil)
+        (org-export-with-date nil)
+        (org-export-with-section-numbers nil))
+    (org-publish project))
+  (rename-theindex-to-index))
+</pre>
+</div>
+</div>
 </div>
 </div>
 
@@ -1914,6 +2019,7 @@ g1.close<span style="color: #DCDCCC;">()</span>
 </div>
 </div>
 
+
 <div id="outline-container-orgad44f65" class="outline-4">
 <h4 id="orgad44f65">当变量为Void (When a Variable is Void)</h4>
 <div class="outline-text-4" id="text-orgad44f65">
@@ -2064,11 +2170,161 @@ e    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt;
 </div>
 </div>
 
-<div id="outline-container-org9759177" class="outline-3">
-<h3 id="org9759177">命令循环 (Command Loop)</h3>
+
+<div id="outline-container-org6ff8199" class="outline-3">
+<h3 id="org6ff8199">调试 (Debugging)</h3>
+<div class="outline-text-3" id="text-org6ff8199">
+<p>
+针对 <code>Emacs Lisp</code> 进行调试可以采取以下几种手段,掌握之后可以节省不少排错的时间.
+</p>
+</div>
+
+<div id="outline-container-orgd17b4ed" class="outline-4">
+<h4 id="orgd17b4ed">Debugger</h4>
+<div class="outline-text-4" id="text-orgd17b4ed">
+<p>
+普通的 <code>Lisp debugger</code> 提供挂起 <code>form</code> 执行的能力.在 <code>Emacs</code> 中的一个挂起(suspended,或者叫中断,break)实际是一个一个递归编辑(recursive edit),
+</p>
+
+<p>
+在挂起的时候可以执行普通的编辑,比如检查运行时的栈,变量的值或者改变这些值等等.关于 <code>Recursive Editing</code> 可以查看 <code>M-: (info "(elisp) Recursive Editing")</code>.
+</p>
+
+<p>
+关于如何阅读 <code>Emacs Lisp Debugger</code> 的 <code>backtrace</code>,它是以栈的顺序动态显示的,也就是说,最底下底语句是第一句,顶层语句是目前执行的语句,也就是当前执行点.
+</p>
+</div>
+
+<ul class="org-ul">
+<li><a id="orgf0eea7e"></a>Error Debugging<br>
+<div class="outline-text-5" id="text-orgf0eea7e">
+<p>
+设定调试的入口,也就是什么时候才唤醒调试器.
+</p>
+
+<ul class="org-ul">
+<li><p>
+debug-on-error
+</p>
+
+<p>
+设定该变量为 <code>t</code> ,可以在 <code>debug-ignored-errors</code> 以外的错误发生时进入调试, <code>debug-ignored-errors</code> 告诉调试器无视哪些错误.
+</p>
+
+<p>
+如果值是一个错误条件的列表,那么只有引发列表中的错误才会进入调试.
+</p>
+
+<p>
+当这个变量的值为 <code>non-nil</code> 的时候, <code>Emacs</code> 是不会为进程过滤函数和哨兵 (<code>process filter functions and sentinels</code>)创建错误处理器,也就是它们一旦有错误就会进入调试.
+</p></li>
+
+<li><p>
+eval-expression-debug-on-error
+</p>
+
+<p>
+如果该变量为 <code>t</code>, 那么在执行 <code>eval-expression</code> 命令,默认 <code>M-:</code>,的时候动态绑定 <code>debug-on-error</code> 为 <code>t</code>,其它时候 <code>debug-on-error</code> 的值还是原来的值.
+</p>
+
+<p>
+也就是针对执行 <code>eval-expression</code> 发生的错误进行调试.
+</p></li>
+
+<li><p>
+debug-on-signal
+</p>
+
+<p>
+正常来说, <code>condition-case</code> 捕捉到的错误是不会唤醒调试器的,因为 <code>condition-case</code> 在调试器之前处理了错误.
+</p>
+
+<p>
+假如 <code>debug-on-signal</code> 这个变量设定为 <code>non-nil</code>,那么调试器就可以无视 <code>condition-case</code> 在第一时间处理错误.
+</p>
+
+<p>
+这个变量可以在 <code>Emacs</code> 的 <code>--eval</code> 选项进行设定,如果运行时候发生了错误,那么 <code>Emacs</code> 就会弹出一个 <code>backtrace</code>.
+</p>
+
+<p>
+<b>最好不要在编码中设定这个变量,因为会导致所有 condition-case 语句失去处理错误的机会,包括你计划外的部分.</b>
+</p>
+
+<p>
+如果需要调试 <code>condition-case</code> 里面的代码,可以考虑使用 <code>condition-case-unless-debug</code>.
+</p></li>
+
+<li><p>
+debug-on-event
+</p>
+
+<p>
+如果给该变量设定一个特别事件(special event),那么 <code>Emacs</code> 就会在接受到事件的第一时间绕过 <code>special-event-map</code> 进入调试器.
+</p>
+
+<p>
+目前值支持对应 <code>SIGUSER1</code> 和 <code>SIGUSER2</code> 的值,当设定好 <code>inhibit-quit</code> 并且在 <code>Emacs</code> 没有响应时候这个变量十分有用.
+</p></li>
+
+<li><p>
+debug-on-message
+</p>
+
+<p>
+给该变量设定用来匹配回显区域(echo area)的消息(message)的正则表达式(regular expression),如果匹配就会进入调试.用来查找造成该消息的原因就很有用.
+</p>
+
+<p>
+比如,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">setq</span> debug-on-message
+    <span style="color: #CC9393;">".*\"q\".*"</span>)
+
+(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">test</span> ()
+    (message <span style="color: #CC9393;">"\"q\""</span>))
+
+(test)
+</pre>
+</div></li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+
+<div id="outline-container-orgb7512b5" class="outline-4">
+<h4 id="orgb7512b5">Edebug</h4>
+</div>
+
+<div id="outline-container-org5ea6c9c" class="outline-4">
+<h4 id="org5ea6c9c">Syntax Errors</h4>
+</div>
+
+<div id="outline-container-org04fa5e5" class="outline-4">
+<h4 id="org04fa5e5">Test Coverage</h4>
+</div>
+
+<div id="outline-container-org1698069" class="outline-4">
+<h4 id="org1698069">Profilling</h4>
+</div>
+
+<div id="outline-container-orgb0a1ab2" class="outline-4">
+<h4 id="orgb0a1ab2">ERT: Emacs Lisp Regression Testing</h4>
 </div>
 </div>
 
+<div id="outline-container-org9759177" class="outline-3">
+<h3 id="org9759177">命令循环 (Command Loop)</h3>
+<div class="outline-text-3" id="text-org9759177">
+<p>
+(未写)
+</p>
+</div>
+</div>
+</div>
 
 <div id="outline-container-org91f46bd" class="outline-2">
 <h2 id="org91f46bd">个人认为不错的的一些参考资源和博客</h2>
@@ -2299,35 +2555,34 @@ Emacs的时候我还用了 <code>Evil</code> 模拟VIM的按键,不过那个时�
 </div>
 <div id="postamble" class="status">
 <div id="disqus_wrapper">
-<div id="disqus_thread"></div>
-<script>
-
-/**
-*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
-/*
-var disqus_config = function () {
-this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-};
-*/
-let disqus;
-(function() { // DON'T EDIT BELOW THIS LINE
-    var d = document;
-    disqus = d.createElement('script');
-    disqus.async = true;
-    disqus.src = 'https://darksalt-me.disqus.com/embed.js';
-    disqus.setAttribute('data-timestamp', +new Date());
-    disqus.onload = function(){
-        console.log("Load disqus successfully.");
-    };
-    disqus.onerror = function(){
-        console.log("Load disqus failed.");
-    };
-    (d.head || d.body).appendChild(disqus);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <div id="disqus_thread"></div>
+    <script>
+     /**
+      *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+      *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+     /*
+        var disqus_config = function () {
+        this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+      */
+     let disqus;
+     (function() { // DON'T EDIT BELOW THIS LINE
+         var d = document;
+         disqus = d.createElement('script');
+         disqus.async = true;
+         disqus.src = 'https://darksalt-me.disqus.com/embed.js';
+         disqus.setAttribute('data-timestamp', +new Date());
+         disqus.onload = function(){
+             console.log("Load disqus successfully.");
+         };
+         disqus.onerror = function(){
+             console.log("Load disqus failed.");
+         };
+         (d.head || d.body).appendChild(disqus);
+     })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-08-31</p>

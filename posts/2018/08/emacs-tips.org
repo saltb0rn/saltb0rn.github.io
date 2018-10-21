@@ -167,40 +167,106 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 ** 写Elisp时候遇到的一些问题
 
-   - 如何解决写Elisp时候遇到的一些需要密码认证的命令行操作
+*** 如何解决写Elisp时候遇到的一些需要密码认证的命令行操作
 
-     以在个人版的Debian上面安装nodejs为例子.
+以在个人版的Debian上面安装nodejs为例子.
 
-     #+begin_example
-     先了解一下sudo,sudo的作用就是以另外一个用户身份执行命令,默认身份是superuser(这里是root),执行时候需要提供这个用户的密码.
-     sudo有一个sudoers policy缓存凭证15分钟,除非重写了凭证,否则在这15分钟内以这个用户身份执行命令是不需要再次输入任何密码的.
-     #+end_example
+#+begin_example
+先了解一下sudo,sudo的作用就是以另外一个用户身份执行命令,默认身份是superuser(这里是root),执行时候需要提供这个用户的密码.
+sudo有一个sudoers policy缓存凭证15分钟,除非重写了凭证,否则在这15分钟内以这个用户身份执行命令是不需要再次输入任何密码的.
+#+end_example
 
-     1. 利用tramp库,设定默认目录为"/sudo::"
+1. 利用tramp库,设定默认目录为"/sudo::"
 
-        #+begin_src elisp
-        (let ((default-directory "/sudo::"))
-        (shell-command "apt-get install nodejs"))
-        #+end_src
+   #+begin_src elisp
+   (let ((default-directory "/sudo::"))
+   (shell-command "apt-get install nodejs"))
+   #+end_src
 
-        缺点就是认证后不会生成凭证
+   缺点就是认证后不会生成凭证
 
-     2. 对命令进行修改
+2. 对命令进行修改
 
-        #+begin_src elisp
-        (shell-command (string-join (list "echo" (shell-quote-argument (read-passwd "Password: "))
-                                          "|" "sudo" "-S" "apt-get" "install" "nodejs") " "))
-        #+end_src
+   #+begin_src elisp
+   (shell-command (string-join (list "echo" (shell-quote-argument (read-passwd "Password: "))
+                                     "|" "sudo" "-S" "apt-get" "install" "nodejs") " "))
+   #+end_src
 
-        缺点就是比较麻烦,也没凭证管理,优点就是你可以自己实现凭证管理(怎么安全管理是一个问题).
+   缺点就是比较麻烦,也没凭证管理,优点就是你可以自己实现凭证管理(怎么安全管理是一个问题).
 
-     3. 使用 =eshell-command=
+3. 使用 =eshell-command=
 
-        #+begin_src elisp
-        (eshell-command "sudo apt-get install nodejs")
-        #+end_src
+   #+begin_src elisp
+   (eshell-command "sudo apt-get install nodejs")
+   #+end_src
 
-        优点是简单,但还是没有凭证管理.
+   优点是简单,但还是没有凭证管理.
+
+
+*** 如何让调试器可以调试user-error?
+#+BEGIN_EXAMPLE
+写于 2018/10/21
+#+END_EXAMPLE
+
+Drew已经在这[[https://superuser.com/questions/782313/emacs-make-debug-on-error-catch-errors/782365][里面]]进行回答了,文档上只是做了暗示,之所以调试器不能调试 =user-error=,那么是因为 =debug-ignored-errors= 这个变量有 =user-error= 这个变量,
+
+=debug-ignored-errors= 是告诉 =Emacs Debugger= 忽略哪些错误,所以只需要把 =debug-ignored-errors= 里面的 =user-error= 条目清空掉就可以了.也就是说 =user-error= 实际上还是可以唤醒 =debugger=.
+
+#+BEGIN_SRC emacs-lisp
+(setq debug-ignored-errors
+      (remove-if
+       (lambda (item) (eq item 'user-error))
+       debug-ignored-errors))
+#+END_SRC
+
+*** Autoload函数引用未被require的变量,修改该变量后无法读取变量?
+#+BEGIN_EXAMPLE
+写于 2018/10/21
+#+END_EXAMPLE
+
+注意: *该问题虽然已经解决了,但是途中遇到一个奇怪现象我没有办法解释,以后还是会更新*.
+
+解决问题时候的 =org-mode= 版本为 =org-plus-contrib-20181015=.
+
+实际情况就是: 写了一个函数 =publish-all-posts= 需要使用 =org-publish= 作为 =subroutine=, 主要是利用 =Emacs Lisp= 的动态作用域名来临时绑定全局变量,特别是 =org-publish-project-alist= 并且调用 =org-publish=.
+
+目的是为了不污染全局变量和环境,然而有一个问题, =org-publish= 是 =Autoload= 函数,可是我并没有 =require= 它引用的变量 =org-publish-project-alist=,就在我用 =let= 进行绑定的时候发生了一个奇怪现象.
+
+第一次执行函数 =publish-all-posts= 的时候报错了: "Unknown component static in project DarkSalt",引发错误的函数是 =org-publish-expand-projects=, 这还是可以理解,因为 =org-publish-project-alist= 并没有进行全局绑定默认是 =nil= 所以引发异常.
+
+我不能理解的地方就在于接下来函数A的调用居然正常,没有发生报错.我读了一下 =org-publish, org-publish-projects 和 org-publish-expand-projects= 这3个函数的源代码并没发现在哪里给 =org-publish-project-alist= 进行赋值.
+
+不过我还是带着疑惑把[[https://github.com/saltb0rn/emacs.d/commit/b146dffaa096683e1f1eee171d6e292af719cdb1#diff-64ed6d0a7a4f2eaf33cacc2454a19cff][报错解决]]了, =require= =ox-publish= (也就是 =org-publish-project-alist= 的定义文件) 就可以解决问题,不过还是不明白这个奇怪现象的原因,有可能是我没有读透代码,所以这个问题不能算是完全解决.
+
+#+BEGIN_SRC emacs-lisp
+(defun publish-all-posts (project &optional force async)
+  "Now the project of blog is isolated from `org-publish-project-alist'.
+That is, when calling `org-publish-project' or `org-publish' would not
+see any project of blog, vice versa."
+  (interactive
+   (list (assoc (completing-read "Publish project: "
+                                 blog-alist nil t)
+                blog-alist)
+         current-prefix-arg))
+  (create-project-directory-if-necessary)
+  (write-posts-to-tag-inc)
+  (rewrite-theindex-inc)
+  (let ((org-publish-project-alist blog-alist)
+        (org-html-home/up-format (ht-get home/up-formats 'blog))
+        (org-html-head (ht-get html-heads 'blog))
+        (org-html-preamble nil)
+        (org-html-doctype "html5")
+        (org-html-link-home "/")
+        (org-html-link-up "/")
+        (org-export-with-toc nil)
+        (org-export-with-author t)
+        (org-export-with-email nil)
+        (org-export-with-creator nil)
+        (org-export-with-date nil)
+        (org-export-with-section-numbers nil))
+    (org-publish project))
+  (rename-theindex-to-index))
+#+END_SRC
 
 
 ** Emacs Lisp学习笔记
@@ -943,6 +1009,7 @@ for i in subgen_wrapper(5):
 
 进入 =Lisp debugger= 的时候会增加这个值.这个值的作用是避免不良定义的函数无限递归.解决这个问题还可以通过设置 =max-lisp-eval-depth= 限制递归层数.
 
+
 **** 当变量为Void (When a Variable is Void)
 
 未赋值的变量和赋值为 =nil= 的变量是不一样的,前者是未绑定的,所以前者情况中的变量为 =void=.
@@ -1029,8 +1096,84 @@ e    ;; => 5
 
 **** 设定变量的值 (Setting Variable Values)
 
+
+*** 调试 (Debugging)
+
+针对 =Emacs Lisp= 进行调试可以采取以下几种手段,掌握之后可以节省不少排错的时间.
+
+**** Debugger
+
+普通的 =Lisp debugger= 提供挂起 =form= 执行的能力.在 =Emacs= 中的一个挂起(suspended,或者叫中断,break)实际是一个一个递归编辑(recursive edit),
+
+在挂起的时候可以执行普通的编辑,比如检查运行时的栈,变量的值或者改变这些值等等.关于 =Recursive Editing= 可以查看 =M-: (info "(elisp) Recursive Editing")=.
+
+关于如何阅读 =Emacs Lisp Debugger= 的 =backtrace=,它是以栈的顺序动态显示的,也就是说,最底下底语句是第一句,顶层语句是目前执行的语句,也就是当前执行点.
+
+***** Error Debugging
+
+设定调试的入口,也就是什么时候才唤醒调试器.
+
+- debug-on-error
+
+  设定该变量为 =t= ,可以在 =debug-ignored-errors= 以外的错误发生时进入调试, =debug-ignored-errors= 告诉调试器无视哪些错误.
+
+  如果值是一个错误条件的列表,那么只有引发列表中的错误才会进入调试.
+
+  当这个变量的值为 =non-nil= 的时候, =Emacs= 是不会为进程过滤函数和哨兵 (=process filter functions and sentinels=)创建错误处理器,也就是它们一旦有错误就会进入调试.
+
+- eval-expression-debug-on-error
+
+  如果该变量为 =t=, 那么在执行 =eval-expression= 命令,默认 =M-:=,的时候动态绑定 =debug-on-error= 为 =t=,其它时候 =debug-on-error= 的值还是原来的值.
+
+  也就是针对执行 =eval-expression= 发生的错误进行调试.
+
+- debug-on-signal
+
+  正常来说, =condition-case= 捕捉到的错误是不会唤醒调试器的,因为 =condition-case= 在调试器之前处理了错误.
+
+  假如 =debug-on-signal= 这个变量设定为 =non-nil=,那么调试器就可以无视 =condition-case= 在第一时间处理错误.
+
+  这个变量可以在 =Emacs= 的 =--eval= 选项进行设定,如果运行时候发生了错误,那么 =Emacs= 就会弹出一个 =backtrace=.
+
+  *最好不要在编码中设定这个变量,因为会导致所有 condition-case 语句失去处理错误的机会,包括你计划外的部分.*
+
+  如果需要调试 =condition-case= 里面的代码,可以考虑使用 =condition-case-unless-debug=.
+
+- debug-on-event
+
+  如果给该变量设定一个特别事件(special event),那么 =Emacs= 就会在接受到事件的第一时间绕过 =special-event-map= 进入调试器.
+
+  目前值支持对应 =SIGUSER1= 和 =SIGUSER2= 的值,当设定好 =inhibit-quit= 并且在 =Emacs= 没有响应时候这个变量十分有用.
+
+- debug-on-message
+
+  给该变量设定用来匹配回显区域(echo area)的消息(message)的正则表达式(regular expression),如果匹配就会进入调试.用来查找造成该消息的原因就很有用.
+
+  比如,
+
+  #+BEGIN_SRC emacs-lisp
+  (setq debug-on-message
+      ".*\"q\".*")
+
+  (defun test ()
+      (message "\"q\""))
+
+  (test)
+  #+END_SRC
+
+**** Edebug
+
+**** Syntax Errors
+
+**** Test Coverage
+
+**** Profilling
+
+**** ERT: Emacs Lisp Regression Testing
+
 *** 命令循环 (Command Loop)
 
+(未写)
 
 ** 个人认为不错的的一些参考资源和博客
 
