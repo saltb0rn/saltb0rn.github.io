@@ -494,7 +494,6 @@ p::first-line {
 
 文档会按照源代码的元素顺序上下排列,称做文档流,是一个层,之后会发现文档不只是只有一个层.
 
-
 **** 浮动布局
 
 元素一旦设置为浮动就会脱离正常文档流(实际上仍然是文档的一部分),它会向左或者右偏移,直到碰触到容器的边缘或者另外一个浮动元素.
@@ -578,6 +577,23 @@ div:nth-of-type(3) {
 
 =relative= 和 =fixed= 的混合体,允许元素像 =relative= 一样动作,直到滚动到某一个阈值点,之后变得 =fixed=.
 
+***** 调整元素位置
+
+上面的这么多定位中,只有相对定位,绝对定位,固定定位以及 =sticky= 可以使用 =top, right, bottom, left= 这个4个属性来调整定位元素(positioned elements)的位置.
+
+- 对于绝对定位,它们是指定元素和容器元素之间(容器元素需要设置 position: relative)边界的距离,比如容器元素A包含一个 =left: 10%= 的子元素a,那么a的左边到A左边的距离为A宽度的10%.
+
+- 对于固定定位,它们是指定元素和 =viewport= 之间的边界距离.
+
+- 对于相对定位,它们是指元素和相邻元素之间的边界距离,如果没有相邻元素,那就是和容器元素之间的距离.
+
+- 对于sticky,当指定元素在 =viewport= 内,那么就表现和 =relative= 一样,当在 =viewport= 外就表现和 =fixed= 一样.
+
+如果元素的 =top= 和 =bottom= 属性都设定了,并且没有指定 =height= 属性或者设定为 =auto= 或100,那么 =top= 和 =bottom= 之间的距离就是元素的高度;假如 =height= 属性固定了,那么会优先处理 =top= 属性并且无视 =bottom= 属性.
+
+如果元素的 =left= 和 =right= 属性都设定了,并且没有指定 =width= 属性或者设定为 =auto= 或者100,那么 =left= 和 =right= 之间的距离就是元素的宽度;假设固定了 =width=,那么就要考虑两种情况,假设容器方向是从左往右(可以通过 =direction= 属性进行设定),那么会优先处理 =left= 属性并且无视 =right=,反之亦然.
+
+但是实际上有一个利用它们来居中元素的例子: https://stackoverflow.com/a/18106475
 
 **** Flex布局
 
@@ -828,6 +844,7 @@ https://mdn.mozillademos.org/files/14645/1_Grid_Area.png
 
 =Flexbox= 是第一个拥有合适的对齐控制的布局技术.
 
+
 *** 更深入盒子模型以及布局
 
 - Visual formatting model
@@ -893,6 +910,10 @@ https://mdn.mozillademos.org/files/14645/1_Grid_Area.png
     - (top|bottom)-(color|left-radius|right-radius|style|width)
 
   - box-shadow
+
+    文档上面的描述可能有点难懂,这个工具会给你明白文档中的概念: 什么是模糊(blur)和扩散(spread)半径.
+
+    https://cssgenerator.org/box-shadow-css-generator.html
 
 - CSS Color
 
@@ -1114,6 +1135,8 @@ https://mdn.mozillademos.org/files/14645/1_Grid_Area.png
 
 - CSS Transforms
 
+  如何通过 =CSS= 让二维或者三维空间内的元素发生变换.
+
   https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Transforms
 
   - backface-visibility
@@ -1128,9 +1151,13 @@ https://mdn.mozillademos.org/files/14645/1_Grid_Area.png
 
   - transform
 
+    对指定元素进行旋转(rotate),拉伸(scale),歪斜(skew)或者转换(translate).
+
     - box
 
     - origin
+
+      就是元素变换的原点,默认是值 =50% 50% 0=,分别是原点的 =x, y, z= 三个参数.
 
     - style
 
@@ -1764,6 +1791,7 @@ self.addEventListener(
 <script type="text/javascript" src="http://livejs.com/live.js"></script>
 #+END_SRC
 
+
 *** 给所有页面元素添设定事件
 
 #+BEGIN_EXAMPLE
@@ -1946,6 +1974,50 @@ window.addEventListener('scroll', scrollFn, false);
 按照每秒60次来说,那么每执行一次就需要隔 =(1000ms / 60)= ms,大概相当于 =throttle(fn, 500, 1000/16)=,当然 =rAF= 的精准度比后者高.
 
 缺点就是性能不好,适合用于需要重绘的场景.
+
+
+*** 如何给定绝对定位元素居中
+
+https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout/Positioning#Absolute_positioning
+
+=margin= 也会会影响定位.
+
+
+*** 如何防止网站被别人iframe
+
+这要针对不同情况来解决,解决的问题的角度不一样,分为前端和后端.
+
+**** 直接在HTML里面使用iframe标签
+
+这种很好解决,我们只需要判断页面是否有一个 =parent=,当它的 =parent= 是自己就证明不存在 =parent=,那么就没有被别人 =iframe= 引用.
+
+如果有,那么可以这样来让它强行跳转到我们的页面.详细内容请看[[https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe][这里]].
+
+#+BEGIN_SRC javascript
+window.top != window.self && window.top.location.replace("http://yoursite.com");
+#+END_SRC
+
+
+**** 通过JavaScript写入iframe标签
+
+对方可能会给 =iframe= 标签设置空 =sandbox= 属性来禁止 =iframe= 里面的脚本运行,这个时候上面的解决办法就失效了.关于 =iframe= 可以看[[https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe][这里]].
+
+这个时候可以通过设置后端的 =XFO= 头来禁止别的网站通过 =iframe= 盗用. HTTP headers 的参考可以参考[[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers][这里]].
+
+比如 =Nginx= 可以在 =server block= 里面添加头,如下
+
+#+BEGIN_SRC sh
+server {
+
+    add_header X-Frame-Options Deny;
+
+    # the rest of the conf is up to you
+
+}
+#+END_SRC
+
+当然要根据实际后端来自行配置.后端是彻底防止别人通过 =iframe= 标签来盗用你的网站,上面通过 =JavaScript= 判断的解决方法可以不用了.
+
 
 *** 移动端适配
 
