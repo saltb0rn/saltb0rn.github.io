@@ -1103,13 +1103,13 @@ e    ;; => 5
 
 **** Debugger
 
-普通的 =Lisp debugger= 提供挂起 =form= 执行的能力.在 =Emacs= 中的一个挂起(suspended,或者叫中断,break)实际是一个一个递归编辑(recursive edit),
+正常的 =Lisp debugger= 提供挂起 =form= 执行的能力.在 =Emacs= 中的一个挂起(suspended,或者叫中断,break)实际是一个递归编辑(recursive edit),
 
 在挂起的时候可以执行普通的编辑,比如检查运行时的栈,变量的值或者改变这些值等等.关于 =Recursive Editing= 可以查看 =M-: (info "(elisp) Recursive Editing")=.
 
 关于如何阅读 =Emacs Lisp Debugger= 的 =backtrace=,它是以栈的顺序动态显示的,也就是说,最底下底语句是第一句,顶层语句是目前执行的语句,也就是当前执行点.
 
-***** Error Debugging
+***** 错误调试 (Error Debugging)
 
 设定调试的入口,也就是什么时候才唤醒调试器.
 
@@ -1161,6 +1161,115 @@ e    ;; => 5
   (test)
   #+END_SRC
 
+***** 无限循环 (Infinite Loops)
+
+当程序死循环的时候,可以通过 =C-g=,也就是调用 =keyboard-quit= 来终止程序.这样直接停止的话是获取不了死循环的信息,可以设置 =debug-on-quit= 为 =non-nil= 来在 =C-g= 的时候进入调试.
+
+***** 函数调试器 (Function Debugging)
+
+如果想在调用特定函数的时候进入调试,可以通过使用 =debug-on-entry= 函数添加想要的调试的函数,比如 =(debug-on-entry 'example)=.
+
+有一点要注意的是, =debug-on-entry= 不能直接添加 =C= 语言实现的原函数和 =Special Forms=,间接是可以的,也就是 =Lisp= 函数用它们作为 =subroutine=.
+
+如果要取消对某个参数的调试,可以通过 =cancel-debug-on-entry= 来取消,比如 =(cancel-debug-on-entry 'example)=.
+
+***** 直接调试 (Explicit Debug)
+
+可以在源代码中想要调试的位置添加 =(debug)= 来作为 =breakpoint=,然后可以通过 =eval-defun= 等方式运行调试.
+
+***** 使用调试器 (Using Debugger)
+
+进入 =Emacs= 调试器的时候会打开一个 =*Backtrace*= {{{buffer}}},它是一个使用了特别 =major mode= 的只读(read-only){{{buffer}}}.
+
+这个 =major mode= 是 =Debugger mode=,把字母定义成调试命令.在该 =mode= 下依然可以做其它正常的 =Emacs= 操作,不过做这些操作之前最好用 =q= 命令退出调试.
+
+=q= 命令可以 =*Backtrace*= {{{buffer}}} 并且退出调试.默认情况下,退出只是隐藏 =*Backtrace*= {{{buffer}}},也就是该{{{buffer}}}没有被杀掉.
+
+要杀掉的话就设定 =debugger-bury-or-kill= 为 ='kill=.
+
+#+BEGIN_SRC emacs-lisp
+(and
+  (require 'debug)
+  (setq debugger-bury-or-kill 'kill))
+#+END_SRC
+
+在进入调试的时候会根据 =eval-expression-debug-on-error= 临时设置 =debug-on-error= 变量,如果前者为 =non-nil=,那么 =debug-on-error= 就会为 =t=.
+
+这意味如果在调试的时候出现了更多错误, =Emacs= 将会触发另外的 =backtraces=,如果不想这样的话可以在 =debugger-mode-hook= 里面把 =eval-expression-debug-on-error= 设置为 =nil= 或者把 =debug-on-error= 设置为 =nil=.
+
+*关于如何查看调试器*
+
+=Backtrace= {{{buffer}}} 展示运行中的函数以及它们的参数值,可以该{{{buffer}}}在上面通过移动 =Emacs= 指针到对应的行来选择一个栈帧(stack frame),栈帧是指 =Lisp= 解析器储存特定函数的调用信息(information about a particular invocation of a function)的位置.
+
+正在工作的栈帧被认为是当前帧(我也不太知道怎么翻译和理解,原文: The frame whose line point is on is considered the “current frame”.),只有一些调试命令可以操作当前栈帧.
+
+=Backtrace= 的栈帧是倒着的,也就是要从底往上读(read from bottom up)才是正确的执行顺序,也就是正序第一行就是当前栈帧.
+
+某些行的前面会有星号,一个星号表示一个函数调用的出口,该栈帧会在这个出口再次调用调试器,没错,调试器是一个递归编辑,每次进入一个栈帧就是进入一个子调试器,简单点就是调试器会在带星号的栈帧停下进行调试.
+
+有一些函数名字会有下划线,这意味着调试器知道它们的源代码位置,可以通过鼠标点击或者指针加 =<RET>= 来浏览源代码.
+
+其中是没有发生报错和因为报错而进入调试模式,两种的顶行显示是不一样的.
+
+#+BEGIN_SRC emacs-lisp
+(setq debug-on-error t)
+
+(defun raise-error (a)
+  (+ a nil))
+
+(raise-error (raise-error 1))
+#+END_SRC
+
+#+CAPTION: 报错的时候
+[[../../../files/raise-error.png]]
+
+#+BEGIN_SRC emacs-lisp
+(defun no-error (a)
+  (+ a 1))
+
+(debug-on-entry 'no-error)
+
+(no-error (no-error 1))
+#+END_SRC
+
+#+CAPTION: 没有错误的时候
+[[../../../files/no-error.png]]
+
+两者的提示是不一样的,出此以外,有一些命令在报错的时候是不可以执行的.比如 =r= 命令就不可以,因为错误是不能返回的.
+
+调试器本身一定要经过编译运行,因为需要假设调试器自身需要使用多少个栈帧.如果是解析运行调试器,假设就会失败.
+
+***** 调试器命令 (Debugger Commands)
+
+如果能理解 *Emacs Lisp的调试器是一个递归编辑,每一个进入栈帧都是进入一个子调试器*,文档上的说明就很好理解.尽管如此我还是要用自己的话总结一下(我没有了解以前可是一头雾水).
+
+- c: 执行并且退出当前栈帧的调试,在下一个星号标记的栈帧处停止.
+- d: 进入当前栈帧并且给该栈帧添加星号, =debug-on-entry= 实际上就是给指定的函数添加星号.进入后可以通过c命令跳出.
+- b: 给当前栈帧添加星号.
+- u: 取消当前栈帧的星号.
+- j: 给当前栈帧添加星号然后和c命令一样执行,不过会无视 =debug-on-entry= 设定的星号(或者说临时禁止所有函数的break-on-entry). =c= 和 =j= 的区别可以通过调试上面没有错误的例子了了解一下.
+- e: 在 =minibuffer= 读取 =Lisp= 表达式并且(如果可以的划在当前词法环境)进行运算以及在回显区域(area echo)打印结果.调试器会在外部临时储存和恢复运行时变量值,所以可以随意检查和更改运行时的值.
+- R: 和e命令一样,不同的是R命令会储存计算结果到 =*Debugger-record*=.
+- q: 终止调试器(最开始的调试器),返回 =Emacs= 的 =top-level=.
+- r: 在带星号的栈帧返回时指定它的返回值,用于 =mock=.
+- l: 显示一个函数列表,这些函数都是会唤醒调试器的.
+- v: 切换显示当前栈帧的本地变量.
+
+***** 唤醒调试器 (Invoking the Debugger)
+
+关于 =debug= 函数的细节.该函数的第一个参数可以用来改变 =*Backtrace*= 顶部的提示信息 "Debugger entered--XXX".具体看文档就好.
+
+***** 调试器内部 (Internals of Debugger)
+
+关于调试器内部使用的函数和变量.
+
+- =debugger= 变量: 用来指定调用 =debug= 函数时候使用的参数,默认是 =debug=,参考 =debug= 函数的细节, =M-: (info "(elisp) Internals of Debugger")=.
+- =backtrace= 函数: =debug= 函数使用该函数给 =*Backtrace*= {{{buffer}}}填充,它是用C语言写的,因为必须要访问栈来判断函数调用是否 =active=,返回值总是 =nil=,该函数的输出默认到 =standard-output= 的.
+- =debug-on-next-call= 变量: =non-nil= 表示在下一个 =eval, apply 或者 funcall= 之前调用调试器,进入调试器后把它设置为 =nil=.调试器的d命令就是通过设置这个变量来工作.如果直接手动设置该变量会进入调试器,可以试试.
+- =backtrace-debug= 函数: 设置 =LEVEL= 级别的栈帧的 =debug-on-exit flag= 为 =FLAG=, =LEVEL= 和 =FLAG= 是函数的参数. =FLAG= 为 =non-nil= 则是说在当前栈帧结束后进入调试器.
+- =command-debug-status= 变量: 记录当前交互命令的调试状态,每一次交互式调用命令就会把这个变量绑定为 =nil=.调试器可以设置这个变量来给在调试时引发的新调试器调用(debugger invocation)留下信息.
+- =backtrace-frame= 函数: 返回第 =FRAME-NUMBER= 层级栈帧的信息.
+
 **** Edebug
 
 **** Syntax Errors
@@ -1171,9 +1280,11 @@ e    ;; => 5
 
 **** ERT: Emacs Lisp Regression Testing
 
+
 *** 命令循环 (Command Loop)
 
 (未写)
+
 
 ** 个人认为不错的的一些参考资源和博客
 

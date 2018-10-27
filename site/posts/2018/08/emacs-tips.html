@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-10-22 Mon 00:04 -->
+<!-- 2018-10-27 Sat 23:53 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emacs Tips(持续更新)</title>
@@ -2183,7 +2183,7 @@ e    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt;
 <h4 id="orgd17b4ed">Debugger</h4>
 <div class="outline-text-4" id="text-orgd17b4ed">
 <p>
-普通的 <code>Lisp debugger</code> 提供挂起 <code>form</code> 执行的能力.在 <code>Emacs</code> 中的一个挂起(suspended,或者叫中断,break)实际是一个一个递归编辑(recursive edit),
+正常的 <code>Lisp debugger</code> 提供挂起 <code>form</code> 执行的能力.在 <code>Emacs</code> 中的一个挂起(suspended,或者叫中断,break)实际是一个递归编辑(recursive edit),
 </p>
 
 <p>
@@ -2196,8 +2196,8 @@ e    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt;
 </div>
 
 <ul class="org-ul">
-<li><a id="orgf0eea7e"></a>Error Debugging<br>
-<div class="outline-text-5" id="text-orgf0eea7e">
+<li><a id="org079d209"></a>错误调试 (Error Debugging)<br>
+<div class="outline-text-5" id="text-org079d209">
 <p>
 设定调试的入口,也就是什么时候才唤醒调试器.
 </p>
@@ -2292,6 +2292,190 @@ debug-on-message
 </ul>
 </div>
 </li>
+
+<li><a id="org6e04e6c"></a>无限循环 (Infinite Loops)<br>
+<div class="outline-text-5" id="text-org6e04e6c">
+<p>
+当程序死循环的时候,可以通过 <code>C-g</code>,也就是调用 <code>keyboard-quit</code> 来终止程序.这样直接停止的话是获取不了死循环的信息,可以设置 <code>debug-on-quit</code> 为 <code>non-nil</code> 来在 <code>C-g</code> 的时候进入调试.
+</p>
+</div>
+</li>
+
+<li><a id="org0f14cf9"></a>函数调试器 (Function Debugging)<br>
+<div class="outline-text-5" id="text-org0f14cf9">
+<p>
+如果想在调用特定函数的时候进入调试,可以通过使用 <code>debug-on-entry</code> 函数添加想要的调试的函数,比如 <code>(debug-on-entry 'example)</code>.
+</p>
+
+<p>
+有一点要注意的是, <code>debug-on-entry</code> 不能直接添加 <code>C</code> 语言实现的原函数和 <code>Special Forms</code>,间接是可以的,也就是 <code>Lisp</code> 函数用它们作为 <code>subroutine</code>.
+</p>
+
+<p>
+如果要取消对某个参数的调试,可以通过 <code>cancel-debug-on-entry</code> 来取消,比如 <code>(cancel-debug-on-entry 'example)</code>.
+</p>
+</div>
+</li>
+
+<li><a id="orge723806"></a>直接调试 (Explicit Debug)<br>
+<div class="outline-text-5" id="text-orge723806">
+<p>
+可以在源代码中想要调试的位置添加 <code>(debug)</code> 来作为 <code>breakpoint</code>,然后可以通过 <code>eval-defun</code> 等方式运行调试.
+</p>
+</div>
+</li>
+
+<li><a id="orgcb8c29e"></a>使用调试器 (Using Debugger)<br>
+<div class="outline-text-5" id="text-orgcb8c29e">
+<p>
+进入 <code>Emacs</code> 调试器的时候会打开一个 <code>*Backtrace*</code> 缓冲区,它是一个使用了特别 <code>major mode</code> 的只读(read-only)缓冲区.
+</p>
+
+<p>
+这个 <code>major mode</code> 是 <code>Debugger mode</code>,把字母定义成调试命令.在该 <code>mode</code> 下依然可以做其它正常的 <code>Emacs</code> 操作,不过做这些操作之前最好用 <code>q</code> 命令退出调试.
+</p>
+
+<p>
+<code>q</code> 命令可以 <code>*Backtrace*</code> 缓冲区 并且退出调试.默认情况下,退出只是隐藏 <code>*Backtrace*</code> 缓冲区,也就是该缓冲区没有被杀掉.
+</p>
+
+<p>
+要杀掉的话就设定 <code>debugger-bury-or-kill</code> 为 <code>'kill</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">and</span>
+  (<span style="color: #F0DFAF; font-weight: bold;">require</span> '<span style="color: #BFEBBF;">debug</span>)
+  (<span style="color: #F0DFAF; font-weight: bold;">setq</span> debugger-bury-or-kill 'kill))
+</pre>
+</div>
+
+<p>
+在进入调试的时候会根据 <code>eval-expression-debug-on-error</code> 临时设置 <code>debug-on-error</code> 变量,如果前者为 <code>non-nil</code>,那么 <code>debug-on-error</code> 就会为 <code>t</code>.
+</p>
+
+<p>
+这意味如果在调试的时候出现了更多错误, <code>Emacs</code> 将会触发另外的 <code>backtraces</code>,如果不想这样的话可以在 <code>debugger-mode-hook</code> 里面把 <code>eval-expression-debug-on-error</code> 设置为 <code>nil</code> 或者把 <code>debug-on-error</code> 设置为 <code>nil</code>.
+</p>
+
+<p>
+<b>关于如何查看调试器</b>
+</p>
+
+<p>
+<code>Backtrace</code> 缓冲区 展示运行中的函数以及它们的参数值,可以该缓冲区在上面通过移动 <code>Emacs</code> 指针到对应的行来选择一个栈帧(stack frame),栈帧是指 <code>Lisp</code> 解析器储存特定函数的调用信息(information about a particular invocation of a function)的位置.
+</p>
+
+<p>
+正在工作的栈帧被认为是当前帧(我也不太知道怎么翻译和理解,原文: The frame whose line point is on is considered the “current frame”.),只有一些调试命令可以操作当前栈帧.
+</p>
+
+<p>
+<code>Backtrace</code> 的栈帧是倒着的,也就是要从底往上读(read from bottom up)才是正确的执行顺序,也就是正序第一行就是当前栈帧.
+</p>
+
+<p>
+某些行的前面会有星号,一个星号表示一个函数调用的出口,该栈帧会在这个出口再次调用调试器,没错,调试器是一个递归编辑,每次进入一个栈帧就是进入一个子调试器,简单点就是调试器会在带星号的栈帧停下进行调试.
+</p>
+
+<p>
+有一些函数名字会有下划线,这意味着调试器知道它们的源代码位置,可以通过鼠标点击或者指针加 <code>&lt;RET&gt;</code> 来浏览源代码.
+</p>
+
+<p>
+其中是没有发生报错和因为报错而进入调试模式,两种的顶行显示是不一样的.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">setq</span> debug-on-error t)
+
+(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">raise-error</span> (a)
+  (+ a nil))
+
+(raise-error (raise-error 1))
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/raise-error.png" alt="raise-error.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>报错的时候</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">no-error</span> (a)
+  (+ a 1))
+
+(debug-on-entry 'no-error)
+
+(no-error (no-error 1))
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/no-error.png" alt="no-error.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>没有错误的时候</p>
+</div>
+
+<p>
+两者的提示是不一样的,出此以外,有一些命令在报错的时候是不可以执行的.比如 <code>r</code> 命令就不可以,因为错误是不能返回的.
+</p>
+
+<p>
+调试器本身一定要经过编译运行,因为需要假设调试器自身需要使用多少个栈帧.如果是解析运行调试器,假设就会失败.
+</p>
+</div>
+</li>
+
+<li><a id="org81d5063"></a>调试器命令 (Debugger Commands)<br>
+<div class="outline-text-5" id="text-org81d5063">
+<p>
+如果能理解 <b>Emacs Lisp的调试器是一个递归编辑,每一个进入栈帧都是进入一个子调试器</b>,文档上的说明就很好理解.尽管如此我还是要用自己的话总结一下(我没有了解以前可是一头雾水).
+</p>
+
+<ul class="org-ul">
+<li>c: 执行并且退出当前栈帧的调试,在下一个星号标记的栈帧处停止.</li>
+<li>d: 进入当前栈帧并且给该栈帧添加星号, <code>debug-on-entry</code> 实际上就是给指定的函数添加星号.进入后可以通过c命令跳出.</li>
+<li>b: 给当前栈帧添加星号.</li>
+<li>u: 取消当前栈帧的星号.</li>
+<li>j: 给当前栈帧添加星号然后和c命令一样执行,不过会无视 <code>debug-on-entry</code> 设定的星号(或者说临时禁止所有函数的break-on-entry). <code>c</code> 和 <code>j</code> 的区别可以通过调试上面没有错误的例子了了解一下.</li>
+<li>e: 在 <code>minibuffer</code> 读取 <code>Lisp</code> 表达式并且(如果可以的划在当前词法环境)进行运算以及在回显区域(area echo)打印结果.调试器会在外部临时储存和恢复运行时变量值,所以可以随意检查和更改运行时的值.</li>
+<li>R: 和e命令一样,不同的是R命令会储存计算结果到 <code>*Debugger-record*</code>.</li>
+<li>q: 终止调试器(最开始的调试器),返回 <code>Emacs</code> 的 <code>top-level</code>.</li>
+<li>r: 在带星号的栈帧返回时指定它的返回值,用于 <code>mock</code>.</li>
+<li>l: 显示一个函数列表,这些函数都是会唤醒调试器的.</li>
+<li>v: 切换显示当前栈帧的本地变量.</li>
+</ul>
+</div>
+</li>
+
+<li><a id="orga253729"></a>唤醒调试器 (Invoking the Debugger)<br>
+<div class="outline-text-5" id="text-orga253729">
+<p>
+关于 <code>debug</code> 函数的细节.该函数的第一个参数可以用来改变 <code>*Backtrace*</code> 顶部的提示信息 "Debugger entered&#x2013;XXX".具体看文档就好.
+</p>
+</div>
+</li>
+
+<li><a id="org9b4eb0b"></a>调试器内部 (Internals of Debugger)<br>
+<div class="outline-text-5" id="text-org9b4eb0b">
+<p>
+关于调试器内部使用的函数和变量.
+</p>
+
+<ul class="org-ul">
+<li><code>debugger</code> 变量: 用来指定调用 <code>debug</code> 函数时候使用的参数,默认是 <code>debug</code>,参考 <code>debug</code> 函数的细节, <code>M-: (info "(elisp) Internals of Debugger")</code>.</li>
+<li><code>backtrace</code> 函数: <code>debug</code> 函数使用该函数给 <code>*Backtrace*</code> 缓冲区填充,它是用C语言写的,因为必须要访问栈来判断函数调用是否 <code>active</code>,返回值总是 <code>nil</code>,该函数的输出默认到 <code>standard-output</code> 的.</li>
+<li><code>debug-on-next-call</code> 变量: <code>non-nil</code> 表示在下一个 <code>eval, apply 或者 funcall</code> 之前调用调试器,进入调试器后把它设置为 <code>nil</code>.调试器的d命令就是通过设置这个变量来工作.如果直接手动设置该变量会进入调试器,可以试试.</li>
+<li><code>backtrace-debug</code> 函数: 设置 <code>LEVEL</code> 级别的栈帧的 <code>debug-on-exit flag</code> 为 <code>FLAG</code>, <code>LEVEL</code> 和 <code>FLAG</code> 是函数的参数. <code>FLAG</code> 为 <code>non-nil</code> 则是说在当前栈帧结束后进入调试器.</li>
+<li><code>command-debug-status</code> 变量: 记录当前交互命令的调试状态,每一次交互式调用命令就会把这个变量绑定为 <code>nil</code>.调试器可以设置这个变量来给在调试时引发的新调试器调用(debugger invocation)留下信息.</li>
+<li><code>backtrace-frame</code> 函数: 返回第 <code>FRAME-NUMBER</code> 层级栈帧的信息.</li>
+</ul>
+</div>
+</li>
 </ul>
 </div>
 
@@ -2316,6 +2500,7 @@ debug-on-message
 </div>
 </div>
 
+
 <div id="outline-container-org9759177" class="outline-3">
 <h3 id="org9759177">命令循环 (Command Loop)</h3>
 <div class="outline-text-3" id="text-org9759177">
@@ -2325,6 +2510,7 @@ debug-on-message
 </div>
 </div>
 </div>
+
 
 <div id="outline-container-org91f46bd" class="outline-2">
 <h2 id="org91f46bd">个人认为不错的的一些参考资源和博客</h2>
