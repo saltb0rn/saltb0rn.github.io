@@ -1,3 +1,9 @@
+*** [[file:posts/2018/11/eopl-sllgen.html][The Sllgen]]
+=EOPL= 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写解析器, =parser= 部分只有在附录里面详细说明.
+
+=Sllgen= 是 =eopl= 库提供的一个生成器,用来生成 =scanner= 和 =parser=.由于并没有在正文部分出现,那么我只能单独了解一下.
+
+	
 *** [[file:posts/2018/10/react-journay.html][React学习之旅]]
 因为各种原因我打算去做前端了,所以最近一直在学习,花了两到三天的事件调教出一份可以复用的 =Webpack= 配置(已经在 =GitHub= 上了),
 

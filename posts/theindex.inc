@@ -20,6 +20,8 @@
   - [[file:2018/10/react-journay.org][React学习之旅]]
   - [[file:2018/08/redis.org][Redis学习笔记]]
   - [[file:2018/07/regex.org][Regex]]
+* S
+  - [[file:2018/11/eopl-sllgen.org][Sllgen]]
 * 关
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
 * 前

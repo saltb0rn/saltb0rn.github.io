@@ -1,0 +1,209 @@
+#+title: The Interpreter
+#+date: 2018-11-04
+#+index: The Interpreter
+#+tags: Racket EOPL
+#+begin_abstract
+之前写了一篇关于 =Sllgen parser generator= 的文章,那是我了解 =parser= 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
+
+之所以要写这两篇文章是因为读 =EOPL= 的时候没有形成一个写 =interpreter= 的思路(或者叫套路),我想应该是读的比较匆忙(因为当时没有太多时间).
+
+=EOPL= 是一本实操性很强的 =textbook=,不亲手操作一遍就没有办法体会的.我会继续以 =LET= 语言做为例子来 *理清楚编写 =interpreter= 思路*.
+
+不会解释为什么这个数据要这么设计,这个函数为什么要这么实现的问题,这些都是具体的程序设计问题,查阅书上显然更加合适.
+
+之所以要把 =parser= 和 =interpreter= 分开写那是因为之后会学习 =compiler=, =parser= 那篇文章就可以复用了.
+#+end_abstract
+
+当定义好语言语法和词法规范之后,并且定义好 =parser= 后,对于直译型语言来说剩下的工作就是直译(interpreting)了.
+
+个人根据 =EOPL= 中第三章的内容分成两大步: *定义规范* 和 *实现规范*.其实讲 =parser= 的那篇笔记也是这样的.
+
+
+*** 值的规范 (Specification of Values)
+
+编程语言中最重要的语言规范之一就是可以操作的值有哪些,也就是语言的数据类型.每一个编程语言有至少两个值的集合.
+
+=expressed values= 和 =denoted values=.前者用来表示表达式可能的值,后者表示变量绑定的值.
+
+=LET= 语言有两种值, =Int= 和 =Bool=; 并且 =expressed values= 和 =denoted values= 是一样,当然不是所有语言都是这样的.
+
+#+BEGIN_EXAMPLE
+ExpVal = Int + Bool
+DenVal = Int + Bool
+#+END_EXAMPLE
+
+然后为这些数据定义好接口,用于之后实现这些接口,
+
+#+BEGIN_EXAMPLE
+num-val      : Int → ExpVal
+bool-val     : Bool → ExpVal
+expval->num  : ExpVal → Int
+expval->bool : ExpVal → Bool
+#+END_EXAMPLE
+
+并且先认为
+
+#+BEGIN_EXAMPLE
+expval->num  : non-expVal-for-num -> undefined
+expval->bool : non-expval-for-bool -> undefined
+#+END_EXAMPLE
+
+
+*** 环境 (Environments)
+
+为了运算包含变量的表达式,需要知道每个变量关联的值.可以把这些值储存到一个环境里面.
+
+环境就像是数学意义上的函数,定义域(domain)是一个无限的变量集合,值域(range)就是 =denoted values=,就像这样
+
+#+BEGIN_EXAMPLE
+Environment : Variable → DenVal
+#+END_EXAMPLE
+
+=EOPL= 采用了一套缩写来表示环境,
+
+- =ρ= 覆盖整个环境.
+
+- =[]= 表示空的环境.
+
+- =[var = val]ρ= 表示 =(extend-env var val ρ)=,也就是给环境在存入一个值为 =val= 的变量 =var=.
+
+- =[var1 = val1, var2 = val2]ρ= 可以缩写为 =[var1 = val1]([var 2 = val2]ρ)=,等等
+
+- =[var1 = val1, var2 = val2, ...]= 表示环境里面的值, =var1= 的值是 =val1=, =var2= 的值是  =val2=,等等.
+
+为了提高可读性,还会采用缩进,比如
+
+#+BEGIN_EXAMPLE
+[x=3]
+ [y=7]
+  [u=5]ρ
+#+END_EXAMPLE
+
+等同于
+
+#+BEGIN_SRC scheme
+(extend-env 'x 3
+  (extend-env 'y 7
+    (extend-env 'u 5 ρ)))
+#+END_SRC
+
+在使用一门语言的时候一般都不能直接操作环境的,所以下面这些接口是 =interpreter= 内部使用的,
+
+#+BEGIN_EXAMPLE
+init-env   : () → Env
+env?       : Env → bool
+empty-env  : () → '()
+empty-env? : Env → bool
+extend-env : Var x DenVal x Env → Env
+apply-env  : Env x Var → DenVal
+#+END_EXAMPLE
+
+
+*** 行为规范 (Specifying the Behavior)
+
+行为规范是根据语言的句法结构来定义的接口,定义接口就是说 *定义接口的输入和输出*.
+
+*(句法结构在 =parser= 中就定义过了, =the-grammar= 变量, 为了节省边幅这里就不写了.)*
+
+接口分两类, =constructor= 和 =observer=,分别用于构建对象和观察对象.
+
+**** Constructor
+
+根据语言的句法结构,可以看出 =Expression= 有六类,每一类需要一个 =constructor=.
+
+如果看的是 =BNF= 语法,就是每一个 =production= 就需要一个 =constructor=.
+
+因此,
+
+=Expression= 的 =Constructors= 如下,
+
+#+BEGIN_EXAMPLE
+const-exp : Int → Exp
+zero?-exp : Exp → Exp
+if-exp    : Exp × Exp × Exp → Exp
+diff-exp  : Exp × Exp → Exp
+var-exp   : Var → Exp
+let-exp   : Var × Exp × Exp → Exp
+#+END_EXAMPLE
+
+=Program= 只有一个 =constructor=,
+
+#+BEGIN_EXAMPLE
+a-program : Exp -> Program
+#+END_EXAMPLE
+
+
+**** Observer
+
+=Observer= 观察对象实际上就是计算出对象的值,如果还记得 =Interpreter= 的本质是运算的话就能理解 =observer= 是重头戏.
+
+据我观察, =observer= 貌似是一类 =production= 需要一个 =observer=.
+
+所以,
+
+=Expression= 需要一个 *可以判断表达式类型并且计算出表达式的值* 的 =observer=,
+
+#+BEGIN_EXAMPLE
+value-of : Exp x Env → ExpVal
+#+END_EXAMPLE
+
+=value-of= 的行为比较复杂,所以需要写下详细的规范:
+
+其中 ==>= 表示变换, =:== 表示结果的一个子集.
+
+#+BEGIN_EXAMPLE
+(value-of (const-exp n) ρ) => (num-val n)
+
+(value-of (var-exp var) ρ) => (apply-env ρ var)
+
+(value-of (diff-exp exp1 exp2) ρ)
+=> (num-val
+     (-
+       (expval->num (value-of exp 1 ρ))
+       (expval->num (value-of exp 2 ρ))))
+
+(value-of (zero?-exp exp1) ρ)
+:= (bool-val #t) if (expval->num val1) = 0
+:= (bool-val #f) if (expval->num val1) = 0
+
+(value-of (if-exp exp1 exp2 exp3) ρ)
+:= (value-of exp2 ρ) if (expval->bool val1) = #t
+:= (value-of exp3 ρ) if (expval->bool val1) = #f
+=> (if (expval->bool (value-of exp 1 ρ ))
+     (value-of exp 2 ρ )
+     (value-of exp 3 ρ ))
+
+(value-of (let-exp var exp1 body) ρ)
+=> (value-of body [var = val1] ρ)
+=> (value-of body [var=(value-of exp1 ρ)] ρ)
+#+END_EXAMPLE
+
+=Program= 需要一个可以计算出它的值 =observer=,
+
+#+BEGIN_EXAMPLE
+value-of-program : Program → ExpVal
+#+END_EXAMPLE
+
+具体规范为,
+
+#+BEGIN_EXAMPLE
+(value-of-program pgm)
+=> (value-of-program (a-program exp))
+=> (value-of exp ρ)
+#+END_EXAMPLE
+
+
+
+*** 实现规范 (Implementing)
+
+一旦定义好规范,就可以开始实现了.同样,也是分 =constructor= 和 =observer= 来做.
+
+对于实现 =constructor=, =parser= 那篇文章就已经完成了,就不说了.
+
+*(还记得这个表达式吗: (sllgen:make-define-datatypes the-lexical-spec the-grammar) ?)*
+
+所有接口的实现就如下,
+
+#+BEGIN_SRC scheme
+
+#+END_SRC
