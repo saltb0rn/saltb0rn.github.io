@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-04 Sun 10:19 -->
+<!-- 2018-11-06 Tue 18:36 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Sllgen</title>
+<title>The Sllgen Parser</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="saltb0rn">
 <style type="text/css">
@@ -241,47 +241,137 @@ for the JavaScript code in this tag.
     </nav>
 </div>
 <div id="content">
-<h1 class="title">The Sllgen</h1>
+<h1 class="title">The Sllgen Parser</h1>
 <div class="abstract">
 <p>
-<code>EOPL</code> 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写解析器, <code>parser</code> 部分只有在附录里面详细说明.
+<code>EOPL</code> 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写直译器, <code>parser</code> 部分只有在附录里面详细说明(可以理解,因为 <code>parser</code> 不是 <code>interpreter</code> 的一部分).
 </p>
 
 <p>
-<code>Sllgen</code> 是 <code>eopl</code> 库提供的一个生成器,用来生成 <code>scanner</code> 和 <code>parser</code>.由于并没有在正文部分出现,那么我只能单独了解一下.
+<code>Sllgen</code> 是 <code>eopl</code> 库提供的一个生成器,用来生成 <code>lexer</code> 和 <code>parser</code>.由于并没有在正文部分出现,那么我只能单独了解一下.
 </p>
 
 </div>
 
+<div id="outline-container-org2825f71" class="outline-2">
+<h2 id="org2825f71">实现一门语言的流程/模式</h2>
+<div class="outline-text-2" id="text-org2825f71">
 <p>
-<code>EOPL</code> 上面说过以解析器的方式实现一门语言主要分两步,第一步就是 <code>scanning</code> 和 <code>parsing</code>,第二步就是 <code>interpreting</code>.
+<code>EOPL</code> 上面说过以实现一门直译语言的整个流程分两步,第一步就是 <code>scanning</code> 和 <code>parsing</code>,第二步就是 <code>interpreting</code> 或者 <code>compiling</code>.
 </p>
 
 <p>
-<code>Scanning</code> 把源代码分为词(words),标点符号(punctuation)等等,这些单元被称为 <code>lexical items</code>, <code>lexmes</code> 或者最常听到的 <code>tokens</code> (下文就用这个叫法).
+第一步和第二步也有可以叫做前端部分和后端部分.
+</p>
+
+<ul class="org-ul">
+<li>前端(front-end)
+
+<ol class="org-ol">
+<li><code>Scanning</code>, 把源代码分为词(words),标点符号(punctuation)等等,这些单元被称为 <code>lexical items</code>, <code>lexmes</code> 或者最常听到的 <code>tokens</code> (下文就用这个叫法).</li>
+
+<li><code>Parsing</code>, 把 <code>scanning</code> 得到的 <code>tokens</code> 序列组织成一个有层次的句法结构(<code>hierarchical syntactic structures</code>),这种句法结构就是抽象语法树(<code>abstract syntax tree</code>),简称 <code>AST</code>,下文也用这个叫法.</li>
+</ol></li>
+
+<li><p>
+后端(back-end)
 </p>
 
 <p>
-<code>Parsing</code> 把 <code>scanning</code> 得到的 <code>tokens</code> 序列组织成一个有层次的句法结构(<code>hierarchical syntactic structures</code>),这种句法结构就是抽象语法树(<code>abstract syntax tree</code>),简称 <code>AST</code>,下文也用这个叫法.
+语言的类型运行方式有两种,直译(interpreting)和编译(compiling),也有的语言混合两种方式.
+</p>
+
+<ul class="org-ul">
+<li><code>Interpreting</code>, 运算 <code>parsing</code> 得到的 <code>AST</code>,得出结果.负责这项工作的是 <code>interpreter</code>,中文名叫直译器.</li>
+
+<li><p>
+<code>Compiling</code>, 把 <code>AST</code> 翻译成别的语言,这门语言可能是能够被硬件直译的机器语言(machine language),也可能是一门特定用途的直译语言,这门语言的直译器叫做虚拟机(virtual machine).
 </p>
 
 <p>
-<code>Interpreting</code> 运算 <code>parsing</code> 得到的 <code>AST</code>,得出结果.
+负责这项工作的是 <code>compiler</code>,中文名叫编译器.一般 <code>Compiler</code> 可以分为两个部分,
+</p>
+
+<ol class="org-ol">
+<li><code>analyzer</code>,负责推断出(deduce)程序有用的信息.</li>
+
+<li><code>translator</code>,负责翻译/编译工作,可能会使用到 <code>analyzer</code> 得到的信息.</li>
+</ol></li>
+</ul></li>
+</ul>
+
+<p>
+我们把想要实现的语言叫做 <code>source/defined language</code>,用于实现直译器/编译器的语言叫做 <code>implementation/defining language</code>,对于编译语言来说,翻译得到语言叫做 <code>target language</code>.
 </p>
 
 <p>
-第一个步就是所谓的前端(<code>frontend</code>),而第二步,也就是解析,是后端(<code>backend</code>),也是 <code>EOPL</code> 的重点内容.后端除了解析还有编译这一个选择,也就是我们说的编译器,和解析器不同,它主要把 <code>AST</code> 翻译成另外一门语言.
+所以整个流程就是:
+</p>
+
+<ol class="org-ol">
+<li>前端处理 <code>source language</code> 的代码,</li>
+
+<li>后端处理(直译或者编译)前端得到的结果.</li>
+</ol>
+</div>
+</div>
+
+
+<div id="outline-container-orgbdab77e" class="outline-2">
+<h2 id="orgbdab77e">什么是 lexer generator, parser generator, lexer 和 parser.</h2>
+<div class="outline-text-2" id="text-orgbdab77e">
+<p>
+<code>parser generator</code> <b>接受 grammar 作为输入然后输出可以根据 grammar 解析字符串流的源代码</b>.
 </p>
 
 <p>
-这次主要是针对第一步学习 <code>Sllgen</code> 的使用.
+这份源代码就是 <code>parser</code>,中文名解析器.实现语言流程中的前端就是 <code>parser</code> 的工作.
 </p>
+
+<p>
+其实准确来说, <code>parser</code> 只是负责 <code>parsing</code> 的工作,还有一个 <code>lexer</code>, 也叫做 <code>scanner</code>,负责 <code>scanning</code> 的工作.
+</p>
+
+<p>
+这个怎么划分实际上问题不大,不过推荐分开看待,知道的细节越多就证明越了解.
+</p>
+
+<p>
+<code>lexer generator</code> 负责根据正则表达式编写成的规则生成 <code>lexer</code>,一般 <code>parser generator</code> 都包含了它们,比如这里的 <code>sllgen</code>.
+</p>
+
+<p>
+经常听到的 <code>lexer generator</code> 有 <code>lex</code> 和 <code>flex</code>.
+</p>
+
+<p>
+<code>Parser generator</code> 有很多,比如 <code>Java</code> 用的 <code>Antlr</code>, <code>Emacs Lisp</code> 用的 <code>Bovine/Wisent</code>, <code>C/C++</code> 用的 <code>GNU Bison</code> 等等.
+</p>
+
+<p>
+除了通过使用的平台(语言)分类以外,可以通过解析算法进行划分,比如 <code>LL(1)</code>, <code>LR(1)</code>, <code>LALR(1)</code> 等等.
+</p>
+
+<p>
+个人推荐可以学习一下 <code>Bison</code> 的使用,因为不少它的移植,比如上面的 <code>Wisent</code> 就是其中之一.这里有一篇<a href="http://alumni.cs.ucr.edu/~lgao/teaching/bison.html">简单完整的实践</a>可以阅读一下.
+</p>
+
+<p>
+解析器是一个挺大的话题,如果想了解更多这一方面的内容,可以看这一篇维基文章: <code>Comparison of parser generators</code>.
+</p>
+</div>
+</div>
+
 
 <div id="outline-container-org8b938bd" class="outline-2">
 <h2 id="org8b938bd">Scanning</h2>
 <div class="outline-text-2" id="text-org8b938bd">
 <p>
-<code>tokens</code> 一定要是原子,也就是不可再划分,这需要根据部分的语言规范(<code>the part of language specification</code>)来划分,部分的语言规范也叫做词法规范(<code>lexical specification</code>).
+<code>tokens</code> 一定要是原子,也就是不可再划分,这需要根据部分的语言规范(<code>the part of language specification</code>)来划分,这部分的语言规范叫做词法规范(<code>lexical specification</code>).
+</p>
+
+<p>
+<b>如果是在BNF或者Grammar的描述中,tokens就是terminals</b>.
 </p>
 
 <p>
@@ -331,11 +421,11 @@ for the JavaScript code in this tag.
 </p>
 
 <ul class="org-ul">
-<li>表示 <code>token</code> 的类型, <code>class</code>.</li>
+<li><code>class</code>, <code>token</code> 的类型.</li>
 
-<li><code>token</code> 的数据,叫做 <code>datum</code>.</li>
+<li><code>datum</code>, <code>token</code> 的数据.</li>
 
-<li><code>token</code> 在输入中的位置.</li>
+<li><code>token</code> 在输入文本/源代码中的位置.</li>
 </ul>
 
 <p>
@@ -457,6 +547,14 @@ Prod-name  :: = Symbol
 </pre>
 
 <p>
+在 <code>Sllgen</code> 里面, 在知道 <b>查找的哪一个nonterminal</b> 和 <b>字符串的第一个token</b> 后, <code>grammar</code> 一定要允许 <code>parser</code> 判断出在使用哪一个 <code>production</code>.这种 <code>grammar</code> 就是 <code>LL(1)</code> 语法.
+</p>
+
+<p>
+而 <code>Sllgen</code> 就是 Racket/Scheme 的一个 <code>LL(1) parser generator</code>.
+</p>
+
+<p>
 上面的定义可以用于之后生成以下定义, <b>这里给它一个外号,定义B</b> ,就是根据这些定义构成 <code>AST</code>,(我曾经按照书上的步骤使用 <code>define-datatype</code>,直到我看到了配套的源代码&#x2026;)
 </p>
 
@@ -483,6 +581,16 @@ Prod-name  :: = Symbol
    <span style="color: #D0BF8F;">(</span>var identifier?<span style="color: #D0BF8F;">)</span>
    <span style="color: #D0BF8F;">(</span>exp1 expression?<span style="color: #D0BF8F;">)</span>
    <span style="color: #D0BF8F;">(</span>body expression?<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+<code>define-datatype</code> 的形式如下,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span>define-datatype type-name type-predicate-name
+  <span style="color: #BFEBBF;">{</span><span style="color: #D0BF8F;">(</span>variant-name <span style="color: #93E0E3;">{</span><span style="color: #9FC59F;">(</span>field-name predicate<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">}</span>&#8727;<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">}</span>+<span style="color: #DCDCCC;">)</span>
 </pre>
 </div>
 </div>
@@ -545,7 +653,7 @@ Prod-name  :: = Symbol
 </div>
 
 <p>
-<code>value-of-program</code> 也就是解析器的核心部分,语言实现的第二部分,这里就不写了,自己看书.
+<code>value-of-program</code> 也就是直译器的核心部分,语言实现的第二部分,这里就不写了,自己看书.
 </p>
 </div>
 </div>
@@ -554,8 +662,13 @@ Prod-name  :: = Symbol
 <div id="outline-container-org211bd4f" class="outline-3">
 <h3 id="org211bd4f">完整的例子</h3>
 <div class="outline-text-3" id="text-org211bd4f">
+<p>
+<b>注意</b>: 由于没有实现 <code>interpreter</code>,所以 <code>parsing</code> 后就直接返回 <code>AST</code>.
+</p>
+
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #F0DFAF; font-weight: bold;">#lang</span> racket
+<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">lang.rkt</span>
+<span style="color: #F0DFAF; font-weight: bold;">#lang</span> racket
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">grammar for the LET language</span>
 
@@ -611,11 +724,13 @@ Prod-name  :: = Symbol
 <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">just-scan</span>
   <span style="color: #BFEBBF;">(</span>sllgen:make-string-scanner the-lexical-spec the-grammar<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
 
+<span style="color: #5F7F5F;">;; </span><span style="color: #ff0000; background-color: #ffffff; font-weight: bold;">BUG</span><span style="color: #7F9F7F;"> bug here, do not use this function</span>
 <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">read-eval-print</span>
-  <span style="color: #BFEBBF;">(</span>sllgen:make-rep-loop
-   <span style="color: #CC9393;">"--&gt; "</span>
-   <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>ast<span style="color: #93E0E3;">)</span> ast<span style="color: #D0BF8F;">)</span>
-   <span style="color: #D0BF8F;">(</span>sllgen:make-stream-parser the-lexical-spec the-grammar<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span><span style="color: #93E0E3;">[</span>interpreter <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>ast<span style="color: #94BFF3;">)</span> ast<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span><span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span><span style="color: #93E0E3;">(</span>sllgen:make-rep-loop
+      <span style="color: #CC9393;">"--&gt; "</span>
+      interpreter
+      <span style="color: #9FC59F;">(</span>sllgen:make-stream-parser the-lexical-spec the-grammar<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
 </pre>
 </div>
 
@@ -627,9 +742,25 @@ Prod-name  :: = Symbol
 <pre class="src src-sh">racket@lang.rkt&gt; (read-eval-print)
 --&gt; -(1,2)
 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">(struct:a-program #(struct:diff-exp #(struct:const-exp 1) #(struct:const-exp 2)))</span>
---&gt; 
+--&gt;
 </pre>
 </div>
+
+<p>
+这个就是经过格式化的 <code>AST</code>,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme">#<span style="color: #DCDCCC;">(</span>struct:a-program
+  #<span style="color: #BFEBBF;">(</span>struct:diff-exp
+    #<span style="color: #D0BF8F;">(</span>struct:const-exp 1<span style="color: #D0BF8F;">)</span>
+    #<span style="color: #D0BF8F;">(</span>struct:const-exp 2<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+可以看到 <b>每一个节点都包含它们的结构体类型以及数据</b> (没有看到在文本中位置).
+</p>
 </div>
 </div>
 </div>

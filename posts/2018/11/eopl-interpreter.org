@@ -3,36 +3,40 @@
 #+index: The Interpreter
 #+tags: Racket EOPL
 #+begin_abstract
-之前写了一篇关于 =Sllgen parser generator= 的文章,那是我了解 =parser= 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
+之前写了一篇关于 =The Sllgen= 的文章,那是我了解 =parser= 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
 
-之所以要写这两篇文章是因为读 =EOPL= 的时候没有形成一个写 =interpreter= 的思路(或者叫套路),我想应该是读的比较匆忙(因为当时没有太多时间).
+之所以要写这两篇文章是因为之前读 =EOPL= 的时候太匆忙了,书本提供的代码只是过了一遍,没有形成一个写 =interpreter= 该有的思路.
 
-=EOPL= 是一本实操性很强的 =textbook=,不亲手操作一遍就没有办法体会的.我会继续以 =LET= 语言做为例子来 *理清楚编写 =interpreter= 思路*.
+这里我会继续以 =LET= 语言做为例子来 *理清楚编写 =interpreter= 思路*,不会涉及语言特性的实现问题和基础知识,不过我之后会单独写笔记进行总结.
 
-不会解释为什么这个数据要这么设计,这个函数为什么要这么实现的问题,这些都是具体的程序设计问题,查阅书上显然更加合适.
+这篇的文章的结构就是根据 =EOPL= 第三版的第三章中 *实现LET* 的内容结构进行重排(说是重排,实际是个人总结),之所以选这一个实践做为参考,那是因为整本书的实践都是基于这一套模式进行的.
 
-之所以要把 =parser= 和 =interpreter= 分开写那是因为之后会学习 =compiler=, =parser= 那篇文章就可以复用了.
+重排是因为 =EOPL= 第三版的内容个人觉得零散和啰嗦,不形成自己的想法是不会有实质的收获,所以我就想,作者这么做是不是想让读者多花点时间思考呢?
+
+除了总结,我这一次还会抽空把书上的例子按照这个思路重新实践一遍,这次绝对不含糊.并且总结语言特性实现方面的笔记,最后完成练习补全笔记.
 #+end_abstract
 
 当定义好语言语法和词法规范之后,并且定义好 =parser= 后,对于直译型语言来说剩下的工作就是直译(interpreting)了.
 
-个人根据 =EOPL= 中第三章的内容分成两大步: *定义规范* 和 *实现规范*.其实讲 =parser= 的那篇笔记也是这样的.
+个人根据 =EOPL= 中第三章的内容分成两大步: *定义规范* 和 *实现规范*.其实讲 =The Sllgen= 的那篇笔记也是这样的.
+
+*注意*,这篇笔记里面的代码引用到了 =The Sllgen= 的代码,所以如果代码部分有什么地方不明确的请翻一翻那篇文章的 *完整的例子* 部分.
 
 
 *** 值的规范 (Specification of Values)
 
-编程语言中最重要的语言规范之一就是可以操作的值有哪些,也就是语言的数据类型.每一个编程语言有至少两个值的集合.
+编程语言中最重要的语言规范之一就是语言可以操作哪些类型的值,也就是语言的数据类型.根据使用场合,每一个编程语言有至少两类值.
 
-=expressed values= 和 =denoted values=.前者用来表示表达式可能的值,后者表示变量绑定的值.
+=Expressed values= 和 =denoted values=,前者用来表示表达式值,后者表示变量绑定的值,某些语言中两者还可以是一样的.
 
-=LET= 语言有两种值, =Int= 和 =Bool=; 并且 =expressed values= 和 =denoted values= 是一样,当然不是所有语言都是这样的.
+=LET= 语言有两种值, =Int= 和 =Bool=,并且 =expressed values= 和 =denoted values= 是一样.
 
 #+BEGIN_EXAMPLE
 ExpVal = Int + Bool
 DenVal = Int + Bool
 #+END_EXAMPLE
 
-然后为这些数据定义好接口,用于之后实现这些接口,
+因为是一样的,所以只需要定义一个 =ExpVal=, 然后为这些数据定义好接口,用于之后实现这些接口,
 
 #+BEGIN_EXAMPLE
 num-val      : Int → ExpVal
@@ -41,7 +45,7 @@ expval->num  : ExpVal → Int
 expval->bool : ExpVal → Bool
 #+END_EXAMPLE
 
-并且先认为
+并且认为,
 
 #+BEGIN_EXAMPLE
 expval->num  : non-expVal-for-num -> undefined
@@ -205,5 +209,131 @@ value-of-program : Program → ExpVal
 所有接口的实现就如下,
 
 #+BEGIN_SRC scheme
+#lang racket
 
+(require eopl
+         "lang.rkt")
+
+;;;;;;;;;;;;;;;;;; Values ;;;;;;;;;;;;;;;;;;
+
+;;; denoted values and expressed values are identical.
+
+(define-datatype expval expval?
+  (num-val
+   (value number?))
+  (bool-val
+   (boolean boolean?)))
+
+;; extractors:
+
+;; expval->num : ExpVal -> Int
+(define expval->num
+  (lambda (v)
+    (cases expval v
+           (num-val (num) num)
+           (else (expval-extractor-error 'num v)))))
+
+;; expval->bool : ExpVal -> Bool
+(define expval->bool
+  (lambda (v)
+    (cases expval v
+           (bool-val (bool) bool)
+           (else (expval-extractor-error 'bool v)))))
+
+(define expval-extractor-error
+  (lambda (variant value)
+    (eopl:error 'expval-extractors "Looking for a ~s, found ~s"
+                variant value)))
+
+;;;;;;;;;;;;;;;;;; Environment ;;;;;;;;;;;;;;;;;;
+(define init-env
+  (lambda ()
+    (extend-env
+     'i (num-val 1)
+     (extend-env
+      'v (num-val 5)
+      (extend-env
+       'x (num-val 10)
+       (empty-env))))))
+
+(define env?
+  (lambda (x)
+    (or (empty-env? x)
+        (and [pair? x]
+             [symbol? (car (car x))]
+             [expval? (cadr (car x))]
+             [env? (cdr x)]))))
+
+(define empty-env (lambda () '()))
+
+(define empty-env? null?)
+
+(define extend-env
+  (lambda (sym val old-env)
+    (cons (list sym val) old-env)))
+
+(define apply-env
+  (lambda (env search-sym)
+    (if (empty-env? env)
+        (eopl:error 'apply-env "No binding for ~s" search-sym)
+        (let ([sym (car (car env))]
+              [val (cadr (car env))]
+              [old-env (cdr env)])
+          (if (eqv? search-sym sym)
+              val
+              (apply-env old-env search-sym))))))
+
+
+;;;;;;;;;;;;;;;;;; the interpreter, observers ;;;;;;;;;;;;;;;;;;
+
+;; value-of-program : Program -> ExpVal
+(define value-of-program
+  (lambda (pgm)
+    (cases program pgm
+           (a-program (exp1)
+                      (value-of exp1 (init-env))))))
+
+;; value-of : Exp * Env -> ExpVal
+(define value-of
+  (lambda (exp env)
+    (cases expression exp
+           [const-exp (num) (num-val num)]
+           [var-exp (var) (apply-env env var)]
+           [diff-exp (exp1 exp2)
+                     (let ((val1 (value-of exp1 env))
+                           (val2 (value-of exp2 env)))
+                       (let ((num1 (expval->num val1))
+                             (num2 (expval->num val2)))
+                         (num-val
+                          (- num1 num2))))]
+           [zero?-exp (exp1)
+                      (let ((val1 (value-of exp1 env)))
+                        (let ((num1 (expval->num val1)))
+                          (if (zero? num1)
+                              (bool-val #t)
+                              (bool-val #f))))]
+           [if-exp (exp1 exp2 exp3)
+                   (let ((val1 (value-of exp1 env)))
+                     (if (expval->bool val1)
+                         (value-of exp2 env)
+                         (value-of exp3 env)))]
+           [let-exp (var exp1 body)
+                    (let ((val1 (value-of exp1 env)))
+                      (value-of body
+                                (extend-env var val1 env)))])))
+
+
+;;;;;;;;;;;;;;;;;; Example ;;;;;;;;;;;;;;;;;;
+
+(define run
+  (lambda (src)
+    (cases expval (value-of-program (scan&parse src))
+           [num-val (num) num]
+           [bool-val (bool) bool]
+           [else (eopl:error 'expval-extractors "Undefined")])))
+
+(run "if zero?(0) then 2 else 0") ; => 2
+(run "-(1,2)")                    ; => -1
+(run "let a = 1 in -(10, a)")     ; => 9
+(run "i")
 #+END_SRC

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2018-11-06 Tue 18:36 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Interpreter</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script type="text/javascript" src="../../../js/live.js" defer></script>
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="/"> Home </a></li>
+            <li><a accesskey="T" href="/tags"> Tags </a></li>
+            <li><a accesskey="A" href="/about"> About </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">The Interpreter</h1>
+<div class="abstract">
+<p>
+之前写了一篇关于 <code>The Sllgen</code> 的文章,那是我了解 <code>parser</code> 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
+</p>
+
+<p>
+之所以要写这两篇文章是因为之前读 <code>EOPL</code> 的时候太匆忙了,书本提供的代码只是过了一遍,没有形成一个写 <code>interpreter</code> 该有的思路.
+</p>
+
+<p>
+这里我会继续以 <code>LET</code> 语言做为例子来 <b>理清楚编写 <code>interpreter</code> 思路</b>,不会涉及语言特性的实现问题和基础知识,不过我之后会单独写笔记进行总结.
+</p>
+
+<p>
+这篇的文章的结构就是根据 <code>EOPL</code> 第三版的第三章中 <b>实现LET</b> 的内容结构进行重排(说是重排,实际是个人总结),之所以选这一个实践做为参考,那是因为整本书的实践都是基于这一套模式进行的.
+</p>
+
+<p>
+重排是因为 <code>EOPL</code> 第三版的内容个人觉得零散和啰嗦,不形成自己的想法是不会有实质的收获,所以我就想,作者这么做是不是想让读者多花点时间思考呢?
+</p>
+
+<p>
+除了总结,我这一次还会抽空把书上的例子按照这个思路重新实践一遍,这次绝对不含糊.并且总结语言特性实现方面的笔记,最后完成练习补全笔记.
+</p>
+
+</div>
+
+<p>
+当定义好语言语法和词法规范之后,并且定义好 <code>parser</code> 后,对于直译型语言来说剩下的工作就是直译(interpreting)了.
+</p>
+
+<p>
+个人根据 <code>EOPL</code> 中第三章的内容分成两大步: <b>定义规范</b> 和 <b>实现规范</b>.其实讲 <code>The Sllgen</code> 的那篇笔记也是这样的.
+</p>
+
+<p>
+<b>注意</b>,这篇笔记里面的代码引用到了 <code>The Sllgen</code> 的代码,所以如果代码部分有什么地方不明确的请翻一翻那篇文章的 <b>完整的例子</b> 部分.
+</p>
+
+
+<div id="outline-container-orgb0c0f84" class="outline-2">
+<h2 id="orgb0c0f84">值的规范 (Specification of Values)</h2>
+<div class="outline-text-2" id="text-orgb0c0f84">
+<p>
+编程语言中最重要的语言规范之一就是语言可以操作哪些类型的值,也就是语言的数据类型.根据使用场合,每一个编程语言有至少两类值.
+</p>
+
+<p>
+<code>Expressed values</code> 和 <code>denoted values</code>,前者用来表示表达式值,后者表示变量绑定的值,某些语言中两者还可以是一样的.
+</p>
+
+<p>
+<code>LET</code> 语言有两种值, <code>Int</code> 和 <code>Bool</code>,并且 <code>expressed values</code> 和 <code>denoted values</code> 是一样.
+</p>
+
+<pre class="example">
+ExpVal = Int + Bool
+DenVal = Int + Bool
+</pre>
+
+<p>
+因为是一样的,所以只需要定义一个 <code>ExpVal</code>, 然后为这些数据定义好接口,用于之后实现这些接口,
+</p>
+
+<pre class="example">
+num-val      : Int → ExpVal
+bool-val     : Bool → ExpVal
+expval-&gt;num  : ExpVal → Int
+expval-&gt;bool : ExpVal → Bool
+</pre>
+
+<p>
+并且认为,
+</p>
+
+<pre class="example">
+expval-&gt;num  : non-expVal-for-num -&gt; undefined
+expval-&gt;bool : non-expval-for-bool -&gt; undefined
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org49aa797" class="outline-2">
+<h2 id="org49aa797">环境 (Environments)</h2>
+<div class="outline-text-2" id="text-org49aa797">
+<p>
+为了运算包含变量的表达式,需要知道每个变量关联的值.可以把这些值储存到一个环境里面.
+</p>
+
+<p>
+环境就像是数学意义上的函数,定义域(domain)是一个无限的变量集合,值域(range)就是 <code>denoted values</code>,就像这样
+</p>
+
+<pre class="example">
+Environment : Variable → DenVal
+</pre>
+
+<p>
+<code>EOPL</code> 采用了一套缩写来表示环境,
+</p>
+
+<ul class="org-ul">
+<li><code>ρ</code> 覆盖整个环境.</li>
+
+<li><code>[]</code> 表示空的环境.</li>
+
+<li><code>[var = val]ρ</code> 表示 <code>(extend-env var val ρ)</code>,也就是给环境在存入一个值为 <code>val</code> 的变量 <code>var</code>.</li>
+
+<li><code>[var1 = val1, var2 = val2]ρ</code> 可以缩写为 <code>[var1 = val1]([var 2 = val2]ρ)</code>,等等</li>
+
+<li><code>[var1 = val1, var2 = val2, ...]</code> 表示环境里面的值, <code>var1</code> 的值是 <code>val1</code>, <code>var2</code> 的值是  <code>val2</code>,等等.</li>
+</ul>
+
+<p>
+为了提高可读性,还会采用缩进,比如
+</p>
+
+<pre class="example">
+[x=3]
+ [y=7]
+  [u=5]ρ
+</pre>
+
+<p>
+等同于
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span>extend-env 'x 3
+  <span style="color: #BFEBBF;">(</span>extend-env 'y 7
+    <span style="color: #D0BF8F;">(</span>extend-env 'u 5 &#961;<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+在使用一门语言的时候一般都不能直接操作环境的,所以下面这些接口是 <code>interpreter</code> 内部使用的,
+</p>
+
+<pre class="example">
+init-env   : () → Env
+env?       : Env → bool
+empty-env  : () → '()
+empty-env? : Env → bool
+extend-env : Var x DenVal x Env → Env
+apply-env  : Env x Var → DenVal
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-orge825e9f" class="outline-2">
+<h2 id="orge825e9f">行为规范 (Specifying the Behavior)</h2>
+<div class="outline-text-2" id="text-orge825e9f">
+<p>
+行为规范是根据语言的句法结构来定义的接口,定义接口就是说 <b>定义接口的输入和输出</b>.
+</p>
+
+<p>
+<b>(句法结构在 <code>parser</code> 中就定义过了, <code>the-grammar</code> 变量, 为了节省边幅这里就不写了.)</b>
+</p>
+
+<p>
+接口分两类, <code>constructor</code> 和 <code>observer</code>,分别用于构建对象和观察对象.
+</p>
+</div>
+
+<div id="outline-container-org8938684" class="outline-3">
+<h3 id="org8938684">Constructor</h3>
+<div class="outline-text-3" id="text-org8938684">
+<p>
+根据语言的句法结构,可以看出 <code>Expression</code> 有六类,每一类需要一个 <code>constructor</code>.
+</p>
+
+<p>
+如果看的是 <code>BNF</code> 语法,就是每一个 <code>production</code> 就需要一个 <code>constructor</code>.
+</p>
+
+<p>
+因此,
+</p>
+
+<p>
+<code>Expression</code> 的 <code>Constructors</code> 如下,
+</p>
+
+<pre class="example">
+const-exp : Int → Exp
+zero?-exp : Exp → Exp
+if-exp    : Exp × Exp × Exp → Exp
+diff-exp  : Exp × Exp → Exp
+var-exp   : Var → Exp
+let-exp   : Var × Exp × Exp → Exp
+</pre>
+
+<p>
+<code>Program</code> 只有一个 <code>constructor</code>,
+</p>
+
+<pre class="example">
+a-program : Exp -&gt; Program
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org7ad0e31" class="outline-3">
+<h3 id="org7ad0e31">Observer</h3>
+<div class="outline-text-3" id="text-org7ad0e31">
+<p>
+<code>Observer</code> 观察对象实际上就是计算出对象的值,如果还记得 <code>Interpreter</code> 的本质是运算的话就能理解 <code>observer</code> 是重头戏.
+</p>
+
+<p>
+据我观察, <code>observer</code> 貌似是一类 <code>production</code> 需要一个 <code>observer</code>.
+</p>
+
+<p>
+所以,
+</p>
+
+<p>
+<code>Expression</code> 需要一个 <b>可以判断表达式类型并且计算出表达式的值</b> 的 <code>observer</code>,
+</p>
+
+<pre class="example">
+value-of : Exp x Env → ExpVal
+</pre>
+
+<p>
+<code>value-of</code> 的行为比较复杂,所以需要写下详细的规范:
+</p>
+
+<p>
+其中 <code>=&gt;</code> 表示变换, <code>:=</code> 表示结果的一个子集.
+</p>
+
+<pre class="example">
+(value-of (const-exp n) ρ) =&gt; (num-val n)
+
+(value-of (var-exp var) ρ) =&gt; (apply-env ρ var)
+
+(value-of (diff-exp exp1 exp2) ρ)
+=&gt; (num-val
+     (-
+       (expval-&gt;num (value-of exp 1 ρ))
+       (expval-&gt;num (value-of exp 2 ρ))))
+
+(value-of (zero?-exp exp1) ρ)
+:= (bool-val #t) if (expval-&gt;num val1) = 0
+:= (bool-val #f) if (expval-&gt;num val1) = 0
+
+(value-of (if-exp exp1 exp2 exp3) ρ)
+:= (value-of exp2 ρ) if (expval-&gt;bool val1) = #t
+:= (value-of exp3 ρ) if (expval-&gt;bool val1) = #f
+=&gt; (if (expval-&gt;bool (value-of exp 1 ρ ))
+     (value-of exp 2 ρ )
+     (value-of exp 3 ρ ))
+
+(value-of (let-exp var exp1 body) ρ)
+=&gt; (value-of body [var = val1] ρ)
+=&gt; (value-of body [var=(value-of exp1 ρ)] ρ)
+</pre>
+
+<p>
+<code>Program</code> 需要一个可以计算出它的值 <code>observer</code>,
+</p>
+
+<pre class="example">
+value-of-program : Program → ExpVal
+</pre>
+
+<p>
+具体规范为,
+</p>
+
+<pre class="example">
+(value-of-program pgm)
+=&gt; (value-of-program (a-program exp))
+=&gt; (value-of exp ρ)
+</pre>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-orgb6e0a79" class="outline-2">
+<h2 id="orgb6e0a79">实现规范 (Implementing)</h2>
+<div class="outline-text-2" id="text-orgb6e0a79">
+<p>
+一旦定义好规范,就可以开始实现了.同样,也是分 <code>constructor</code> 和 <code>observer</code> 来做.
+</p>
+
+<p>
+对于实现 <code>constructor</code>, <code>parser</code> 那篇文章就已经完成了,就不说了.
+</p>
+
+<p>
+<b>(还记得这个表达式吗: (sllgen:make-define-datatypes the-lexical-spec the-grammar) ?)</b>
+</p>
+
+<p>
+所有接口的实现就如下,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #F0DFAF; font-weight: bold;">#lang</span> racket
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> eopl
+         <span style="color: #CC9393;">"lang.rkt"</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;">;;;;;;;;;;;;;;;;;; </span><span style="color: #7F9F7F;">Values ;;;;;;;;;;;;;;;;;;</span>
+
+<span style="color: #5F7F5F;">;;; </span><span style="color: #7F9F7F;">denoted values and expressed values are identical.</span>
+
+<span style="color: #DCDCCC;">(</span>define-datatype expval expval?
+  <span style="color: #BFEBBF;">(</span>num-val
+   <span style="color: #D0BF8F;">(</span>value number?<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+  <span style="color: #BFEBBF;">(</span>bool-val
+   <span style="color: #D0BF8F;">(</span>boolean boolean?<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">extractors:</span>
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">expval-&gt;num : ExpVal -&gt; Int</span>
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">expval-&gt;num</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>v<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cases expval v
+           <span style="color: #93E0E3;">(</span>num-val <span style="color: #9FC59F;">(</span>num<span style="color: #9FC59F;">)</span> num<span style="color: #93E0E3;">)</span>
+           <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #9FC59F;">(</span>expval-extractor-error 'num v<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">expval-&gt;bool : ExpVal -&gt; Bool</span>
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">expval-&gt;bool</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>v<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cases expval v
+           <span style="color: #93E0E3;">(</span>bool-val <span style="color: #9FC59F;">(</span>bool<span style="color: #9FC59F;">)</span> bool<span style="color: #93E0E3;">)</span>
+           <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #9FC59F;">(</span>expval-extractor-error 'bool v<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">expval-extractor-error</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>variant value<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>eopl:error 'expval-extractors <span style="color: #CC9393;">"Looking for a ~s, found ~s"</span>
+                variant value<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;">;;;;;;;;;;;;;;;;;; </span><span style="color: #7F9F7F;">Environment ;;;;;;;;;;;;;;;;;;</span>
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">init-env</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">()</span>
+    <span style="color: #D0BF8F;">(</span>extend-env
+     'i <span style="color: #93E0E3;">(</span>num-val 1<span style="color: #93E0E3;">)</span>
+     <span style="color: #93E0E3;">(</span>extend-env
+      'v <span style="color: #9FC59F;">(</span>num-val 5<span style="color: #9FC59F;">)</span>
+      <span style="color: #9FC59F;">(</span>extend-env
+       'x <span style="color: #94BFF3;">(</span>num-val 10<span style="color: #94BFF3;">)</span>
+       <span style="color: #94BFF3;">(</span>empty-env<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">env?</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>x<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">or</span> <span style="color: #93E0E3;">(</span>empty-env? x<span style="color: #93E0E3;">)</span>
+        <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">and</span> <span style="color: #9FC59F;">[</span>pair? x<span style="color: #9FC59F;">]</span>
+             <span style="color: #9FC59F;">[</span>symbol? <span style="color: #94BFF3;">(</span>car <span style="color: #E0CF9F;">(</span>car x<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span>
+             <span style="color: #9FC59F;">[</span>expval? <span style="color: #94BFF3;">(</span>cadr <span style="color: #E0CF9F;">(</span>car x<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span>
+             <span style="color: #9FC59F;">[</span>env? <span style="color: #94BFF3;">(</span>cdr x<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">empty-env</span> <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">()</span> '<span style="color: #D0BF8F;">()</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">empty-env?</span> null?<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">extend-env</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>sym val old-env<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cons <span style="color: #93E0E3;">(</span>list sym val<span style="color: #93E0E3;">)</span> old-env<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-env</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>env search-sym<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #93E0E3;">(</span>empty-env? env<span style="color: #93E0E3;">)</span>
+        <span style="color: #93E0E3;">(</span>eopl:error 'apply-env <span style="color: #CC9393;">"No binding for ~s"</span> search-sym<span style="color: #93E0E3;">)</span>
+        <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #9FC59F;">(</span><span style="color: #94BFF3;">[</span>sym <span style="color: #E0CF9F;">(</span>car <span style="color: #8FB28F;">(</span>car env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">]</span>
+              <span style="color: #94BFF3;">[</span>val <span style="color: #E0CF9F;">(</span>cadr <span style="color: #8FB28F;">(</span>car env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">]</span>
+              <span style="color: #94BFF3;">[</span>old-env <span style="color: #E0CF9F;">(</span>cdr env<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">]</span><span style="color: #9FC59F;">)</span>
+          <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #94BFF3;">(</span>eqv? search-sym sym<span style="color: #94BFF3;">)</span>
+              val
+              <span style="color: #94BFF3;">(</span>apply-env old-env search-sym<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #5F7F5F;">;;;;;;;;;;;;;;;;;; </span><span style="color: #7F9F7F;">the interpreter, observers ;;;;;;;;;;;;;;;;;;</span>
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">value-of-program : Program -&gt; ExpVal</span>
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">value-of-program</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>pgm<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cases program pgm
+           <span style="color: #93E0E3;">(</span>a-program <span style="color: #9FC59F;">(</span>exp1<span style="color: #9FC59F;">)</span>
+                      <span style="color: #9FC59F;">(</span>value-of exp1 <span style="color: #94BFF3;">(</span>init-env<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">value-of : Exp * Env -&gt; ExpVal</span>
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">value-of</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>exp env<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cases expression exp
+           <span style="color: #93E0E3;">[</span>const-exp <span style="color: #9FC59F;">(</span>num<span style="color: #9FC59F;">)</span> <span style="color: #9FC59F;">(</span>num-val num<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span>var-exp <span style="color: #9FC59F;">(</span>var<span style="color: #9FC59F;">)</span> <span style="color: #9FC59F;">(</span>apply-env env var<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span>diff-exp <span style="color: #9FC59F;">(</span>exp1 exp2<span style="color: #9FC59F;">)</span>
+                     <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #94BFF3;">(</span><span style="color: #E0CF9F;">(</span>val1 <span style="color: #8FB28F;">(</span>value-of exp1 env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span>
+                           <span style="color: #E0CF9F;">(</span>val2 <span style="color: #8FB28F;">(</span>value-of exp2 env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span>
+                       <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #E0CF9F;">(</span><span style="color: #8FB28F;">(</span>num1 <span style="color: #6CA0A3;">(</span>expval-&gt;num val1<span style="color: #6CA0A3;">)</span><span style="color: #8FB28F;">)</span>
+                             <span style="color: #8FB28F;">(</span>num2 <span style="color: #6CA0A3;">(</span>expval-&gt;num val2<span style="color: #6CA0A3;">)</span><span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span>
+                         <span style="color: #E0CF9F;">(</span>num-val
+                          <span style="color: #8FB28F;">(</span>- num1 num2<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span>zero?-exp <span style="color: #9FC59F;">(</span>exp1<span style="color: #9FC59F;">)</span>
+                      <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #94BFF3;">(</span><span style="color: #E0CF9F;">(</span>val1 <span style="color: #8FB28F;">(</span>value-of exp1 env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span>
+                        <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #E0CF9F;">(</span><span style="color: #8FB28F;">(</span>num1 <span style="color: #6CA0A3;">(</span>expval-&gt;num val1<span style="color: #6CA0A3;">)</span><span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span>
+                          <span style="color: #E0CF9F;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #8FB28F;">(</span>zero? num1<span style="color: #8FB28F;">)</span>
+                              <span style="color: #8FB28F;">(</span>bool-val #t<span style="color: #8FB28F;">)</span>
+                              <span style="color: #8FB28F;">(</span>bool-val #f<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span>if-exp <span style="color: #9FC59F;">(</span>exp1 exp2 exp3<span style="color: #9FC59F;">)</span>
+                   <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #94BFF3;">(</span><span style="color: #E0CF9F;">(</span>val1 <span style="color: #8FB28F;">(</span>value-of exp1 env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span>
+                     <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #E0CF9F;">(</span>expval-&gt;bool val1<span style="color: #E0CF9F;">)</span>
+                         <span style="color: #E0CF9F;">(</span>value-of exp2 env<span style="color: #E0CF9F;">)</span>
+                         <span style="color: #E0CF9F;">(</span>value-of exp3 env<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span>let-exp <span style="color: #9FC59F;">(</span>var exp1 body<span style="color: #9FC59F;">)</span>
+                    <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #94BFF3;">(</span><span style="color: #E0CF9F;">(</span>val1 <span style="color: #8FB28F;">(</span>value-of exp1 env<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span>
+                      <span style="color: #94BFF3;">(</span>value-of body
+                                <span style="color: #E0CF9F;">(</span>extend-env var val1 env<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #5F7F5F;">;;;;;;;;;;;;;;;;;; </span><span style="color: #7F9F7F;">Example ;;;;;;;;;;;;;;;;;;</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">run</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>src<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cases expval <span style="color: #93E0E3;">(</span>value-of-program <span style="color: #9FC59F;">(</span>scan&amp;parse src<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span>
+           <span style="color: #93E0E3;">[</span>num-val <span style="color: #9FC59F;">(</span>num<span style="color: #9FC59F;">)</span> num<span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span>bool-val <span style="color: #9FC59F;">(</span>bool<span style="color: #9FC59F;">)</span> bool<span style="color: #93E0E3;">]</span>
+           <span style="color: #93E0E3;">[</span><span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #9FC59F;">(</span>eopl:error 'expval-extractors <span style="color: #CC9393;">"Undefined"</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">]</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span>run <span style="color: #CC9393;">"if zero?(0) then 2 else 0"</span><span style="color: #DCDCCC;">)</span> <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">=&gt; 2</span>
+<span style="color: #DCDCCC;">(</span>run <span style="color: #CC9393;">"-(1,2)"</span><span style="color: #DCDCCC;">)</span>                    <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">=&gt; -1</span>
+<span style="color: #DCDCCC;">(</span>run <span style="color: #CC9393;">"let a = 1 in -(10, a)"</span><span style="color: #DCDCCC;">)</span>     <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">=&gt; 9</span>
+<span style="color: #DCDCCC;">(</span>run <span style="color: #CC9393;">"i"</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_wrapper">
+    <div id="disqus_thread"></div>
+    <script>
+     /**
+      *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+      *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+     /*
+        var disqus_config = function () {
+        this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+      */
+     let disqus;
+     (function() { // DON'T EDIT BELOW THIS LINE
+         var d = document;
+         disqus = d.createElement('script');
+         disqus.async = true;
+         disqus.src = 'https://darksalt-me.disqus.com/embed.js';
+         disqus.setAttribute('data-timestamp', +new Date());
+         disqus.onload = function(){
+             console.log("Load disqus successfully.");
+         };
+         disqus.onerror = function(){
+             console.log("Load disqus failed.");
+         };
+         (d.head || d.body).appendChild(disqus);
+     })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2018-11-04</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.14)</p>
+</div>
+</body>
+</html>

@@ -3,9 +3,9 @@
 #+index: The Sllgen Parser
 #+tags: Racket EOPL
 #+begin_abstract
-=EOPL= 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写直译器, =parser= 部分只有在附录里面详细说明.
+=EOPL= 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写直译器, =parser= 部分只有在附录里面详细说明(可以理解,因为 =parser= 不是 =interpreter= 的一部分).
 
-=Sllgen= 是 =eopl= 库提供的一个生成器,用来生成 =scanner= 和 =parser=.由于并没有在正文部分出现,那么我只能单独了解一下.
+=Sllgen= 是 =eopl= 库提供的一个生成器,用来生成 =lexer= 和 =parser=.由于并没有在正文部分出现,那么我只能单独了解一下.
 #+end_abstract
 
 *** 实现一门语言的流程/模式
@@ -57,16 +57,20 @@
 
 经常听到的 =lexer generator= 有 =lex= 和 =flex=.
 
-=Parser generator= 有很多,比如 =Java= 用的 =Antlr=, =Emacs Lisp= 用的 =Bovine=, =C= 用的 =Bison= 等等.
+=Parser generator= 有很多,比如 =Java= 用的 =Antlr=, =Emacs Lisp= 用的 =Bovine/Wisent=, =C/C++= 用的 =GNU Bison= 等等.
 
 除了通过使用的平台(语言)分类以外,可以通过解析算法进行划分,比如 =LL(1)=, =LR(1)=, =LALR(1)= 等等.
 
-如果想了解更多这一方面的内容,可以看这一篇维基文章: =Comparison of parser generators=.
+个人推荐可以学习一下 =Bison= 的使用,因为不少它的移植,比如上面的 =Wisent= 就是其中之一.这里有一篇[[http://alumni.cs.ucr.edu/~lgao/teaching/bison.html][简单完整的实践]]可以阅读一下.
+
+解析器是一个挺大的话题,如果想了解更多这一方面的内容,可以看这一篇维基文章: =Comparison of parser generators=.
 
 
 *** Scanning
 
 =tokens= 一定要是原子,也就是不可再划分,这需要根据部分的语言规范(=the part of language specification=)来划分,这部分的语言规范叫做词法规范(=lexical specification=).
+
+*如果是在BNF或者Grammar的描述中,tokens就是terminals*.
 
 典型的词法规范有3个:
 
@@ -281,6 +285,7 @@ Prod-name  :: = Symbol
 *注意*: 由于没有实现 =interpreter=,所以 =parsing= 后就直接返回 =AST=.
 
 #+BEGIN_SRC scheme
+;; lang.rkt
 #lang racket
 
 ;; grammar for the LET language
