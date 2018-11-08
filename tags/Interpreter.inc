@@ -1,0 +1,1 @@
+- [[file:../posts/2018/11/eopl-techniques-to-imp-interpreter.org][直译器的实现技术总结]]

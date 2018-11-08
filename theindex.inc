@@ -1,3 +1,9 @@
+*** [[file:posts/2018/11/eopl-techniques-to-imp-interpreter.html][直译器的实现技术总结]]
+主要是总结 =EOPL= 上的一些用于实现语言特性的技术,包括词法作用域,动态作用域,并发等等.
+
+这篇笔记不涉及实现的代码,主要是思路方面以及解答我自己的疑问,我也会把实践的代码放到 =GitHub= 上.
+
+	
 *** [[file:posts/2018/11/eopl-interpreter.html][The Interpreter]]
 之前写了一篇关于 =The Sllgen Parser= 的文章,那是我了解 =parser= 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
 

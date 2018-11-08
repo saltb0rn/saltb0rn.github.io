@@ -1,0 +1,158 @@
+#+title: 直译器的实现技术总结
+#+date: 2018-11-07
+#+index: 直译器的实现技术总结
+#+tags: Interpreter
+#+begin_abstract
+主要是总结 =EOPL= 上的一些用于实现语言特性的技术,包括词法作用域,动态作用域,并发等等.
+
+这篇笔记不涉及实现的代码,主要是思路方面以及解答我自己的疑问,我也会把实践的代码放到 =GitHub= 上.
+#+end_abstract
+
+先认为我们已经理解变量和环境的概念.
+
+*** 函数的定义和调用
+
+*先认为已经了解什么是函数编程*
+
+=EOPL= 里面的 =PROC= 语言,是一门函数式编程语言,所以它变量和函数的地位是一样的,
+
+体现在 =expressed values= 和 =denoted values= 是一样的,并且 =expressed values= 就包含了函数.
+
+在函数式编程语言中,函数既是一个值,也可以进行调用.因此除了把函数定义为语言的数据类型外,还要考虑如何实现它的调用.
+
+=PROC= 没有声明语句,所以它的函数都是匿名的,变量的绑定也是发生在函数传参中,也不需要考虑作用域的规则,定义函数的语法如下
+
+#+BEGIN_EXAMPLE
+proc (<arg>) <body>
+#+END_EXAMPLE
+
+函数作为一个数据,它需要记录3个信息,函数的形参(parameters),函数体(body)以及环境(environment).前两个信息可以一眼观察出来(参考 =Lisp= 的 =lambda= 表达式的使用),唯独环境是直译器内部维护的.
+
+因为函数调用的时候会发生变量绑定,也就是形参(parameters)和实参(arguments)进行绑定,其中形参是变量,实参是值,所以函数需要一个环境来应对的绑定发生.
+
+那么现在问题来了: *那么这个环境的初始值该怎么取呢?*. =PROC= 里面函数的环境是在计算 =AST= 的时候得出来的,假设函数表达式在 =AST= 里面是 =proc-exp= 结构,
+
+那么准确一点的说法就是 *在直译器在计算 proc-exp 结构的时候使用当前的环境的值做为初始值*,虽然说了不考虑作用域规则,但是还是要说明一下 =PROC= 语言使用的规则就是词法作用域.
+
+在词法作用域下,修改 =PROC= 的函数的环境是不会对全局的作用域有副作用的,可以理解成函数定义时深拷贝了一份全局环境,函数记录的环境在定义的时候就决定好了.
+
+最后是函数调用的本质: *函数体(body)在函数记录的环境下(environment)进行运算*.
+
+
+
+
+*** 递归函数
+
+=EOPL= 里面的 =LETREC= 语言在 =PROC= 的基础上支持递归,增加了递归声明语句.
+
+#+BEGIN_EXAMPLE
+letrec proc-name (bound-var) = proc-body in letrec-body
+#+END_EXAMPLE
+
+解析成 =AST=,
+
+#+BEGIN_EXAMPLE
+letrec-exp (proc-name bound-var proc-body letrec-body)
+#+END_EXAMPLE
+
+其中 =proc-name= 是递归函数的名字, =bound-var= 是递归函数的形参, =proc-body= 是递归函数的函数体.
+
+递归函数和普通函数一样,也是记录了形参,函数体和环境三个信息,同样递归函数的调用本质和不同函数也是没有区别.
+
+递归之所以需要函数的名字,那是因为递归函数调用的时候,函数体里面要引用它自己,如何获取函数定义呢?那必然是与变量一样在环境里面根据名字查找对应的值.
+
+现实就有一个例子, =Lisp= 的 =lambda= 表达式是没有办法自己递归的,只有绑定了一个名字才可以递归.
+
+这样又有一个问题了,在把递归函数的绑定储存到环境 =env= 之前,递归函数和本身也是需要记录一个环境 =env0= 的,那么这个环境 =env0= 是怎么样的呢?
+
+*实际上 env 和 env0 是一样的.* 因为函数在定义的时候就决定好了环境,而函数定义又只有一次而已,而且递归函数的环境不需要记住上一次的参数绑定,它只需要在定义时候当前环境的基础上储存函数名字和函数本身的绑定就好了.
+
+所以书上的递归函数的环境是这么定义的(这只是其中一种实现方法而已),
+
+#+BEGIN_SRC scheme
+;; extend-env-rec : ProcName x BoundVar x ProcBody x LetrecBody -> Env
+(define extend-env-rec
+  (lambda (proc-name bound-var proc-body old-env)
+    (let ((vec (make-vector 1)))
+      (let ((new-env (extend-env proc-name vec old-env)))
+        (vector-set! vec 0
+                     (proc-val (procedure bound-var proc-body new-env)))
+        new-env))))
+#+END_SRC
+
+
+*** 词法地址 (lexical/static address)
+
+*假设你已经知道词法作用域*
+
+上面提到的环境(environments),这里称它为 =old-school-env=,是一个类似于链表的结构,每个元素是 =name-value=,表示变量绑定,查找变量的时候需要按照链表顺序一个一个比对.如果环境的储存的东西多了效率就低了.
+
+如果可以像 =Hash Table= 那样可以通过地址查找变量的值,效率就可以提高很多了.事实上的确是可以这么做,虽然不能达到 =O(1)=,但是可以减少很多次比对,就是用词法地址.什么是词法地址呢?
+
+首先词法作用域是可以嵌套的,一个嵌套就为一层,从变量声明的那一层到引用它的那一层,中间相差的层数就是它的引用地址.
+
+为了方便计算,每层给一个编号,声明变量的那一层对于该变量的是第一层,编号可以采用 =Zero-based indexing=,也就是从 =0= 开始.
+
+简单点说就是变量的引用深度就是词法地址,也较叫做词法深度(lexical/static depth).
+
+比如这段 =Scheme= 代码,
+
+#+BEGIN_SRC scheme
+(lambda (x)
+  ((lambda (a) (x a))
+   x))
+#+END_SRC
+
+采用 =#N= 这样的标记表示第 =N= 层,如果用词法地址标示里面的 =x= 和 =a= 的话就是这样,
+
+#+BEGIN_SRC scheme
+(lambda (x)
+  ((lambda (a) (#1 #0))  ; 对于 x 是第二层,对于 a 是第一层.
+   #0))                  ; 对于 x 是第一层.
+#+END_SRC
+
+词法地址有一个要求,那就是必须唯一.但是现实中基本所有语言的函数都支持多个参数,如果是多个参数,上面的方法就不适用了.
+
+比如下面 =x= 和 =y= 的词法地址就会发生冲突.=EOPL= 上没有说,不过我在[[https://www.cs.uni.edu/~wallingf/teaching/cs3540/sessions/session18.html#lexical-address][这里]]找到答案.
+
+做法就是拓展一下词法地址,记录多一个信息就可以了,比如下面 =lambda= 的 =(x y)= 也是一个列表,
+
+那么额外记录它们的索引就可以保证词法地址唯一了,就像这样 =#(depth index)=, 其中 =index= 和 =depth= 一样从零开始.
+
+#+BEGIN_SRC scheme
+(lambda (x y)
+  ((lambda (a) (x (a y)))
+   x))
+#+END_SRC
+
+使用词法地址表示里面引用,就像这样,
+
+#+BEGIN_SRC scheme
+(lambda (x y)
+  ((lambda (a) (#(1 0) #(0 0) (#(1 1))))
+   #(0 0)))
+#+END_SRC
+
+到这里不难发现 *变量名字就是个语法糖(syntactic sugar)*,的确,在 =interpreter= 是不需要使用变量名字来进行计算,而我们也是这么做.
+
+*为了简单一点,现在只考虑只有一个参数的情况.*
+
+一旦使用了词法地址就不能在采用 =old-style-env= 那种设计了,不再以 =name-value= 形式储存绑定.
+
+现在需要把 =names= 和 =values= 分开储存,需要两个环境,分别称为 =static environment= 和 =nameless environment=,在这里是两个列表.
+
+前者储存所有变量名字,后者储存变量的值,变量在 =static environment= 中的索引和它所对应的值在 =nameless environment= 中的索引是一样的.
+
+每次遇到变量的定义/声明就把变量存放到 =static environment= 第一个位置,这样遇到刚定义的变量永远处于第一层,并且正好索引都为 =0=.
+
+查找变量的值过程就是 *先在 static environment 中查找出变量的索引,然后根据该索引在 nameless environment 中取值*.
+
+=EOPL= 上的 =LEXADDR= 语言就是根据这些思路实现的,实现的流程如下,
+
+1. =Translator=: 把解析得到的 =AST= 翻译成任何变量的 =AST=,也就是用词法地址替换掉引用,过程大致如下,
+
+   1. 遇到变量定义/声明就把变量储存在 =static environment= 中并且移除变量;
+
+   2. 在遇到变量引用的时候,通过 =static environment= 计算出该变量的词法地址,用获得的词法地址替换变量引用.
+
+2. =Interpreter=: 计算出翻译后的 =AST= 的值,不过和上面以往的实现不一样,不是操作 =old-style-env= 而是使用 =nameless environment=,以前是遇到变量引用,现在是遇到变量的词法地址.
