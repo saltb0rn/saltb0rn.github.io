@@ -279,3 +279,120 @@ Env : Var -> Ref(Var)
 对于 =SETREF=,需要一个 =ASSIGN= 操作,实际中, =Scheme= 的 =set= 操作符号就是这一类.
 
 在这种设计中,我们可以说: 变量是可以变的(mutable),并且和上面定义的一样, =DenVal= 和 =ExpVal= 不一样,变量是不可以被 =DEREF= 的.
+
+
+*** Mutable Pairs
+
+关于 =Mutable Pair= (下文简称 =MutPair=),可以参考 =Scheme= 里面的 =pair=.
+
+#+BEGIN_EXAMPLE
+MutPair := (CAR CDR)
+CAR     := RefToVal
+CDR     := RefToNextLocation
+#+END_EXAMPLE
+
+关于 =MutPair= 的 =representation=,有两种方式:
+
+1. 一个包含两个字段的数据结构,分别是 =CAR= 和 =CDR= 字段, 它们两个不一定处于内存连续的位置,也就是分别独立.
+
+2. 既然 =CAR= 和 =CDR= 都是引用,那么让它们处于内存连续的位置上,用 =CAR= 的引用表示 =MutPair=.
+
+在 =-source language= 中 =MutPair= 有以下几个接口:
+
+1. =make-pair=
+
+2. =left=
+
+3. =right=
+
+4. =setleft=
+
+5. =setright=
+
+*** 参数传递方式 (Parameter passing)
+
+调用函数的时候,形式参数(formal parameter)会绑定实际参数的 =denoted value=.
+
+参数传递有不同的方式,这里总结一下之前见过的方式和之后采用一些新的方式.
+
+- =Natural parameter passing=
+
+  在这种设计中, =denoted value= 和实际参数的 =expressed value= 是一样的.
+
+- =Call-by-value=
+
+  在这种设计中, =denoted value= 是一个位置的引用( a reference to a location),该位置包含实际参数的 =expressed value=.
+
+  和 =natural parameter passing= 不同在于 =call-by-value= 里面实际参数的值是 =reference=.
+
+- =Call-by-reference=
+
+  在这种设计中,值的定义和 =call-by-value= 中的一样,
+
+  #+BEGIN_EXAMPLE
+  ExpVal = Int + Bool + Proc
+  DenVal = Ref(ExpVal)
+  #+END_EXAMPLE
+
+  在函数内改变参数的值可以改变实际参数的值.
+
+  #+BEGIN_EXAMPLE
+  let p = proc (x) set x = 4
+  in let a = 3
+     in begin (p a); a end
+  #+END_EXAMPLE
+
+  在 =call-by-value= 的设计下,当 =(p a)= 的 =a= 等于 =4= 的时候,最后 =a= 的值为 =3=;当程序改成这样,
+
+  #+BEGIN_EXAMPLE
+  let p = proc (x) setleft(x,4)
+  in let a = pair(3,4)
+     in begin (p a); a end
+  #+END_EXAMPLE
+
+  =a= 的结果为 =(4,4)=,后面成功更改了实际参数的值.
+
+  原因是更改前的 =set x =4= 给 =x= 分配了新引用,而更改后的 =setleft(x,4)= 没有给 =x= 分配新的引用,是直接在 =x= 的引用的基础上做修改的.
+
+  这就是实现 =call-by-reference= 的关键点所在, =call-by-value= 每次运算参数(也叫operand)的时候都会新分配一个引用,
+
+  而 =call-by-reference= 只要是传入变量做为参数的时候不要新分配引用就可以了.
+
+- =Lazy Evaluation/Call-by-name/Call-by-need=
+
+  到目前为止,每次调用函数的时候都会先计算出实际参数的值,而现在这种方式在这点上不一样.
+
+  函数调用的时候不会先计算出实际参数的值,只有函数体引用到参数才会计算参数的值.比如下面这个,
+
+  #+BEGIN_EXAMPLE
+  letrec infinite-loop (x) = infinite-loop(-(x,-1))
+  in let f = proc (z) 11
+     in (f (infinite-loop 0))
+  #+END_EXAMPLE
+
+  在这种设计下, =(f (infinite-loop 0))= 永远都返回 =11=.因为函数 =f= 的函数体内没有引用到参数 =z=,所以 =(infinite-loop 0)= 不会发生计算.
+
+  上面这个例子有点像 =Lambda calculus= 的 =β-reduction=,这是编程语言语义学的内容,不详细讲.
+
+  把那些没有经过运算的参数叫做参数冻结(frozen),当运算它的时候叫做参数解冻 =thawed=.
+
+  这样有一个问题,在词法作用域下,函数定义的时候就决定好环境,现在参数要冻结,那么变量就不能和值的位置(location)关联并且储存到环境里面了.
+
+  所以需要一个新的数据类型 =thunk=,变量关联 =thunk= 的位置(location)并且储存到环境中.一个 =thunk= 包含一个表达式(expression)和一个环境(environment),用于在必要时候运算.
+
+  在这种设计下,值的设定如下,
+
+  #+BEGIN_EXAMPLE
+  DenVal = Ref(ExpVal + Thunk)
+  ExpVal = Int + Bool + Proc
+  #+END_EXAMPLE
+
+  当每次遇到变量的时候,如果变量的值是 =Ref(ExpVal)=,也就说不是在参数绑定的时候,就根据它的引用获得值.
+
+  如果变量的值是 =Ref(Thunk)=,也就说变量作为函数调用的参数,并且在函数体内被引用,那么就要利用它所指向的 =thunk= 进行计算.
+
+  在这种设计方式下,函数的计算方式和 =β-reduction= 一样,可以对计算化简,如果函数没有任何计算作用,那么这种方式是没有问题的.
+
+  上面的那个例子中, =(infinite-loop 0)= 被直接无视掉了,由于它没有计算作用,所以无视它是没有问题的,可以如果 =(infinite-loop 0)= 计算的时候需要打印一些信息,那么这就有问题了.
+
+  因为计算作用是我们需要的,不能忽略.还有一个问题,那就是计算的顺序会变得不确定,所以这种设计基本上不会在实际的编程语言中见到.

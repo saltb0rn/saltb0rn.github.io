@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-10 Sat 10:10 -->
+<!-- 2018-11-10 Sat 23:42 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>直译器的实现技术总结</title>
@@ -708,6 +708,199 @@ Env : Var -&gt; Ref(Var)
 在这种设计中,我们可以说: 变量是可以变的(mutable),并且和上面定义的一样, <code>DenVal</code> 和 <code>ExpVal</code> 不一样,变量是不可以被 <code>DEREF</code> 的.
 </p>
 </div>
+</div>
+</div>
+
+
+<div id="outline-container-org3bbe94f" class="outline-2">
+<h2 id="org3bbe94f">Mutable Pairs</h2>
+<div class="outline-text-2" id="text-org3bbe94f">
+<p>
+关于 <code>Mutable Pair</code> (下文简称 <code>MutPair</code>),可以参考 <code>Scheme</code> 里面的 <code>pair</code>.
+</p>
+
+<pre class="example">
+MutPair := (CAR CDR)
+CAR     := RefToVal
+CDR     := RefToNextLocation
+</pre>
+
+<p>
+关于 <code>MutPair</code> 的 <code>representation</code>,有两种方式:
+</p>
+
+<ol class="org-ol">
+<li>一个包含两个字段的数据结构,分别是 <code>CAR</code> 和 <code>CDR</code> 字段, 它们两个不一定处于内存连续的位置,也就是分别独立.</li>
+
+<li>既然 <code>CAR</code> 和 <code>CDR</code> 都是引用,那么让它们处于内存连续的位置上,用 <code>CAR</code> 的引用表示 <code>MutPair</code>.</li>
+</ol>
+
+<p>
+在 <code>-source language</code> 中 <code>MutPair</code> 有以下几个接口:
+</p>
+
+<ol class="org-ol">
+<li><code>make-pair</code></li>
+
+<li><code>left</code></li>
+
+<li><code>right</code></li>
+
+<li><code>setleft</code></li>
+
+<li><code>setright</code></li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org6ed216a" class="outline-2">
+<h2 id="org6ed216a">参数传递方式 (Parameter passing)</h2>
+<div class="outline-text-2" id="text-org6ed216a">
+<p>
+调用函数的时候,形式参数(formal parameter)会绑定实际参数的 <code>denoted value</code>.
+</p>
+
+<p>
+参数传递有不同的方式,这里总结一下之前见过的方式和之后采用一些新的方式.
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>Natural parameter passing</code>
+</p>
+
+<p>
+在这种设计中, <code>denoted value</code> 和实际参数的 <code>expressed value</code> 是一样的.
+</p></li>
+
+<li><p>
+<code>Call-by-value</code>
+</p>
+
+<p>
+在这种设计中, <code>denoted value</code> 是一个位置的引用( a reference to a location),该位置包含实际参数的 <code>expressed value</code>.
+</p>
+
+<p>
+和 <code>natural parameter passing</code> 不同在于 <code>call-by-value</code> 里面实际参数的值是 <code>reference</code>.
+</p></li>
+
+<li><p>
+<code>Call-by-reference</code>
+</p>
+
+<p>
+在这种设计中,值的定义和 <code>call-by-value</code> 中的一样,
+</p>
+
+<pre class="example">
+ExpVal = Int + Bool + Proc
+DenVal = Ref(ExpVal)
+</pre>
+
+<p>
+在函数内改变参数的值可以改变实际参数的值.
+</p>
+
+<pre class="example">
+let p = proc (x) set x = 4
+in let a = 3
+   in begin (p a); a end
+</pre>
+
+<p>
+在 <code>call-by-value</code> 的设计下,当 <code>(p a)</code> 的 <code>a</code> 等于 <code>4</code> 的时候,最后 <code>a</code> 的值为 <code>3</code>;当程序改成这样,
+</p>
+
+<pre class="example">
+let p = proc (x) setleft(x,4)
+in let a = pair(3,4)
+   in begin (p a); a end
+</pre>
+
+<p>
+<code>a</code> 的结果为 <code>(4,4)</code>,后面成功更改了实际参数的值.
+</p>
+
+<p>
+原因是更改前的 <code>set x =4</code> 给 <code>x</code> 分配了新引用,而更改后的 <code>setleft(x,4)</code> 没有给 <code>x</code> 分配新的引用,是直接在 <code>x</code> 的引用的基础上做修改的.
+</p>
+
+<p>
+这就是实现 <code>call-by-reference</code> 的关键点所在, <code>call-by-value</code> 每次运算参数(也叫operand)的时候都会新分配一个引用,
+</p>
+
+<p>
+而 <code>call-by-reference</code> 只要是传入变量做为参数的时候不要新分配引用就可以了.
+</p></li>
+
+<li><p>
+<code>Lazy Evaluation/Call-by-name/Call-by-need</code>
+</p>
+
+<p>
+到目前为止,每次调用函数的时候都会先计算出实际参数的值,而现在这种方式在这点上不一样.
+</p>
+
+<p>
+函数调用的时候不会先计算出实际参数的值,只有函数体引用到参数才会计算参数的值.比如下面这个,
+</p>
+
+<pre class="example">
+letrec infinite-loop (x) = infinite-loop(-(x,-1))
+in let f = proc (z) 11
+   in (f (infinite-loop 0))
+</pre>
+
+<p>
+在这种设计下, <code>(f (infinite-loop 0))</code> 永远都返回 <code>11</code>.因为函数 <code>f</code> 的函数体内没有引用到参数 <code>z</code>,所以 <code>(infinite-loop 0)</code> 不会发生计算.
+</p>
+
+<p>
+上面这个例子有点像 <code>Lambda calculus</code> 的 <code>β-reduction</code>,这是编程语言语义学的内容,不详细讲.
+</p>
+
+<p>
+把那些没有经过运算的参数叫做参数冻结(frozen),当运算它的时候叫做参数解冻 <code>thawed</code>.
+</p>
+
+<p>
+这样有一个问题,在词法作用域下,函数定义的时候就决定好环境,现在参数要冻结,那么变量就不能和值的位置(location)关联并且储存到环境里面了.
+</p>
+
+<p>
+所以需要一个新的数据类型 <code>thunk</code>,变量关联 <code>thunk</code> 的位置(location)并且储存到环境中.一个 <code>thunk</code> 包含一个表达式(expression)和一个环境(environment),用于在必要时候运算.
+</p>
+
+<p>
+在这种设计下,值的设定如下,
+</p>
+
+<pre class="example">
+DenVal = Ref(ExpVal + Thunk)
+ExpVal = Int + Bool + Proc
+</pre>
+
+<p>
+当每次遇到变量的时候,如果变量的值是 <code>Ref(ExpVal)</code>,也就说不是在参数绑定的时候,就根据它的引用获得值.
+</p>
+
+<p>
+如果变量的值是 <code>Ref(Thunk)</code>,也就说变量作为函数调用的参数,并且在函数体内被引用,那么就要利用它所指向的 <code>thunk</code> 进行计算.
+</p>
+
+<p>
+在这种设计方式下,函数的计算方式和 <code>β-reduction</code> 一样,可以对计算化简,如果函数没有任何计算作用,那么这种方式是没有问题的.
+</p>
+
+<p>
+上面的那个例子中, <code>(infinite-loop 0)</code> 被直接无视掉了,由于它没有计算作用,所以无视它是没有问题的,可以如果 <code>(infinite-loop 0)</code> 计算的时候需要打印一些信息,那么这就有问题了.
+</p>
+
+<p>
+因为计算作用是我们需要的,不能忽略.还有一个问题,那就是计算的顺序会变得不确定,所以这种设计基本上不会在实际的编程语言中见到.
+</p></li>
+</ul>
 </div>
 </div>
 </div>
