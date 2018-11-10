@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-08 Thu 16:22 -->
+<!-- 2018-11-10 Sat 10:10 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>直译器的实现技术总结</title>
@@ -248,7 +248,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-这篇笔记不涉及实现的代码,主要是思路方面以及解答我自己的疑问,我也会把实践的代码放到 <code>GitHub</code> 上.
+这篇笔记不涉及实现的代码,主要是思路方面以及几个关键疑问的 <code>why</code>,我也会把实践的<a href="https://github.com/saltb0rn/eopl3/tree/master/langs">代码</a>放到 <code>GitHub</code> 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得有点乱).
 </p>
 
 </div>
@@ -277,7 +277,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-<code>PROC</code> 没有声明语句,所以它的函数都是匿名的,变量的绑定也是发生在函数传参中,也不需要考虑作用域的规则,定义函数的语法如下
+<code>PROC</code> 它的函数都是匿名的,变量的绑定也是发生在函数传参中,定义函数的语法如下
 </p>
 
 <pre class="example">
@@ -307,10 +307,40 @@ proc (&lt;arg&gt;) &lt;body&gt;
 <p>
 最后是函数调用的本质: <b>函数体(body)在函数记录的环境下(environment)进行运算</b>.
 </p>
-</div>
+
+<p>
+最后对于词法作用域我有个疑问,就是下面的例子
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">example-maker</span><span style="color: #BFEBBF;">)</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">func</span> <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>x<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>+ x a<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">a</span> 1<span style="color: #BFEBBF;">)</span>
+  func<span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">example</span> <span style="color: #BFEBBF;">(</span>example-maker<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span>example 3<span style="color: #DCDCCC;">)</span> <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">=&gt; 4</span>
+</pre>
 </div>
 
+<p>
+疑问点是 <code>a</code> 在 <code>func</code> 之后定义,然而 <code>func</code> 却可以使用之后 <code>a</code> 的绑定,个人猜测这里使用了如 <code>JavaScript</code> <a href="https://developer.mozilla.org/zh-CN/docs/Glossary/Hoisting">变量提升</a>(Hoisting,也叫标识符提升)的那种技术.
+</p>
 
+<p>
+这种技术就是让你提前获取未定义变量,有一个表示未初始化的默认值,所以 <code>func</code> 定义的时候可以获取了 <code>a</code> 的值,不过 <code>a</code> 的值是未定义之类的,
+</p>
+
+<p>
+不过和这个变量 <code>a</code> 不是普通的绑定,是一个引用(reference),因为后面 <code>a</code> 的定义会对 <code>func</code> 里面的 <code>a</code> 有影响.
+</p>
+
+<p>
+也只是猜测,展示没有办法证明 <code>Racket</code> 这种语言也是使用了这种技术.
+</p>
+</div>
+</div>
 
 
 <div id="outline-container-org3b05521" class="outline-2">
@@ -499,8 +529,185 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 <li>在遇到变量引用的时候,通过 <code>static environment</code> 计算出该变量的词法地址,用获得的词法地址替换变量引用.</li>
 </ol></li>
 
-<li><code>Interpreter</code>: 计算出翻译后的 <code>AST</code> 的值,不过和上面以往的实现不一样,不是操作 <code>old-style-env</code> 而是使用 <code>nameless environment</code>,以前是遇到变量引用,现在是遇到变量的词法地址.</li>
+<li><code>Interpreter</code>: 计算出翻译后的 <code>AST</code> 的值,不过和上面以往的实现不一样,不是操作 <code>old-style-env</code> 而是使用 <code>nameless environment</code>,在遇到翻译得到的词法地址,根据该词法地址在 <code>nameless environment</code> 中找出对应的值.</li>
 </ol>
+</div>
+</div>
+
+
+<div id="outline-container-org70db69d" class="outline-2">
+<h2 id="org70db69d">引用和计算作用 (References and computation effects)</h2>
+<div class="outline-text-2" id="text-org70db69d">
+<p>
+到目前为止都是认为值是通过计算产生的,但是计算也可以产生作用(你应该听说过什么是副作用).
+</p>
+
+<p>
+产生值和产生作用的区别在于作用是全局的,可以影响整个计算过程.作用有很多类,最常见一类是变量赋值,接下来也是专门讲它.
+</p>
+
+<p>
+变量赋值(variable assignment)和变量绑定(variable binding)不是一回事,是有区别的,绑定是局部的(local),而变量赋值 <b>可能</b> 是全局的(global).
+</p>
+
+<p>
+变量赋值可以给内存的某个位置赋值,而这个内存位置可以被多个地方共享,而变量绑定是不能被多个地方共享的.我们会建立一个内存模型,用来实现内存位置的引用.
+</p>
+
+<p>
+内存就是有一个有限的映射(finite map),从变量在内存中的位置(location)到该变量的值,这些值叫做可储存值(storable values),由于历史原因,我们把这个模型叫做 <code>store</code>.
+</p>
+
+<pre class="example">
+Store : Location -&gt; Value
+</pre>
+
+<p>
+表示位置的数据结构叫做引用(reference,上面的词法地址也是引用),位置是指内存中用来储存值的地方,而引用就是指向这个地方.
+</p>
+
+<p>
+打个比方,在某个路径的文件一样,路径就是引用,文件就是位置,这个文件的内容就是可储存的值.在典型的编程语言设计中,可储存值属于 <code>expressed value</code>.
+</p>
+
+<p>
+引用有时候叫做 <code>L-values</code>,那是因为它出现在赋值表达式的左手边, <code>expressed values</code> 则是在右手边,叫做 <code>R-values</code>.
+</p>
+
+<p>
+语言的引用有两种设计形式,显式引用(explicit references)和隐式引用(implicit references).显式引用也就是可以手动操作引用,隐式引用全靠语言维护引用.
+</p>
+</div>
+
+
+<div id="outline-container-org3aafa35" class="outline-3">
+<h3 id="org3aafa35">显示引用</h3>
+<div class="outline-text-3" id="text-org3aafa35">
+<p>
+(书本的 <code>EXPLICIT-REFS</code> 语言.)
+</p>
+
+<p>
+现实中采用这种设计的语言最出名的就是 <code>C/C++</code>,它们的指针.操作引用有三个动作,
+</p>
+
+<ol class="org-ol">
+<li><code>NEWREF</code>: 分配位置(location),也就是 <code>C/C++</code> 里面的分配(allocate)内存,返回指向它的引用.</li>
+
+<li><code>DEREF</code>: 获取引用所指向的位置上的内容.</li>
+
+<li><code>SETREF</code>: 改变引用所指向的位置上的内容.</li>
+</ol>
+
+<p>
+这种设计中,语言的值是这样定义的,
+</p>
+
+<pre class="example">
+ExpVal = Int + Bool + Proc + Ref(ExpVal)
+DenVal = ExpVal
+</pre>
+
+<p>
+多了一个 <code>Ref(ExpVal)</code>,这样就可以手动操作引用了.
+</p>
+
+<p>
+由于现在要考虑计算的作用(这里主要是变量赋值),所以计算的时候除了记录环境变量绑定外,还需要记录 <code>store</code>.
+</p>
+
+<p>
+有两种方法记录 <code>store</code>,
+</p>
+
+<ol class="org-ol">
+<li><p>
+Store Passing Specification
+</p>
+
+<p>
+这种形式是把 <code>store</code> 储存在参数中, <code>value-of</code> 的定义就要变成这样 <code>(value-of exp env store)</code>,
+</p>
+
+<p>
+整个计算过程中,不同时刻的 <code>store</code> 的内容都 <b>可能</b> 会被修改,把某个时刻的 <code>store</code> 的值称为 <code>state</code>.
+</p>
+
+<pre class="example">
+   计算过程中有作用: (value-of exp env1 store0) = (val, store1)
+
+   计算过程中没有作用: (value-of exp env2 store0) = (val, store0)
+</pre>
+
+<p>
+<code>σ</code> 表示整个 <code>store</code>,也就是内存, <code>[l=v]σ</code> 表示 <code>σ</code> 的 <code>l</code> 引用指向了 <code>v</code>,表明 <code>σ</code> 发生了改变.
+</p></li>
+
+<li>保存在全局变量中</li>
+</ol>
+
+
+<p>
+最后还要选一个 <code>representation</code> 来表示 <code>store</code>,这里选择 <b>列表</b>:
+</p>
+
+<ul class="org-ul">
+<li>列表的索引作为引用(reference),索引对应的值就是引用所指向的位置的内容</li>
+
+<li>最新 <code>NEWREF</code> 的引用放置在列表的最后一个位置.</li>
+</ul>
+
+<p>
+书本上的例子采用的第二种方案.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org45a84bf" class="outline-3">
+<h3 id="org45a84bf">隐式引用</h3>
+<div class="outline-text-3" id="text-org45a84bf">
+<p>
+大部份语言都是采用这种设计, <code>Lisp</code>, <code>JavaScript</code>, <code>Python</code> 等等,不需要程序员手动管理引用.
+</p>
+
+<p>
+这种设计也叫做 <code>call-by-name</code>.除了这一点外,和采用显式引用设计的语言最大区别就是值的定义不一样,
+</p>
+
+<pre class="example">
+ExpVal = Int + Bool + Proc
+DenVal = Ref(ExpVal)
+</pre>
+
+<p>
+<b>不过书上的例子中 Reference 依然是定义在 ExpVal 中,只是不能再通过 Expression 计算得出 Reference,这种方式也是间接定义了 DenVal</b>.
+</p>
+
+<p>
+环境不再是从变量到值的映射,而是从变量到引用的映射,也就是以后所有绑定动作会分配引用(<code>NEWREF</code>).
+</p>
+
+<p>
+<b>能计算出 <code>Reference</code> 的地方只有 <code>apply-env</code></b>.
+</p>
+
+<pre class="example">
+Env : Var -&gt; Ref(Var)
+</pre>
+
+<p>
+根据变量在环境得到的引用后,再到 <code>store</code> 根据引用获得变量的值(<code>DEREF</code>,是不是和词法地址的设计有点相似).
+</p>
+
+<p>
+对于 <code>SETREF</code>,需要一个 <code>ASSIGN</code> 操作,实际中, <code>Scheme</code> 的 <code>set</code> 操作符号就是这一类.
+</p>
+
+<p>
+在这种设计中,我们可以说: 变量是可以变的(mutable),并且和上面定义的一样, <code>DenVal</code> 和 <code>ExpVal</code> 不一样,变量是不可以被 <code>DEREF</code> 的.
+</p>
+</div>
 </div>
 </div>
 </div>

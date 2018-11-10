@@ -5,7 +5,7 @@
 #+begin_abstract
 主要是总结 =EOPL= 上的一些用于实现语言特性的技术,包括词法作用域,动态作用域,并发等等.
 
-这篇笔记不涉及实现的代码,主要是思路方面以及解答我自己的疑问,我也会把实践的代码放到 =GitHub= 上.
+这篇笔记不涉及实现的代码,主要是思路方面以及几个关键疑问的 =why=,我也会把实践的[[https://github.com/saltb0rn/eopl3/tree/master/langs][代码]]放到 =GitHub= 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得有点乱).
 #+end_abstract
 
 先认为我们已经理解变量和环境的概念.
@@ -20,7 +20,7 @@
 
 在函数式编程语言中,函数既是一个值,也可以进行调用.因此除了把函数定义为语言的数据类型外,还要考虑如何实现它的调用.
 
-=PROC= 没有声明语句,所以它的函数都是匿名的,变量的绑定也是发生在函数传参中,也不需要考虑作用域的规则,定义函数的语法如下
+=PROC= 它的函数都是匿名的,变量的绑定也是发生在函数传参中,定义函数的语法如下
 
 #+BEGIN_EXAMPLE
 proc (<arg>) <body>
@@ -38,7 +38,26 @@ proc (<arg>) <body>
 
 最后是函数调用的本质: *函数体(body)在函数记录的环境下(environment)进行运算*.
 
+最后对于词法作用域我有个疑问,就是下面的例子
 
+#+BEGIN_SRC scheme
+(define (example-maker)
+  (define func (lambda (x) (+ x a)))
+  (define a 1)
+  func)
+
+(define example (example-maker))
+
+(example 3) ; => 4
+#+END_SRC
+
+疑问点是 =a= 在 =func= 之后定义,然而 =func= 却可以使用之后 =a= 的绑定,个人猜测这里使用了如 =JavaScript= [[https://developer.mozilla.org/zh-CN/docs/Glossary/Hoisting][变量提升]](Hoisting,也叫标识符提升)的那种技术.
+
+这种技术就是让你提前获取未定义变量,有一个表示未初始化的默认值,所以 =func= 定义的时候可以获取了 =a= 的值,不过 =a= 的值是未定义之类的,
+
+不过和这个变量 =a= 不是普通的绑定,是一个引用(reference),因为后面 =a= 的定义会对 =func= 里面的 =a= 有影响.
+
+也只是猜测,展示没有办法证明 =Racket= 这种语言也是使用了这种技术.
 
 
 *** 递归函数
@@ -155,4 +174,108 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 
    2. 在遇到变量引用的时候,通过 =static environment= 计算出该变量的词法地址,用获得的词法地址替换变量引用.
 
-2. =Interpreter=: 计算出翻译后的 =AST= 的值,不过和上面以往的实现不一样,不是操作 =old-style-env= 而是使用 =nameless environment=,以前是遇到变量引用,现在是遇到变量的词法地址.
+2. =Interpreter=: 计算出翻译后的 =AST= 的值,不过和上面以往的实现不一样,不是操作 =old-style-env= 而是使用 =nameless environment=,在遇到翻译得到的词法地址,根据该词法地址在 =nameless environment= 中找出对应的值.
+
+
+*** 引用和计算作用 (References and computation effects)
+
+到目前为止都是认为值是通过计算产生的,但是计算也可以产生作用(你应该听说过什么是副作用).
+
+产生值和产生作用的区别在于作用是全局的,可以影响整个计算过程.作用有很多类,最常见一类是变量赋值,接下来也是专门讲它.
+
+变量赋值(variable assignment)和变量绑定(variable binding)不是一回事,是有区别的,绑定是局部的(local),而变量赋值 *可能* 是全局的(global).
+
+变量赋值可以给内存的某个位置赋值,而这个内存位置可以被多个地方共享,而变量绑定是不能被多个地方共享的.我们会建立一个内存模型,用来实现内存位置的引用.
+
+内存就是有一个有限的映射(finite map),从变量在内存中的位置(location)到该变量的值,这些值叫做可储存值(storable values),由于历史原因,我们把这个模型叫做 =store=.
+
+#+BEGIN_EXAMPLE
+Store : Location -> Value
+#+END_EXAMPLE
+
+表示位置的数据结构叫做引用(reference,上面的词法地址也是引用),位置是指内存中用来储存值的地方,而引用就是指向这个地方.
+
+打个比方,在某个路径的文件一样,路径就是引用,文件就是位置,这个文件的内容就是可储存的值.在典型的编程语言设计中,可储存值属于 =expressed value=.
+
+引用有时候叫做 =L-values=,那是因为它出现在赋值表达式的左手边, =expressed values= 则是在右手边,叫做 =R-values=.
+
+语言的引用有两种设计形式,显式引用(explicit references)和隐式引用(implicit references).显式引用也就是可以手动操作引用,隐式引用全靠语言维护引用.
+
+
+**** 显示引用
+
+(书本的 =EXPLICIT-REFS= 语言.)
+
+现实中采用这种设计的语言最出名的就是 =C/C++=,它们的指针.操作引用有三个动作,
+
+1. =NEWREF=: 分配位置(location),也就是 =C/C++= 里面的分配(allocate)内存,返回指向它的引用.
+
+2. =DEREF=: 获取引用所指向的位置上的内容.
+
+3. =SETREF=: 改变引用所指向的位置上的内容.
+
+这种设计中,语言的值是这样定义的,
+
+#+BEGIN_EXAMPLE
+ExpVal = Int + Bool + Proc + Ref(ExpVal)
+DenVal = ExpVal
+#+END_EXAMPLE
+
+多了一个 =Ref(ExpVal)=,这样就可以手动操作引用了.
+
+由于现在要考虑计算的作用(这里主要是变量赋值),所以计算的时候除了记录环境变量绑定外,还需要记录 =store=.
+
+有两种方法记录 =store=,
+
+1. Store Passing Specification
+
+   这种形式是把 =store= 储存在参数中, =value-of= 的定义就要变成这样 =(value-of exp env store)=,
+
+   整个计算过程中,不同时刻的 =store= 的内容都 *可能* 会被修改,把某个时刻的 =store= 的值称为 =state=.
+
+   #+BEGIN_EXAMPLE
+   计算过程中有作用: (value-of exp env1 store0) = (val, store1)
+
+   计算过程中没有作用: (value-of exp env2 store0) = (val, store0)
+   #+END_EXAMPLE
+
+   =σ= 表示整个 =store=,也就是内存, =[l=v]σ= 表示 =σ= 的 =l= 引用指向了 =v=,表明 =σ= 发生了改变.
+
+2. 保存在全局变量中
+
+
+最后还要选一个 =representation= 来表示 =store=,这里选择 *列表*:
+
+- 列表的索引作为引用(reference),索引对应的值就是引用所指向的位置的内容
+
+- 最新 =NEWREF= 的引用放置在列表的最后一个位置.
+
+书本上的例子采用的第二种方案.
+
+
+**** 隐式引用
+
+大部份语言都是采用这种设计, =Lisp=, =JavaScript=, =Python= 等等,不需要程序员手动管理引用.
+
+这种设计也叫做 =call-by-name=.除了这一点外,和采用显式引用设计的语言最大区别就是值的定义不一样,
+
+#+BEGIN_EXAMPLE
+ExpVal = Int + Bool + Proc
+DenVal = Ref(ExpVal)
+#+END_EXAMPLE
+
+*不过书上的例子中 Reference 依然是定义在 ExpVal 中,只是不能再通过 Expression 计算得出 Reference,这种方式也是间接定义了 DenVal*.
+
+环境不再是从变量到值的映射,而是从变量到引用的映射,也就是以后所有绑定动作会分配引用(=NEWREF=).
+
+*能计算出 =Reference= 的地方只有 =apply-env=*.
+
+#+BEGIN_EXAMPLE
+Env : Var -> Ref(Var)
+#+END_EXAMPLE
+
+根据变量在环境得到的引用后,再到 =store= 根据引用获得变量的值(=DEREF=,是不是和词法地址的设计有点相似).
+
+对于 =SETREF=,需要一个 =ASSIGN= 操作,实际中, =Scheme= 的 =set= 操作符号就是这一类.
+
+在这种设计中,我们可以说: 变量是可以变的(mutable),并且和上面定义的一样, =DenVal= 和 =ExpVal= 不一样,变量是不可以被 =DEREF= 的.
