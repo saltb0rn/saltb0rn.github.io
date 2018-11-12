@@ -169,7 +169,7 @@ you a resource to learn to how to use them.
 
 	
 *** [[file:posts/2018/06/continuation-passing-style.html][Continuation Passing Style]]
-写一写自己对CPS的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
+写一写自己对 =CPS= 的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
 
 	
 *** [[file:posts/2018/06/about-rpc.html][网络编程笔记 RPC]]

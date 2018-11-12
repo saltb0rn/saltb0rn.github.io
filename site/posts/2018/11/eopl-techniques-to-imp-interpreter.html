@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-10 Sat 23:42 -->
+<!-- 2018-11-12 Mon 13:33 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>直译器的实现技术总结</title>
@@ -753,6 +753,7 @@ CDR     := RefToNextLocation
 </div>
 </div>
 
+
 <div id="outline-container-org6ed216a" class="outline-2">
 <h2 id="org6ed216a">参数传递方式 (Parameter passing)</h2>
 <div class="outline-text-2" id="text-org6ed216a">
@@ -847,7 +848,7 @@ in let a = pair(3,4)
 </p>
 
 <pre class="example">
-letrec infinite-loop (x) = infinite-loop(-(x,-1))
+letrec infinite-loop (x) = (infinite-loop -(x,-1))
 in let f = proc (z) 11
    in (f (infinite-loop 0))
 </pre>
@@ -902,6 +903,59 @@ ExpVal = Int + Bool + Proc
 </p></li>
 </ul>
 </div>
+</div>
+
+
+<div id="outline-container-org698cc6a" class="outline-2">
+<h2 id="org698cc6a">Continuation-Passing Interpreter</h2>
+<div class="outline-text-2" id="text-org698cc6a">
+<p>
+上面的 <code>interpreters</code> 都使用到 <code>environment</code> 计算, <code>environment</code> 记录了上下文的数据绑定,是数据上下文的一种抽象(an abstraction of data context).
+</p>
+
+<p>
+除了记录上下文的数据外,还可以记录还有多少没计算完/下一步的执行起始点,这里引入 <code>continuation</code> 的概念,是控制上下文的一种抽象(an abstraction of control context).
+</p>
+
+<p>
+如果还不能理解什么是控制上下文,可以看以下这个例子,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">execute</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>n<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>+
+      <span style="color: #93E0E3;">(</span>- n 1<span style="color: #93E0E3;">)</span>
+      5<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span>execute 5<span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+当我们要理解 <code>(execute 5)</code> 的执行过程,要看函数定义,然后按照执行顺序一步一步读,这个例子整个执行顺序为
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org26e8eb4" class="outline-2">
+<h2 id="org26e8eb4">Trampolined Interpreter</h2>
+</div>
+
+
+<div id="outline-container-org2b5e080" class="outline-2">
+<h2 id="org2b5e080">Imperative Interpreter</h2>
+</div>
+
+
+<div id="outline-container-org388b603" class="outline-2">
+<h2 id="org388b603">异常 (Exceptions)</h2>
+</div>
+
+
+<div id="outline-container-org0c6e722" class="outline-2">
+<h2 id="org0c6e722">线程 (Threads)</h2>
 </div>
 </div>
 <div id="postamble" class="status">
