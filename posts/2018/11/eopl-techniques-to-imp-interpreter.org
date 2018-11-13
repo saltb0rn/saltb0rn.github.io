@@ -399,31 +399,92 @@ CDR     := RefToNextLocation
   因为计算作用是我们需要的,不能忽略.还有一个问题,那就是计算的顺序会变得不确定,所以这种设计基本上不会在实际的编程语言中见到.
 
 
-*** Continuation-Passing Interpreter
+*** 控制上下文 (Control Context)
 
-上面的 =interpreters= 都使用到 =environment= 计算, =environment= 记录了上下文的数据绑定,是数据上下文的一种抽象(an abstraction of data context).
+针对特性不同的语言有不同的方法实现控制上下文.
 
-除了记录上下文的数据外,还可以记录还有多少没计算完/下一步的执行起始点,这里引入 =continuation= 的概念,是控制上下文的一种抽象(an abstraction of control context).
+**** Continuation-Passing Interpreter
 
-如果还不能理解什么是控制上下文,可以看以下这个例子,
+之前已经写过一篇关于 =[[../06/continuation-passing-style.org][CPS]]= 的文章,关于什么是 =CPS= 和 =continuation= 的概念就不再叙述了.
+
+=Continuation-passing interpreter= 的目的是实现控制上下文(control context)这一特性,做法就是给 =interpreter= 的函数,比如 =value-of=,添加第三个参数,也就是 =continuation=.
+
+这个直译器是基于 =LETREC= 重写(overwrite)的,目标是让 =value-of= 的调用不会导致控制上下文的增长.
+
+我们选择函数(procedure)作为 =Continuation= 的 =representation=,
+
+#+BEGIN_EXAMPLE
+FinalAnswer = ExpVal
+Cont : ExpVal -> FinalAnswer
+#+END_EXAMPLE
+
+不同情况下 =continuation= 是不一样的,书上的例子大概就是根据表达式种类来划分.
+
+
+**** Trampolined Interpreter
+
+用 =procedure language= 把一个直译器改写为 =continuation-passing interpreter= 可能不是一个明智的做法.
+
+因为大部份 =procedure language= 不是在必要的时候增长控制上下文,而是每一次函数调用都增长控制上下文(stack!),比如 =Python=,这些系统上的函数调用只有在计算结束的时候才返回,所以到结束为止栈会一直增长.
+
+实际上这些语言这么设计也是合理的,如果函数调用出现在赋值表达式的右手边,那么就需要通过增长控制上下文跟踪下一步的赋值.并且大部份语言都把 =environment= 信息储存到栈上,每次函数调用的时候都会产生一个控制上下文来在之后移除栈上的 =environment= 信息.
+
+用这种语言实现 =interpreter= 的时候,可以使用一种叫做 =trampolining= 的技术来避免无止境的函数调用链(an unbound chain of procedure calls).
+
+做法就是让 =interpreter= 里面的其中一个函数返回一个无参数的函数(zero-argument procedure),然后执行这个返回值.比如 =interpreter= 里面有一个 =apply-procedure/k= 如下,
 
 #+BEGIN_SRC scheme
-(define execute
-  (lambda (n)
-    (+
-      (- n 1)
-      5)))
-
-(execute 5)
+(define apply-procedure/k
+  (lambda (proc arg cont)
+    (body-of-apply-procedure/k)))
 #+END_SRC
 
-当我们要理解 =(execute 5)= 的执行过程,要看函数定义,然后按照执行顺序一步一步读,这个例子整个执行顺序为
+=trampolining= 后就是这样,
+
+#+BEGIN_SRC scheme
+(define apply-procedure/k
+  (lambda (proc arg cont)
+    (lambda ()
+      (body-of-apply-procedure/k))))
+#+END_SRC
+
+不过我们要把这个抽象出来,整个 =interpreter= 的都会被一个叫做 =trampoline= 的函数分开. =Interpreter= 计算得到的值会先是一个 =Bounce=,然后把 =bounce= 传给 =trampoline= 函数计算出结果.
+
+书本上的例子是基于上一个小节的 =continuation-passing interpreter= 修改的,定义修改部分为,
+
+#+BEGIN_EXAMPLE
+value-of-program  : Program -> FinalAnswer
+apply-procedure/k : Proc * ExpVal * Cont -> Bounce
+value-of/k        : Exp * Env * Cont -> Bounce
+apply-cont        : Cont * ExpVal -> Bounce
+#+END_EXAMPLE
+
+=FinalAnswer=, =Trampoline= 和 =Bounce= 的定义如下,
+
+#+BEGIN_EXAMPLE
+FinalAnswer = ExpVal
+Trampoline : Bounce -> FinalAnswer
+Bounce = ExpVal ∪ (() -> Bounce)
+#+END_EXAMPLE
+
+其中 =trampoline= 的实现如下,
+
+#+BEGIN_SRC scheme
+(define trampoline
+  (lambda (bounce)
+    (if (expval? bounce)
+        bounce
+        (trampoline (bounce)))))
+#+END_SRC
 
 
-*** Trampolined Interpreter
+**** Imperative Interpreter
 
+并非所有语言都是支持函数式编程,想用这种语言实现控制上下文,那么可以采用寄存器(register)设计方式进行实现.
 
-*** Imperative Interpreter
+可以根据上面的 =continuation-passing interpreter= 进行改写, =continuation-passing interpreter= 的当前执行点的 =environment=, =continuation=, =exp=, =proc= 和 =val= 所有信息都是通过传参维护的,
+
+=imperative interpreter= 则是通过把这些信息储存到对应的全局变量里,这些全局变量就是模拟寄存器.采用寄存器设计之后 =value-of/k=, =apply-env= 这样的函数就不需要参数了.
 
 
 *** 异常 (Exceptions)

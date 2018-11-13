@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-12 Mon 18:51 -->
+<!-- 2018-11-14 Wed 00:48 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>直译器的实现技术总结</title>
@@ -906,46 +906,144 @@ ExpVal = Int + Bool + Proc
 </div>
 
 
-<div id="outline-container-org698cc6a" class="outline-2">
-<h2 id="org698cc6a">Continuation-Passing Interpreter</h2>
-<div class="outline-text-2" id="text-org698cc6a">
+<div id="outline-container-org19f5a3a" class="outline-2">
+<h2 id="org19f5a3a">控制上下文 (Control Context)</h2>
+<div class="outline-text-2" id="text-org19f5a3a">
 <p>
-上面的 <code>interpreters</code> 都使用到 <code>environment</code> 计算, <code>environment</code> 记录了上下文的数据绑定,是数据上下文的一种抽象(an abstraction of data context).
+针对特性不同的语言有不同的方法实现控制上下文.
+</p>
+</div>
+
+<div id="outline-container-org698cc6a" class="outline-3">
+<h3 id="org698cc6a">Continuation-Passing Interpreter</h3>
+<div class="outline-text-3" id="text-org698cc6a">
+<p>
+之前已经写过一篇关于 <code>[[../06/continuation-passing-style.org][CPS]]</code> 的文章,关于什么是 <code>CPS</code> 和 <code>continuation</code> 的概念就不再叙述了.
 </p>
 
 <p>
-除了记录上下文的数据外,还可以记录还有多少没计算完/下一步的执行起始点,这里引入 <code>continuation</code> 的概念,是控制上下文的一种抽象(an abstraction of control context).
+<code>Continuation-passing interpreter</code> 的目的是实现控制上下文(control context)这一特性,做法就是给 <code>interpreter</code> 的函数,比如 <code>value-of</code>,添加第三个参数,也就是 <code>continuation</code>.
 </p>
 
 <p>
-如果还不能理解什么是控制上下文,可以看以下这个例子,
+这个直译器是基于 <code>LETREC</code> 重写(overwrite)的,目标是让 <code>value-of</code> 的调用不会导致控制上下文的增长.
+</p>
+
+<p>
+我们选择函数(procedure)作为 <code>Continuation</code> 的 <code>representation</code>,
+</p>
+
+<pre class="example">
+FinalAnswer = ExpVal
+Cont : ExpVal -&gt; FinalAnswer
+</pre>
+
+<p>
+不同情况下 <code>continuation</code> 是不一样的,书上的例子大概就是根据表达式种类来划分.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org26e8eb4" class="outline-3">
+<h3 id="org26e8eb4">Trampolined Interpreter</h3>
+<div class="outline-text-3" id="text-org26e8eb4">
+<p>
+用 <code>procedure language</code> 把一个直译器改写为 <code>continuation-passing interpreter</code> 可能不是一个明智的做法.
+</p>
+
+<p>
+因为大部份 <code>procedure language</code> 不是在必要的时候增长控制上下文,而是每一次函数调用都增长控制上下文(stack!),比如 <code>Python</code>,这些系统上的函数调用只有在计算结束的时候才返回,所以到结束为止栈会一直增长.
+</p>
+
+<p>
+实际上这些语言这么设计也是合理的,如果函数调用出现在赋值表达式的右手边,那么就需要通过增长控制上下文跟踪下一步的赋值.并且大部份语言都把 <code>environment</code> 信息储存到栈上,每次函数调用的时候都会产生一个控制上下文来在之后移除栈上的 <code>environment</code> 信息.
+</p>
+
+<p>
+用这种语言实现 <code>interpreter</code> 的时候,可以使用一种叫做 <code>trampolining</code> 的技术来避免无止境的函数调用链(an unbound chain of procedure calls).
+</p>
+
+<p>
+做法就是让 <code>interpreter</code> 里面的其中一个函数返回一个无参数的函数(zero-argument procedure),然后执行这个返回值.比如 <code>interpreter</code> 里面有一个 <code>apply-procedure/k</code> 如下,
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">execute</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>n<span style="color: #D0BF8F;">)</span>
-    <span style="color: #D0BF8F;">(</span>+
-      <span style="color: #93E0E3;">(</span>- n 1<span style="color: #93E0E3;">)</span>
-      5<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-
-<span style="color: #DCDCCC;">(</span>execute 5<span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-procedure/k</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>proc arg cont<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>body-of-apply-procedure/k<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
 </pre>
 </div>
 
 <p>
-当我们要理解 <code>(execute 5)</code> 的执行过程,要看函数定义,然后按照执行顺序一步一步读,这个例子整个执行顺序为
+<code>trampolining</code> 后就是这样,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-procedure/k</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>proc arg cont<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">()</span>
+      <span style="color: #93E0E3;">(</span>body-of-apply-procedure/k<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+不过我们要把这个抽象出来,整个 <code>interpreter</code> 的都会被一个叫做 <code>trampoline</code> 的函数分开. <code>Interpreter</code> 计算得到的值会先是一个 <code>Bounce</code>,然后把 <code>bounce</code> 传给 <code>trampoline</code> 函数计算出结果.
+</p>
+
+<p>
+书本上的例子是基于上一个小节的 <code>continuation-passing interpreter</code> 修改的,定义修改部分为,
+</p>
+
+<pre class="example">
+value-of-program  : Program -&gt; FinalAnswer
+apply-procedure/k : Proc * ExpVal * Cont -&gt; Bounce
+value-of/k        : Exp * Env * Cont -&gt; Bounce
+apply-cont        : Cont * ExpVal -&gt; Bounce
+</pre>
+
+<p>
+<code>FinalAnswer</code>, <code>Trampoline</code> 和 <code>Bounce</code> 的定义如下,
+</p>
+
+<pre class="example">
+FinalAnswer = ExpVal
+Trampoline : Bounce -&gt; FinalAnswer
+Bounce = ExpVal ∪ (() -&gt; Bounce)
+</pre>
+
+<p>
+其中 <code>trampoline</code> 的实现如下,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">trampoline</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>bounce<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #93E0E3;">(</span>expval? bounce<span style="color: #93E0E3;">)</span>
+        bounce
+        <span style="color: #93E0E3;">(</span>trampoline <span style="color: #9FC59F;">(</span>bounce<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org2b5e080" class="outline-3">
+<h3 id="org2b5e080">Imperative Interpreter</h3>
+<div class="outline-text-3" id="text-org2b5e080">
+<p>
+并非所有语言都是支持函数式编程,想用这种语言实现控制上下文,那么可以采用寄存器(register)设计方式进行实现.
+</p>
+
+<p>
+可以根据上面的 <code>continuation-passing interpreter</code> 进行改写, <code>continuation-passing interpreter</code> 的当前执行点的 <code>environment</code>, <code>continuation</code>, <code>exp</code>, <code>proc</code> 和 <code>val</code> 所有信息都是通过传参维护的,
+</p>
+
+<p>
+<code>imperative interpreter</code> 则是通过把这些信息储存到对应的全局变量里,这些全局变量就是模拟寄存器.采用寄存器设计之后 <code>value-of/k</code>, <code>apply-env</code> 这样的函数就不需要参数了.
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-org26e8eb4" class="outline-2">
-<h2 id="org26e8eb4">Trampolined Interpreter</h2>
-</div>
-
-
-<div id="outline-container-org2b5e080" class="outline-2">
-<h2 id="org2b5e080">Imperative Interpreter</h2>
 </div>
 
 
