@@ -61,7 +61,7 @@
 
 好了,介绍什么是 =continuation= 之前先介绍一下什么是控制上下文?首先要先了解什么是上下文,所谓上下文就是贯穿整个过程的一个意像,在整个过程中的每一个点上,上下文的状态都不一样.
 
-假如调用 =(ans 1 2 3)=,那么会发生以下几件事情,
+而控制上下文就像 =stack=,假如调用 =(ans 1 2 3)=,那么会发生以下几件事情,
 
 1. 形式参数和实际参数发生绑定: =x=1, y=2, z=3=.
 
@@ -71,9 +71,9 @@
 
 整一个计算过程需要记住变量的值,这需要一个叫做 =environment= 的东西进行储存,它就是一个从变量到值的映射, =environment= 是数据上下文(data context)的一个抽象.
 
-除了数据上下文,还有另外一种上下文,上面的整个计算过程中的第二步和第三步,每次执行一步都需要记录下一步要从哪里开始,这个就是所谓的控制上下文.可以想象一下用调试器的逐步调试的过程,每一步都是一个执行点,逐步执行直到计算结束.
+除了数据上下文,还有另外一种上下文,上面的整个计算过程中的第二步和第三步,每次执行一步都需要记录下一步要从哪里开始,这个就是所谓的控制上下文.事实上还可以想象一下用调试器的逐步调试的过程,每一步都是一个执行点,逐步执行直到计算结束.
 
-而 =continuation= 就是控制上下文的一个抽象. =Environment= 是一个映射,它的 =representation= 有很多选择:哈希表,关联链表等等,那么 =continuation= 的 =representation= 又是什么呢?
+而 =continuation= 就是控制上下文的一个抽象,它就像 =stack= 的帧(frame). =Environment= 是一个映射,它的 =representation= 有很多选择:哈希表,关联链表等等,那么 =continuation= 的 =representation= 又是什么呢?
 
 
 **** Continuation 的 representation
@@ -106,9 +106,9 @@
 (define last-step (lambda (v) v))
 #+END_SRC
 
-除了用函数作为 =representation= 外,还可以选择数据结构作为 =representation=,这个数据结构需要有 =environment=, =expression= 和 =continuation= 三个信息.
+除了用函数作为 =representation= 外,还可以选择数据结构作为 =representation=,这个数据结构包含了下一步需要的信息,比如 =environment=, =expression=, =value=, =procedure= 和 =continuation=.
 
-其中 =expression= 是下一个要执行的表达式, =environment= 就是该 =expression= 执行的 =environment=, =continuation= 就是该 =expression= 的 =continuation=.
+其中 =expression= 是下一个要执行的表达式, =environment= 就是该 =expression= 执行的 =environment=, =continuation= 就是该 =expression= 的 =continuation=,如此类推.
 
 我想你应该多少能看出来了这是一个递归.下面开始演示如何编写 =CPS= 程序.
 
@@ -175,9 +175,9 @@ null
 (+ 1 (- 2 ((lambda (x) x) 1)))
 #+END_SRC
 
-这样划分的原因是,可以保证 =non-simple expression= 处于函数的 =tail position=, =tail position= 就是函数的退出的位置,也就是结束的地方,这一步的 =continuation= 和整个函数的 =continuation= 是一样的,也就是说栈空间没有发生改变,在这种地方的调用就是尾递归调用(tail call),这样的函数称为 =tail form= 的.
+这样划分的原因是,可以保证 =non-simple expression= 处于函数的 =tail position=, =tail position= 就是函数的退出的位置,也就是结束的地方,这一步的 =continuation= 和整个函数的 =continuation= 是一样的,也就是说栈空间没有发生改变,在这种地方的调用就是尾调用(tail call),这样的函数称为 =tail form= 的.
 
-简单点,就是保证了尾递归的发生.这里可能会有点绕,一时间可能会不太理解,具体可以结合之后的 *最后一个例子* 来理解.
+简单点,就是保证了尾调用的发生.这里可能会有点绕,一时间可能会不太理解,具体可以结合之后的 *最后一个例子* 来理解.
 
 
 **** 一套把程序转化为 CPS 程序的算法
@@ -199,9 +199,7 @@ null
    (define (sub/k x y cont) (cont (- x y)))
    #+end_src
 
-比如第 2 步中,你可以这么想象: 先计算出 =(add x y)= 的值 =res= ,然后把这个值交给下一步 =cont=.
-
-其实这整个过程可以想的更加抽象一点, =CPS= 就是把多个简单的计算过程组合成一个复杂的计算过程.计算这一步,得出的结果传递给下一步并且开始计算,如此类推,直到计算完毕.
+比如第 =2= 步中,你可以这么想象: 先计算出 =(add x y)= 的值 =res= ,然后把这个值交给下一步 =cont=. =CPS= 实际上反映了整个计算过程,这一步到下一步,如此类推,直到计算完毕.
 
 
 **** 最后一个例子

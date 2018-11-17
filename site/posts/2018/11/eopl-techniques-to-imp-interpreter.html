@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-14 Wed 01:01 -->
+<!-- 2018-11-17 Sat 16:12 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>直译器的实现技术总结</title>
@@ -248,7 +248,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-这篇笔记不涉及实现的代码,主要是思路方面以及几个关键疑问的 <code>why</code>,我也会把实践的<a href="https://github.com/saltb0rn/eopl3/tree/master/langs">代码</a>放到 <code>GitHub</code> 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得有点乱).
+这篇笔记不涉及实现的代码,主要是思路方面以及几个关键疑问的 <code>why</code>,我也会把实践的<a href="https://github.com/saltb0rn/eopl3/tree/master/langs">代码</a>放到 <code>GitHub</code> 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得原版代码有点乱).
 </p>
 
 </div>
@@ -783,7 +783,7 @@ CDR     := RefToNextLocation
 </p>
 
 <p>
-和 <code>natural parameter passing</code> 不同在于 <code>call-by-value</code> 里面实际参数的值是 <code>reference</code>.
+和 <code>natural parameter passing</code> 不同在于 <code>call-by-value</code> 里面实际参数的值是 <code>reference</code>.大部份编程语言都是采用这种设计,比如 <code>Racket</code>, <code>Emacs Lisp</code>, <code>Python</code>, <code>JavaScript</code> 等等.
 </p></li>
 
 <li><p>
@@ -832,7 +832,7 @@ in let a = pair(3,4)
 </p>
 
 <p>
-而 <code>call-by-reference</code> 只要是传入变量做为参数的时候不要新分配引用就可以了.
+而 <code>call-by-reference</code> 只要是传入变量作为参数的时候不要新分配引用就可以了.
 </p></li>
 
 <li><p>
@@ -910,17 +910,14 @@ ExpVal = Int + Bool + Proc
 <h2 id="org19f5a3a">控制上下文 (Control Context)</h2>
 <div class="outline-text-2" id="text-org19f5a3a">
 <p>
-针对特性不同的语言有不同的方法实现控制上下文.
+针对特性不同的语言有不同的方法实现控制上下文.之前已经写过一篇关于 <code>[[../06/continuation-passing-style.org][CPS]]</code> 的文章,里面已经解释了 <code>CPS</code>, <code>continuation</code> 和 <code>control context</code> 的概念,就不再赘述了.
 </p>
 </div>
+
 
 <div id="outline-container-org698cc6a" class="outline-3">
 <h3 id="org698cc6a">Continuation-Passing Interpreter</h3>
 <div class="outline-text-3" id="text-org698cc6a">
-<p>
-之前已经写过一篇关于 <code>[[../06/continuation-passing-style.org][CPS]]</code> 的文章,关于什么是 <code>CPS</code> 和 <code>continuation</code> 的概念就不再叙述了.
-</p>
-
 <p>
 <code>Continuation-passing interpreter</code> 的目的是实现控制上下文(control context)这一特性,做法就是给 <code>interpreter</code> 的函数,比如 <code>value-of</code>,添加第三个参数,也就是 <code>continuation</code>.
 </p>
@@ -929,20 +926,17 @@ ExpVal = Int + Bool + Proc
 这个直译器是基于 <code>LETREC</code> 重写(overwrite)的,目标是让 <code>value-of</code> 的调用不会导致控制上下文的增长.
 </p>
 
-<p>
-我们选择函数(procedure)作为 <code>Continuation</code> 的 <code>representation</code>,
-</p>
-
 <pre class="example">
 FinalAnswer = ExpVal
 Cont : ExpVal -&gt; FinalAnswer
 </pre>
 
 <p>
-不同情况下 <code>continuation</code> 是不一样的,书上的例子大概就是根据表达式种类来划分.
+不同情况下 <code>continuation</code> 是不一样的,书上的例子大概就是根据表达式种类来划分.在递归中的说法中,当前执行的表达式是常量,函数以及变量就是基本情况.
 </p>
 </div>
 </div>
+
 
 
 <div id="outline-container-org26e8eb4" class="outline-3">
@@ -1032,6 +1026,7 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 </div>
 
 
+
 <div id="outline-container-org2b5e080" class="outline-3">
 <h3 id="org2b5e080">Imperative Interpreter</h3>
 <div class="outline-text-3" id="text-org2b5e080">
@@ -1053,11 +1048,632 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 
 <div id="outline-container-org388b603" class="outline-2">
 <h2 id="org388b603">异常 (Exceptions)</h2>
+<div class="outline-text-2" id="text-org388b603">
+<p>
+基于上面的 <code>Continuation-Passing Interpreter</code> 进行修改.异常处理需要基于控制上下文实现的.
+</p>
+
+<p>
+实现分为两部分: 设置异常处理器(installing exception handler)和引发异常(raise exception).
+</p>
+
+<p>
+把控制上下文看做栈(stack):
+</p>
+
+<ul class="org-ul">
+<li>设置异常处理器的时候实际就是把异常处理器(exception handler)封装成帧(frame)压进栈里面,</li>
+
+<li>引发异常就是在栈里面查找相应的异常处理器,如果没有找到就引发错误,也就是捕捉不到异常,反之异常捕捉成功.</li>
+</ul>
+
+<p>
+具体实现中关键点在于添加两种新的 <code>continuations</code>.
+</p>
+</div>
 </div>
 
 
 <div id="outline-container-org0c6e722" class="outline-2">
 <h2 id="org0c6e722">线程 (Threads)</h2>
+<div class="outline-text-2" id="text-org0c6e722">
+<p>
+一次处理多个计算(multiple computations),它们跑在同一个地址空间(address space)里面,这个地址空间是同一个进程(process)的一部分,这些计算叫做线程(threads).
+</p>
+
+<p>
+因为要使用地址空间,这次需要基于 <code>IMPLICIT-REFS</code> 语言来实现,这么语言有 <code>store</code> (不过我们先要把它改成 <code>continuation-passing interpreter</code>).
+</p>
+
+<p>
+现在目标是实现一个单核直译器,先总结一下线程模型的一些特点:
+</p>
+
+<ul class="org-ul">
+<li>一个进程只维护一个线程池 (a pool of threads),</li>
+
+<li>线程的状态为 <code>running</code> (正在运行), <code>runnable</code> (随时都可以运行),或者 <code>blocked</code> (由于某些原因没有准备好运行) 之一.</li>
+
+<li>一个 <code>CPU</code> 同一时间点上只有一个进程,这个进程同以时间点上只能运行一个线程,</li>
+
+<li>主线程的返回值作为多线程的返回值,而不是子线程的返回值.</li>
+
+<li><p>
+线程的执行由调度器(scheduler)调度.线程执行了一定时间后就切换执行另外一个线程,而我们的做法是根据计算步数来进行判断是否切换到另外一个线程,而一个 <code>continuation</code> 就是一步.
+</p>
+
+<p>
+调度器有以下几个状态:
+</p>
+
+<ul class="org-ul">
+<li><code>the-ready-queue</code>: 维护 <code>runnable</code> 线程的队列.</li>
+
+<li><code>the-max-time-slice</code>: 每个线程可以执行的步数.</li>
+
+<li><code>the-time-remaining</code>: 当前运行的线程还剩多少步.</li>
+
+<li><code>the-final-answer</code>: 主线程的结果.</li>
+</ul>
+
+<p>
+调度器的完整工作流程就是:
+</p>
+
+<ol class="org-ol">
+<li>如果 <code>the-ready-queue</code> 为空,执行下一个线程的时候返回 <code>the-final-answer</code>,所有计算完成.</li>
+
+<li>如果 <code>the-ready-queue</code> 不为空,那么选择 <code>the-ready-queue</code> 的第一个线程作为下一个执行线程 (running treads),并且开始计算它的剩余步数 <code>the-time-remaining</code>, <code>the-time-remaining</code> 的初始值为 <code>the-max-time-slice</code>.</li>
+
+<li>当 <code>the-time-remaining</code> 为 <code>0</code> 的时候,如果线程整个运算还没有完成,那么就添加进 <code>the-ready-queue</code> 并且等待下一轮的执行.这里有一个边界问题,如果刚好执行完 <code>the-max-time-slice</code> 步并且下一步就要返回,那么改线程还是得添加 <code>the-ready-queue</code> 中,下一轮执行就是返回结果,返回结果后就不再添加进 <code>the-ready-queue</code> 中.</li>
+
+<li>从第一步开始重复整个过程.</li>
+</ol>
+
+<p>
+因此调度器有以下接口:
+</p>
+
+<ol class="org-ol">
+<li><p>
+<code>initialize-scheduler! : Int -&gt; Unspecified</code>
+</p>
+
+<p>
+初始化调度器的状态.
+</p></li>
+
+<li><p>
+<code>place-on-ready-queue! : Thread -&gt; Unspecified</code>
+</p>
+
+<p>
+添加线程到 <code>the-ready-queue</code> 中.
+</p></li>
+
+<li><p>
+<code>run-next-thread : () -&gt; FinalAnswer</code>
+</p>
+
+<p>
+执行下一个线程,如果 <code>the-ready-queue</code> 为空,返回 <code>the final answer</code>.
+</p></li>
+
+<li><p>
+<code>set-final-answer! : ExpVal -&gt; Unspecified</code>
+</p>
+
+<p>
+设置主线程的结果.
+</p></li>
+
+<li><p>
+<code>time-expired? : () -&gt; Bool</code>
+</p>
+
+<p>
+判断是否 <code>the-time-remaining</code> 是否为 <code>0</code>.
+</p></li>
+
+<li><p>
+<code>decrement-timer! : () -&gt; Unspecified</code>
+</p>
+
+<p>
+<code>the-time-remaining</code> 减少 <code>1</code>.
+</p></li>
+</ol></li>
+</ul>
+
+<p>
+在实现的时候还需要考虑如何定义针对主线程和子线程的 <code>continuations</code>.
+</p>
+
+<p>
+另外还有线程的同步功能,最简单的同步功能就是 <code>mutex</code> (<code>mutual exclusion</code> 的简写) 或者 <code>binary semaphore</code>.
+</p>
+
+<p>
+其中 <code>mutex</code> 有打开(open)和关闭(closed)两种状态,同一时刻只有一个状态;它还包含一个队列,这个队列里面都是在等 <code>mutex</code> 被打开的线程.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span>struct mutex <span style="color: #BFEBBF;">(</span>closed? wait-queue<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+对于 <code>mutex</code> 三种操作,新建, <code>wait</code> 和 <code>signal</code>.新建的 <code>mutex</code> 默认是 <code>open</code> 的.
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>wait</code>
+</p>
+
+<p>
+让线程 <code>th</code> 等待 <code>mutex</code>,这个行为取决于 <code>mutex</code> 的状态.
+</p>
+
+<p>
+如果 <code>mutex</code> 本身就是 <code>closed</code>,那么 <code>th</code> 就被添加到 <code>wait-queue</code> 中并且被挂起,然后运行 <code>the-ready-queue</code> 里面的下一个线程,我们就说这个 <code>blocked</code> 线程在等待这个 <code>mutex</code> 打开.
+</p>
+
+<p>
+如果 <code>mutex</code> 本身是 <code>open</code>,那么 <code>mutext</code> 就会关闭,然后运行 <code>th</code> 线程.
+</p></li>
+
+<li><p>
+<code>signal</code>
+</p>
+
+<p>
+使用线程 <code>th</code> 释放 <code>mutex</code>,这个行为取决于 <code>mutex</code> 的状态.
+</p>
+
+<p>
+如果 <code>mutex</code> 本身是 <code>closed</code>,并且 <code>wait-queue</code> 没有任何线程,那么 <code>mutex</code> 就变成 <code>open</code> 并且运行 <code>th</code>.
+</p>
+
+<p>
+如果 <code>mutex</code> 本身是 <code>closed</code>,并且 <code>wait-queue</code> 有线程,那么就从里面取一个线程放置到调度器的 <code>the-ready-queue</code> 里面,保持 <code>mutex</code> 为 <code>closed</code>.并且执行 <code>th</code>.
+</p>
+
+<p>
+如果 <code>mutex</code> 本身是 <code>open</code>,那么 <code>th</code> 就让它保持 <code>open</code> 然后继续执行.
+</p></li>
+</ul>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+<div id="outline-container-orgfd83e87" class="outline-2">
+<h2 id="orgfd83e87">类型系统 (Types)</h2>
+<div class="outline-text-2" id="text-orgfd83e87">
+<p>
+在没有运行程序的情况下分析(analyze)/预测(predict)程序的行为,目的是判断程序的运行是否安全.安全意味这运行的时候是否产生错误.
+</p>
+
+<p>
+当然错误的原因有很多,比如除以0,索引超出数据范围等等,这些错误不在我们的考虑范围内,因为实现起来会十分困难.
+</p>
+
+<p>
+我们考虑的安全就只有类型的正确性,比如 <code>Lisp</code> 的 <code>(- 1 a)</code>, <code>a</code> 绑定的数据为 <code>number</code> 类型才安全.
+</p>
+
+<p>
+还有一种情况,安全运算可能是无限运行的,这个也不在我们的考虑范围中.
+</p>
+
+<p>
+我们的目标是写一个 <b>分析程序(analysis procedure)</b> 来查看程序的代码然后接受(accept)或者拒绝(reject)它运行.书上没有说,不过这种类型系统系统叫做静态类型检测 <b><a href="https://en.wikipedia.org/wiki/Type_system#Static_type_checking">Static Type Checking</a></b>.
+</p>
+
+<p>
+如果分析结果接受(accept)了被检测的程序,那么可以肯定被检测的程序的运算是安全的,也就是说运算安全就会被接受.
+</p>
+
+<p>
+如果分析结果不能确定程序是否安全,那么一定要拒绝(reject)程序,这种情况就说分析结果是 <code>sound</code> ,也就是没有错误(free from errors).
+</p>
+
+<p>
+值 <code>v</code> 和类型 <code>t</code> 的关系是这样的: <b>v是否有类型t</b> (v has type t) 或者 <b>v是否属于类型t</b> (v is of type t).
+</p>
+
+<p>
+我们可以根据这个关系来设计一套系统来跟踪值的类型: <b>把类型抽象为语言的一种结构,叫做类型结构(type structure)</b>,比如下面是 <code>LETREC</code> 语言的类型结构定义,
+</p>
+
+<pre class="example">
+Type ::= int
+       | bool
+       | (Type -&gt; Type)
+</pre>
+
+<p>
+现在有一个函数如下,
+</p>
+
+<pre class="example">
+proc (x) if zero?(-(a,1)) then 0 else a+1
+</pre>
+
+<p>
+那么类型系统的工作流程大概就是这样的,
+</p>
+
+<p>
+<code>-(a,1)</code> 有 <code>int</code> 类型;
+</p>
+
+<p>
+<code>zero(-(a,1))</code> 有 <code>bool</code> 类型;
+</p>
+
+<p>
+所以 <code>proc (x) if zero?(-(a,1)) then 0 else a+1</code> 有 <code>(int -&gt; int)</code> 类型.
+</p>
+
+<p>
+目前位置只处理表达式值,大致的实现方案就是写一个函数(procedure),接受一个表达式(expression)和一个类型环境(type environment),计算出该表达式的类型.
+</p>
+
+<p>
+类型环境的定义如下,
+</p>
+
+<pre class="example">
+Type-Environment : Variable -&gt; Type
+</pre>
+
+<p>
+这个函数和 <code>value-of</code> 这个 <code>observer</code> 很类似,不同在于这个函数计算的是类型,所以我们就叫这个函数 <code>type-of</code>,定义如下,
+</p>
+
+<pre class="example">
+type-of : Expression * Type-Environment -&gt; (type | nontermination | an-error-other-than-a-type-error)
+</pre>
+
+<p>
+和 <code>value-of</code> 类似,不同的表达式有不同的行为,拿 <code>LETREC</code> 来说,
+</p>
+
+
+<div class="figure">
+<p><img src="../../../simple-typing-rules.png" alt="simple-typing-rules.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>Simple typing rules</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../proc-typing-rule.png" alt="proc-typing-rule.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>Proc typing rule</p>
+</div>
+
+<p>
+函数表达式有点特殊,这条规则是 <code>sound</code>,因为函数的变量是在运行的时候进行绑定的,所以在没有运行的时候得不到变量的类型,所以也就没有办法得到函数的类型.
+</p>
+
+<p>
+类型系统有两种标准设计: <code>Type Checking</code> 和 <code>Type Inference</code>.
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>Type Checking</code>
+</p>
+
+<p>
+在使用采用这种设计的编程语言的时候,程序员需要在声明变量的时候提供类型,然后类型检测器(type-checker)会推断(deduces)出其它表达式的类型并且检查是否一致.
+</p>
+
+<p>
+比如 <code>C/C++, Java, C#, GO</code> 这些语言.
+</p></li>
+
+<li><p>
+<code>Type Inference</code>
+</p>
+
+<p>
+在使用采用这种设计的编程语言的时候,程序员不需要为变量提供类型,类型检测器(type-checker)会根据变量的使用方式尝试推导(infer)出变量的类型.
+</p>
+
+<p>
+比如 <code>Scheme, Racket, JavaScript, Python</code> 这些语言.如果语言设计得好,是可以推导出大部份表达式的类型的.
+</p></li>
+</ul>
+</div>
+
+
+<div id="outline-container-orgeb60f59" class="outline-3">
+<h3 id="orgeb60f59">类型检测 (Type Checking)</h3>
+<div class="outline-text-3" id="text-orgeb60f59">
+<p>
+基于 <code>LETREC</code> 修改获得 <code>CHECKED</code> 语言,为它实现一个类型检测系统.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orge89c716" class="outline-3">
+<h3 id="orge89c716">类型推导 (Type Inference)</h3>
+<div class="outline-text-3" id="text-orge89c716">
+<p>
+基于 <code>CHECKED</code> 修改得到 <code>INFERRED</code> 语言.把类型的定义变为可选,
+</p>
+
+<pre class="example">
+Optional-type ::= ?
+                | Type
+Expression    ::= proc (Identifier : Optional-type) Expression
+                | letrec Optional-type Identifier (Identifier : Optional-type) = Expression in Expression
+</pre>
+
+<p>
+<code>?</code> 是需要被推理出来的类型.简单来说就是通过等式来推导.
+</p>
+</div>
+
+<div id="outline-container-org8dd7f98" class="outline-4">
+<h4 id="org8dd7f98">一个推导结果一致导的例子</h4>
+<div class="outline-text-4" id="text-org8dd7f98">
+<p>
+假如我们要推导 <code>proc (f) proc (x) -((f 3), (f x))</code>,那么首先要列出一张包含所有变量表达式, <code>proc</code> 表达式, <code>if</code> 表达式以及 <code>let</code> 表达式的表,并且给每一个都标上一个类型变量.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/type-variable-table-1.png" alt="type-variable-table-1.png">
+</p>
+</div>
+
+<p>
+根据这个表整理出类型等式
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/type-variable-table-2.png" alt="type-variable-table-2.png">
+</p>
+</div>
+
+<p>
+接下通过这些等式推导出每个类型变量的值,这个过程叫做 <code>unification</code>.左边的等式(equations)是要被解决的等式,右边 <code>substitution</code> 是目前已经被解决的等式.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-1.png" alt="unification-1.png">
+</p>
+<p><span class="figure-number">Figure 5: </span>Unification-1</p>
+</div>
+
+<p>
+逐个等式逐个思考,每次移动一个等式到右边.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-2.png" alt="unification-2.png">
+</p>
+<p><span class="figure-number">Figure 6: </span>Unification-2</p>
+</div>
+
+<p>
+当移动的等式的变量出现在 <code>substitution</code> 中等式的右边,那么就进行替换.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-3.png" alt="unification-3.png">
+</p>
+<p><span class="figure-number">Figure 7: </span>Unification-3</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-4.png" alt="unification-4.png">
+</p>
+<p><span class="figure-number">Figure 8: </span>Unification-4</p>
+</div>
+
+<p>
+因为在 <code>substitution</code> 中已经解决了一些类型变量的值了,可以用在左边的等式上.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/applying-substitution.png" alt="applying-substitution.png">
+</p>
+<p><span class="figure-number">Figure 9: </span>Applying substitution to the equation</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-5.png" alt="unification-5.png">
+</p>
+<p><span class="figure-number">Figure 10: </span>Unification-5</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-6.png" alt="unification-6.png">
+</p>
+<p><span class="figure-number">Figure 11: </span>Unification-6</p>
+</div>
+
+<p>
+如果等式的两边都不是单纯的变量,那么可以拆成两个.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-7.png" alt="unification-7.png">
+</p>
+<p><span class="figure-number">Figure 12: </span>Unification-7</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-8.png" alt="unification-8.png">
+</p>
+<p><span class="figure-number">Figure 13: </span>Unification-8</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/unification-9.png" alt="unification-9.png">
+</p>
+<p><span class="figure-number">Figure 14: </span>Unification-9</p>
+</div>
+
+<p>
+到目前为止整个计算都是 <code>acceptable</code>.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org4a299f7" class="outline-4">
+<h4 id="org4a299f7">一个推导结果不确定的例子</h4>
+<div class="outline-text-4" id="text-org4a299f7">
+<p>
+这次的例子是 <code>proc (f) (f 11)</code>,
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/polymorphic-1.png" alt="polymorphic-1.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/polymorphic-2.png" alt="polymorphic-2.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/polymorphic-3.png" alt="polymorphic-3.png">
+</p>
+</div>
+
+<p>
+没有办法确定最终的类型,这种情况就说 <code>t1</code> 是多态的(polymorphic).
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org7157fbd" class="outline-4">
+<h4 id="org7157fbd">一个推导结果不一致的例子</h4>
+<div class="outline-text-4" id="text-org7157fbd">
+<p>
+这次的例子是 <code>if x then -(x,1) else 0</code>.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/non-constant-1.png" alt="non-constant-1.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/non-constant-2.png" alt="non-constant-2.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/non-constant-3.png" alt="non-constant-3.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/applying-substitution-2.png" alt="applying-substitution-2.png">
+</p>
+</div>
+
+<p>
+正如上面一样, <code>tx</code> 既是 <code>bool</code> 也是 <code>int</code> 类型,已经出现了不一致,也就意味着 <code>if x then -(x,1) else 0</code> 是非法的(illegal).
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org1a7c46f" class="outline-4">
+<h4 id="org1a7c46f">一个无法推导的例子</h4>
+<div class="outline-text-4" id="text-org1a7c46f">
+<p>
+这次的例子是 <code>proc (f) zero?((f f))</code>.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/occurrence-1.png" alt="occurrence-1.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/occurrence-2.png" alt="occurrence-2.png">
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="../../../files/occurrence-3.png" alt="occurrence-3.png">
+</p>
+</div>
+
+<p>
+这里出现了一个无法推导的结果: <b>右手边永远大于左手边</b>.如果类似的等式: 该等式左手边的变量出现该等式的右手边中,那么就可以得出该等式不存在结果的结论.
+</p>
+
+<p>
+在 <code>substitution</code> 中也是一样, <code>substitution</code> 中的等式要满足这一个条件,这叫做 <code>occurrence check</code>.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgd887669" class="outline-4">
+<h4 id="orgd887669">一些实现的关键点</h4>
+<div class="outline-text-4" id="text-orgd887669">
+<p>
+和 <code>CHECKED</code> 一样需要实现一个 <code>type-of</code> <code>observer</code>,实际上它和 <code>IMPLICIT/EXPLICIT-REFS</code> 这两门语言的 <code>value-of</code> 类似, <code>substitution</code> 和 <code>store</code> 上都是数据上下文.
+</p>
+
+<p>
+按照上面的那些例子,我们把左边等式 <code>tv=t</code> 移动到右边的 <code>substitution</code> 叫做 <code>unifier</code>,并且这是一个两步操作: 首先替换 <code>substitution</code> 中所有等式右手边在等式中的变量 <code>tv</code>,然后把等式 <code>tv=t</code> 添加进 <code>substitution</code> 中.
+</p>
+
+<p>
+当然这个过程中还要做 <code>occurrence check</code>.最后 <code>type-of</code> 的定义如下,
+</p>
+
+<pre class="example">
+Answer = Type * Substitution
+type-of : Expression * Type-Environment * Substitution -&gt; Answer
+</pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">

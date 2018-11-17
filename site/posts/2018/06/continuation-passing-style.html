@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-14 Wed 00:54 -->
+<!-- 2018-11-17 Sat 10:00 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Continuation Passing Style</title>
@@ -334,7 +334,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-假如调用 <code>(ans 1 2 3)</code>,那么会发生以下几件事情,
+而控制上下文就像 <code>stack</code>,假如调用 <code>(ans 1 2 3)</code>,那么会发生以下几件事情,
 </p>
 
 <ol class="org-ol">
@@ -350,11 +350,11 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-除了数据上下文,还有另外一种上下文,上面的整个计算过程中的第二步和第三步,每次执行一步都需要记录下一步要从哪里开始,这个就是所谓的控制上下文.可以想象一下用调试器的逐步调试的过程,每一步都是一个执行点,逐步执行直到计算结束.
+除了数据上下文,还有另外一种上下文,上面的整个计算过程中的第二步和第三步,每次执行一步都需要记录下一步要从哪里开始,这个就是所谓的控制上下文.事实上还可以想象一下用调试器的逐步调试的过程,每一步都是一个执行点,逐步执行直到计算结束.
 </p>
 
 <p>
-而 <code>continuation</code> 就是控制上下文的一个抽象. <code>Environment</code> 是一个映射,它的 <code>representation</code> 有很多选择:哈希表,关联链表等等,那么 <code>continuation</code> 的 <code>representation</code> 又是什么呢?
+而 <code>continuation</code> 就是控制上下文的一个抽象,它就像 <code>stack</code> 的帧(frame). <code>Environment</code> 是一个映射,它的 <code>representation</code> 有很多选择:哈希表,关联链表等等,那么 <code>continuation</code> 的 <code>representation</code> 又是什么呢?
 </p>
 </div>
 </div>
@@ -403,11 +403,11 @@ for the JavaScript code in this tag.
 </div>
 
 <p>
-除了用函数作为 <code>representation</code> 外,还可以选择数据结构作为 <code>representation</code>,这个数据结构需要有 <code>environment</code>, <code>expression</code> 和 <code>continuation</code> 三个信息.
+除了用函数作为 <code>representation</code> 外,还可以选择数据结构作为 <code>representation</code>,这个数据结构包含了下一步需要的信息,比如 <code>environment</code>, <code>expression</code>, <code>value</code>, <code>procedure</code> 和 <code>continuation</code>.
 </p>
 
 <p>
-其中 <code>expression</code> 是下一个要执行的表达式, <code>environment</code> 就是该 <code>expression</code> 执行的 <code>environment</code>, <code>continuation</code> 就是该 <code>expression</code> 的 <code>continuation</code>.
+其中 <code>expression</code> 是下一个要执行的表达式, <code>environment</code> 就是该 <code>expression</code> 执行的 <code>environment</code>, <code>continuation</code> 就是该 <code>expression</code> 的 <code>continuation</code>,如此类推.
 </p>
 
 <p>
@@ -516,11 +516,11 @@ null
 </div>
 
 <p>
-这样划分的原因是,可以保证 <code>non-simple expression</code> 处于函数的 <code>tail position</code>, <code>tail position</code> 就是函数的退出的位置,也就是结束的地方,这一步的 <code>continuation</code> 和整个函数的 <code>continuation</code> 是一样的,也就是说栈空间没有发生改变,在这种地方的调用就是尾递归调用(tail call),这样的函数称为 <code>tail form</code> 的.
+这样划分的原因是,可以保证 <code>non-simple expression</code> 处于函数的 <code>tail position</code>, <code>tail position</code> 就是函数的退出的位置,也就是结束的地方,这一步的 <code>continuation</code> 和整个函数的 <code>continuation</code> 是一样的,也就是说栈空间没有发生改变,在这种地方的调用就是尾调用(tail call),这样的函数称为 <code>tail form</code> 的.
 </p>
 
 <p>
-简单点,就是保证了尾递归的发生.这里可能会有点绕,一时间可能会不太理解,具体可以结合之后的 <b>最后一个例子</b> 来理解.
+简单点,就是保证了尾调用的发生.这里可能会有点绕,一时间可能会不太理解,具体可以结合之后的 <b>最后一个例子</b> 来理解.
 </p>
 </div>
 </div>
@@ -554,11 +554,7 @@ null
 </ol>
 
 <p>
-比如第 2 步中,你可以这么想象: 先计算出 <code>(add x y)</code> 的值 <code>res</code> ,然后把这个值交给下一步 <code>cont</code>.
-</p>
-
-<p>
-其实这整个过程可以想的更加抽象一点, <code>CPS</code> 就是把多个简单的计算过程组合成一个复杂的计算过程.计算这一步,得出的结果传递给下一步并且开始计算,如此类推,直到计算完毕.
+比如第 <code>2</code> 步中,你可以这么想象: 先计算出 <code>(add x y)</code> 的值 <code>res</code> ,然后把这个值交给下一步 <code>cont</code>. <code>CPS</code> 实际上反映了整个计算过程,这一步到下一步,如此类推,直到计算完毕.
 </p>
 </div>
 </div>
