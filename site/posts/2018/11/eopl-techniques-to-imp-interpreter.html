@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-11-17 Sat 16:12 -->
+<!-- 2018-11-21 Wed 00:07 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>直译器的实现技术总结</title>
@@ -248,7 +248,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-这篇笔记不涉及实现的代码,主要是思路方面以及几个关键疑问的 <code>why</code>,我也会把实践的<a href="https://github.com/saltb0rn/eopl3/tree/master/langs">代码</a>放到 <code>GitHub</code> 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得原版代码有点乱).
+这篇笔记尽量不涉及实现的代码,除非代码比文字更容易描述,主要是思路方面以及几个关键疑问的 <code>why</code>,我也会把实践的<a href="https://github.com/saltb0rn/eopl3/tree/master/langs">代码</a>放到 <code>GitHub</code> 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得原版代码有点乱).
 </p>
 
 </div>
@@ -1673,6 +1673,417 @@ type-of : Expression * Type-Environment * Substitution -&gt; Answer
 </pre>
 </div>
 </div>
+</div>
+</div>
+
+
+<div id="outline-container-org20821b6" class="outline-2">
+<h2 id="org20821b6">模块 (Module)</h2>
+<div class="outline-text-2" id="text-org20821b6">
+<p>
+<b>什么是模块?</b> 当程序变得复杂的时候,就需要把程序分成多个相对独立的部分,并且标明各个部分之间的依赖关系,每个部分就是一个模块.
+</p>
+
+<p>
+<b>模块的职责是什么?</b>
+</p>
+
+<ol class="org-ol">
+<li>和词法作用域一样需要控制名字的作用域和名字的绑定的,当程序被分块后, <b>每个模块有自己的作用域和绑定集合</b>.</li>
+
+<li>它可以确保抽象边界(abstraction boundaries),和数据类型抽象(data type abstraction)一样,在数据类型的(接口)实现之内中可以任意操作数据,如果要在实现之外操作数据就只能通过它的接口,这就是抽象边界.如果遵守这种设计,那么就可以改变数据类型(改变 <code>representation</code>),因为这种情况下不依赖实现细节.</li>
+
+<li>灵活组合模块并且可以在不同上下文中使用.</li>
+</ol>
+
+<p>
+利用有模块系统的语言写出来的程序就是一系列模块定义后面跟着要被运行的表达式.
+</p>
+
+<p>
+模块有两种形式: <code>simple module</code> 和 <code>module procedure</code>.前者是一个绑定的集合,后者是一个函数,接受一个模块做为参数并且返回另外一个模块.
+</p>
+
+<p>
+模块的定义会绑定到一个名字上面,每个模块都有一个接口,如果是 <code>simple module</code> 的话就叫做 <code>simple interface</code>,用来列出模块提供的绑定以及它们的类型.
+</p>
+
+<p>
+如果是 <code>module procedure</code> 的话,它的接口规定了它自己的参数以及结果模块的接口,简单点就是函数的类型.
+</p>
+</div>
+
+
+<div id="outline-container-orgd4c3cfc" class="outline-3">
+<h3 id="orgd4c3cfc">SIMPLE-MODULES</h3>
+<div class="outline-text-3" id="text-orgd4c3cfc">
+<p>
+基于 <code>CHECKED</code> 修改.
+</p>
+
+<p>
+<code>Simple module</code> 的样子大概就是,一个模块接口( <code>interface</code> )部分和一个模块体( <code>body</code> )部分, <code>interface</code> 向别的模块提供值,而 <code>body</code> 则是提供这些值的绑定, <code>body</code> 要满足 <code>interface</code> 的要求并且它的最终结果会做为模块的值.
+</p>
+
+<p>
+从别的模块导入的变量叫做 <code>qualified variables</code>.每个模块都会在模块体和程序的剩余部分之间建立一个抽象边界,模块体内的表达式就是处于边界内,反之边界外.
+</p>
+
+<p>
+上面也说过了,模块可以是一个绑定的结合,其实它就是一个新型的 <code>environment</code>,当引用模块的时候就是在这种 <code>environment</code> 查找 <code>qualified variable</code>.
+</p>
+
+<p>
+不过在这之前还要考虑先如何查找模块本身,由于模块的接口本身就像类型,所以我们把模块看作 <code>interface module-name module-body</code>,这样就很像 <code>C</code> 语言里面的变量定义,可以使用 <code>type environment</code> 来维护模块定义和模块名字的绑定.
+</p>
+
+<p>
+所以整个导入行为比如 <code>from module take var</code> : 先在 <code>type environment</code> 查找 <code>module</code> 然后在 <code>module</code> 的 <code>environment</code> 查找 <code>var</code>. <code>Interface</code> 是一个复杂的类型,所以还需要通过 <code>checker</code> 进行类型检测,判断模块体是否满足接口定义.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orge87c0bc" class="outline-3">
+<h3 id="orge87c0bc">Modules That Declare Types</h3>
+<div class="outline-text-3" id="text-orge87c0bc">
+<p>
+基于 <code>SIMPLE-MODULES</code> 进行拓展,该语言名字叫做 <code>OPAQUE-TYPES</code>.
+</p>
+
+<p>
+目前为止模块的接口部分只能声明普通的变量以及它们类型,现在的目标是允许语言实现声明类型(也就是和声明变量一样声明类型).类型有两种: <code>opaque/abstract types</code> 和 <code>transparent/concrete types 或者叫 type abbreviations</code>.
+</p>
+
+<p>
+两者的差别在于前者定义的类型 <code>t</code> 的真实定义只对定义它的模块体内透明,不对外透明,透明的意思是知道变量的真实定义,别的模块只能使用 <code>t</code>,但是不清楚它的定义;而后者则是模块内外都透明.
+</p>
+
+<p>
+现在需要多一种  <code>type environment</code> 来维护类型声明和拓展类型的定义,
+</p>
+
+<pre class="example">
+Type :: = int | bool | from m take t | (Type -&gt; Type)
+</pre>
+
+<p>
+<code>from m take t</code> 叫做 <code>expanded type</code>.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org7c7e0a3" class="outline-3">
+<h3 id="org7c7e0a3">Module Procedures</h3>
+<div class="outline-text-3" id="text-org7c7e0a3">
+<p>
+基于 <code>OPAQUE-TYPES</code> 拓展的 <code>PROC-MODULES</code>.
+</p>
+
+<p>
+和函数 <code>proc (arg) body</code> 类似, <code>module procedure</code> 的语法如下,
+</p>
+
+<pre class="example">
+module-procedure ((Module-Name-Arg : Interface-of-Module) =&gt; Interface-of-New-Module) * body
+</pre>
+
+
+<div class="figure">
+<p><img src="../../../files/module-procedure.png" alt="module-procedure.png">
+</p>
+<p><span class="figure-number">Figure 25: </span>模块函数的例子</p>
+</div>
+
+<p>
+之所以需要模块函数,那么是因为让模块变得更加可复用.
+</p>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-org7792aa6" class="outline-2">
+<h2 id="org7792aa6">对象和类 (Objects and Classes)</h2>
+<div class="outline-text-2" id="text-org7792aa6">
+<p>
+很多编程任务要求通过一个接口管理一部分状态,面向对象编程( <code>Object-oriented programming</code>,后面简称 <code>OOP</code> )可以很好地完成这项任务.
+</p>
+
+<p>
+在 <code>OOP</code> 中,一个对象就是一部分状态,一个对象包含若干个 <code>fields (它们实际上是 =references)</code> 以及几个相关的函数(procedures),也就是我们常说的方法(methods),方法可以用来访问 <code>fields</code>.
+</p>
+
+<p>
+调用方法的这种操作可以看作给对象发送方法名字和参数作为信息,有时候这叫做消息传递 (<code>message-passing</code>).
+</p>
+
+<p>
+<code>OOP</code> 中提供一种叫做 <code>class</code> 的结构体, <code>class</code> 为每一个对象指定 <code>fields</code> 和 <code>methods</code>,每一个创建的对象叫做实例 (<code>instance</code>).
+</p>
+
+<p>
+<code>OOP</code> 一般还提供继承 (inheritance),可以通过在已存在的对象的基础上做一些修改来定义一个新的 <code>class</code>,这些修改可以是包括改变 <code>methods</code> 的行为或者添加新的 <code>fields</code> 或者 <code>methods</code>.
+</p>
+
+<p>
+我们说,新的 <code>class</code> 继承于/拓展旧的 <code>class</code>,因为剩余的部分没有被修改.
+</p>
+
+<p>
+对象实际和模块有很多相似点,不过它们非常不一样.模块和类都提供定义不透明类型(defining opaque types).然而一个对象是一个带有行为的数据结构,模块仅仅是一个绑定的集合.
+</p>
+
+<p>
+同一个类可以有多个对象,大部份的模块系统不提供类似的能力.在另外一个方面来说像 <code>PROC-MODULES</code> 提供更灵活的方式控制名字的可见度.
+</p>
+
+<p>
+<code>Dynamic dispatch</code> 是 <code>OOP</code> 中的一个关键点,这确保了定义对象方法的时候会调用正确的方法,有多个不同类的对象有同样的方法,在不清楚对象类型的时候调用这个对象的方法会正确工作, <code>duck-like</code> 特性就是利用了这个特性.
+</p>
+
+<p>
+继承正如上面说了在旧类上做增量修改来定义新类,新类是旧类的子类(child/subclass),旧类是新类的父类(parent)或者超类(superclass),在层级关系里面,还有先祖(ancestors)和后代(descendants)这种说法.父类可以有多个子类.那么子类呢?
+</p>
+
+<p>
+这里涉及继承的两种设计: <b>单继承(single inheritance)和多继承(multiple inheritance)</b>,前者中子类只能有最多一个父类,后者中子类可以有多个父类.采用这些设计的语言分别叫做单继承语言(single-inheritance language)和多继承语言(multiple-inheritance language).
+</p>
+
+<p>
+总体上来看,多继承会比单继承强大一点,不过这种设计是有问题的.(日后研究).
+</p>
+
+<p>
+一个类 <code>A</code> 的任何一个后代的实例 <code>b</code> 都可以在使用类 <code>A</code> 实例的地方使用 <code>b</code>,这叫做子类多态(subclass polymorphism).并非所有语言都采用这种设计,不过我们会采用这种设计.
+</p>
+
+<p>
+方法所定义于的这个类叫做这个方法的 <code>host class</code>.继承的时候调用方法还要遵守 <code>dynamic dispatch</code> (指 <code>self call</code>) 和 <code>static method dispatch</code> (指 <code>super call</code>).像下面的结果就为 <code>33</code>.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/static-method-dispatch.png" alt="static-method-dispatch.png">
+</p>
+<p><span class="figure-number">Figure 26: </span>Static method dispatch</p>
+</div>
+
+<p>
+过程就是 <code>c3</code> 没有自己定义方法 <code>m3</code>,所以调用父类 <code>c2</code> 的 <code>m3</code>, <code>c2</code> 的 <code>m3</code> 调用它的父类 <code>c1</code> 的 <code>m1</code>, <code>m1</code> 调用 <code>self</code> 的 <code>m2</code>, 而 <code>self</code> 是指 <code>c3</code> 的实例.这就是 <code>static method dispatch</code>.
+</p>
+
+<p>
+说得简单点 <b>调用者不会因为在调用链查找方法而发生改变</b>, 而这里得调用者是 <code>o3</code>,所以最后一步的 <code>self</code> 就是 <code>o3</code>.
+</p>
+</div>
+
+<div id="outline-container-org4488424" class="outline-3">
+<h3 id="org4488424">CLASSES</h3>
+<div class="outline-text-3" id="text-org4488424">
+<p>
+基于 <code>IMPLICIT-REFS</code> 拓展,因为采用 <code>OOP</code> 的语言必定是 <code>stateful</code>.
+</p>
+
+<p>
+值的定义如下,
+</p>
+
+<pre class="example">
+ExpVal = Int + Bool + Proc + Listof(ExpVal) + Obj
+DenVal = Ref(ExpVal)
+</pre>
+
+<p>
+直译器部分,会对于类的定义进行处理,使用一个全局 <code>class environment</code> 进行维护, <code>class environment</code> 是一个从类名(class name)到类方法集合(methods of the class)的映射.
+</p>
+
+<p>
+关于 <code>value-of</code> 如何计算对象的行为,这要根据对象的 <code>4</code> 个常见的行为来讨论: 新建实例(initialize),调用方法, <code>self</code> 调用和 <code>super</code> 调用.
+</p>
+
+<p>
+定义好以后就要为对象,方法和类选择 <code>representation</code>.
+</p>
+
+<p>
+<b>对象的 representation</b>,
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/a-simple-object.png" alt="a-simple-object.png">
+</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span>define-datatype object object?
+  <span style="color: #BFEBBF;">(</span>an-object
+    <span style="color: #D0BF8F;">(</span>class-name identifier?<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>fields <span style="color: #93E0E3;">(</span>list-of reference?<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+我们会根据字段定义的顺序进行存放,最早定义的放在第一个位置,如此类推,这是为了保证不会因为之后定义的字段而破坏已存放的字段的引用,因为它们被添加到列表的右侧.
+</p>
+
+<p>
+创建一个对象其实就是这样,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">new-object</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>class-name<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>an-object
+      class-name
+      <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">map</span>
+        <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>field-name<span style="color: #94BFF3;">)</span>
+          <span style="color: #94BFF3;">(</span>newref <span style="color: #E0CF9F;">(</span>list &#8217;uninitialized-field field-name<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span>
+      <span style="color: #9FC59F;">(</span>class-&gt;field-names <span style="color: #94BFF3;">(</span>lookup-class class-name<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+<b>方法的 representation</b>,
+</p>
+
+<p>
+至于方法,和函数比较相似,不过方法不捕捉 <code>environment</code>.相反会跟踪方法引用 <code>fields</code> 的名字,当调用方法的时候,方法体需要在符合这些条件的 <code>environment</code> 下运行,
+</p>
+
+<p>
+该 <code>environment</code> 需要有 1) 方法参数的绑定; 2) <code>self</code> 和 <code>super</code> 的绑定,其中 <code>self</code> 绑定当前对象, <code>super</code> 绑定当前对象的类的父类; 3) 对象的字段的绑定.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span>define-datatype method method?
+  <span style="color: #BFEBBF;">(</span>a-method
+    <span style="color: #D0BF8F;">(</span>vars <span style="color: #93E0E3;">(</span>list-of identifier?<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>body expression?<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>super-name identifier?<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>field-names <span style="color: #93E0E3;">(</span>list-of identifier?<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+调用方法的实现如下,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-method</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>m self args<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>cases method m
+      <span style="color: #93E0E3;">(</span>a-method <span style="color: #9FC59F;">(</span>vars body super-name field-names<span style="color: #9FC59F;">)</span>
+        <span style="color: #9FC59F;">(</span>value-of body
+          <span style="color: #94BFF3;">(</span>extend-env* vars <span style="color: #E0CF9F;">(</span><span style="color: #F0DFAF; font-weight: bold;">map</span> newref args<span style="color: #E0CF9F;">)</span>
+            <span style="color: #E0CF9F;">(</span>extend-env-with-self-and-super
+              self super-name
+              <span style="color: #8FB28F;">(</span>extend-env field-names <span style="color: #6CA0A3;">(</span>object-&gt;fileds self<span style="color: #6CA0A3;">)</span> <span style="color: #6CA0A3;">(</span>empty-env<span style="color: #6CA0A3;">)</span><span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+不过这里还需要做多一项工作,上面也说过了,字段列表是根据字段定义顺序存放字段的,那么有一个问题: 在继承时候子类重新定义父类的字段改怎么查找?这里要保证每个方法看到的 <code>filed-names</code> 是不一样的.
+</p>
+
+<p>
+如果有多个重复的字段,那么就用别的名字替换最新边定义之外的所有重复变量,比如现在有 <code>c3</code> 继承 <code>c2</code>, <code>c2</code> 继承 <code>c1</code>,那么不同类中的方法看到的字段就不一样.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/shadow-filed-names.png" alt="shadow-filed-names.png">
+</p>
+</div>
+
+
+<p>
+<b>类的 representation</b>,
+</p>
+
+<p>
+类由 <code>class environment</code> 维护,而 <code>class environment</code> 可以用这么一个关联列表来表示,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme">'<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>class-name1 class1<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>class-name2 class2<span style="color: #BFEBBF;">)</span> ... <span style="color: #BFEBBF;">(</span>class-namen classn<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+<code>class-name</code> 是一个 <code>symbol</code>, <code>class</code> 则是表示类的 <code>representation</code>,类的定义如下,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span>define-datatype class class?
+  <span style="color: #BFEBBF;">(</span>a-class
+    <span style="color: #D0BF8F;">(</span>super-name <span style="color: #93E0E3;">(</span>maybe identifier?<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>field-names <span style="color: #93E0E3;">(</span>list-of identifier?<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>method-env method-environment?<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+其中 <code>method-env</code> 是用于调用方法的时候,它和 <code>class environment</code> 差不多,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme">'<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>method-name1 method1<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>method-name2, method2<span style="color: #BFEBBF;">)</span> ... <span style="color: #BFEBBF;">(</span>method-namen, methodn<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+当子类重复定义父类的方法的时候,我们需要合并父类和子类的 <code>method environment</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">merge-method-envs</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>super-m-env new-m-env<span style="color: #D0BF8F;">)</span>
+    <span style="color: #D0BF8F;">(</span>append new-m-env super-m-env<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org418c25d" class="outline-3">
+<h3 id="org418c25d">TYPED-OO</h3>
+<div class="outline-text-3" id="text-org418c25d">
+<p>
+在 <code>CLASSES</code> 的基础上增加以下特性,
+</p>
+
+<ul class="org-ul">
+<li>针对字段和方法进行 <code>type checking</code>.</li>
+<li>给类新增接口的概念,就像 <code>Java</code> 的那样.</li>
+<li>子类型多态(<code>subtype polymorphism</code>).</li>
+<li><code>casting</code> 的概念和 <code>instanceof</code> 测试.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+
+
+
+<div id="outline-container-org91dc8a6" class="outline-2">
+<h2 id="org91dc8a6">最后</h2>
+<div class="outline-text-2" id="text-org91dc8a6">
+<pre class="example">
+写于 2018/11/20
+</pre>
+
+<p>
+总体上来说大概复习完一遍了,书上的实践代码剩下控制上下文之后的部分,会尽快补完.由一些笔记写的很简单,可能的原因有两个,一是的确没啥重点,二是我还没有实践过所以了解不深.之所以先写笔记后实践,那是因为我每次边实践边写笔记的效率太低了.对于第二个原因,这部分笔记可能会在我实践过后进行修正的.
+</p>
+
+<p>
+第二次读完 <code>EOPL</code> 我领悟到: <b>维护上下文是多步骤计算的关键</b>.几乎每实现一种新特性都离不开 <code>data context</code> 或者 <code>control context</code>,特别是 <code>data context</code> 的抽象 <code>environment</code>,根据计算对象不一样, <code>environment</code> 的类型也不一样.
+</p>
 </div>
 </div>
 </div>
