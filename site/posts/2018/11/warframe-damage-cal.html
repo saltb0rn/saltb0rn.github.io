@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-12-04 Tue 12:24 -->
+<!-- 2018-12-04 Tue 12:19 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Distributed-Computing</title>
+<title>Warframe伤害计算</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="saltb0rn">
 <style type="text/css">
@@ -182,7 +182,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <script type="text/javascript" src="../../../js/live.js" defer></script>
 <script src="../../../js/main.js" defer></script>
-<link rel="stylesheet" type="text/css" href="../../../css/tags.css"/>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -242,16 +241,173 @@ for the JavaScript code in this tag.
     </nav>
 </div>
 <div id="content">
-<h1 class="title">Distributed-Computing</h1>
+<h1 class="title">Warframe伤害计算</h1>
+<div class="abstract">
+<p>
+4年前就玩过一段时间的 <code>Warframe</code>,后面由于固定队解散而 <code>AFK</code>,本来之前就有回归的意向加上最近登录了 <code>Nintendo Switch</code>,所以毫不犹豫地选择了回归,而且玩得还挺开心,这真的得感谢 <code>Panic Button</code>.
+</p>
+
+<p>
+由于时间长没玩并且随着游戏的不断更新而导致机制变了好多,所以我要复习一下这个游戏伤害机制,复习资料我选择了 <code>Warframe</code> 的 <code>Fandom Wiki</code>, <code>fandom</code> 可以拆分为 <code>Fan</code> 和 <code>dom</code>,其中 <code>dom</code> 是 <code>kingdom</code> 里面的一个部分,有国度,国家的意思.
+</p>
+
+<p>
+<code>fan</code> 当然就是粉丝的意思,所以这个维基资料就是粉丝整理的,并且都是经过玩家们验证的,准确性还是可以的.不过即便如此有空的话最好还是自己动手计算验证资料的准确,这是一个好习惯.
+</p>
+
+</div>
+
+<div id="outline-container-org82d027b" class="outline-2">
+<h2 id="org82d027b">基础伤害/物理伤害 (Base Damage)</h2>
+<div class="outline-text-2" id="text-org82d027b">
+<p>
+这游戏有物理伤害和元素伤害两大类,物理伤害类型有 <code>3</code> 种: 打击(impact),切割(slash)和穿透(puncture);元素伤害类型有 <code>4</code> 种: 热(heat),冻(cold),毒(toxin)和电(electricity),这 <code>4</code> 种元素类型又叫做 <b>基本元素类型</b>,基本元素类型又可以两两混合为新的元素类型,叫做 <b>混合元素类型</b>.
+</p>
+
+<p>
+武器的伤害为物理伤害和元素伤害的总和,而物理伤害就是 <code>3</code> 种类型的物理伤害的总和,元素伤害就是 <code>4</code> 种基本元素类型和混合元素类型的总和.元素伤害有触发机率这种东西,触发机率并不是说有多少机率触发伤害,而是有多少机率触发元素伤害的效果.
+</p>
+
+<p>
+其实还有第三大类,叫做 <code>Unique Damage</code>,这个不算在基础伤害里面,这也是我 <code>AFK</code> 之前没有的,不过这个伤害不占据游戏伤害的主边幅,所以不就说了.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orga9d3813" class="outline-2">
+<h2 id="orga9d3813">修正 (Modifier)</h2>
+<div class="outline-text-2" id="text-orga9d3813">
+<p>
+和大部份其它的游戏一样,基础伤害并不是最终伤害(也就是敌人受到的伤害),要考虑敌人的防御和属性克制之类的因素的影响计算出最终伤害.这些影响因素叫做修正(modifier).这游戏并没有防御和属性克制的说法,不过有对应的有护甲(armor),护盾(shield)和生命值类型(health class/type).
+</p>
+
+<p>
+护甲则是影响生命值的扣除,敌人有两种情况:有护甲和无护甲.护甲有很多种类型,不同类型对不同伤害类型有不同程度的增益和减益.生命值类型分两个大类,有护盾和生命(health),有护盾的敌人在受到伤害的时候会先减少护盾的值而不是生命,如果护盾没了就真正计算生命值,注意护甲只会影响伤害对生命的计算,不影响护盾的计算.其中生命又分很多类, <code>flesh</code>, <code>cloned flesh</code> 等等,不同类型不同伤害类型有不同程度的增益和减益.其实护甲也是生命值类型的一种,不过护甲比较特殊,所以需要单独拿出来说.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org75714f1" class="outline-2">
+<h2 id="org75714f1">伤害计算</h2>
+<div class="outline-text-2" id="text-org75714f1">
+<p>
+计算的时候要考虑敌人是否有护甲,所以有两种情况,
+</p>
+
 <ul class="org-ul">
-<li><a href="../posts/2018/08/distributed-computing-with-python.html">Distributed Computing with Python的阅读笔记</a></li>
+<li><p>
+无护甲
+</p>
+
+<pre class="example">
+  最终伤害 = 基础伤害 * (1 + 生命值类型修正)
+</pre></li>
+
+<li><p>
+有护甲
+</p>
+
+<p>
+这种情况比较复杂,护甲可以受到一些 <code>mods</code> 的影响,比如削弱,
+</p>
+
+<pre class="example">
+  最终伤害 = 基础伤害 * [&lt;(1 + 生命值类型修正) * (1 + 护甲修正)&gt; / &lt;1 + 护甲削减率 * (1 - 护甲修正) / 300&gt;]
+</pre></li>
 </ul>
+
+<p>
+这里的最终伤害是没有发生暴击的情况下的.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgfeb07e5" class="outline-2">
+<h2 id="orgfeb07e5">暴击</h2>
+<div class="outline-text-2" id="text-orgfeb07e5">
+<p>
+这游戏的暴击机制绝对是一大亮点,在发生了暴击的情况下,最终伤害为未发生暴击的最终伤害乘于暴击修正.
+</p>
+
+<p>
+暴击修正受 <code>4</code> 个因素影响: 暴击率,暴击倍率,暴击等级和身体修正.
+</p>
+
+<p>
+武器本身有一个暴击率,叫做武器初始暴击率.有 <code>2</code> 种(还有一种,比较特殊)增加暴击率的 <code>mods</code> : 相对增加暴击率的 <code>mod</code> 和绝对增加暴击率的 <code>mod</code>.
+</p>
+
+<pre class="example">
+暴击率 = 武器初始暴击率 * (1 + 用于相对增加暴击率的mod的点数)
+
+暴击率 = 武器初始暴击率 * (1 + 用于相对增加暴击率的mod的点数) + 用于绝对增加暴击率的mod的点数
+</pre>
+
+<p>
+这游戏的暴击率可以突破 <code>100%</code>,不要以为暴击率到了 <code>100%</code> 就可以了,因为这样游戏有暴击等级这机制,暴击等级由暴击率决定,暴击率为 <code>0%</code> 就表示暴击等级为 <code>0</code>, <code>0%&lt;cirt&lt;=100%</code> 的暴击等级为 <code>1</code>,如此类推.
+</p>
+
+<p>
+计算暴击伤害的时候,暴击等级和暴击倍率挂钩.暴击倍率就是发生暴击的时候暴击未发生时候的最终伤害要翻多少倍.
+</p>
+
+<pre class="example">
+被mod调整过后的暴击率 = 武器初始暴击倍率 * (1 + 用于增加暴击等级的mod的点数)
+
+最终暴击倍率 = 1 + 暴击等级 * (被mod调整过后的暴击倍率 - 1)
+</pre>
+
+<p>
+最后还有身体修正,
+</p>
+
+<pre class="example">
+爆头伤害 = 发生暴击或者未发生暴击的最终伤害 * 爆头倍率 * (1 + 暴击等级 * (2 * 被mod调整过后的暴击倍率 - 1))
+</pre>
+
+<p>
+爆头倍率一般是 <code>2</code>,也有部分敌人的爆头倍率是 <code>3</code>.
+</p>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
+<div id="disqus_wrapper">
+    <div id="disqus_thread"></div>
+    <script>
+     /**
+      *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+      *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+     /*
+        var disqus_config = function () {
+        this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+      */
+     let disqus;
+     (function() { // DON'T EDIT BELOW THIS LINE
+         var d = document;
+         disqus = d.createElement('script');
+         disqus.async = true;
+         disqus.src = 'https://darksalt-me.disqus.com/embed.js';
+         disqus.setAttribute('data-timestamp', +new Date());
+         disqus.onload = function(){
+             console.log("Load disqus successfully.");
+         };
+         disqus.onerror = function(){
+             console.log("Load disqus failed.");
+         };
+         (d.head || d.body).appendChild(disqus);
+     })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
-<p class="date">Date: </p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.14)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="date">Date: 2018-11-28</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="https://orgmode.org">Org</a> mode 9.1.14)</p>
 </div>
 </body>
 </html>

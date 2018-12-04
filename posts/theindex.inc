@@ -23,9 +23,12 @@
 * T
   - [[file:2018/11/eopl-interpreter.org][The Interpreter]]
   - [[file:2018/11/eopl-sllgen.org][The Sllgen Parser]]
+* W
+  - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
 * 关
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
 * 前
+  - [[file:2018/11/gimp-for-webfe-dev.org][前端人员的GIMP]]
   - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]

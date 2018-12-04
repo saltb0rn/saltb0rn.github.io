@@ -1,0 +1,1 @@
+- [[file:../posts/2018/11/gimp-for-webfe-dev.org][前端人员的GIMP]]
