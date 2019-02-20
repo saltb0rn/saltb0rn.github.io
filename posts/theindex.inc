@@ -8,10 +8,12 @@
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
 * D
   - [[file:2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
+  - [[file:2019/02/docker-compose-file.org][Docker stack depoly 的使用]]
 * E
   - [[file:2018/08/emacs-tips.org][Emacs Tips(持续更新)]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
+  - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]

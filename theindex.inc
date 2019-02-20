@@ -1,3 +1,19 @@
+*** [[file:posts/2019/02/docker-compose-file.html][docker-compose.yml文件的编写]]
+去年的时候写过一篇[[/posts/2018/08/tornado-with-docker.html][用Docker打包Tornado项目]]的文章,本来是打算很快补上后续文章的,不过那个时候学其他东西就忘记了.前一段时间家里的网络失常,笔记本的系统崩坏以及服务器的各种问题,为了以后可以快速恢复环境,因此要了解 =docker= 的更多用法,这文章就是给自己备忘的.
+
+由于我本人也没有经常用 =Docker=,所以难免会有些遗漏,我自己也尽量避开这些点,给出相关连接.本文主要是讲述如何编写 =docker-compose.yml= 文件,从而使用 =docker-compose= 和 =docker stack deploy= 命令部署应用.
+
+	
+*** [[file:posts/2019/01/http-headers-tutorial-notes.html][HTTP Headers 学习笔记]]
+大概两年前粗略地读过一下 *HTTP权威指南* 这本书(不知道名字有没有记错),当时读起来感觉好难懂,现在想起来感觉就像读 =Reference= 一样,不过书的确是好书,不过做为教程就有点过于厚重了.
+
+因为之前读 *HTTP权威指南* 的时候还有很多地方不太懂,所以最近打算要复习一下 =HTTP Headers= 的内容,正好发现 *MDN* 上面有这部分的教程,并且简单明了,于是打算针对这一块这个笔记.
+
+说个题外话, *MDN* 真是一个关于 *WEB* 开发的很好的文档库,我说的 *WEB* 开发并非只针对前端或者后端,而是前后端的总和, *MDN* 的教程相比那些厚重的书可谓是好太多了,简单易懂,而且还免费,这里衷心感谢 *Mozilla* 以及开源社区的各位.
+
+题外话二,最近怠惰了好多,这篇文章其实很早之前就开始写了,不过懒癌晚期导致最近才发出来,新的一年要做出一些改变, time to show your true Tenno power.
+
+	
 *** [[file:posts/2018/11/warframe-damage-cal.html][Warframe伤害计算]]
 4年前就玩过一段时间的 =Warframe=,后面由于固定队解散而 =AFK=,本来之前就有回归的意向加上最近登录了 =Nintendo Switch=,所以毫不犹豫地选择了回归,而且玩得还挺开心,这真的得感谢 =Panic Button=.
 
