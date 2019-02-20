@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-02-18 一 15:32 -->
+<!-- 2019-02-20 三 22:59 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HTTP Headers 学习笔记</title>
@@ -374,7 +374,6 @@ Cache-Control: must-revalidate
 </div>
 </div>
 
-
 <div id="outline-container-orgf0b29fb" class="outline-3">
 <h3 id="orgf0b29fb">新鲜度 (Freshness)</h3>
 <div class="outline-text-3" id="text-orgf0b29fb">
@@ -454,7 +453,6 @@ Cache-Control: must-revalidate
 </p>
 </div>
 </div>
-
 
 <div id="outline-container-orgae26abf" class="outline-3">
 <h3 id="orgae26abf">区分响应 (Varying response)</h3>
@@ -820,6 +818,409 @@ Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
 </p>
 <p><span class="figure-number">Figure 6: </span>逐跳的压缩过程</p>
 </div>
+</div>
+</div>
+
+
+<div id="outline-container-orga6333b0" class="outline-2">
+<h2 id="orga6333b0">内容协商 (Content negotiation)</h2>
+<div class="outline-text-2" id="text-orga6333b0">
+<p>
+对同一个 <code>URI</code> 提供不同的展现形式,例如文档使用的自然语言,编码形式,图片格式等等.客户端请求资源的时候,服务器会选择该资源的变种做为响应,服务器如何选择变种资源则是靠内容协商机制决定的.
+</p>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/13789/HTTPNego.png" alt="HTTPNego.png">
+</p>
+<p><span class="figure-number">Figure 7: </span>内容协商机制</p>
+</div>
+
+<p>
+选择变种资源是通过以下两种方法其中一种:
+</p>
+<ol class="org-ol">
+<li>客户端指定 <code>HTTP</code> 头,这种叫做服务器驱动或者主动协商(server-driven negotiation or proactive negotiation),是标准的协商方式.</li>
+<li>服务器响应 <code>300</code> 或者 <code>406</code> 响应码,这种叫做代理驱动或者响应式协商(agent-driven negotiation or reactive negotiation),做为回滚机制使用.</li>
+</ol>
+</div>
+
+<div id="outline-container-org374d9d5" class="outline-3">
+<h3 id="org374d9d5">服务器驱动协商</h3>
+<div class="outline-text-3" id="text-org374d9d5">
+<p>
+这种方式定义了一套标准 <code>HTTP</code> 请求头来用于服务器驱动协商,除了标准头,还有一些别的头也能够用于内容协商.
+</p>
+</div>
+
+<div id="outline-container-orgceffd4a" class="outline-4">
+<h4 id="orgceffd4a">标准头</h4>
+<div class="outline-text-4" id="text-orgceffd4a">
+<ul class="org-ul">
+<li><p>
+Accept
+</p>
+
+<p>
+声明用户代理能够处理的所有 <code>MIME</code> 类型,该头的值是一个列表,每种类型都通过一个逗号隔开.
+</p></li>
+
+<li><p>
+Accept-CH
+</p>
+
+<p>
+目前还处于实验阶段,告诉服务器用户代理的需要选择一个正确的响应.(不深入了解,目前只有 <code>Chrome 46+</code> 的浏览器实现了).
+</p></li>
+
+<li><p>
+Accept-Charset
+</p>
+
+<p>
+声明用户代理能够理解的字符编码.
+</p></li>
+
+<li><p>
+Accept-CH-Lifetime
+</p>
+
+<p>
+和 <code>Accept-CH</code> 类似,不做深入了解,目前只有 <code>Chrome 61+</code> 的浏览器实现了.
+</p></li>
+
+<li><p>
+Accept-Encoding
+</p>
+
+<p>
+声明用户代理所支持的内容压缩算法.
+</p></li>
+
+<li><p>
+Accept-Language
+</p>
+
+<p>
+声明用户的偏好语言.
+</p></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orge2de550" class="outline-4">
+<h4 id="orge2de550">非标准头</h4>
+<div class="outline-text-4" id="text-orge2de550">
+<ul class="org-ul">
+<li><p>
+User-Agent
+</p>
+
+<p>
+标识用户代理是什么浏览器,是一个字符串,内容一般如下,
+</p>
+
+<pre class="example">
+USER-AGENT     :: PRODUCT-TOKEN + ("(" + COMMENT + ")")? + " " + USER-AGENT
+               :: ""
+PRODUCT-TOKENS :: name + "/" + version-number
+COMMENT        :: free-string-without-any-parentheses
+</pre>
+
+<p>
+举个例子, <code>Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0</code>.
+</p>
+
+<p>
+<code>COMMENT</code> 没有定义一个标准,一般来说就是上面这个例子的写法.
+</p></li>
+
+<li><p>
+Vary
+</p>
+
+<p>
+上面缓存中有写,就不说了.
+</p></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-orga53d94b" class="outline-3">
+<h3 id="orga53d94b">代理驱动协商</h3>
+<div class="outline-text-3" id="text-orga53d94b">
+<p>
+具体就不说了,了解<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#Agent-driven_negotiation">一下</a>就好.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org210c652" class="outline-2">
+<h2 id="org210c652">重定向 (Redirection)</h2>
+<div class="outline-text-2" id="text-org210c652">
+<p>
+也叫做 <code>URL</code> 转发 (URL forwarding):访问某个 <code>URL</code> 的时候跳转到其它 URL, 有几个用途:当网站在维护的时候临时转发原来 <code>URL</code> 到能够访问的地方,以及当网站发生永久改变的时候保证旧的 <code>URL</code> 能够正常使用.
+</p>
+
+<p>
+重定向有三种类型:永久重定向(permanent redirection),临时重定向(temporary redirection)和特殊重定向(special redirection).
+</p>
+</div>
+
+<div id="outline-container-org6e62ebd" class="outline-3">
+<h3 id="org6e62ebd">永久重定向</h3>
+<div class="outline-text-3" id="text-org6e62ebd">
+<p>
+意味着这些重定向是长期不变的,这也暗示了原来的 <code>URL</code> 不再使用并且推荐新的 <code>URL</code>,搜索引擎会触发一次更新.
+</p>
+
+<p>
+常见的两种状态码有两种:
+</p>
+
+<table>
+
+
+<colgroup>
+<col  class="org-right">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">&lt;状态码&gt;</th>
+<th scope="col" class="org-left">&lt;文本描述&gt;</th>
+<th scope="col" class="org-left">&lt;方法处理&gt;</th>
+<th scope="col" class="org-left">&lt;典型使用例子&gt;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">301</td>
+<td class="org-left">Moved Permanently</td>
+<td class="org-left">GET方法不变,其他方法可能会变成GET</td>
+<td class="org-left">网站组织发生改变</td>
+</tr>
+
+<tr>
+<td class="org-right">308</td>
+<td class="org-left">Permanent Redirect</td>
+<td class="org-left">方法和消息主体不变</td>
+<td class="org-left">网站组织发生改变(用于non-GET)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div id="outline-container-orgbf4d851" class="outline-3">
+<h3 id="orgbf4d851">临时重定向</h3>
+<div class="outline-text-3" id="text-orgbf4d851">
+<p>
+有时候不能在标准的地方访问资源,但可以在别的地方访问.这个时候可以临时重定向,搜索引擎不会触发更新.
+</p>
+
+<table>
+
+
+<colgroup>
+<col  class="org-right">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">&lt;状态码&gt;</th>
+<th scope="col" class="org-left">&lt;文本描述&gt;</th>
+<th scope="col" class="org-left">&lt;方法处理&gt;</th>
+<th scope="col" class="org-left">&lt;典型使用例子&gt;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">302</td>
+<td class="org-left">Found</td>
+<td class="org-left">GET方法不变,其他方法可能会变成GET</td>
+<td class="org-left">页面暂时不可用</td>
+</tr>
+
+<tr>
+<td class="org-right">303</td>
+<td class="org-left">See Other</td>
+<td class="org-left">GET方法不变,其他方法可能会变成GET (消息主体丢失)</td>
+<td class="org-left">在PUT或者POST后重定向来阻止页面刷新</td>
+</tr>
+
+<tr>
+<td class="org-right">307</td>
+<td class="org-left">Temporary Redirect</td>
+<td class="org-left">方法和消息主体不发生改变</td>
+<td class="org-left">页面由于某些原因不能使用,用于non-GET</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div id="outline-container-org1aac636" class="outline-3">
+<h3 id="org1aac636">特殊重定向</h3>
+<div class="outline-text-3" id="text-org1aac636">
+<table>
+
+
+<colgroup>
+<col  class="org-right">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">&lt;状态码&gt;</th>
+<th scope="col" class="org-left">&lt;文本描述&gt;</th>
+<th scope="col" class="org-left">&lt;典型使用例子&gt;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">300</td>
+<td class="org-left">Multiple Choice</td>
+<td class="org-left">在HTML页面中显示所有选项,也可以返回 <code>200 OK</code> 状态码</td>
+</tr>
+
+<tr>
+<td class="org-right">304</td>
+<td class="org-left">Not Modified</td>
+<td class="org-left">缓存刷新</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+
+
+
+<div id="outline-container-org8fff69c" class="outline-3">
+<h3 id="org8fff69c">其他重定向实现手段</h3>
+<div class="outline-text-3" id="text-org8fff69c">
+<p>
+除了在后端设定头以外,还有其他方法可以实现重定向,<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Alternative_way_of_specifying_redirections">具体</a>自己看,大部份人都略有了解.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgfb799dd" class="outline-3">
+<h3 id="orgfb799dd">重定向循环</h3>
+<div class="outline-text-3" id="text-orgfb799dd">
+<p>
+无限的重定向循环会导致永远找不到页面,大部份都是服务器的设置问题,如果服务器检测到了就会返回 <code>500 Internal Server Error</code> 错误 (并非所有错误都是因为重定向循环).
+</p>
+
+<p>
+当然服务器也有检测不到的时候,比如服务器与服务器之间的重定向循环,这种情况浏览器就会检测到并且显示一个错误信息(不同浏览器的信息不一样).
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7cb26f6" class="outline-2">
+<h2 id="org7cb26f6">条件请求 (Conditional requests)</h2>
+<div class="outline-text-2" id="text-org7cb26f6">
+<p>
+一个请求的结果会取决于验证器对资源验证的结果,这种请求叫做条件请求.用于验证缓存的有效性,文件完整性等等.由于验证器的概念在缓存一节提过一下,并且这一块比较笼统,<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests">具体</a>请自己看.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orga7a18ed" class="outline-2">
+<h2 id="orga7a18ed">范围请求/部分请求 (Range requests/Partial requests)</h2>
+<div class="outline-text-2" id="text-orga7a18ed">
+<p>
+范围请求允许服务器只发消息的一部分给客户端,用于大的媒体文件以及实现暂停和重启下载的功能.
+</p>
+
+<p>
+如果服务器的响应有 <code>Accept-Ranges</code> 首部并且值不为"none",那么服务器就支持范围请求,可以通过 <code>HEAD</code> 请求来验证,可以使用 <code>curl -I XXXX-URL</code> 来实现,返回结果会有 <code>Content-Length</code>,可以看出请求资源的大小.
+</p>
+
+<p>
+如果服务器支持部分请求,那么用户可以设置 <code>Range</code> 头告诉服务器应该返回多大的文档 (parts of a document),成功的话还会返回 <code>206 Partial Content</code> 返回码.
+</p>
+
+<p>
+同样可以利用 <code>curl -i -H "Range: bytes=0-1023" xxx-URL</code> 做实验(curl真的是万能的啊),其中 <code>-H</code> 选项是设置请求头的.
+</p>
+
+<p>
+比如下载图片的第一个 <code>1024</code> 字节,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">curl -i -H <span style="color: #CC9393;">"Range: bytes=0-1023"</span> http://i.imgur.com/z4d4kWk.jpg
+</pre>
+</div>
+
+<p>
+这里会返回 <code>206 Partial Content</code> 状态码,并且 <code>Content-Length</code> 会显示内容大小, <code>Content-Range</code> 会标明部分信息属于哪一块,比如 <code>0-1023/146515</code>.
+</p>
+
+<p>
+如果指定的范围大于请求资源的大小,就会返回 <code>416 Requested Range Not Satisfiable</code> 状态,比如上面的例子整个文档大小为 <code>146515 bytes</code>,把请求命令改为如下就会返回 <code>416</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">curl -i -H <span style="color: #CC9393;">"Range: bytes=146515"</span> http://i.imgur.com/z4d4kWk.jpg
+</pre>
+</div>
+
+<p>
+上面是只下载一部分的,还指定多个范围集来告诉浏览器可以下载多个部分,一般开发中前端给后端上传文件都是用这种方式.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">curl -i -H <span style="color: #CC9393;">"Range: bytes=0-10, 100-150"</span> https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
+</pre>
+</div>
+
+<p>
+这里的意思是请求两个部分,响应头会包含 <code>content-type: multipart/byteranges; boundary=CloudFront:22D01D86714B960A7B73A5F8F8A4B9B0</code>,这个头说明了有多部分信息,每一部分都有自己的 <code>Content-Type</code>, <code>Content-Range</code> 头以及用来指定划分信息的边界参数.
+</p>
+
+<p>
+多部分请求的时候要注意,多个范围机和中只少要有一个范围是合法的,否则将会返回 <code>406</code>.
+</p>
 </div>
 </div>
 </div>

@@ -1,5 +1,6 @@
 #+title: HTTP Headers 学习笔记
 #+date: 2019-01-04
+#+STARTUP: align
 #+index: HTTP Headers 学习笔记
 #+tags: HTTP
 #+begin_abstract
@@ -393,4 +394,98 @@ https://mdn.mozillademos.org/files/16401/preflight_.png
 *** 重定向 (Redirection)
 
 也叫做 =URL= 转发 (URL forwarding):访问某个 =URL= 的时候跳转到其它 URL, 有几个用途:当网站在维护的时候临时转发原来 =URL= 到能够访问的地方,以及当网站发生永久改变的时候保证旧的 =URL= 能够正常使用.
+
+重定向有三种类型:永久重定向(permanent redirection),临时重定向(temporary redirection)和特殊重定向(special redirection).
+
+**** 永久重定向
+
+意味着这些重定向是长期不变的,这也暗示了原来的 =URL= 不再使用并且推荐新的 =URL=,搜索引擎会触发一次更新.
+
+常见的两种状态码有两种:
+
+|   | <状态码> | <文本描述>         | <方法处理>                        | <典型使用例子>                |
+|---+----------+--------------------+-----------------------------------+-------------------------------|
+| / |       <> | <>                 | <>                                | <>                            |
+| # |      301 | Moved Permanently  | GET方法不变,其他方法可能会变成GET | 网站组织发生改变              |
+| # |      308 | Permanent Redirect | 方法和消息主体不变                | 网站组织发生改变(用于non-GET) |
+
+
+**** 临时重定向
+
+有时候不能在标准的地方访问资源,但可以在别的地方访问.这个时候可以临时重定向,搜索引擎不会触发更新.
+
+|   | <状态码> | <文本描述>         | <方法处理>                                       | <典型使用例子>                       |
+|---+----------+--------------------+--------------------------------------------------+--------------------------------------|
+| / |       <> | <>                 | <>                                               | <>                                   |
+| # |      302 | Found              | GET方法不变,其他方法可能会变成GET                | 页面暂时不可用                       |
+| # |      303 | See Other          | GET方法不变,其他方法可能会变成GET (消息主体丢失) | 在PUT或者POST后重定向来阻止页面刷新  |
+| # |      307 | Temporary Redirect | 方法和消息主体不发生改变                         | 页面由于某些原因不能使用,用于non-GET |
+
+
+**** 特殊重定向
+
+|   | <状态码> | <文本描述>      | <典型使用例子>                                      |
+|---+----------+-----------------+-----------------------------------------------------|
+| / |       <> | <>              | <>                                                  |
+| # |      300 | Multiple Choice | 在HTML页面中显示所有选项,也可以返回 =200 OK= 状态码 |
+| # |      304 | Not Modified    | 缓存刷新                                            |
+
+
+
+
+
+**** 其他重定向实现手段 
+
+除了在后端设定头以外,还有其他方法可以实现重定向,[[https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Alternative_way_of_specifying_redirections][具体]]自己看,大部份人都略有了解.
+
+**** 重定向循环
+
+无限的重定向循环会导致永远找不到页面,大部份都是服务器的设置问题,如果服务器检测到了就会返回 =500 Internal Server Error= 错误 (并非所有错误都是因为重定向循环).
+
+当然服务器也有检测不到的时候,比如服务器与服务器之间的重定向循环,这种情况浏览器就会检测到并且显示一个错误信息(不同浏览器的信息不一样).
+
+*** 条件请求 (Conditional requests)
+
+一个请求的结果会取决于验证器对资源验证的结果,这种请求叫做条件请求.用于验证缓存的有效性,文件完整性等等.由于验证器的概念在缓存一节提过一下,并且这一块比较笼统,[[https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests][具体]]请自己看.
+
+
+*** 范围请求/部分请求 (Range requests/Partial requests)
+
+范围请求允许服务器只发消息的一部分给客户端,用于大的媒体文件以及实现暂停和重启下载的功能.
+
+如果服务器的响应有 =Accept-Ranges= 首部并且值不为"none",那么服务器就支持范围请求,可以通过 =HEAD= 请求来验证,可以使用 =curl -I XXXX-URL= 来实现,返回结果会有 =Content-Length=,可以看出请求资源的大小.
+
+如果服务器支持部分请求,那么用户可以设置 =Range= 头告诉服务器应该返回多大的文档 (parts of a document),成功的话还会返回 =206 Partial Content= 返回码.
+
+同样可以利用 =curl -i -H "Range: bytes=0-1023" xxx-URL= 做实验(curl真的是万能的啊),其中 =-H= 选项是设置请求头的.
+
+比如下载图片的第一个 =1024= 字节,
+
+#+BEGIN_SRC shell
+curl -i -H "Range: bytes=0-1023" http://i.imgur.com/z4d4kWk.jpg
+#+END_SRC
+
+这里会返回 =206 Partial Content= 状态码,并且 =Content-Length= 会显示内容大小, =Content-Range= 会标明部分信息属于哪一块,比如 =0-1023/146515=.
+
+如果指定的范围大于请求资源的大小,就会返回 =416 Requested Range Not Satisfiable= 状态,比如上面的例子整个文档大小为 =146515 bytes=,把请求命令改为如下就会返回 =416=.
+
+#+BEGIN_SRC shell
+curl -i -H "Range: bytes=146515" http://i.imgur.com/z4d4kWk.jpg
+#+END_SRC
+
+上面是只下载一部分的,还指定多个范围集来告诉浏览器可以下载多个部分,一般开发中前端给后端上传文件都是用这种方式.
+
+#+BEGIN_SRC shell
+curl -i -H "Range: bytes=0-10, 100-150" https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
+#+END_SRC
+
+这里的意思是请求两个部分,响应头会包含 =content-type: multipart/byteranges; boundary=CloudFront:22D01D86714B960A7B73A5F8F8A4B9B0=,这个头说明了有多部分信息,每一部分都有自己的 =Content-Type=, =Content-Range= 头以及用来指定划分信息的边界参数.
+
+多部分请求的时候要注意,多个范围机和中只少要有一个范围是合法的,否则将会返回 =406=.
+
+
+
+
+
+
 
