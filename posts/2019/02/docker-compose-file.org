@@ -1,0 +1,100 @@
+#+title: docker-compose.yml文件的编写
+#+date: 2019-02-15
+#+index: Docker stack depoly 的使用
+#+tags: Docker
+#+begin_abstract
+去年的时候写过一篇[[/posts/2018/08/tornado-with-docker.html][用Docker打包Tornado项目]]的文章,本来是打算很快补上后续文章的,不过那个时候学其他东西就忘记了.前一段时间家里的网络失常,笔记本的系统崩坏以及服务器的各种问题,为了以后可以快速恢复环境,因此要了解 =docker= 的更多用法,这文章就是给自己备忘的.
+
+由于我本人也没有经常用 =Docker=,所以难免会有些遗漏,我自己也尽量避开这些点,给出相关连接.本文主要是讲述如何编写 =docker-compose.yml= 文件,从而使用 =docker-compose= 和 =docker stack deploy= 命令部署应用.
+#+end_abstract
+
+*** Docker Compose 和 Docker Swarm
+
+    官方文档介绍:
+
+    - https://docs.docker.com/compose/overview/
+    - https://docs.docker.com/engine/swarm/key-concepts/
+    - https://docs.docker.com/engine/swarm/stack-deploy/
+
+    =Docker compose (docker-compose cli)= 是一个用来定义以及运行多容器的 =Docker= 应用.该工具需要你编写 =docker-compose.yml= 文件,然后一条 =docker-compose up= 命令就可以启动了.
+
+    =Docker swarm (docker swarm and docker stack cli)= 是一个管理集群服务的工具,在 =Docker= 的世界里面,一个集群叫做 =swarm=,关于集群的知识就不多说了,该工具同样需要编写 =docker-compose.yml=,然后几条简单的命令就可以管理集群.部署到 =swarm= 需要先 =docker swarm init= 启动 =swarm=,然后再 =docker stack deploy -c /path/to/docker-compose.yml= 进行部署.
+
+    除了都要编写 =docker-compose.yml= 文件外,它们都适合部署多服务的应用,差别在于前者只适合用于单机,后者是集群.
+
+    现在清楚 =Docker Compose=, =Docker Swarm= 和 =Docker Stack Deploy= 三者的概念以及关系后,是时候讲一下 =docker-compose.yml= 文件的编写了.
+
+
+*** docker-compose.yml
+
+    不论你是用 =docker-compose= 还是 =docker swarm=,你都要编写 =docker-compose.yml= 文件,值得注意的是 =docker= 的更新是很快的,不同版本的 =docker-compose.yml= 的能用指令是不一样的.这里是其中一个版本的[[https://docs.docker.com/compose/compose-file/][reference]],你可以在这里找到其他版本的参考文档,具体就不说了.
+
+    =docker-compose.yml= 有很多个指令,全部讲完又不太现实,所以我就抛砖引玉,刚好 =Nginx= 的 =docker= [[https://docs.docker.com/samples/library/nginx/#complex-configuration][官方参考]]只是讲了如何使用 =Dockerfile= 和命令行的使用,那么正好我就用它做为例子,补充一个 =docker-compose.yml= 的例子.
+
+    首先你要准备一个静态站点的目录以及它的 =Nginx= 配置文件和一个最新的 =Nginx= 镜像,其中静态站点目录的内容类似(请结合自己的实际情况来操作,这里为了演示就一切从简)如下:
+
+    #+BEGIN_EXAMPLE
+    site/
+      |- index.html
+      |- css/
+      |- style/
+      |- js/
+    #+END_EXAMPLE
+
+    我相信大部份刚接触 =docker= 的人在过完 =docker= 的入门教程后都会想到在 =Dockerfile= 文件里面使用 =COPY= 命令来把静态目录复制到容器里面,然后 =build= 出新的镜像.不是不行,但是如果你的站点频繁更新,那么就需要频繁 =build= 镜像,因为你的站点是和你的镜像耦合在一起了.
+
+    很明显,这样会十分繁琐,也不符合 =docker= 用于打包环境的初衷.我们部署需要满足一个要求:可以实时更新静态文件,不用每次更新一次文件就要重新 =build= 一次服务或者镜像并且重新运行容器.
+
+    由于 =docker-compose.yml= 是使用 =YAML= 做为语言的,所以编写配置文件之前请确保自己 =了解= =YAML= 是什么以及它的[[https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html][基本语法]],不了解的话花几分钟了解一下.
+
+    根据 =Nginx= 的官方参考可以了解到 =volumes= 指令可以满足这一个要求,所以 =docker-compose.yml= 的配置如下:
+
+    #+BEGIN_EXAMPLE
+    version: "3.2"
+
+    services:
+      blog:
+        image: nginx:latest
+        volumes:
+          - ./site:/site
+          - ./conf.d:/etc/nginx/conf.d
+        ports:
+          - "80:80"
+    #+END_EXAMPLE
+
+    这里要求目录 =conf.d= 和 =docker-compose.yml= 与 =site= 是目录同级,其中 =conf.d= 目录是 =Nginx= 的配置目录,内容如下:
+
+    #+BEGIN_EXAMPLE
+    conf.d/
+      |- site.conf
+    #+END_EXAMPLE
+
+    =site.conf= 的配置如下,
+
+    #+BEGIN_EXAMPLE
+    server {
+        listen 80;
+        listen [::]:80;
+        root /site;
+        index index.html;
+    }
+    #+END_EXAMPLE
+
+    关于站点结构和 =Nginx= 的配置请自己到 =Nginx= 的使用文档进行阅读,不在本文的范围内.
+
+    到这里为止就可以开始选择你想要的方式(=docker-compose= 或者 =docker swarm=)进行部署了.
+
+    接下来针对 =docker-compose.yml= 的几个指令进行说明,
+
+    - =version=,声明 =docker-compose.yml= 文件的版本,请一定要正确选择自己当前使用的版本,不同版本能够使用的命令是不一样的.关于版本的区别请看[[https://docs.docker.com/compose/compose-file/compose-versioning/][这里]].
+    - =services=,定义多个服务,上面例子中的 =blog= 就是一个服务,如果项目复杂了还可以多定义一些服务,并且服务与服务之间是可以相互访问的,[[https://docs.docker.com/compose/networking/#links][并且不要求服务本身就要与别的服务通信]].更多具体用法请阅读[[https://docs.docker.com/compose/networking/][Networking in Compose]].
+      - =image=,指定该服务所使用的镜像,如果现成镜像不满足自己的需求,可以自己使用 =build= 命令指定 =Dockerfile= 来建立镜像.
+      - =volumes=,挂载文件,比如上述例子中,把宿主机的 =site= 挂载到容器的 =/site= 位置,你可以通过 =docker cp= 命令来把容器中的 =/site= 复制到宿主机上进行验证.当然,这个命令有更加复杂的写法,用于更复杂的情况,具体自行读文档.
+      - =ports=,端口映射,格式为 =Host:Container=.
+
+
+*** 结语
+
+    由于官方文档的有效例子太少,所以我就自己写了这么一个简单的实验过程,内容虽少但五脏俱全,包含了基本概念以及基础用法.还有就是官方文档的结构实在是太乱了,新手看到估计会很迷茫,所以每篇文章下面都出现大量的 =thumbs down=,不过官方文档的内容其实质量很好,针对这个问题我在文章用合适的地方放上官方的参考连接.
+
+    这不是 =docker-compose.yml= 的全部用法,如果你要实现负载均衡,拓展服务等,那么请去阅读 =docker-compose.yml= 的 =reference= 文档,本文边幅有限,再加上如果你看懂这篇文章的内容,那么就问题不大了.

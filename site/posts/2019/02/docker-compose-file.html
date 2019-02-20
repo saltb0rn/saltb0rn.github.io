@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2019-02-18 一 10:01 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docker-compose.yml文件的编写</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script type="text/javascript" src="../../../js/live.js" defer></script>
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="/"> Home </a></li>
+            <li><a accesskey="T" href="/tags"> Tags </a></li>
+            <li><a accesskey="A" href="/about"> About </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">docker-compose.yml文件的编写</h1>
+<div class="abstract">
+<p>
+去年的时候写过一篇<a href="file:///posts/2018/08/tornado-with-docker.html">用Docker打包Tornado项目</a>的文章,本来是打算很快补上后续文章的,不过那个时候学其他东西就忘记了.前一段时间家里的网络失常,笔记本的系统崩坏以及服务器的各种问题,为了以后可以快速恢复环境,因此要了解 <code>docker</code> 的更多用法,这文章就是给自己备忘的.
+</p>
+
+<p>
+由于我本人也没有经常用 <code>Docker</code>,所以难免会有些遗漏,我自己也尽量避开这些点,给出相关连接.本文主要是讲述如何编写 <code>docker-compose.yml</code> 文件,从而使用 <code>docker-compose</code> 和 <code>docker stack deploy</code> 命令部署应用.
+</p>
+
+</div>
+
+<div id="outline-container-org84bdc89" class="outline-2">
+<h2 id="org84bdc89">Docker Compose 和 Docker Swarm</h2>
+<div class="outline-text-2" id="text-org84bdc89">
+<p>
+官方文档介绍:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://docs.docker.com/compose/overview/">https://docs.docker.com/compose/overview/</a></li>
+<li><a href="https://docs.docker.com/engine/swarm/key-concepts/">https://docs.docker.com/engine/swarm/key-concepts/</a></li>
+<li><a href="https://docs.docker.com/engine/swarm/stack-deploy/">https://docs.docker.com/engine/swarm/stack-deploy/</a></li>
+</ul>
+
+<p>
+<code>Docker compose (docker-compose cli)</code> 是一个用来定义以及运行多容器的 <code>Docker</code> 应用.该工具需要你编写 <code>docker-compose.yml</code> 文件,然后一条 <code>docker-compose up</code> 命令就可以启动了.
+</p>
+
+<p>
+<code>Docker swarm (docker swarm and docker stack cli)</code> 是一个管理集群服务的工具,在 <code>Docker</code> 的世界里面,一个集群叫做 <code>swarm</code>,关于集群的知识就不多说了,该工具同样需要编写 <code>docker-compose.yml</code>,然后几条简单的命令就可以管理集群.部署到 <code>swarm</code> 需要先 <code>docker swarm init</code> 启动 <code>swarm</code>,然后再 <code>docker stack deploy -c /path/to/docker-compose.yml</code> 进行部署.
+</p>
+
+<p>
+除了都要编写 <code>docker-compose.yml</code> 文件外,它们都适合部署多服务的应用,差别在于前者只适合用于单机,后者是集群.
+</p>
+
+<p>
+现在清楚 <code>Docker Compose</code>, <code>Docker Swarm</code> 和 <code>Docker Stack Deploy</code> 三者的概念以及关系后,是时候讲一下 <code>docker-compose.yml</code> 文件的编写了.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org65a9f23" class="outline-2">
+<h2 id="org65a9f23">docker-compose.yml</h2>
+<div class="outline-text-2" id="text-org65a9f23">
+<p>
+不论你是用 <code>docker-compose</code> 还是 <code>docker swarm</code>,你都要编写 <code>docker-compose.yml</code> 文件,值得注意的是 <code>docker</code> 的更新是很快的,不同版本的 <code>docker-compose.yml</code> 的能用指令是不一样的.这里是其中一个版本的<a href="https://docs.docker.com/compose/compose-file/">reference</a>,你可以在这里找到其他版本的参考文档,具体就不说了.
+</p>
+
+<p>
+<code>docker-compose.yml</code> 有很多个指令,全部讲完又不太现实,所以我就抛砖引玉,刚好 <code>Nginx</code> 的 <code>docker</code> <a href="https://docs.docker.com/samples/library/nginx/#complex-configuration">官方参考</a>只是讲了如何使用 <code>Dockerfile</code> 和命令行的使用,那么正好我就用它做为例子,补充一个 <code>docker-compose.yml</code> 的例子.
+</p>
+
+<p>
+首先你要准备一个静态站点的目录以及它的 <code>Nginx</code> 配置文件和一个最新的 <code>Nginx</code> 镜像,其中静态站点目录的内容类似(请结合自己的实际情况来操作,这里为了演示就一切从简)如下:
+</p>
+
+<pre class="example">
+site/
+  |- index.html
+  |- css/
+  |- style/
+  |- js/
+</pre>
+
+<p>
+我相信大部份刚接触 <code>docker</code> 的人在过完 <code>docker</code> 的入门教程后都会想到在 <code>Dockerfile</code> 文件里面使用 <code>COPY</code> 命令来把静态目录复制到容器里面,然后 <code>build</code> 出新的镜像.不是不行,但是如果你的站点频繁更新,那么就需要频繁 <code>build</code> 镜像,因为你的站点是和你的镜像耦合在一起了.
+</p>
+
+<p>
+很明显,这样会十分繁琐,也不符合 <code>docker</code> 用于打包环境的初衷.我们部署需要满足一个要求:可以实时更新静态文件,不用每次更新一次文件就要重新 <code>build</code> 一次服务或者镜像并且重新运行容器.
+</p>
+
+<p>
+由于 <code>docker-compose.yml</code> 是使用 <code>YAML</code> 做为语言的,所以编写配置文件之前请确保自己 <code>了解</code> <code>YAML</code> 是什么以及它的<a href="https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html">基本语法</a>,不了解的话花几分钟了解一下.
+</p>
+
+<p>
+根据 <code>Nginx</code> 的官方参考可以了解到 <code>volumes</code> 指令可以满足这一个要求,所以 <code>docker-compose.yml</code> 的配置如下:
+</p>
+
+<pre class="example">
+version: "3.2"
+
+services:
+  blog:
+    image: nginx:latest
+    volumes:
+      - ./site:/site
+      - ./conf.d:/etc/nginx/conf.d
+    ports:
+      - "80:80"
+</pre>
+
+<p>
+这里要求目录 <code>conf.d</code> 和 <code>docker-compose.yml</code> 与 <code>site</code> 是目录同级,其中 <code>conf.d</code> 目录是 <code>Nginx</code> 的配置目录,内容如下:
+</p>
+
+<pre class="example">
+conf.d/
+  |- site.conf
+</pre>
+
+<p>
+<code>site.conf</code> 的配置如下,
+</p>
+
+<pre class="example">
+server {
+    listen 80;
+    listen [::]:80;
+    root /site;
+    index index.html;
+}
+</pre>
+
+<p>
+关于站点结构和 <code>Nginx</code> 的配置请自己到 <code>Nginx</code> 的使用文档进行阅读,不在本文的范围内.
+</p>
+
+<p>
+到这里为止就可以开始选择你想要的方式(<code>docker-compose</code> 或者 <code>docker swarm</code>)进行部署了.
+</p>
+
+<p>
+接下来针对 <code>docker-compose.yml</code> 的几个指令进行说明,
+</p>
+
+<ul class="org-ul">
+<li><code>version</code>,声明 <code>docker-compose.yml</code> 文件的版本,请一定要正确选择自己当前使用的版本,不同版本能够使用的命令是不一样的.关于版本的区别请看<a href="https://docs.docker.com/compose/compose-file/compose-versioning/">这里</a>.</li>
+<li><code>services</code>,定义多个服务,上面例子中的 <code>blog</code> 就是一个服务,如果项目复杂了还可以多定义一些服务,并且服务与服务之间是可以相互访问的,<a href="https://docs.docker.com/compose/networking/#links">并且不要求服务本身就要与别的服务通信</a>.更多具体用法请阅读<a href="https://docs.docker.com/compose/networking/">Networking in Compose</a>.
+<ul class="org-ul">
+<li><code>image</code>,指定该服务所使用的镜像,如果现成镜像不满足自己的需求,可以自己使用 <code>build</code> 命令指定 <code>Dockerfile</code> 来建立镜像.</li>
+<li><code>volumes</code>,挂载文件,比如上述例子中,把宿主机的 <code>site</code> 挂载到容器的 <code>/site</code> 位置,你可以通过 <code>docker cp</code> 命令来把容器中的 <code>/site</code> 复制到宿主机上进行验证.当然,这个命令有更加复杂的写法,用于更复杂的情况,具体自行读文档.</li>
+<li><code>ports</code>,端口映射,格式为 <code>Host:Container</code>.</li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org1cfa098" class="outline-2">
+<h2 id="org1cfa098">结语</h2>
+<div class="outline-text-2" id="text-org1cfa098">
+<p>
+由于官方文档的有效例子太少,所以我就自己写了这么一个简单的实验过程,内容虽少但五脏俱全,包含了基本概念以及基础用法.还有就是官方文档的结构实在是太乱了,新手看到估计会很迷茫,所以每篇文章下面都出现大量的 <code>thumbs down</code>,不过官方文档的内容其实质量很好,针对这个问题我在文章用合适的地方放上官方的参考连接.
+</p>
+
+<p>
+这不是 <code>docker-compose.yml</code> 的全部用法,如果你要实现负载均衡,拓展服务等,那么请去阅读 <code>docker-compose.yml</code> 的 <code>reference</code> 文档,本文边幅有限,再加上如果你看懂这篇文章的内容,那么就问题不大了.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_wrapper">
+    <div id="disqus_thread"></div>
+    <script>
+     /**
+      *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+      *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+     /*
+        var disqus_config = function () {
+        this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+      */
+     let disqus;
+     (function() { // DON'T EDIT BELOW THIS LINE
+         var d = document;
+         disqus = d.createElement('script');
+         disqus.async = true;
+         disqus.src = 'https://darksalt-me.disqus.com/embed.js';
+         disqus.setAttribute('data-timestamp', +new Date());
+         disqus.onload = function(){
+             console.log("Load disqus successfully.");
+         };
+         disqus.onerror = function(){
+             console.log("Load disqus failed.");
+         };
+         (d.head || d.body).appendChild(disqus);
+     })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2019-02-15</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.1)</p>
+</div>
+</body>
+</html>

