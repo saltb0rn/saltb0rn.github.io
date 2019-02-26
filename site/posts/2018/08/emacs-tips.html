@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-02-15 五 15:39 -->
+<!-- 2019-02-26 二 13:35 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emacs Tips(持续更新)</title>
@@ -288,6 +288,7 @@ for the JavaScript code in this tag.
 <li><a href="#orgbaab65c">如何解决写Elisp时候遇到的一些需要密码认证的命令行操作</a></li>
 <li><a href="#org9ba354f">如何让调试器可以调试user-error?</a></li>
 <li><a href="#org2ff7dff">Autoload函数引用未被require的变量,修改该变量后无法读取变量?</a></li>
+<li><a href="#orgc47bfe3">如何请求接口(JSON)</a></li>
 </ul>
 </li>
 <li><a href="#orgf3f7eaf">Emacs Lisp 学习笔记</a>
@@ -337,7 +338,7 @@ for the JavaScript code in this tag.
 <li><a href="#org2cd9fd2">变量 (Variables)</a>
 <ul>
 <li><a href="#orge9cdb00">全局变量 (Global Variables)</a></li>
-<li><a href="#org889e8a9">变量作用域 (Variable Scoping)</a></li>
+<li><a href="#orgf1ec38a">变量作用域 (Variable Scoping)</a></li>
 <li><a href="#org8b25c17">永远不会改变的变量 (Constant Variables)</a></li>
 <li><a href="#org310befd">局部变量 (Local Variables)</a></li>
 <li><a href="#org440bdcb">Void变量 (Void Variables)</a></li>
@@ -345,7 +346,7 @@ for the JavaScript code in this tag.
 <li><a href="#org0b6891b">定义健壮变量的提示 (Tips for Defining)</a></li>
 <li><a href="#orgbedaacb">访问变量 (Accessing Variables)</a></li>
 <li><a href="#orge4ee2d6">设定变量 (Setting Variables)</a></li>
-<li><a href="#orgf1ec38a">变量作用域 (Variable Scoping)</a></li>
+<li><a href="#org07a2f88">变量作用域 (Variable Scoping)</a></li>
 <li><a href="#orga642fef">缓冲区局部变量 (Buffer-Local Variables)</a></li>
 <li><a href="#org89a0f1d">文件局部变量 (File local Variables)</a></li>
 <li><a href="#orgab64455">目录局部变量 (Directory Local Variables)</a></li>
@@ -726,6 +727,7 @@ Drew已经在这<a href="https://superuser.com/questions/782313/emacs-make-debug
 </div>
 </div>
 
+
 <div id="outline-container-org2ff7dff" class="outline-3">
 <h3 id="org2ff7dff">Autoload函数引用未被require的变量,修改该变量后无法读取变量?</h3>
 <div class="outline-text-3" id="text-org2ff7dff">
@@ -789,6 +791,43 @@ Drew已经在这<a href="https://superuser.com/questions/782313/emacs-make-debug
         (org-export-with-section-numbers nil))
     (org-publish project))
   (rename-theindex-to-index))
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgc47bfe3" class="outline-3">
+<h3 id="orgc47bfe3">如何请求接口(JSON)</h3>
+<div class="outline-text-3" id="text-orgc47bfe3">
+<pre class="example">
+写于 2019/2/26
+</pre>
+<p>
+<code>Emacs Lisp</code> 没有 <code>Python</code> 那么直接的网络请求库,不过我们可以自己手动封装一下(这里只是提供一下思路)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(<span style="color: #F0DFAF; font-weight: bold;">require</span> '<span style="color: #BFEBBF;">json</span>)
+(<span style="color: #F0DFAF; font-weight: bold;">require</span> '<span style="color: #BFEBBF;">url</span>)
+
+(<span style="color: #F0DFAF; font-weight: bold;">defstruct</span> response headers body)
+
+(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">url-open</span> (url)
+  <span style="color: #9FC59F;">"Return the response by requesting the url."</span>
+    (<span style="color: #F0DFAF; font-weight: bold;">with-temp-buffer</span>
+      (insert-buffer (url-retrieve-synchronously url)) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">the message containing the headers and body</span>
+      (set-buffer-multibyte t)
+      (goto-char (point-min))
+      (re-search-forward <span style="color: #CC9393;">"^$"</span> nil 'move)
+      (make-response <span style="color: #DCDCCC; font-weight: bold;">:headers</span> (buffer-substring-no-properties (point-min) (point))
+                     <span style="color: #DCDCCC; font-weight: bold;">:body</span> (buffer-substring-no-properties (point) (point-max)))))
+
+(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">response-to-json</span> (response)
+  (json-read-from-string (response-body response)))
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">example</span>
+(response-to-json (url-open <span style="color: #CC9393;">"https://api.jikan.moe/v3/anime/1/characters_staff"</span>))
 </pre>
 </div>
 </div>
@@ -2320,8 +2359,8 @@ g1.close<span style="color: #DCDCCC;">()</span>
 </div>
 
 
-<div id="outline-container-org889e8a9" class="outline-4">
-<h4 id="org889e8a9">变量作用域 (Variable Scoping)</h4>
+<div id="outline-container-orgf1ec38a" class="outline-4">
+<h4 id="orgf1ec38a">变量作用域 (Variable Scoping)</h4>
 </div>
 
 <div id="outline-container-org8b25c17" class="outline-4">
@@ -2558,9 +2597,9 @@ e    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">=&gt;
 </div>
 
 
-<div id="outline-container-orgf1ec38a" class="outline-4">
-<h4 id="orgf1ec38a">变量作用域 (Variable Scoping)</h4>
-<div class="outline-text-4" id="text-orgf1ec38a">
+<div id="outline-container-org07a2f88" class="outline-4">
+<h4 id="org07a2f88">变量作用域 (Variable Scoping)</h4>
+<div class="outline-text-4" id="text-org07a2f88">
 <p>
 每个局部绑定都有一个明确的作用域(scope)和生命周期(extent).分别指 <b>可以在文本源码的什么地方访问绑定</b> 和 <b>在程序执行过程中,绑定在什么时候存在</b>.
 </p>

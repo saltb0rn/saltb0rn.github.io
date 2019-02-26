@@ -219,6 +219,7 @@ Drew已经在这[[https://superuser.com/questions/782313/emacs-make-debug-on-err
        debug-ignored-errors))
 #+END_SRC
 
+
 *** Autoload函数引用未被require的变量,修改该变量后无法读取变量?
 #+BEGIN_EXAMPLE
 写于 2018/10/21
@@ -266,6 +267,36 @@ see any project of blog, vice versa."
         (org-export-with-section-numbers nil))
     (org-publish project))
   (rename-theindex-to-index))
+#+END_SRC
+
+
+*** 如何请求接口(JSON)
+#+BEGIN_EXAMPLE
+写于 2019/2/26
+#+END_EXAMPLE
+=Emacs Lisp= 没有 =Python= 那么直接的网络请求库,不过我们可以自己手动封装一下(这里只是提供一下思路)
+
+#+BEGIN_SRC elisp
+(require 'json)
+(require 'url)
+
+(defstruct response headers body)
+
+(defun url-open (url)
+  "Return the response by requesting the url."
+    (with-temp-buffer
+      (insert-buffer (url-retrieve-synchronously url)) ;; the message containing the headers and body
+      (set-buffer-multibyte t)
+      (goto-char (point-min))
+      (re-search-forward "^$" nil 'move)
+      (make-response :headers (buffer-substring-no-properties (point-min) (point))
+                     :body (buffer-substring-no-properties (point) (point-max)))))
+
+(defun response-to-json (response)
+  (json-read-from-string (response-body response)))
+
+;; example
+(response-to-json (url-open "https://api.jikan.moe/v3/anime/1/characters_staff"))
 #+END_SRC
 
 
