@@ -40,6 +40,8 @@
   - [[file:2018/11/eopl-techniques-to-imp-interpreter.org][直译器的实现技术总结]]
 * 网
   - [[file:2018/06/about-rpc.org][网络编程笔记 RPC]]
+* 自
+  - [[file:2019/03/laziness-is-a-habit.org][自身经历谈懒惰]]
 * 设
   - [[file:2018/07/how-to-block-ip-addresses-from-countries.org][设置Nginx禁止某些地区IP的访问]]
   - [[file:2018/09/design-patterns.org][设计模式总结]]

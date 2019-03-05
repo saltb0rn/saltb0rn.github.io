@@ -1,0 +1,1 @@
+- [[file:../posts/2019/03/laziness-is-a-habit.org][自身经历谈懒惰]]
