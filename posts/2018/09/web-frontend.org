@@ -1336,7 +1336,11 @@ https://mdn.mozillademos.org/files/14645/1_Grid_Area.png
 
 - CSS Extensions
 
-  独占的 =CSS= 属性.
+  独占的 =CSS= 属性,或者叫做非标准属性(,实际上不仅限于属性,还有选择器和值),这部份都是特定浏览器使用的属性,不推荐在产品上使用,如果要使用请自己做好兼容工作.
+
+  比如自定义 <input type="range"> 的输入框,那么就可以用的上这些属性了,因为不同浏览器的 =range= 输入框的样式是不一样的,所以要先重置样式,这就需要用到这些属性.
+
+  这里有一篇完整的教程,如果有兴趣可以自己[[https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/][阅读]].
 
   - Microsoft-only CSS Extensions
 
@@ -1844,7 +1848,7 @@ document.onclick = function(event) {
     event = event || window.event;
     var target = event.target || event.srcElement;
     var is_event_set = target.onclick;
-    if (target.tagName == 'DIV' && target.className == 'outline') {
+    if (target.tagName == 'DIV' && target.className == 'child') {
          target.onclick = function(event) {
          /*
            可以根据元素地属性判断是否你想要地元素,如果符合条件就执行动作.
@@ -1852,16 +1856,15 @@ document.onclick = function(event) {
          */
          /*
            如果要取消冒泡,则点击事件必须要传入event对象,然后
-           设定 event 对象的 bubbles 为 false 或者 cancelBubble 为 true.
+           设定 event 对象的 cancelBubble 为 true 或者调用 event.stopPropagation()
          */
-             (event.bubbles = false) || (event.cancelBubble = true);
-             if (target.tagName == 'DIV' && target.className == 'outline') {
-                 console.log(target);
+             event.cancelBubble = true;
+             console.log(target);
              }
          };
     }
     // 第一次点击是设定事件,要触发就要点击第二次,为了第一次就触发要做判断
-    if(!is_event_set) target.onclick(event);
+    target.onclick && target.onclick(event);
 };
 #+END_SRC
 
@@ -2156,20 +2159,12 @@ Width-of-element-in-device = Width-of-element-in-design / Design-width * Device-
 
 主要难题在于同时考虑字体大小,图片清晰度和元素间距的问题,这就是为什么不能单纯通过百分比设计元素大小来做适配.对于布局,只要熟练掌握布局手段就没问题了.实现适配的手段有很多,经过一段时间的观察基本是离不开 =CSS= 相对单位的应用.上面的几个参考链接已经非常全面了,就不再赘述了.
 
+实际开发中有两种方法,使用淘宝的 =flexible.js= 或者 =viewport= 单位做开发,这两者的原理其实都是一样的,前者实际上就是模拟 =viewport= 单位的工作方式,后者由于兼容问题而一直没有被采用,不过现在已经比较成熟了, =flexible.js= 的使命也差不多到头了.
+
+[[https://github.com/amfe/lib-flexible]] 上的页面也建议采用 =viewport= 单位,并且该项目的源代码从 =16= 年起就没更新了,所以我觉得可以大胆使用 =viewport= 单位了.
 
 
 
-
-
-**** 实践
-
-1. 获取 =dpr=
-
-   #+BEGIN_SRC javascript
-   var dpr = window.devicePixelRatio;
-   #+END_SRC
-
-   要注意的是这个 =API= 并非百分百对,目前我个人知道的 =Firefox= 和 =Chrome= 会在用户缩放后改变这个值,所以是否使用这个值请自己考量.(这里就不考虑缩放的情况).
 
 *** 如何快速检测某个CSS属性的兼容性
 
@@ -2181,3 +2176,25 @@ Width-of-element-in-device = Width-of-element-in-design / Design-width * Device-
 
 使用很简单,比如我要查自定义变量的支持程度,在搜索框输入 =var= 就可以看到关于 =var= 相关关键字的信息.
 
+
+*** JavaScript里面的bind()方法
+
+#+BEGIN_EXAMPLE
+写于 2019/3/5
+#+END_EXAMPLE
+
+=JavaScript= 的 =this= 我们都知道怎么用,但是你见过这么写的吗?
+
+#+BEGIN_SRC javascript
+window.addEventListener('load', this.render.bind(this), false);
+#+END_SRC
+
+这里有一个关于 =bind()= [[https://stackoverflow.com/questions/41391288/why-is-javascript-bind-necessary][解释]]十分简单易懂,具体我就不多说了.
+
+*** JavaScript的this关键字
+
+#+BEGIN_EXAMPLE
+写于 2019/3/13
+#+END_EXAMPLE
+
+https://www.quirksmode.org/js/this.html

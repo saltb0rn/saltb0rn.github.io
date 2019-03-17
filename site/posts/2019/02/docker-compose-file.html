@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-02-26 二 13:35 -->
+<!-- 2019-03-18 一 00:17 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>docker-compose.yml文件的编写</title>
@@ -390,9 +390,283 @@ server {
 <ul class="org-ul">
 <li><code>image</code>,指定该服务所使用的镜像,如果现成镜像不满足自己的需求,可以自己使用 <code>build</code> 命令指定 <code>Dockerfile</code> 来建立镜像.</li>
 <li><code>volumes</code>,挂载文件,比如上述例子中,把宿主机的 <code>site</code> 挂载到容器的 <code>/site</code> 位置,你可以通过 <code>docker cp</code> 命令来把容器中的 <code>/site</code> 复制到宿主机上进行验证.当然,这个命令有更加复杂的写法,用于更复杂的情况,具体自行读文档.</li>
-<li><code>ports</code>,端口映射,格式为 <code>Host:Container</code>.</li>
+<li><code>ports</code>,有两种设置方法,1. 端口映射,格式为 <code>Host:Container</code>; 2. 只指定容器端口,主机端口随机,如果这么分配的话就要通过 <code>docker ps</code> 命令来找主机端口了.</li>
 </ul></li>
 </ul>
+</div>
+</div>
+
+
+<div id="outline-container-orgee15d76" class="outline-2">
+<h2 id="orgee15d76">追加例子: MYSQL + Tornado</h2>
+<div class="outline-text-2" id="text-orgee15d76">
+<pre class="example">
+    写于 2019/3/17
+</pre>
+
+<p>
+因为最近有好几个朋友问我一些关于 <code>Docker</code> 的一些使用问题,每次和这个说完另外一个就问起,所以我决定追加一篇例子来做为日后回答.
+</p>
+
+<p>
+主要是关于如何组合两个或者两个以上的服务,也算是为了自己之前的偷懒而负责了,这里我只负责演示两个服务,最后会留下一个思考(都会再说).
+</p>
+</div>
+
+<div id="outline-container-org89b4ba8" class="outline-3">
+<h3 id="org89b4ba8">项目内容</h3>
+<div class="outline-text-3" id="text-org89b4ba8">
+<p>
+这个这是一个很简单的 <code>API</code> 服务,使用 <code>Python</code> 做为后端语言,实际上什么后端语言都无所为,根据你自己的实际情况来就好.
+</p>
+
+<p>
+换句话说,这里的 <code>Python</code> 代码没有必要看懂,要求看懂的我会特意说明,该项目主要使用了 <code>MYSQL</code> 数据库, <code>Tornado</code> 框架以及一个加密算法库.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc99bcfa" class="outline-3">
+<h3 id="orgc99bcfa">项目结构</h3>
+<div class="outline-text-3" id="text-orgc99bcfa">
+<pre class="example">
+server/
+  |- sql/
+  |    |- init.sql
+  |- data/
+  |- src/
+  |    |- app.py
+  |    |- requirements.txt
+  |    |- Dockerfile
+  |- docker-compose-yml
+</pre>
+
+<p>
+其中, <code>src</code> 就是后端程序的整个源代码,和我刚刚说的一样你可以用任何语言开发的后端程序,同样,源代码也可以直接类似的放这里面.
+</p>
+
+<p>
+<code>app.py</code> 是程序代码的本身, <code>requirements.txt</code> 是该程序所需要的一些依赖记录,部署的时候会先安装好依赖再运行程序的.
+</p>
+
+<p>
+其中 <code>Dockerfile</code> 是用来构建镜像的,不过值得一提的是我并不打算把源代码也 <code>build</code> 到镜像里面,我只会建立一个已经安装好依赖的环境镜像.
+</p>
+
+<p>
+最后启动的时候挂载好代码再执行(注意,有些人不了解直译型和编译型语言的工作方式的区别,我这里简单提一下, <code>Python</code> 主要是直译运行,也就是说一个程序读取代码然后直接执行,
+</p>
+
+<p>
+而 <code>Java</code> 这种主要是编译的,也就是把源代码翻译成另外一种语言,所以每次 <code>Java</code> 程序员都是写完代码需要 <code>build</code> 以下然后把生成的东西打包好发布,而 <code>Python</code> 是直接写完再整理一下文件目录就可以发布了).
+</p>
+
+<p>
+这里我要展示一下 <code>app.py</code> 的源代码,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/python3</span>
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+
+<span style="color: #F0DFAF; font-weight: bold;">import</span> os
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.web
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.ioloop
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.httpserver
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.options
+<span style="color: #F0DFAF; font-weight: bold;">from</span> tornado.options <span style="color: #F0DFAF; font-weight: bold;">import</span> options, define
+<span style="color: #F0DFAF; font-weight: bold;">import</span> pymysql
+
+<span style="color: #DFAF8F;">MYSQL_HOST</span> = os.environ.get<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'MYSQL_HOST'</span><span style="color: #DCDCCC;">)</span>
+
+define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"port"</span>, default=8000, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run server on the given port."</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DFAF8F;">database</span> = pymysql.connect<span style="color: #DCDCCC;">(</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   host=MYSQL_HOST,
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   database=<span style="color: #CC9393;">'MUSICDB'</span>, port=3306,
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   user=<span style="color: #CC9393;">'saltborn'</span>, password=<span style="color: #CC9393;">'saltborn'</span>, charset=<span style="color: #CC9393;">'utf-8'</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">Application</span><span style="color: #DCDCCC;">(</span>tornado.web.Application<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">__init__</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">handlers</span> = <span style="color: #DCDCCC;">[</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">(</span>r<span style="color: #CC9393;">"/music/(?P&lt;id&gt;\d+)/?"</span>,
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>MusicSrcHandler,
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #DCDCCC; font-weight: bold;">dict</span><span style="color: #D0BF8F;">(</span>database=database<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC;">]</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">settings</span> = <span style="color: #DCDCCC; font-weight: bold;">dict</span><span style="color: #DCDCCC;">(</span>debug=<span style="color: #BFEBBF;">True</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; font-weight: bold;">super</span><span style="color: #DCDCCC;">()</span>.__init__<span style="color: #DCDCCC;">(</span>handlers, **settings<span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">MusicSrcHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">initialize</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, database<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.database = database
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, <span style="color: #DCDCCC; font-weight: bold;">id</span><span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return music src</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Content-Type"</span>, <span style="color: #CC9393;">"application/json"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">with</span> <span style="color: #F0DFAF; font-weight: bold;">self</span>.database.cursor<span style="color: #DCDCCC;">()</span> <span style="color: #F0DFAF; font-weight: bold;">as</span> cursor:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">sql</span> = <span style="color: #CC9393;">"SELECT `msg` FROM MUSIC WHERE `id` = %s"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   cursor.execute<span style="color: #DCDCCC;">(</span>sql, <span style="color: #BFEBBF;">(</span><span style="color: #DCDCCC; font-weight: bold;">id</span>,<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">result</span> = cursor.fetchone<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">do something with result, I am not doing here</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">{</span><span style="color: #CC9393;">"msg"</span>: <span style="color: #DCDCCC; font-weight: bold;">id</span><span style="color: #BFEBBF;">}</span><span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">main</span><span style="color: #DCDCCC;">()</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   tornado.options.parse_command_line<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">app</span> = Application<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   app.listen<span style="color: #DCDCCC;">(</span>options.port<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   tornado.ioloop.IOLoop.current<span style="color: #DCDCCC;">()</span>.start<span style="color: #DCDCCC;">()</span>
+
+<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">'__main__'</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   main<span style="color: #DCDCCC;">()</span>
+</pre>
+</div>
+
+<p>
+这里我们程序的 <code>pymysql.connect</code> 中的 <code>host</code> 参数表示 <code>MYSQL</code> 数据库的主机地址,我们这里 <b>不需要写 <code>MYSQL</code> 数据库的地址,只需要写 <code>MYSQL</code> 服务名字就可以了</b>.
+</p>
+
+<p>
+我这里是通过环境变量 <code>MYSQL_HOST</code> 来获取服务名,因为日后服务名字可能会变,这样就可以防万变了,当然你也可以直接写死.这也是项目代码中唯二值得注意的地方了.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb0ae1a5" class="outline-3">
+<h3 id="orgb0ae1a5">docker-compose.yml 配置</h3>
+<div class="outline-text-3" id="text-orgb0ae1a5">
+<pre class="example">
+version: "3"
+
+services:
+
+mysql:
+  container_name: mysql
+  image: mysql
+  restart: on-failure
+  # environment:
+  #   - MYSQL_USER=saltborn
+  #   - MYSQL_ROOT_PASSWORD=saltborn
+  #   - MYSQL_DATABASE=MUSICDB
+  ports:
+    - "3306:3306"
+  volumes:
+    - "./data:/var/lib/mysql"
+    - "./sql:/docker-entrypoint-initdb.d"
+  healthcheck:
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u","$MYSQL_USER", "-p$MYSQL_ROOT_PASSWORD"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+
+music.api:
+  container_name: music_api
+  restart: on-failure
+  # build: ./src
+  image: saltborn/music
+  environment:
+    - MYSQL_HOST=mysql
+  depends_on:
+    - mysql
+  # links:
+  #   - mysql
+  ports:
+    - "8000:8000"
+  volumes:
+    - "./src:/app"
+  command: sh -c "python3 /app/app.py"
+</pre>
+
+<p>
+这里如你所见定义了两个服务,分别是 <code>mysql</code> 和 <code>music.api</code>, 其中 <code>music.api</code> 需要连接 <code>mysql</code> 这个服务.
+</p>
+
+<p>
+这里你会发现一些新选项,不用害怕我会尽量讲的简单点,
+</p>
+
+<ul class="org-ul">
+<li><code>container_name</code>: 运行时容器的名字;</li>
+<li><code>restart</code>: 在什么时候重启容器, <code>on-failure</code> 表示失败的时候重启;</li>
+<li><code>build</code>: 建立镜像的目录/文件,服务就是基于这个新建立成的镜像生成容器,个人一般都是手动建立好镜像然后通过 <code>image</code> 选项来指定镜像,否则每次启动这些服务都会很耗时;</li>
+<li><code>environment</code>: 设定环境变量,比如上面提到的 <code>MYSQL_HOST</code> 就是在这里设置的;</li>
+<li><code>depends_on</code>: 告诉 <code>docker</code> <code>music.api</code> 服务基于 <code>mysql</code> 服务,还有一个作用就是确保先让 <code>mysql</code> 服务在 <code>music.api</code> 服务之前启动,但是这里有一些小问题,下面再说;</li>
+<li><code>links</code>: 告诉 <code>docker</code> <code>music.api</code> 服务需要连接 <code>mysql</code> 服务,实际上该选项和 <code>depends_on</code> 比较相识,该选项可以不使用,直接用 <code>depends_on</code> 即可;</li>
+<li><code>command</code>: 服务的入口,相当于 <code>Dockerfile</code> 的 <code>ENTRYPOINT</code>,也就是启动服务时候执行的命令;</li>
+<li><code>healthcheck</code>: 由于 <code>music.api</code> 服务是基于 <code>mysql</code> 服务的,所以我们需要检测 <code>mysql</code> 服务是否运行(防止 <code>mysql</code> 因为错误而无限重启);</li>
+</ul>
+
+<p>
+关于如何确保 <code>mysql</code> 服务在 <code>music.api</code> 服务启动之前就绪,我在网上看到几种说法, <code>wait-for-it</code> 和 <code>wait-for</code> 等脚本,也有人说 <code>healthcheck</code>,但是我看了文档并没觉得这选项能干嘛(也有可能根据它的检测结果来决定是否启动 <code>music.api</code> 服务?).
+上面的几种解决方法我都没有试过,但是很明显我目前这个配置已经可以确保 <code>music.api</code> 服务能够正常启动,为什么?因为 <code>restart: on-failure</code>,这会在 <code>music.api</code> 服务发生错误的时候重启,这样 <code>music.api</code> 会一直重启直到 <code>mysql</code> 服务就绪为止,当然这不是什么解决方法,但是对于简单的项目而言已经足够用了.
+我个人还是推荐尝试上面的提到的 <code>wait-for-it</code> 和 <code>wait-for</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd9458a6" class="outline-3">
+<h3 id="orgd9458a6">关于 MYSQL Docker 的额外补充</h3>
+<div class="outline-text-3" id="text-orgd9458a6">
+<p>
+也有一两个朋友不大了解如何使用 <code>MYSQL</code> 的镜像的,其实很简单(可能官方文档太多了大部份人都懒得看),这里我大概说一下,重点在于 <code>mysql</code> 服务的 <code>volumes</code> 选项那里,
+</p>
+
+<p>
+你会发现主机上的 <code>sql</code> 挂载到容器的 <code>/docker-entrypoint-initdb.d</code> 目录上,这个容器的目录是 <code>mysql</code> 服务初次启动时候查找 <code>sql</code> 文件的位置,也就是说如果你想新建用户,数据库和表等等的东西都可以写个脚本挂载到这里.
+</p>
+
+<p>
+比如例子中的 <code>init.sql</code>,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql"><span style="color: #F0DFAF; font-weight: bold;">CREATE</span> DATABASE IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> MUSICDB <span style="color: #7CB8BB;">CHARACTER</span> <span style="color: #F0DFAF; font-weight: bold;">SET</span> utf8;
+
+USE MUSICDB;
+
+<span style="color: #F0DFAF; font-weight: bold;">CREATE</span> <span style="color: #F0DFAF; font-weight: bold;">TABLE</span> IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> <span style="color: #93E0E3;">MUSIC</span>(
+       `ID` <span style="color: #7CB8BB;">int</span>(11) <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">NULL</span> AUTO_INCREMENT,
+       `<span style="color: #F0DFAF; font-weight: bold;">NAME</span>` <span style="color: #7CB8BB;">varchar</span>(50) <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">NULL</span>,
+       <span style="color: #F0DFAF; font-weight: bold;">PRIMARY</span> <span style="color: #F0DFAF; font-weight: bold;">KEY</span> (`ID`)) ENGINE=InnoDB;
+
+<span style="color: #F0DFAF; font-weight: bold;">CREATE</span> <span style="color: #DCDCCC; font-weight: bold;">USER</span> IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'%'</span> IDENTIFIED <span style="color: #F0DFAF; font-weight: bold;">BY</span> <span style="color: #CC9393;">'saltborn'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">CREATE</span> <span style="color: #DCDCCC; font-weight: bold;">USER</span> IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'localhost'</span> IDENTIFIED <span style="color: #F0DFAF; font-weight: bold;">BY</span> <span style="color: #CC9393;">'saltborn'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">GRANT</span> <span style="color: #F0DFAF; font-weight: bold;">SELECT</span>, <span style="color: #F0DFAF; font-weight: bold;">INSERT</span>, <span style="color: #F0DFAF; font-weight: bold;">UPDATE</span>, <span style="color: #F0DFAF; font-weight: bold;">DELETE</span> <span style="color: #F0DFAF; font-weight: bold;">ON</span> MUSICDB.* <span style="color: #F0DFAF; font-weight: bold;">TO</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'%'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">GRANT</span> <span style="color: #F0DFAF; font-weight: bold;">SELECT</span>, <span style="color: #F0DFAF; font-weight: bold;">INSERT</span>, <span style="color: #F0DFAF; font-weight: bold;">UPDATE</span>, <span style="color: #F0DFAF; font-weight: bold;">DELETE</span> <span style="color: #F0DFAF; font-weight: bold;">ON</span> MUSICDB.* <span style="color: #F0DFAF; font-weight: bold;">TO</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'localhost'</span>;
+
+FLUSH <span style="color: #F0DFAF; font-weight: bold;">PRIVILEGES</span>;
+</pre>
+</div>
+
+<p>
+而 <code>/var/lib/mysql</code> 则是容器中 <code>MYSQL</code> 保存数据的地方,我们应该挂载到这个位置来保存数据到主机上(除非你不在乎这些数据).
+</p>
+
+<p>
+<b>要注意的是</b> 当 <code>/var/lib/mysql</code> 已经有数据的时候, <code>init.sql</code> 就不会在下一次服务启动的时候被执行了.
+</p>
+
+<p>
+还有就是 <code>MYSQL_USER</code>, <code>MYSQL_ROOT_PASSWORD</code>, <code>MYSQL_DATABASE</code> 等等这些变量,分别是说启动镜像的时候创建出用户,设定 <code>root</code> 密码和创建数据库,也就是相当于上面 <code>init.sql</code> 文件的内容,在 <code>init.sql</code> 准备好的情况下,这些变量都是可选的.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org67acb06" class="outline-3">
+<h3 id="org67acb06">额外思考</h3>
+<div class="outline-text-3" id="text-org67acb06">
+<p>
+假设你已经根据上面这些思路自己动手操作过一遍了(选自己熟悉的后端语言写一个简单的程序),那么再想一下 <code>后端程序 + MYSQL + 前端</code> 这样的组合该如何用 <code>docker-compose</code> 打包呢?配置文件该如何写呢?(所有的答案都在这文件里面了).
+</p>
+
+<p>
+这里我给点提示,前端访问后端提供的接口时候是跨域的,并且前端不想后端那样简单设置的 <code>depends_on: music.api</code> 并且通过 <code>music.api:8000/api</code> 这种形式获取响应,不过可以通过 <code>Nginx</code> 做到反向代理来解决这些问题,提示已经给了,剩下就要自己动手验证了.
+</p>
+</div>
 </div>
 </div>
 
@@ -443,7 +717,7 @@ server {
 </div>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-02-15</p>
-<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.1)</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.2)</p>
 </div>
 </body>
 </html>

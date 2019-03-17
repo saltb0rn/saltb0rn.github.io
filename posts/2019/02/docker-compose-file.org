@@ -90,11 +90,216 @@
     - =services=,定义多个服务,上面例子中的 =blog= 就是一个服务,如果项目复杂了还可以多定义一些服务,并且服务与服务之间是可以相互访问的,[[https://docs.docker.com/compose/networking/#links][并且不要求服务本身就要与别的服务通信]].更多具体用法请阅读[[https://docs.docker.com/compose/networking/][Networking in Compose]].
       - =image=,指定该服务所使用的镜像,如果现成镜像不满足自己的需求,可以自己使用 =build= 命令指定 =Dockerfile= 来建立镜像.
       - =volumes=,挂载文件,比如上述例子中,把宿主机的 =site= 挂载到容器的 =/site= 位置,你可以通过 =docker cp= 命令来把容器中的 =/site= 复制到宿主机上进行验证.当然,这个命令有更加复杂的写法,用于更复杂的情况,具体自行读文档.
-      - =ports=,端口映射,格式为 =Host:Container=.
+      - =ports=,有两种设置方法,1. 端口映射,格式为 =Host:Container=; 2. 只指定容器端口,主机端口随机,如果这么分配的话就要通过 =docker ps= 命令来找主机端口了.
+
+
+*** 追加例子: MYSQL + Tornado
+
+    #+BEGIN_EXAMPLE
+    写于 2019/3/17
+    #+END_EXAMPLE
+
+    因为最近有好几个朋友问我一些关于 =Docker= 的一些使用问题,每次和这个说完另外一个就问起,所以我决定追加一篇例子来做为日后回答.
+
+    主要是关于如何组合两个或者两个以上的服务,也算是为了自己之前的偷懒而负责了,这里我只负责演示两个服务,最后会留下一个思考(都会再说).
+
+**** 项目内容
+
+     这个这是一个很简单的 =API= 服务,使用 =Python= 做为后端语言,实际上什么后端语言都无所为,根据你自己的实际情况来就好.
+
+     换句话说,这里的 =Python= 代码没有必要看懂,要求看懂的我会特意说明,该项目主要使用了 =MYSQL= 数据库, =Tornado= 框架以及一个加密算法库.
+
+**** 项目结构
+
+     #+BEGIN_EXAMPLE
+     server/
+       |- sql/
+       |    |- init.sql
+       |- data/
+       |- src/
+       |    |- app.py
+       |    |- requirements.txt
+       |    |- Dockerfile
+       |- docker-compose-yml
+     #+END_EXAMPLE
+
+     其中, =src= 就是后端程序的整个源代码,和我刚刚说的一样你可以用任何语言开发的后端程序,同样,源代码也可以直接类似的放这里面.
+
+     =app.py= 是程序代码的本身, =requirements.txt= 是该程序所需要的一些依赖记录,部署的时候会先安装好依赖再运行程序的.
+
+     其中 =Dockerfile= 是用来构建镜像的,不过值得一提的是我并不打算把源代码也 =build= 到镜像里面,我只会建立一个已经安装好依赖的环境镜像.
+
+     最后启动的时候挂载好代码再执行(注意,有些人不了解直译型和编译型语言的工作方式的区别,我这里简单提一下, =Python= 主要是直译运行,也就是说一个程序读取代码然后直接执行,
+
+     而 =Java= 这种主要是编译的,也就是把源代码翻译成另外一种语言,所以每次 =Java= 程序员都是写完代码需要 =build= 以下然后把生成的东西打包好发布,而 =Python= 是直接写完再整理一下文件目录就可以发布了).
+
+     这里我要展示一下 =app.py= 的源代码,
+
+     #+BEGIN_SRC python
+     #! /usr/bin/python3
+     # -*- coding: utf-8 -*-
+
+     import os
+     import tornado.web
+     import tornado.ioloop
+     import tornado.httpserver
+     import tornado.options
+     from tornado.options import options, define
+     import pymysql
+
+     MYSQL_HOST = os.environ.get('MYSQL_HOST')
+
+     define("port", default=8000, type=int, help="run server on the given port.")
+
+     database = pymysql.connect(
+         host=MYSQL_HOST,
+         database='MUSICDB', port=3306,
+         user='saltborn', password='saltborn', charset='utf-8')
+
+
+     class Application(tornado.web.Application):
+         def __init__(self):
+             handlers = [
+                 (r"/music/(?P<id>\d+)/?",
+                  MusicSrcHandler,
+                  dict(database=database))
+             ]
+             settings = dict(debug=True)
+             super().__init__(handlers, **settings)
+
+
+     class MusicSrcHandler(tornado.web.RequestHandler):
+
+         def initialize(self, database):
+             self.database = database
+
+         def get(self, id):
+             # return music src
+             self.set_header("Content-Type", "application/json")
+             with self.database.cursor() as cursor:
+                 sql = "SELECT `msg` FROM MUSIC WHERE `id` = %s"
+                 cursor.execute(sql, (id,))
+                 result = cursor.fetchone()
+                 # do something with result, I am not doing here
+             self.write({"msg": id})
+
+
+     def main():
+         tornado.options.parse_command_line()
+         app = Application()
+         app.listen(options.port)
+         tornado.ioloop.IOLoop.current().start()
+
+     if __name__ == '__main__':
+         main()
+     #+END_SRC
+
+     这里我们程序的 =pymysql.connect= 中的 =host= 参数表示 =MYSQL= 数据库的主机地址,我们这里 *不需要写 =MYSQL= 数据库的地址,只需要写 =MYSQL= 服务名字就可以了*.
+
+     我这里是通过环境变量 =MYSQL_HOST= 来获取服务名,因为日后服务名字可能会变,这样就可以防万变了,当然你也可以直接写死.这也是项目代码中唯二值得注意的地方了.
+
+**** docker-compose.yml 配置
+
+     #+BEGIN_EXAMPLE
+     version: "3"
+
+     services:
+
+     mysql:
+       container_name: mysql
+       image: mysql
+       restart: on-failure
+       # environment:
+       #   - MYSQL_USER=saltborn
+       #   - MYSQL_ROOT_PASSWORD=saltborn
+       #   - MYSQL_DATABASE=MUSICDB
+       ports:
+         - "3306:3306"
+       volumes:
+         - "./data:/var/lib/mysql"
+         - "./sql:/docker-entrypoint-initdb.d"
+       healthcheck:
+         test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u","$MYSQL_USER", "-p$MYSQL_ROOT_PASSWORD"]
+         interval: 30s
+         timeout: 10s
+         retries: 5
+
+     music.api:
+       container_name: music_api
+       restart: on-failure
+       # build: ./src
+       image: saltborn/music
+       environment:
+         - MYSQL_HOST=mysql
+       depends_on:
+         - mysql
+       # links:
+       #   - mysql
+       ports:
+         - "8000:8000"
+       volumes:
+         - "./src:/app"
+       command: sh -c "python3 /app/app.py"
+     #+END_EXAMPLE
+
+     这里如你所见定义了两个服务,分别是 =mysql= 和 =music.api=, 其中 =music.api= 需要连接 =mysql= 这个服务.
+
+     这里你会发现一些新选项,不用害怕我会尽量讲的简单点,
+
+     - =container_name=: 运行时容器的名字;
+     - =restart=: 在什么时候重启容器, =on-failure= 表示失败的时候重启;
+     - =build=: 建立镜像的目录/文件,服务就是基于这个新建立成的镜像生成容器,个人一般都是手动建立好镜像然后通过 =image= 选项来指定镜像,否则每次启动这些服务都会很耗时;
+     - =environment=: 设定环境变量,比如上面提到的 =MYSQL_HOST= 就是在这里设置的;
+     - =depends_on=: 告诉 =docker= =music.api= 服务基于 =mysql= 服务,还有一个作用就是确保先让 =mysql= 服务在 =music.api= 服务之前启动,但是这里有一些小问题,下面再说;
+     - =links=: 告诉 =docker= =music.api= 服务需要连接 =mysql= 服务,实际上该选项和 =depends_on= 比较相识,该选项可以不使用,直接用 =depends_on= 即可;
+     - =command=: 服务的入口,相当于 =Dockerfile= 的 =ENTRYPOINT=,也就是启动服务时候执行的命令;
+     - =healthcheck=: 由于 =music.api= 服务是基于 =mysql= 服务的,所以我们需要检测 =mysql= 服务是否运行(防止 =mysql= 因为错误而无限重启);
+
+     关于如何确保 =mysql= 服务在 =music.api= 服务启动之前就绪,我在网上看到几种说法, =wait-for-it= 和 =wait-for= 等脚本,也有人说 =healthcheck=,但是我看了文档并没觉得这选项能干嘛(也有可能根据它的检测结果来决定是否启动 =music.api= 服务?).
+     上面的几种解决方法我都没有试过,但是很明显我目前这个配置已经可以确保 =music.api= 服务能够正常启动,为什么?因为 =restart: on-failure=,这会在 =music.api= 服务发生错误的时候重启,这样 =music.api= 会一直重启直到 =mysql= 服务就绪为止,当然这不是什么解决方法,但是对于简单的项目而言已经足够用了.
+     我个人还是推荐尝试上面的提到的 =wait-for-it= 和 =wait-for=.
+
+**** 关于 MYSQL Docker 的额外补充
+
+     也有一两个朋友不大了解如何使用 =MYSQL= 的镜像的,其实很简单(可能官方文档太多了大部份人都懒得看),这里我大概说一下,重点在于 =mysql= 服务的 =volumes= 选项那里,
+
+     你会发现主机上的 =sql= 挂载到容器的 =/docker-entrypoint-initdb.d= 目录上,这个容器的目录是 =mysql= 服务初次启动时候查找 =sql= 文件的位置,也就是说如果你想新建用户,数据库和表等等的东西都可以写个脚本挂载到这里.
+
+     比如例子中的 =init.sql=,
+
+     #+BEGIN_SRC sql
+     CREATE DATABASE IF NOT EXISTS MUSICDB CHARACTER SET utf8;
+
+     USE MUSICDB;
+
+     CREATE TABLE IF NOT EXISTS MUSIC(
+            `ID` int(11) NOT NULL AUTO_INCREMENT,
+            `NAME` varchar(50) NOT NULL,
+            PRIMARY KEY (`ID`)) ENGINE=InnoDB;
+
+     CREATE USER IF NOT EXISTS 'saltborn'@'%' IDENTIFIED BY 'saltborn';
+     CREATE USER IF NOT EXISTS 'saltborn'@'localhost' IDENTIFIED BY 'saltborn';
+
+     GRANT SELECT, INSERT, UPDATE, DELETE ON MUSICDB.* TO 'saltborn'@'%';
+     GRANT SELECT, INSERT, UPDATE, DELETE ON MUSICDB.* TO 'saltborn'@'localhost';
+
+     FLUSH PRIVILEGES;
+     #+END_SRC
+
+     而 =/var/lib/mysql= 则是容器中 =MYSQL= 保存数据的地方,我们应该挂载到这个位置来保存数据到主机上(除非你不在乎这些数据).
+
+     *要注意的是* 当 =/var/lib/mysql= 已经有数据的时候, =init.sql= 就不会在下一次服务启动的时候被执行了.
+
+     还有就是 =MYSQL_USER=, =MYSQL_ROOT_PASSWORD=, =MYSQL_DATABASE= 等等这些变量,分别是说启动镜像的时候创建出用户,设定 =root= 密码和创建数据库,也就是相当于上面 =init.sql= 文件的内容,在 =init.sql= 准备好的情况下,这些变量都是可选的.
+
+**** 额外思考
+
+     假设你已经根据上面这些思路自己动手操作过一遍了(选自己熟悉的后端语言写一个简单的程序),那么再想一下 =后端程序 + MYSQL + 前端= 这样的组合该如何用 =docker-compose= 打包呢?配置文件该如何写呢?(所有的答案都在这文件里面了).
+
+     这里我给点提示,前端访问后端提供的接口时候是跨域的,并且前端不想后端那样简单设置的 =depends_on: music.api= 并且通过 =music.api:8000/api= 这种形式获取响应,不过可以通过 =Nginx= 做到反向代理来解决这些问题,提示已经给了,剩下就要自己动手验证了.
 
 
 *** 结语
-
     由于官方文档的有效例子太少,所以我就自己写了这么一个简单的实验过程,内容虽少但五脏俱全,包含了基本概念以及基础用法.还有就是官方文档的结构实在是太乱了,新手看到估计会很迷茫,所以每篇文章下面都出现大量的 =thumbs down=,不过官方文档的内容其实质量很好,针对这个问题我在文章用合适的地方放上官方的参考连接.
 
     这不是 =docker-compose.yml= 的全部用法,如果你要实现负载均衡,拓展服务等,那么请去阅读 =docker-compose.yml= 的 =reference= 文档,本文边幅有限,再加上如果你看懂这篇文章的内容,那么就问题不大了.
