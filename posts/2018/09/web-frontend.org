@@ -2191,6 +2191,7 @@ window.addEventListener('load', this.render.bind(this), false);
 
 这里有一个关于 =bind()= [[https://stackoverflow.com/questions/41391288/why-is-javascript-bind-necessary][解释]]十分简单易懂,具体我就不多说了.
 
+
 *** JavaScript的this关键字
 
 #+BEGIN_EXAMPLE
@@ -2198,3 +2199,46 @@ window.addEventListener('load', this.render.bind(this), false);
 #+END_EXAMPLE
 
 https://www.quirksmode.org/js/this.html
+
+
+*** 如何判断一个元素是否可以滚动
+
+#+BEGIN_EXAMPLE
+写于 2019/3/19
+#+END_EXAMPLE
+
+根据 =MDN= 描述,当元素不能滚动的时候,它的 =scrollTop= 属性是0,并且设置任何值都是0,根据这个特点可以写出一个函数来判断元素是否可以滚动.
+
+#+BEGIN_SRC javascript
+function isScrollable(element) {
+    let origin_value = element.scrollTop;
+    if (element.scrollTop > 0) return true;
+    element.scrollTop = 1;
+    if (element.scrollTop == 1) {
+        element.scrollTop = origin_value;
+        return true;
+    }
+    return false;
+}
+#+END_SRC
+
+*** 如何判断一个可滚动的元素是否滚动到底部
+
+#+BEGIN_EXAMPLE
+写于 2019/3/19
+#+END_EXAMPLE
+
+这要根据元素的三个属性来计算了,分别是 =scrollTop=, =scrollHeight= 和 =clientHeight=.
+
+- =scrollTop=: 元素顶边到元素顶边之间的距离,换句话说就是元素已经滚动到多远了;
+- =scrollHeight=: 元素可以滚动的高度,也就是元素内容的高度(可见内容高度 + 未见内容高度,一些细节的处理和 =clientHeight= 一样,下面说);
+- =clientHeight=: 元素的高,计算公式为: =CSS 高度 + Padding 高度 - 水平滚动条的高度(如果有的话)=.
+
+这里不难发现如果元素滚动到底部的时候 =(scrollHeight == scrollTop + clientHeight)=,那么可以开始编码了,
+
+#+BEGIN_SRC javascript
+function isHittingBottom(element) {
+    return element.scrollTop + element.clientHeight == element.scrollHeight;
+}
+#+END_SRC
+

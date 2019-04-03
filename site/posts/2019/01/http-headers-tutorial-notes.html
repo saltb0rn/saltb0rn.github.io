@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-02-26 二 13:35 -->
+<!-- 2019-04-03 三 14:55 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HTTP Headers 学习笔记</title>
@@ -727,7 +727,7 @@ Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
 </p>
 
 <p>
-如果服务器没有针对这些请求在响应中添加 <code>Access-Control-Allow-Credentials: true</code> 头,那么这个响应就会被浏览器无视.
+如果服务器没有针对这些请求在响应中添加 <code>Access-Control-Allow-Credentials: true</code> 头,那么这个响应就会被浏览器拦截.
 </p>
 
 <p>
@@ -737,6 +737,97 @@ Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
 <p>
 在 <code>CORS</code> 响应中设置的 <code>cookies</code> 叫做第三方 <code>cookie</code> (相关的参考 third-party cookie policies),如果用户把浏览器配置成不拒绝第三方 <code>cookies</code> 的话,第三方 <code>cookies</code> 就不会被保存.
 </p>
+</div>
+</div>
+
+<div id="outline-container-org56c7b99" class="outline-3">
+<h3 id="org56c7b99">示例代码</h3>
+<div class="outline-text-3" id="text-org56c7b99">
+<p>
+用 <code>tornado</code> 和 <code>axios</code> 作为示范(不是完整例子,不过重要的东西都有了),展示了后端如何响应预测请求以及如何允许跨域带 <code>cookie</code>,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">Server</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.web
+
+<span style="color: #CC9393;">"""</span>
+<span style="color: #CC9393;">Skip a lot of 'useless' things</span>
+<span style="color: #CC9393;">"""</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">BaseRequestHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">set_default_headers</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#35774;&#32622;&#22836;</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">origin</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.headers.get<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'Origin'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> origin:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#20801;&#35768;&#29305;&#23450;&#30340;&#22495;&#35831;&#27714;&#24102;&#20973;&#35777;(cookie),&#22240;&#20026; Access-Control-Allow-Origin</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#22836;&#19981;&#33021;&#35774;&#32622;&#22810;&#20010;&#22495;&#25110;&#32773;&#19981;&#33021;&#35774;&#32622;&#22810;&#26465; Access-Control-Allow-Origin &#22836;,</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#25152;&#20197;&#26681;&#25454;&#35831;&#27714;&#20013;&#30340; Origin &#22836;&#26469;&#35774;&#32622;</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Access-Control-Allow-Origin"</span>, origin<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Access-Control-Allow-Credentials"</span>, <span style="color: #CC9393;">"true"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Access-Control-Allow-Origin"</span>, <span style="color: #CC9393;">"*"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Access-Control-Allow-Headers"</span>, <span style="color: #CC9393;">"content-type"</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Access-Control-Allow-Methods"</span>, <span style="color: #CC9393;">"POST, OPTIONS"</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">options</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#39044;&#27979;&#35831;&#27714;&#19981;&#38656;&#35201;&#26381;&#21153;&#22120;&#36820;&#22238;&#20219;&#20309;&#23454;&#37096;,&#21482;&#38656;&#35201;&#30693;&#36947;&#26381;&#21153;&#22120;&#30340;&#21709;&#24212;&#20013;&#30340; CORS &#22836;,</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#25152;&#20197;&#36820;&#22238; 204 &#29366;&#24577;&#30721;</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#27880;&#24847; options&#35831;&#27714;&#26159;&#20250;&#35302;&#21457;&#39044;&#27979;&#35831;&#27714;&#30340;</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_status<span style="color: #DCDCCC;">(</span>204<span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">LoginHandler</span><span style="color: #DCDCCC;">(</span>BaseRequestHandler<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the uri will be /login</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">post</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #9FC59F;">'''</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   {</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   id: "username or email",</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   password: "password"</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   }</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   '''</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return True if successfull otherwise False</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">POST &#35831;&#27714;&#26159;&#31616;&#21333;&#35831;&#27714;,&#26159;&#19981;&#20250;&#35302;&#21457;&#39044;&#27979;&#35831;&#27714;&#30340;,&#20294;&#26159;&#35831;&#27714;&#30340;&#26102;&#20505;&#27983;&#35272;&#22120;&#28155;&#21152;&#20102;&#19968;&#20123;&#20250;&#35302;&#21457;&#39044;&#27979;&#35831;&#27714;&#30340;&#22836;,&#27604;&#22914; Accept, Content-Type</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = tornado.escape.json_decode<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.request.body<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">identifier</span> = data.get<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'id'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">password</span> = data.get<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'password'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">login</span> = <span style="color: #BFEBBF;">True</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">try</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   RaiseAnErrorIfLoginFailed<span style="color: #DCDCCC;">()</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#35774;&#32622; Set-Cookie &#22836;</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_cookie<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'uid'</span>, <span style="color: #DCDCCC; font-weight: bold;">str</span><span style="color: #BFEBBF;">(</span>uuid.uuid4<span style="color: #D0BF8F;">()</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">except</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">login</span> = <span style="color: #BFEBBF;">False</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #DCDCCC; font-weight: bold;">dict</span><span style="color: #BFEBBF;">(</span>result=login<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">Client */</span>
+<span style="color: #F0DFAF; font-weight: bold;">import</span> axios from <span style="color: #CC9393;">'axios'</span>;
+
+<span style="color: #5F7F5F;">/*</span>
+<span style="color: #7F9F7F;">&#22914;&#26524;&#26381;&#21153;&#22120;&#27809;&#26377;&#35774;&#32622;&#22909; Access-Control-Allow-Credentials &#22836;,&#35774;&#32622; withCredentials = true &#27983;&#35272;&#22120;&#23601;&#20250;&#25253;&#38169;;</span>
+<span style="color: #7F9F7F;">&#22914;&#26524;&#26381;&#21153;&#22120;&#35774;&#32622;&#22909;&#20102;,&#20294;&#26159;&#27809;&#26377;&#35774;&#32622; withCredentials = true &#30340;&#35805;,&#26381;&#21153;&#22120;&#30340; set-cookie &#22836;&#23601;&#20250;&#22833;&#25928;.</span>
+<span style="color: #7F9F7F;">*/</span>
+axios.defaults.withCredentials = <span style="color: #BFEBBF;">true</span>;
+<span style="color: #BFEBBF;">this</span>.axios.post(<span style="color: #CC9393;">`http://server-address.com/login`</span>, {
+        id: <span style="color: #CC9393;">"identifier"</span>,
+        password: <span style="color: #CC9393;">"password"</span>
+    })
+    .then(
+        (rsp) =&gt; {
+            <span style="color: #F0DFAF; font-weight: bold;">if</span> (rsp.data.result) {
+                <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">do something and get have cookie now</span>
+                <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">if it is not secure cookie</span>
+                console.log(document.cookie);
+            } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+                console.log(<span style="color: #CC9393;">'login failed'</span>);
+            }});
+</pre>
+</div>
 </div>
 </div>
 </div>
@@ -1289,7 +1380,7 @@ Vary
 </div>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-01-04</p>
-<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.1)</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.2)</p>
 </div>
 </body>
 </html>

@@ -257,8 +257,8 @@ The output here. It has same behavior as the generator iterator created by gen_i
 #+end_src
 
 
-`gen_iter_outer' function accepts a generator iterator as the input and returns another generator iterator
-as output, the input is the so-called sub-generator, the output is the caller. It is interesting that
+`gen_iter_outer' function *accepts a generator iterator as the input and returns another generator iterator as output*,
+the input is the so-called sub-generator, the output is the caller. It is interesting that
 when the caller calls send(6), the 6 is passed to the sub-generator. This is the meaning of "a transparent
 two-way channel from the caller to the sub-generator". And one more thing, a caller cloud have more than
 one sub-generator.
@@ -513,6 +513,8 @@ loop.run_until_complete(task1)
 loop.close()
 #+END_SRC
 
+=asyncio.get_event_loop()= gets the default event loop (like I show you earlier), once we have this we could run the =task1= synchronously with =loop.run_until_complete()=.
+
 For native coroutines, only "async def" statement can define them.
 
 #+BEGIN_SRC python
@@ -529,6 +531,8 @@ async def native_coroutine(num):
 async def native_coroutine_outer(num):
     data = await native_coroutine(num)
     return data
+    # or just
+    # return await native_coroutine(num)
 
 
 task1 = native_coroutine_outer(5)
@@ -537,8 +541,28 @@ loop.run_until_complete(task1)
 loop.close()
 #+END_SRC
 
+If you want to execute the tasks asynchronously, then like this
+
+#+BEGIN_SRC python
+task1 = native_coroutine_outer(5)
+task2 = native_coroutine_outer(10)
+loop.ensure_future(task1)
+loop.ensure_future(task2)
+loop.run_forever()
+#+END_SRC
+
+=loop.run_forever()= will run the loop forever to process everything.
+
 The generator-based function is the "old" style to define coroutines, "async def" and "await" statement
 is the "new" style. As you see, they look so similar, we can rewrite code from "old" to "new" by removing
 the decorator and replacing the "def" with "async def" and "yield from" with "await".
 
-About "async for" and "async with", someday I maybe introduce them to you just like these new sections today.
++About "async for" and "async with", someday I maybe introduce them to you just like these new sections today.+
+
+#+BEGIN_EXAMPLE
+2019/3/30
+#+END_EXAMPLE
+
+=async for= and =async with= are just the "async" version for "for" and "with" statements, the difference is that they only manipulate =coroutine=,
+
+like =async with coroutine as res:=, you could read more example from documentation of =aiohttp= library.

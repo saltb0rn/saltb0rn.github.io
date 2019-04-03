@@ -209,10 +209,10 @@
        container_name: mysql
        image: mysql
        restart: on-failure
-       # environment:
-       #   - MYSQL_USER=saltborn
-       #   - MYSQL_ROOT_PASSWORD=saltborn
-       #   - MYSQL_DATABASE=MUSICDB
+         environment:
+           - MYSQL_USER=saltborn
+           - MYSQL_ROOT_PASSWORD=saltborn
+           - MYSQL_DATABASE=MUSICDB
        ports:
          - "3306:3306"
        volumes:
@@ -255,7 +255,7 @@
      - =command=: 服务的入口,相当于 =Dockerfile= 的 =ENTRYPOINT=,也就是启动服务时候执行的命令;
      - =healthcheck=: 由于 =music.api= 服务是基于 =mysql= 服务的,所以我们需要检测 =mysql= 服务是否运行(防止 =mysql= 因为错误而无限重启);
 
-     关于如何确保 =mysql= 服务在 =music.api= 服务启动之前就绪,我在网上看到几种说法, =wait-for-it= 和 =wait-for= 等脚本,也有人说 =healthcheck=,但是我看了文档并没觉得这选项能干嘛(也有可能根据它的检测结果来决定是否启动 =music.api= 服务?).
+     关于如何确保 =mysql= 服务在 =music.api= 服务启动之前就绪,我在网上([[https://docs.docker.com/compose/startup-order/][官网]])看到几种说法, =wait-for-it= 和 =wait-for= 等脚本,也有人说 =healthcheck=,但是我看了文档并没觉得这选项能干嘛(也有可能根据它的检测结果来决定是否启动 =music.api= 服务?).
      上面的几种解决方法我都没有试过,但是很明显我目前这个配置已经可以确保 =music.api= 服务能够正常启动,为什么?因为 =restart: on-failure=,这会在 =music.api= 服务发生错误的时候重启,这样 =music.api= 会一直重启直到 =mysql= 服务就绪为止,当然这不是什么解决方法,但是对于简单的项目而言已经足够用了.
      我个人还是推荐尝试上面的提到的 =wait-for-it= 和 =wait-for=.
 
@@ -290,7 +290,7 @@
 
      *要注意的是* 当 =/var/lib/mysql= 已经有数据的时候, =init.sql= 就不会在下一次服务启动的时候被执行了.
 
-     还有就是 =MYSQL_USER=, =MYSQL_ROOT_PASSWORD=, =MYSQL_DATABASE= 等等这些变量,分别是说启动镜像的时候创建出用户,设定 =root= 密码和创建数据库,也就是相当于上面 =init.sql= 文件的内容,在 =init.sql= 准备好的情况下,这些变量都是可选的.
+     还有就是 =MYSQL_USER=, =MYSQL_ROOT_PASSWORD=, =MYSQL_DATABASE= 等等这些变量,分别是说启动镜像的时候创建出用户,设定 =root= 密码和创建数据库(尽管我的 =init.sql= 的工作内容就是和这里的一样,但这几个变量还是要提供的).
 
 **** 额外思考
 
