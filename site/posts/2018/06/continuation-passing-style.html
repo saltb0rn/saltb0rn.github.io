@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-02-26 二 13:35 -->
+<!-- 2019-04-08 一 17:16 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Continuation Passing Style</title>
@@ -449,7 +449,15 @@ for the JavaScript code in this tag.
 <h3 id="orgc425786">CPS 的意义</h3>
 <div class="outline-text-3" id="text-orgc425786">
 <p>
-讨论它的意义实际上就是讨论为什么需要控制上下文,因为在直译器中,异常,线程这些语言特性是需要通过切换上下文来实现的,而数据上下文只能维护数据绑定.还有一个就是用于递归中可以保证尾递归的发生(等一下会说到).除此以外我想不到还有什么意义,硬要说的话那就是编写 <code>CPS</code> 程序的时候可以像平常那样自然的思考: <b>做完这件事情后下一步要做什么</b>.
+讨论它的意义实际上就是讨论为什么需要控制上下文,因为在直译器中,异常,线程这些语言特性是需要通过切换上下文来实现的,而数据上下文只能维护数据绑定.
+</p>
+
+<p>
+还有一个就是用于递归中可以保证尾递归的发生(等一下会说到),除此以外我想不到还有什么意义.
+</p>
+
+<p>
+编写 <code>CPS</code> 程序的时候可以像平常那样自然的思考: <b>做完这件事情后下一步要做什么</b>.
 </p>
 </div>
 </div>
@@ -617,7 +625,7 @@ null
 </p>
 
 <p>
-在 <code>Racket</code> 里面, <code>acc-tail</code> 和 <code>acc</code> 的计算行为和循环是一样的, <code>trace</code> 的跟踪都会只显示一步.所以我才觉得, <code>CPS</code> 是一门十分强大而优雅的"魔法".
+在 <code>Racket</code> 里面, <code>acc-tail</code> 和 <code>acc</code> 的计算行为和迭代是一样的, <code>trace</code> 的跟踪都会只显示一步.所以我才觉得, <code>CPS</code> 是一门十分强大而优雅的"魔法".
 </p>
 
 
@@ -627,8 +635,171 @@ null
 </div>
 
 <p>
-然而这门"魔法"不是万能的,如果把它用在像 <code>Python</code> 和 <code>Emacs Lisp</code> 这种有”先天缺“陷的语言上面就不行了.
+然而这门"魔法"不是万能的,如果把它直接用在像 <code>Python</code> 和 <code>Emacs Lisp</code> 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言上面就不行了.虽然不能直接用,但是我们可以间接用.
 </p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org1277081" class="outline-2">
+<h2 id="org1277081">Trampoline 和 Bounce</h2>
+<div class="outline-text-2" id="text-org1277081">
+<pre class="example">
+写于 2019/4/8
+</pre>
+
+<p>
+<code>Python</code> 和 <code>Emacs Lisp</code> 这类语言之所以会因为递归而爆栈,归根到底是因为这些语言中函数会发生多次不返回的调用(就是没来得及返回就开始新的调用).
+</p>
+
+<p>
+这个时候直译器就会在每次调用的时候记录下函数的调用状态和其他信息,这个时候栈就会一直上涨,在不加以限制的情况下,若递归逻辑出错就会引发崩溃.
+</p>
+
+<p>
+而如果语言支持尾递归优化,那么函数的调用状态信息就会只进栈一次,递归过程中只是修改栈上的状态信息,和迭代一样,就和上面 <code>Racket</code> 的 <code>acc</code> 例子一样.
+</p>
+
+<p>
+既然函数调用会压栈,那么在函数调用链增长的时候断开一下就好了,既然尾递归优化的语言中尾递归和迭代效率一样,为何不把 <code>CPS</code> 中发生的尾递归改成迭代呢.
+</p>
+
+<p>
+为此我们需要一个叫做 <code>Trampoline</code> 的 <code>continuation</code> "调度器" (毕竟和事件循环挺像的) 以及一个叫做 <code>bounce</code> 对象, 该对象包含上一步的计算结果和下一步的 <code>continuation</code>.
+</p>
+
+<p>
+比如我们把上面的 <code>acc/k</code> 改写成可以供 <code>Trampoline</code> 使用的形式,也就是把 <code>acc/k</code> 改成 <code>bounce</code> 版本 <code>acc-bounce</code>.
+</p>
+
+<p>
+为了断开函数调用链,我们需要 <b>把 <code>acc/k</code> 中所有的函数调用换成 <code>bounce</code> 值</b> ,这是使用 <code>Trampoline</code> 技术的关键,也是编写 <code>bounce</code> 的关键.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bounce &#30340;&#23450;&#20041;,</span>
+<span style="color: #DCDCCC;">(</span>struct bounce <span style="color: #BFEBBF;">(</span>res cont<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#23545; acc/k &#36827;&#34892;&#20462;&#25913;,&#35201;&#28857;&#20043;&#19968;&#23601;&#26159;&#25226;&#25152;&#26377; acc/k &#30340;&#35843;&#29992;&#25442;&#25104;bounce&#20540;.</span>
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">acc-bounce</span> n cont<span style="color: #BFEBBF;">)</span>
+  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span>= n 0<span style="color: #D0BF8F;">)</span>
+      <span style="color: #D0BF8F;">(</span>bounce 0 cont<span style="color: #D0BF8F;">)</span>
+      <span style="color: #D0BF8F;">(</span>bounce n
+              <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #9FC59F;">(</span>t<span style="color: #9FC59F;">)</span>
+                <span style="color: #9FC59F;">(</span>acc-bounce <span style="color: #94BFF3;">(</span>- t 1<span style="color: #94BFF3;">)</span>
+                            <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #E0CF9F;">(</span>res<span style="color: #E0CF9F;">)</span> <span style="color: #E0CF9F;">(</span>bounce <span style="color: #8FB28F;">(</span>+ t res<span style="color: #8FB28F;">)</span> cont<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#30001;&#20110; Racket &#27809;&#26377;&#20160;&#20040;&#31867;&#20284;&#19982; Python while statement &#37027;&#31181;&#19996;&#35199;,&#25152;&#20197;&#25105;&#36824;&#26159;&#29992;&#20102;&#36882;&#24402;,&#22312; Python &#20013;&#21487;&#20197;&#25913;&#20889;&#25104; while</span>
+
+<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">trampoline</span>
+  <span style="color: #BFEBBF;">[</span>lambda <span style="color: #D0BF8F;">(</span>b<span style="color: #D0BF8F;">)</span>
+    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">let* &#25805;&#20316;&#31526;&#21487;&#20197;&#26242;&#26102;&#29702;&#35299;&#20026;&#20854;&#23427;&#35821;&#35328;&#20013;&#30340;&#23616;&#37096;&#23450;&#20041;</span>
+    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">kont = bounce-cont(b)</span>
+    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">n    = bounce-res(b)</span>
+    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">res  = kont(n)</span>
+    <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let*</span> <span style="color: #93E0E3;">(</span><span style="color: #9FC59F;">[</span>kont <span style="color: #94BFF3;">(</span>bounce-cont b<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span>
+           <span style="color: #9FC59F;">[</span>n <span style="color: #94BFF3;">(</span>bounce-res b<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span>
+           <span style="color: #9FC59F;">[</span>res <span style="color: #94BFF3;">(</span>kont n<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span><span style="color: #93E0E3;">)</span>
+      <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #9FC59F;">(</span>bounce? res<span style="color: #9FC59F;">)</span>
+          <span style="color: #9FC59F;">(</span>trampoline res<span style="color: #9FC59F;">)</span>
+          res<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
+
+<span style="color: #DCDCCC;">(</span>trampoline <span style="color: #BFEBBF;">(</span>acc-bounce 10000000 <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>x<span style="color: #93E0E3;">)</span> x<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+</pre>
+</div>
+
+<p>
+由于 <code>Racket</code> 本身就支持尾递归优化,所以上面的代码其实只要能保证尾递归就能用的了,根本不需要确保 <code>bounce</code> 版的 <code>acc/k</code> 去掉所有调用.
+</p>
+
+<p>
+接下来,我会按照这段代码的思路用 <code>Python</code> 和 <code>JavaScript</code> 实现一边,这两门语言都是不支持尾递归优化的.
+</p>
+
+<p>
+貌似默认最大递归层数都为一千(<code>Python</code> 确定, <code>JavaScript</code> 没说),如果上面的方法能行那么 <code>1001</code> 的计算规模就可以通过计算了.
+</p>
+
+<p>
+<code>Python</code> 版本:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">Bounce</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">__init__</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, res, cont<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.res = res
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.cont = cont
+
+
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">trampoline</span><span style="color: #DCDCCC;">(</span>bounce<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> 1:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = bounce.cont<span style="color: #DCDCCC;">(</span>bounce.res<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">isinstance</span><span style="color: #DCDCCC;">(</span>res, Bounce<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">bounce</span> = res
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> res
+
+
+<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">acc_bounce</span><span style="color: #DCDCCC;">(</span>n, cont<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> n == 0:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> Bounce<span style="color: #DCDCCC;">(</span>n, cont<span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">kont</span><span style="color: #DCDCCC;">(</span>t<span style="color: #DCDCCC;">)</span>:
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> acc_bounce<span style="color: #DCDCCC;">(</span>t-1, <span style="color: #F0DFAF; font-weight: bold;">lambda</span> res: Bounce<span style="color: #BFEBBF;">(</span>t+res, cont<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return acc_bounce(t-1, lambda res: cont(t+res)) # &#36825;&#26679;&#20381;&#28982;&#20250;&#29190;&#26632;,&#20063;&#23601;&#26159;&#25105;&#19978;&#38754;&#35828;&#30340;&#19968;&#23450;&#35201;&#25226;&#25152;&#26377;&#35843;&#29992;&#25442;&#25104; bounce</span>
+<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> Bounce<span style="color: #DCDCCC;">(</span>n, kont<span style="color: #DCDCCC;">)</span>
+
+
+<span style="color: #DFAF8F;">bounce</span> = acc_bounce<span style="color: #DCDCCC;">(</span>10000, <span style="color: #F0DFAF; font-weight: bold;">lambda</span> x: x<span style="color: #DCDCCC;">)</span>  <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#25105;&#20915;&#23450;&#32473;&#20010;10000&#36816;&#31639;&#35268;&#27169;</span>
+<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>trampoline<span style="color: #BFEBBF;">(</span>bounce<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+</pre>
+</div>
+
+<p>
+我还发现有一个更加高级的实现方法,直接对 <code>AST</code> 实现变换: <a href="https://github.com/0x65/trampoline">https://github.com/0x65/trampoline</a>.
+</p>
+
+<p>
+<code>JavaScript</code> 版本:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">trampoline</span>(<span style="color: #DFAF8F;">bounce</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">res</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (1) {
+        res = bounce.cont(bounce.res);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">typeof</span>(res) == <span style="color: #CC9393;">'object'</span>)
+            bounce = res;
+        <span style="color: #F0DFAF; font-weight: bold;">else</span>
+            <span style="color: #F0DFAF; font-weight: bold;">return</span> res;
+    }
+}
+
+<span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">accBounce</span>(<span style="color: #DFAF8F;">n</span>, <span style="color: #DFAF8F;">cont</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (n == 0) {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+            res: n,
+            cont: cont
+        };
+    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+            res: n,
+            <span style="color: #93E0E3;">cont</span>: <span style="color: #F0DFAF; font-weight: bold;">function</span>(<span style="color: #DFAF8F;">t</span>) {
+                <span style="color: #F0DFAF; font-weight: bold;">return</span> accBounce(
+                    t-1,
+                    res =&gt; {
+                        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+                            cont: cont,
+                            res: t+res
+                        };
+                    });
+            }
+        };
+    }
+}
+
+console.log(trampoline(accBounce(10000, x =&gt; x)));
+</pre>
 </div>
 </div>
 </div>
@@ -639,6 +810,10 @@ null
 <div class="outline-text-2" id="text-org04ffc0e">
 <p>
 还是觉得这篇东西有很多地方有欠缺,也说明了我对 <code>CPS</code> 的理解还不够深入.突然觉得 <code>EOPL</code> 写的很好,因为我能明白给我传达的知识,原来写一篇易懂的科普文是如此艰难,真的是佩服这些老前辈.
+</p>
+
+<p>
+<code>EOPL</code> 这本书都写到了这些内容,个人十分推荐去阅读这本书,总的来说, <code>CPS</code> 可以保证尾递归发生,而 <code>Trampoline</code> 可以保证不支持尾递归的语言运行尾递归不会发生爆栈,也就是说这两项技术可以实现尾递归优化,用在直译器上面就不言而喻了.
 </p>
 </div>
 </div>
@@ -676,7 +851,7 @@ null
 </div>
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-06-20</p>
-<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.1)</p>
+<p class="creator">Generated by <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.3)</p>
 </div>
 </body>
 </html>
