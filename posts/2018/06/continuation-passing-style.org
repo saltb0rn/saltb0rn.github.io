@@ -262,22 +262,23 @@ null
 
 既然函数调用会压栈,那么在函数调用链增长的时候断开一下就好了,既然尾递归优化的语言中尾递归和迭代效率一样,为何不把 =CPS= 中发生的尾递归改成迭代呢.
 
-为此我们需要一个叫做 =Trampoline= 的 =continuation= "调度器" (毕竟和事件循环挺像的) 以及一个叫做 =bounce= 对象, 该对象包含上一步的计算结果和下一步的 =continuation=.
+为此我们需要一个叫做 =Trampoline= 的 =continuation= "调度器" (毕竟和事件循环挺像的) 以及一个叫做 =bounce= 对象, 该对象 *包含上一步的计算结果和下一步的 =continuation=*.
 
 比如我们把上面的 =acc/k= 改写成可以供 =Trampoline= 使用的形式,也就是把 =acc/k= 改成 =bounce= 版本 =acc-bounce=.
 
-为了断开函数调用链,我们需要 *把 =acc/k= 中所有的函数调用换成 =bounce= 值* ,这是使用 =Trampoline= 技术的关键,也是编写 =bounce= 的关键.
+为了断开函数调用链,我们需要 *把 =acc/k= 中所有的函数调用换成 =bounce= 值,尾递归的调用是发生在尾部的,也就是说把返回值需要变为 =bounce=* ,这是使用 =Trampoline= 技术的关键.
 
 #+BEGIN_SRC scheme
 ;; bounce 的定义,
 (struct bounce (res cont))
 
-;; 对 acc/k 进行修改,要点之一就是把所有 acc/k 的调用换成bounce值.
+;; 对 acc/k 进行修改,要点之一就是把所有 acc/k 的调用(也就是返回值)换成bounce值.
+;; 可以这么想,这么做是把原本的调用给拆开了.
 (define (acc-bounce n cont)
   (if (= n 0)
-      (bounce 0 cont)
-      (bounce n
-              (lambda (t)
+      (bounce 0 cont) ;; <= (cont 0), 直接拆
+      (bounce n       ;; <= (acc-bounce (- n 1) (lambda (res) (cont (+ n res)))), 这里拆的地方是 (cont (+ n res)),
+              (lambda (t)  ;; 和 (cont 0) 不一样,这个需要先把 n 直接提到外面然后得到一个新的 continuation: (lambda (t) (acc-bounce (- t 1) (cont (+ t res)))), 最后拆 (cont (+ t res)) 变成 (bounce (+ t res) cont)
                 (acc-bounce (- t 1)
                             (lambda (res) (bounce (+ t res) cont)))))))
 ;; 由于 Racket 没有什么类似与 Python while statement 那种东西,所以我还是用了递归,在 Python 中可以改写成 while
