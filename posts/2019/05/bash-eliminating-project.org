@@ -1,0 +1,97 @@
+#+title: Bash消灭计划
+#+date: 2019-05-02
+#+index: Bash消灭计划
+#+tags: Bash Shell Linux
+#+begin_abstract
+用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
+
+出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
+
+这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
+#+end_abstract
+
+*** Bash & Shell 的关系
+
+    =Bash= 全称 =Bourne Again SHell=,是 =Shell= 的一种实现.而 =Shell= 是一种编程语言,你可以理解 =Bash= 与 =Shell= 的关系和 =GCC= 和 =C= 语言的关系一样.
+
+    除了 =Bash= 以外还有 =Zsh=, =Dash=, =Fish= 等等各种实现, =Shell= 也可以理解为各种实现的命令行解析器的统称.大部份 =Linux= 发行版默认的 =Shell= 实现就是 =Bash=.
+
+    相对于 =Python=, =C= 等这些编程语言, =Shell= 在命令行处理上占据着能够和各种命令无缝衔接的优势.这也就是为什么说大部份时候 =Shell= 解决问题都很方便.
+
+
+*** 掌握 Shell 的重点
+
+    这里我们会以 =Bash= 这个个例作为笔记对象,它的官方文档在这里: [[https://www.gnu.org/software/bash/manual/bashref.html]].
+
+**** 特性
+
+     我想特性之复杂应该是 =Shell= 的一大诟病,我个人最害怕的东西就是它的那些 =builtin= 命令.
+
+***** 执行命令 (Executing Commands)
+
+****** 结束状态 (Exit Status)
+
+       结束状态是由 =waitpid= 系统调用或者拥有相同作用的功能的返回值,在 =0~255= 之间.
+
+       - 0: 表示名命令成功执行;
+       - 非0: 表示命令执行失败,
+         - 2: 所有 =builtin= 命令返回值,表示命令用法错误;
+         - =>125= 被 =Shell= 用于特殊目的:
+           - 126: 找到命令但是命令不可执行;
+           - 127: 找不到命令;
+           - 128+N: 当命令被致命信号(fatal signal)中止,比如 =wait -n N= 发送的信号,那么 =Bash= 的返回值就是 =128+N=,具体信号号码可以通过 =kill -l= 查看.
+
+
+       最后,可以通过 =echo $?= 获得最后一次命令执行的状态码.
+
+****** 环境变量 (Environment)
+
+       当启动一个程序的时候,程序都会得到一个叫做环境(environment)的字符串数组,每个字符字符串都是 =name=value= 形式.
+
+       =Bash= 提供 =export= 和 =declare -x= 命令给环境添加参数和函数, =export -n= 和 =unset= 可以从环境删除参数和函数,子程序可以从父程序继承环境.
+
+       除了上面这些, =env= 命令可以在程序启动的时候操纵环境变量,修改的环境只在程序运行的时候生效.
+
+       =printenv= 与 =env= 命令可以打印所有环境变量,不带任何参数的 =set= 命令会打印所有 =shell= 变量,环境变量,本地变量以及 =shell= 函数.
+
+
+***** 重定向 (Redirections)
+
+      =Linux= 有标准输入(=stdin=),标准输出(=stdout=)以及标准错误(=stderr=),它们的文件描述符(file descriptor)分别为0,1以及2.
+
+      =Bash= 文档有提及到 =ls > dirlist 2>&1= 与 =ls 2>&1 > dirlist= 有区别: 重定向顺序会影响结果.
+
+      [[https://unix.stackexchange.com/questions/177525/redirecting-standard-output-and-standard-error-to-one-file/177630#177630][一个比官方文档讲得还清楚的回答]],要正确读懂重定向就要理解 =C= 语言中指针的工作方式.
+
+      =ls > dirlist 2>&1= 大概等于
+
+      #+BEGIN_SRC c
+      fd = open("dirlist", O_WRONTLY | O_CREAT | O_TRUNC, 0666);
+      // > dirlist
+      dup2(fd, 1);
+      close(fd);
+      // 2>&1
+      dup2(1, 2);
+      #+END_SRC
+
+
+      =ls 2>&1 > dirlist= 大概等于
+
+      #+BEGIN_SRC c
+      // 2>&1
+      dup2(1, 2);
+      // > dirlist
+      fd = open("dirlist", O_WRONTLY | O_CREAT | O_TRUNC, 0666);
+      dup2(fd, 1);
+      close(fd);
+      #+END_SRC
+
+      其中 =dup2= 的用法为 =dup2(int oldfd, int newfd)=: =newfd= 是 =oldfd= 的一个备份 =(makes newsfd be the copy of oldfd)=, =newfd= 和 =oldfd= 都是指向同一个打开的文件描述号,可以通过对 =newfd= 进行修改来间接修改 =oldfd=.
+
+      可以通过 =man 2 dup2= 命令查看具体用法.
+
+      还有需要注意的是 =2>&1= 的 =>= 作用实际上是复制: 2是1的备份, 而 =&= 作用是告诉 =Bash= 后面跟着的 =1= 是文件描述符,不是名字叫做 =1= 的文件.
+
+      在一个空的目录下执行 =ls file-not-exist 2&>1 2> dirlist= 的结果是得到一个名字叫做 =1= 的空白文件和一个内容为 =ls: cannot access 'file-not-exist': No such file or directory= 的文件,名叫 =dirlist=,
+
+      具体过程为: 标准错误是文件 =1= 的备份,然后标准错误表变为 =dirlist= 的备份,最后标准错误接收了错误消息,所以 =dirlist= 有标准错误的内容,而文件 =1= 是没有内容的,这和指针的工作方式有关. (这条命令中的 =&= 是没用的,只是为了演示 =&= 的作用和上述一致).
