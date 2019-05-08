@@ -1131,6 +1131,8 @@ for i in subgen_wrapper(5):
             (print 1))))
    #+END_SRC
 
+   在 =Emacs Lisp= 中是没有 =return= 表达式的,函数的返回值只有函数最后一句执行的表达式的值,如何让函数在执行到一半的时候返回?现在可以通过 =catch= 和 =throw= 来实现, =(throw tag value)= 相当于 =c= 语言的 =return value;=.
+
    关于 =catch= 和 =throw= 更多的示例可以在 =M-: (info "(elisp)Examples of Catch")= 找到,这里就不写了.
 
  - 利用错误/异常(Errors)
@@ -2545,7 +2547,21 @@ F addition-test
 
 *** 命令循环 (Command Loop)
 
-(未写)
+**** 递归编辑 (Recursive Editing)
+
+     当 =Emacs= 启动的时候就会自动进入一个命令循环,是第一个命令循环,并且只有 =Emacs= 结束的时候这个循环才会结束.
+
+     在 =Emacs= 中,第一个命令循环也叫做 =top-level=.因为可以在命令循环的基础上再调用更多的命令循环,我们称呼新调用的命令循环为递归编辑.
+
+     只要有命令唤醒一个的递归编辑就会被挂起并且会允许用户在命令恢复之前任意编辑.递归编辑和 =top-level= 中所支持的命令和 =keymaps= 都是一样的.
+
+     只有小部分命令会结束递归编辑(或者说退出递归编辑级/recursive editing level),其他命令会在结束的时候返回到递归编辑级上.
+
+     这一小部分命令在任何时候都是可用的,但是在递归编辑以外的情况下使用是没任何作用的.
+
+     所有的命令循环都设立了 (=all-purpose error handlers=) 通用错误处理,目的是避免命令引发的错误导致所在的命令循环被结束.
+
+     
 
 
 *** GNU Emacs Internals
