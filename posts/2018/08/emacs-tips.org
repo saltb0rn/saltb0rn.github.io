@@ -2721,6 +2721,34 @@ F addition-test
 
   2. 滚动条
 
+ 
+  =M-: (info "elisp(Accessing Mouse)")= 有介绍如何获取鼠标事件的位置列表,这里就先不说了.
+
+
+  如果在第一类位置发生点击事件,那么鼠标位置的 =list= 就是如下形式:
+
+  #+BEGIN_SRC elisp
+  (WINDOW POS-OR-AREA (X . Y) TIMESTAMP
+   OBJECT TEXT-POS (COL . ROW)
+   IMAGE (DX . DY) (WIDTH . HEIGHT))
+  #+END_SRC
+
+  - =WINDOW=: 点击发生的{{{window}}}.
+  - =POS-OR-AREA=: 如果点击位置在文本区域内,就表示被点击的字符的{{{buffer}}}位置,或者如果在文本区域之外就表示{{{window}}}位置.
+    是 =mode-line, header-line, vertical-line, left-margin, right-margin, left-fringe 或 right-fringe= 的其中之一.
+    如果事件的前置键(imaginary prefix keys)已经被 =Emacs= 绑定了的话,那么 =POS-OR-AREA= 就是一个包含了一个上述 =symbol= 的 =list=.
+  - =X, Y=: 点击的相对像素坐标.
+  - =TIMESTAMP=: 点击事件的发生时间.
+  - =OBJECT=: 如果点击的位置不没有文本就返回 =nil=;否则就是 =(STRING . STRING-POS)=, =STRING= 表示被点击的 =string= 以及它的所有属性, =STRING-POS= 就是点击的位置.
+  - =TEXT-POS=: 如果在边缘区域或者条纹(fringe)上点击,那么这就是{{{window}}}上第一个可见字符的{{{buffer}}}位置;如果在 =mode line= 或者 =header line= 点击就是 =nil=;对于其他事件就是距离点击位置的最近{{{buffer}}}位置.
+    
+
+  如果在第二类位置发生点击事件,那么鼠标位置的 =list= 就是如下形式:
+
+  #+BEGIN_SRC elisp
+  (WINDOW AREA (PORTION . WHOLE) TIMESTAMP PART)
+  #+END_SRC
+
 - CLICK-COUNT
 
   记录了同一个鼠标按钮快速重复点击的次数.
