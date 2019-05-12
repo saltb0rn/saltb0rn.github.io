@@ -621,7 +621,7 @@ see any project of blog, vice versa."
 
    就像查询通讯录一样,比如查找 =Jan Jones= 就会从 =J= 开始查,然后在 =J= 索引下找 =a=,如此类推.
 
-   =obarray= 本质就是一个 =vector=,它的每一个元素就是一个篮子(bucket),每个篮子储存了一个 =0= 或一个 =interned symbol=, =0= 表示篮子为空, 
+   =obarray= 本质就是一个 =vector=,它的每一个元素就是一个篮子(bucket),每个篮子储存了一个 =0= 或一个 =interned symbol=, =0= 表示篮子为空,
 
    (*这里开始文档的说法有点绕,我的塑料英语这里可能会理解有误*)对于 =symbol=,先计算出 =symbol= 的名字的 =hash code= 再把 =symbol= 的名字存放到在一个篮子里面(参考 [[https://research.cs.vt.edu/AVresearch/hashing/strings.php][Hash Functions for Strings]] 和 [[http://www.cse.yorku.ca/~oz/hash.html][Hash Functions]]).
 
@@ -706,7 +706,7 @@ see any project of blog, vice versa."
 
 
 
-**** 
+****
 
 **** Advising Functions
 
@@ -1374,7 +1374,7 @@ e    ;; => 5
 
 **** 一般化变量 (Generalized Variables)
 
-**** 
+****
 
 
 *** 调试 (Debugging)
@@ -2547,21 +2547,200 @@ F addition-test
 
 *** 命令循环 (Command Loop)
 
+**** 命令概览 (Command Overview)
+
+命令循环的最重要的工作就是读取按键序列(a key sequence),按键序列实际就是一个能够被翻译成一个命令的序列,通过 =read-key-sequence= 函数来完成读取以及翻译工作.
+
+=read-key= 或者 =read-event= 比 =read-key-sequence= 更加低级,只能针对一个按键或者事件进行处理, =discard-input= 可以舍弃终端输入 {{{buffer}}} 的内容
+
+按键序列根据当前激活的 =keymaps= 来翻译成命令的,这个过程叫做按键查找(Key Lookup),最终结果是一个键盘宏(keyboard macro)或者可调用函数(callable function).
+
+如果按键是 =M-x= 就会读取另外一个命令的名字然后进行调用, =M-x= 翻译成 =execute-extended-command=.
+
+在执行命令之前 =Emacs= 会运行 =undo-boundary= 来创建一个撤销边界 ( =undo boundary= ),撤销边界是用来记录操作动作的,以后能够根据这些记录来进行撤销,详情 =M-: (info "elisp(Maintaining Undo)")=.
+
+执行命令的时候, =Emacs= 会首先通过调用 =command-execute= 来读取命令的参数, =command-execute= 会根据函数的 =interactive= (只有 =interactive= 函数才有,也就是能够通过命令方式使用的函数)规范来读取参数.
+
+如果翻译所得的命令是一个键盘宏(也就是一个 =string= 或者 =vector=), =Emacs= 就会通过 =execute-kbd-macro= 来执行它.
+
+有两个值得注意的钩子: =pre-command-hook= 和 =post-command-hook=,分别会在命令执行的前后分别执行,就算执行命令的时候被 =C-g= 结束也不能阻止这两个钩子的运行.
+
+如果钩子执行的时候发生错误,错误就会被"沉默"并且发生错误钩子函数会被移除.
+
+
+**** 定义命令 (Defining Commands)
+
+=Emacs= 的命令和函数是两个概念,不过两者关系十分接近,函数的名字不能被 =execute-extended-command= 读取到,不过可以使用 =interactive= 来把一个 =Lisp= 函数变成命令.
+
+一般是 =interactive= 一定要是在函数体的第一个 =form= (top-level),这条规则适用于 =lambda= 表达式和 =defun form=.
+
+=interactive= 和函数的实际执行是没有关系的,它就是一个 =flag=,告诉 =Emacs= 的命令循环这个函数能不能被读取/交互式使用.
+
+=interactive= 的参数规定了交互调用的时候如何读取参数.
+
+除了在函数体中使用 =interactive=,还可以通过指定给函数的 =symbol= 的 =interactive-form= 属性设定为 =not-nil= 来把函数变为一个命令,这个的优先级比直接使用 =interactive= 要高,这个特性很少被使用.
+
+有时候只是想让这个函数只能用于交互使用,这种情况下可以直接或者通过 =declare form= 给函数的 =symbol= 的 =interactive-only= 属性设定为 =non-nil=,如果从 =Lisp= 调用这个命令的话字节码编译器就会产生警告. =describe-function= 的输出会包含类似的信息.
+
+值得注意的是,通用函数(Generic Functions)是不能转化变成命令的,不过可以通过定义一个正常的函数然后让这个函数调用通用函数这种方式来间接使用.
+
+
+***** 使用 interactive (Using Interactive)
+
+=(interactive arg-descriptor)=,调用命令的时候会根据 =arg-descriptor= 读取命令的参数, =arg-descriptor= 有三种可能:
+
+- =nil= 或者放着不管,就是指命令不需要任何参数.
+- =string=,它的内容是一个由 =newlines= 分割做为分割符的元素序列,每一个元素代表一个参数,每个元素是一个 =Interactive Code= 后面跟着一个可选的提示字符串(prompt). =Interactive Code= 可以在这里看 =M-: (info "elisp("Interactive Codes")")=.
+  提示字符串可以使用 =%= 来获取上一个参数的值.
+  如果 =arg-descriptor= 以 =*= 字符开头,并且如果在 =read-only= {{{buffer}}} 调用该命令就会引发错误;
+  如果以 =@= 字符开头,并且如果按键序列包含任何鼠标事件,那么与第一个事件关联的{{{window}}}就会在命令执行前被选中;
+  如果以 =^= 字符开头,并且如果命令在 =shift-translation= 下唤醒,那么命令在执行前就会临时设定 =mark= 和激活区域(region),或者拓展一个早已激活的区域,
+  如果命令在没有 =shift-translation= 的情况下激活,那么区域尖或被临时激活,然后在运行前取消激活(deactivate).
+  可以三个字符一起使用,并且顺序无关要紧.
+  比如,
+  #+BEGIN_SRC elisp
+  (defun pesudo-rename (oldname newname)
+    (interactive "sOldname to rename: \nsRename %s to: ")
+    (message (format "oldname: %s to newname: %s" oldname newname)))
+  #+END_SRC
+
+- 一个非 =string= 的 =Lisp= 表达式,并且它的运算结果应该是一个参数列表(list of arguments).
+  比如,
+  #+BEGIN_SRC elisp
+  (defun pesudo-rename (oldname newname)
+    (interactive (let* ((name1 (read-string "name1: "))
+                        (name2 (read-string (format "reaname %s to name2: " name1))))
+                   (list name1 name2)))
+    (message (format "Oldname: %s to newname: %s" oldname newname)))
+  #+END_SRC
+
+  注意的是,参数值不应该包含任何不能被打印然后读取的数据类型,一些功能会保存 =command-history= 到一个文档里面,可能会在后续会话中被读取,
+  如果一个命令的参数包含这些数据类型(会使用 =#<...>= 语法打印),那么这些功能就不会正常工作.
+
+=(interactive-form function)= 可以获取函数的 =interactive form=.
+
+
+***** 通用命令 (Generic Commands)
+
+有些交互函数的实现可以让用户选择实现,这些就是通用命令.
+
+
+**** 交互式调用 (Interactive Call)
+
+一些关于命令的 =APIs=.
+
+
+**** 区分交互式调用 (Distinguish Interactive)
+
+判断命令是否被交互式使用.
+
+
+**** 命令循环的信息 (Command Loop Info)
+
+一些关于命令记录的 =APIs=.
+
+
+**** 命令后调整指针 (Adjusting Point)
+
+当指针处于拥有 =display= 或者 =composition= 属性或者不可见的文本中 =Emacs= 就不能显示指针.因此在命令执行后,如果指针在这种文本中,命令循环会把指正移动到文本的边界中,这样文本就不能被触碰到.
+
+可以通过 =disable-point-adjustment= 以及 =global-disable-point-adjustment= 来关闭这个特性.
+
+
+**** 输入事件 (Input Events)
+
+=Emacs= 的命令循环读取一个输入事件的序列,输入事件表示键盘或者鼠标的活动,又或者是发送给 =Emacs= 的系统事件.
+
+表示键盘活动的事件是字符(characters)或者 =symbols=,其他类型的事件一定是列表(lists).可以通过 =eventp= 来判断一个对象是否输入事件.
+
+
+***** 键盘事件
+
+从键盘中能够获取的输入类型有两种,普通键(ordinary keys)和功能键(function keys).普通建对应字符,它们所生成的事件是用 =Lisp= 的字符表示.
+
+字符事件的事件类型是字符本身(整数),会设定一些 =modifier bits=,一个输入字符事件由一个0到524287之间的 =basic code= 和任意或者所有 =modifier bits= 组成.
+
+以下是它们的设定:
+
+- meta键: 2**27 bit (the 28th bit)
+
+- control键: 2**26 bit (the 27th bit)
+
+- shift键: 2**25 bit (the 26th bit)
+
+- hyper键: 2**24 bit (the 25th bit)
+
+- super键: 2**23 bit (the 24th bit)
+
+- alt键: 2** 22 bit (the 23th bit),大部份键盘的alt键都会被当作meta键.
+
+
+***** 功能键 (Function Keys)
+
+功能键与普通键不一样,采用 =symbols= 作为表示, =symbols= 的名字就是功能键的标签,比如 =<F1>= 键就是用 =f1= 表示.
+
+文档上举了几个例子,自行查阅.
+
+
+***** 鼠标事件 (Mouse Events)
+
+=Emacs= 支持点击事件(click events),拖拽事件(drag events),按钮按下(button-down events)和运动事件(motion events)4个类型的鼠标事件.
+
+所有类型的事件都是采用 =lists= 做为表示. =list= 的 =car= 结果是事件类型,也就是告诉 =Emacs= 使用的鼠标按钮以及 =modifier keys=.
+
+事件类型还可以区分双击以及三击,剩余的 =list= 元素包含位置以及时间信息.
+
+对于按键查找(key lookup)来说只有事件类型是重要的:同类型的两个事件是一定执行同一个命令,命令可以通过 =e= =interactive code= 来获取这些事件的全值.
+
+一个以鼠标事件开头的按键序列会通过当前鼠标所在的{{{window}}}的 =keymaps= 来读取,不是当前{{{buffer}}},这并非暗示在某个{{{window}}}点击就会选择那个{{{window}}}和或者它的{{{buffer}}},
+
+这完全是由按键序列的绑定命令来控制的.
+
+
+***** 点击事件 (Click Events)
+
+用户按下鼠标按钮并且在同一个地方释放它,这样会产生一个点击事件.所有鼠标事件都用同一个格式:
+
+=(EVENT-TYPE POSITION CLICK-COUNT)=
+
+- EVENT-TYPE
+
+  一个表示使用了哪个鼠标按钮的 =symbol=.是 =mouse-1=, =mouse-2= ... 其中一个,分别从左到右表示鼠标按钮.
+
+  还可以像功能键那样使用 =A-= =C-=, =H-=, =M-=, =S-= 和 =s-= 来分别表示 =alt=, =control=, =hyper=, =meta=, =shift= 和 =super= 键.
+
+  该 =symbol= 也表示事件的事件类型,按键绑定根据它们事件类型来描述事件,因此如果有个 =mouse-1= 的按键绑定,那么这个绑定将会应用于所有事件类型为 =mouse-1= 的事件上.
+
+- POSITION
+
+  一个鼠标位置列表,记录发生鼠标点击的位置.
+
+  点击的位置分为两类:
+ 
+  1. 文本区域(=text area=), =mode line=, =header line=, 条纹(=fringe=)或者边缘区域(=marginal areas=);
+
+  2. 滚动条
+
+- CLICK-COUNT
+
+  记录了同一个鼠标按钮快速重复点击的次数.
+
+
 **** 递归编辑 (Recursive Editing)
 
-     当 =Emacs= 启动的时候就会自动进入一个命令循环,是第一个命令循环,并且只有 =Emacs= 结束的时候这个循环才会结束.
+当 =Emacs= 启动的时候就会自动进入一个命令循环,是第一个命令循环,并且只有 =Emacs= 结束的时候这个循环才会结束.
 
-     在 =Emacs= 中,第一个命令循环也叫做 =top-level=.因为可以在命令循环的基础上再调用更多的命令循环,我们称呼新调用的命令循环为递归编辑.
+在 =Emacs= 中,第一个命令循环也叫做 =top-level=.因为可以在命令循环的基础上再调用更多的命令循环,我们称呼新调用的命令循环为递归编辑.
 
-     只要有命令唤醒一个的递归编辑就会被挂起并且会允许用户在命令恢复之前任意编辑.递归编辑和 =top-level= 中所支持的命令和 =keymaps= 都是一样的.
+只要有命令唤醒一个的递归编辑就会被挂起并且会允许用户在命令恢复之前任意编辑.递归编辑和 =top-level= 中所支持的命令和 =keymaps= 都是一样的.
 
-     只有小部分命令会结束递归编辑(或者说退出递归编辑级/recursive editing level),其他命令会在结束的时候返回到递归编辑级上.
+只有小部分命令会结束递归编辑(或者说退出递归编辑级/recursive editing level),其他命令会在结束的时候返回到递归编辑级上.
 
-     这一小部分命令在任何时候都是可用的,但是在递归编辑以外的情况下使用是没任何作用的.
+这一小部分命令在任何时候都是可用的,但是在递归编辑以外的情况下使用是没任何作用的.
 
-     所有的命令循环都设立了 (=all-purpose error handlers=) 通用错误处理,目的是避免命令引发的错误导致所在的命令循环被结束.
+所有的命令循环都设立了 (=all-purpose error handlers=) 通用错误处理,目的是避免命令引发的错误导致所在的命令循环被结束.
 
-     
+
 
 
 *** GNU Emacs Internals
