@@ -2738,8 +2738,8 @@ F addition-test
     是 =mode-line, header-line, vertical-line, left-margin, right-margin, left-fringe 或 right-fringe= 的其中之一.
     如果事件的前置键(imaginary prefix keys)已经被 =Emacs= 绑定了的话,那么 =POS-OR-AREA= 就是一个包含了一个上述 =symbol= 的 =list=.
   - =X, Y=: 点击的相对像素坐标.
-  - =TIMESTAMP=: 点击事件的发生时间.
-  - =OBJECT=: 如果点击的位置不没有文本就返回 =nil=;否则就是 =(STRING . STRING-POS)=, =STRING= 表示被点击的 =string= 以及它的所有属性, =STRING-POS= 就是点击的位置.
+  - =TIMESTAMP=: 点击事件的发生时间,是一个整数,表示从系统初始时间到目前的微秒.
+  - =OBJECT=: 如果点击的位置没有文本就返回 =nil=;否则就是 =(STRING . STRING-POS)=, =STRING= 表示被点击的 =string= 以及它的所有属性, =STRING-POS= 就是点击的位置.
   - =TEXT-POS=: 如果在边缘区域或者条纹(fringe)上点击,那么这就是{{{window}}}上第一个可见字符的{{{buffer}}}位置;如果在 =mode line= 或者 =header line= 点击就是 =nil=;对于其他事件就是距离点击位置的最近{{{buffer}}}位置.
   - =COL, ROW=: 实际的列行坐标.
   - =IMAGE=: 点击发生的图像对象,如果没有图片就是 =nil=,否则就是和 =find-image= 返回值一样的图像对象.
@@ -2763,6 +2763,52 @@ F addition-test
 - CLICK-COUNT
 
   记录了同一个鼠标按钮快速重复点击的次数.
+
+
+***** 拖拽事件 (Drag Events)
+
+拖拽事件就是用户按下鼠标并且在释放按钮前移动到别的字符的位置,它的形式是这样的:
+
+#+BEGIN_SRC elisp
+(EVENT-TYPE (WINDOW1 START-POSITION) (WINDOW2 END-POSITION))
+#+END_SRC
+
+- =EVENT-TYPE=: =drag-= 开头的 =symbol=,比如 =drag-mouse-2=.
+- =(WINDOW1 START-POSITION)= 和 =(WINDOW2 END-POSITION)= 分别表示按下按钮时候的位置和释放按钮时候的位置,释放时候可能会在{{{window}}}的边界外,那么就是一个包含了{{{window}}}所处于的{{{frame}}}的 =list=.
+
+如果 =read-key-sequence= 接收了一个没有按键绑定的拖拽事件,那么就把它转化成在拖拽开始位置的发生的点击事件.
+
+
+***** 按钮按下事件 (Button-Down Events)
+
+没有办法在按钮释放以前区分点击和拖拽事件,如果要在按钮按下的时候进行处理,那么就需要处理这个事件,它的形式类似点击事件,除了 =EVENT-TYPE= 是一个以 =down-= 开头的 =symbol=.
+
+=read-key-sequence= 会无视没有命令绑定的 =button-down= 事件,所以命令循环会无视它们.一般使用 =button-down= 事件的原因是为了在按钮以前通过读取 =motion events= 来跟踪鼠标的动作(motion).
+
+
+***** 重复事件 (Repeat Events)
+
+在没有移动鼠标的情况下快速按下同一个按钮多于一次, =Emacs= 会对后续按下动作产生一种叫做 =repeat= 的鼠标事件.
+
+最常见的是双击事件(=double-click=),双击事件的类型包含了 =double-= 前缀,如果双击左键的时候按着 =meta= 键,那么事件类型就是 =M-double-mouse-1=.
+
+当用户双击的时候 =Emacs= 会对第一下生成一个普通的点击事件,然后才对第二下生成双击事件.
+
+如果点击了一下按钮然后再按下并且在释放前拖动鼠标,那么就会产生一个 =double-drag= 事件,如果 =double-drag= 没有绑定,那么 =Emacs= 就会查找普通的 =drag= 事件的绑定,如果 =drag= 也没有绑定,那么就会直接忽略.
+
+在 =double-click= 或者 =double-drag= 之前, =Emacs= 会在用户第二次按下鼠标的时候生成一个 =double-down= 事件,同样如果没有绑定的话就会使用普通的 =button-down= 的绑定,如果 =button-down= 也没有绑定,那么就会直接忽略.
+
+三次快速点击会产生三击(triple-click)事件,和双击对应,有 =triple-drag= 以及 =triple-down= 事件,三次以上也是 =triple= 事件,可以通过事件列表来看到实际点击次数.
+
+***** 动作事件 (Motion Events)
+
+所谓动作事件就是描述鼠标在没有任何按钮活动的情况下的动作.事件形式如下,
+
+#+BEGIN_SRC elisp
+(mouse-movement POSITION)
+#+END_SRC
+
+其中 =POSITION= 是一个位置 =list=,表示了鼠标指针的当前位置. =track-mouse= form 允许动作事件在它的体内产生,之外则不行.
 
 
 **** 递归编辑 (Recursive Editing)
