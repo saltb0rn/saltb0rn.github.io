@@ -117,17 +117,15 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
    - 快速做正则测试
 
-     Emacs的正则表达式可能会跟你之前遇到的正则不太一样,它的正则表达式会先当作string解析一遍后才进行匹配,这个影响了"\"正则表达式里面的用法.
+     Emacs的正则表达式可能会跟你之前遇到的正则不太一样,严格来说, =Emacs Lisp= 根本没有正则这一数据类型,是直接用 =string= 来做匹配模式(pattern)的,
 
-     1. 除了一些转义字符,比如\s,\n等等(不要跟正则的转义字符搞混)外,跟Python相比"\"的数量要翻倍,跟Racket相比则是一样(果然都是Lisp家族的).
+     如果你接触过 =Python= 的正则类型,在 =repl= 中输入 =r"\\"= 会得到结果 ="\\\\"= ,正如上面说道的, 在 =Emacs Lisp= 里面写正则就是写 "得到的结果".
 
-     2. 平常正则里面的元字符,大中小括号和"|",全部都得escape掉,否则就是普通字符了.
+     所以在 =Emacs= 写正则的时候需要用 =正则展开成字符串= 的思维去写.
 
-     比如完整匹配 ="(a)"= ,在Racket里面,正则是 ="\\(a\\)"= ,在Python是 ="\(a\)"= ,而在Emacs Lisp里面则是 ="(a)"=.
+     跟Racket提供regexp-quote反输出用于匹配目标字符串的正则一样,Emacs也提供一些辅助工具帮助你写"RegEx".
 
-     可能会经常搞混,不过跟Racket提供regexp-quote反输出用于匹配目标字符串的正则一样,Emacs也提供一些辅助工具帮助你写RegEx.
-
-     跟Racket一样的regexp-quote 和对当前buffer即时比对正则的 =M-x re-builder= (注意要写在它给你的双引号里面).
+     跟Racket一样的regexp-quotem 对当前buffer即时比对正则的 =M-x re-builder= (注意要写在它给你的双引号里面) 还有简单强大的 =rx=.
 
      P.S: 我怎么感觉它们的开发者也可能觉得这样的设计不太好,所以才提供这些辅助功能.
 
@@ -2716,12 +2714,12 @@ F addition-test
   一个鼠标位置列表,记录发生鼠标点击的位置.
 
   点击的位置分为两类:
- 
+
   1. 文本区域(=text area=), =mode line=, =header line=, 条纹(=fringe=)或者边缘区域(=marginal areas=);
 
   2. 滚动条
 
- 
+
   =M-: (info "elisp(Accessing Mouse)")= 有介绍如何获取鼠标事件的位置列表,这里就先不说了.
 
 
@@ -2745,7 +2743,7 @@ F addition-test
   - =IMAGE=: 点击发生的图像对象,如果没有图片就是 =nil=,否则就是和 =find-image= 返回值一样的图像对象.
   - =DX, DY=: 相对于 =OBJECT= 左上角的相对像素坐标, =OBJECT= 为 =(0 . 0)=;如果 =OBJECT= 为 =nil=,那么就是相对于点击位置字符的坐上角的像素坐标.
   - =WIDTH, HEIGHT=: 如果 =OBJECT= 不为 =nil= 那么就是它的宽高,否则就是这些被点击字符.
-    
+
 
   如果在第二类位置发生点击事件,那么鼠标位置的 =list= 就是如下形式:
 
@@ -2855,6 +2853,10 @@ F addition-test
 
 不建议把事件储存为字符串,之所以存在这种东西是因为历史兼容问题,新的 =Lisp= 程序最好不要采用这种方式,用向量(vector)来替代字符串(string),具体自行阅读文档.
 
+
+**** 读取输入
+
+命令循环使用 =read-key-sequence= 函数来读取按键序列, =read-key-sequence= 使用 =read-event= 读取事件.
 
 **** 递归编辑 (Recursive Editing)
 
