@@ -2977,6 +2977,39 @@ F addition-test
 
 **** 中止 (Quitting)
 
+默认情况 =C-g= 就是绑定 =keyboard-quit= 命令,在一个 =Lisp= 函数运行的时候输入 =C-g= 会中止该函数.
+
+当命令循环在等待按键输入的时候输入 =C-g= 不会造成任何影响,当然是没办法看出差别的.
+
+在 =minibuffer= 中 =C-g= 的定义不大一样,它会先退出(exits) =minibuffer= 然后才中止(quits),原因是这样就可以在 =minibuffer= 里面重新定义 =C-g= 的意思.
+
+在 =minibuffer= 里面,跟着前缀的 =C-g= 是不会被重新定义的,并且有取消前缀按键和前缀参数的正常效果.
+
+当 =C-g= 直接中止的时候是直接通过设置变量 =quit-flag= 为 =t= 来实现的. =Emacs= 会在合适的时间检查这个变量是否为非 =nil=.
+
+在 =C= 的层面上中止(quitting)不会在任何地方发生,只会在特定地方检查 =quit-flag=,理由是在别的地方中止会导致 =Emacs= 的内部状态不一致,也正是因为这样中止才不会导致 =Emacs= 崩溃.
+
+像 =read-key-sequence= 或者 =read-quoted-char= 这种特定的函数接收到 =C-g= 是完全不会中止的, =C-g= 对于它们来说只是它们请求的输入.
+
+你可以在函数的局部通过绑定 =inhibit-quit= 变量为非 =nil= 来阻止中止的发生,尽管 =C-g= 仍然会把 =quit-flag= 绑定为 =t=,但是中止不生效,最终 =inhibit-quit= 会再次变为 =nil=.
+
+至于为什么 =read-quoted-char= 这种函数可也不受中止影响,原理是先绑定 =inhibit-quit= 为 =t= 然后在 =inhibit-quit= 变回 =nil= 之前绑定 =quit-flag= 为 =nil=.
+
+#+BEGIN_SRC elisp
+(defun read-quoted-char (&optional prompt)
+  "...DOCUMENTATION..."
+  (let ((message-log-max nil) done (first t) (code 0) char)
+    (while (not done)
+      (let ((inhibit-quit first)
+            ...)
+        (and prompt (message "%s-" prompt))
+        (setq char (read-event))
+        (if inhibit-quit (setq quit-flag nil)))
+      ...set the variable ‘code’...)
+    code))
+#+END_SRC
+
+
 **** 递归编辑 (Recursive Editing)
 
 当 =Emacs= 启动的时候就会自动进入一个命令循环,是第一个命令循环,并且只有 =Emacs= 结束的时候这个循环才会结束.
@@ -2992,6 +3025,10 @@ F addition-test
 所有的命令循环都设立了 (=all-purpose error handlers=) 通用错误处理,目的是避免命令引发的错误导致所在的命令循环被结束.
 
 
+
+
+
+**** 禁用命令 (Disabling Commands)
 
 
 
