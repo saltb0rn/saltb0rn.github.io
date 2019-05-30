@@ -1,1 +1,2 @@
 - [[file:../posts/2017/11/ssl-configuration-for-your-website.org][为你的网站配置SSL证书]]
+- [[file:../posts/2019/05/bash-eliminating-project.org][Bash消灭计划]]
