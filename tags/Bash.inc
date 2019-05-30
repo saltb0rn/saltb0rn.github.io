@@ -1,0 +1,1 @@
+- [[file:../posts/2019/05/bash-eliminating-project.org][Bash消灭计划]]
