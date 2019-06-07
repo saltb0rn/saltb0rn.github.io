@@ -1,1 +1,0 @@
-/home/salt/Documents/code/shell/rename-files.sh
