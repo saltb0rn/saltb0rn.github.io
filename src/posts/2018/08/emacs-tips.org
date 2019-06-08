@@ -3308,9 +3308,91 @@ F addition-test
 
 =Emacs= 有很多按键映射,但是只有少数是在任何时候是激活的.当接收到用户的输入, =Emacs= 根据 =translation keymaps= 翻译输入事件,然后在激活的按键映射查找按键绑定.
 
-通常,激活的按键映射是这些:
+通常,激活的按键映射是这些,按照优先级高到低排序:
 
-1. 指定了 =keymap= 属性的
+1. 指定了 =keymap= 属性的按键映射,通常是由某个 =point= 上的 =keymap= 文本或者 =overlay= 属性指定的.
+2. 所启用的次要模式(=minor mode=)的按键映射,如果次要模式有自己的按键映射,
+   一但启用就会由 =emulation-mode-map-alists=, =minor-mode-overriding-map-alist= 和 =minor-mode-map-alist= 指定为激活.
+3. 当前{{{buffer}}}的本地映射(=local keymap=),{{{buffer}}}特定的按键映射,由点上的 =local-map= 文本或者 =overlay= 属性指定,
+   正常来说是根据{{{buffer}}}的主要模式设定本地按键映射的,并且所有启用了相同主要模式的{{{buffer}}}共享同一个本地按键映射.
+   所以注意 =local-set-key= 的使用.
+4. 全局按键映射(=global keymap=), 绑定到 =global-map= 上,并且总是处于激活状态.
+
+除了上面平时的 =Emacs= 还提供了其它激活按键映射的方法,首先, =overriding-local-map= 指定一个映射来替换上面的(除了 =global map=).
+
+其次, =terminal-local= 变量 =overriding-terminal-local-map= 可以使一个映射的优先级高于任何其他映射,包括 =overriding-local-map=,
+
+一般这是用于临时的(modal/transient)按键绑定,为此 =set-transient-map= 提供了一个方便的接口.
+
+激活按键映射并非唯一使用射的方式,还可以用于 =read-key-sequence= 翻译事件.
+
+=current-active-maps= 可以获取当前处于激活状态的按键映射,具体用法看文档.还有 =key-binding= 可以得到某个按键的绑定,具体用法是
+
+
+
+**** 查找激活的按键映射 (Searching Keymaps)
+
+这是官方文档给出的查找过程的伪代码,其中 =FIND-IN= 和 =FIND-IN-ANY= 分别是在一个按键映射和一个按键映射 =alist= 进行查找的伪函数.
+
+#+BEGIN_SRC elisp
+(or (if overriding-terminal-local-map
+        (FIND-IN overriding-terminal-local-map))
+    (if overriding-local-map
+        (FIND-IN overriding-local-map)
+      (or (FIND-IN (get-char-property (point) 'keymap))
+          (FIND-IN-ANY emulation-mode-map-alists)
+          (FIND-IN-ANY minor-mode-overriding-map-alist)
+          (FIND-IN-ANY minor-mode-map-alist)
+          (if (get-text-property (point) 'local-map)
+              (FIND-IN (get-char-property (point) 'local-map))
+            (FIND-IN (current-local-map)))))
+    (FIND-IN (current-global-map)))
+#+END_SRC
+
+值得注意的是,如果按键序列是以一个鼠标事件开始的,那么事件的位置就会替代上面代码中的 =point=.
+
+
+**** 控制激活的按键映射 (Controlling Active Maps)
+
+=API= 文档,自己阅读.
+
+
+**** 按键查找 (Key Lookup)
+
+按键查找就是一个从指定的按键映射中查找按键序列对应绑定的过程,绑定的指定或者使用不是按键查找的一部分.
+
+按键查找只会使用按键序列中的每个事件的类型来查找,事件剩余的部分都会被忽视.
+
+事实上用于按键查找的按键序列可能会通过它的事件类型来指定一个鼠标事件,这样的一个按键序列不满足 =command-execute= 的执行条件,
+
+但满足查找或者重新绑定一个按键的条件.
+
+按键查找逐个处理事件:第一个被找到的事件的绑定必须是个按键映射,然后第二个事件的绑定需要在从按键映射中查找,重复这个过程直到所有事件被处理完,
+
+最后一个绑定可能不是一个按键映射.
+
+我们用 =keymap entry= 这个术语来描述在按键映射中查找的结果:
+
+1. =nil=: 按键未定义
+2. =COMMAND=: 按键绑定的命令
+3. =ARRAY (string or vector)=: 按键绑定的键盘宏
+4. =KEYMAP=: 前缀键的绑定
+5. =LIST=: 如果 =CAR= 是 =symbol= =keymap=,那么这个 =LIST= 就是一个按键映射;如果是一个 =symbol= =lambda=,那么就是一个 =lambda= 表达式,
+   也就是一个函数,为了正常执行,它必须是一个命令.
+6. =SYMBOL=: 如果 =SYMBOL= 的定义是个函数就用函数定义来替代 =SYMBOL=.如果 =SYMBOL= 的定义是另外一个 =SYMBOL=,那么就重复这个处理过程,直到替代发生.
+
+   最终结果应该是一个按键映射,或者命令,又或者一个键盘宏.
+
+   需要注意的是,按键映射以及键盘宏不是合法的函数,所以一个与作为函数定义的 =keymap, string 或者 vector= 关联的 =symbol= 是不合法的函数.
+
+   然而作为按键绑定是合法的.如果定义是一个键盘宏,那么 =symbol= 作为 =command-execute= 的参数也是合法的.
+
+   如果 =SYMBOL= 是 =undefined=,就是说,按键未定义,严格来说,按键是定义了,只不过它的绑定是命令 =undefined=.
+
+   而 =undefined= 命令做得事情就是和未定义按键做的一样: 调用 =ding= 来响起提示音 (ring the bell) 但不引发错误.
+
+   =undefined= 用在本地按键映射上来覆盖一个全局按键绑定,使按键局部未定义. =nil= 的本地绑定会导致 =undefined= 失败.
+7. =ANYTHING ELSE=: 所有其它类型的对象,表示绑定不能作为一个命令来执行.
 
 
 **** 改变按键绑定 (Changing Key Bindings)
