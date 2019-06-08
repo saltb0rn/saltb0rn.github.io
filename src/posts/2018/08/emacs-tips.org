@@ -3213,7 +3213,95 @@ F addition-test
 
 按键映射有两种: =full keymap= 和 =sparse keymap=,前者是包含一张拥有非 =modifier= 字符的字符表,后者是一个没有任何条目的按键映射.
 
-分别的函数是 =make-keymap= 和 =make-sparse-keymap=,而除了创建外,还可以通过 =copy-keymap= 复制别人 =map=,比如 =lisp-mode-map= 就是复制 =lisp-mode-shared-map= 得来的.
+分别的函数是 =make-keymap= 和 =make-sparse-keymap=,而除了创建外,还可以通过 =copy-keymap= 复制别人 =map=,这个功能基本是用不上的,如果只是想要一个和别的差不多的按键映射,那么应该使用 =set-keymap-parent= 继承别的按键映射.
+
+
+**** 继承和按键映射 (Inheritance and Keymaps)
+
+按键映射可以继承别的按键映射,被继承的一个叫做 =parent keymap=,这种按键映射结构是这样的:
+
+#+BEGIN_SRC elisp
+(keymap ELEMENTS... . PARENT-KEYMAP)
+#+END_SRC
+
+一个比较熟悉的例子就是 =lisp-mode-map=,它的 =parent keymap= 就是 =lisp-mode-shared-map=.
+
+=lisp-mode-map= 继承了所有 =lisp-mode-shared-map= 的绑定,在查找按键的时候, =Emacs= 会先看 =lisp-mode-map= 有没有查找的绑定,如果没有就去 =lisp-mode-shared-map= 上查找.
+
+如果用 =define-key= 或者其它按键绑定的函数改变了 =lisp-mode-shared-mode= 的绑定, =lisp-mode-map= 也是能够看到这些改变.
+
+但如果反过来,改变 =lisp-mode-map= 上面的绑定,是不会对 =lisp-mode-shared-map= 造成影响的.
+
+构建一个有 =parent keymap= 的按键映射的正确做法是使用 =set-keymap-parent=,不应该直接通过"手动"构建.
+
+可以通过 =keymap-parent= 来获取 =parent keymap=,比如:
+
+#+BEGIN_SRC elisp
+(keymap-parent lisp-mode-map)
+#+END_SRC
+
+如果没有 =parent keymap= 就返回 =nil=.
+
+假设现在要求构建一个和 =lisp-mode-map= 差不多的 =keymap=,利用继承可以这么做,
+
+#+BEGIN_SRC elisp
+(let ((map (map-sparse-keymap)))
+  (set-keymap-parent map lisp-mode-map)
+  map)
+#+END_SRC
+
+=non-spare= 按键映射也可以有一个 =parent keymap=,不过意义不大,因为它们一定会为所有不带 =modifier bits= 的数字字符指定了绑定,
+
+所以这些绑定是不可能从别的 =parent keymap= 继承到的.
+
+有时候想继承多个映射,可以使用 =make-composed-keymap=,比如 =Emacs= 的 =help-mode-map=,
+
+#+BEGIN_SRC elisp
+(let ((map (make-sparse-keymap)))
+  (set-keymap-parent map
+    (make-composed-keymap button-buffer-map special-mode-map))
+  ... map) ... )
+#+END_SRC
+
+
+**** 前缀键 (Prefix Keys)
+
+所谓前缀键就是一个绑定为一个 =keymap= 的按键序列.其它按键映射定义了那些拓展了前缀按键的按键序列的绑定,
+
+比如 =C-x= 是一个前缀键,它使用的按键映射刚好也储存在 =ctl-x-map= 中,这个按键映射定义了以 =C-x= 开头的按键序列.
+
+一些标准的 =Emacs= 前缀键也可以在 =Lisp= 变量中找到,具体就自己查阅了 =M-: (info "(elisp) Prefix Keys")=.
+
+前缀键的按键映射绑定就是用来查找跟在前缀键后面的事件的,绑定可能是一个 =symbol=,这个 =symbol= 的函数定义就是一个按键映射,
+
+效果是一样的,不过 =symbol= 同时也是作为前缀键的名字.因此, =C-x= 的绑定就是一个叫做 =Control-X-prefix= 的 =symbol=,
+
+它的 =function cell= 储存的是 =C-x= 的按键映射,也就是 =ctl-x-map= 的值.
+
+前缀键可以定义在任何激活的按键映射上,如果一个前缀键出现在多个激活的按键映射上,那么各个的定义的作用就会被合并:
+
+次要模式(minor mode)按键映射定义第一,然后是 =local map= 的,最后是 =global map= 的.
+
+比如下面定义 =C-p= (原本是属于 =global-map= 的绑定) 等同于 =C-x=,
+
+#+BEGIN_SRC elisp
+(use-local-map (make-sparse-keymap)
+(local-set-key "\C-p" ctl-x-map)
+(key-binding "\C-p\C-f")
+#+END_SRC
+
+可以通过 =define-prefix-command= 来定义一个 =symbol= 为前缀键的绑定,
+
+#+BEGIN_SRC elisp
+(define-prefix-command SYMBOL &optional MAPVAR PROMPT)
+#+END_SRC
+
+大概的过程就是:创建一个 =sparse keymap= 并且把它储存为 =SYMBOL= 的函数定义, =SYMBOL= 随后的一个按键序列绑定会成为前缀键,返回值是一个 =symbol=.
+
+如果 =MAPVAR= 是 =non-nil=,该函数会把 =MAPVAR= 变为变量而不是把 =SYMBOL= 定义为函数. =PROMPT= 用于菜单按键序列.
+
+[[https://www.emacswiki.org/emacs/PrefixKey][EmacsWiki]]上有一个不错的例子,可以看一下.
+
 
 
 **** 改变按键绑定 (Changing Key Bindings)
