@@ -3321,6 +3321,83 @@ F addition-test
 
 =global-set-key= 和 =local-set-key= 可以分别改变当前 =global map= 和 =local map= 的绑定.
 
+通常都用 =global-set-key= 以及 =local-set-key= 来做这种事,除了这两个以外还有更通用的函数可以做这种事情:
+
+=define-key= 给某个映射设定绑定;
+
+=substitute-key-definition= 替换某个映射里面某个绑定,这个绑定出现的所有地方都会被替换;
+
+=suppress-keymap= 通过把 =self-insert-command= 映射到 =undefined= 的手段来改变按键映射上所有字符,一旦这么就可能正常德输入文本了.
+
+
+**** 重新映射命令 (Remapping Commands)
+
+有一种特别的绑定可以在不引用按键序列的情况下映射命令绑定的按键到另外一个命令上,比如我自己 =mode= 想提供一个叫 =my-kill-line= 函数,
+
+以前执行 =C-k= 执行 =kill-line=,现在要在使用我自己的 =mode= 下输入 =C-k= 的时候执行 =my-kill-line=,通过 =remap= 事件可以轻松实现,
+
+#+BEGIN_SRC elisp
+(define-key my-mode-map [remap kill-line] 'my-kill-line)
+#+END_SRC
+
+上面的表达式是这么描述: 把 =kill-line= 映射到 =my-kill-line=,这是一个重新映射关系,把这个映射关系放到 =my-mode-map= 中.
+
+#+BEGIN_SRC elisp
+[remap COMMAND]
+#+END_SRC
+
+其中, =remap= 是一个事件, =COMMAND= 是要被重新映射的命令.其实可以这么理解,这个形式就是获取 =COMMAND= 的按键绑定,而实际上它做的事情也正是这样.
+
+如果想取消重新映射,直接这么做就好,
+
+#+BEGIN_SRC elisp
+(define-key my-mode-map [remap kill-line] nil)
+#+END_SRC
+
+要注意的是,重新映射只能发生在激活的映射中,比如在 =ctrl-x-map= 执行重新映射是无效的;还有一个重新映射只能在一级内的关系有作用,比如
+
+#+BEGIN_SRC elisp
+(define-key my-mode-map [remap kill-line] 'my-kill-line)
+(define-key my-mode-map [remap my-kill-line 'my-other-kill-line)
+#+END_SRC
+
+这里 =kill-line= 没有被映射到 =my-other-kill-line= 上,输入 =C-k= 的时候会执行 =my-kill-line= 而不是 =my-other-kill-line=,当然, =my-kill-line= 是被映射到 =my-ohter-kill-line= 上了.
+
+可以通过 =(command-remapping 'kill-line nil my-mode-map)= 来获得重新映射,这里返回的是 ='my-kill-line=.
+
+
+
+**** 用于翻译事件序列的按键映射 (Keymaps for Translating Sequences of Events)
+
+当 =read-key-sequence= 函数读取一个按键序列,它会用翻译按键序列来翻译事件序列成别的事件序列.翻译用的按键映射就是 =input-decode-map=, =local-function-key-map= 和 =key-translation-map= 三个.
+
+这三个是按照优先级排列的.在结构上,翻译用的按键映射和其他的按键映射是一样的,在用途上却不同:翻译用的按键映射(下面称为翻译映射)是用来指定要翻译的内容,而不是绑定映射.
+
+每当读取一个按键序列,翻译映射就会检查每个翻译映射.如果其中一个翻译映射绑定了序列 =k= 到向量 =v= 上,而 =k= 又是按键序列的子序列,那么子序列出现的地方就会替换成 =v=.
+
+翻译映射只有在 =Emacs= (通过由 =keyboard-coding-system= 指定的输入编码系统)解码(decode)键盘输入才工作.
+
+比如, =VT100= 终端会在按下 =<PF1>= 的时候发送 =<ESC> O P= 序列, =Emacs= 一定把这个序列翻译成单个的事件 =pf1=,子所以能这么做是因为 =input-decode-map= 上绑定了 =ESC O P= 到 =[pf1]=.
+
+因此当输入 =C-c <PF1>= 的时候,终端会提交一个字符序列 =C-c <ESC> O P=,然后 =read-key-sequence= 会把它翻译成 =C-c <PF1>= 并且返回一个向量 =[?\C-c pf1]=.
+
+
+**** 绑定按键的命令 (Commands for Binding Keys)
+
+就是讲 =API= 的.
+
+
+**** 扫描按键映射
+
+为了打印出帮助信息而扫描所有当前的按键映射(因为 =keymap= 结构本身不是给人阅读的)这章节就是说这些 =API=.
+
+
+**** 菜单按键映射 (Menu Keymaps)
+
+通过为键盘按键和鼠标按钮定义绑定,按键映射可以像菜单那样操作.一般菜单需要鼠标操作,但同样也可以通过键盘来操作.
+
+我个人对菜单这块不太感兴趣(我自己都不用菜单栏),所以暂时放下.等以后想读的时候再看.
+
 
 *** GNU Emacs Internals
 
