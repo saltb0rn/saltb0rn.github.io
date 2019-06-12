@@ -1854,20 +1854,21 @@ self.addEventListener(
 document.onclick = function(event) {
     // about the interface of Event object
     // https://dom.spec.whatwg.org/#event
-    event = event || window.event;
+    var event = event || window.event;
     var target = event.target || event.srcElement;
     var is_event_set = target.onclick;
     if (target.tagName == 'DIV' && target.className == 'child') {
-         target.onclick = function(event) {
+         target.onclick = function(evt) {
          /*
            可以根据元素地属性判断是否你想要地元素,如果符合条件就执行动作.
            比如,对class为outline的div元素添加事件,这就是在需要的时候添加事件,可以节省资源
          */
          /*
-           如果要取消冒泡,则点击事件必须要传入event对象,然后
-           设定 event 对象的 cancelBubble 为 true 或者调用 event.stopPropagation()
+           如果要取消冒泡,则点击事件必须要传入event对象,然后设定 event 对象的 cancelBubble 为 true 或者调用 event.stopPropagation(),否则会导致事件发生两次;
+           如果对象是类似于 a 这种有默认动作的标签,就要使用 event.preventDefault() 来阻止默认动作(除非你确实有这种奇怪的需求)
          */
-             event.cancelBubble = true;
+             evt.preventDefault();
+             evt.stopPropagation();
              console.log(target);
              }
          };
@@ -1876,6 +1877,8 @@ document.onclick = function(event) {
     target.onclick && target.onclick(event);
 };
 #+END_SRC
+
+注意,一旦使用了事件代理,同一个页面上没有被代理的事件注意要取消冒泡,否者会被执行两次.
 
 
 *** 解决事件执行次数过于频繁: 防抖(debounce),节流(throttle)和rAF(requestAnimationFrame)
@@ -2230,6 +2233,7 @@ function isScrollable(element) {
     return false;
 }
 #+END_SRC
+
 
 *** 如何判断一个可滚动的元素是否滚动到底部
 

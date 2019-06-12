@@ -2083,7 +2083,7 @@ undefined
 
 因此必须为每一个 =Edebug= 会遇到的宏定义 =Edebug specification= 来解释宏的调用格式.做法是给宏定义添加一个 =debug= 声明.
 
-=Edebug specification= 告诉 =Edebug= 宏的哪些部分需要运算.关于如何为宏定义 =Edebug specification=,看这里 =M-: (info "(elisp Defining Macros)")=.
+=Edebug specification= 告诉 =Edebug= 宏的哪些部分需要运算.关于如何为宏定义 =Edebug specification=,看这里 =M-: (info "(elisp) Defining Macros")=.
 
 当 =instrument= 代码的时候要保证 =Edebug= 知道 =specification=.如果 =instrument= 一个文件中的函数,并且这个函数引用了使用 =eval-when-compile= 导入另外一个文件的宏定义,那么就需要 =load= 一遍那个文件.
 
@@ -2652,6 +2652,25 @@ F addition-test
 
 对于 =test suites=,经常用来为特定模块运行测试或者根据测试的时间长度来少运行慢的测试,定义测试的时候所有相关模块的所有测试使用相同前缀,或者使用 =:tag=,然后通过正则测试选择器或者 =tag= 测试选择器运行所有相关测试.
 
+
+*** 读取和打印 (Read and Print)
+
+打印是转换 =Lisp= 对象为文本形式的操作,而读取就是把文本转换为 =Lisp= 对象.它们会使用 =M-: (info "(elisp) Lisp Data Types")= 中描述的打印以及读取语法.
+
+**** 读取和打印的简介 (Introduction to Reading and Printing)
+
+读取一个 =Lisp= 对象意味着解析文本形式的 =Lisp= 表达式并且产生对应的 =Lisp= 对象.这也是 =Lisp= 代码文件怎么被读取进 =Lisp= 上并且运行的方式,这种文本叫做对象的读取语法 (=read syntax of the object=).
+
+打印一个 =Lisp= 对象意味着产生一个表示该对象的文本,就是把对象转换成它打印表示(=printed representation=).
+
+读取和打印是一对反操作:通常打印读取文本所得得结果会是同一段文本,反过来,读取一个打印对象时所得的结果通常会得到一个类似的对象.
+
+然而这两操作是不能精确地互逆的,有这三个情况:
+
+- 打印可以得到一些不可被读取的对象,比如, =buffers, windows, frames. subprocesses, markers= 这些都会得到 =#= 开头的文本;
+  如果尝试读取这些文本会得到错误,没有方法读取这些数据.
+- 一个对象有多种文本表示.比如, =1= 和 =01= 表示同一个整数, =(a b)= 和 =(a . (b))= 表示同样的列表.任何一个都可以被读取,但是打印只有一种可能.
+- 注释可以出现再一个对象读取序列中间的任何一个点上,不会影响读取的结果,但是会影响打印的结果.
 
 *** 命令循环 (Command Loop)
 
