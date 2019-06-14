@@ -2083,7 +2083,7 @@ undefined
 
 因此必须为每一个 =Edebug= 会遇到的宏定义 =Edebug specification= 来解释宏的调用格式.做法是给宏定义添加一个 =debug= 声明.
 
-=Edebug specification= 告诉 =Edebug= 宏的哪些部分需要运算.关于如何为宏定义 =Edebug specification=,看这里 =M-: (info "(elisp Defining Macros)")=.
+=Edebug specification= 告诉 =Edebug= 宏的哪些部分需要运算.关于如何为宏定义 =Edebug specification=,看这里 =M-: (info "(elisp) Defining Macros")=.
 
 当 =instrument= 代码的时候要保证 =Edebug= 知道 =specification=.如果 =instrument= 一个文件中的函数,并且这个函数引用了使用 =eval-when-compile= 导入另外一个文件的宏定义,那么就需要 =load= 一遍那个文件.
 
@@ -2651,6 +2651,95 @@ F addition-test
 宏版本的就自己研究了,都差不多的.
 
 对于 =test suites=,经常用来为特定模块运行测试或者根据测试的时间长度来少运行慢的测试,定义测试的时候所有相关模块的所有测试使用相同前缀,或者使用 =:tag=,然后通过正则测试选择器或者 =tag= 测试选择器运行所有相关测试.
+
+
+*** 读取和打印 (Read and Print)
+
+打印是转换 =Lisp= 对象为文本形式的操作,而读取就是把文本转换为 =Lisp= 对象.它们会使用 =M-: (info "(elisp) Lisp Data Types")= 中描述的打印以及读取语法.
+
+**** 读取和打印的简介 (Streams Intro)
+
+读取一个 =Lisp= 对象意味着解析文本形式的 =Lisp= 表达式并且产生对应的 =Lisp= 对象.这也是 =Lisp= 代码文件怎么被读取进 =Lisp= 上并且运行的方式,这种文本叫做对象的读取语法 (=read syntax of the object=).
+
+打印一个 =Lisp= 对象意味着产生一个表示该对象的文本,就是把对象转换成它打印表示(=printed representation=).
+
+读取和打印是一对反操作:通常打印读取文本所得得结果会是同一段文本,反过来,读取一个打印对象时所得的结果通常会得到一个类似的对象.
+
+然而这两操作是不能精确地互逆的,有这三个情况:
+
+- 打印可以得到一些不可被读取的对象,比如, =buffers, windows, frames. subprocesses, markers= 这些都会得到 =#= 开头的文本;
+  如果尝试读取这些文本会得到错误,没有方法读取这些数据.
+- 一个对象有多种文本表示.比如, =1= 和 =01= 表示同一个整数, =(a b)= 和 =(a . (b))= 表示同样的列表.任何一个都可以被读取,但是打印只有一种可能.
+- 注释可以出现再一个对象读取序列中间的任何一个点上,不会影响读取的结果,但是会影响打印的结果.
+
+
+**** 输入流 (Input Streams)
+
+大部份用于读取的 =Lisp= 函数都会接收一个 =input stream=,也就是叫做输入流的对象做为参数.输入流指定了在哪以及怎么读取文本的字符.输入流有以下几种:
+
+- =BUFFER=: 从{{{buffer}}}读取字符,从点(point)的后面,也就是指针的后面开始读取.
+- =MARKER=: 在 =Marker= 所在的{{{buffer}}}读取字符,从 =Marker= 的位置后面开始读取,这并不会影响{{{buffer}}}上面点的位置.
+- =STRING=: 从字符串读取字符,在第一个字符的前边开始读取.
+- =FUNCTION=: 用于生成字符的函数,这种函数需要满足满足以下两种条件调用方式,
+  1. 不带参数调用,并且返回下一个字符;
+  2. 带一个参数调用,这参数还一定是个字符, =FUNCTION= 应该保存参数并且在下一次调用的时候返回这个参数.这叫做 ="unreading" the character=;
+     这种调用发生在 =Lisp reader= 读取一个字符太多次并且想把它放回它所来自的地方.这种情况下, =FUNCTION= 返回的值没有区别.
+- =t=: 表示流是 =minibuffer=,一旦从 =minibuffer= 读取就会马上唤醒并且等待用户输入的字符串.如果 =Emacs= 是以 =batch mode= 下运行,那么就用标准输入(=standard input=)作为输入流.
+- =nil=: 表示用标准输入 =standard-input= 作为输入流.
+- =SYMBOL=: =SYMBOL= 的函数定义作为输入流(如果有函数定义的话).
+
+这章节的文档还有针对上面的演示,比如如何定义一个符合要求的 =FUNCTION=.
+
+
+**** 输入函数 (Input Functions)
+
+与读取相关的函数以及变量.
+
+
+
+**** 输出流 (Output Streams)
+
+输出流指定了怎么处理打印的字符.输入流有可能是以下几种类型:
+
+- =BUFFER=: 输出的字符被插入到{{{BUFFER}}}里面的点后面.
+- =MARKER=: 把输出的字符插入到 =Marker= 所在的{{{BUFFER}}}里面,在 =Marker= 的位置后面插入,这并不会影响{{{buffer}}}上面点的位置.
+- =FUNCTION=: 输出的字符会被传给 =FUNCTION= 进行储存,这个函数需要接收一个字符作为参数,输出的字符有多少个就需要传入多少次,并且能够在你想要的时候负责储存字符.
+- =t=: 把输出字符显示在回显区域中(echo area).
+- =nil=: 把输出字符输出到标准输出(=standard-out=)中.
+- =SYMBOL=: =SYMBOL= 的函数定义作为输出流(如果有函数定义的话).
+
+这章节的文档还有针对上面的演示,比如如何定义一个符合要求的 =FUNCTION=.
+
+
+**** 输出函数 (Output Functions)
+
+一些打印函数会在必要时候给输出添加一些引用字符串(quoting character)来使这些输出能够被正常读取.引用字符有 ="= 和 =\=,可以区分 =string= 和 =symbol= 以及防止在读取 =string= 和 =symbol= 的时候有中断(punctuation)的发生.
+
+=String= 用 ="= =\= 大部份人都很熟悉,但是 =symbol= 用 =\= 就不一定了,比如, ='What\ The\ Fuck\ != 是一个合法的 =symbol=,是的,就叫 =What The Fuck !=. 实际上可以设定打印函数是否添加引用字符.
+
+=Lisp= 对象可以引用它们自身,也就是所谓的环状结构,用正常的方法打印这种对象会陷入无限递归的, 当 =Emacs= 检测到递归的时会打印 =#LEVEL= 来表示对于当前打印操作而言一个在 =LEVEL= 级上的对象的引用,而不是递归打印一个已经打印过的对象.
+
+比如,
+
+#+BEGIN_SRC elisp
+(setq foo (list nil)) ;; => (nil)
+(setcar foo foo) ;; => (#0)
+#+END_SRC
+
+这章节的文档剩下的部分就是一些 =API= 说明了.
+
+
+**** 影响输出的变量 (Output Variables)
+
+自行查阅.
+
+
+
+*** Minibuffers
+
+=minibuffer= 就是一种特别的{{{buffer}}}, =Emacs= 命令会用它来读取比数字前缀参数(numeric prefix argument)更加复杂的参数.
+
+这些参数包括文件名字,{{{buffer}}}名字和命令名字. =minibuffer= 会显示在 =frame= 的底部,和回显区域(=echo area=)的位置一样,区别在于 =minibuffer= 用来读取, =echo area= 用于打印.
 
 
 *** 命令循环 (Command Loop)
@@ -3395,6 +3484,10 @@ F addition-test
 7. =ANYTHING ELSE=: 所有其它类型的对象,表示绑定不能作为一个命令来执行.
 
 
+**** 按键查找的函数 (Functions for Key Lookup)
+
+
+
 **** 改变按键绑定 (Changing Key Bindings)
 
 重新绑定按键的方式就是改变按键映射的条目.如果你改变全局按键映射里面的绑定,那么就会影响所有{{{buffer}}}(即使对于 =global map= 被 =local map= 遮掩的{{{buffer}}}不会有直接影响).
@@ -3402,6 +3495,83 @@ F addition-test
 通常改变当前的{{{buffer}}}的 =local map= 会影响所有使用相同主模式(=major mode=)的{{{buffer}}}.
 
 =global-set-key= 和 =local-set-key= 可以分别改变当前 =global map= 和 =local map= 的绑定.
+
+通常都用 =global-set-key= 以及 =local-set-key= 来做这种事,除了这两个以外还有更通用的函数可以做这种事情:
+
+=define-key= 给某个映射设定绑定;
+
+=substitute-key-definition= 替换某个映射里面某个绑定,这个绑定出现的所有地方都会被替换;
+
+=suppress-keymap= 通过把 =self-insert-command= 映射到 =undefined= 的手段来改变按键映射上所有字符,一旦这么就可能正常德输入文本了.
+
+
+**** 重新映射命令 (Remapping Commands)
+
+有一种特别的绑定可以在不引用按键序列的情况下映射命令绑定的按键到另外一个命令上,比如我自己 =mode= 想提供一个叫 =my-kill-line= 函数,
+
+以前执行 =C-k= 执行 =kill-line=,现在要在使用我自己的 =mode= 下输入 =C-k= 的时候执行 =my-kill-line=,通过 =remap= 事件可以轻松实现,
+
+#+BEGIN_SRC elisp
+(define-key my-mode-map [remap kill-line] 'my-kill-line)
+#+END_SRC
+
+上面的表达式是这么描述: 把 =kill-line= 映射到 =my-kill-line=,这是一个重新映射关系,把这个映射关系放到 =my-mode-map= 中.
+
+#+BEGIN_SRC elisp
+[remap COMMAND]
+#+END_SRC
+
+其中, =remap= 是一个事件, =COMMAND= 是要被重新映射的命令.其实可以这么理解,这个形式就是获取 =COMMAND= 的按键绑定,而实际上它做的事情也正是这样.
+
+如果想取消重新映射,直接这么做就好,
+
+#+BEGIN_SRC elisp
+(define-key my-mode-map [remap kill-line] nil)
+#+END_SRC
+
+要注意的是,重新映射只能发生在激活的映射中,比如在 =ctrl-x-map= 执行重新映射是无效的;还有一个重新映射只能在一级内的关系有作用,比如
+
+#+BEGIN_SRC elisp
+(define-key my-mode-map [remap kill-line] 'my-kill-line)
+(define-key my-mode-map [remap my-kill-line 'my-other-kill-line)
+#+END_SRC
+
+这里 =kill-line= 没有被映射到 =my-other-kill-line= 上,输入 =C-k= 的时候会执行 =my-kill-line= 而不是 =my-other-kill-line=,当然, =my-kill-line= 是被映射到 =my-ohter-kill-line= 上了.
+
+可以通过 =(command-remapping 'kill-line nil my-mode-map)= 来获得重新映射,这里返回的是 ='my-kill-line=.
+
+
+
+**** 用于翻译事件序列的按键映射 (Translation Keymaps)
+
+当 =read-key-sequence= 函数读取一个按键序列,它会用翻译按键序列来翻译事件序列成别的事件序列.翻译用的按键映射就是 =input-decode-map=, =local-function-key-map= 和 =key-translation-map= 三个.
+
+这三个是按照优先级排列的.在结构上,翻译用的按键映射和其他的按键映射是一样的,在用途上却不同:翻译用的按键映射(下面称为翻译映射)是用来指定要翻译的内容,而不是绑定映射.
+
+每当读取一个按键序列,翻译映射就会检查每个翻译映射.如果其中一个翻译映射绑定了序列 =k= 到向量 =v= 上,而 =k= 又是按键序列的子序列,那么子序列出现的地方就会替换成 =v=.
+
+翻译映射只有在 =Emacs= (通过由 =keyboard-coding-system= 指定的输入编码系统)解码(decode)键盘输入才工作.
+
+比如, =VT100= 终端会在按下 =<PF1>= 的时候发送 =<ESC> O P= 序列, =Emacs= 一定把这个序列翻译成单个的事件 =pf1=,子所以能这么做是因为 =input-decode-map= 上绑定了 =ESC O P= 到 =[pf1]=.
+
+因此当输入 =C-c <PF1>= 的时候,终端会提交一个字符序列 =C-c <ESC> O P=,然后 =read-key-sequence= 会把它翻译成 =C-c <PF1>= 并且返回一个向量 =[?\C-c pf1]=.
+
+
+**** 绑定按键的命令 (Key Binding Commands)
+
+就是讲 =API= 的.
+
+
+**** 扫描按键映射 (Scanning Keymaps)
+
+为了打印出帮助信息而扫描所有当前的按键映射(因为 =keymap= 结构本身不是给人阅读的)这章节就是说这些 =API=.
+
+
+**** 菜单按键映射 (Menu Keymaps)
+
+通过为键盘按键和鼠标按钮定义绑定,按键映射可以像菜单那样操作.一般菜单需要鼠标操作,但同样也可以通过键盘来操作.
+
+我个人对菜单这块不太感兴趣(我自己都不用菜单栏),所以暂时放下.等以后想读的时候再看.
 
 
 *** GNU Emacs Internals
