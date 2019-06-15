@@ -2741,6 +2741,51 @@ F addition-test
 
 这些参数包括文件名字,{{{buffer}}}名字和命令名字. =minibuffer= 会显示在 =frame= 的底部,和回显区域(=echo area=)的位置一样,区别在于 =minibuffer= 用来读取, =echo area= 用于打印.
 
+**** 入门Minibuffers (Intro to Minibuffers)
+
+大部份情况下, =minibuffers= 就是一个普通的 =Emacs= {{{buffer}}}.在{{{buffer}}}里面,大部份操作,比如编辑命令都能够正常工作.
+
+然而,许多管理{{{buffer}}}的操作都不会应用到 =minibuffers= 上. =Minibuffer= 的名字必定是 =' *Minibuf-NUMBER*'= 这种形式并且不会被改变.
+
+=Minibuffers= 只会显示在用于显示 =minibuffers= 的{{{window}}}中,这些{{{window}}}一定是显示在 =frame= 的底部.
+
+有时候{{{frame}}}是没有 =minibuffer= {{{window}}}的,还有种特别的{{{frame}}}是只包含一个 =minibuffer= {{{window}}} 的.
+
+=Minibuffer= 里面的文本必定是以提示字符串开头(prompt string)的, =prompt string= 可以被调用 =minibuffer= 的程序指定,用来告诉用户应该输入什么.
+
+提示字符串是 =read-only= 的,所以不会有意外删除或者改变它的情况发生.它还被标识为一个 =field=,一些动作函数(motion functions)包括 =beginning-of-line=,
+
+=forward-word=, =forward-sentence= 和 =forward-paragraph=,会在提示文本和实际文本之间的边界停止.
+
+=Minibuffer= 的{{{window}}}一般就是单行,它会在内容需要更多空间的情况下自动增长.在 =minibuffer= 激活的同时,可以通过改变{{{window}}}大小的命令临时改变 =minibuffer= 的{{{window}}}大小,
+
+在 =minibuffer= 退出的时候会还原回去.在 =minibuffer= 没有激活的时候可以在同一个{{{frame}}}里其他{{{window}}}使用更改大小的命令或者通过鼠标拖动 =mode line= 来永远改变它 =minibuffer= 的大小.
+
+由于目前版本 =27.0.50= 的实现细节,只有把 =resize-mini-window= 设置为 =nil= 才能成功.
+
+对于只有 =minibuffer= 的{{{frame}}},只要改变{{{frame}}}的大小就可以了.
+
+=minibuffer= 的用途就是用于读取输入事件以及修改类似 =this-command= 和 =last-command= 这样变量的值.
+
+如果你的程序不想改变这些变量的值,那么应该在 =minibuffer= 的外层作用域绑定这些变量.
+
+在一些情况下,一个命令可以在即使已经存在一个已激活的 =minibuffer= 的情况下再使用一个 =minibuffer=,这个新的 =minibuffer= 叫做递归 =minibuffer= (=recursive minibuffer=).
+
+第一个 =mimibuffer= 被命名为 =' *Minibuf-1*'= .递归 =minibuffer= 就是通过增加后面的数字来命名.
+
+(名字前面是有个空格的,因为这样就不会显示在正常的{{{buffer}}}列表中).在所有的递归 =minibuffer= 里面,只有最内层的那个是激活的,通常这个才被叫做 =minibuffer=.
+
+可以通过设置 =enable-recursive-minibuffers= 这个变量来允许或者禁止递归 =minibuffer=,又或者给命令对应的 =symbol= 设置 =enable-recursive-minibuffers= 属性来达到局部控制.
+
+和其他{{{buffer}}}一样, =minibuffer= 也有 =local keymap=.激活 =minibuffer= 的同时也会根据被完成的工作来设置它的 =local map=.
+
+有针对于无补全的 =minibuffer= (=non-completion minibuffer=) 的 =local map=,还有针对带有补全功能的 =minibuffer= 的 =local map=.
+
+当 =minibuffer= 是未激活状态,它的主要模式就是 =minibuffer-inactive-mode=, 对应的 =keymap= 就是 =minibuffer-inactive-mode-map=.
+
+当 =Emacs= 是以 =batch mode= 的形式运行,从 =minibuffer= 读取实际上就是从标准输入描述符 (standard input descriptor) 读取, =batch mode= 下是不支持包括 =history, completion= 等特色 =minibuffer= 特性.
+
+
 
 *** 命令循环 (Command Loop)
 
@@ -2765,6 +2810,7 @@ F addition-test
 如果钩子执行的时候发生错误,错误就会被"沉默"并且发生错误钩子函数会被移除.
 
 
+
 **** 定义命令 (Defining Commands)
 
 =Emacs= 的命令和函数是两个概念,不过两者关系十分接近,函数的名字不能被 =execute-extended-command= 读取到,不过可以使用 =interactive= 来把一个 =Lisp= 函数变成命令.
@@ -2780,6 +2826,7 @@ F addition-test
 有时候只是想让这个函数只能用于交互使用,这种情况下可以直接或者通过 =declare form= 给函数的 =symbol= 的 =interactive-only= 属性设定为 =non-nil=,如果从 =Lisp= 调用这个命令的话字节码编译器就会产生警告. =describe-function= 的输出会包含类似的信息.
 
 值得注意的是,通用函数(Generic Functions)是不能转化变成命令的,不过可以通过定义一个正常的函数然后让这个函数调用通用函数这种方式来间接使用.
+
 
 
 ***** 使用 interactive (Using Interactive)
