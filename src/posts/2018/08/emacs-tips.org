@@ -2940,6 +2940,72 @@ F addition-test
 
 
 
+**** 条件变量 (Condition Variables)
+
+条件变量是线程同步的一种手段,在一些事件发生前一直阻塞,线程等到条件变量收到其它线程的通知,然后继续执行.条件变量需要结合 =mutex= 以及一些条件(=conditions=)来工作.正确的操作是,
+
+#+BEGIN_SRC elisp
+;; for thread which is waiting
+(with-mutex mutex
+  (while (not global-variable)
+    (condition-wait cond-var)))
+
+;; for thread which is notifying
+(with-mutex mutex
+  (setq global-variable (some-computation))
+  (condition-notify cond-var))
+#+END_SRC
+
+- =(make-condition-variable MUTEX &optional NAME)=
+
+  创建一个关联 =MUTEX= 的条件变量并且返回它,还可以给这个条件指定一个名字.
+
+- =(condition-variable-p OBJECT)=
+
+  判断对象是否条件变量.
+
+- =(condition-wait COND)=
+
+  等待另外一个线程通知 =COND=,这个函数会一直阻塞直到条件 =COND= 被通知,又或者该线程接收到一个用 =thread-signal= 发出的信号.
+
+  在不持有条件变量关联的 =mutex= 下调用这个函数是错误的.这个函数会在等待的时候释放 =mutex=,这样那些要发送通知的线程就可以获取 =mutex= 了.
+
+- =(condition-notify COND &optional ALL)=
+
+  通知 =COND=.一定要在持有 =mutex= 的情况下才能调用这个函数.一般是单个等待中的线程接收到通知,如果 =ALL= 是 =non-nil=,那么所有等到 =COND= 的线程都会接收到通知.
+
+  这个函数会在等待的时候释放 =COND= 关联的 =mutex=,这样那些等待 =COND= 的线程就可以获取 =mutex= 了.
+
+- =(condition-name COND)=
+
+  获取 =COND= 的名字,这个名字是被 =make-condition-variable= 指定的.
+
+- =(condition-mutex COND)=
+
+  获取 =COND= 关联的 =mutex=,关联的 =mutex= 是不可改变的.
+
+
+**** 线程列表 (The Thread List)
+
+=list-threads= 命令可以实时列出所有当前存活的线程,每个线程都是通过 =make-thread= 指定的名字或者是 =Emacs Lisp= 提供的标识展示.
+
+- =thread-list-refresh-seconds=
+
+  列表刷新时间.
+
+该列表的{{{buffer}}}支持一些命令:
+
+1. =b=: 展示线程当前执行点上的 =backtrace=,注意这个 =backtrace= 就是一个快照,实际时刻的状态可能与此刻显示的不一样.
+
+   在 =backtrace= {{{buffer}}}中按下 =g= 可以进行刷新.
+
+2. =s=: 给线程在当前的执行点发送信号.在 =s= 后输入 =q= 发送结束(quit)的信号或者 =e= 发送错误(error)的信号.
+   
+   线程可以实现对信号的处理,否则默认行为是结束线程.使用这个命令的是后必须先要理解如何重启目标线程,因为 =Emacs session= 会因为重要线程被杀而表现不正常.
+
+3. =g=: 更新线程列表.
+
+
 *** 进程 (Processes)
 
 
