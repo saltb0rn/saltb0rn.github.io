@@ -1179,7 +1179,7 @@ for i in subgen_wrapper(5):
 
    =Emacs Lisp= 有3个引发异常的 special forms 和支持自定义异常.
 
-   如何引发一个异常 =M-: (info "(elisp)Signaling Errors")=
+   如何引发一个异常 =M-: (info "(elisp) Signaling Errors")=
 
    关于定义新异常和标准的异常 =M-: (info "(elisp) Error Symbols")=
 
@@ -1232,6 +1232,7 @@ for i in subgen_wrapper(5):
 
 
 **** 变量作用域 (Variable Scoping)
+
 
 **** 永远不会改变的变量 (Constant Variables)
 
@@ -2787,13 +2788,159 @@ F addition-test
 
 
 
-**** 从Minibuffer中读取文本
+**** 从Minibuffer中读取文本 (Text from MInibuffer)
 
 针对 =minibuffer= 的输入而言最原始的操作就是 =read-from-minibuffer=,可以读取一个 =string= 或者一个文本形式的 =Lisp= 对象.
 
 =read-regexp= 用来读取正则表达式.还有各种各样用于其它用途的函数.大部份情况下不应该直接调用这些函数,如果只是用于读取输入,可以用 =interactive=.
 
-本章节基本都是关于 =minibuffer= 读取文本的 =api=,其中个人比较关注的是它 =minibuffer-local-map= 以及 =minibuffer-local-ns-map= 两个变量,可以了解到 =minibuffer= 的安检绑定.
+本章节基本都是关于 =minibuffer= 读取文本的 =api=,其中个人比较关注的是它 =minibuffer-local-map= 以及 =minibuffer-local-ns-map= 两个变量,可以了解到 =minibuffer= 的按键绑定.
+
+
+**** 从Minibuffer中读取对象 (Object from Minibuffer)
+
+就是关于读取对象的 =API=.
+
+
+**** Minibuffer历史 (Minibuffer History)
+
+=Minibuffer history list= 是一个列表,用于记录用户输入的上一个命令,这样用户就可以方便地重新调用命令.
+
+其实有很多个不同的 =minibuffer history list= 用与不同种类的输入.
+
+
+*** 线程 (Threads)
+
+=Emacs Lisp= 提供有限的并发机制-线程的支持, =Emacs Lisp= 的线程模型基本上是协同线程模型(most cooperative),也就是只有在规定的时间(well-defined time)切换线程的执行(switch execution).
+
+然而, =Emacs= 的线程支持已经被设计成方便以后支持更加细粒度(fine-grained)的并发,让程序不再依赖与协同线程.
+
+协同线程也叫做 =Non-preemptive threads=,与之相反的有 =preemtive threads=, [[https://stackoverflow.com/questions/4147221/preemptive-threads-vs-non-preemptive-threads][关于两者介绍以及区别]]可以在这里看看.
+
+目前,线程切换会出现在通过 =thread-yield= 发送的请求时候;或者在等到键盘输入/异步进程的输出的时候;又或者是于线程相关的阻塞操作时候,比如 =mutex locking= 或 =thread-join=.
+
+=Emacs Lisp= 提供原操作来创建以及控制线程,同时也提供创建和控制互斥锁(=mutexes=)和条件变量(=condition variables=)用于线程同步.
+
+全局变量被所有 =Emacs Lisp= 线程共享,而局部变量不是,一个动态的 =let= 绑定是局部的.每个线程都有自己的当前{{{buffer}}}以及匹配数据(=match data=).
+
+注意, =let= 绑定在 =Emacs Lisp= 的实现中是被特别对待的,没有任何方法可也复制 =let= 的 =unwinding= 以及 =rewinding= 行为.
+
+所以,即使用 =unwind-protect= 手动 =let= 也不能让一个变量变成线程特定(=thread-specific=).
+
+在词法绑定的情况中,闭包和其它 =Lisp= 对象一样,闭包中的绑定是被激活该闭包的线程共享的.
+
+**** 基础的线程函数 (Basic Thread Functions)
+
+线程可以被创建和等待,不能被直接结束,但是当前线程可以被隐式结束,能够发送信号给其它的线程.
+
+虽然该小节的剩下内容都是 =API=,但是唯读这一块的内容我很感兴趣.
+
+- =(make-thread FUNCTION &optional NAME)=
+
+  创建一个调用 =FUNCTION= 的线程并且返回该线程,在 =FUNCTION= 返回的时候线程就结束了.
+
+  事实上(=in effect=),被创建的线程没有任何局部绑定,新线程的当前{{{buffer}}}是从当前的线程中给继承的.
+
+  =NAME= 是给线程提供一个名字,目的用于调试以及告诉开发人员的线程目的,是一个字符串.
+
+- =(threadp OBJECT)=
+
+  判断对象是否一个 =Emacs= 线程.
+
+- =(thread-join THREAD)=
+
+  阻塞(block)直到 =THREAD= 结束或者当前线程接收到消息.返回 =THREAD= 执行函数的结果.如果 =THREAD= 早已经结束就会马上返回.
+
+- =(thread-signal THREAD ERROR-SYMBOL DATA)=
+
+  类似用于引发异常的 =signal=,区别信号是发送给线程,而大部份信号的动作都是停止执行.
+
+  如果 =THREAD= 是当前线程就会立刻调用 =signal=,否则 =THREAD= 就会接收信号并且成为当前线程.
+
+  如果 =THREAD= 被 =mutex-lock, condition-wait 或者 thread-join= 阻塞,那么 =thread-signal= 就会取消它的阻塞 (=unblock it=).
+
+  如果 =THREAD= 是主线程,那么信号就不会被传播到那里,相反会作为主线程的消息(=message=)被显示.
+
+  关于 =Emacs= 是如何处理信号的,可以参考 =M-: (info "(elisp) Processing of Errors")=.
+
+- =(thread-yield)=
+
+  给下一个可运行线程让出执行(Yield execution to next runnable thread).
+
+- =(thread-name THREAD)=
+
+  获取线程的名字,这个名字是在 =make-thread= 指定的.
+
+- =(thread-live-p THREAD)=
+
+  判断线程是否存活.
+
+- =(thread--blocker THREAD)=
+
+  返回 =THREAD= 正在等待(=waiting on=)的对象.这个函数主要是用于调试的.
+
+  如果线程因为 =thread-join= 被阻塞,就会返回等待的线程;如果是因为 =mutex-lock= 就返回 =mutex=;如果是因为 =condition-wait= 就返回条件变量.
+
+  否则,返回 =nil=.
+
+- =(current-thread)=
+
+  返回当前的线程.
+
+- =(all-threads)=
+
+  返回一个包含所有存活对象的列表.
+
+- =main-thread=
+
+  储存了主线程的变量,如果 =Emacs= 编译的时候没有线程支持就返回 =nil=.
+
+- =(thread-last-error &optional CLEANUP)=
+
+  当线程执行的代码发送了一个错误信号并且没被处理,那么线程结束.其他线程可以通过这个函数来访问造成线程错误的原因.
+
+  只要有线程发生错误,结果就会被重写.
+
+
+**** 互斥锁 (Mutexes)
+
+在任何时候有0到1个线程会拥有一把互斥锁(=mutex=).如果线程在别的线程早已经拥有的情况下试图获取(acquire)一个 =mutex=,
+
+那么该线程会一直阻塞直到 =mutex= 被其它线程释放为止.
+
+=Emacs Lisp= 的 =mutexes= 是可以递归的,就是说一个线程可以在自己早已拥有 =mutex= 的情况下再次获取一到多个 =mutexes=.
+
+=Mutex= 会记录被获取多少次,然后获取次数一定要与释放次数匹配,最后一次的释放会把 =mutex= 还原成未被持有的状态 (=unowned state=),
+
+允许其他线程获取它.
+
+- =(mutexp OBJECT)=
+
+  判断是否 =mutex=.
+
+- =(make-mutex &optional name)=
+
+  创建一个 =mutex= 并且返回它,类似线程可以指定名字.
+
+- =(mutex-name MUTEX)=
+
+  获取 =MUTEX= 的名字,这个名字是被 =make-mutex= 指定.
+
+- =(mutex-lock MUTEX)=
+
+  一直阻塞直到有线程获取了 =MUTEX=,又或者直到该线程接收到了 =thread-signal= 发送的信号.如果该线程早已经拥有 =MUTEX=,那么就直接返回.
+
+- =(mutex-unlock MUTEX)=
+
+  释放 =MUTEX=.如果该线程没有拥有 =MUTEX= 就会引发一个错误(signal an error).
+
+- =(with-mutex MUTEX BODY...)=
+
+  =BODY= 执行的时候自动获取一个 =MUTEX=,执行结束后自动释放,返回的结果是 =BODY= 的结果.
+
+
+
+*** 进程 (Processes)
 
 
 *** 命令循环 (Command Loop)
