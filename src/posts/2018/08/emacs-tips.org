@@ -151,7 +151,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
      1. 编辑远程文件
 
-        =C-x C-f= 输入 =/user@host:/path/to/file=, 就是说以user身份编辑host上的 =/path/to/file= 文件.
+        =C-x C-f= 输入 =/user@host#port:/path/to/file=, 就是说以user身份编辑host:port上的 =/path/to/file= 文件.
 
      2. sudo修改文件
 
@@ -701,7 +701,7 @@ see any project of blog, vice versa."
 
 *** 函数 (Functions)
 
-**** What is a Function
+**** 什么是函数 (What is a Function)
 
 =Emacs Lisp= 中的函数是函数对象(=function object=)和函数名字(=function name=)组成的,其中函数名字是可选的,函数对象是可以执行计算,支持函数式编程的语言都拥有这特性.
 
@@ -709,7 +709,7 @@ see any project of blog, vice versa."
 
 在使用 =Emacs Lisp= 进行编程的时候要分清楚以下几个概念:
 
-- *=Lambda Expression=*: 函数对象,常说匿名函数,也就是没有名字的函数;
+- *=Lambda Expression=*: 函数对象,常说的匿名函数,也就是没有名字的函数;
 - *=Primitive=*: 用 =C= 语言编写并且能够被 =Emacs Lisp= 调用的函数,也就是 =built-in function=, 比如 =car= 和 =append=, 关于如何编写 =primitive= 请参考 =(info "Writing Emacs Primitives")=;
 - *=Special Form=*: 属于 =primitive=,和函数一样可以执行计算,但是不像函数一样以正常顺序运算完所有参数,或者说只运行部分参数,又或者所不按照正常顺序执行,又又或者运算几遍,比如 =if, and 和 while=;
 - *=Macro=*: 和函数一样可以调用,不同的是 =macro= 把 =Emacs Lisp= 表达式翻译成另外一个表达式再进行运算,开发人员可以通过它来做到 =special form= 能够做到的事情;
@@ -719,8 +719,75 @@ see any project of blog, vice versa."
 - *=Autoload Object=*: 函数的占位符(place-holder). =Emacs= 一旦调用 =autoload object= 就会加载包含函数定义的文件然后调用真正的函数.
 
 
+**** Lambda表达式 (Lambda Expressions)
 
-****
+***** Lambda的组件 (Lambda Components)
+
+一个 =lambda= 表达式就是以下形式的一个列表.
+
+#+BEGIN_SRC elisp
+(lambda (ARG-VARIABLES...)
+  [DOCUMENTATION-STRING]
+  [INTERACTIVE-DECLARATION]
+  BODY-FORMS...)
+#+END_SRC
+
+第一个元素 =lambda= 是必定要有的,目的是为了与其他列表进行区分,以及告诉 =Emacs= 这个列表是一个函数.
+
+第二个元素 =(ARG-VARIABLES...)= 就是一个 =symbol list=,这些 =symbols= 都是参数(=arguments=)的名字.
+在调用函数的时候,参数的值就会根据该列表来进行匹配,形成 =local bindings=.
+
+第三个元素 =DOCUMENTATION-STRING= 是可选的,是一个 =string= 对象,用来描述该函数.
+
+第四个元素 =INTERACTIVE-DECLARATION= 也是可选的,是一个形式为 =(interactive CODE-STRING)= 的列表.
+这是用来声明在函数成为命令时候提供参数的方式,成为命令的函数可以通过 =M-x= 来调用或者被绑定到一个按键上.
+
+剩下部分就是函数体,在 =Lisp= 下我们叫做 =a list of Lisp forms to evaluate=,函数的返回值就是 =BODY-FORMS= 里的最后一个 =form=.
+
+
+***** 简单的Lambda (Simple Lambda)
+
+就是对上个小节的演示,不写了.
+
+
+***** 参数列表 (Argument List)
+
+参数列表的完整语法如下,
+
+#+BEGIN_SRC elisp
+(REQUIRED-VARS...
+ [&optional [OPTIONAL-VARS...]]
+ [&rest [REST-VAR]])
+#+END_SRC
+
+=REQUIRED-VARS...= 是必要参数列表,在其他语言可能叫做 =POSITION ARGUMENTS=.
+
+定义函数的时候有多少个 =REQUIRED-VAR=,调用的时候就需要传入多少个实际参数(=actual argument=),否则会有 =wrong-number-of-arguments= 错误.
+
+=&optional= 后面的 =OPTIONAL-VARS...= 是可选参数,调用时候的参数数量不能超过定义时候的数量,并且传入的参数序号一定要和定义的匹配.
+
+=&rest= 后面跟着只有一个 =REST-VAR=,调用时传入的实际参数数量为大于等于0.
+
+结合上面的描述你会发现 =&optional= 以及 =&rest= 的参数在调用时是可以不传入的,不传入的情况下默认值是 =nil=.
+
+函数没有办法区分显示传入 =nil= 以及默认 =nil=.和 =Common Lisp= 不同, =Emacs Lisp= 不支持给可选参数设定默认值,也不支持关键字参数(keyword arguments).
+
+=EmacsWiki= 上有关于 =Keyword Arguments= 的[[https://emacswiki.org/emacs/KeywordArguments][话题]]:利用 =&rest= 以及 =make-hash-table= 来实现类似与 =Common Lisp= 的关键字参数.
+
+比如有一个这样的参数列表:
+
+#+BEGIN_SRC elisp
+(a b &optional c d &rest e)
+#+END_SRC
+
+调用时候的参数数量:
+
+- =2个=: =a= 和 =b= 分别绑定, =c,d,e= 都为 =nil=;
+- =3个=: =a=, =b= 和 =c= 分别绑定, =d,e= 为 =nil=;
+- =大于等于5个=: =a,b,c,d= 分别绑定传入的前四个参数,剩下的参数都被打包成一个列表和 =e= 进行绑定.
+
+和 =Python= 这些语言不一样, =Emacs Lisp= 不能在不传入 =c, d= 的情况下直接给 =e= 传入参数,必须给 =c,d= 传入 =nil=.
+
 
 **** Advising Functions
 
@@ -3007,6 +3074,46 @@ F addition-test
 
 
 *** 进程 (Processes)
+
+在操作系统的术语中,一个进程就是一个能够让程序运行的地方. =Emacs= 在进程内运行, =Emacs Lisp= 能够调用其它程序的进程,让它们在自己的进程内运行,
+
+这些进程被称为 =Emacs= 进程的 =subprocesses= 或者 =child processes=,也就是子进程, =Emacs= 进程就是它们的 =parent process=,也就是父进程.
+
+=Emacs= 的子进程可以是同步或者异步的,取决于创建时候的设定.同步的子进程会让 =Lisp= 程序等待子进程的结束才能继续执行;
+
+而异步的进程则是可以与 =Lisp= 程序平行/同时运行.在 =Emacs Lisp= 中,子进程是 =process= 对象, =Lisp= 程序会通过这个对象来与子进程通信或者控制它,
+
+比如,可以给子进程发送信号,从子进程获取状态信息/接收输出,或者给进程发送输入.
+
+除了程序的进程外, =Emacs Lisp= 还可以打开几种不同的设备的链接,以及不同或者相同机器上的进程链接,支持的类型有:
+
+=TCP= 以及 =UDP= 网络链接,序列端口链接(=serial port connections=)和管道链接(=pipe connections=),每个链接都是一个进程目标.
+
+可以利用 =processp= 来判断一个对象是否一个进程.除了当前 =Emacs session= 的子进程外,还可以访问同一台机器上的其它进程.
+
+**** 创建子进程 (Subprocess Creation)
+
+有三个原函数(=primitives=)可以用来创建一个新的子进程给程序运行: 创建并返回一个异步进程的 =make-process=, 创建但不返回同步进程的 =call-process= 和 =call-process-region=.
+
+三者的参数形式十分相似,它们都是指定一个要运行的程序文件,然后再可选地提供参数.如果指定的文件不可执行或者没找到,那么就会发送一个错误信号.
+
+如果文件名字是相对路径形式的,那么就会在变量 =exec-path= 包含的文件列表中查找, =Emacs= 在启动的时候就会根据环境变量 =PATH= 的值来初始化 =exec-path=.
+
+标准的文件名字结构中, =~=, =.= 和 =..= 在 =exec-path= 是可以被正常解析的,但是环境变量替换(=environment variable substitutions=),比如 =Emacs= 是不认识 =$HOME= 的,但是可以使用 =(substitute-in-file-name "$HOME")= 执行替换.
+
+=exec-path= 中的 =nil= 表示 =default-directory=.可以通过 =exec-suffixes= 设置执行文件的后缀来进行查找.
+
+*注意, =call-process= 和 =call-process-region= 的 =PROGRAM= 参数应该只包含程序的名字,不应该包含给程序提供的参数,要通过 =ARGS= 参数来传; =make-process= 只有一个 =COMMAND= 参数,可以包含程序名字以及参数*.
+
+每个子进程创建函数都有一个的参数用来指定程序的输出地方,一般就是{{{buffer}}}或者{{{buffer}}}的名字,可以是 =nil=,表示舍弃输出,除非有个自定一个筛选函数(=filter function=)处理输出.
+
+
+
+
+
+
+
+
 
 
 *** 命令循环 (Command Loop)
