@@ -3145,13 +3145,30 @@ F addition-test
 
 *注意, =call-process= 和 =call-process-region= 的 =PROGRAM= 参数应该只包含程序的名字,不应该包含给程序提供的参数,要通过 =ARGS= 参数来传; =make-process= 只有一个 =COMMAND= 参数,可以包含程序名字以及参数*.
 
-每个子进程创建函数都有一个的参数用来指定程序的输出地方,一般就是{{{buffer}}}或者{{{buffer}}}的名字,可以是 =nil=,表示舍弃输出,除非有个自定一个筛选函数(=filter function=)处理输出.
+每个子进程创建函数都有一个的参数用来指定程序的输出地方,一般就是{{{buffer}}}或者{{{buffer}}}的名字对应的形式参数是 =BUFFER= 或者 =DESTINATION=,可以是 =nil=,表示舍弃输出,除非有个自定一个筛选函数(=filter function=)处理输出.
 
+如果指定的{{{buffer}}}不存在 =Emacs= 会自动创建.一般来说,不应该让多个进程把输出发送给同一个{{{buffer}}},因为会导致输出随机混乱,而同步进程可以把输出发送给文件.在默认情况下,标准输出和标准错误的目的地是同一个,三个原函数允许决定是否同一个目的地.
 
+比如要执行 =ls= 命令来显示 =/home/saltb0rn= 目录下的文件,并且把输出发送到{{{buffer}}} - =ls-buf= 中.
 
+#+BEGIN_SRC elisp
+;; async process
+(make-process :name "list-dir" :buffer "ls-buf" :command (list "ls" "/home/saltb0rn"))
 
+;; sync process
+(call-process "ls" nil (list "ls-buf" "ls-buf") nil "/home/saltb0rn")
+; 发送当前 buffer 的 (point-min) 到 (point-max) 的文本给 =ls=,可以新建一个 buffer 并且输入 /home/saltb0rn
+(call-process-region (point-min) (point-max) "ls" nil "ls-buf")
 
+;; 对于一个以上的参数的命令 cp
+(make-process :name "cp-file" :buffer "cp-buf" :command (list "cp" "/home/saltb0rn/a" "/home/saltb0rn/b"))
+(call-process "cp" nil (list "cp-buf" "cp-buf") nil "/home/saltb0rn/a" "/home/saltb0rn/b")
+;; call-process-region 就不演示了
+#+END_SRC
 
+这里要注意, =wildcard= 字符以及其他 =Shell= 的东西是没有用的,还要再次提醒 =~= 是解析不了的,要手动解析.
+
+还有子进程会默认继承 =Emacs= 的环境,可以通过覆写 =process-environment= 来改变继承的环境.
 
 
 
