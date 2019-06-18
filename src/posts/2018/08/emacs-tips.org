@@ -3173,6 +3173,47 @@ F addition-test
 
 
 
+**** Shell参数 (Shell Arguments)
+
+有时候 =Lisp= 程序需要给一个 =shell= 一个由用户指定的命令.这些程序应该能够支持任何合法的文件名字,不过 =shell= 会特别对一些字符,所以这些字符出现在文件名字中会让 =shell= 很困扰,
+
+=shell-quote-argument= 可以解决这个问题,构建一个 =shell= 命令.
+
+#+BEGIN_SRC elisp
+(concat "diff -u "
+        (shell-quote-argument oldfile)
+        " "
+        (shell-quote-argument newfile))
+#+END_SRC
+
+=split-string-and-unquote= 可以把命令变成一个字符串列表, =combine-and-quote-strings= 可以把一个字符串列表合并成一个命令.
+
+这两个函数一般都是给 =make-process=, =call-process= 或者 =start-process= 是用的.注意,  =combine-and-quote-strings= 并不是为了做和 =shell-quote-argument= 的事情,
+
+所以一些 =shell= 会运算的特别字符还是需要用 =shell-quote-argument= 来处理,也就是说,当涉及到 =shell= 一定要用 =shell-quote-argument=.
+
+
+
+
+**** 创建同步进程 (Synchronous Processes)
+
+在创建一个同步进程后, =Emacs= 需要等到进程结束后才能继续做其它事情.在等待的过程中,用户可以输入一次 =C-g= 给进程发送 =SIGINT= 信号来杀掉该进程,
+
+但这只是告诉进程要结束,进程还需要等到一小段时间结束,在这个期间输入第二次 =C-g= 会发送 =SIGKILL= 给进程,立刻杀掉进程(在 =MS-DOS= 上是个例外).
+
+同步的子进程会返回一个标识,也就是状态码,来说明程序是如何结束的:正常结束或者因为一些错误而结束.同步子进程的输出一般都是被编码系统编码过的,就像读取文件一样,输入同样经过编码.
+
+在 *创建子进程* 的那篇笔记中有提到一下 =call-process= 的用法,这里就不详细笔记了,主要是关于 =process-file= 这个函数,它和 =call-process= 差不多,
+
+不同之处在于 =process-file= 创建的子进程会根据 =default-directory= 的值来决定是否是用一个文件处理器(file handler), =default-directory= 的值就是子进程当前的工作目录,
+
+如果 =default-directory= 是远程工作目录,那么就唤醒一个文件处理器. =process-file= 可以在远程目录运行一个进程(当然本地也是 =okay=),是 =call-process= 的远程版本.
+
+(如果你用 =Emacs= 远程编辑了文件,可能需要在远程服务器上执行一些命令,那么这个毫无疑问是你想要的),=process-file-shell-command= 是一个更加方便的版本.
+
+其他就不写了,自己读文档.
+
+
 *** 命令循环 (Command Loop)
 
 **** 命令概览 (Command Overview)
