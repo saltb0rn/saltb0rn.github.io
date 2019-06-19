@@ -3214,6 +3214,44 @@ F addition-test
 其他就不写了,自己读文档.
 
 
+**** 创建异步进程 (Asynchronous Processes)
+
+创建一个异步进程后,进程会和 =Emacs= 平行/同时运行, =Emacs= 还可以与它通信,但是注意, =Emacs= 与异步进程的通信是部分异步的:
+
+=Emacs= 只有在调用特定函数下才会给进程发送数据, =Emacs= 只有在等待输入或者一段时间延迟后(waiting for input or for a time delay)才能接收到进程的数据.
+
+异步进程是由 =pty (pseudo-terminal)= 或者 =pipe= 来控制的,选择 =pty= 或者 =pipe= 是在创建进程的时候就决定的了,默认是根据 =process-connection-type= 的值来决定.
+
+一般 =pty= 对于用户来说是最好的选择,这个是对应于 =Shell= 模式,它支持进程和它的子进程之间的进程控制(=job control=)操作,比如 =C-c=, =C-z= 等等,
+
+因为交互形的程序会把 =pty= 看做终端设备(=terminal device=). =pipe= 是不支持这些特性的,但如果进程是用于 =Lisp= 程序内部,那么 =pipe= 就是最好的选择，因为 =pipe= 更加高效,
+
+并且避免/免疫(immune)像 =pty= 那样由于大量信息(500 byte 左右)而引入的全角字符注入(=stray character injections=)的问题,还有大部份系统都会对可运行 =pty= 的总数进行限制,这是一件好事.
+
+=make-process= 就是创建异步进程的原函数, =start-process= 对于它来说是一个高级版本,和同步进程的 =process-file= 一样,异步进程的创建函数也有远程版本 =start-file-process=,
+
+也就是说可以远程执行异步命令,如果 =default-directory= 是远程目录,那么执行的就是远程命令,否则是本地命令, =start-file-process-shell-command= 则更加好用.
+
+其它自己看.
+
+
+
+**** 删除进程 (Deleting Processes)
+
+"删除一个进程"会马上断开 =Emacs= 和这个(Emacs的)子进程的链接.其实在进程结束之后就会自动被 =Emacs= 删除(不一定是马上).可以在任何时候删除一个进程,删除一个已经停止但是又未被删除的进程是没有任何问题的.
+
+删除一个进程就是给这个进程以及它的子进程发送一个信号,并且调用进程的哨兵(=sentinel=,同步进程没有哨兵这种东西).在进程被删除的时候,只要有其它 =Lisp= 程序指向它,那么它就会继续存在.
+
+所有能够访问进程的原函数都接受已经被删除的进程.但是那些涉及 =I/O= 操作或者发送消息操作的原函数会引发错误.
+
+=delete-process= 可以通过给进程发送一个 =SIGKIL= 信号来删除进程,它接收一个参数,可以是进程对象/进程名字,{{{buffer}}}对象/{{{buffer}}}名字,{{{buffer}}}对象以及{{{buffer}}}名字表示 =get-buffer-process= 返回的进程.
+
+对一个运行中的进程调用 =delete-process= 会中止该进程,更新该进程的状态以及马上运行该进程的哨兵,对已经结束的进程没有效果.
+
+如果正在运行的进程对象是一个网络(=network=),串口(=serial=)或者 =pipe= 连接,那么它的状态就变成 =closed=,否则是 =singal=.
+
+
+
 *** 命令循环 (Command Loop)
 
 **** 命令概览 (Command Overview)
