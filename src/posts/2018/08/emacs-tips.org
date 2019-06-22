@@ -799,7 +799,7 @@ see any project of blog, vice versa."
 
 #+BEGIN_SRC elisp
 (defun fn-example (arg)
-  "This is an examnple only to show the indetation of 
+  "This is an examnple only to show the indetation of
 the documentation string."
   )
 #+END_SRC
@@ -808,7 +808,7 @@ the documentation string."
 
 #+BEGIN_SRC elisp
 (defun fn-example (arg)
-  "This is an examnple only to show the indetation of 
+  "This is an examnple only to show the indetation of
    the documentation string."
   )
 #+END_SRC
@@ -3107,7 +3107,7 @@ F addition-test
    在 =backtrace= {{{buffer}}}中按下 =g= 可以进行刷新.
 
 2. =s=: 给线程在当前的执行点发送信号.在 =s= 后输入 =q= 发送结束(quit)的信号或者 =e= 发送错误(error)的信号.
-   
+
    线程可以实现对信号的处理,否则默认行为是结束线程.使用这个命令的是后必须先要理解如何重启目标线程,因为 =Emacs session= 会因为重要线程被杀而表现不正常.
 
 3. =g=: 更新线程列表.
@@ -3370,14 +3370,117 @@ F addition-test
 
 ***** 进程关联的{{{buffer}}} (Processes Buffers)
 
+一个进程可以有一个关联的{{{buffer}}},是一个普通的{{{buffer}}},有两个目的:储存进程输出和决定杀掉进程的时机.
+
+可以根据{{{buffer}}}来识别它所关连的进程,因为在实际情况中,一般一个进程关联一个{{{buffer}}},大部份进程也会用{{{buffer}}}来编辑发送给进程的输入.
+
+默认情况下,程序输出会被插入到关联的{{{buffer}}}中,当然可以通过自定义的过滤函数来改变这一行为.输出插入的位置由 =process-mark= 决定,在插入文本后,
+
+=process-mark= 会更新为文本的最后一个点,正常情况下 =process-mark= 就是在{{{buffer}}}的结尾.
+
+杀掉程序关联的{{{buffer}}}也会杀掉进程本身,如果进程的 =process-query-on-exit-flag= 属性是 =non-nil=, =Emacs= 会先征求用户的确认.
+
+征求确认的这个行为是通过 =process-kill-buffer-query-function= 来完成的,而它又是从 =kill-buffer-query-functions= 中运行的.
+
+具体 =API= 就自己看了.
+
+
 ***** 进程过滤函数 (Filter Functions)
+
+一个进程过滤函数就是一个从关联进程接收标准输出的函数.进程的所有输出都会被传入到过滤函数中,默认的过滤函只是把进程输出直接插入到关联的{{{buffer}}}中.
+
+默认情况下,进程的错误输出也会被传入到过滤函数中,除非在创建进程的时候分开了标准输出流和标准错误流.
+
+过滤函数只有在 =Emacs= 等待某些事情的时候被调用,因为进程的输出只会在这种情况下到达.具体上面的导读有写,就不再重复了.
+
+一个过滤函数一定要接收两个参数: 关联的进程和一个字符串,这个字符串表示进程的输出,这个函数可以对输出做任何事情.
+
+一般情况下,会在过滤函数执行期间禁止中止(quitting)的,否则在命令层面上输入 =C-g= 或者停止一个用户命令会发生意想不到的情况.
+
+如果想要允许这一行为,可以把 =inhibit-quit= 设置为 =nil=,大部份情况下正确做法应该是使用 =with-local-quit= 宏.
+
+如果在过滤函数执行的期间发生错误,错误会被自动捕捉,所以错误不会停止进程的执行,但是如果设置了 =debug-on-error= 为 =non-nil=,错误就不会被捕捉.
+
+这样可以方便使用 =Lisp= 调试器进行调试.
+
+很多过滤函数有时候会模仿默认过滤器的行为那样插入输出到进程关联的{{{buffer}}}中.这种过滤函数需要确保在插入前保存了当前{{{buffer}}},
+
+以及选择正确的{{{buffer}}},插入后回复原来的{{{buffer}}},除了这些外,还应该检查{{{buffer}}}是否存活,更新 =process-marker=,在某下情况下还需要更新点的值.
+
+正确做法应该是这样:
+
+#+BEGIN_SRC elisp
+(defun ordinary-insertion-filter (proc string)
+  (when (buffer-live-p (process-buffer proc))
+    (with-current-buffer (process-buffer proc)
+      (let ((moving (= (point) (process-mark proc))))
+        (save-excursion
+          ;; Insert the text, advancing the process marker.
+          (goto-char (process-mark proc))
+          (insert string)
+          (set-marker (process-mark proc) (point)))
+        (if moving (goto-char (process-mark proc)))))))
+#+END_SRC
+
+如果想在新文本到达的时候显示进程的{{{buffer}}},可以在 =with-current-buffer= 前插入 =(display-buffer (process-buffer proc))=.
+
+还有最后一个表达式的判断并非必须的,可以去掉判断强迫点在{{{buffer}}}的尾部,默认的过滤函数使用 =insert-before-markers= 移动所有 =markers=,
+
+包括{{{window}}}的点,因为这可能会移动不相关的 =markers=,所以一般最好只移动{{{window}}}的点,有或者设置插入点的类型为 =t=.
+
+当执行过滤函数的时候, =Emacs= 会自动保存以及恢复匹配数据(match data).
+
+过滤函数接收到的进程输出会有任何不同大小,比如一个程序可能一行内会两次产生相同的输出,然后一次性发送一批 (a batch) =200= 个字符的文本,接下来再发送5批40个字符的文本.
+
+如果过滤函数在子进程的输出查找特定的文本,那么需要注意文本可能会被分开到不同的批次的输出的情况,方法就是把接收的文本插入到一个临时的{{{buffer}}}中以供搜索.
+
+=set-process-filter= 和 =process-filter= 分别给进程设置过滤函数和获取进程的过滤函数.
+
+
 
 ***** 解码进程输出 (Decoding Output)
 
+当 =Emacs= 直接把输出写入多字节(=multibyte=){{{buffer}}}中,它就会根据进程的输出编码系统(coding system)来解码.
+
+如果编码系统是 =raw-text= 或者是 =no-conversion=, =Emacs= 会使用 =string-to-multibyte= 把统一字节(=unibyte=)输出转换成 =multibyte=,并且插入处理得到后的 =multibyte= 文本.
+
+可以使用 =set-process-coding-system= 来指定进程使用的编码系统,否则,如果 =coding-system-for-read= 是 =non-nil=,
+
+那么就会使用 =coding-system-for-read= 指定的编码系统;或者是默认的编码系统.
+
+如果进程输出的文本包含空字节(=null byte=), =Emacs= 默认会使用 =no-conversion= 做为编码系统.
+
+最好不要使用哪种类似于 =undecided= 这种根据数据判断编码系统的编码系统,因为对于异步子进程的输出不完全可靠.
+
+因为 =Emacs= 必须分批次处理异步子进程的输出, =Emacs= 必须尝试检查出每个批次的正确编码系统,但是这并非百分百成功.
+
+所以,最好自己指定一个编码系统,比如 =latin-1-unix=,不要 =undecided= 或者 =latin-1=.
+
+在 =Emacs= 调用一个进程过滤函数时, =Emacs= 会根据进程的过滤编码系统(=filter coding system=)给过滤函数提供一个多字节字符串或者统一字符串的进程输出.
+
+=Emacs= 会根据进程输出的编码系统来解码输出,这个编码系统通常会产生一个多字节字符串,除了像 =binary= 和 =raw-text= 这样的编码系统.
+
+
+
+
 ***** 接收进程输出 (Accepting Output)
+
+主要是关于 =accept-process-output= 的用法.
+
 
 ***** 进程和线程 (Processes and Threads)
 
+=Emacs= 的线程是相对于进程后面才得到支持的,由于动态绑定有时候会和 =accept-process-output= 同时被使用,
+
+默认情况下,一个进程会被锁定到(be locked to)那个创建了该进程的线程上,进程的输出只能被该线程接收.
+
+一个 =Lisp= 程序可以指定进程被锁定到哪个线程上,或者让 =Emacs= 解锁一个进程,一旦被解锁,进程的输出就可以给任何线程处理.
+
+一个时间内只可以有一个线程等待指定进程的输出,一旦进程开始等待输出, =Emacs= 就临时锁定进程直到 =accept-process-output= 或者 =sit-for= 返回.
+
+如果线程结束,所有被锁定到该线程的进程都会被解锁.
+
+=process-thread= 返回锁定进程的线程,如果进程已经被解锁就返回 =nil=; =set-process-thread= 把进程锁定到线程上.
 
 
 **** 哨兵:检测进程状态的改变 (Sentinels)
