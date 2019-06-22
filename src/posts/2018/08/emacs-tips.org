@@ -3222,7 +3222,7 @@ F addition-test
 
 异步进程是由 =pty (pseudo-terminal)= 或者 =pipe= 来控制的,选择 =pty= 或者 =pipe= 是在创建进程的时候就决定的了,默认是根据 =process-connection-type= 的值来决定.
 
-一般 =pty= 对于用户来说是最好的选择,这个是对应于 =Shell= 模式,它支持进程和它的子进程之间的进程控制(=job control=)操作,比如 =C-c=, =C-z= 等等,
+一般 =pty= 对于用户来说是最好的选择,这个是对应于 =Shell= 模式,它支持进程和它的子进程之间的作业控制(=job control=)操作,比如 =C-c=, =C-z= 等等,
 
 因为交互形的程序会把 =pty= 看做终端设备(=terminal device=). =pipe= 是不支持这些特性的,但如果进程是用于 =Lisp= 程序内部,那么 =pipe= 就是最好的选择，因为 =pipe= 更加高效,
 
@@ -3305,7 +3305,68 @@ F addition-test
 
 **** 给进程发送信号 (Signals to Processes)
 
+给子进程发送信号是阻止子进程活动的一种方法.有几种不同的信号,不同的信号有不同的效果,信号是由操作系统定义的.
+
+比如 =SIGINT= 意味着 =interrupting=,也就是中断子进程,相当于输入 =C-c= 或者类似的操作.
+
+大部份信号会杀掉进程,也有一些停止或者重启进程的执行,大部份信号可以被程序可选地处理,如果程序处理了信号,那么就不能知道信号的标准效果了.
+
+(if the program handles the signal, then we can say nothing in general about its effects.)
+
+在 =Emacs= 中,给子进程发送信号分显式和隐式, =Emacs= 会自动在特定时间里面发送信号,比如会在杀掉{{{buffer}}}的时候给所有关联的进程发送 =SIGHUP= 信号;
+
+杀掉 =Emacs= 会给所有 =Emacs= 的子进程发送 =SIGHUP= 信号;这些都是隐式的方式.而显式的方式就是调用 =Emacs Lisp= 提供的 =API= 来手动杀死进程.
+
+=Emacs Lisp= 的每一个信号发送功能都接收两个可选的参数: =PROCESS= 和 =CURRENT-GROUP=.
+
+=PROCESS= 一定要是个进程对象,或者{{{buffer}}}对象,或者{{{buffer}}}名字,又或者 =nil=,当是一个{{{buffer}}}对象或者是{{{buffer}}}名字的时候,
+
+会自动通过 =get-buffer-process= 获取进程. =nil= 表示当前{{{buffer}}}的进程.除了(except with) =stop-process= 和 =continue-process= 外,在进程不存活,或者进程是一个链接的情况下调用这些函数会引发错误.
+
+
+=CURRENT-GROUP= 只有在运行一个作业控制(job-control)的 =shell= 作为 =Emacs= 子进程的情况下才会有区别. (类似线程组,建议先了解以下进程组的概念).
+
+如果 =CURRENT-GROUP= 是 =non-nil=,那么信号就会被发送到 =Emacs= 与子进程通信的终端的当前进程组,当子进程是一个作业控制 =shell= 时候,该参数就表示 =shell= 当前 =subjob=.
+
+如果 =CURRENT-GROUP= 是 =nil=,信号会被发送到 =Emacs= 的中间子进程的进程组,如果子进程是一个作业控制的 =shell=,那么这个参数表示 =shell= 本身.
+
+如果 =CURRENT-GROUP= 是 =lambda=,那么信号会被发送到拥有终端的进程组上,但是该参数不是 =shell= 本身.
+
+=APIs= 就自己阅读了,要注意的是,这些 =APIs= 都是只是针对本地的异步进程的,如果要用  =interrupt-process= 中断非本地进程,那么就需要接合 =interrupt-process-functions= 来实现自己的 =interrupt-process=.
+
+=interrupt-process-functions= 是一个函数列表,而 =interrupt-process= 会按照这个列表的顺序调用列表里面每个的函数,直到其中一个函数返回 =non-nil=,这些函数接收的参数和 =interrupt-process= 的一样.
+
+默认函数 =internal-default-interrupt-process= 需要放在列表的最后一位.现实中 =Tramp= 就是这么实现 =interrupt-process= 的方式.
+
+
+
+
+
 **** 接收进程的输出 (Output from Processes)
+
+异步子进程的输出在写入标准输出流之前会先通过一个叫做过滤函数(=filter function=)的函数.每个异步子进程都有一个默认过滤函数,其行为就是简单地插入输出到{{{buffer}}}中,
+
+该{{{buffer}}}就是进程关联的{{{bufer}}}.如果进程没有关联{{{buffer}}},那么默认的过滤函数就会丢弃输出.
+
+如果子进程写入标准错误流,默认的错误输出也会先通过进程的过滤函数.
+
+如果 =Emacs= 使用 =pty (pesudo-TTY)= 与子进程进行通信,那么就不可能分开标准输出流和标准错误流,因为 =pty= 只有一个输出通道,如果不想占用这些输出流,那么就把输出重定向到文件中.
+
+=make-process= 的 =:stderr= 参数可以通过设置为 =non-nil= 来把错误输出和标准错误分开,这种情况下, =Emacs= 会使用 =pipes= 和子进程通信.
+
+在子进程结束的时候, =Emacs= 会读取所有等待中的输出(=pending output=),然后停止读取子进程的输出.因此,如果有子进程有还存活的子进程,那么 =Emacs= 不会接收它们的输出.
+
+只有在 =Emacs= 等待的时候子进程的输出才能到达,等待的情况有以下几种:在读取终端输入时候;在调用 =sit-for= 或者 =sleep-for= 的时候以及在调用 =accept-process-output= 的时候.
+
+这最小化了困扰(plague)并行编程的掌握错误时机的问题(problem of timing errors).
+
+比如,你可以安全的创建一个进程并且指定{{{buffer}}}或者过滤函数;如果期间代码没有调用任何执行等待操作的原函数,没有任何输出在你操作结束前到达.
+
+
+在一些操作系统上, =Emacs= 只能每次读取子进程输出很小的一部分数据,这会造成严重的性能问题,针对这个问题可以通过设置 =process-adaptive-read-buffering= 为 =non-nil=,
+
+以此来自动延迟读取,这样就可以让进程产生更多输出后才让 =Emacs= 读取.
+
 
 ***** 进程关联的{{{buffer}}} (Processes Buffers)
 
