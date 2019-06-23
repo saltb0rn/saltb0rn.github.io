@@ -3569,7 +3569,6 @@ F addition-test
 
 3. =g=: 更新线程列表.
 
-
 *** 进程 (Processes)
 
 在操作系统的术语中,一个进程就是一个能够让程序运行的地方. =Emacs= 在进程内运行, =Emacs Lisp= 能够调用其它程序的进程,让它们在自己的进程内运行,
@@ -4161,9 +4160,126 @@ F addition-test
 
 **** 网络链接 (Network)
 
+=Emacs= 可以打开连接同一台机器或者不是同一台机器上的其它进程的流(=TCP=)和数据报(=datagram=)(=UDP=)网络链接. =Emacs= 把网络链接当作一个子进程来处理,
+
+并且在 =Emacs= 中网络链接就是进程对象.但是和其它真正的进程不一样,它不是 =Emacs= 的子进程,所以它没有进程 =ID=,不能杀掉它也不能给它发信号.
+
+能够做的就只有发送和接收数据. =delete-process= 会关闭链接,但是不会杀掉通信端的另外一头的程序.
+
+=Lisp= 程序可以创建网络服务器来监听链接.网络服务器也是一种进程对象,但是和网络链接不一样,它并不会自己传输数据,当接收到连接请求的时候,网络服务器会创建一个新的网络链接,
+
+这个新的网络链接会从网络服务继承一些信息,包括进程的属性列表,然后网络服务器回去监听更多的请求.
+
+=make-network-process= 可以创建网络链接和网络服务器,接收关键字参数,参数 =:server= 为 =t= 的时候表示创建网络服务器进程, =:type= 为 =datagram= 表示创建数据报链接.
+
+进程是有类型之分的,可以通过 =process-type= 函数来获取进程类型,网络链接或者网络服务器的会返回 =network= 的 =symbol=,
+
+串口(=serial port=)链接的就是 =serial=, 管道(=pipe=)链接的就是 =pipe=, 真正的子进程是 =real=.
+
+对于网络链接, =process-status= 可以返回 =open, closed, connect, stop or failed= 的其中之一,对于网络服务器,必定是返回 =listen=.
+
+除了 =stop=,上面的每一个状态对于真正的子进程是不可能的.
+
+可以利用 =stop-process= 和 =continue-process= 来停止和恢复网络链接,对于一个网络服务器来说,停止意味着不接受新的链接,当恢复网络服务器的时候,
+
+最多可能有 =5= 个网络请求被添加到队列中,这个数值可以被增加,除非操作系统不允许,具体看 =make-network-process= 的 =:server= 关键字参数.
+
+对于一个流链接来说,停止意味着不处理输入,所有到达的输入都会等待直到恢复了链接;对于一个数据报链接来说,一些数据包会被添加到队列中,但是输入会被丢弃.
+
+可以用 =process-command= 来判断网络链接或者网络服务器是否停止了, =non-nil= 意味着停止,比如以下例子.
+
+#+BEGIN_SRC elisp
+(make-network-process :name "echo-server" :server t :buffer " *echo-server*" :service 10000)
+(stop-process (get-process "echo-server"))
+;; (continue-process (get-process "echo-server"))
+(process-command (get-process "echo-server"))
+#+END_SRC
+
+
+还有 =Emacs= 能够创建加密的网络链接,可以使用内置或外部的支持.内置支持是使用 =GnuTLS Transport Layer Security Library=,
+
+可以通过 =gnutls-available-p= 检查 =Emacs= 是否编译了 =GnuTLS= 支持;外部支持就是是用 =starttls.el= 库,这个要求系统安装了 =gnutls-cli= 这样的功能,而 =open-network-stream= 可以帮助你处理创建加密链接的细节.
 
 
 
+**** 网络服务器 (Network Servers)
+
+主要是关于 =make-network-process= 的一些介绍,就不详细写了.
+
+
+**** 数据报 (Datagrams)
+
+数据报链接是通过独立的数据包(packets)而不是数据流来通信的.调用一次 =process-send= 会发送一个数据包,并且每接收一个数据包都会调用一次过滤函数.
+
+数据报链接不需要每时每刻都要连接上远程节点,它有一个远程节点地址来指定数据包发送到哪里去,每当接收一个数据包并且传入到过滤函数的时候,节点地址就会被设置为该发送该数据包的节点的地址,
+
+所以如果过滤函数要发送一个数据包,那么就会回到那个地址上,可以在创建数据报链接的时候通过 =:remote= 关键字设置远程节点的地址.
+
+=process-datagram-address= 获取链接的远程节点地址, =set-process-datagram-address= 可以设置链接的远程节点地址.
+
+
+**** 底层网络访问 (Low-Level Network)
+
+=make-network-process= 就是 =Emacs= 用来创建网络链接的原函数,本章节的重点.
+
+
+***** 网络进程 (Network Processes)
+
+主要是 =make-network-process= 的文本,就不详细写了.
+
+***** 网络选项 (Network Options)
+
+主要是网络链接进程对象的选项,可以在创建网络链接后通过 =set-network-process-option= 设置.就不详细说了.
+
+***** 网络特性测试 (Network Feature Testing)
+
+测试 =Emacs= 是否支持某些网络特性,总体用法是这样,
+
+#+BEGIN_SRC elisp
+(featurep 'make-network-process '(KEYWORD VALUE))
+#+END_SRC
+
+比如要测试是否支持非阻塞连接,可以这样,
+
+#+BEGIN_SRC elisp
+(featurep 'make-network-process '(:nowait t))
+#+END_SRC
+
+
+**** 网络杂项 (Misc Network)
+
+=network-interface-list= 获取机器上的网络接口列表,是一个 =alist=,每个元素都是 =(NAME . ADDRESS)= 的形式.
+
+=network-interface-info= 根据网络接口名字获取网络接口的信息,格式如 =(ADDR BCAST NETMASK HWADDR FLAGS)=,分别是 =IPv4= 地址,
+
+广播地址,网络掩码,硬件地址和当前网络接口的 =flags= 列表.
+
+=format-network-address= 把网络地址的 =Lisp= 表示转化成一个字符串,一个五个元素的向量 =[A B C D P]= 表示一个 =IPv4= 地址 =A.B.C.D=, =P= 是端口号.
+
+一个九个元素的向量 =[A B C D E F G H P]= 表示一个端口号为 =P= 的 =IPv6= =A:B:C:D:E:F:G:H= 地址.
+
+这些函数并不是所有系统都适用的.
+
+
+
+**** 串口 (Serial Ports)
+
+=Emacs= 可以和串口通信, =serial-term= 可以打开一个为使用串口的终端,如果是编写 =Lisp= 程序,可以使用 =make-serial-process= 创建一个串口进程对象.
+
+串口的配置可以在运行时完成,不需要关闭以及重新打开, =serial-process-configure= 可以让你改变速度,字节大小,和其它参数.
+
+和网络链接进程一样,串口进程也是没有进程 =ID=,也不能给它发送信号,以及状态信息也是和其它类型的进程不一样.
+
+=delete-process= 和 =kill-buffer= 可以关闭链接,但是不会对连接到该串口上的设备产生影响.
+
+
+**** 字节打包 (Byte Packing)
+
+这个章节主要是关于如何打包和解包字节数组,通常都是为了二进制传输协议才这么做. =Emacs= 提供了一些函数把字节数组转化成 =alist= 或者反过来.
+
+字节数组可以是一个统一字节字符串(=unibyte string=)或者是一个整数向量,而 =alist= 则是 =symbol= 关联固定大小的对象或者是一个 =alist=.
+
+这些函数都是来自于 =bindat= 库.字节数组到 =alist= 的转化也被叫做反序列化(=deserializing=)或者解包(=unpacking=),而反过来叫做序列化(=serializing=)或者打包(=packing=).
 
 
 *** 按键映射 (Keymaps)
