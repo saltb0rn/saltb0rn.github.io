@@ -2918,11 +2918,13 @@ F addition-test
 
 *** 线程 (Threads)
 
-=Emacs Lisp= 提供有限的并发机制-线程的支持, =Emacs Lisp= 的线程模型基本上是协同线程模型(most cooperative),也就是只有在规定的时间(well-defined time)切换线程的执行(switch execution).
+=Emacs Lisp= 提供有限的并发机制-线程的支持, =Emacs Lisp= 的线程模型基本上是协作式(most cooperative, or non-preemetive)线程模型,也就是只有在规定的时间(well-defined time)切换线程的执行(switch execution),
 
-然而, =Emacs= 的线程支持已经被设计成方便以后支持更加细粒度(fine-grained)的并发,让程序不再依赖与协同线程.
+而线程的切换/调度是由线程们自身决定的,和由操作系统调度的抢占式(preemetive)线程模型不同,协作式线程容易因为其中一个线程不让出 =CPU= 而导致其它线程没有占用 =CPU= 的机会;而抢占式线程模型不会发生这种情况,线程可以主动让出 =CPU=,
 
-协同线程也叫做 =Non-preemptive threads=,与之相反的有 =preemtive threads=, [[https://stackoverflow.com/questions/4147221/preemptive-threads-vs-non-preemptive-threads][关于两者介绍以及区别]]可以在这里看看.
+但如果有其中一个不让出 =CPU=,操作系统就会规定的执行时间后强迫线程让出 =CPU=.
+
+然而, =Emacs= 的线程支持已经被设计成方便以后支持更加细粒度(fine-grained)的并发,让程序不再依赖与协作式线程.
 
 目前,线程切换会出现在通过 =thread-yield= 发送的请求时候;或者在等到键盘输入/异步进程的输出的时候;又或者是于线程相关的阻塞操作时候,比如 =mutex locking= 或 =thread-join=.
 
@@ -3007,7 +3009,6 @@ F addition-test
   当线程执行的代码发送了一个错误信号并且没被处理,那么线程结束.其他线程可以通过这个函数来访问造成线程错误的原因.
 
   只要有线程发生错误,结果就会被重写.
-
 
 **** 互斥锁 (Mutexes)
 
