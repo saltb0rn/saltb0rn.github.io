@@ -354,7 +354,9 @@ see any project of blog, vice versa."
 
 =Emacs Lisp= 的数据类型分为两类, =Primitive types= (或者叫 =Programming Types=) 和 =Editing Types= .
 
-前者就是大部份 =Lisp= 实现都有的数据类型,后者是 =Emacs Lisp= 特有的数据类型,用于处理编辑器.
+前者就是大部份 =Lisp= 实现都有的数据类型,和语言本身有关,后者是 =Emacs Lisp= 特有的数据类型,用于处理编辑器;
+
+=Editing Types= 可以理解为 =Emacs= 提供编辑器接口,而 =Primitive Types= 是语言本身的值.
 
 **** 打印显示和读取语法
 
@@ -470,9 +472,9 @@ see any project of blog, vice versa."
 
     当{{{finalizer}}}对象在 =GC= 后不可到达,=Emacs= 就会调用它关联的函数对象来清理它自己.
 
-    当断定一个{{{finalizer}}}是否可以到达,=Emacs= 是不会计算{{{finalizer}}}对象的引用,
+    当断定一个{{{finalizer}}}是否可以到达,=Emacs= 是不会计算{{{finalizer}}}对象的引用,完全不用担心会意外捕获到{{{finalizer}}}对象的引用.
 
-    这允许你在不同担心意外捕获被清理对象的情况下使用{{{finalizer}}}.
+
 
 - =Editing Types=
 
@@ -566,6 +568,46 @@ see any project of blog, vice versa."
 
 
 *** Records (Records)
+
+=Record= 允许用户定义 =Emacs Lisp= 没有的数据类型,底层实际是用 =cl-defstruct= 和 =defclass= 定义的实例作为表示.
+
+从内部实现来讲,一个 =record= 对象更像是一个向量,可以是用 =aref= 来访问它的槽位(=slots=),以及能够使用 =copy-sequence= 进行复制.
+
+在当前的实现中, =record= 对象最多自由 =4096= 个槽位,而向量(=vector=)可以有更多, =records= 和数组(=arrays=)一样是用 =0= 做为第一个索引的 (=zero-origin indexing=).
+
+=record= 的第一个槽位是用来存放类型的,叫做类型槽(type slot),不是叫做 =slot one= (索引为 =1= 的槽位才是),类型槽位的值可以通过 =(type-of RECORD)= 这种方式获取.
+
+而类型槽存放的值有两种,类型名字的 =symbol= 以及类型描述符(=type descriptor=),类型描述符也是一个 =record= 对象,特别之处在于这个 =record= 对象的 =slot one= 存放的类型名字的 =symbol=,这个值同样也是可以通过 =type-of= 获取
+
+
+#+BEGIN_SRC elisp
+(setq si (make-record 'salt 5 'x))
+
+(type-of si)                            ; => 'salt
+
+(setq sii (make-record si 5 'z))
+
+(setf (aref si 1) 'saltII)
+
+(type-of sii)                           ; => 'saltII
+#+END_SRC
+
+=record= 的打印是一个以 =#s= 开头的 =list=: =#s(elm1 elm2 ... elmn)=. =record= 对象被认为是一个常数,所以它符合自运算的条件.
+
+**** Record 函数 (Record Functions)
+
+=recordp= 判断对象是否 =record= 对象; =record= 和 =make-record= 创建并且返回 =record= 对象.
+
+
+**** 向后兼容 (Backward Compatibility)
+
+老版本的代码都是用 =cl-defstruct= 而不是用 =record=,如果这些代码在新版本的 =Emacs= 上使用可能会引发一些问题.
+
+=Emacs= 会在检测到老版本的 =cl-defstruct= 的调用时候启用一个模式,这个模式下 =type-of= 会像是处理 =record= 对象那样处理一个老版本的 =struct= 对象.
+
+=(cl-old-struct-compat-mode t)= 就可以启用这个模式.
+
+
 *** 哈习表 (Hash Tables)
 *** 符号 (Symbols)
 
