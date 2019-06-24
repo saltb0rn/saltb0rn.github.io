@@ -4281,6 +4281,141 @@ F addition-test
 
 这些函数都是来自于 =bindat= 库.字节数组到 =alist= 的转化也被叫做反序列化(=deserializing=)或者解包(=unpacking=),而反过来叫做序列化(=serializing=)或者打包(=packing=).
 
+***** Bindat 规范 (Bindat Spec)
+
+在打包或者解包数据前需要制订一个数据布局规范(=data layout specification=),就是一个嵌套列表,描述有名字以及类型的字段.
+
+该规范控制的字段被处理的长度以及打包和解包的方式.一般这个规范的变量的名字都是 =-bindat-spec= 结尾,这种名字的变量会自动被 =Emacs= 识别为有风险.
+
+字段的类型描述了字段表示的对象的大小(byte为单位),还有在字段表示多字节的时候字节是如何排序的.只有两种排序, =big endian= (大端,高位优先)和 =litte endian= (小端,低位优先),
+
+=big endian= 也叫网络字节顺序 (=network byte ordering=).比如 =#x23cd= 有 =#x23= 和 =#xcd= 两个字节, =big endian= 排序就是 =#x23 #xcd=, =little endian= 就是 =#xcd #x23=.
+
+类型的值参考就自己看文档了.
+
+
+
+***** Bindat Functions
+
+=Bindat= 库的 =APIs=,自己阅读.
+
+
+***** Bindat Examples
+
+前两章节介绍了概念以及一些 =APIs=,这章节就有完整例子.
+
+打包:
+
+#+BEGIN_SRC elisp
+(bindat-pack
+ '((numberA u16)
+   (numberB u16))
+ '((numberA . #x83aa)
+   (numberB . #x7e80))) ; => "\203\252~\200"
+#+END_SRC
+
+
+
+解包:
+
+#+BEGIN_SRC C
+struct header {
+    unsigned long    dest_ip;
+    unsigned long    src_ip;
+    unsigned short   dest_port;
+    unsigned short   src_port;
+};
+
+struct data {
+    unsigned char    type;
+    unsigned char    opcode;
+    unsigned short   length;  /* in network byte order  */
+    unsigned char    id[8];   /* null-terminated string  */
+    unsigned char    data[/* (length + 3) & ~3 */];
+};
+
+struct packet {
+    struct header    header;
+    unsigned long    counters[2];  /* in little endian order  */
+    unsigned char    items;
+    unsigned char    filler[3];
+    struct data      item[/* items */];
+};
+#+END_SRC
+
+对应 =Bindat= 规范就是
+
+#+BEGIN_SRC elisp
+(setq header-spec
+      '((dest-ip   ip)
+        (src-ip    ip)
+        (dest-port u16)
+        (src-port  u16)))
+
+(setq data-spec
+      '((type      u8)
+        (opcode    u8)
+        (length    u16)  ; network byte order
+        (id        strz 8)
+        (data      vec (length))
+        (align     4)))
+
+(setq packet-spec
+      '((header    struct header-spec)
+        (counters  vec 2 u32r)   ; little endian order
+        (items     u8)
+        (fill      3)
+        (item      repeat (items)
+                   (struct data-spec))))
+#+END_SRC
+
+假设有一个如下的二进制数据,
+
+#+BEGIN_SRC elisp
+(setq binary-data
+      [ 192 168 1 100 192 168 1 101 01 28 21 32
+            160 134 1 0 5 1 0 0 2 0 0 0
+            2 3 0 5 ?A ?B ?C ?D ?E ?F 0 0 1 2 3 4 5 0 0 0
+            1 4 0 7 ?B ?C ?D ?E ?F ?G 0 0 6 7 8 9 10 11 12 0 ])
+#+END_SRC
+
+解码成对应的结构是,
+
+#+BEGIN_SRC elisp
+((item
+  ((data .
+         [1 2 3 4 5])
+   (id . "ABCDEF")
+   (length . 5)
+   (opcode . 3)
+   (type . 2))
+  ((data .
+         [6 7 8 9 10 11 12])
+   (id . "BCDEFG")
+   (length . 7)
+   (opcode . 4)
+   (type . 1)))
+ (items . 2)
+ (counters .
+           [100000 261])
+ (header
+  (src-port . 5408)
+  (dest-port . 284)
+  (src-ip .
+          [192 168 1 101])
+  (dest-ip .
+           [192 168 1 100])))
+#+END_SRC
+
+利用 =bindat-get-filed= 获取字段的值,
+
+#+BEGIN_SRC elisp
+(bindat-get-field decoded 'item 1 'id); => "BCDEFG"
+#+END_SRC
+
+
+
+
 
 *** 按键映射 (Keymaps)
 
