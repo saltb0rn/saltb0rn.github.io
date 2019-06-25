@@ -751,6 +751,51 @@ see any project of blog, vice versa."
 
 
 *** 运算 (Evaluation)
+
+**** 运算简介 (Intro Eval)
+
+ =Lisp= 解释器(=Lisp interpreter=),或者说求值程序(=evaluator=)是 =Emacs= 的一部分,负责计算表达式的值.当调用一个 =Lisp= 函数时,
+
+求值程序会通过计算函数里表达式的值作为函数的值,因此运算 =Lisp= 程序就意味着运行 =Lisp= 解释器.
+
+一个用于运算的 =Lisp= 对象被叫做 =form= 或者表达式(=expression,在Lisp中也可以用S-expression或者sexp的叫法=), =form= 是数据对象,不仅仅是一个文本,这是 =Lisp= 语言和其他常规编程语言最基本的区别.
+
+任何对象都可以被运算,实际常用的有 =number=, =symbol= =list= 和 =string=.
+
+读取(=reading=)一个 =Lisp form= 然后运算这个 =form=,读取和运算是两个独立的活动.读取不会运算任何东西,只是把 =Lisp= 对象的打印表示(=printed representation=)转成对象本身.
+
+运算则是一个递归过程,运算一个 =form= 通常都是每次只是运算 =form= 的一部分,比如 =(car (cdr x))=:
+
+=Emacs= 首先计算 =(cdr x)= 的值,在计算 =(cdr x)= 的时候先计算 =x= 的值,然后执行函数 =cdr= 得出结果,这里我们给它个名字 =res1=;最后就运算 =(car res1)=,按照前面的步骤得出最终结果.
+
+运算发生在一个叫做环境(=environment=)的上下文中,由所有 =Lisp= 变量当前的值和绑定(bindings)组成.当 =form= 引用了一个变量,变量就会运算得到由当前环境为该变量提供的值,除非环境没有这个变量的绑定.
+
+当然运算一个绑定变量的 =form= 可能会临时改变环境的.运算 =form= 的过程中可能会导致一些持久性的改变,这些改变叫做副作用(=side effects=),比如 =(setq foo 1)= 就是改变的内存上的地址.
+
+
+**** Forms
+
+=Form= 分类型,不同种类的 =form= 的运算方式不一样,分三种: =list=, =symbol= 和其它类型.
+
+
+***** 自运算form (Self-Evaluating Forms)
+
+自运算 =form= 就是 =list= 和 =symbol= 之外的 =form=,它们的运算结果是它们自己,比如 =number=, =string= 和 =vector= 对象运算结果就是它们自己.
+
+这种 =form= 可以直接写下来,这是很常见的事情,但是对于那些没有读取语法(read syntax)的类型就不怎么常见了,不过还是可以做得到的,比如,
+
+#+BEGIN_SRC elisp
+;; Build an expression containing a buffer object.
+(setq print-exp (list 'print (current-buffer)))
+;; ⇒ (print #<buffer eval.texi>)
+;; Evaluate it.
+(eval print-exp)
+;; ⊣ #<buffer eval.texi>
+;; ⇒ #<buffer eval.texi>
+#+END_SRC
+
+
+
 *** 控制结构 (Control Structures)
 
 
