@@ -766,7 +766,9 @@ see any project of blog, vice versa."
 
 运算则是一个递归过程,运算一个 =form= 通常都是每次只是运算 =form= 的一部分,比如 =(car (cdr x))=:
 
-=Emacs= 首先计算 =(cdr x)= 的值,在计算 =(cdr x)= 的时候先计算 =x= 的值,然后执行函数 =cdr= 得出结果,这里我们给它个名字 =res1=;最后就运算 =(car res1)=,按照前面的步骤得出最终结果.
+=Emacs= 首先检查第一个元素 =car= 是函数,宏还是 =special form=, 是函数,那么计算 =(cdr x)= 的值,在计算 =(cdr x)= 的时候同样先检查 =cdr= 是什么,是函数,那么先计算 =x= 的值,然后执行函数 =cdr= 得出结果,
+
+这里我们给它个名字 =res1=;最后就运算 =(car res1)=,按照前面的步骤得出最终结果,注意, =list form= 的第一个元素(这里是 =car= 和 =cdr=)是没有会被运算的.
 
 运算发生在一个叫做环境(=environment=)的上下文中,由所有 =Lisp= 变量当前的值和绑定(bindings)组成.当 =form= 引用了一个变量,变量就会运算得到由当前环境为该变量提供的值,除非环境没有这个变量的绑定.
 
@@ -793,6 +795,18 @@ see any project of blog, vice versa."
 ;; ⊣ #<buffer eval.texi>
 ;; ⇒ #<buffer eval.texi>
 #+END_SRC
+
+=symbol= 中 =nil=, =t= 以及 =:= 开头的 =symbol= 都是比较特殊的,它们被 =Emacs Lisp= 看做常量不可改变,都属于自运算 =form=.
+
+
+***** List Forms分类 (Classifying Lists)
+
+一个非空列表有可能是一个函数调用,或者是一个 =special form=,又或者是一个宏调用, =Emacs= 是根据列表的第一个元素来判断的,其它元素则是组成参数.
+
+函数,宏以及 =special form= 三者的运算方式是不一样的.
+
+
+***** 函数的间接调用 (Function Indirection)
 
 
 
