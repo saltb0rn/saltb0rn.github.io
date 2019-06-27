@@ -808,6 +808,96 @@ see any project of blog, vice versa."
 
 ***** 函数的间接调用 (Function Indirection)
 
+如果 =list= 的第一个元素是 =symbol=,运算的第一步会检查这个 =symbol= 的 =function cell= 并使用里面的内容,如果里面的内容是另外一个 =symbol=,那么重复这个过程,直到获取到一个 =non-symbol=.
+
+这个过程叫做 =symbol= 函数的间接调用(=symbol function indirection=),这个过程有可能会是一个无限循环,一个 =symbol= 的 =function cell= 最终引用到它自己身上就会发生这种情况.
+
+正确的情况下,这个 =non-symbol= 应该是函数, =lambda= 表达式, 字节码函数(=byte-code function=), 原函数(=primitive function=),宏(macro), =special form= 和 =autoload= 对象的其中一个.
+
+不正确的情况 =Emacs= 会引发一个 =invalid-function= 错误. =fset= 和 =symbol-function= 能够分别设置和获取 =symbol= 的 =function cell=.
+
+比如这个文档的例子,
+
+#+BEGIN_SRC elisp
+;; Build this function cell linkage:
+;;   -------------       -----        -------        -------
+;;  | #<subr car> | <-- | car |  <-- | first |  <-- | erste |
+;;   -------------       -----        -------        -------
+(symbol-function 'car)
+;; ⇒ #<subr car>
+(fset 'first 'car)
+;; ⇒ car
+(fset 'erste 'first)
+;; ⇒ first
+(erste '(1 2 3))   ; Call the function referenced by ‘erste’.
+;; ⇒ 1
+#+END_SRC
+
+如果第一个元素是 =lambda= 表达式,那么就不会发生函数间接调用了.
+
+=indirect-function= 能够获取 =symbol= 的真正含意,比如上面例子的后续,
+
+#+BEGIN_SRC elisp
+(indirect-function 'erste) ; ⇒ #<subr car>
+#+END_SRC
+
+
+***** 函数Form (Function Form)
+
+如果 =list= 的第一个函数是 =function=, =byte-code function= 或者 =primitive function=,那么这个 =list= 就是一个函数调用(=function call=).
+
+=function call=. 运算的第一步是计算出除了第一个元素之外所有元素的值,也就是参数的值,每个参数都有一个值.下一步就是根据这些值来调用函数: =(apply 'FIRST-ELEMENT '(REST-ELEMENT-VALUES ...))=.
+
+函数是用 =Lisp= 写的,那么参数会被绑定到函数的参数变量上,然后按顺序运算函数体里面的 =form=,最后一个 =form= 的值就是函数调用的结果.
+
+
+
+
+
+
+***** 宏Forms (Macro Forms)
+
+如果 =list= 的第一个元素是 =macro= 对象,那么这个 =list= 就是一个宏调用 (=macro call=).宏调用的情况下, =list= 剩余的元素是不会被马上运算的.
+
+这些元素会做为宏的参数,计算的时机由宏决定.宏的定义实际是计算出一个替代 =form= (=replacement form=),这叫做宏的展开式 (=expansion of the macro=): 一个新的 =form= 用来替代原来的 =form=.
+
+调用宏叫做展开宏调用,或者叫展开宏.宏的展开式可能是以下其中一种 =form=: 一个自运算常量,一个 =symbol= 或者是一个 =list=.如果展开式本身也是一个宏调用,展开处理会一直重复直到不能计算出展开式为止.
+
+一个宏调用是以运算完展开式为结束,然而,并非一得到宏的展开式就马上进行运算,因为其它 =Lisp= 的程序也会展开宏调用,并且它们"可能"会运算展开式.
+
+通常,宏的参数不会在计算宏的展开式中进行计算,而是应该做为宏的展开式的一部分,在展开式被运算的时候一起被运算.
+
+#+BEGIN_SRC elisp
+(defmacro mcadr (x)
+  (list 'car (list 'cdr x)))
+;; or using backquote
+
+(defmacro mcadr (x)
+  `(car (cdr ,x)))
+
+
+(mcadr (cons 0 '(1 2 3))) ;; 展开式是 (car (cdr (cons 0 '(1 2 3))))
+#+END_SRC
+
+注意上面上面的展示式有 =(cons 0 '(1 2 3))=,与宏调用发生时候传入的参数是一样的,并不是被运算后的 ='(0 1 2 3)=.
+
+
+***** Special Forms (Special Forms)
+
+=Special Form= 是原函数的一种,它们的参数是不会被全部运算的.大部份 =special forms= 是用来定义控制结构或者执行变量绑定,这些都是函数不能做的.
+
+每个 =special form= 都有自己的运算规则,可以通过 =special-form-p= 来判断对象是不是 =special form=, 比如 =(special-form-p 'and)=.
+
+
+***** 自动加载 (Autoloading)
+
+自动加载特性允许调用一个定义未被加载进 =Emacs= 的函数或者宏,自动加载对象指定了包含了定义的文件,它做为一个函数定义对应的 =symbol= 出现,调用这个 =symbol= 会自动加载指定的文件,然后调用真正的函数定义.
+
+
+
+**** 引用 (Quoting)
+
+
 
 
 *** 控制结构 (Control Structures)
