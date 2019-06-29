@@ -897,6 +897,106 @@ see any project of blog, vice versa."
 
 **** 引用 (Quoting)
 
+=special form= =quote= 直接返回它未被经过运算的参数,这是 =Lisp= 给非自运算对象提供的一种免受运算的方法.
+
+一般用于 =symbols= 和 =lists= 身上,对于 =number, string, vector= 这种类型的对象就没必要使用了.
+
+因为 =quote= 很常用,所以 =Lisp= 为它提供了一种方便的读取语法(=read syntax=): ='= 撇号后面跟着一个 =Lisp= 对象,
+
+=Lisp= 会把这种形式展开成一个第一个元素为 =quote= 的 =list=,该 =list= 的第二个元素就是后面跟着的 =Lisp= 对象.
+
+所以 ='x= 就是 =(quote x)= 的缩写.
+
+其它类似的 =quoting constructs= 还有让 =lambda= 表达式被编译的 =special form= =function=,以及能够引用 =list= 任何一部分并且能够计算以及替换其他部分的 =backquote= (=`=).
+
+
+**** 反向引用 (Backquote)
+
+反向引用允许你引用一个 =list=,但能够选择性地运算该 =list= 的元素.在最简单的情况下它的作用等同于 =quote=.
+
+#+BEGIN_SRC elisp
+'(a (+ 1 2))
+`(a (+ 1 2))
+#+END_SRC
+
+反向引用支持一些特别标记符号来告诉 =Lisp= 运算器如何处理标记符号后面的参数.有两种标记符号: =,= 和 =,@=.
+
+用上面的例子来说明它们的用法.
+
+#+BEGIN_SRC elisp
+`(a ,(+ 1 2)) ; => '(a 3)
+#+END_SRC
+
+=(+ 1 2)= 被进行了运算, =,= 的作用就是告诉 =Lisp= 运算器根在它后面的对象不是一个常量,这样 =Lisp= 计算器就会运算该对象.
+
+#+BEGIN_SRC elisp
+`(a ,@'(1 2)) ; => '(a 1 2)
+`(a ,@(+ 1 2)) ; => '(a . 3)
+#+END_SRC
+
+这里有两个例子,第一个, ='(1 2)= 被去掉括号并且成为 =a= 的同级元素.
+第二个可以看出 =,@= 后面的对象也是会被运算的,并非单纯的去掉括号,并且和 =`(a ,(+ 1 2))= 的结果不一样,
+这两个例子可以用 =cons= 进行改写,
+
+#+BEGIN_SRC elisp
+(cons 'a '(1 2))  ; => '(a 1 2)
+(cons 'a (+ 1 2)) ; => '(a . 3)
+#+END_SRC
+
+
+
+**** 运算 (Eval)
+
+大部份情况下, =form= 会在 =Lisp= 程序运行中被使用的时候自动被 =Lisp= 运算器运算,在一些场景下可能需要写一些在运行时候运算的代码,
+
+在运行的时候(比如读取文本时获得 =form= ,根据情况生成 =form=,从属性列表获取 =form= 等)从某处获得了一个 =form=,需要对它进行运算,在这些场景下使用 =eval= 进行运算.
+
+通常 =eval= 并不是必须的,如果 =form= 是一个 =symbol=,那么 =symbol-value= 就更合适;除非 =form= 是一个 =function call=, 否则 =funcall= 或者 =apply= 更合适.
+
+=eval= 的用法是 =(eval FORM &optional LEXICAL)=, =FORM= 就是要在当前环境下被运算的 =form=, =LEXICAL= 指定作用域规则,默认是 =nil=,表示动态作用域, =t= 就是表示词法作用域.
+
+=LEXICAL= 也可以是一个 =lexical environment=,调试器就用了这个来调试,比如
+
+#+BEGIN_SRC elisp
+(eval '(+ a 1) '((a . 1))) ; => 2
+#+END_SRC
+
+=eval= 是一个函数, =FORM= 在 =eval= 调用前作为准备而运算一次,然后 =eval= 本身的调用运算一次,所以一个 =eval= 调用会运算 =2= 次.
+
+比如上面的例子, ='(+ a 1)= 要先运算一次得到自己,然后 =eval= 的调用本身再运算一次. =Emacs Lisp= 有最大调用数,由 =max-lisp-eval-depth= 决定.
+
+还有 =eval-region= 和 =eval-buffer= 这两个从流中读取 =form= 进行运算,还能够自定义读取用的函数,具体就不介绍了.
+
+上面说到 =max-lisp-eval-depth= 会限制函数的最大调用层数,默认是 =800=, 如果超过了这个限制,那么就会引发错误,错误信息为 =Lisp nesting exceeds max-lisp-eval-depth=.
+
+实际上,局部绑定(比如let)以及 =unwind-protect= 的嵌套层数也有限制,由 =max-specpdl-size= 限制,默认是1500,超过这个限制会引发错误,
+
+错误信息为 =Variable binding depth exceeds max-specpdl-size=.
+
+变量 =values= 是一个列表,记录了最近被读取,被运算,被 =Emacs= 命令打印到{{{buffer}}}(不包括 =*ielm*= 中运算和使用 =C-j=, =C-x C-e= 以及 =lisp-interaction-mode= 中类似命令的结果)上的表达式返回的结果.
+
+最近的运算结果排列表第一位.
+
+
+**** 延迟运算 (Deferred Eval)
+
+=Emacs Lisp= 有一个 =thunk= 库专门用来处理延迟运算.
+
+=thunk-delay= 宏接收多个 =forms= 返回一个 =thunk=,一个 =thunk= 是一个继承了 =thunk-delay= 调用时候的环境的闭包,这个宏需要启用 =lexical-binding=.
+
+=thunk-force= 强制 =thunk= 执行运算并且返回 =thunk= 里面最后一个 =form= 的结果, =thunk= 会记住自己有没有被强制执行过,如果有被强制执行过,
+
+如果以后再次调用 =thunk-force= 会在没运算的情况下直接返回上一次的运算结果.
+
+=thunk-let= 宏是 =let= 的惰性版本,每个绑定都是 =(SYMBOL VALUE-FORM)= 这种形式,只有 =SYMBOL= 第一次被使用的时候 =VALUE-FORM= 才会被运算,同样需要启用 =lexical-binding=.
+
+=thunk-let*= 是 =let*= 的惰性版本,具体就不说了,和 =thunk-let= 差不多.
+
+=thunk-let= 和 =thunk-let*= 会隐式使用 =thunks=: 它们的展开式会创建助手 =symbols= 并且绑定把这些 =symbols= 绑定到由 =value-forms= 转化成的 =thunks= 上,
+
+先把这些 =thunks= 叫做 =thunk-of-value-forms=,单个 =thunk= 叫做 =thunk-of-value-form=,
+
+所有出现在 =body forms= 的变量的引用(reference)都会在之后被 =(thunk-force  thunk-of-form)= 这种形式的表达式替换.
 
 
 
