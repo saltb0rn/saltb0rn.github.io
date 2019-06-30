@@ -1693,6 +1693,168 @@ the documentation string."
 
 
 
+**** 函数名字 (Function Names)
+
+当 =symbol= 的 =function cell= 包含了一个函数对象,它就是函数的名字,它也就是一个可调用对象.
+
+=function cell= 的内容被称为 =symbol= 的函数定义,如果 =function cell= 是另外一个 =symbol=,
+
+那么就会用另外的这个 =symbol= 的函数定义来替代原来 =symbol= 的 =function cell=,这叫做函数间接调用.
+
+实际中几乎所有函数都有名字,通常都是通过它们的名字来调用,你可以通过定义一个 =lambda= 表达式再把它放到 =function cell= 里面的方式来定义函数,
+
+当然最常见的方法就是用 =defun=. 给函数名字是因为可以通过名字来引用,特别是对于递归函数来说函数名字是必须的.
+
+还有就是原函数(=primitive function=)只能通过名字引用,因为原函数没有读取语法.
+
+函数不需要有一个唯一的名字,通常一个函数对象只会出现在一个 =symbol= 的 =function cell= 里面,
+
+实际上用 =fset= 能够把一个函数对象储存到几个 =symbols= 上,这样这几个 =symbols= 都是不同名字的同一个函数.
+
+=Emacs Lisp= 的 =symbol= 可以同时作为变量以及函数,变量和函数有不同的命名空间,这叫做 =Lisp-2=,而 =Scheme/Racket= 这种就不是,叫做 =Lisp-1=.
+
+在 =Emacs Lisp= 中,函数名字中有 =--= 分隔号的函数是用于内部使用的,而 =C= 语言实现的函数的名字一般都是以 =-internal= 结尾来表示内部使用.
+
+
+
+**** 定义函数 (Defining Functions)
+
+=Emacs Lisp= 定义函数有几种方式,
+
+- =defun= (重新)定义函数(甚至是原函数);
+- =defalias= 给函数一个别名,一般在内部它用了 =fset= 来设定函数定义,
+  如果该别名有一个 =defalias-fset-function= 属性,该属性关联的值酒会做为函数来使用,替代 =fset=.
+  =defalias= 像 =defun= 记录函数定义的位置一样来记录赋予别名的时候的位置.
+- =define-inline= 宏定义内联函数,比起同样作用的 =defsubst=, =define-inline= 可以作为 =mapcar= 的参数,
+  并且更加有效率,还能作为 =place forms= 储存值.还有一些应该用在 =define-inline= 内部的宏,具体看文档.
+
+
+
+**** 调用函数 (Calling Functions)
+
+调用(call/invocation)函数就是运行函数.调用函数分两种情况,硬编码调用以及运行时调用.
+
+硬编码调用一般就是确定和限定程序要调用什么函数以及需要多少参数,这种情况可以用 =function call= 的 =list form= 来调用函数.
+
+运行时调用就是不确定调用哪个函数以及传入多少参数,都是由运行时决定的,这种情况可以用 =funcall= 或者 =apply= 根据情况来进行调用.
+
+=funcall= 和 =apply= 的区别在于 =apply= 的最后一个参数必须是个 =list=,如果想让 =funcall= 想使用命令那样调用一个命令,那么请使用 =funcall-interactively=.
+
+有时候可能因为某些原因不想每次调用参数的时候传入相同的参数,需要固定函数的一部分参数的值,这种叫做偏函数 (=partial application=),结果是一个新的函数,
+
+如下面这个例子,
+
+#+BEGIN_SRC elisp
+(defun example (a b c)
+  (+ a b c))
+
+(defun partial-example (c)
+  (+ 1 2 c))
+#+END_SRC
+
+偏函数和柯里化(=Currying=)相似也有关,但两者不一样,而且目的也不一样,在编程语义学中,柯里化是由于 =lambda= 表达式只能接收一个参数,但想要实现接收多个参数的一种技术.
+
+这个是 =Racket= 代码,下面的例子就是一个如何利用柯里化实现一个计算两个参数的和的 =lambda= 表达式.
+
+#+BEGIN_SRC racket
+(((lambda (x)
+    (lambda (y)
+      (+ x y))) 1) 2)
+#+END_SRC
+
+=Emacs Lisp= 因为 =Lisp-2= 的原因要这么写
+
+#+BEGIN_SRC elisp
+(funcall
+ ((lambda (y)
+    (lambda (x) (+ y x)))
+  2)
+ 1)
+#+END_SRC
+
+在 =Emacs Lisp= 中有专门的 =apply-partial= 来实现偏函数.还有可以用 =call-interactively= 调用一些身为命令的函数.
+
+
+
+**** Mapping函数 (Mapping Functions)
+
+=mapping= 函数就是把一个函数依次应用到一个 =list= 或者其他集合中的每一个元素的函数.
+
+=mapcar= 把 =FUNCTION= 依次应用到 =SEQUENCE= 的每一个元素,最后按照顺序把结果收集到一个 =list= 中并且返回.
+
+=mapcan= 类似 =mapcar=,但是 =FUNCTION= 的返回结果一定要是 =list=, =mapcan= 返回的列表就是用 =nconc= 来对这些结果重新排列的结果.
+
+=mapc= 类似 =mapcar= 但是只返回 =SEQUENCE=,这个只适合用与副作用(=side-effect=).
+
+=mapconcat= 把 =FUNCTION= 依次应用到 =SEQUENCE= 的每一个元素,但是最后结果一定是一个字符序列(string/vector/list), =FUNCTION= 必须要接收一个参数并且返回一个字符序列.
+
+还有其它一些别的 =mapping= 函数,比如 =mapatoms= 就是用于 =obarray= 上的, =maphash= 就是用于 =hash table= 上.
+
+对于 =char table= 有 =map-char-table=.
+
+
+**** 匿名函数 (Anonymous Functions)
+
+匿名函数就是没有名字的函数,有三种构建匿名函数, =lambda= 宏, =function= =special form= 以及 =#'= 读取语法.
+
+=lambda= 都很熟悉,具体不说了, =function= 接收一个函数对象,在没有运算的情况下返回一个函数对象,读取语法 =#'= 就是它的简写(short-hand).
+
+当 =function= 接收的 =FUNCTION-OBJECT= 是一个合法的 =lambda= 表达式,有两种效果:
+
+- 当代码被编译的时候, =FUNCTION-OBJECT= 就会被编译成字节码函数(=byte-code function=);
+- 当启用了词法绑定, =FUNCTION-OBJECT= 会转换成一个闭包对象.
+
+如果 =FUNCTION-OBJECT= 是一个 =symbol= 并且代码被编译,那么字节编译器(=byte-compiler=)会因为函数没有被定义,或者编译器不知道定义的情况下进行警告.
+
+就个人目前使用 =Emacs= 的经历来看,后一种情况比较多.
+
+
+**** 通用函数 (Generic Functions)
+
+一般函数都是硬编码(=hard-coded=)的,也就是假定了函数的类型以及预期的参数值(预期的参数类型和数量),调用的时候只能传入特定的参数以及根据返回值类型来使用返回值.
+
+相反,面向对象程序(=object-oriented programs=)能够使用多态函数(=polymorphic functions=)解决这个问题,
+
+多态函数: 就是一个有相同名字的函数集合,每一个函数都有自己的参数类型集合,多态函数会根据运行时传入的参数类型决定调用集合里面的某个函数.
+
+=Emacs= 提供了像其他 =Lisp= 方言的多态支持,特别像 =Common Lisp= 以及它的 =Common Lisp Object System= (=CLOS=), =Emacs= 的通用函数就类似多态函数,
+
+=Emacs= 的多态支持就是模仿 =CLOS=.一个通用函数就是一个抽象,定义函数名字以及参数,通常是没有函数的实现.
+
+实际的实现会根据特定参数类型来由对应的"方法"提供,每个方法实现一个与通用函数同名的函数,但要指定它接受的参数类型,这就是专化(specializing)参数,这些参数类型叫做参数专化器(=argument specializers=).
+
+参数的专化程度可以或多或少,比如 =string= 比 =sequence= 更加特定/专有化.
+
+不像基于消息传递的面向对象的编程语言(=message-based OO languages=),比如, =C++= 和 =Simula=, =Emacs Lisp= 实现通用函数的方法不属于类,
+
+它们属于它们实现的通用函数,所以才说通用函数就是一个抽象.当调用一个通用函数的时候,它会通过比对实际传入的参数以及方法的参数专化器来选择合适的方法(applicable methods).
+
+会出现有多于1个合适方法的情况,这种情况下这些合适的方法会根据特定规则组合在一起.
+
+**** Function Cells
+
+=symbol= 的函数定义就是一个储存在 =symbol= 的 =function cell= 的函数定义.这个章节描述了如何访问 =function cell=,
+
+以及如何操作 =function cell=,包括设置 =function cell= (=fset=),判断 =symbol= 的 =function cell= 是否为 =void= (=fboundp=),以及移除 =function cell= 的内容(=fmakunbound)=.
+
+
+
+**** 闭包 (Closures)
+
+在 =Emacs= 启用了词法绑定的情况下,任何有名字的函数以及用 =lambda/function= 或者 =#'= 读取语法构建的匿名函数,都会被自动转化成闭包对象(=closure=).
+
+闭包就是一个包含了定义发生时的词法环境(=lexical environment=)记录的函数,在调用的时候,任何自由/词法变量都会从这个记录里面找值.
+
+所谓自由变量就是不是在函数内部定义但却在内部被引用的的变量. =Emacs= 中的闭包是暴露的,是一个首个元素为 =symbol= =closure= 的列表,可以手动构建.
+
+#+BEGIN_SRC elisp
+#'(closure (t) (x) (* x x)) ; => 相当于 (lambda (x) (* x x))
+(funcall #'(closure (t) (x) (* x x)) 2) ; => 相当于 ((lambda (x) (* x x)) 2)
+#+END_SRC
+
+这里的第二个元素 =(t)= 表示词法环境, =(x)= 就是这个闭包函数接受的参数, =(* x x)= 毫无疑问就是函数体了.
+
+
 **** Advising Functions
 
  P.S: 之前一直误会了add-function的用法,直到认真地读了一下[[https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html][文档]].
