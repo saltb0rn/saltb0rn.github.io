@@ -1831,6 +1831,7 @@ the documentation string."
 
 会出现有多于1个合适方法的情况,这种情况下这些合适的方法会根据特定规则组合在一起.
 
+
 **** Function Cells
 
 =symbol= 的函数定义就是一个储存在 =symbol= 的 =function cell= 的函数定义.这个章节描述了如何访问 =function cell=,
@@ -1857,7 +1858,14 @@ the documentation string."
 
 **** Advising Functions
 
- P.S: 之前一直误会了add-function的用法,直到认真地读了一下[[https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html][文档]].
+当需要修改定义在别的库的函数,或者需要修改一个 =hook=,一个进程过滤器,或者持有函数值的任意变量或者对象字段,你可以是用恰当的 =setter= 来修改定义,
+
+对于命名函数可以用 =fset= 或者 =defun=, 对于 =hook= 可以用 =setq=, 对于进程过滤器可以用 =set-process-filter=,但是这些会完全覆盖旧的定义.
+
+=Emacs Lisp= 提供 =advice= 特性让你在不覆盖原有定义的情况下对原有定义进行拓展. =Emacs= 的 =advice= 系统提供两类原操作,
+
+针对变量和对象字段(variable and object fields)有 =add-function= 和 =remove-function=,针对命名函数有 =advice-add= 和 =advice-remove=.
+
 
  - advising已经存在的函数,就是组合函数,想想钩子(hooks)
 
@@ -1967,8 +1975,70 @@ the documentation string."
      advising函数的参数跟advised变量的持有函数要求的参数一样就可以.
 
 
+**** 废弃函数 (Obsolete Functions)
+
+可以把一个有名字的函数标记为废弃(=obsolete=),表示该函数可能会在将来被移除.当编译的代码包含一个废弃的函数时候, =Emacs= 会警告说该函数是废弃的.
+
+除此以外废弃函数与一般函数没有行为上的差别.
+
+把一个函数标记为废弃的最简单做法就是在使用 =defun= 定义函数的时候使用 =(declare obsolete ...)= =form=,还可以使用 =make-obsolete= 函数来进行设定.
+
+这里有一个 =set-advertised-calling-convention= 的函数,可以给函数指定 =signature=,相当于指定函数调用时候需要的参数类型,有点像 =Racket= 的 =Contract=.
+
+
+**** 内联函数 (Inline Functions)
+
+内联函数的行为和普通函数一样,差别在于编译时候调用函数会不一样,内联函数会像宏一样被编译器张开,通俗点就是出现调用内联函数的地方就用内联函数的定义替换, =defsubst= 可以定义内联函数,
+
+內联函数在编译时候被调用发生的事情可以这么理解,
+
+
+#+BEGIN_SRC elisp
+(defun fake-inline-func () (message "hello")) ;; 这不是内联函数,只是用来演示,真正的内联函数请用 =defsubst= 或者 =define-inline=
+
+(defun caller ()
+  (fake-inline-func))
+
+;; 被编译后,上面的部分等于以下
+
+(defun caller ()
+  (message "hello"))
+#+END_SRC
+
+既有优点,也有缺点,减少调用次数,提高程序性能,但是缺点也明显,由于展开是发生在编译的,所以一旦编译,之后每次修改程序后都需要重新编译,其次內联函数不能是用递归;
+
+还有就是內联函数只适合小规模功能的实现,否则大量是用内联函数会大程度地编译文件在文件系统上和内存上所需要的空间,最后一个缺点就是不方便调试.
+
+
+
 **** Declare Form
 
+在函数/宏的定义中(=defun/defsubst/defmacro=)使用,给函数/宏设定元属性. =declare= 宏,如果用在函数和宏之外,那么就无视自己的函数并且返回 =nil=,不影响运行时.
+
+只有用在函数/宏的定义中才能够设定元属性.
+
+
+
+**** 声明函数 (Declaring Functions)
+
+编译一个文件经常会产生一些警报:编译器不知到函数的定义.有时候确实有这个问题,但通常不是问题,这个不是问题的警告是由于运行时才会加载的在别的文件中定义的函数.
+
+比如编译依赖了 =shell-mode= 的 =simple.el= 时候, =shell-mode= 只能在执行 =(require 'shell)= 之后才能被调用,所以 =shell-mode= 会在运行时被正确定义,这明显不是一个问题.
+
+我们可以让编译器不再警告这个问题,在第一次是用 =shell-mode= 之前执行以下 =form=,
+
+#+BEGIN_SRC elisp
+(declare-function shell-mode "shell" ()) ;; or shell.,el for 2nd argument
+#+END_SRC
+
+这是告诉编译器 =shell-mode= 被定义在 =shell.el= 中.
+
+
+
+
+**** 函数安全 (Function Safety)
+
+**** 相关话题 (Related Topics)
 
 
 *** 宏 (Macros)
