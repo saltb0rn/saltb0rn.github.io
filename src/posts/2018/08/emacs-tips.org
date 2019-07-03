@@ -1811,7 +1811,7 @@ the documentation string."
 
 **** 通用函数 (Generic Functions)
 
-一般函数都是硬编码(=hard-coded=)的,也就是假定了函数的类型以及预期的参数值(预期的参数类型和数量),调用的时候只能传入特定的参数以及根据返回值类型来使用返回值.
+一般函数都是硬编码(=hard-coded=)的,也就是假定了函数的类型以及预期的参数值(预期的参数类型),调用的时候只能传入特定的参数以及根据返回值类型来使用返回值.
 
 相反,面向对象程序(=object-oriented programs=)能够使用多态函数(=polymorphic functions=)解决这个问题,
 
@@ -1829,7 +1829,41 @@ the documentation string."
 
 它们属于它们实现的通用函数,所以才说通用函数就是一个抽象.当调用一个通用函数的时候,它会通过比对实际传入的参数以及方法的参数专化器来选择合适的方法(applicable methods).
 
-会出现有多于1个合适方法的情况,这种情况下这些合适的方法会根据特定规则组合在一起.
+为同一个通用函数提供实现的方法的参数数量必须要一样,通过参数类型来区分,会出现有多于1个合适方法的情况,这种情况下这些合适的方法会根据特定规则组合在一起.
+
+来一个简单的例子,
+
+#+BEGIN_SRC elisp
+(cl-defgeneric genericFunc (a)
+  "Example for generaic" nil
+  (message "Body as default method"))
+
+(genericFunc) ;; 如果没有提供方法,那么就调用提供的函数体,作为默认方法
+
+;; 提供方法,方法的参数可以和通用函数定义的不一样,因为目前而言定义通用函数时的参数不会被处理的
+
+;; 提供主要实现, primary implementation
+
+(cl-defmethod genericFunc ((a (eql 1))) ; (eql 1) 表示判断实际参数a是否等于1
+  1)
+
+(cl-defmethod genericFunc ((c (eql 2)))
+  2)
+
+(genericFunc 1) ; => 1
+(genericFunc 2) ; => 2
+
+
+;; 提供辅助实现, auxiliary method
+
+(cl-defmethod genericFunc :before ((c (eql 3)))
+  3)
+
+;; 辅助函数对通用函数有一个要求: 通用函数的参数数量要和辅助方法的参数数量一样,因为辅助方法的参数会传入到通用函数里面,这个时候需要参数数量一致.
+
+#+END_SRC
+
+
 
 
 **** Function Cells
