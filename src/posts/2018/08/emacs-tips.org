@@ -2076,10 +2076,298 @@ the documentation string."
 
 **** 函数安全 (Function Safety)
 
+有些函数可能会定义在一些不值得信任/来历不明的文件中,直接调用这些函数可能会有风险, =unsafep= 会简单分析 =form= 是否安全,
+
+如果安全就返回 =nil=.
+
+
 **** 相关话题 (Related Topics)
+
+和函数相关的一些文档,自己阅读.
 
 
 *** 宏 (Macros)
+
+宏能够做到函数做不了的事情:定义新的控制结构以及定义新的语言特性.
+
+定义宏和定义函数的方式十分相似,不同在于函数是直接计算出值,而宏是表达如何计算出另一个 =Lisp= 表达式,再计算出这个表达式的值.
+
+这个计算得出的表达式叫做宏的展开式(expansion).
+
+宏之所以能够这么做那是因为它们可以直接操作未经过运算的参数表达式,而不是像函数那样只能操作参数表达式运算得出的值,
+
+因此,宏能够构建一个包含参数表达式的展开式.普通函数能完成事情就不要交给宏来做了,如果只是为了速度,那么就用内联函数.
+
+
+**** 宏例子 (Simple Macro)
+
+写一个自己的 =if=,具体思路就是把 =myif= 的调用展开成 =if= 表达式.
+
+#+BEGIN_SRC elisp
+(defmacro myif (cond-expr if-branch else-branch)
+  (list 'if cond-expr
+        if-branch
+        else-branch))
+#+END_SRC
+
+如果你把 =defmacro= 换成 =defun=,那么不管是 =if-branch= 还是 =else-branch= 都会在传入的时候进行运算,不需要通过 =cond-expr= 的判断.
+
+这么一来就不是和 =if= 做一样的事情了,
+
+**** 宏调用的展开式 (Expansion)
+
+宏调用看起来和函数调用十分相似,是一个 =(MACRO-NAME ARGS ...)= 形式的列表.宏调用的运算和函数调用的运算是两个区别:
+
+1. 给宏传入的参数表达式是不会经过运算的,宏操作的是参数表达式本身;而给函数传入的参数表达式会经过运算的出结果,所以函数操作的是参数表达式的值.
+
+2. 宏返回的值是一个 =Lisp= 表达式,也就是所谓的宏的展开式,然后 =Lisp= 解析器会进一步运算得到的表达式;而函数返回的就是值.
+
+因为展开式是以正常方式的运算的,所以展开式可能会包含其它的宏调用,所以宏也是和函数一样支持递归的.
+
+=Emacs= 在加载未编译的 =Lisp= 文件尝试展开里面的宏,如果成功,那么就可以提高执行速度.
+
+和大部份 =Lisp= 方言一样, =Emacs Lisp= 也提供检查宏展开式的函数, =macroexapnd=, =macroexpand-all= 以及 =macroexpand-1=.
+
+
+**** 宏和编译 (Compiling Macros)
+
+当宏调用出现在正在被编译的程序中, =Lisp= 编译器会像 =Lisp= 解析器那样调用宏,然后得到一个展开式.
+
+不过在得到展开式后编译器并不是运算展开式,而是把展开式编译到程序中,就好像是直接嵌入到程序里面一样.
+
+编译代码时候会得到的编译后的代码,值以及 =macro= 打算产生的副作用,并且以全速执行.
+
+注意,值以及副作用只会在出现在编译的时候,对于某些原本就是冲着副作用的宏来说并不是什么好事,比如
+
+#+BEGIN_SRC elisp
+(defmacro myif (cond-expr if-branch else-branch)
+  (message "Some imporant side effects just like me")
+  (list 'if cond-expr
+        if-branch
+        else-branch))
+#+END_SRC
+
+为了保证宏调用的编译通过,需要 =macro= 在调用被编译前定义.对于这个问题,编译器有一个特性做出这样的处理:
+
+如果被编译的文件包含了 =defmacro= =form=,那么宏就会被临时定义,这样该文件的剩余编译部分都能够看到这个定义.
+
+编译文件的时候需要在文件的 =top-level= 执行 =require= 调用来保证所需的宏定义在编译时候可用.要注意一个问题,
+
+编译得到的程序里面还是会有 =require= 调用的,它们会加载宏的定义,然后对于编译得到的程序来说是没必要的,针对这个问题,
+
+可以在 =require= 调用外边使用 =eval-when-compile= =form=,这样 =require= 调用就会在编译/直译时候运行,而不回在加载编译后的程序时运行.
+
+#+BEGIN_SRC elisp
+(eval-when-compile
+  (require 'macro-definition))
+#+END_SRC
+
+
+**** 定义宏 (Defining Macros)
+
+一个宏对象是一个 =list=: =(macro lambda ARGS . BODY)=. =Lisp= 是有可能支持匿名宏的,但是 =Emacs Lisp= 不支持.
+
+=Emacs Lisp= 里面宏只能用 =defmacro= 宏去定义宏: =(defmacro NAME ARGS [DOC] [DECLARE] BODY ...)=
+
+再看看上面宏对象的列表,你会发现在里面有个 =lambda=,没错,宏对象是存在 =function cell= 里面的,
+
+这意味着宏对象的 =ARGS= 是和函数的参数列表一样的(相比其他 =Lisp= 方言 =Emacs Lisp= 的宏简单好多).
+
+上面我写的 =myif= 就是一个例子,除了上面的写法,还可以用 =backquote= 来写,
+
+#+BEGIN_SRC elisp
+(defmacro myif (cond-expr if-branch else-branch)
+  `(if ,cond-expr
+       ,if-branch
+       ,else-branch))
+#+END_SRC
+
+具体关于 =backquote= 的内容可以查看 =M-: (info "(elisp) Backquote")=.
+
+
+**** 宏的问题 (Problems With Macros)
+
+=Lisp= 的宏算是语言特色了,虽然说 =C= 也支持宏,但后者在能力上起 =Lisp= 的相差太远,同时 =Lisp= 的宏也更复杂.
+
+所以一个不留神就容易出现一些问题.
+
+***** 时机错误 (Wrong Time)
+
+这是最常见的问题之一: 在展开宏的时候处理目的的事情,而不是在展开式本身处理.
+
+#+BEGIN_SRC elisp
+(defmacro my-set-buffer-multibyte (arg)
+  (if (fboundp 'set-buffer-multibyte)
+      (set-buffer-multibyte arg)))
+#+END_SRC
+
+比如这个问题就是设定没有在展开式里面设置{{{buffer}}}的多字节,这个宏能够在直译的时候成功执行,但是编译的时候不会通过.
+
+正确的做法是,
+
+#+BEGIN_SRC elisp
+(defmacro my-set-buffer-multibyte (arg)
+  (if (fboundp 'set-buffer-multibyte)
+      `(set-buffer-multibyte ,arg)))
+#+END_SRC
+
+
+***** 参数运算 (Argument Evaluation)
+
+定义宏的时候需要注意运行展开式的时候参数的运算次数.比如定义一个 =for= 循环结构.
+
+文档上缺了 =inc= 的定义,所以我改了一下,
+
+#+BEGIN_SRC elisp
+(defmacro for (var from init to final do &rest body)
+  "Execute a simple \"for\" loop.
+     For example, (for i from 1 to 10 do (print i))."
+  (list 'let (list (list var init))
+        (cons 'while
+              (cons (list '<= var final)
+                    (append body (list (list 'setq var (list '1+ var)))))))))
+#+END_SRC
+
+=backquote= 版本如下,
+
+#+BEGIN_SRC elisp
+(defmacro for (var from init to final do &rest body)
+  `(let ((,var ,init))
+     (while (<= ,var ,final)
+       ,@body
+       (setq ,var (1+ ,var)))))
+#+END_SRC
+
+下面是它的一个调用的展开式,
+
+#+BEGIN_SRC elisp
+(for i from 1 to 3 do
+     (setq square (* i i))
+     (princ (format "\n%d %d" i square)))
+↦
+(let ((i 1))
+  (while (<= i 3)
+    (setq square (* i i))
+    (princ (format "\n%d %d" i square))
+    (setq var (1+ var))))
+
+    ⊣1       1
+    ⊣2       4
+    ⊣3       9
+⇒ nil
+#+END_SRC
+
+=from=, =to= 以及 =do= 就是语法糖(=syntactic sugar=),可以无视它们.
+
+这里有一个问题: 参数 =final= 每一轮迭代都进行了运算,如果 =final= 是常量的话没有问题;如果是一个复杂的 =form=,
+
+那么会造成严重的性能问题;如果 =final= 存在副作用,那么执行多次可能会有问题.
+
+正确的做法应该是这样,
+
+#+BEGIN_SRC elisp
+(defmacro for (var from init to final do &rest body)
+  `(let ((,var ,init)
+         (max ,final))
+     (while (<= ,var max)
+       ,@body
+       (setq ,var (1+ ,var)))))
+#+END_SRC
+
+不过这样会引入另外一个问题.
+
+
+***** 展开式的局部变量 (Surprising Local Vars)
+
+上一个章节说的引入的问题是引入了新的变量 =max=,如果使用该宏的时候用户也定义了一个 =max= 的变量,
+
+#+BEGIN_SRC elisp
+(let ((max 0))
+  (for x from 0 to 10 do
+       (let ((this (frob x)))
+         (if (< max this)
+             (setq max this)))))
+#+END_SRC
+
+这样用户的 =max= 就会被 =for= 宏里面的 =max= 遮掩了,用户定义的 =max= 就没用了.
+
+解决这个问题的核心在于如何避免临时宏的变量 =max= 不会和用户的变量发生冲突,正好 =Lisp= 有 =uninterned symbol=,
+
+这种 =symbol= 可以被绑定以及被引用,并且不会和任何其它的 =symbol= 发生冲突,如果不进行绑定的话,这种 =symbol= 就没法引用了.
+
+利用这特性,
+
+#+BEGIN_SRC elisp
+(defmacro for (var from init to final do &rest body)
+  (let ((tempvar (make-symbol "max")))
+    `(let ((,var ,init)
+           (,tempvar ,final))
+       (while (<= ,var ,tempvar)
+         ,@body
+         (setq ,var (1+ ,var))))))
+#+END_SRC
+
+=uninterned symbol= =max= (make-symbol 生成的 =max=) 不会和 =interned symbol= =max= (用户定义的 =max=) 发生冲突.
+
+
+***** 展开式中运算参数 (Eval During Expansion)
+
+另外一个问题,就是不要在展开式中运算(=eval=)参数,如果运算的参数和用户传入的参数变量重名会发生问题,如下,
+
+比如想要设置变量所引用的另外一个 =symbol=,
+
+#+BEGIN_SRC elisp
+(defmacro foo (a)
+  (list 'setq (eval a) t))
+
+(setq x 'b)
+
+(foo x) ;; -> (setq b t)
+
+(setq a 'c)
+
+(foo a) ;;-> (setq a t),宏变量a和用户变量a发生冲突,设置不了a指向的c
+#+END_SRC
+
+而且在编译的时候使用 =eval= 也很可能不会完成你想要做的事情.正确的做法就是让参数和整个展开式一起运算.
+
+如果真的正确实现上面说的功能,那么应该这么做,
+
+#+BEGIN_SRC elisp
+(defmacro foo (a)
+  (list 'setq (symbol-value a) t))
+#+END_SRC
+
+
+
+
+***** 重复展开 (Repeated Expansion)
+
+如果在直译函数里面执行宏调用,那么每次调用都会展开;对于编译函数,那么宏调用只会在编译时展开一次,之后编译函数只会调用编译好的展开式.
+
+因为这个原因,如果宏的定义有副作用,那么宏调用的次数不同就有可能会产生不同结果,直译函数每次都会产生副作用,而编译函数只有编译的时候才会产生副作用.
+
+因此尽量不要在宏展开的时候使用副作用(可以在展开式中使用),比如,
+
+#+BEGIN_SRC elisp
+(defmacro my-message (msg)
+  `(message msg))
+
+;; NOT THIS
+(defmacro wrong-message (msg)
+  (message msg))
+#+END_SRC
+
+只有一种副作用不能避免: 构建 =Lisp= 对象.这是大部份宏的重点,这是没问题的,只有一种情况需要注意:
+
+构建的对象是宏展开式的一个被引用常量(=quoted constant=)的一部分.
+
+
+**** 缩进宏 (Indenting Macros)
+
+在宏的定义中,可以使用 =declare= 指定宏使用多少个 =<TAB>=: =(declare (indent INDENT-SPEC))=.
+
+
 *** 个性化 (Customization)
 
 
