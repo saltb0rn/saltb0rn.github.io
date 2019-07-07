@@ -1905,7 +1905,7 @@ the documentation string."
 
    =defadvice= 和 =advice-add=
 
-   比如,在display-buffer命令执行之后提示buffer的名字,用display-buffer做实验是因为一旦出错了minibuffer都用不了,反馈快速.
+   比如,在display-buffer命令执行之后提示buffer的名字,用display-buffer做实验是因为一旦出错了 =minibuffer= 都用不了,反馈快速.
 
    - 老风格 =defadvice=
 
@@ -2370,8 +2370,14 @@ the documentation string."
 
 *** 个性化 (Customization)
 
+=Emacs= 用户可以在不编写 =Lisp= 代码的情况下通过自定义界面来自定义变量和外观(=face=),详情阅读 =M-: (info "(Emacs)Easy Customization")=
+
+可自定义的项包括可自定义变量(使用 =defcustom= 宏定义);可自定义外观(使用 =defface= 定义)和可自定义组(用 =defgroup= 定义得到一组相关的可自定义项).
+
+
 
 *** 加载 (Loading)
+
 *** 字节编码 (Byte Compilation)
 
 =Emacs= 拥有两个直译器和一个编译器,编译器可以把 =Emacs Lisp= 代码编译成字节码(byte-code),
@@ -2415,7 +2421,13 @@ the documentation string."
 
 **** 编译时运行 (Eval During Compile)
 
-要清楚编译时和运行时是不同的两个阶段, =eval-and-compile= 可以让 =body= 在运行或者编译时候运行, =eval-when-compile= 则是在编译时候而不是加载时候运行 =body=,注意它们都不是用于产生字节码的.
+要清楚编译时和运行时是不同的两个阶段, =Emacs= 提供了两个 =forms= 来允许代码在运行时候执行: =eval-and-compile= 和 =eval-when-compile=.
+
+通俗点讲,如果你想让代码 =body= 在编译时以及在使用编译得到的代码时运行,那么用 =eval-and-compile=;
+
+如果一段代码 =body= 只是针对编译时,对在执行编译得到的代码时没所谓,那么用 =eval-when-compile=.
+
+最后要注意,这两个 =forms= 的 =body= 在直译时也是会被运行的.
 
 
 
@@ -3830,7 +3842,100 @@ F addition-test
 
 =Minibuffer history list= 是一个列表,用于记录用户输入的上一个命令,这样用户就可以方便地重新调用命令.
 
-其实有很多个不同的 =minibuffer history list= 用与不同种类的输入,可以通过设定 =read-from-minibuffer= 或者 =completing-read= 的 =HISTORY= 参数来指定 =minibuffer= 的历史列表.
+其实有很多个不同的 =minibuffer history list= 用与不同种类的输入,可以通过设定 =read-from-minibuffer= 或者 =completing-read= 的 =HISTORY= 参数来指定 =minibuffer= 的历史列表:
+
+有两种可能的值:
+
+- =VARIABLE=: 使用变量(symbol)作为历史列表;
+- =(VARIABLE . STARTPOS)=: 使用变量作为历史列表, =STARTPOS= 是历史列表的初始位置,是一个非负整数,如果为0就是和只使用变量一样.
+
+如果不指定的话就会使用默认历史列表 =minibuffer-history=. =read-from-minibuffer= 和 =completing-read= 都会自动给历史列表新增加元素,并且提供命令给用户重新使用列表上的元素.
+
+历史列表是有长度限制的,首先由 =history-length= 变量决定,如果某个历史列表有 =history-length= 属性,那么该列表的长度就由该属性的值决定.
+
+=history-delete-duplicates= 变量可以决定是否删除重复的历史记录.
+
+
+
+
+**** 初始输入 (Initial Input)
+
+有几个关于 =minibuffer= 输入的函数都有一个参数叫做 =INITIAL=,它能够让 =minibuffer= 以特定文本开头,不过这个几乎是被舍弃了.
+
+因为这个参数为 =non-nil= 的时候是一个扰乱性的接口(intrusive interface),所以不推荐使用,历史列表提供了更好的方法来完成这种事情.
+
+
+
+**** 补全 (Completion)
+
+补全就是根据文本的开头填充文本的剩余部分,通过对比用户的输入和一个可用的完整文本的列表,我们叫它补全表(=completion table=),然后判断用户输入的文本最接近哪一个.
+
+标准的 =Emacs= 命令提供了 =symbol= / 文件/ {{{buffer}}} /进程名字的补全,当然 =Emacs= 也提供了原函数 =try-completion= 以及高级函数 =completing-read= 来让用户实现对其它类型名字的补全.
+
+***** 基础补全 (Basic Completion)
+
+这章节的 =API= 都是和 =minibuffer= 本身无关的,因为这样,它们能够用在很多其它的地方上.
+
+
+
+
+***** Minibuffer补全 (Minibuffer Completion)
+
+用于补全 =minibuffer= 的基本接口.
+
+
+***** 补全命令 (Completion Commands)
+
+描述用于补全 =minibuffer= 的按键映射(=keymap=),命令以及用户选项.
+
+
+***** 高级补全 (High-Level Completion)
+
+针对特定种类({{{buffer}}}/ =symbol= / 命令 / 颜色,等等)名字的高级补全函数.
+
+
+***** 读取文件名字 (Reading File Names)
+
+描述用于补全文件名字,目录名字还有 =shell= 命令名字的高级函数.
+
+
+***** 补全相关变量 (Completion Variables)
+
+补全相关的用户选项,修改默认的补全行为.
+
+
+***** 编程补全 (Programmed Completion)
+
+有时候不可能或者不方便提前创建一个包含匹配值的 =alist= 或者 =obarray=,这种情况下你可以提供自己的函数来计算指定 =string= 的补全的可能值.
+
+这叫做编程补全,比如 =Emacs= 在补全文件名字的时候就使用了编程补全.这章节就是描述相关的接口.
+
+
+***** 在{{{buffer}}}中补全 (Completion in Buffers)
+
+除了在 =minibuffer= 中补全, =Emacs= 还允许在{{{buffer}}}上进行补全.
+
+钩子变量 =completion-at-point-functions= 是一个函数列表,里面的函数都是用于计算用于补全某个点上文本的补全表(=completion table=).
+
+=Major mode= 可以用这个变量来提供补全表.当运行 =completion-at-point= 的时候,列表上的函数就会被依次调用,不需要传入参数.
+
+每个函数都应该返回 =nil=,除非它能够负责该点上的文本的补全,否则就应该返回如下形式的列表 =(START END COLLECTION . PROPS)=.
+
+=START= 和 =END= 界定了被补全的文本, =COLLECTION= 就是补全表, =PROPS= 就是一个记录了额外信息的 =plist=.
+
+文章余下部分就是讲解编写这些函数需要注意的地方.
+
+
+**** Yes-or-No查询 (Yes-or-No Queries)
+
+=Emacs= 提供了询问用户 =yes-or-no= 问题的函数: =y-or-n-p= 的问题可以用一个字符回答; =yes-or-no-p= 的问题则需要用三或者四个字符回答, =yes-or-no-p= 适合用于重要的问题(=momentous questions=).
+
+严格来讲, =yes-or-no-p= 使用 =minibuffer=, 而 =y-or-n-p= 不,还有 =y-or-n-p= 有一个限时版本: =y-or-n-p-with-timeout=,超过多少秒就提供默认回答.
+
+
+**** 多重选择查询 (Multiple Queries)
+
+
 
 *** 命令循环 (Command Loop)
 
@@ -5319,6 +5424,8 @@ struct packet {
 
 
 
+*** 显示 (Display)
+
 
 *** 按键映射 (Keymaps)
 
@@ -5714,6 +5821,7 @@ struct packet {
 
 
 *** Modes (Modes)
+
 *** 文档 (Documentation)
 
 
