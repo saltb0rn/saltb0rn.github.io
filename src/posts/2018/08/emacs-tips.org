@@ -5842,9 +5842,95 @@ struct packet {
 通过为键盘按键和鼠标按钮定义绑定,按键映射可以像菜单那样操作.一般菜单需要鼠标操作,但同样也可以通过键盘来操作.
 
 我个人对菜单这块不太感兴趣(我自己都不用菜单栏),所以暂时放下.等以后想读的时候再看.
+*** 模式 (Modes)
+
+模式就是一个能够自定义 =Emacs= 行为的定义集合.有两种类型的模式: 在编译的时候可以选择关闭或者启用来决定是否提供特性的次要模式,
+
+以及用来专门编辑某一种文本或者与特定种类文本进行交互的主要模式.每个{{{buffer}}}一个时间内只有一个主要模式,可以有0到多个次要模式.
 
 
-*** Modes (Modes)
+**** 钩子 (Hooks)
+
+钩子其实就是变量,用来储存函数,这些函数会在特定程序执行结束后被调用. =Emacs= 提供了一些用来自定义的钩子,
+
+通常都是在 =Emacs= 的初始文件 (=init file=) 进行设置,当然也能通过 =Lisp= 程序进行设置.
+
+大部份钩子都是普通钩子(=normal hooks=),这种钩子是一个由不接受参数的函数组成的列表.根据约定,普通钩子的名字要求以 =-hook= 结尾.
+
+每个模式命令(=mode command=)都应该运行一个叫做模式钩子(=mode hook=)的普通钩子作为初始化工作的最后一步.
+
+用户可以很容易地通过修改模式定义的 =buffer-local= 赋值来自定义模式的行为.大部份次要模式也是在结尾执行模式钩子.除了模式之外,钩子也可以用在别的地方.
+
+比如. =Emacs= 会在挂起自己之前运行 =suspend-hook=.给钩子添加函数的推荐方法是调用 =add-hook=.这种钩子函数只要是能够通过 =funcall= 调用就可以.
+
+大部份普通钩子都是初始为 =void= 的, =add-hook= 知道如何处理, =add-hook= 可以全局或者{{{buffer}}}局部添加钩子函数.
+
+如果一个钩子变量不是以 =hook= 结尾,根据约定,它就不是一个普通钩子,就是非普通钩子(=abnormal hook=),意味着钩子函数接受参数,或者它们的返回值会有特殊用途.
+
+一般而言,钩子的文档会说明钩子函数如何调用, =add-hook= 也可以给非普通钩子添加函数,根据约束,非普通钩子的名字需要以 =-functions= 结尾.
+
+如果一个变量是以 =-function= 结尾,并且它的值是一个函数,而不是一个函数列表,那么就不能用 =add-hook= 来调整这种函数钩子(=function hook=),而是用 =add-function=.
+
+
+***** 运行钩子 (Running Hooks)
+
+=run-hooks= 接受一到多个普通钩子,依次运行每个钩子,每个钩子都应该是一个函数列表,然后依次调用每个函数.有一个废弃的用法:钩子的值是一个函数,但是这种用法已经废弃了.
+
+如果钩子是{{{buffer}}}局部变量,那么就用{{{buffer}}}局部变量而不是全局变量,然而如果作为{{{buffer}}}局部变量的钩子包含元素 =t=,那么全局变量版本的钩子也会运行.
+
+
+=run-hook-with-args= 接收一个非普通钩子,依次给钩子里面的钩子函数传递参数 =ARGS=: =(run-hook-with-args HOOK &rest ARGS)=,还有两个变种就不说了.
+
+普通钩子的用法,
+
+#+BEGIN_SRC elisp
+(setq test-hook nil)
+
+(defun test ()
+  (run-hooks 'test-hook))
+
+(defun func1 ()
+  (message "no"))
+
+(add-hook 'test-hook 'func1)
+
+(test) ;; log no
+#+END_SRC
+
+
+非普通钩子的用法,
+
+#+BEGIN_SRC elisp
+(setq test-functions nil)
+
+(defun test ()
+  (run-hook-with-args 'test-functions "This is the prompt"))
+
+(defun func1 (prompt)
+  (message (format "%s: %s" prompt "func1")))
+
+(defun func2 (prompt)
+  (message (format "%s: %s" prompt "func2")))
+
+(add-hook 'test-functions 'func1)
+(add-hook 'test-functions 'func2)
+
+(test)
+
+;; log:
+;; This is the prompt: func2
+;; This is the prompt: func1
+#+END_SRC
+
+
+
+
+***** 设置钩子 (Setting Hooks)
+
+=Emacs Lisp= 提供 =add-hook= 和 =remove-hook= 来添加和移除钩子上的函数, =add-hook= 不会添加重复的函数,两者都是通过 =equal= 来比对要被添加或者删除的函数,
+
+所以这两个函数不论对有名字的函数还是对 =lambda= 表达式都有效.
+
 
 *** 文档 (Documentation)
 
