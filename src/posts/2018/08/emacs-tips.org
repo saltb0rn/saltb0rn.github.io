@@ -4404,6 +4404,113 @@ F addition-test
 
 
 
+
+*** 语法表 (Syntax Tables)
+
+语法表负责为{{{buffer}}}上的每一个字符分配语法角色(=syntactic role=).语法表可以决定单词(word),符号(symbol)和其他语法成分(syntactic constructs)从哪里开始到哪里结束.
+
+许多 =Emacs= 功能都是用这些信息,包括 =Font Lock mode= 和各种复杂的移动命令(=movement commands=).
+
+
+**** 语法表基础 (Syntax Basics)
+
+语法表是一种数据结构,可以用来查找每个字符的语法类(=syntax class=)和其他语法属性(=syntactic properties=). =Lisp= 程序会用它来扫瞄文本以及在文本间移动.
+
+内部实现中,一个语法表就是一个字符表(=char-table=),在 =index C= 上的元素就描述了代号为 =C= 的字符,它的值是一个指定了字符的语法的 =cons cell=. 
+
+然后 =Emacc= 提供了高级函数 =char-syntax= 和 =modify-synbtax-entry= 来检查和修改语法表的内容,而不是像字符表那样使用 =aset= 和 =aref=.
+
+每个{{{buffer}}}都有自己的主要模式,并且每个主要模式都有自己的语法表,每个语法表对同一个字符指定的作用可能不一样,比如,
+
+在 =Emacs Lisp mode= 里面以 =;= 开头的语句表示注释,在 =C mode= 里面 =;= 则是表示语句(=statement=)的结尾.很明显,语法表对于每个{{{buffer}}}来说是局部的(=local=).
+
+总的来说,每个 =mode= 都有自己的语法表,而使用了 =mode= 的{{{buffer}}}会安装对应 =mode= 的语法表.比如, =Emacs Lisp mode= 的语法表就是 =emacs-lisp-mode-syntax-table= 的值,
+
+=C mode=,改变 =mode= 的语法表会影响所有是用了该 =mode= 的{{{buffer}}}.
+
+语法表会用继承于别的语法表,被继承的语法表叫做父语法表(=parent syntax table=),继承得到的语法表可以只改变某些字符,其余的不变.
+
+=Emacs= 提供一个标准语法表 =(standard-syntax-table)=,也就是默认的父语法表,同时这张语法表也被 =Fundamental mode= 使用着,按照继承级别来说就是根语法表.
+
+=Emacs Lisp reader= 不使用语法表,它有自己内置的语法规则,并且不能改变.一些 =Lisp= 系统会提供重新定义读取语法(=read syntax=)的能力,比如 =Racket=,而 =Emacs Lisp= 不提供这特性是为了简洁.
+
+
+**** 语法描述符 (Syntax Descriptors)
+
+字符的语法类决定了它的语法角色,每个语法表都会为每个字符指定语法类,不同语法表上的同一个字符的语法类是没有必然联系的.
+
+每个语法类都是用一个方便记忆的字符(=mnemonic character=)来命名,这个字符叫做指示字符(=designator character=),虽然说指示字符要被分配和语法类,
+
+但是不管指示字符被分配到哪个语法类,示字符本身是有自己的语义,比如 =\= 就是表示转义,不管它在语法表上面是哪个类, =M-: (info "(elisp)Syntax Class Table")= 有语法类和它们的指示字符.
+
+语法描述器是一个 =Lisp= 字符串,用来描述一个字符的语法类和其他语法属性.当你要修改一个字符的语法,给 =modify-syntax-entry= 函数传入一个语法描述器作为参数就可以完成了.
+
+语法描述器的第一个字符就是语法类的指示字符,如果有第二个字符,那么就是前者的匹配字符(=matching character=),比如在 =Lisp= 里面 =(= 的匹配字符就是 =)=,空格没有匹配字符.然后剩下的字符就是额外的语法属性(=syntax properties=)了,可以看 =M-: (info "(elisp)Syntax Flags")=.
+
+#+BEGIN_SRC elisp
+"<DESIGNATOR-CHAR><MATCHING-CHAR><PROPERTIE-CHARS>"
+#+END_SRC
+
+最简单的语法描述符就是只有一个指示字符.再举一些例子,
+
+=C mode= 里面的 =*= 的语法描述器是 =. 23=,第一个字符是 =punctuation= (可以查看上面的 =Syntax Class Table= 得知）, 中间的 =<MATCHING-CHAR>= 没有被使用,第3和第4字符:2和3,具体意义可以通过上面的 =Syntax Flags= 查看.
+
+
+
+**** 语法表函数 (Syntax Table Functions)
+
+一些关于创建,访问和修改语法表的函数.
+
+
+**** 语法属性 (Syntax Properties)
+
+当语法表不足够灵活来指定一门语言的语法,可以为{{{buffer}}}上的特定字符而覆盖语法表,通过应用 =syntax-table= 文本属性来完成,该属性的合法值是以下其中之一:
+
+- =SYNTAX-TABLE=
+
+  如果属性的值是个语法表,{{{buffer}}}就会使用该表,而不是当前{{{buffer}}}正在使用的 =mode= 的语法表.
+
+- =(SYNTAX-CODE . MATCHING-CHAR)=
+
+  是 (=raw syntax descriptor=) =raw= 形式的语法描述器.
+
+- =nil=
+
+  是用{{{buffer}}}当前的语法表,不做任何改变.
+
+当 =parse-sexp-lookup-properties= 为 =non-nil= 的时候,像 =forward-sexp= 这种扫瞄函数就会注意文本的 =syntax-table= 属性,然后根据属性的值来决定是否是用对应的语法表.
+
+否则就是用当前语法表.
+
+
+**** 动作和语法 (Motion and Syntax)
+
+能够在有着指定语法类的字符之间进行移动的函数. =skip-syntax-forward= 和 =skip-syntax-backward= 可以分别向前和向后跳过指定的语法类,在遇到不符合条件的地方停下,参数是一个表示了多个语法类的字符串 =SYNTAXES= 和一个位置限制 =LIMIT=,最后返回移动距离.
+
+如果 =SYNTAXES= 是以 =^= 开头,那么就会跳过没有出现在 =SYNTAXES= 里面的情况.
+
+=backward-prefix-chars= 把移动点经过任意数量带有前缀语法(=prefix syntax=)的表达式,前缀语法表达式可以通过 =M-: (info "(elisp)Syntax Flags")= 来了解.
+
+
+**** 解析表达式 (Parsing Expressions)
+
+这章是关于如何解析(=parsing=)和(=scanning=)对称的表达式(=balanced expressions=),我们叫它们 =sexps=,这是 =Lisp= 的术语,实际上这些函数还能对 =Lisp= 以外的语言生效.
+
+语法表控制的字符的直译(=interpretation=),这也就是为什么同一个字符在不同 =mode= 下有不同作用的原因.而一个字符的语法控制着它如何改变 =parser= 的状态,而不是描述它自身的状态.
+
+比如一个字符串分隔符(=string delimiter character=)就让 =parser= 在处于字符串中(=in-string=)和处于代码中(=in-code=)两个状态之间切换,
+
+但是字符的语法不能直接说明字符是不是字符串里面,比如: =(put-text-property 1 9 'syntax-table '(15 . nil))=,根据 =M-: (info "(elisp)Syntax Table Internals")= 可以看到 =15= 是字符串分隔符的代号,
+
+这是告诉 =Emacs= 当前{{{buffer}}}的前8个字符都是字符串分隔符,而不是一个字符串,而结果就是 =Emacs= 会把这个 =8= 个字符看作4个连续的字符串常量(因为不同的变换状态,所以是4个).
+**** 语法表内部实现 (Syntax Table Internals)
+
+语法表就是由字符表实现的,但是大部份 =Lisp= 程序不直接通过它的内部实现来工作,
+
+
+**** 分类 (Categories)
+
+
 *** 线程 (Threads)
 
 =Emacs Lisp= 提供有限的并发机制-线程的支持, =Emacs Lisp= 的线程模型基本上是协作式(most cooperative, or non-preemetive)线程模型,也就是只有在规定的时间(well-defined time)切换线程的执行(switch execution),
