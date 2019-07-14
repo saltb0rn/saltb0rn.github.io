@@ -344,6 +344,8 @@ see any project of blog, vice versa."
 
 这不是教程,也不是文档的翻译,只是单纯是给我个人看的笔记,我只会对我不熟悉的地方做笔记, *还有就是我不保证我的笔记准确性*,所以读的时候需要注意.
 
+基本不会写 =API= 的笔记,原因: =Emacs Lisp= 版本更新太快, =API= 也在不断改变.所以都是笔记一些 =Emacs Lisp= 特有的概念,只有少数个人感兴趣的才会特别记录.
+
 有兴趣的话可以读一读,但是开发参考和学习请以 =Reference= 为准.
 
 写这份笔记的时候文档的版本是 =25.2.2=,所以也许会有一点地方是过时的,比如某个函数,这些我只会有空的话会进行更新,只是有空的情况下...
@@ -4416,7 +4418,7 @@ F addition-test
 
 语法表是一种数据结构,可以用来查找每个字符的语法类(=syntax class=)和其他语法属性(=syntactic properties=). =Lisp= 程序会用它来扫瞄文本以及在文本间移动.
 
-内部实现中,一个语法表就是一个字符表(=char-table=),在 =index C= 上的元素就描述了代号为 =C= 的字符,它的值是一个指定了字符的语法的 =cons cell=. 
+内部实现中,一个语法表就是一个字符表(=char-table=),在 =index C= 上的元素就描述了代号为 =C= 的字符,它的值是一个指定了字符的语法的 =cons cell=.
 
 然后 =Emacc= 提供了高级函数 =char-syntax= 和 =modify-synbtax-entry= 来检查和修改语法表的内容,而不是像字符表那样使用 =aset= 和 =aref=.
 
@@ -4533,13 +4535,70 @@ F addition-test
 - 第十一个元素: 如果上一个被扫瞄到的{{{buffer}}}位置是双字符结构(比如注释分隔符或者转义和字符引用符号对)的第一个字符,那么就是该位置上的 =syntax code=,否则为 =nil=.
 
 
+***** 底层解析 (Low-Level Parsing)
+
+使用表达式解析器(parser)的最基本方法就是指定开始位置和结束位置之间的范围进行解析: =parse-partial-sexp=.
+
+
+***** 控制解析 (Control Parsing)
+
+一些控制解析的参数.
+
+
 
 **** 语法表内部实现 (Syntax Table Internals)
 
-语法表就是由字符表实现的,但是大部份 =Lisp= 程序不直接通过它的内部实现来工作,
+语法表就是由字符表实现的,但是大部份 =Lisp= 程序不直接通过它的内部实现来工作,语法表并不是以语法描述符的形式储存语法数据(syntax data).
+
+语法表的每个条目都是一个生语法描述符 (=raw syntax descriptor=): =(SYNTAX-CODE . MATCHING-CHAR)=.
+
+=SYNTAX-CODE= 是一个整数,编码了语法类和语法 =flags=, =MATCHING-CHAR= 就是匹配字符(如果有的话).
+
+总体上来看跟语法描述符差不多.
+
+使用 =aref= 获取一个字符的生语法描述符: =(aref (syntax-table) CHAR)=. 分别在 =Lisp Interaction mode= 中和 =C mode= 中的 =*= ,
+
+#+BEGIN_SRC elisp
+;; in Lisp Interaction mode
+(lisp-interaction-mode)
+(aref (syntax-table) ?\*) ;; => (3)
+
+;; in C mode
+(c-mode)
+(aref (syntax-table) ?\*) ;; => (393217)
+
+#+END_SRC
+
+分别是 =3= 和 =393217=,如果想根据 =SYNTAX CODE= 获取出语法类,那么可以使用 =syntax-class=:
+
+#+BEGIN_SRC elisp
+(syntax-class '(3)) ;= > 3
+(syntax-class '(393217)) ; => 1, 393217 = 1 + (ash 17) + (ash 18), syntax descriptor: ". 23"
+#+END_SRC
+
+=Syntax flag= 被编码在高阶位上(=higher order bits=),从最小的关键位(永远是第0位)之后的16位(bits)或16位以上进行储存,比如上面 =C mode= 的 =*=,它的 =SYNTAX-CODE= 应该是这样的,
+
+=110 0000 0000 0000 0001=
+
+根据它的语法描述符 =". 23"= ,可以推理到它的计算过程如下,其中 =23= 是 =SYNTAX FLAGS=:
+
+1. 指示器字符 =.= 表示的语法类 =punctuation=,对应的代码为 =1= (文档有语法类对应的代码表).
+2. 第一个 =FLAG= 为2,根据 =prefix= 对应 =flag= 的表可以看出,要从第0位开始往左移动 =17= 位, =(ash 1 17)=.
+3. 第二个 =FLAG= 为3,同上,左移动 =18= 位, =(ash 1 18)=.
+4. 综合所得 =(+ 1 (ash 1 17) (ash 1 18))=,等于393217.
+
+其实 =Emacs Lisp= 已经提供了 =string-to-syntax= 帮助我们计算出语法描述符的 =SYNTAX CODE=.
 
 
 **** 分类 (Categories)
+
+=Emacs Lisp= 提供了别的方法给字符分类: 根据需要来定义不同分类,然后独立地把字符分配到一到多个分类中.
+
+每个{{{buffer}}}都有一个分类表(=category table=),记录了定义哪些分类以及哪些字符属于哪些分类.
+
+每个分类表定义了自己的分类,实际上它们大部份都复制标准分类表(=standard categories table=)来的.
+
+具体 =API= 看文档.
 
 
 *** 线程 (Threads)
