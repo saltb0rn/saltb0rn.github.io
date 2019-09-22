@@ -95,6 +95,6 @@
     }
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/docs/sw.js', {scope: '/docs'});
+        navigator.serviceWorker.register('/docs/sw.js');
     }
 })();
