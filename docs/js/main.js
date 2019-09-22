@@ -1,13 +1,3 @@
-// window.document.addEventListener('DOMContentLoaded', function() {
-//     /*
-//       window.onload 方法是在整个页面加载完后才执行,包括样式文件和脚本文件;
-//       而 DOMContentLoaded 事件是在文档对象加载完才执行,不包括样式文件和脚本文件,
-//       只是元素加载完就可以.也就是说在脚本事件加载前可以阻止触发.用这事件可以在评论加载前移除它.
-//     */
-
-
-// });
-
 (function(){
     let ptype;
     var re_index = /^(?:\/|\/index\.html(?:\/|\/.*)?)$/;
@@ -105,6 +95,6 @@
     }
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/js/sw.js');
+        navigator.serviceWorker.register('/docs/sw.js', {scope: '/docs'});
     }
 })();

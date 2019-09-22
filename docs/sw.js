@@ -1,19 +1,18 @@
 var cacheName = 'saltb0rn-blog';
 var shellFiles = [
-    '../index.html',
-    'main.js',
-    'live.js',
-    '../css/index.css',
-    '../css/stylesheet.css',
-    '../css/animation.css',
-    '../css/tags.css',
-    '../img/logo.png',
+    '/docs/index.html',
+    '/docs/js/main.js',
+    '/docs/css/index.css',
+    '/docs/css/stylesheet.css',
+    '/docs/css/animation.css',
+    '/docs/css/tags.css',
+    '/docs/img/logo.png',
 ];
 
 self.addEventListener('install', function(e) {
     console.log('[Service Worker] Install');
     e.waitUntil(
-        window.self.caches.open(cacheName).then(function(cache) {
+        caches.open(cacheName).then(function(cache) {
             console.log('[Service Work] Caching app shell');
             return cache.addAll(shellFiles);
         })
