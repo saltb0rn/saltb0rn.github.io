@@ -47,6 +47,8 @@
   - [[file:2019/03/laziness-is-a-habit.org][自身经历谈懒惰]]
 * 英
   - [[file:2019/05/et-project-day1.org][英语消灭计划-Day1]]
+* 视
+  - [[file:2019/08/digital-video-file.org][视频文件简单了解]]
 * 设
   - [[file:2018/07/how-to-block-ip-addresses-from-countries.org][设置Nginx禁止某些地区IP的访问]]
   - [[file:2018/09/design-patterns.org][设计模式总结]]
