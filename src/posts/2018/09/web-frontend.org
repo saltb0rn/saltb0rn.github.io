@@ -2315,3 +2315,53 @@ function isHittingBottom(element) {
     return element.scrollTop + element.clientHeight == element.scrollHeight;
 }
 #+END_SRC
+
+
+*** Service Worker 的一些容易令人疑惑的地方
+
+参照 =MDN= 上面的 =PWA= [[https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps][教程]]的话,如果是按照完全按照上面的步骤来做是完全没有问题的,但是给我的 =blog= 添加 =service worker= 来实现首页离线功能,情况就不一样了,
+
+所以发现了一个这个容易使人疑惑的地方,那就是 =navigator.serviceWorker.register= 的第二个参数以及缓存资源的时候如何正确写出路径.
+
+我的 =blog= 的源代码以及编译后的页面是放在 =GitHub= 上的,大概结构是这样的,
+
+#+BEGIN_SRC sh
+.
+├── index.html
+│   ├── darksalt.conf
+│   └── passwd
+├── docker-compose.yml
+├── Dockerfile
+├── docs
+│   │   ...
+│   │   index.html
+│   ├── └── main.js
+│   ├── posts
+└── src
+|   ├── ...
+|   ├── js
+│   │   index.org
+    ├── └── main.js
+    └── posts
+        └── index.org
+#+END_SRC
+
+因为 =GitHub= 的缘故,我的首页要重定向到 =/docs/= 目录下的,因为 =/docs/=- 才是应该被访问的根目录.
+
+=main.js= 是页面的唯一的 =js= 脚本(不包括第三方脚本),所以就用这个脚本来注册 =service worker= 了.
+
+问题就处在这里了, 将要被注册 =sw.js= 文件要放在哪里呢,教程上面(貌似)没提到.其实很简单,最好放在根目录,
+
+在这里就是 =/docs/= (不是docs的父级目录),因为 =sw.js= 里面指定的缓存文件只能位于与 =sw.js= 一样的层级或者该层级之下,
+
+不能超出 =sw.js= 的层级,所以如果把 =/docs/sw.js= 改为 =/docs/js/sw.js=,那么就不能加载与 =js= 同级目录 =css= 下的文件,
+
+这就是 =sw.js= 的作用域, =navigator.serviceWorker.register= 的第二个参数里面的 =scope= 属性是指定 =sw.js= 的作用域,
+
+这里没有设置,所以默认就是 =/docs/=.根据前面的说明可以了解到,设置的作用域是不能大于 =sw.js= 的,虽然教程上没说,但 =register= 的 =API= 说明还是有提到的.
+
+剩下的就是 =sw.js= 指定位于该作用域下的文件来进行缓存了,可以是用相对以及绝对路径,比如 =/docs/index.html, /docs/= 以及 =index.html= 都是一样的,
+
+不能写 =/src/js/main.js=. 当然可以通过设置头来突破作用域的限制,但不推荐.
+
+完成后 =https://blog.darksalt.me/docs/= 的页面就可以在第一次浏览后离线浏览了.
