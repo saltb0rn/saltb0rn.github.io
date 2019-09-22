@@ -1,10 +1,14 @@
-window.document.addEventListener('DOMContentLoaded', function() {
-    /*
-      window.onload 方法是在整个页面加载完后才执行,包括样式文件和脚本文件;
-      而 DOMContentLoaded 事件是在文档对象加载完才执行,不包括样式文件和脚本文件,
-      只是元素加载完就可以.也就是说在脚本事件加载前可以阻止触发.用这事件可以在评论加载前移除它.
-    */
+// window.document.addEventListener('DOMContentLoaded', function() {
+//     /*
+//       window.onload 方法是在整个页面加载完后才执行,包括样式文件和脚本文件;
+//       而 DOMContentLoaded 事件是在文档对象加载完才执行,不包括样式文件和脚本文件,
+//       只是元素加载完就可以.也就是说在脚本事件加载前可以阻止触发.用这事件可以在评论加载前移除它.
+//     */
 
+
+// });
+
+(function(){
     let ptype;
     var re_index = /^(?:\/|\/index\.html(?:\/|\/.*)?)$/;
     var re_post = /^\/(?:.*)\.html(?:\/|\.*)?$/;
@@ -61,43 +65,46 @@ window.document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function log_error(err, url='') {
-        if (!url) {
-            var div = (window.document.querySelector("div.errlogs") ||
-                       window.document.createElement('div'));
-            if (!("errlogs" in div.classList))
-            {
-                window.document.appendChild(div);
-                div.className = "errlogs";
-            }
-            var p = window.document.createElement('p');
-            p.className = 'err';
-            p.textContent = "message: "+ err.message + "\n" + "stack: " + er.stack + "\n";
-            div.appendChild(p);
-            return;
-        }
-        fetch(url, {
-            method: "POST",
-            mode: "no-cache",
-            credentials: "same-origin",
-            headers: {
-                "Content-Type": "application/json; charset=utf-8"
-            },
-            redirect: "follow",
-            referrer: "no-referrer",
-            body: JSON.stringify(
-                {
-                    message: err.message,
-                    stack: err.stack
-                }
-            )
-        }).then(response => response.json());
-    }
+    // function log_error(err, url='') {
+    //     if (!url) {
+    //         var div = (window.document.querySelector("div.errlogs") ||
+    //                    window.document.createElement('div'));
+    //         if (!("errlogs" in div.classList))
+    //         {
+    //             window.document.appendChild(div);
+    //             div.className = "errlogs";
+    //         }
+    //         var p = window.document.createElement('p');
+    //         p.className = 'err';
+    //         p.textContent = "message: "+ err.message + "\n" + "stack: " + er.stack + "\n";
+    //         div.appendChild(p);
+    //         return;
+    //     }
+    //     fetch(url, {
+    //         method: "POST",
+    //         mode: "no-cache",
+    //         credentials: "same-origin",
+    //         headers: {
+    //             "Content-Type": "application/json; charset=utf-8"
+    //         },
+    //         redirect: "follow",
+    //         referrer: "no-referrer",
+    //         body: JSON.stringify(
+    //             {
+    //                 message: err.message,
+    //                 stack: err.stack
+    //             }
+    //         )
+    //     }).then(response => response.json());
+    // }
 
     try {
         setup_style();
     } catch(err) {
-        log_error('');
+        // log_error('');
     }
 
-});
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/js/sw.js');
+    }
+})();
