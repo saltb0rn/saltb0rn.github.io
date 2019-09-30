@@ -122,11 +122,11 @@
 
 **** CPS 的意义
 
-讨论它的意义实际上就是讨论为什么需要控制上下文,因为在直译器中,异常,线程这些语言特性是需要通过切换上下文来实现的,而数据上下文只能维护数据绑定.
+坦白说,我本人也不敢说有什么意义,个人了解到的有两个,对控制上下文(control context)进行抽象和实例化以及把递归转化成尾递归.
 
-还有一个就是用于递归中可以保证尾递归的发生(等一下会说到),除此以外我想不到还有什么意义.
+对控制上下文进行抽象就是说程序执行的下一步可以被抽象成数据表示,就像上面的说明例子那样,就是使用了函数来表示下一步要执行的动作.
 
-编写 =CPS= 程序的时候可以像平常那样自然的思考: *做完这件事情后下一步要做什么*.
+而递归转化成尾递归就是说可以保证尾递归的发生,正是因为这样,对尾递归的函数进行 =CPS= 化会很别扭,等读完这篇文章可以自己尝试一下.
 
 
 **** 把上面的 ans 改写成 CPS 程序 ans/k
@@ -140,8 +140,7 @@
                (cont res2))))))
 #+end_src
 
-是不是有点看不懂?没事,看不懂是正常的,因为我前面只是说了 =continuation= 的概念而已,现在才是开始.来说说改写的思路,也就是一套把程序转换 =CPS= 程序的算法.
-
+这是这个例子的最终结果.现在开始说改写的思路,也就是一套把程序转换 =CPS= 程序的算法.
 
 **** Simple Expression and Non-simple Expression
 
@@ -186,15 +185,19 @@ null
 
 **** 一套把程序转化为 CPS 程序的算法
 
-其实 =EOPL= 里一句就可以总结完了,找到第一个 =non-simple expression= 并且把它改写成 =CPS= ,对于剩下的 =non-simple expression= 重复这个过程.实际中细节还不少.在上面 =ans= 的例子中,
+其实 =EOPL= 里一句就可以总结完了,找到第一个(执行的) =non-simple expression= 并且把它改写成 =CPS= ,对于剩下的 =non-simple expression= 重复这个过程.实际中细节还不少.在上面 =ans= 的例子中,
 
 1. 把 =(ans x y z)= 改写 =(ans/k x y z cont)=,
 
-2. 找到第一个 =non-simple expression= 是 =(add x y)= ,于是对它进行改写 =(add/k x y cont)=,
+2. 在 =(ans x y z)= 整个的计算过程里面, =(sub x y)= 是第一个进行运算的,同时它也是一个 =non-simple expression=,所以先对它的调用进行改写, =(sub/k x y cont1)=, =cont1= 就是要执行的下一步,
 
-3. 在 =(add/k x y cont)= 中, =cont= 就是下一步计算过程,所以 =cont= 要改为 =(lambda (res1) (cont (sub res1 z)))=,
+3. 计算完 =(sub x y)=,下一步就是计算整个结果了,假设上一步的 =(sub x y)= 的结果为 =res1=,那么下一步就是 =(add res1 z)= 的计算了, 它及是第二个 =non-simple expression=, 对它进行改写 =(add/k res1 z cont2)=,
 
-4. 不过 =(sub res1 z)= 同样也是 =non-simple expression= ,于是改写为 =(sub/k res1 z cont)=,这里的 =cont= 就有点微妙了,写成 =(lambda (res2) (cont res2))=,
+4. 回到 =cont1= 和 =cont2= 上,在第2步上面说到 =cont1= 是下一步,而 =(add res1 z)= 刚好也是 =(sub x y)= 的下一步,那么 =cont1= 就是 =(lambda (res1) (add res1 z))=,不要忘记把 =(add res1 z)= 改写成 =(add/k res1 z cont2)=;
+
+   =cont2= 就是 =(add res1 z)= 的下一步,它的下一步就是返回结果,假设 =(add res1 z)= 的结果为 =res2=,那么 =cont2= 就是 =(lambda (res2) res2)=?,不,这是错的!正确是 =(lambda (res2) (cont res2))=,不要忘记了 =(ans/k x y z cont)= 里面的 =cont=,
+
+   这是才是整个计算过程的真正最后一步,这一步也是什么都没有做,就是返回结果,所以它应该是这样的 =(lambda (res) res)=,这也被叫做空延续.
 
 5. 最后还要把 =add= 和 =sub= 的定义也要改写,注意 =+= 和 =-= 是 =primitive operators=,不能对它们的定义进行修改,所以它们就不用改写,
 
@@ -203,7 +206,8 @@ null
    (define (sub/k x y cont) (cont (- x y)))
    #+end_src
 
-比如第 =2= 步中,你可以这么想象: 先计算出 =(add x y)= 的值 =res= ,然后把这个值交给下一步 =cont=. =CPS= 实际上反映了整个计算过程,这一步到下一步,如此类推,直到计算完毕.
+
+=CPS= 的程序实际上反映了这程序的计算过程,这一步到下一步,如此类推,直到计算完毕.
 
 
 **** 最后一个例子
@@ -223,7 +227,7 @@ null
 
 (define (acc-tail-inner n res)
     (if (= n 0)
-        res
+        (cont res)
         (acc-tail-inner (- n 1) (+ res n))))
 
 ;; cps
@@ -237,15 +241,26 @@ null
                (lambda (res) (cont (+ n res))))))
 #+end_src
 
-注意这个例子里面, =acc= 内部调用 =acc/k= 时候传入了 =(lambda (val) val)=,这表示一个空的 =continuation=.
-
 利用 =racket/trace= 中的 =trace= 跟踪计算过程,会发现在3者中, =acc-tail= 和 =acc= 的计算行为是一样的,只有一步,对于 =bad-acc=,可以明显观察到每一步,并且有明显的起伏.
 
-在 =Racket= 里面, =acc-tail= 和 =acc= 的计算行为和迭代是一样的, =trace= 的跟踪都会只显示一步.所以我才觉得, =CPS= 是一门十分强大而优雅的"魔法".
+在 =Racket= 里面, =acc-tail= 和 =acc= 的计算行为和迭代是一样的, =trace= 的跟踪都会只显示一步.
 
 [[file:../../../files/cps.jpg]]
 
-然而这门"魔法"不是万能的,如果把它直接用在像 =Python= 和 =Emacs Lisp= 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言上面就不行了.虽然不能直接用,但是我们可以间接用.
+在上面我有提到过,把尾递归转化成 =CPS= 会很别扭,可以把上面的 =acc-tail-inner= 改写成 =acc-tail-inner/k=,定义如下,
+
+#+BEGIN_SRC scheme
+(define (acc-tail-inner/k n res cont)
+    (if (= n 0)
+        (cont res)
+        (acc-tail-inner/k
+          (- n 1) (+ res n)
+          (lambda (res2) (cont res2)))))
+#+END_SRC
+
+仔细看你会发现 =res= 和 =cont= 的在某些意义上算是重复了,在实际开发中如果遇到尾递归的话可以绕路不写,因为那样意义不大,而且 =CPS= 的其中一个目的就是为了保证尾递归的发生,就没必要改成 =CPS= 了.
+
+=CPS= 虽然很好,但如果把它直接用在像 =Python= 和 =Emacs Lisp= 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言上面就不行了,不过还好可以间接使用.
 
 
 *** Trampoline 和 Bounce
@@ -260,7 +275,7 @@ null
 
 而如果语言支持尾递归优化,那么函数的调用状态信息就会只进栈一次,递归过程中只是修改栈上的状态信息,和迭代一样,就和上面 =Racket= 的 =acc= 例子一样.
 
-既然函数调用会压栈,那么在函数调用链增长的时候断开一下就好了,既然尾递归优化的语言中尾递归和迭代效率一样,为何不把 =CPS= 中发生的尾递归改成迭代呢.
+既然函数调用会压栈,那么在函数调用链增长的时候断开一下就好了,既然尾递归优化的语言中尾递归和迭代效率一样,为何不把 =CPS= 中发生的 *尾递归改成迭代* 呢.
 
 为此我们需要一个叫做 =Trampoline= 的 =continuation= "调度器" (毕竟和事件循环挺像的) 以及一个叫做 =bounce= 对象, 该对象 *包含上一步的计算结果和下一步的 =continuation=*.
 
