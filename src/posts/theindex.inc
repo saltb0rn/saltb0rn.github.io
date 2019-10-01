@@ -44,6 +44,7 @@
   - [[file:2019/04/data-transfer-unit.org][网络数据传输单位]]
   - [[file:2018/06/about-rpc.org][网络编程笔记 RPC]]
 * 自
+  - [[file:2019/10/self-taught-and-compiler.org][自学编译原理]]
   - [[file:2019/03/laziness-is-a-habit.org][自身经历谈懒惰]]
 * 英
   - [[file:2019/05/et-project-day1.org][英语消灭计划-Day1]]

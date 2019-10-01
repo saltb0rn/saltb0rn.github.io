@@ -4,7 +4,7 @@
 <!-- 2019-10-01 二 21:01 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>设置Nginx禁止某些地区IP的访问</title>
+<title>自学编译原理</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="saltb0rn">
 <style type="text/css">
@@ -257,133 +257,46 @@ for the JavaScript code in this tag.
     </nav>
 </div>
 <div id="content">
-<h1 class="title">设置Nginx禁止某些地区IP的访问</h1>
+<h1 class="title">自学编译原理</h1>
 <div class="abstract">
 <p>
-闲来无事就去玩一下Nginx
+这里是我学习编译原理的笔记,使用的材料是 <code>Modern Compiler Implement in C</code>,俗称"虎书".
+</p>
+
+<p>
+其实一直都在我的学习计划之中,但是由于自身原因一直拖到现在,其实书的选择也纠结了好久.
+</p>
+
+<p>
+选择虎书是因为比起龙书(Compilers: Principles, Techniques and Tools,编译原理)相对较薄,比起编译原理与实践(<code>Compiler Construction: Principles and Practice</code>)的内容更加多,其实个人更推荐使用编译原理与实践来进行自学的.
+</p>
+
+<p>
+其实个人之前学了一点直译器的实现,"半途而废"了,因为前端方面的 <code>eopl</code> 不是讲得很详细,后端讲的倒还行,所以直译器剩下的部分就等学完编译或者边学边回顾.
 </p>
 
 </div>
 
+<div id="outline-container-orgafe1745" class="outline-2">
+<h2 id="orgafe1745">关于虎书</h2>
+<div class="outline-text-2" id="text-orgafe1745">
 <p>
-<b>大概两年前</b>,我刚开始接触Python,最先的练手项目就是爬虫.当然那个时候还没有找到一本关于这个话题的书籍,所以就到网络上找相关
-的博客,其中找到了一个叫fuckbilibili的网站,现在应该是没了.它有一段时间是可以直接访问的,后面就直接451了.忘了在哪他们说了
-为什么451,还有给出了Nginx的配置.那个时候我还没接触Nginx呢,觉得很高深.在昨天的时候,不知道为什么会想这个,于是就有折腾一下
-的想法,折腾过后发现其实不难.
+根据实现所使用语言来分,虎书有三个不同版本: <code>C, Java &amp; ML</code>.本人所使用的就是 <code>C</code> 版本的, <code>C</code> 语言在读书的时候学了,但是从没有在别的地方用过,
 </p>
 
 <p>
-<b>最终的效果</b>,判断客户端IP决定是否禁止它访问,非真实IP,也就是所对于使用了代理的用户还是暂时没有办法.如果这不是你想要的效果
-的话那就节省自己的时间吧.
+所以读这本书之前我要先复习一下 <code>C</code> 语言的一些内容: <a href="https://www.studytonight.com/c/">https://www.studytonight.com/c/</a>, 这个网站上的讲解都很不错,特别是指针那块,个人评价 <code>5/5</code>.
 </p>
 
 <p>
-<b>我的折腾环境</b>
+然后虎书是有配套源代码的,可以在官方网站: <a href="https://www.cs.princeton.edu/~appel/modern/c/">https://www.cs.princeton.edu/~appel/modern/c/</a> 找到,除了源代码还有书中提到的工具,读者跟着书上走一遍问题应该不大.
 </p>
-<ul class="org-ul">
-<li>服务器操作系统: Debian 9,并且安装了geoip database</li>
-<li>Nginx: 版本1.13.12,并且编译了ngx_http_geoip_module</li>
-<li>编辑器: Emacs (选你熟悉的就行)</li>
-</ul>
-
-<p>
-<b>假定你有一定的Ngnix使用经验下,你还可能会用这些的资料</b>,
-</p>
-<ul class="org-ul">
-<li><a href="https://nginx.org/en/docs/http/ngx_http_geoip_module.html">ngx_http_geoip_module文档</a></li>
-<li><a href="https://nginx.org/en/docs/http/ngx_http_map_module.html#map">ngx_http_map_module文档</a></li>
-</ul>
-
-<p>
-<b>操作步骤</b>
-</p>
-
-<ul class="org-ul">
-<li>确定你的Nginx已经是编译了ngx_http_geoip_module</li>
-</ul>
-<div class="org-src-container">
-<pre class="src src-sh">ngnix -V                        <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#26816;&#26597;&#37324;&#38754;&#26377;&#27809;&#26377; --with-http_geoip_module,&#27809;&#26377;&#23601;&#26159;&#27809;&#26377;&#25903;&#25345;&#36825;&#20010;&#27169;&#22359;&#20102;</span>
-</pre>
 </div>
-
-<ul class="org-ul">
-<li>确保你的服务器上有geoip database,如果没有就自己部署一个,很简单,我本人的桌面版Debian 9是自带的,服务器上没有,所以我按照桌面版的路径来放,你可以选一个没有问题的路径来放.</li>
-</ul>
-<div class="org-src-container">
-<pre class="src src-sh"><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #F0DFAF; font-weight: bold;">!</span> [ -d /usr/share/geoip ]; <span style="color: #F0DFAF; font-weight: bold;">then</span> mkdir /usr/share/geoip &amp;&amp; <span style="color: #CC9393;">\</span>
-<span style="color: #DCDCCC; font-weight: bold;">cd</span> - &amp;&amp; <span style="color: #CC9393;">\</span>
-wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz &amp;&amp; <span style="color: #CC9393;">\</span>
-gunzip GeoIP.dat.gz ; <span style="color: #F0DFAF; font-weight: bold;">fi</span>
-</pre>
 </div>
-
-<ul class="org-ul">
-<li>在/etc/nginx/conf.d下新建名为geoip.conf(只要是*.conf这种就可以,因为/etc/nginx/nginx.conf指定了这种include规则)的文件,并且输入以下内容.这里是根据变量geoip_country_code的值来给变量allowed_country进行绑定,allowed_country是新建的,你可以换成你想要的变量名字.下面做了相关注释,也就是说,只有当客户端访问时候的IP地区码为CN和US的时候,allowed_country才为no.请根据你的目的来赋值.</li>
-</ul>
-<div class="org-src-container">
-<pre class="src src-sh">geoip_country /usr/share/geoip/GeoIP.dat; <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#37197;&#32622;geoip&#25968;&#25454;&#24211;,&#23601;&#26159;&#25351;&#23450;&#25968;&#25454;&#24211;&#30340;&#36335;&#24452;&#32780;&#24050;</span>
-map $<span style="color: #DFAF8F;">geoip_country_code</span> $<span style="color: #DFAF8F;">allowed_country</span> {
-    default yes; <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#40664;&#35748;&#24773;&#20917;&#19979;,allowed_country&#20250;&#36171;&#20540;&#20026;yes</span>
-    CN no;       <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">geoip_country_code&#20026;CN&#26102;,allowed_country&#20250;&#36171;&#20540;&#20026;no;</span>
-    US no;       <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#21516;CN</span>
-}
-</pre>
-</div>
-
-<ul class="org-ul">
-<li>根据allowed_country的值来返回,在你的网站的配置文件,比如/etc/nginx/sites-avaliable/default,内容如下,</li>
-</ul>
-<div class="org-src-container">
-<pre class="src src-sh">server {
-  listen 80 default_server;
-  server_name star.yourdomain.com *.yourdomain.com;
-  root /path/to/project;
-  error_page 404 errors/404.html;
-  access_log logs/star.yourdomain.com.access.log;
-  index index.html;
-  location ~ /test/(<span style="color: #DCDCCC; font-weight: bold;">.</span>*) {
-       proxy_pass http://127.0.0.1:1080/$<span style="color: #DFAF8F;">1</span>
-  }
- }
-</pre>
-</div>
-<p>
-你可以在里面加入判断的配置,最后如下
-</p>
-<div class="org-src-container">
-<pre class="src src-sh">server {
-  listen 80 default_server;
-  server_name star.yourdomain.com *.yourdomain.com;
-  root /path/to/project;
-  error_page 404 errors/404.html;
-  access_log logs/star.yourdomain.com.access.log;
-
-  <span style="color: #F0DFAF; font-weight: bold;">if</span> ($<span style="color: #DFAF8F;">allowed_country</span> = no) {
-       <span style="color: #F0DFAF; font-weight: bold;">return</span> 502;              <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#21487;&#20197;&#25913;&#25104;&#20320;&#24819;&#35201;&#30340;&#36820;&#22238;&#30721;&#25110;&#32773;&#39029;&#38754;,&#31561;&#31561;</span>
-  }
-
-  index index.html;
-  location ~ /test/(<span style="color: #DCDCCC; font-weight: bold;">.</span>*) {
-       proxy_pass http://127.0.0.1:1080/$<span style="color: #DFAF8F;">1</span>
-  }
- }
-</pre>
-</div>
-<p>
-重启Nginx后如果有来自中国和美国的IP进行访问,就会给他们返回502页面(自己测试的时候有可能有因为某些原因显示不了,
-我遇到过两种情况,其中一种是浏览器缓存,可以对浏览器Ctrl+F5解决,另外一种就比较难以说明,应该是本地访问的缘故吧).
-注意,你也可以针对一个location level来进行判断,把插入的代码放到location level就可以了.总之注意context就好.
-</p>
-
-<p>
-<b>最后</b>,看吧,挺简单的对吧,不过我在开头也说了,这种配置方法是搞不定用了梯子的访问者,所以以后我还可能还会再写一篇
-可以检测真实IP的方法.这种配置除了可以过滤掉一部分IP外,也可以用来针对不同的地区提供不同的服务,还有很多别的其他
-用途,看你的决定了.
-</p>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
-<p class="date">Date: 2018-07-04</p>
+<p class="date">Date: 2019-10-01</p>
 <p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.6)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
