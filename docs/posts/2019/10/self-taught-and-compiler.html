@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-10-07 一 16:41 -->
+<!-- 2019-10-09 Wed 00:17 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>自学编译原理</title>
@@ -159,19 +159,6 @@
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
-  .equation-container {
-    display: table;
-    text-align: center;
-    width: 100%;
-  }
-  .equation {
-    vertical-align: middle;
-  }
-  .equation-label {
-    display: table-cell;
-    text-align: right;
-    vertical-align: middle;
-  }
   .inlinetask {
     padding: 10px;
     border: 2px solid gray;
@@ -202,7 +189,7 @@
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2019 Free Software Foundation, Inc.
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -277,9 +264,9 @@ for the JavaScript code in this tag.
 
 </div>
 
-<div id="outline-container-orgeeeb4d8" class="outline-2">
-<h2 id="orgeeeb4d8">关于虎书以及读前准备</h2>
-<div class="outline-text-2" id="text-orgeeeb4d8">
+<div id="outline-container-org4b2dbe3" class="outline-2">
+<h2 id="org4b2dbe3">关于虎书以及读前准备</h2>
+<div class="outline-text-2" id="text-org4b2dbe3">
 <p>
 根据实现所使用语言来分,虎书有三个不同版本: <code>C, Java &amp; ML</code>.本人所使用的就是 <code>C</code> 版本的, <code>C</code> 语言在读书的时候学了,但是从没有在别的地方用过,
 </p>
@@ -308,12 +295,55 @@ for the JavaScript code in this tag.
 万事准备好就可以开始阅读虎书了.要注意的是,没有必要把上面的东西都"精通",不懂的时候再查阅,毕竟上面的东西不是虎书的重点.因此,你只需要花一到两天的时间来大概读一下上面的东西就可以了.
 </p>
 </div>
+
+
+<div id="outline-container-orga03424b" class="outline-3">
+<h3 id="orga03424b">番外1:C程序的内存布局</h3>
+<div class="outline-text-3" id="text-orga03424b">
+<p>
+主要参考资料 <code>APUE 3rd</code> 的第7章的第6小节.
+</p>
+
+<p>
+学会用 <code>C</code> 的指针,最重要的是清楚 <code>C</code> 程序的内存布局,也叫做程序的内存映像(program's image),一个 <code>C</code> 程序,比如, <code>a.out</code> 可执行文件的内存映像由6个部分组成,如果所示(等一下补),
+</p>
+
+<p>
+这是一张典型的内存排列图,从高位到低位依次看,
+</p>
+
+<ol class="org-ol">
+<li>储存了命令行参数以及环境变量的区域/段;</li>
+<li>Stack,在函数执行的时候,函数里所定义的变量(一般就是局部变量)以及相应的信息都会被储存到这里,当函数返回后这些变量以及信息就丢弃了.
+并且每次调用函数时,该区域都会保存返回的地址以及调用者(caller)的环境信息.所以每次调用一个函数的时候都会在这个区域为函数的自动以及临时变量分配空间.
+所以递归函数里面,每次调用一次就会使用一个栈帧,不同栈帧上的同名变量是不一样的.这个区域和叫做 <code>stack</code> 的数据结构一样有着同样的特性,而栈底位于高位.</li>
+<li>Heap,这个区域不像 <code>Stack</code> 一样有着同名数据结构的特性,动态内存分配就是发生在这个区域的,比如 <code>char *s = malloc(s)</code>,这个区域上面数据不会像 <code>Stack</code> 那样自动释放,
+所以不在使用 <code>s</code> 的时候一定要手动释放: <code>free(s)</code>.</li>
+<li>未初始数据 (Uninitialized Data Segment),又叫做 (bss, block started by symbol)区域/段,
+包含了在函数外声明却未初始的变量,也就是未初始化的全局变量;比如在函数外声明 <code>long sum[1000];</code>, <code>sum</code> 就是属于这个区域,
+内核(kernel)会在程序执行前给这些数据给一个初始值, 0 或者 <code>null pointer</code>.</li>
+<li>已初始数据 (Initialized Data Segment)区域/段,包含了在函数外声明而且初始化了的变量,也就是已被初始化的变量;
+比如在函数外声明 <code>int maxcount = 99</code>; <code>maxcount</code> 就是属于该区域;</li>
+<li>Text 区域/段,包含了 <code>CPU</code> 能够执行的机器指令(machine instructions),这块区域是可以共享的(sharable),所以这块才需要被加载进内存来方便频繁执行.
+并且这块区域基本上是只读的,防止执行过程中被意外地修改.</li>
+</ol>
+
+<p>
+<code>a.out</code> 文件其实还有更多类型的区域存在,比如符号表(symbol table),调试信息(debugging information),动态共享库的连接表(linkage tables)等等,但是只有上面6个区域才会被加载到内存中,
+所以这些额外区域不能算入内存映像中.
+</p>
+
+<p>
+并非所有内存排列都是一样的,比如在 <code>32-bit Intel x86</code> 处理上的 <code>Linux</code> 就不是这样, 从 <code>0x08048000</code> 开始,栈底在 <code>0xC00000000</code> 下,然后从高位到低位开始增长.
+</p>
+</div>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-10-01</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="https://orgmode.org">Org</a> mode 9.2.6)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.0.50 (<a href="http://orgmode.org">Org</a> mode 9.1.5)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
