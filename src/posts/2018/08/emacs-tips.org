@@ -899,6 +899,7 @@ see any project of blog, vice versa."
 每个 =special form= 都有自己的运算规则,可以通过 =special-form-p= 来判断对象是不是 =special form=, 比如 =(special-form-p 'and)=.
 
 
+
 ***** 自动加载 (Autoloading)
 
 自动加载特性允许调用一个定义未被加载进 =Emacs= 的函数或者宏,自动加载对象指定了包含了定义的文件,它做为一个函数定义对应的 =symbol= 出现,调用这个 =symbol= 会自动加载指定的文件,然后调用真正的函数定义.
@@ -2124,6 +2125,7 @@ the documentation string."
 
 这么一来就不是和 =if= 做一样的事情了,
 
+
 **** 宏调用的展开式 (Expansion)
 
 宏调用看起来和函数调用十分相似,是一个 =(MACRO-NAME ARGS ...)= 形式的列表.宏调用的运算和函数调用的运算是两个区别:
@@ -2137,6 +2139,18 @@ the documentation string."
 =Emacs= 在加载未编译的 =Lisp= 文件尝试展开里面的宏,如果成功,那么就可以提高执行速度.
 
 和大部份 =Lisp= 方言一样, =Emacs Lisp= 也提供检查宏展开式的函数, =macroexapnd=, =macroexpand-all= 以及 =macroexpand-1=.
+
+比如,
+
+#+BEGIN_SRC elisp
+(defmacro prefixed-setq (name value)
+  `(set (intern (format "prefixed-%s" (symbol-name (quote ,name)))) ,value))
+
+(prefixed-setq var 1)
+ ;; => (set (intern (format "prefixed-%s" (symbol-name (quote var)))) 1)
+ ;; then evaluate the above expansion
+(+ prefixed-var 1)
+#+END_SRC
 
 
 **** 宏和编译 (Compiling Macros)
