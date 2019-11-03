@@ -84,6 +84,8 @@
 
 这篇笔记尽量不涉及实现的代码,除非代码比文字更容易描述,主要是思路方面以及几个关键疑问的 =why=,我也会把实践的[[https://github.com/saltb0rn/eopl3/tree/master/langs][代码]]放到 =GitHub= 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得原版代码有点乱).
 
+还有个人建议不要使用书中展示的代码,因为存在一些BUG问题,并且没有得到更新,建议使用书本作者在Github上的repo: [[https://github.com/mwand/eopl3]],该 =repo= 会及时更新.
+
 	
 *** [[file:posts/2018/11/eopl-interpreter.html][The Interpreter]]
 之前写了一篇关于 =The Sllgen Parser= 的文章,那是我了解 =parser= 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.

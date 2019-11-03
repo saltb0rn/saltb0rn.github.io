@@ -6,6 +6,8 @@
 主要是总结 =EOPL= 上的一些用于实现语言特性的技术,包括词法作用域,动态作用域,并发等等.
 
 这篇笔记尽量不涉及实现的代码,除非代码比文字更容易描述,主要是思路方面以及几个关键疑问的 =why=,我也会把实践的[[https://github.com/saltb0rn/eopl3/tree/master/langs][代码]]放到 =GitHub= 上(,其实就是把书本配套的代码重构一遍而已,因为个人觉得原版代码有点乱).
+
+还有个人建议不要使用书中展示的代码,因为存在一些BUG问题,并且没有得到更新,建议使用书本作者在Github上的repo: [[https://github.com/mwand/eopl3]],该 =repo= 会及时更新.
 #+end_abstract
 
 先认为我们已经理解变量和环境的概念.
@@ -602,6 +604,65 @@ Bounce = ExpVal ∪ (() -> Bounce)
 
 
 
+
+
+
+
+*** CPS转换
+
+前面几个小节都是直接把程序改写成 =CPS= 风格,这个章节的目标这是编写一个转换程序在不更该原来代码的情况下把原来代码转换成等效于CPS的程序.
+
+为了把一个程序执行成CPS,可以采用CPS秘诀(The CPS Recipe):
+
+1. 把每个子程序的定义需要多一个参数,这个参数表示的是 =continuation=, 一般叫做 =cont= 或者 =k=;
+2. 当子程序的返回值是常量或者变量 =v=,都要改成返回 =continuation= 的返回值,也就是 =(cont v)= 或者 =(k v)=;
+3. 当一个子程序的调用 =(proc x)= 出现在 =tail position=,也就是子程序返回的地方,那么改成就使用同一个 =cont= 来调用函数, =(proc x cont)=;
+4. 当一个子程序的调用 =(proc x)= 出现在 =operand position=,也就是参数位置,比如 =(operator (proc x))=, 那么先要在一个新的 =continuation= 下运算完这个调用,
+   给它的运算结果一个名字,比如 =v1,v2...=, 并且继续计算.
+
+书中的经典例子:
+
+#+BEGIN_SRC scheme
+#lang racket
+
+(lambda (x)
+  (cond
+    [(zero? x) 17]
+    [(= x 1) (f x)]
+    [(= x 2) (+ 22 (f x))]
+    [(= x 3) (g 22 (f x))]
+    [(= x 4) (+ (f x) 33 (g y))]
+    [else (h (f x) (- 44 y) (g y))]))
+
+
+;; after transforming
+
+(lambda (x cont)
+  (cond
+    [(zero? x) (cont 17)]
+    [(= x 1) (f x cont)]
+    [(= x 2)
+     (f x
+        (lambda (v)
+           (+ 22 v)))]
+    [(= x 3)
+     (f x
+        (lambda (v)
+           (g 22 v cont)))]
+    [(= x 4)
+     (f x
+        (lambda (v1)
+           (g y
+              (lambda (v2)
+                 (cont (+ v1 33 v2))))))]
+    [else (f x
+             (lambda (v1)
+                (g y
+                   (lambda (v2)
+                      (h v1 (- 44 y) v2 cont)))))]))
+#+END_SRC
+
+正如上面的代码所展示一样,一旦把子程序转化成 =CPS=,里面调用的所有子程序都要对应的变化成 =CPS=.
 
 
 

@@ -36,6 +36,8 @@
   - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
+* 大
+  - [[file:2019/10/art-of-ssbu.org][大乱斗SP"Art Of"系列]]
 * 用
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直
