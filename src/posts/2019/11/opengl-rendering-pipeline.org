@@ -23,6 +23,7 @@
 
 #+macro: vertex 顶点
 #+macro: shader 着色
+#+macro: primitive 图元
 
 
 *** OpenGL
@@ -42,51 +43,131 @@
 
 *完善:管线的并行与显卡的关系*
 
+参考: https://users.cs.jmu.edu/bernstdh/web/common/lectures/summary_opengl-modern_pipeline.php
+
 整个流程的官方图片如下,本人单纯针对每个步骤进行理解与总结:
 
-1. {{{vertex}}}规范 (Vertex Specification)
+1. {{{vertex}}}规范化 (Vertex Specification)
+
+   先了解一些理论概念: {{{vertex}}}流(Vertex Stream)和{{{primitive}}}(Primitives).
+
+   参考: https://users.cs.jmu.edu/bernstdh/web/common/lectures/summary_opengl-modern_vertex-specification.php
+   
+
+   这个是先设定好必要的对象用来进行渲染,以及利用这些对象进行渲染的一个过程,主要包含两个子过程: 定义{{{vertex}}}流以及{{{vertex}}}渲染.
 
    所谓{{{vertex}}}就是一个 =3D= 物品所需要的一些点,比如一个立方体就有8个{{{vertex}}},在三维坐标系中,{{{vertex}}}的信息可以通过x,y,z三轴的集合来表示:(X,Y,Z).
 
-   假设这8个点坐标分别为 =v1,v2,v3,v4,v5,v6,v7,v8=. 除了坐标数据外,每个点还能有其他属性,这里分别假设为 =attrA1,attrA2,attrA3,attrA4,attrA5,attrA6,attrA7,attrA8=,
+   假设这8个点坐标分别为 =pv1,pv2,pv3,pv4,pv5,pv6,pv7,pv8=. 除了坐标数据 =p= 外,每个点还能有其他属性,这里分别假设为 =attrA1,attrA2,attrA3,attrA4,attrA5,attrA6,attrA7,attrA8=,
 
-   还可以有 =AttrBX= 系列,就不多说了.
-
-   但是仅仅是{{{vertex}}}齐了也不满足画出一个立方体的条件,那是因为可能没有按照规定的点来进行连线,
+   还可以有 =AttrBX= 系列,就不多说了.但是仅仅是{{{vertex}}}齐了也不满足画出一个立方体的条件,那是因为可能没有按照规定的点来进行连线,
 
    假设 =v1,v2,v3,v4= 的 =z= 坐标都是 =z1= (也就是处于同一个平面), =v5,v6,v7,v8= 的坐标都是 =z2=,并且 =v1,v5= 的 =(x,y)= 一样,这里暂时写作 =(v1,v5)=,
 
    同样还有 =(v2,v6)/(v3/v7)(v4/v8)=,这里可以看成 =v1,v2,v3,v4= 为一个正方形平面, =v5,v6,v7,v8= 为另外一个正方形平面, =v1,v5,v2,v6= 如此类推一共6个平面,最后组成一个立方体.
 
+   为了让 =OpenGL= 渲染出一个立方体,首先需要提交这些{{{vertex}}},并且告诉 =OpenGL= 如何解析这些{{{vertex}}},也就是告诉 =OpenGL= 如何画出立方体.
+
+   而提交{{{vertex}}}的形式就是提交{{{vertex}}}流.
+
+   - 规范好{{{vertex}}}数组
+
+     比如现在画一个由 =v1,v2,v3,v4= 组成的平面,需要提交4个点,假设每个{{{vertex}}}坐标属性(x, y, z)以及 =atrrA= 和 =attrB= 属性,那么{{{vertex}}}流就是这样的,
+
+     #+BEGIN_SRC cpp
+     {
+       x1, y1, z1, attrA1, attrB1,
+       x2, y2, z2, attrA2, attrB2,
+       x3, y3, z3, attrA3, attrB3,
+       x4, y4, z4, attrA4, attrB4
+     }
+     #+END_SRC
+
+     或者,
+
+     #+BEGIN_SRC cpp
+     //  positions
+     {             
+       x1, y1, z1,
+       x2, y2, z2,       
+       x3, y3, z3,
+       x4, y4, z4
+     }
+
+     // attrA
+     {
+       attrA1, attrA2, attrA3, attrA4
+     }
+
+     // attrB
+     {
+       attrB1, attrB2, attrB3, attrB4
+     }
+     #+END_SRC
+
+     第一种叫做交错流(interleaved stream),第二种叫做非交错流(interleaved stream).
+
+     一个{{{vertex}}}的属性需要按照顺序排列好,比如 =v1= 的坐标属性 =pv1= 的数组下标是 =0= ,那么 =v1= 的属性 =attrA1= 的数组下标也应该是 =0=.
+
+     有两种方式给 =OpenGL= 提交{{{vertex}}},假设现在提交八个{{{vertex}}},分别是 =v1,v2,v3,v4,v4,v3,v2,v1=.那么 ={ v1,v2,v3,v4,v4,v3,v2,v1 }= 就是一个{{{vertex}}}流,这是第一种方式;
+
+     也可以这样, 一个 ={ v1,v2,v3,v4 }= 再加一个 =zero-based= 的索引列表: ={ 0,1,2,3,3,2,1,0 }=,这样 =OpenGL= 接收到后就会解析成第一种方式的结果.
+
+   - {{{vertex}}}渲染 (Vertex Processing)
+
+     这个过程会告诉 =OpenGL= 如何解释{{{vertex}}}流,比如一个3个{{{vertex}}}的{{{vertex}}}流,可以表示成一个三角形,1条直线加1个点,3个点,以及1个角和一个点其中一种.
+
+     所以,只有{{{vertex}}}流是不足以画出一个图的.图元有这几种: 点(point),线条(line),三角形(triangle),以及相邻图元(adjacency primitive) ,有些甚至还有自己的分类,
+
+     同样,以 =v1,v2,v3,v4= 作为例子,
+
+     - Point primitives
+
+       点图元只有1种 =GL_POINTS= ,每个单独的{{{vertex}}}就是一个点.
+
+     - Line primitives
+
+       线图元有3种,
+
+       1. =GL_LINES=: v1和v2可以看做一条线,v3和v4看做一条线,如此类推,每两个{{{vertex}}}作为一条线,如果{{{vertex}}}流的{{{vertex}}}数是非偶数个,那么多出的那个{{{vertex}}}就被忽略.
+
+       2. =GL_LINE_STRIP=: 相邻的两个{{{vertex}}}为一条线,v1和v2为一条线,v2和v3为一条,v3和v4为一条,如果有n个{{{vertex}}},那么就有n-1条线.
+
+       3. =GL_LINE_LOOP=: 和第二种类似,在第二种的基础上,v1和v4也看做一条线,这样有n(n > 1)个{{{vertex}}}就有n条线,如果(n=1),那么这个{{{vertex}}}就被忽略.
+
+     - Triangle primitive
+
+       三角图元也有3种,这里以 =v1,v2,v3,v4,v5,v6,v7,v8= 作为例子,
+
+       1. =GL_TRIANGLES=: 每3个{{{vertex}}}作为一个2D三角形,
+
+          #+BEGIN_EXAMPLE
+          (v1,v2,v3),(v4,v5,v6),v7,v8
+          #+END_EXAMPLE
+
+          v7和v8不足以作为一个三角形,所以忽略掉.
+
+       2. =GL_TRIANGLE_STRIP=: 每3个相邻的{{{vertex}}}作为一个三角形,
+
+          #+BEGIN_EXAMPLE
+          (v1,v2,v3), (v2,v3,v4), (v3,v4,v5), (v4,v5,v6), (v5,v6,v7), (v6,v7,v8)
+          #+END_EXAMPLE
+
+          如果{{{vertex}}}流的长度为n,一共有n-2(n > 3)个三角形,如果n < 3,那么就有0个三角形.
+
+       3. =GL_TRIANGLE_FAN=: 固定第一个{{{vertex}}}v1,每两个相邻的{{{vertex}}}联合v1作为一个三角形,
+
+          #+BEGIN_EXAMPLE
+          (v1,v2,v3), (v1,v3,v4), (v1,v4,v5), (v1,v5,v6), (v1,v6,v7), (v1,v7,v8)
+          #+END_EXAMPLE
+
+          如果{{{vertex}}}流的长度为n,一共有n-2(n > 3)个三角形,如果n < 3,那么就有0个三角形.
+          
+     - Adjacency Primitives
+
+       TODO LATER
 
 
-   为了让 =OpenGL= 渲染出一个立方体,首先需要提交这些{{{vertex}}},并且告诉 =OpenGL= 如何解析这些{{{vertex}}},也就是告诉 =OpenGL= 如何画出立方体.而提交{{{vertex}}}则就要创建一个{{{vertex}}}流.
+2. {{{vertex}}}处理 (Vertex Processing)
 
-   =OpenGL= 需要一个包含了{{{vertex}}}{{{shader}}} (=Vertex Shader, VS=) 工序的管线或者使用{{{shader}}}程序来对{{{vertex}}}进行渲染, =VS= 的用户定义变量定义了预期的{{{vertex}}}属性,这个变量是一个集合,
-
-   定义了{{{vertex}}}流必须提供的属性值.
-
-   一个{{{vertex}}}流实际上就是一个数组,比如现在画一个由 =v1,v2,v3,v4= 组成的平面:
-
-   #+BEGIN_SRC example
-   [[v1,     v2,     v3,     v4]
-    [attrA1, attrA2, attrA3, attrA4]]
-   #+END_SRC
-
-   这个{{{vertex}}}流提供了{{{vertex}}}的两个属性: 位置属性 =v= 以及 =attrA= 属性.
-
-   首先有两种方式给 =OpenGL= 提交{{{vertex}}},假设现在提交八个{{{vertex}}},分别是 =v1,v2,v3,v4,v4,v3,v2,v1=.那么 =[v1,v2,v3,v4,v4,v3,v2,v1]= 就是一个{{{vertex}}}流,这是第一种方式;
-
-   也可以这样, 一个 =[v1,v2,v3,v4]= 再加一个 =zero-based= 的索引列表: =[0,1,2,3,3,2,1,0]=,这样 =OpenGL= 接收到后就会解析成第一种方式的结果.
-
-   
-
-
-
-
-   
-
-   
-
-
-
+   这个阶段将会处理上个阶段得到的{{{vertex}}}流,这个阶段又分为三个子过程: {{{vertex}}}渲染(vertex rendering),细分曲面(Tessellation)和
