@@ -75,43 +75,50 @@
      比如现在画一个由 =v1,v2,v3,v4= 组成的平面,需要提交4个点,假设每个{{{vertex}}}坐标属性(x, y, z)以及 =atrrA= 和 =attrB= 属性,那么{{{vertex}}}流就是这样的,
 
      #+BEGIN_SRC cpp
-     {
+     float vertices[] = {
        x1, y1, z1, attrA1, attrB1,
        x2, y2, z2, attrA2, attrB2,
        x3, y3, z3, attrA3, attrB3,
        x4, y4, z4, attrA4, attrB4
-     }
+     };
      #+END_SRC
 
      或者,
 
      #+BEGIN_SRC cpp
      //  positions
-     {             
+     float positions[] = {             
        x1, y1, z1,
        x2, y2, z2,       
        x3, y3, z3,
        x4, y4, z4
-     }
+     };
 
      // attrA
-     {
+     float attrAs[] = {
        attrA1, attrA2, attrA3, attrA4
-     }
+     };
 
      // attrB
-     {
+     float attrBs[] = {
        attrB1, attrB2, attrB3, attrB4
-     }
+     };
      #+END_SRC
 
-     第一种叫做交错流(interleaved stream),第二种叫做非交错流(interleaved stream).
+     第一种叫做交错流(interleaved stream),坐标和其它属性混合起来存放,第二种叫做非交错流(interleaved stream),是否交错取决于用途.
 
-     一个{{{vertex}}}的属性需要按照顺序排列好,比如 =v1= 的坐标属性 =pv1= 的数组下标是 =0= ,那么 =v1= 的属性 =attrA1= 的数组下标也应该是 =0=.
+     这些概念具体后就对应着 =OpenGL= 里面的 =VAO (Vertex Array Objects)= 和 =VBO (Vertex Buffer Objects)=.
 
-     有两种方式给 =OpenGL= 提交{{{vertex}}},假设现在提交八个{{{vertex}}},分别是 =v1,v2,v3,v4,v4,v3,v2,v1=.那么 ={ v1,v2,v3,v4,v4,v3,v2,v1 }= 就是一个{{{vertex}}}流,这是第一种方式;
+     =VBO= 是 =Buffer Objects= 的一种, 一个 =Buffer Object= 储存一个由 =OpenGL= 上下文分配的未格式化内存数组(array of unformatted memory),一般发生在 =GPU= 上,而这里的内存就是平时说的显存.
 
-     也可以这样, 一个 ={ v1,v2,v3,v4 }= 再加一个 =zero-based= 的索引列表: ={ 0,1,2,3,3,2,1,0 }=,这样 =OpenGL= 接收到后就会解析成第一种方式的结果.
+     而 =VBO= 就是储存了和{{{vertex}}}相关的数据,可以是{{{vertex}}}所有属性的集合,也可以是{{{vertex}}}某种属性.
+
+     创建 =VBO= 需要利用 =void glGenBuffers(GLsizei n​, GLuint* buffers​)= api,
+
+     https://users.cs.jmu.edu/bernstdh/web/common/lectures/summary_opengl-modern_vertex-specification.php
+
+     https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.1.hello_triangle/hello_triangle.cpp
+
 
    - {{{vertex}}}渲染 (Vertex Processing)
 
@@ -163,9 +170,6 @@
 
           如果{{{vertex}}}流的长度为n,一共有n-2(n > 3)个三角形,如果n < 3,那么就有0个三角形.
           
-     - Adjacency Primitives
-
-       TODO LATER
 
 
 2. {{{vertex}}}处理 (Vertex Processing)
