@@ -14,7 +14,7 @@ Web组件
 
 *** 与第三方框架(Angular/React/Vue)相比
 
-    优点: 无任何依赖,原生,代码量少,更低的学习成本(没有第三方框架的一些抽象概念)
+    优点: 无任何依赖,原生,代码量少,更低的学习成本(没有第三方框架的一些抽象概念以及一大堆工具)
     缺点: 兼容问题,没有 =MVVM= 这种抽象概念
 
 
@@ -35,6 +35,7 @@ Web组件
        然后像正常操作 =DOM= 那样对这个 =ShadowRoot= 进行事件监听,添加子元素等操作.
     4. 如果有必要,可以使用 =<template>= 以及 =slot= 来定义 =HTML= 模板,然后像正常操作 =DOM= 那样把模板 =clone= 到 =ShadowRoot= 上.
     5. 在页面上像原生元素那样使用自定义元素.
+
 
 *** 一个简单的例子
 
@@ -76,7 +77,18 @@ Web组件
       注册自定义组件, =customElements= 是 =CustomElementRegistry= 的一个内置实例,
 
       #+BEGIN_SRC javascript
+      // webcomponent.js(cont)
       customElements.define('cus-input', CusInput);
+      #+END_SRC
+
+      要注意的是,未定义的 =HTML= 对象也是被浏览器承认的,它们是 =HTMLUnknownElement= 的实例,如果没有注册,那么它们的类就是这个,
+
+      如果要编程判断组件是否已经定义,可以这样,
+
+      #+BEGIN_SRC javascript
+      document.querySelector('cus-input') instanceof HTMLUnknownElement;
+      // or
+      document.querySelector('cus-input') instanceof HTMLElement;
       #+END_SRC
 
     - *Step 3*
@@ -136,8 +148,7 @@ Web组件
                  super();
                  console.log("I am showing how hard I'm working !!!");
 
-                 var shadowRoot = this.attachShadow({ mode: 'closed' });
-
+                 const _shadowRoot = this.attachShadow({ mode: 'closed' });
 
                  var placeholder = this.getAttribute('placeholder'),
                      btnText = this.getAttribute('btntext');
@@ -158,18 +169,258 @@ Web组件
                      console.log(btnText);
                  }
 
-                 shadowRoot.appendChild(input);
-                 shadowRoot.appendChild(button);
+                 _shadowRoot.appendChild(input);
+                 _shadowRoot.appendChild(button);
              }
          }
          #+END_SRC
+
          当 =Element.attachShadow= 的 =mode= 为 ='open'= 模式的时候可以通过 =document.querySelector('cus-input').shadowRoot= 访问里面的元素,
 
-         但因为不想暴露出去,所以就用 =closed=,这样 =document.querySelector('cus-input').shadowRoot= 得到的值就为 =null=.
+         你可以像这样来操作里面的元素 =document.querySelector('cus-input').shadowRoot.querySelector('input')=.
+
+         但是暴露出去不是我们想要的,所以就用 =closed=,这样 =document.querySelector('cus-input').shadowRoot= 得到的值就为 =null=.
 
          自带的 =<video>= 元素就使用了 =Shadow DOM=,所以说其实 =Shadow DOM= 并不是什么新鲜事物.
 
+         不过哪一种模式下,都是不能通过 =document= 对象使用 =DOM API= 获取以及操作 =ShadowRoot= 里面的内容.
+
+         现在可以给组件传递属性并且不用担心受到外界的影响了.目前这个阶段可以说是完成了一个完整的 =WEB= 组件了.当是还有得优化.
 
     - *Step 4*
 
-      
+      目前的组件还是相对比较简单的,但如果组件比较复就建议使用 =<template>= 以及 =<slot>=,当然现在还是用这个简单的 =<cus-input>= 来作为例子.
+
+      =<template>= 是一个持有 =HTML= 内容(style,html元素,甚至script)的元素,这个元素类似于 =<script>= 这种元素一样默认样式为 =display:none=,它的目的是用于后续渲染,
+
+      它的对象遵守 =HTMLTemplateElement= 的接口设计,这种和其它 =HTML= 元素对象有一个差别: 有一个特有的 =read-only content= 属性,
+
+      它的值就是一个 =DOM subtree=.
+
+      而 =<slot>= 这是一个占位符(placeholder),可以用于后续填充想要的 =HTML= 内容,是 =<template>= 的好兄弟;这个元素有一个 =name= 属性作为标识,
+
+      =HTML= 元素有一个 =slot= 全局属性,该属性的值就是 =<slot>= 的标识,指定这个值意味着该元素被用于"替换"到对应的 =<slot>=.
+
+      先从简单的开始 - 改用 =<template>=,
+
+      1. 首先改写页面文件
+
+         #+BEGIN_SRC html
+         <html>
+             <head>
+                 <meta charset="utf-8">
+             </head>
+             <body>
+                 <template id="cus-input-tpl">
+                     <input class="input" type="text" />
+                     <button class="button"></button>
+                 </template>
+                 <cus-input placeholder="请输入内容" btntext="提交"></cus-input>
+                <script src="webcomponent.js"></script>
+             </body>
+         </html>
+         #+END_SRC
+
+      2. 然后把模板内容添加到 =ShadowRoot= 下,通过 =ShadowRoot= 来对模板上的内容进行操作,
+
+         #+BEGIN_SRC javascript
+         // webcomponent.js
+         class CusInput extends HTMLElement {
+
+             constructor() {
+                 super();
+                 console.log("I am showing how hard I'm working !!!");
+
+                 const tpl = document
+                       .getElementById('cus-input-tpl')
+                       .content;
+
+                 const _shadowRoot = this.attachShadow({ mode: 'closed' });
+
+                 _shadowRoot.appendChild(tpl.cloneNode(true));
+
+                 // point A
+
+                 var placeholder = this.getAttribute('placeholder'),
+                     btnText = this.getAttribute('btntext');
+
+                 var input = _shadowRoot.querySelector('input'),
+                     button = _shadowRoot.querySelector('button');
+                 // point B
+
+                 input.classList.add('input');
+                 input.type = 'text';
+                 if (placeholder) {
+                     input.placeholder = placeholder;
+                     console.log(placeholder);
+                 }
+
+                 button.classList.add('button');
+                 if (btnText) {
+                     button.innerText = btnText;
+                     console.log(btnText);
+                 }
+             }
+         }
+
+         // cont ...
+         #+END_SRC
+
+         这里有两个重点,
+
+         - A. =<template>= 对象的 =content= 属性是 =read-only= 的,当是不代表 =content= 指向的内容不能改变,
+             这是一个类似于 =C= 语言里面典型的指针变量是 =const= 的问题,这个变量指向的内容地址不可改变,但该地址上的内容并非不可改变.
+             所以为了防止发生意外改变了模板内容,需要使用 =Node.cloneNode()= 进行深拷贝(如果你的 =<template>= 需要在其它地方使用的话).
+
+         - B. 因为组件里面的 =input= 和 =button= 都不是我们手动创建的,所以要对它们进行操作只能通过 =_shadowRoot= 获取进行修改.
+
+         - C. (4大天王有5个人是常识,所以两个重点有三个也没什么问题),除了 =HTML= 外, 别忘了 =<template>= 也可以把 =css= 和 =js= 包含进去,这里就不展示了.
+
+      3. 拓展(需求变更): 要求用户可以自己提供一个清除按钮.
+
+         这个听上去很麻烦,实际上只需要添加一句代码就搞掂了.
+
+         #+BEGIN_SRC html
+         <html>
+             <head>
+                 <meta charset="utf-8">
+             </head>
+             <body>
+                 <template id="cus-input-tpl">
+                     <input class="input" type="text" />
+                     <button class="button"></button>
+                     <slot name="btnClear"></slot>
+                     <!-- 使用slot -->
+                 </template>
+
+                 <!-- 用法展示 -->
+                 <cus-input placeholder="请输入内容" btntext="提交">
+                     <button slot="btnClear">清除</button>
+                     <!-- 在这里插入指定了slot属性的元素 -->
+                 </cus-input>
+                 <script src="webcomponent.js"></script>
+             </body>
+         </html>
+         #+END_SRC
+
+         这里需要注意一下,"清除"按钮是可以通过 =document.querySelector()= 来获取到的,也就是说新插入的内容不会被封闭到组件里面,
+         很好的与组件细节隔离开.你可以对它进行样式化以及各种 =DOM= 操作.
+
+      4. 把组件封装成单独一个文件实现复用
+
+         目前为止组件脱离不了页面文件上的 =<template>=,所以现在的组件还是不能复用,其实这个也好解决,通过编程创建 =<template>= 就好了.
+
+         #+BEGIN_SRC javascript
+         // webcomponent.js
+         class CusInput extends HTMLElement {
+
+             constructor() {
+
+                 super();
+
+                 console.log("I am showing how hard I'm working !!!");
+
+                 const template = document.createElement('template');
+
+                 template.innerHTML = `
+                     <input class="input" type="text" />
+                     <button class="button"></button>
+                     <slot name="btnClear"></slot> <!-- 使用slot -->`;
+
+                 const tpl = template.content;
+
+                 const _shadowRoot = this.attachShadow({ mode: 'closed' });
+
+                 _shadowRoot.appendChild(tpl.cloneNode(true));
+
+                 // things done before ...
+             }
+         }
+
+         customElements.define('cus-input', CusInput);
+         #+END_SRC
+
+         这样一来,一个可复用的组件 =<cus-input>= 就诞生了.
+
+    - *Step 5*
+
+      现在你可以在任何一个页面的任何地方使用这个没有任何依赖的原生组件 =<cus-input>= 了.
+
+
+*** 更加高级的内容
+
+    1. 拓展现有元素
+
+       这里通过拓展 =<p>= 元素以及使用一个 =is= 属性来对现有 =<p>= 作增强:
+
+       https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/is.
+
+    2. 特有的CSS伪类和伪元素
+
+    3. 实现MVVM
+
+       =MVVM= 的本质是 =Publisher/Subscriber= 模式,简单点说就是更新的同时触发回调.
+
+       =MVVM= 并不是御三家的专属,实际上 =Web Components= 也可以实现双向绑定,而且十分简单.
+
+       1. =Object.defineProperty()=
+
+          可以给一个对象设定一个 =property=,并且给这个 =property= 设定 =setter= 和 =gettter=,在 =set= 这个 =property= 的时候做更新操作.
+
+          比如在 =set= 的时候触发 =getter=.
+
+          #+BEGIN_SRC javascript
+          var obj = new Object();
+
+          function callGetterAfterSetter() {
+              console.log('Calling getter');
+              return this.value === undefined ? 'EMPTY' : this.value;
+          }
+
+          Object.defineProperty(
+              obj,
+              'key',
+              {
+                  get() {
+                      return callGetterAfterSetter.call(this);
+                  },
+
+                  set(value) {
+                      this.value = value;
+                      callGetterAfterSetter.call(this);
+                  }
+              }
+          );
+
+          obj.key = 2;
+          #+END_SRC
+
+          实际上,把 =Vue= 里面的 =data= 打印出来也是一大堆 =setter= 和 =getter=,至于是不是用 =Object.defineProperty()= 实现就不清楚了.
+
+       2. =Web Components= 的生命周期
+
+          https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements#Using_the_lifecycle_callbacks
+
+          利用 =attributeChangedCallback= 钩子可以做到在指定的属性发生改变的时候做出反应.
+
+
+
+
+*** 更多参考例子
+
+    =MDN= 的一个 =Repo= : https://github.com/mdn/web-components-examples.
+
+
+*** 结论
+
+    和目前流行的御三家来比, =Web Components= 其实没那么好用,当是优点还是明显的,那就是简单.实际上也有不少非主流框架基于 =Web Components= 开发.
+
+    而微软收购了 =Github= 后也采用了 =Web Components= 进行改写,目前 =Github= 体验良好.
+
+    作为一个前端开发者可以说是十分希望这套标准组件能够流行,但是因为"老"用户的存在以及技术竞争的原因导致这东西在工业上不太容易被接受,
+
+    所以目前还是使用御三家来工作吧(除非你们不在乎),但个人还是推荐学一下这个东西,其实内容没多少,加起来还没到 =Vue= 的一个入门指南的页面多.
+
+    实在要在低版本浏览器使用也是可以的,可以使用 =polyfill=, 比如谷歌的[[https://github.com/Polymer/polymer][polymer]].
+
+    而我这篇笔记也就425行,还有一大部分是虚高的代码.真的感觉 *前端需要一套标准才能够让开发者不会那么累*.
