@@ -3,7 +3,7 @@
 #+index: Web Components
 #+tags: WebComponents
 #+begin_abstract
-Web组件 + Object.defineProperty
+WEB前端代码
 #+end_abstract
 Web组件
 
@@ -30,7 +30,7 @@ Web组件
     实现一个WEB组件的整体流程如下:
 
     1. 创建一个类(ECMAScript 2015的语法规范)或者函数来指定组件的功能
-    2. 利用 =CustomElementRegistry.define(cusElName, class/function[, inheritedEl])= 进行注册
+    2. 利用 =CustomElementRegistry.define(cusElName, class/function[, inheritedEl])= 对定义的组件进行注册
     3. 如果有用到 =Shadow DOM= 的话,需要使用 =Element.attachShadow({ mode: 'open'/'closed' })= 创建一个 =ShadowRoot=,
        然后像正常操作 =DOM= 那样对这个 =ShadowRoot= 进行事件监听,添加子元素等操作.
     4. 如果有必要,可以使用 =<template>= 以及 =slot= 来定义 =HTML= 模板,然后像正常操作 =DOM= 那样把模板 =clone= 到 =ShadowRoot= 上.
@@ -81,14 +81,25 @@ Web组件
       customElements.define('cus-input', CusInput);
       #+END_SRC
 
-      要注意的是,未定义的 =HTML= 对象也是被浏览器承认的,它们是 =HTMLUnknownElement= 的实例,如果没有注册,那么它们的类就是这个,
+      需要注意的一点是: 自定义元素的名字必须包含一个 =-(hyphen)=.对于自定义元素来说,只要名字合法,这种元素就能通过浏览器的解释.
 
-      如果要编程判断组件是否已经定义,可以这样,
+      哪怕没有经过定义以及注册,也是被浏览器承认的,并且它们实现的是 =HTMLElement= 的接口.或者反过来说,只要名字符合这种规范的都是自定义元素.
+
+      除此以外的就是 =HTML= 对象的第三类: =HTMLUnknownElement=,与它的名字意思不一样,它代表了所有不合法的元素,
+
+      比如 =<hello>= 这种既非内置元素也非自定义元素.
+
+      结论就是自定义元素和 =HTMLUnknownElement= 没有任何交集,不能简单通过判断元素是否 =HTMLUnknownElement= 的实例来断定这个元素是不是自定义元素.
+
+      (看名字就得了).
 
       #+BEGIN_SRC javascript
-      document.querySelector('cus-input') instanceof HTMLUnknownElement;
-      // or
-      document.querySelector('cus-input') instanceof HTMLElement;
+      document.querySelector('cus-input') instanceof HTMLUnknownElement; // false
+      document.querySelector('cus-input') instanceof HTMLElement; // true
+      document.querySelector('undefined-el') instanceof HTMLUnknownElement; // false
+      document.querySelector('undefined-el') instanceof HTMLElement; // true
+      document.querySelector('hello') instanceof HTMLUnknownElement; // true
+      document.querySelector('hello') instanceof HTMLElement; // false
       #+END_SRC
 
     - *Step 3*
@@ -98,8 +109,6 @@ Web组件
       现在要求是这样: =<cus-input>= 由 =<input>= 元素以及 =<button>= 组成,并且支持 =placeholder= 以及 =btntext= 两个属性.
 
       有两种实现方法: 操作 =DOM= 和操作 =Shadow DOM=.
-
-      *大概介绍 =Shadow DOM=.*
 
       1. 操作 =DOM=
 
@@ -140,6 +149,8 @@ Web组件
          这种方法有个问题:可以通过 =DOM API= 来操作里面的 =<input>= 和 =<button>=,而 =Shadow DOM= 可以解决这个问题.
 
       2. 操作 =Shadow DOM=
+
+         关于 =Shadow DOM= 的介绍可以阅读[[https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM][这里]].
 
          #+BEGIN_SRC javascript
          class CusInput extends HTMLElement {
