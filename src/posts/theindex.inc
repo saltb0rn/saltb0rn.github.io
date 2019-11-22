@@ -18,6 +18,8 @@
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]
+* O
+  - [[file:2019/11/opengl-rendering-pipeline.org][OpenGL渲染管线]]
 * R
   - [[file:2018/09/Racket-Guide-Notes.org][Racket Guide 笔记]]
   - [[file:2018/10/react-journay.org][React学习之旅]]
@@ -28,6 +30,7 @@
   - [[file:2018/11/eopl-sllgen.org][The Sllgen Parser]]
 * W
   - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
+  - [[file:2019/11/web-components.org][Web Components]]
 * 关
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
   - [[file:2019/03/about-audio-file-metadata.org][关于音频文件的元信息]]

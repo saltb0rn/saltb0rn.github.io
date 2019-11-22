@@ -1,3 +1,13 @@
+*** [[file:posts/2019/11/web-components.html][Web Components]]
+前端组件化已经是大势所趋了,随着组件化的口号越来越响,在这种背景下诞生了一些用来实现组件化的开发工具,
+
+在另外一方面,随着浏览器的现代化,WEB前端标准化也越来越重要,就连微软也意识到了这个趋势,在今年4月左右开始宣布新版的Edge开始使用 =chromium= 内核,
+
+截至目前为止,Edge有两个分支在同时更新:旧版以及 =beta= 版,后者的内核就是 =chromium=, 这里是[[https://developer.microsoft.com/en-us/microsoft-edge/platform/status/shadowdom/][更新状态]].
+
+在这个时代下,组件化也迎来了它的标准.
+
+	
 *** [[file:posts/2019/08/digital-video-file.html][视频文件简单了解]]
 
 因为临时的工作需要,要处理视频无法在 =ckplayer= 上面播放的问题,久违地使用了一下 =ffmpeg=.
@@ -13,20 +23,20 @@
 对 =codec= , =format= 等基础概念的不理解会造成对 =ffmpeg= 的工作流程的不理解.
 
 	
-*** [[file:posts/2019/05/bash-eliminating-project.html][Bash消灭计划]]
-用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
-
-出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
-
-这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
-
-	
 *** [[file:posts/2019/05/et-project-day1.html][英语消灭计划-Day1]]
 从今天开始要拓展自己英语的词汇量了,起始之前很久就想拓展了,只不过没想到用博客这种形式来学习.
 
 有一个准则,由于英语的一词多意的特征,所有笔记都会只介绍示例文本中的单词的当前用法.
 
 今天的示例文本来源于"八方旅人" 中 Primrose 的序章剧情. Primrose's Journal 1-1
+
+	
+*** [[file:posts/2019/05/bash-eliminating-project.html][Bash消灭计划]]
+用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
+
+出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
+
+这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
 
 	
 *** [[file:posts/2019/04/data-transfer-unit.html][网络数据传输单位]]
