@@ -2402,6 +2402,102 @@ the documentation string."
 
 *** 加载 (Loading)
 
+    加载 =Lisp= 代码文件意味着把文件内容以 =Lisp= 对象的形式带入到 =Lisp= 环境中.
+
+    =Emacs= 查找并且打开文件,读取文本然后运算每个 =form=,最后关闭文件,这个文件也可以称作一个 =Lisp= 库.
+
+    加载文件的函数会运算文件中所有的表达式,就像 =eval-buffer= 运算 =buffer= 里面的所有表达式一样.
+
+    被加载的文件必须包含 =Lisp= 表达式,不管文件是源代码还是字节码形式.文件中每个 =form= 被叫作一个 =top-level form=.
+
+    已经加载文件的 =forms= 并没有什么特别的格式,任何 =forms= 都可以直接输入到 {{{buffer}}} 中并且运行它们.
+
+    =Emacs= 也可以加载已经编译好的动态模块:共享库(shared libraries),通常由 =C/C++= 编写,在动态模块被加载时,
+
+    =Emacs= 会调用一个特别命名的初始化函数,这个函数需要模块自己实现,该函数的工作就是把函数以及变量暴露给 =Emacs Lisp= 程序.
+
+    关于编写动态模块可以阅读这里: =(info "(elisp) Writing Dynamic Modules")=.
+
+**** 程序的加载过程 (How Programs Do Loading)
+
+     =Emacs Lisp= 有几个用于加载的接口,不过所有接口最后都是调用 =load= 函数来加载文件,因此,这里只了解 =load=.
+
+     比如现在用 =load= 加载一个叫做 =FILENAME= 文件, =(load 'FILENAME')=:
+
+     1. 先查找 =FILENAME.elc=,如果找到就打开并且读取文件内容,然后运算,最后关闭文件,然后返回 =t= 这就是加载;
+
+     2. 如果文件不存在就,尝试查找 =FIELNAME.el=, =.elc= 文件格式是 =.el= 文件的字节码编译格式,如果找到就加载.
+
+     3. 如果 Emacs 支持加载动态模块并且步骤2也没有找到 =FILENAME.el= 就尝试查找 =FILENAME.EXT=,
+
+        =EXT= 表示动态模块的后缀,不同的系统后缀不一样.如果找到后就加载.
+
+     4. 如果步骤3也找不到就尝试查找 =FILENAME=,不带任何后缀,如果找到就加载.
+
+     5. 如果还没找到,并且启用了 =Auto Compression mode=,就尝试查找文件压缩版本,查找压缩文件顺序由 =jka-compr-load-suffixes= 决定,
+
+        =jka-compr-load-suffixes= 的标准值是 =(.gz)=,会按照 =("FILENAME.elc.gz" "FILENAME.elc.gz" "FILENAME.el.gz" "FILENAME.gz")= 顺序查找,
+
+        找到后在其中尝试查找 =FILENAME= 文件: =(load FILENAME)=,找到后进行解压加载,这是一个递归过程.
+
+     6. 如果都没找到,默认引发 =file-error= 错误,可以在参数 =missing-ok= 位置传入 =non-nil= 让它不报错并且返回 =nil=.
+
+
+**** 加载后缀 (Load Suffixes)
+
+     事实上, =load= 函数的查找文件过程是由变量 =load-suffixes= 决定的,该变量的标准值是 =(".elc" ".el")=,
+
+     如果 =Emacs= 支持加载动态模块 =.EXT=,那么值是 =(".elc" ".el" ".EXT")=. =load= 函数有 =nosuffix= 参数,
+
+     如果该参数为 =t= 就无视 =load-suffixes= 的设定,把 =load-suffixes= 看做 =nil=.
+
+     =load-file-rep-suffixes= 指定了同一个文件的各个表示(representations),默认是 =("")=,这个也就是文件名的后缀,
+
+     该变量会把 =jka-compr-load-suffixes= 的值 =(".gz")= 添加到该变量中得到 =("" ".gz")=,表示启用了 =Auto Compression mode=.
+
+
+**** 库的查找 (Library Search)
+
+**** 加载非 ASCII 字符 (Loading Non-ASCII)
+
+**** 自动加载 (Autoload)
+
+自动加载功能允许先注册函数或者宏,但是没有加载定义了函数或者宏的文件本身,第一次调用这个函数或者宏的时候先自动加载对应的文件/库,
+
+这是为了安装真正的定义以及其他相关的代码,然后运行真正的定义.自动加载也可以在查找函数和宏的文档时/补全变量名字以及函数名字时触发.
+
+说的简单点,自动加载就是按需加载/懒加载,防止无用加载减少时间.
+
+有两种方法使用自动加载: 调用 =autoload= 函数,以及在源文件里的函数/宏定义前面加上"魔法"注释("magic" comment).
+
+后者实际上是基于前者实现的.
+
+比如 =(autoload 'fn-to-call "/path/to/source.el")=, 这里的情况是函数 =fn-to-call= 定义在 =/path/to/source.el= 中,
+
+这样就有一个名叫 =fn-to-call= 的占位符,通过 =(symbol-function 'fn-to-call)= 可以获得获取到一个 =autoload= 对象,
+
+第一次调用 =fn-to-call= 的时候先判断它的定义是否存在,如果不存在就触发自动加载:通过 =load= 函数加载 =/path/to/source.el= 文件,
+
+如果没有找到文件或者加载文件后没有 =fn-to-call= 这个定义就会报错.除了函数,也可以定义宏/按键映射(keymap)作为函数来自动加载.
+
+至于"魔法"注释则是这么使用,
+
+#+BEGIN_SRC elisp
+;; source.el
+
+;;;###autoload
+(defun fn-to-call () (message "Hello"))
+
+(provide 'source)
+#+END_SRC
+
+其中 =;;;###autoload= 就是"魔法"注释,单独一行,一个"魔法"注释通常被称为一个 =autoload cookie=.
+
+实际上这个注释本身没什么动作,它是作为一个标记来服务 =update-file-autoloads= 或者 =update-directory-autoloads= 命令的,
+
+当使用这两个命令其中一个的时候, =Emacs= 会把这个注释后面的定义写成对应的 =autoload= 对象到一个文件中,加载这个文件可以在以后的调用中触发自动加载,
+
+典型的例子 =lisp/loaddefs.el=, 可以通过 =(find-library "loaddefs")= 查找到里面的内容.
 
 *** 字节编码 (Byte Compilation)
 
@@ -2420,9 +2516,11 @@ the documentation string."
 #+END_SRC
 
 
+
 **** 编译字节函数 (Compilation Functions)
 
 可以针对函数(byte-compile-function),文件(byte-compile-file)和目录(byte-compile-file)3个等级进行编译.
+
 
 
 
@@ -6473,6 +6571,8 @@ struct packet {
 
 *** 文档 (Documentation)
 
+
+*** 打包 (Packaging)
 
 *** GNU Emacs Internals
 

@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2020-01-30 四 20:45 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>主动认识 WebAssembly</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">主动认识 WebAssembly</h1>
+<div class="abstract">
+<p>
+WebAssembly 是我刚开始接触前端时最想学的技术之一,另外的还有 WebGL,刚好 WebGL 和 WebAssembly 有着不少联系,
+</p>
+
+<p>
+两门技术我都"觊觎"好久了,现在也接近过年了,干脆在假期里面把这两个都学了.
+</p>
+
+</div>
+
+<div id="outline-container-orgb9bba28" class="outline-2">
+<h2 id="orgb9bba28">什么是 WebAssembly</h2>
+<div class="outline-text-2" id="text-orgb9bba28">
+<p>
+<a href="https://webassembly.github.io/spec/core/intro/index.html">WebAssembly</a> 实际上是一套针对于字节码(bytecode)的规范,可能有人不知道字节码是做什么的,
+</p>
+
+<p>
+这里要大概先了解一下一门编译型语言的编译过程,编译的过程实际就是一门语言翻译成另外一门语言,这另外一门语言通常是汇编(assembly),
+</p>
+
+<p>
+比如 C 语言编译成汇编语言, C++ 也可以编译成汇编语言等等,实际上很多语言都可以编译成汇编语言,
+</p>
+
+<p>
+这样实现 n 门语言 X 到汇编的语言需要实现 n 个编译器,为了减少工作量以及实现一个编译器支持编译多门语言,
+</p>
+
+<p>
+人们想出了先编译到一个中间层表示(Intermediate Representation),然后再从中间层表示编译到汇编,在规范好中间层以后,只需要实现从语言到中间层的过程就好了,
+</p>
+
+<p>
+中间层到汇编永远只有一种可能.而这个中间层一般都是字节码.而对于 Web 来说,只需要把这段字节码作为"汇编"就足以,最后还需要一个能跑这段字节码的虚拟机.
+</p>
+
+<p>
+这估计也就是 WebAssembly 名字的来源吧.
+</p>
+
+<p>
+目前 WebAssembly 已经是 W3C 的标准了,官方工具是 <a href="https://emscripten.org/docs/introducing_emscripten/about_emscripten.html">EmScripten</a>,把别的语言源代码编译成 <code>.js + .wasm</code>,也可能是 <code>.html</code> 等等.
+</p>
+
+<p>
+WebAssembly 有两种格式: 二进制格式(binary format)和文本格式(text format),其中二进制格式的文件格式为 <code>.wasm</code>,文本格式的文件格式为 <code>.wat</code>.
+</p>
+
+<p>
+官方有一套<a href="https://github.com/WebAssembly/wabt.">工具</a>针对二进制格式经行转换.
+</p>
+
+<p>
+WebAssembly 并非是 Web 限定的,它完全可以在 Web 以外的环境运行.
+</p>
+</div>
+
+
+<div id="outline-container-org5119a1d" class="outline-3">
+<h3 id="org5119a1d">asm.js</h3>
+<div class="outline-text-3" id="text-org5119a1d">
+<p>
+在 WebAssembly 的时间点之前有一个叫做 <a href="http://asmjs.org/">asm.js</a> 的语言,由 Mozilla 研发,通过把 C/C++ 代码编译成 asm.js,然后浏览器执行,
+</p>
+
+<p>
+asm.js 是 JavaScript 的一个子集,但多了 Type Checking 以及少了 GC, 同样也可以在浏览器上跑 C/C++ 的应用,然而在执行过程中比 WebAssembly 多了几步:
+</p>
+
+<p>
+解析得出 AST; 编译成字节码的过程; 字节码编译成 asm.js.导致效率上比 WebAssembly 低了好多,因此 WebAssembly 取得了胜利.
+</p>
+
+<p>
+即便如此, asm.js 也是一个值得敬畏的技术,目前依然在发展中.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgc14623e" class="outline-2">
+<h2 id="orgc14623e">笔记的思路</h2>
+<div class="outline-text-2" id="text-orgc14623e">
+<p>
+这篇笔记剩下的内容可能会比较多,难度也不太一样,本人笔记的思路是从浅到深,从最基础的 Emscripten 使用到读懂 WebAssembly 规范.
+</p>
+
+<p>
+如果只是学会如何使用 WebAssembly 的话,基础部分就够了,可了解细节也是一件很诱人的事情,所以具体就看读者个人安排了.
+</p>
+
+<p>
+因为 API 是概念的具象化,所以先从 WebAssembly 相关概念入手.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org8aa7add" class="outline-2">
+<h2 id="org8aa7add">个人学习心得</h2>
+<div class="outline-text-2" id="text-org8aa7add">
+<p>
+WebAssembly 就是一个 <a href="http://llvm.org/pubs/2003-10-01-LLVA.pdf">Virtual ISA</a>.
+</p>
+
+<p>
+这里只是针对于个人的学习经历来写的,可能不太符合官方推荐的方法,根据<a href="https://webassembly.github.io/spec/core/intro/index.html">WebAssembly规范</a>学习,这和大部分人学习一门新的语言不太一样,
+</p>
+
+<p>
+由于使用 WebAssembly 的方法很多,其中 C/C++ 代码编译成 WebAssembly 的方法是最常用/主流的.最开始本人就是从这种方法开始的,
+</p>
+
+<p>
+跟着 <a href="https://developer.mozilla.org/en-US/docs/WebAssembly/Concepts">MDN WebAssembly</a> 教程实践,不过随之而来会出现很多疑问,主要原因是对 WebAssembly 本身不太了解,不是说 MDN 的教程不好,
+</p>
+
+<p>
+而是入门教程都是这样经过简化.这个时候我就开始阅读 WebAssembly 的规范,刚才也说了这和大部分人学习一门编程语言不太一样,
+</p>
+
+<p>
+根据语言的规范学习一门语言,先要能够读懂这门语言的语义描述文档,这样才能知道语言本身是怎么运行(运算),也就是这个语法代表着的运算过程.
+</p>
+
+<p>
+WebAssembly 是基于 Stack Machine 模型进行计算的,抽象机(abstract)的机器状态(machine state)是 <code>(store, frame, instruction*)</code>.
+</p>
+
+
+
+
+
+
+
+<p>
+由于 WebAssembly 还在继续发展,它的内容也在不断改变,对应的概念也是一样,因此会特地标明版本,如果有变化还会更新.
+</p>
+</div>
+
+
+<div id="outline-container-org36f9953" class="outline-3">
+<h3 id="org36f9953">概念</h3>
+<div class="outline-text-3" id="text-org36f9953">
+<ul class="org-ul">
+<li><p>
+值(values)
+</p>
+
+<p>
+WebAssembly 只提供 4 种基本类型值: 整数(integers)和<a href="https://ieeexplore.ieee.org/document/8766229">IEEE 754-2019</a>数(也就是浮点数),各都有 32-bit 和 64-bit 宽.
+</p>
+
+<p>
+其中, 32-bit 整数还可以作为 Booleans 和内存地址 (memory address).可以对这些值做正常的操作,包括全矩阵转换.
+</p>
+
+<p>
+有符号和无符号整数之间的表示(两部分表示)没有区别,它们会被操作符自动解析成有符号或者无符号.
+</p></li>
+
+<li><p>
+指令(Instructions/instr)
+</p>
+
+<p>
+WebAssembly 的计算模型是基于 Stack Machine.代码是由指令序列组成,按照顺序执行.
+</p>
+
+<p>
+指令分为两大类: 操作值的普通指令(simple/plain instructions)和修改控制流的控制指令(control instructions).
+</p>
+
+<p>
+值被储存在一个操作对象栈上(operand stack)上,普通指令会从栈上弹出(pop)值进行计算,然后把计算结果推进(push)栈里.
+</p></li>
+
+<li><p>
+陷阱/异常(Traps)
+</p>
+
+<p>
+在某些情况下,某些指令可能会产生一个陷阱,陷阱会终止执行,并且不能在 WebAssembly 代码里面被处理,但可以被外部环境捕获到并且可以处理.
+</p></li>
+
+<li><p>
+函数(Functions)
+</p>
+
+<p>
+就和其他编程语言的函数一样,没啥可说的.
+</p></li>
+
+<li><p>
+表格(Tables)
+</p>
+
+<p>
+表格是一个包含了特定元素类型的数组,这些特别元素的值都不透明(opaque),程序可以通过索引操作间接获取里面的值.
+</p>
+
+<p>
+目前支持的元素类型是无类型函数引用(untyped function reference).
+</p></li>
+
+<li><p>
+线性内存(Linear Memory)
+</p>
+
+<p>
+一个线性内存是一个连续,可以改变的字节数组,就像一个内存以初始大小创建,然后动态增长.
+</p>
+
+<p>
+程序可以在线性内存上的任意字节地址(包括未对齐的地址)上存和取值,存和取可以指定比基本类型的基本储存大小还要小.
+</p>
+
+<p>
+访问当前内存边界以外的地址会出现陷阱.
+</p></li>
+
+<li><p>
+模块(Modules)
+</p>
+
+<p>
+一个 WebAssembly 二进制文件,包含了函数/表格/线性内存以及可变/不可变的全局变量的定义.
+</p>
+
+<p>
+可以通过指定一个模块/名字对(module/name pair)以及一个合适的类型(suitable type)来从外部导入(import)定义.
+</p>
+
+<p>
+同样定义也可以被导出到别的模块中.除了定义之外,模块还可以以 segments 的形式为它的内存或者表格定义初始数据.
+</p>
+
+<p>
+还可以定义一个指定执行的开始函数(start function).
+</p></li>
+
+<li><p>
+嵌入器(Embedder)
+</p>
+
+<p>
+一个 WebAssembly 实现,一般被嵌入到宿主环境(host environment,比如浏览器)中,这个环境规定了如何初始化导入的模块,
+</p>
+
+<p>
+如何提供 imports,以及如何访问 exports.具体内容要看具体宿主环境.
+</p></li>
+</ul>
+</div>
+</div>
+
+
+
+<div id="outline-container-org8f2cadf" class="outline-3">
+<h3 id="org8f2cadf">语义阶段</h3>
+<div class="outline-text-3" id="text-org8f2cadf">
+<ol class="org-ol">
+<li><p>
+解码
+</p>
+
+<p>
+WebAssembly 模块会以二进制格式发布,解码处理就是把模块转化成内部表示(internal representation),
+</p>
+
+<p>
+在规范中,该表示形式是以抽象语法模型,在现实中则可能是直接编译成机器码.
+</p></li>
+
+<li><p>
+验证
+</p>
+
+<p>
+被解码的模块在执行之前必须要经过验证,这个过程需要检查一系列符合要求的条件保证是有意义以及安全的.
+</p>
+
+<p>
+给函数以及函数体内执行一系列类型检测,保证操作对象栈一致.
+</p></li>
+
+<li><p>
+执行
+</p>
+
+<p>
+经过检验过后就可以执行了,执行是在宿主环境中发生的,执行还可以分为两个阶段:
+</p>
+
+<ol class="org-ol">
+<li><p>
+实例化(Instantiation)
+</p>
+
+<p>
+模块实例就是模块的动态表示(dynamic representation),拥有它自己的执行栈(execution stack),
+</p>
+
+<p>
+实例化会执行模块体自己本身,所有导入的定义,全局定义,内存以及表格,并且如果有定义的化就激活模块的开始函数(start function).
+</p>
+
+<p>
+最后返回模块导出(exports)的实例.
+</p></li>
+
+<li><p>
+激活(Invocation)
+</p>
+
+<p>
+一旦实例化完成,可以在后续通过激活(invoke)模块实例导出的函数来实行 WebAssembly 计算.
+</p>
+
+<p>
+给对应的函数提供要求的参数,执行然后返回结果.
+</p></li>
+</ol></li>
+</ol>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+<div id="outline-container-org0a38cbe" class="outline-3">
+<h3 id="org0a38cbe">掌握</h3>
+</div>
+
+<div id="outline-container-org29af586" class="outline-3">
+<h3 id="org29af586">1.1</h3>
+<div class="outline-text-3" id="text-org29af586">
+<ul class="org-ul">
+<li>模块(Module): 一个已经被浏览器编译为可执行机器码的 WebAssembly 二进制代码 (WebAssembly binary, 文件格式是 .wasm).模块没有状态,因此可以简单地在 windows 和 workers 之间共享.声明模块的 imports 和 exports 就像一个 ES2015 模块那样.</li>
+
+<li>内存(Memory): 可伸缩,线性的(连续的)字节数组,通过 WebAssembly 低级的内存访问指令进行读写.</li>
+
+<li>表格(Table): 可伸缩,带类型的数组,用于储存不能以字节形式(raw bytes)储存的对象的引用,比如函数(functions),这是出于安全性和移植性的考虑.</li>
+
+<li>实例(Instance): 一个模块加上在运行时期间它所使用到的状态,包括内存,表格以及被导入的值的集合.实例和一个被加载到特定全局的 ES2015 模块一样.</li>
+</ul>
+
+
+<p>
+JavaScript API 提供了创建上面对象的能力,在有了一个实例的情况下,可以在 JavaScript 代码中同步调用实例提供的导入内容,这些内容和平常的 JavaScript 函数一样暴露出来.
+</p>
+
+<p>
+而 WebAssembly 代码也可以同步调用任意的 JavaScript 函数,只要把这些 JavaScript 函数作为实例的导入就可以了.
+</p>
+
+<p>
+因为 JavaScript 可以掌握了 WebAssembly 下载/编译/运行的方式,开发者可以把 WebAssembly 看做一个 JavaScript 特性.
+</p>
+
+<p>
+目前 WebAsssembly 还不能像 ES2015 模块那样通过 <code>&lt;script type</code>"module"&gt;= 加载,不过这个已经在计划上了.
+</p>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-orga18d99d" class="outline-2">
+<h2 id="orga18d99d">Emscripten 的使用</h2>
+<div class="outline-text-2" id="text-orga18d99d">
+<p>
+整体的工作流就是, <code>C/C++</code> 代码通过 Emscripten 编译得到 <code>.wasm</code> 模块,也就是 WebAssembly 二进制文件,然后通过 JavaScript 调用模块.
+</p>
+
+<p>
+关于 Emscripten 的安装和使用请自行到<a href="https://emscripten.org/docs/getting_started/downloads.html">官方</a>地址上阅读,这里多插一句,本人是 Linux 用户,用的发行版是 Ubuntu,虽然 apt 支持直接安装 Emscripten,
+</p>
+
+<p>
+但是由于 sdk 的配置问题,个人还是推荐按照官方的安装方法,不过要注意的是按照官方的做法最好在 bash 的配置文件 <code>.bashrc</code> 上添加以下内容:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #DCDCCC; font-weight: bold;">.</span> &lt;pathTo&gt;/emsdk/emsdk_env.sh
+emsdk activate latest
+</pre>
+</div>
+
+<p>
+这可以让你不用每次重新打开 bash 使用 emcc 前都要手动激活 Emscripten 的配置. Windows 用户以及 Mac 用户同样也要注意这个问题,尽管解决方法不一样.
+</p>
+</div>
+
+
+<div id="outline-container-orgbeb3f7e" class="outline-3">
+<h3 id="orgbeb3f7e">从 C/C++ 到 WebAssembly</h3>
+<div class="outline-text-3" id="text-orgbeb3f7e">
+<p>
+源代码如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">hello.c</span><span style="color: #5F7F5F;"> */</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;emscripten/emscripten.h&gt;</span>
+
+<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">main</span>(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
+    printf(<span style="color: #CC9393;">"Hello, world!\n"</span>);
+}
+
+
+<span style="color: #94BFF3;">#ifdef</span> __cplusplus
+<span style="color: #F0DFAF; font-weight: bold;">extern</span> <span style="color: #CC9393;">"C"</span> {
+<span style="color: #94BFF3;">#endif</span>
+
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">EMSCRIPTEN_KEEPALIVE</span> myFunction(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
+        printf(<span style="color: #CC9393;">"MyFunction Called!\n"</span>);
+    }
+
+<span style="color: #94BFF3;">#ifdef</span> __cplusplus
+}
+<span style="color: #94BFF3;">#endif</span>
+</pre>
+</div>
+
+<p>
+先说明一下 Emscripten 编译得到代码, Emscripten 默认只会调用 main() 函数, main() 以外的函数都会被认为是无用的代码被优化(消除)掉.
+</p>
+
+<p>
+为了让 Emscripten 知道这个函数是有用的,必须要在函数定义的时候在函数名字前加上 <code>EMSCRIPTEN_KEEPALIVE</code>,这需要导入 <code>emscripten.h</code> 库.
+</p>
+
+<p>
+对于不太熟悉 <code>C/C++</code> 的读者,这里的例子 hello.c 中有几个东西需要注意一下:
+</p>
+
+<ol class="org-ol">
+<li><code>__cplusplus</code> 是 C++ 标准的宏定义,可以用来判断编译器是否支持 <code>C++</code>.这里也用来实现 C/C++ 混编.</li>
+
+<li><p>
+C 和 C++ 的命名管理方式不一样, C++ 支持函数重载,也就是函数是以 <code>函数名字+参数(类型,个数,顺序)+返回值类型</code> 作为唯一标识,
+</p>
+
+<p>
+也就是说 C++ 支持多个同名函数共存, C 语言不存在这样的机制,所以这里需要 <a href="https://docs.microsoft.com/en-us/cpp/cpp/extern-cpp?view=vs-2019">extern "C"</a> 配合 <code>__cplusplus</code> 解决这份代码可能会以 C++ 使用时候编译出错的情况.
+</p></li>
+</ol>
+
+
+<p>
+最简单的编译操作如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">emcc hello.c
+</pre>
+</div>
+
+<p>
+会得到两个文件: <code>a.out.js</code> 和 <code>a.out.wasm</code>.
+</p>
+
+<p>
+<code>a.out.wasm</code> 就是 模块文件, <code>a.out.js</code> 就是 <code>C</code> 和 <code>JavaScript/wasm</code> 之间的耦合代码.而 <code>a.out.wasm</code> 就是我们要发布的代码.
+</p>
+</div>
+
+
+<div id="outline-container-org9ff9842" class="outline-4">
+<h4 id="org9ff9842">直接让 emcc 把代码编译成 .html</h4>
+<div class="outline-text-4" id="text-org9ff9842">
+<div class="org-src-container">
+<pre class="src src-sh">emcc hello.c -o hello.out.html -s <span style="color: #CC9393;">"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']"</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-orged0758f" class="outline-3">
+<h3 id="orged0758f">调用 WebAssembly 模块文件</h3>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2019-12-18</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.0.50 (<a href="https://orgmode.org">Org</a> mode 9.3.1)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
