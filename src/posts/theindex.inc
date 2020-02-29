@@ -1,3 +1,5 @@
+* 3
+  - [[file:2019/12/economic-machine.org][30分钟看懂经济机器如何运转]]
 * A
   - [[file:2018/07/a-simple-websocket-echo-server.org][A Simple WebSocket Echo Server]]
   - [[file:2018/06/about-python.org][About Python]]
@@ -5,6 +7,7 @@
   - [[file:2019/05/bash-eliminating-project.org][Bash消灭计划]]
   - [[file:2018/05/blog-with-emacs.org][Blog with Emacs and Org mode]]
 * C
+  - [[file:2019/11/canvas-intro.org][Canvas入门而不入土]]
   - [[file:2018/06/continuation-passing-style.org][Continuation Passing Style]]
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
 * D
@@ -15,11 +18,15 @@
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
+* L
+  - [[file:2019/12/latex-intro.org][LaTex入门]]
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]
 * O
   - [[file:2019/11/opengl-rendering-pipeline.org][OpenGL渲染管线]]
+* P
+  - [[file:2019/12/pokemon-pvp-notes.org][Pokemon对战入坑笔记]]
 * R
   - [[file:2018/09/Racket-Guide-Notes.org][Racket Guide 笔记]]
   - [[file:2018/10/react-journay.org][React学习之旅]]
@@ -31,6 +38,8 @@
 * W
   - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
   - [[file:2019/11/web-components.org][Web Components]]
+* 主
+  - [[file:2019/12/make-friend-with-webassembly.org][主动认识 WebAssembly]]
 * 关
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
   - [[file:2019/03/about-audio-file-metadata.org][关于音频文件的元信息]]
@@ -45,6 +54,8 @@
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直
   - [[file:2018/11/eopl-techniques-to-imp-interpreter.org][直译器的实现技术总结]]
+* 线
+  - [[file:2019/12/linear-algebra-notes.org][线性代数读书随笔]]
 * 网
   - [[file:2019/04/data-transfer-unit.org][网络数据传输单位]]
   - [[file:2018/06/about-rpc.org][网络编程笔记 RPC]]
