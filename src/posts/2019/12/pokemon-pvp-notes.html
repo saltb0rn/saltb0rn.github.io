@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2019-12-17 周二 13:30 -->
+<!-- 2020-05-05 二 01:07 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Pokemon对战入坑笔记</title>
@@ -198,7 +198,7 @@
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2019 Free Software Foundation, Inc.
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -269,8 +269,7 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org10cbedf">1. 宝可梦对战的思维模式</a></li>
-<li><a href="#org27e0c10">2. 努力值分配 (Effect value)</a></li>
+<li><a href="#org9e3f959">1. 努力值分配</a></li>
 </ul>
 </div>
 </div>
@@ -293,79 +292,55 @@ for the JavaScript code in this tag.
 
 </div>
 
-<div id="outline-container-org10cbedf" class="outline-2">
-<h2 id="org10cbedf"><span class="section-number-2">1</span> 宝可梦对战的思维模式</h2>
+<div id="outline-container-org9e3f959" class="outline-2">
+<h2 id="org9e3f959"><span class="section-number-2">1</span> 努力值分配</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-对战有点类似于 Rock-Scissor-Paper,也就是我们说的石头剪刀布,俗话猜拳.
+这里不讲252大法,也就是把其中两项属性拉到最高,然后把剩下的4点加到剩下某一项.
 </p>
 
 <p>
-猜拳的玩法思路就是猜(read)对手下一个动作是什么,
-</p>
-</div>
-</div>
-
-
-<div id="outline-container-org27e0c10" class="outline-2">
-<h2 id="org27e0c10"><span class="section-number-2">2</span> 努力值分配 (Effect value)</h2>
-<div class="outline-text-2" id="text-2">
-<p>
-每一只 Pokemon 的 EV 总和 510,其中有两点是无效的,也就是最大可以使用 508 点.
+努力值分配一般首先考虑速度,原因很简单,宝可梦是回合制游戏,出手顺序十分重要,有时候就像枪手之间的对决,双方都是一枪击杀,就看谁快了.
 </p>
 
 <p>
-需要根据 Pokemon 的种族值,招式以及队伍组合打法来确定一只 Pokemon 的定位,然后根据定位分配 EV.
-</p>
-
-<ul class="org-ul">
-<li><p>
-普防/特防/双防肉盾
+而在宝可梦里面,只要速度比对方多一点,那么在戏法空间外就必定能比对手先出手(不考虑能力升降的情况),所以速度的努力值只需要够用就好,速度分配有可能会过剩,
 </p>
 
 <p>
-这种 Pokemon 一般都是高 HP 或者高防,分配方法就是尽可能让这两或者三个项分配后的数值接近,理由很简单,
+通常只有一种情况需要把速度分配到最高,那就是戏法空间外相同精灵之间内战(不考虑能力升降的情况).
 </p>
 
 <p>
-因为 EV 是固定的,所以如果是分配 HP 和普防,最后得到 HP 和 普防的总和也是固定的(毕竟两个最大只能各项加252 EV).
+所以给速度分配努力值的思路是根据选定的超速对象进行分配,而超速对象可以选择该精灵的热门"威胁"进行反制,当然选择"威胁"作为超速对象只是其中一种思路,
 </p>
 
 <p>
-\(HP + Def = Sum\)
+确定超速对象以后就要看给该精灵的速度分配努力值是否划算了,举个例子,我方固执(加攻击减特攻)葱游兵想超速内敛(加特攻减攻击)波克基斯,速度种族分别是65和80,
 </p>
 
 <p>
-\(HP * Def = Eval\) 的 Eval 就是综合耐久的评定标准,值越大综合耐久越高,那么如何确定 HP 和 Def 的值呢?
+在50级的时候,假设速度个体值都达到最高,并且不考虑努力值分配以及道具加成的情况,波克基斯的速度是 \(\left(\frac{\left[80 \times 2 + 31 + 0\right] \times 50}{100} + 5\right) \times 1 \approx 100\),
 </p>
 
 <p>
-其实可以用另外一种角度看上面的关系,
+假设100就是葱游兵超速目标,那么葱游兵的速度应该是101,那么应该给速度分配多少努力值呢?
 </p>
 
 <p>
-\(Avg * 2 = Sum\)
+\(\left(\frac{\left[65 \times 2 + 31 + \frac{ev}{4}\right] \times 50}{100} + 5\right) \times 1 \approx 101\),可以解得如下,
 </p>
 
 <p>
-\((Avg - a) + (Avg + a) = Sum\)
+\(ev = ((spd_{target} \div modifier -5) \times 2 - spd_{spec} \times 2 - spd_{iv}) \times 4 = ((101 - 5) \times 2 - 65 \times 2 - 31) \times 4 = 124\).
 </p>
-
-<p>
-\((Avg - a) * (Avg + a) = Avg^2 - a^2 = Eval\)
-</p>
-
-<p>
-HP 与 Def 之间的差距为 2a,从上面可以看出 a 越小评定值越大,所以 HP 与 Def 的差距越小越好(当然前提 HP 和 Def 本身要有一定高度).
-</p></li>
-</ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="date">Date: 2019-12-17</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2019-12-17 周二 13:30</p>
+<p class="date">Created: 2020-05-05 二 01:07</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
