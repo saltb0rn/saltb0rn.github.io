@@ -3336,7 +3336,7 @@
     \right)
     \end{equation}
 
-    假设 $A$ 的规模是 $i \times j$, 那么 $L$ 和 $U$ 的规模分别就是 $i \times m$ 以及 $m \times j$,而 $m$ 就是对角线的宽/高度(不是长度),也就是 $i$ 和 $j$ 当中最小的那个.
+    假设 $A$ 的规模是 $i \times j$, 那么 $L$ 和 $U$ 的规模分别就是 $i \times m$ 以及 $m \times j$,而 $m$ 就是对角线的宽/高度(不是长度),也 *就是 $i$ 和 $j$ 当中最小的那个*.
 
     简单点认为就是先找出对角线,再按照对角线切割分成的两块,最后补上0得到下三角矩阵(L)和上三角矩阵(U).
 
@@ -3399,3 +3399,29 @@
     因为一般来讲除法比乘法的运算更加复杂,需要的运算更多,所以这里是先求完除法,把结果记录起来,可以发现除法运算都是在除以对角线上的元素,也就是除法需要 $m$ 次.
 
     所以综合下来求出 $l_{im}$ 需要 $m$ 次乘法, $m - i$ 次减法以及 $m$ 次除法.
+
+    根据上面的发现可以进一步对 $LU$ 分解进行总结:
+
+    1. 现要对 $i \times j$ 的矩阵 $A$ 进行 $LU$ 分解,先确定 $L$ 和 $U$ 的规模,分别是 $i \times m$ 和 $m \times j$, $m$ 是 $i$ 和 $j$ 中最小的那个.
+
+    2. 对 $L$ 和 $U$ 进行分块, $L$ 按列分块, $U$ 按行分块,分别是 $L = \left(\begin{array}{c}l_{1} & \cdots & l_{m}\end{array}\right)$ 以及 $U = \left(\begin{array}{c}u_{1} \\ \vdots \\ u_{m}\end{array}\right)$.
+
+       所以 $A = l_{1}u_{1} + l_{2}u_{2} + ...  + l_{m}u_{m}$.
+
+    3. 由于是可以马上确认 $L$ 的第一列以及 $U$ 的第一行,所以 $l_{1} = \frac{1}{a_{11}} \times \left(\begin{array}{c}a_{11} \\ \vdots \\ a_{i1}\end{array}\right)$, $u_{1} = \left(\begin{array}{c}a_{11} & \cdots & a_{1j}\end{array}\right)$,
+
+       所以 $A = \frac{1}{a_{11}}\left(\begin{array}{c}a_{11} \\ \vdots \\ a_{i1}\end{array}\right)\left(\begin{array}{c}a_{11} & \cdots & a_{1j}\end{array}\right) + l_{2}u_{2} + ... + l_{m}u_{m}$.
+
+       可以得出 $A - l_{1}u_{1} = \left(\begin{array}{c|ccc}0 & 0 & \cdots & 0 \\ \hline 0 &&& \\ \vdots & & A^{'} \\ 0 &&& \end{array}\right)$.
+
+       这样,剩下的具体计算就是对 $A^{'}$ 进行 $LU$ 分解了,可以发现这是一个递归了,假设 $A^{'}$ 的 $LU$ 分别是 $L^{'}$ 以及 $U^{'}$, 有 $A^{'} = l_{1}^{'}u_{1}^{'} + l_{2}^{'}u_{2}^{'} + ...  + l_{m}^{'}u_{m}^{'}$,
+
+       同样可以马上确定 $l_{1}^{'} = \frac{1}{a_{11}^{'}}\left(\begin{array}{c}a_{11}^{'} \\ \vdots \\ a_{i1}^{'}\end{array}\right)$ 以及 $u_{1}^{'} = \left(\begin{array}{c}a_{11}^{'} & \cdots & a_{1j}^{'}\end{array}\right)$,然后 $A^{'} - l_{1}^{'}u_{1}^{'} = \left(\begin{array}{c|ccc}0 & 0 & \cdots & 0 \\ \hline 0 &&& \\ \vdots & & A^{''} \\ 0 &&& \end{array}\right)$,计算完 $l_{1}^{'}$ 以及 $u_{1}^{'}$ 后就要还原回去,
+
+       $l_{2} = \left(\begin{array}{c} 0 \\ \hline l_{1}^{'} \end{array}\right)$, $u_{2} = \left(\begin{array}{c|c} 0 & u_{1}^{'} \end{array}\right)$, $A^{'}$ 相对 $A$ 降了1阶,所以就是补上1个0,如果是针对 $A^{''}$ 的 $L_{''} = \left(\begin{array}{c}l_{1}^{''} & \cdots & l_{m}^{''}\end{array}\right)$ 以及 $U_{''} = \left(\begin{array}{c}u_{1}^{''} \\ \vdots \\ u_{m}^{''}\end{array}\right)$,
+
+       那么,由于 $A^{''}$ 相对 $A$ 降低了2阶,所以 $l_{3} = \left(\begin{array}{c}0 \\ 0 \\ \hline l_{1}^{''}\end{array}\right)$, $u_{3} = \left(\begin{array}{cc|c}0 & 0 & u_{1}^{''}\end{array}\right)$.
+
+       直到第 $m$ 步后的 $A^{m-1个'} = O$,所以严格意义上是这样的 $A = l_{1}u_{1} + l_{2}u_{2} + ...  + l_{m}u_{m} + O$.
+
+       最后把之前的计算结果按照 $L$ 和 $U$ 的形式契合起来.
