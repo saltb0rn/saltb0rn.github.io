@@ -3165,7 +3165,7 @@
 
         现实中,对于极其接近奇异矩阵的可逆矩阵,往往会被当作奇异矩阵进行处理,
 
-        这是出于对噪音的考虑,理由如下,假如一个接近奇异矩阵 $A$ 的基底为 \left(\begin{array}{c}e_{1},\; ..., \;e_{2}\end{array}\right)$,
+        这是出于对噪音的考虑,理由如下,假如一个接近奇异矩阵 $A$ 的基底为 $\left(\begin{array}{c}e_{1},\; ..., \;e_{2}\end{array}\right)$,
 
         如果两个基向量(看成两条有方向的线段)之间的夹角接近 0 度,那么经过 $A$ 后会被收缩得很严重,反过来的话经过逆矩阵则会被放大的很严重.
 
@@ -3410,7 +3410,7 @@
 
     3. 由于是可以马上确认 $L$ 的第一列以及 $U$ 的第一行,所以 $l_{1} = \frac{1}{a_{11}} \times \left(\begin{array}{c}a_{11} \\ \vdots \\ a_{i1}\end{array}\right)$, $u_{1} = \left(\begin{array}{c}a_{11} & \cdots & a_{1j}\end{array}\right)$,
 
-       所以 $A = \frac{1}{a_{11}}\left(\begin{array}{c}a_{11} \\ \vdots \\ a_{i1}\end{array}\right)\left(\begin{array}{c}a_{11} & \cdots & a_{1j}\end{array}\right) + l_{2}u_{2} + ... + l_{m}u_{m}$.
+       所以 $A = \frac{1}{a_{11}}\left(\begin{array}{c}a_{11} \\ \vdots \\ a_{i1}\end{array}\right)\left(\begin{array}{c}a_{11} & \cdots & a_{1j}\end{array}\right) + l_{2}u_{2} + ... + l_{m}u_{m} = \left(\begin{array}{c}\frac{1}{a_{11}}a_{11}a_{11} & \frac{1}{a_{11}}a_{11}a_{12} & \cdots & \frac{1}{a_{11}}a_{11}a_{1j} \\ \frac{1}{a_{11}}a_{21}a_{11} & \frac{1}{a_{11}}a_{21}a_{12} & \cdots & \frac{1}{a_{11}}a_{21}a_{1j} \\ \vdots & \vdots & \vdots & \vdots \\ \frac{1}{a_{11}}a_{i1}a_{11} & \frac{1}{a_{11}}a_{i1}a_{12} & \cdots & \frac{1}{a_{11}}a_{i1}a_{1j} \end{array}\right) + l_{2}u_{2} + ... + l_{m}u_{m}$.
 
        可以得出 $A - l_{1}u_{1} = \left(\begin{array}{c|ccc}0 & 0 & \cdots & 0 \\ \hline 0 &&& \\ \vdots & & A^{'} \\ 0 &&& \end{array}\right)$.
 
@@ -3425,3 +3425,40 @@
        直到第 $m$ 步后的 $A^{m-1个'} = O$,所以严格意义上是这样的 $A = l_{1}u_{1} + l_{2}u_{2} + ...  + l_{m}u_{m} + O$.
 
        最后把之前的计算结果按照 $L$ 和 $U$ 的形式契合起来.
+
+       如果要代码实现出来的话考虑两点:
+
+       1. 如果要把 $L$ 和 $U$ 分别单独储存的话需要把0和对角线1也储存,浪费内存.
+
+       2. 把 $L$ 的对角线以及0去掉,再把 $U$ 的0去掉,然后两个合并起来,规模和原来的 $A$ 是一样的(具体可以自己动手画图看看).
+
+       综合两点来看可以直接在 $A$ 上操作,用 =Python= 实现出来的话是这样,
+
+       #+BEGIN_SRC python
+        def matrix_size(mat):
+            rows = len(mat)
+            if rows == 0:
+                return [0, 0]
+            cols = len(mat[0])
+            return [rows, cols]
+
+        def lu_decomp(matrix):
+            rows, cols = matrix_size(mat)
+            m = min(rows, cols)
+            for k in range(m):
+                x = 1 / mat[k][k]
+                for i in range(k+1, rows):
+                    mat[i][k] = mat[i][k] * x
+                for i in range(k+1, rows):
+                    for j in range(k+1, cols):
+                        mat[i][j] = mat[i][j] - mat[i][k] * mat[k][j]
+
+        mat = [[4, 3], [6, 3]]
+        lu_decomp(mat)
+       #+END_SRC
+
+       在 =lu_decomp= 里面唯一会出异常的地方就是 =1 / mat[k][k]= 了,也就是对角线出现0.
+
+       要在对角线存在0的时候也能分解,那么只能采用选主元的方法了,选主元分 *完全选主元* 以及 *部分选主元*.
+
+       部分选主元就是只允许交换行或列,而完全选主元就是行列都允许进行交换,如果是部分选主元,某一列或者某一行全都是0,那么就分解不了了,而完全选主元则可以分解所有矩阵 $A$.
