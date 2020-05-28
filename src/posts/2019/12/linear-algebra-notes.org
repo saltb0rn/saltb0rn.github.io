@@ -3442,6 +3442,7 @@
             cols = len(mat[0])
             return [rows, cols]
 
+
         def lu_decomp(matrix):
             rows, cols = matrix_size(mat)
             m = min(rows, cols)
@@ -3452,6 +3453,7 @@
                 for i in range(k+1, rows):
                     for j in range(k+1, cols):
                         mat[i][j] = mat[i][j] - mat[i][k] * mat[k][j]
+
 
         mat = [[4, 3], [6, 3]]
         lu_decomp(mat)
@@ -3483,5 +3485,84 @@
 
           当需要操作第 $i$ 行的时候就是操作第 $m$ 行,这样“认为” $i$ 和 $m$ 行交换了.
 
-       2. 主元的选择方案,
+       2. 主元的选择方案,首先关于判断分量是否为0,计算机处理实数实际就是把实数作为一个有限位的近似小数,也就是存在误差,那种近似0的非0实数的小数位一但超过计算机的处理范围就会被认为是0,
 
+          所以没有办法准确判断是否正好等于0.针对这个问题有两个比较简单的选主元方法,一是选取一个阀值,小于该阀值就认为是0;二是每次都选择最“优”的一行进行交换,
+
+          这里的"优"可以简单的定为绝对值最大,当然方法有很多.
+
+       综合这两点来用 =Python= 实现,
+
+       #+BEGIN_SRC python
+        def matrix_size(mat):
+            rows = len(mat)
+            if rows == 0:
+                return [0, 0]
+            cols = len(mat[0])
+            return [rows, cols]
+
+
+        def ref_get(mat, rowrefs, rowref, colref):
+            real_row = mat[rowrefs[rowref]]
+            return real_row[colref]
+
+
+        def ref_set(mat, rowrefs, rowref, colref, val):
+            real_row = mat[rowrefs[rowref]]
+            real_row[colref] = val
+
+
+        def pivot_update(mat, rowrefs, start_rowref):
+            """
+            选择主元都是从[k,k]这样的对角线元素开始的,
+            所以 k == start_rowref,k就不作为参数了
+            """
+            max_val = -777
+            max_index = 0
+            for i in range(start_rowref, len(mat)):
+                x = abs(ref_get(mat, rowrefs, i, start_rowref))
+                if x > max_val:
+                    max_val = x
+                    max_index = i
+            # 下面是 Python 的交换赋值语法糖
+            rowrefs[start_rowref], rowrefs[max_index] = \
+                rowrefs[max_index], rowrefs[start_rowref]
+
+
+        def plu_decomp(mat):
+            rows, cols = matrix_size(mat)
+            rowrefs = [i for i in range(len(mat))]
+            m = min(rows, cols)
+            for k in range(m):
+                pivot_update(mat, rowrefs, k)
+                x = 1 / ref_get(mat, rowrefs, k, k)
+                for i in range(k+1, rows):
+                    y = ref_get(mat, rowrefs, i, k) * x
+                    ref_set(mat, rowrefs, i, k, y)
+                for i in range(k+1, rows):
+                    for j in range(k+1, cols):
+                        y = ref_get(mat, rowrefs, i, j) - \
+                            ref_get(mat, rowrefs, i, k) * \
+                            ref_get(mat, rowrefs, k, j)
+                        ref_set(mat, rowrefs, i, j, y)
+
+
+        mat1 = [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16]
+        ]
+        plu_decomp(mat1)
+        mat2 = [
+            [4, 3],
+            [6, 3]
+        ]
+        plu_decomp(mat2)
+       #+END_SRC
+
+       这里的 =mat1= 用 =lu_decomp= 是分解不了的,但是 =plu_decomp= 可以; =mat2= 用 =lu_decomp= 和 =plu_decomp= 都可以分解, 但是结果不一样,
+
+       用 =plu_decomp= 的 结果是 =[[2/3, 1], [6, 3]]=, 根据选主元方案可以知道这是分解 =[[6, 3], [4, 3]]= 然后还原交换行得到的结果,
+
+       还原前的 $L$ 和 $U$ 分别为 $\left(\begin{array}{c} 1 & 0 \\ \frac{2}{3} & 1 \end{array}\right)$ 和 $\left(\begin{array}{c} 6 & 3 \\ 0 & 1 \end{array}\right)$, 而 $LU$ 就等于 $\left(\begin{array}{c} 6 & 3 \\ 4 & 3 \end{array}\right)$.
