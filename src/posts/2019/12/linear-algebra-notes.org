@@ -3563,6 +3563,36 @@
 
        这里的 =mat1= 用 =lu_decomp= 是分解不了的,但是 =plu_decomp= 可以; =mat2= 用 =lu_decomp= 和 =plu_decomp= 都可以分解, 但是结果不一样,
 
-       用 =plu_decomp= 的 结果是 =[[2/3, 1], [6, 3]]=, 根据选主元方案可以知道这是分解 =[[6, 3], [4, 3]]= 然后还原交换行得到的结果,
+       用 =plu_decomp= 的 结果是 =[[2/3, 1], [6, 3]]=, 其中 $P = S_{1,2}$,$L$ 和 $U$ 分别为 $\left(\begin{array}{c} 1 & 0 \\ \frac{2}{3} & 1 \end{array}\right)$ 和 $\left(\begin{array}{c} 6 & 3 \\ 0 & 1 \end{array}\right)$, 而 $LU$ 就等于 $\left(\begin{array}{c} 6 & 3 \\ 4 & 3 \end{array}\right)$.
 
-       还原前的 $L$ 和 $U$ 分别为 $\left(\begin{array}{c} 1 & 0 \\ \frac{2}{3} & 1 \end{array}\right)$ 和 $\left(\begin{array}{c} 6 & 3 \\ 0 & 1 \end{array}\right)$, 而 $LU$ 就等于 $\left(\begin{array}{c} 6 & 3 \\ 4 & 3 \end{array}\right)$.
+       但是要记住,矩阵并非只要分量一样就可以,还需要同构(就是分量和分量排列要一样的两个矩阵才是相同),所以有些库的 =lu= 分解是不支持选主元的,但是否允许选主元不能一概而论,接下来会讨论 $LU$ 的作用,以及什么情况允许选主元.
+
+       得到 $L$ 和 $U$ 可以用来求行列式,方程组的解以及可逆矩阵,当然这都建立在一些前提下: 可求行列式的矩阵(方阵);"良性问题"(针对方程组的解以及逆矩阵).
+
+       - 行列式
+
+         方阵的行列式不会因为行列交换而改变(以前有提到过),这种情况可以选主元.
+
+         根据行列式的性质: $det\;(AB) = (det\;A)(det\;B)$,可以得到 $det\;A = (det\;L)(det\;U)$,又因为可以选择主元,所以 $det\;A = (det\;P)(det\;L)(det\;U)$.
+
+         再根据行列式的交替性可以根据行列的交换次数知道 $det\;P$ 是1或者-1,由于 $L$ 和 $U$ 都是三角矩阵,三角矩阵的行列式是对角元素总乘积,所以 $det\;L = 1$,也就是说 $det\;A = (det\;P)(det\;U)$.
+
+         而求出 $det\;U$ 是一件十分简单的事情.
+
+       - 求解方程组
+
+         假设现在要求出 $Ax = y$ 中的 $x$,可以使用 $LU$ 分解 $A$ 然后求解 $x$, $LUx = y$, $x$ 经过 $U$ 到达 $z$, $z$ 再经过 $L$ 到达 $y$,现在已知 $y$ 要求出 $x$,也就是把过程逆向,
+
+         先求出满足 $Lz = y$ 的 $z$, 然后求出满足 $Ux = z$ 的 $x$.这样初看要解两次方程组,好像没什么不同,实际上这要比直接解更加少计算量.
+
+         先了解计算过程,找出其中规律然后使用代码进行实现.
+
+         假设 $n \times n$ 的 $A$ 的 $L$ 和 $U$ 分别是 $\left(\begin{array}{c}1 \\ l_{21} & 1 \\ l_{31} & l_{32} & 1 \\ l_{41} & l_{42} & l_{43} & 1 \end{array}\right)$ 以及 $\left(\begin{array}{c} u_{11} & u_{12} & u_{13} & u_{14} \\ &  u_{22} & u_{23} & u_{24} \\ & & u_{33} & u_{34} \\  &  &  & u_{44} \end{array}\right)$.
+
+         先求出 $z$, $\left(\begin{array}{c}1 \\ l_{21} & 1 \\ l_{31} & l_{32} & 1 \\ l_{41} & l_{42} & l_{43} & 1 \end{array}\right)\left(\begin{array}{c} z_{1} \\ z_{2} \\ z_{3} \\ z_{4} \end{array}\right) = \left(\begin{array}{c}y_{1} \\ y_{2} \\ y_{3} \\ y_{4} \end{array}\right)$,可以得出 $\begin{equation}\left\{\begin{array}{**lr**} 1 \times z_{1} = y_{1} \\ l_{21}z_{1} + 1 \times z_{2} = y_{2} \\ l_{31}z_{1} + l_{32}z_{2} + 1 \times z_{3} = y_{3} \\ l_{41}z_{1} + l_{42}z_{2} + l_{43}z_{3} + 1 \times z_{4} = y_{4}  \end{array} \right. \end{equation}$.
+
+         最后求出 $x$, $\left(\begin{array}{c} u_{11} & u_{12} & u_{13} & u_{14} \\ &  u_{22} & u_{23} & u_{24} \\ & & u_{33} & u_{34} \\  &  &  & u_{44} \end{array}\right)\left(\begin{array}{c}x_{1} \\ x_{2} \\ x_{3} \\ x_{4} \end{array}\right) = \left(\begin{array}{c}z_{1} \\ z_{2} \\ z_{3} \\ z_{4} \end{array}\right)$,可以得出 $\begin{equation}\left\{\begin{array}{**lr**} u_{11}x_{1} + u_{12}x_{2} + u_{13}x_{3} + u_{14}x_{4} = z_{1} \\ u_{22}x_{2} + u_{23}x_{3} + u_{24}x_{4} = z_{2} \\ u_{33}x_{3} + u_{34}x_{4} = z_{3} \\ u_{44}x_{4} = y_{4}  \end{array} \right. \end{equation}$.
+
+         假设 $1 \le k \le n$,在第一步中,求出  $z_{k}$ 需要发生 $k-1$ 次减法, $k-1$ 次乘法以及 $k$ 次除法,而 $z$ 的分量一共有 $n$ 个,那么运算量就是 $(2 \times (k+1) + k) \times n$,复杂度就是 $n^{2}$,求 $x$ 的复杂度也是一样.
+
+         这是得益于 $L$ 和 $U$ 都是特殊矩阵,如果直接用消元法,那么复杂度是 $n^{3}$,显然 $n^{2}$ 更好.
