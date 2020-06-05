@@ -3565,13 +3565,9 @@
 
        用 =plu_decomp= 的 结果是 =[[2/3, 1], [6, 3]]=, 其中 $P = S_{1,2}$,$L$ 和 $U$ 分别为 $\left(\begin{array}{c} 1 & 0 \\ \frac{2}{3} & 1 \end{array}\right)$ 和 $\left(\begin{array}{c} 6 & 3 \\ 0 & 1 \end{array}\right)$, 而 $LU$ 就等于 $\left(\begin{array}{c} 6 & 3 \\ 4 & 3 \end{array}\right)$.
 
-       但是要记住,矩阵并非只要分量一样就可以,还需要同构(就是分量和分量排列要一样的两个矩阵才是相同),所以有些库的 =lu= 分解是不支持选主元的,但是否允许选主元不能一概而论,接下来会讨论 $LU$ 的作用,以及什么情况允许选主元.
-
        得到 $L$ 和 $U$ 可以用来求行列式,方程组的解以及可逆矩阵,当然这都建立在一些前提下: 可求行列式的矩阵(方阵);"良性问题"(针对方程组的解以及逆矩阵).
 
        - 行列式
-
-         方阵的行列式不会因为行列交换而改变(以前有提到过),这种情况可以选主元.
 
          根据行列式的性质: $det\;(AB) = (det\;A)(det\;B)$,可以得到 $det\;A = (det\;L)(det\;U)$,又因为可以选择主元,所以 $det\;A = (det\;P)(det\;L)(det\;U)$.
 
@@ -3596,3 +3592,46 @@
          假设 $1 \le k \le n$,在第一步中,求出  $z_{k}$ 需要发生 $k-1$ 次减法, $k-1$ 次乘法以及 $k$ 次除法,而 $z$ 的分量一共有 $n$ 个,那么运算量就是 $(2 \times (k+1) + k) \times n$,复杂度就是 $n^{2}$,求 $x$ 的复杂度也是一样.
 
          这是得益于 $L$ 和 $U$ 都是特殊矩阵,如果直接用消元法,那么复杂度是 $n^{3}$,显然 $n^{2}$ 更好.
+
+         用 =Python= 实现如下:
+
+         #+BEGIN_SRC python
+mat = [
+    [27, 9, 3, 1],
+    [27, 6, 1, 0],
+    [1, 1, 1, 1],
+    [3, 2, 1, 0]
+]
+
+y = [0, 0, 8, -4]
+
+
+def sol(mat, y):
+    lu_decomp(mat)
+    sol_lu(mat, y)
+
+
+def sol_lu(lu, y):
+    n = len(y)
+    sol_l(lu, y, n)
+    sol_u(lu, y, n)
+
+
+def sol_l(lu, y, n):
+    for i in range(n):
+        for j in range(i-1):
+            y[i] = y[i] - lu[i][j] * y[j]
+
+
+def sol_u(lu, y, n):
+    for i in range(n):
+        k = n - i
+        for j in range(k+1, n):
+            y[i] = y[i] - lu[i][j] * y[j]
+        y[i] = y[i] / lu[i][i]
+
+
+sol(mat, y)
+
+print(y)
+         #+END_SRC
