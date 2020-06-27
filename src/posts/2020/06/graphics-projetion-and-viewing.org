@@ -10,8 +10,52 @@ http://math.hws.edu/graphicsbook/c3/s3.html
 本文主要讲述 =OpenGL= 的各种坐标系以及它们之间的转换,这对于理解 =OpenGL= 的渲染管线/渲染流水线很有必要.
 #+end_abstract
 
+*** 几个该清楚的概念关系
 
-用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinates).
+**** 欧几里得空间以及笛卡尔空间
+
+欧几里得空间(Euclidean space)是一套度量空间,在数学上经常用于研究二维以及三维空间,大概知道它用来干什么就可以了,这里也不详细说.
+
+笛卡尔空间(Cartesian space)是基于欧几里德空间发展来的,欧几里德空间支持一套定理,而笛卡尔空间就是在欧几里得定理上加上一些表示点的表示方法.
+
+或者说,笛卡尔空间就是欧几里得空间上开启了一套坐标系辅助系统,这套坐标系叫做笛卡尔坐标系,而坐标系分为正交坐标系以及斜交坐标系(区别就是坐标轴之间是否相互垂直,是的话就是正交坐标系,否的话就是斜交坐标系).
+
+**** 齐次坐标系
+
+笛卡尔空间上两条平行的直线是永远不可能相交的,这是不符合人的视觉的
+
+ 但在人看来,也就是在投影空间(projective space)却会相交.
+
+#+CAPTION: 马路两边的两条平行线在原处相交(图片来源于网络)
+[[../../../files/road.jpg]]
+
+为了解决这种问题,数学家找到一种方法:齐次坐标系(Homogeneous coordinate system).
+
+齐次坐标系是用来处理投影空间上的图形以及几何的计算.齐次坐标就是 $n$ 维坐标的 $n+1$ 维坐标表示.
+
+一个 2D 的笛卡尔坐标 $\left(x, y\right)$ 的齐次坐标是这样的 $\left(x_{'}, y_{'}, w\right)$,其中满足这样的关系 $\begin{equation} \left\{ \begin{aligned} x &= \frac{x_{'}}{w} \\ y &= \frac{y_{'}}{w} \end{aligned} \right. \end{equation}$.
+
+一个笛卡尔坐标 $\left(1, 2\right)$ 在齐次坐标系上可以用 $\left(1, 2, 1\right)$, $\left(2, 4, 2\right)$ ... 表示,不管用哪种方式表示,它们都对应同一个笛卡尔坐标,所以这些点都是"homogeneous",所以它们都叫做"homogeneous coordinates".
+
+当 $\left(1, 2\right)$ 向原处无限移动,相当于 $w = 0$, $\left(\frac{1}{0}, \frac{2}{0}\right) \approx \left(\infty, \infty\right)$.
+
+如何证明两条平行线可以相交呢?
+
+假设现在在笛卡尔坐标系中有这这样的方程组: $\begin{equation} \left\{ \begin{aligned} Ax + By + C = 0 \\ Ax + By + D = 0 \end{aligned} \right. \end{equation}$,如果 $C \neq D$, 那么该方程组无解(因为平行无法相交),如果 $C = D$,那么两条线是重叠的,或者说就是同一条线.
+
+把它改写成投影空间上的关系: $\begin{equation} \left\{ \begin{aligned} A\frac{x^{'}}{w} + B\frac{y^{'}}{w} + C = 0 \\ A\frac{x^{'}}{w} + B\frac{y^{'}}{w} + D = 0 \end{aligned} \right. \end{equation}$ $\longrightarrow$ $\begin{equation} \left\{ \begin{aligned} Ax^{'} + By^{'} + Cw = 0 \\ Ax^{'} + By^{'} + Dw = 0 \end{aligned} \right. \end{equation}$.
+
+现在这个方程组有一个解: $\left(x^{'}, y^{'}, 0\right)$,因为 $\left(C - D\right)w = 0$,所以 $w = 0$,所以它们会在 $\left(x^{'}, y^{'}, 0\right)$ 上相交.
+
+
+
+*** OpenGL 中对象的变换历程
+
+**** 对象坐标系
+
+用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
+
+**** 世界坐标系
 
 在 =OpenGL= 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
 
@@ -19,16 +63,144 @@ A. 把不同对象组装成更加复杂的对象.
 
 B. 把对象放到场景(scene)/世界(world)中.
 
-其实场景/世界就是所有对象里面最复杂,最大的那个对象,定义场景/世界的坐标系叫做世界坐标系(world coordinates),本质就是一个对象坐标系.
+其实场景/世界就是所有对象里面最复杂,最大的那个对象,定义场景/世界的坐标系叫做世界坐标系(world coordinate system),本质就是一个对象坐标系.
 
-$A$ 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, $B$ 过程是对象经历了从对象坐标系到世界坐标系(world coordinates)的变换,
+**** 从对象坐标系到世界坐标系的变换
 
-本质都是从 *一个对象坐标系到另外一个对象坐标系的变换,这种变换叫做模型变换(modeling transformation)*.
+上面中, $A$ 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, $B$ 过程是对象经历了从对象坐标系到世界坐标系的变换,
 
+本质都是从 *一个对象坐标系到另外一个对象坐标系的变换,这种变换叫做模型变换(modeling transformation)*,因此在 =OpenGL= 中对象坐标系以及世界坐标系只是概念上的区别,没有这两种概念的对应实现.
 
+用 $M_{model} = \left(\begin{array}{c} m_{1x} & m_{2x} & m_{3x} & d_{x} \\ m_{1y} & m_{2y} & m_{3y} & d_{y} \\ m_{1z} & m_{2z} & m_{3z} & d_{z} \\ 0 & 0 & 0 & 1\end{array}\right)$ 表示这个模型变换.
 
-在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 =OpenGL= 中也有类似的存在,叫做 =viewer=,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinates).
+其中 $\left(\begin{array}{c}m_{1x} \\ m_{1y} \\ m_{1z}\end{array}\right)$, $\left(\begin{array}{c}m_{2x} \\ m_{2y} \\ m_{2z}\end{array}\right)$ 以及 $\left(\begin{array}{c}m_{3x} \\ m_{3y} \\ m_{3z}\end{array}\right)$ 分别是 $x$, $y$ 以及 $z$ 轴, 至于 $\left(\begin{array}{c}d_{x} \\ d_{y} \\ d_{z} \end{array}\right)$ 是负责平移.
 
-在该坐标系中, =Viewer= 位于原点 $\left(0, 0, 0\right)$ 上看着 $z$ 轴的负方向(就是向这屏幕里), $y$ 轴的正方向是向上, $x$ 轴的正方向是向右(简单点说就是右手坐标系),这是一个以 =viewer= 为中心的坐标系统 (=viewer-centric coordinate system=).
+#+BEGIN_EXAMPLE
+通过一个 2D 例子想象一下 ,我们已经画了一个三角形,要把它放到已经画好的正方形上,它们都有各自的坐标系,也就是上面提到的对象坐标系,
 
+通常来说都希望系统对象都是居中到坐标系的中心,也就是原点上,或者至少使用原点作为参考点(reference point),
 
+首先把三角形放到正方形的原点上,然后 *通常* 按照缩放,旋转以及平移这个顺序参考正方形的坐标系原点进行几何变换,
+
+按照这个顺序变换是因为缩放和旋转不会让三角形偏移参考点,而平移是会偏移参考点的,如果先平移再缩放和旋转的话,直接按照参考点进行缩放和旋转会出现问题.
+
+不过要记住, OpenGL 里面会按照相反的指令顺序执行变换的,所以如果是想按照 *缩放,旋转和平移* 这个顺序进行变换,那么代码里面就要按照 *平移,旋转和缩放* 这个顺序写.
+#+END_EXAMPLE
+
+**** 视点坐标系
+
+在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 =OpenGL= 中也有类似的存在,叫做 =viewer=,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinate system).
+
+在该坐标系中, =Viewer= 位于原点 $\left(0, 0, 0\right)$ 上看着 $z$ 轴的负方向(就是向这屏幕里), $y$ 轴的正方向是向上, $x$ 轴的正方向是向右(简单点说就是右手坐标系),这是一个以 =viewer= 为中心的坐标系统 (=viewer-centric coordinate system=),
+
+这个坐标系是 *固定* 的,用来在屏幕绘画(drawing)的,这个 =viewer= 其实就是 =OpenGL= 的相机(camera),但实际上 =OpenGL= 但没有定义相机这个对象以及对应的变换,所以如果要看场景的其他位置,只能对整个场景进行反向模型变换(比如看场景的右边,那么场景就需要向左边平移)来实现.
+
+也就是说 =OpenGL= 的相机是虚拟的.
+
+**** 从世界坐标系到视点坐标系的变换
+
+一旦模型变换完成后,就可以开始进行到视点坐标系的变换了,这个叫做视点变换(viewing transformation).
+
+=OpenGL= 有一个叫做 $lookAt$ 的变换,就是用来对相机进行变换的.之前也说了, =OpenGL= 的相机是虚拟的,它是根据参考的相对性对场景进行反向变换来达到"变换相机"的效果.
+
+$lookAt$ 就是相机从位于原点上看着 $z$ 的负反向到位于 $\left(x_{e}, y_{e}, z_{e}\right)$ 上看着 $\left(x_{t}, y_{t}, z_{t}\right)$ 的变换,这些坐标都是定义在世界坐标系上.
+
+$lookAt$ 变换由两个变换构成: 反向的从视点坐标到原点平移整个场景,用 $M_{T}$ 表示;反向的旋转整个场景,用 $M_{R}$ 表示.
+
+$M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{2} & r_{5} & r_{8} & 0 \\ r_{3} & 4_{6} & r_{9} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\left(\begin{array}{c} 0 & 0 & 0 & d_{x} \\ 0 & 0 & 0 & d_{y} \\ 0 & 0 & 0 & d_{z} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
+
+首先是平移,因为是场景的反向平移,所以 $M_{T} = \left(\begin{array}{c} 1 & 0 & 0 & -x_{e} \\ 0 & 1 & 0 & -y_{e} \\ 0 & 0 & 1 & -z_{e} \\ 0 & 0 & 0 & 1\end{array}\right)$.
+
+然后是旋转,同样也是反向旋转的,比如相机看一个对象的上方时候,相当于场景围绕自身原点往下旋转.
+
+#+CAPTION: 相机看小黄鸭的顶部
+[[../../../files/gl_camera03.gif]]
+
+这个图的意思是相机还是在原来的位置(也就是浅色橙线)看着原来的方向,小黄鸭往下旋转相当于相机围绕小黄鸭反方向旋转.
+
+#+CAPTION: 相机看小黄鸭的正前方
+[[../../../files/gl_camera04.gif]]
+
+这图同理,如上.
+
+那么这个旋转的矩阵应该怎么求出来呢?还是按照上面的图来看,其实就是求出小黄鸭旋转的逆矩阵.
+
+这么理解,先把相机看做场景种的一个对象,整个场景旋转,这个时候相机看到的内容还是一样的;然后单独把相机还原到场景旋转前的位置上,这个还原的变换也就是世界坐标旋转的逆矩阵了.
+
+假设场景的变换矩阵是 $M_{r} = \left(\begin{array}{c} l_{x} & u_{x} & f_{x} & 0 \\ l_{y} & u_{y} & f_{y} & 0 \\ l_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)$, 那么 $M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} l_{x} & l_{y} & l_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)$ (由于 $M_{r}$ 是一个正交坐标系,而正交坐标系的逆矩阵就是它的转置矩阵).
+
+**** 3D转化成2D图像
+
+当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上称成为一张 2D 图片.
+
+这一个过程经历三个步骤,
+
+第一步是就是选择相机看到的内容,因为相机是不能看到完整场景的,所以要求出相机看到的内容,再把看到的内容投影到空间上的一个平面上,这个空间叫做裁剪空间(clip space),
+
+这一步就是从视点坐标变成裁剪坐标,也就是从视点坐标系到裁剪坐标系(clip coordinate system),这个时候只是确定看到的内容,还没有真正投影,也没有发生真正的裁剪.
+
+这里涉及了一个细节: 当远处的对象被近处的对象挡住,只有前面的对象会出现在图片上,这个就是隐藏面问题(hidden surface problem),解决这个问题的算法叫做深度测试(depth test);
+
+第二步,对变换后的坐标进行裁剪(clip/frustum clip),实际上这才是确定裁剪空间.裁剪的计算是这样的,首先,裁剪用的坐标是这样的 $\left(x, y, z, w\right)$,没错就是齐次坐标,用 $w$ 坐标分别比较 $x$, $y$ 和 $z$ 坐标,如果任何一个坐标小于 $-w$ 或者大于 $w$,
+
+那么该顶点就会被舍弃,所以一个点要出现在图片上必须满足 $-w < x,y,z < w$ 这个关系,
+
+#+CAPTION: 三角形被裁剪
+[[../../../files/gl_frustumclip_tri.png]]
+
+第三步就是把内容投影到平面上,并且显示在屏幕上.
+
+这里第一步和第三步分别涉及两个变换,分别是投影变换以及标准化设备坐标系,接下来开始进入正题.
+
+***** 从视点坐标系到裁剪坐标系的变换,再到标准化设备坐标系.
+
+那么如何选择相机看到的内容呢?有两种选择方案,分别如图.
+
+#+CAPTION: 透视投影
+[[../../../files/gl_perspective.png]]
+
+#+CAPTION: 正交投影
+[[../../../files/gl_orthographic.png]]
+
+图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum),第二个是长方体.
+
+构造这两个多边体都只需要 6 个参数,分别是 $l(eft)$, $r(ight)$, $b(ottom)$, $t(op)$, $n(ear)$ 以及 $f(ar)$,这 6 个参数要满足这样的关系 $\begin{equation} \left\{ \begin{aligned} 0 < l &< r \\ 0 < b &< t \\ 0 < n &< f\end{aligned} \right. \end{equation}$.
+
+可以看到每个多边体都有两个比较深色的平面,离相机近叫做近裁剪平面(near plane / near clipping plane),远的叫做远裁剪平面(far plane / far clipping plane).
+
+(你可能会问为什么看到的内容不是从相机位置到远处,而是要截头呢?想象一下,相机贴近物体还能看到什么.)
+
+这两种选择方案叫做: 透视投影(perspective projection)以及正交投影(orthographic projection).
+
+*在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上,所以近裁剪平面也叫投影平面(projection plane)*.
+
+投影后还要经过一个变换才能出图,这个变换叫视口变换(viewport transformation),从裁剪坐标变换成达标准化设备坐标(normalized device coordinates),简称 NDC.
+
+****** 透视投影
+
+#+CAPTION: 透视投影2
+[[../../../files/gl_projectionmatrix01.png]]
+
+这里第一个就是透视的截头锥体,第二个是标准化设备坐标系,该坐标系用的是左手坐标系.
+
+下图展示了一个视点空间上的点 $v_{e} = \left(x_{e}, y_{e}, z_{e}\right)$ 如何投影到近裁剪平面的 $v_{p} = \left(x_{p}, y_{p}, z_{p}\right)$ 上.
+
+[[../../../files/gl_projectiomat.png]]
+
+从俯视图可以看到 $x_{e}$ 投影到 $x_{p}$ 上,可以看到原点加上 $v_{e}$ 配合 $z$ 轴可以组成一个三角形,而原点加上 $v_{p}$ 配合 $z$ 轴同样可组成一个三角形,并且两个三角形是相似三角形.
+
+根据这个关系可以得到 $\frac{x_{p}}{x_{e}} = \frac{-n}{z_{e}}$,所以 $x_{p} = \frac{-nx_{e}}{z_{e}} = \frac{nx_{e}}{-z_{e}}$.
+
+从侧视图也可以看出两个相似三角形, $y_{e}$ 投影到 $y_{p}$ 上,根据关系可以的 $\frac{y_{p}}{y_{e}} = \frac{-n}{z_{e}}$,所以 $y_{p} = \frac{-ny_{e}}{z_{e}} = \frac{ny_{e}}{-z_{e}}$.
+
+注意, $x_{p}$ 和 $y_{p}$ 都取决于 $z_{e}$,成反比关系.
+
+假设投影矩阵 $M_{projection} = \left(\begin{array}{c} x_{pl} & x_{pu} & x_{pf} & x \\ y_{pl} & y_{pu} & y_{pf} & y \\ z_{pl} & z_{pu} & z_{pf} & z \\ w_{pl} & w_{pu} & w_{pf} & w \end{array}\right)$,那么变换过程就是: $\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$.
+
+因为经过裁剪变换后需要把裁剪坐标变换成 NDC, $\left(\begin{array}{c}x_{ndc} \\ y_{ndc} \\ z_{ndc}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{clip}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)$.
+
+所以我们可以把裁剪坐标的 $w_{clip}$ 坐标设定成 $-z_{e}$,所以 $\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = \left(\begin{array}{c} x_{pl} & x_{pu} & x_{pf} & x \\ y_{pl} & y_{pu} & y_{pf} & y \\ z_{pl} & z_{pu} & z_{pf} & z \\ 0 & 0 & -z_{e} & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$.
+
+这里可以看到变换得到的坐标的 $w_{clip}$ 不再是 1,这个时候可以根据 $w$ 才确定这个点是否被舍弃,也就是确定是否裁剪.
+
+裁剪后所剩下的顶点的坐标就需要转换成 NDC 了.
