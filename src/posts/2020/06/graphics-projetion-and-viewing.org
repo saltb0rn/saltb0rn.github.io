@@ -107,7 +107,7 @@ $lookAt$ 就是相机从位于原点上看着 $z$ 的负反向到位于 $\left(x
 
 $lookAt$ 变换由两个变换构成: 反向的从视点坐标到原点平移整个场景,用 $M_{T}$ 表示;反向的旋转整个场景,用 $M_{R}$ 表示.
 
-$M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{2} & r_{5} & r_{8} & 0 \\ r_{3} & 4_{6} & r_{9} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\left(\begin{array}{c} 0 & 0 & 0 & d_{x} \\ 0 & 0 & 0 & d_{y} \\ 0 & 0 & 0 & d_{z} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
+$M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{2} & r_{5} & r_{8} & 0 \\ r_{3} & r_{6} & r_{9} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\left(\begin{array}{c} 0 & 0 & 0 & d_{x} \\ 0 & 0 & 0 & d_{y} \\ 0 & 0 & 0 & d_{z} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
 
 首先是平移,因为是场景的反向平移,所以 $M_{T} = \left(\begin{array}{c} 1 & 0 & 0 & -x_{e} \\ 0 & 1 & 0 & -y_{e} \\ 0 & 0 & 1 & -z_{e} \\ 0 & 0 & 0 & 1\end{array}\right)$.
 
@@ -137,9 +137,9 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 第一步是就是选择相机看到的内容,因为相机是不能看到完整场景的,所以要求出相机看到的内容,因此需要求出哪些顶点是在视野范围内的,
 
-之前几个阶段用到的顶点的坐标都是 $\left(x, y, z, w\right)$, $w=1$ 的这种形式,确定顶点是否在视野内的关键就是根据 $w$,
+之前几个阶段用到的顶点的坐标都是 $\left(x, y, z, w\right)$, $w=1$ 的这种形式,确定顶点是否在视野内的是由根据 $w$ 的值来决定的,
 
-不过不能单存地把 $w$ 设定为 1,这需要计算,这个变换过程叫做投影变换(projection transformation)(,虽然名字叫做投影,但是根本就没有发生投影).
+不过不能单纯地把 $w$ 设定为 1,这需要计算,这个变换过程叫做投影变换(projection transformation)(,虽然名字叫做投影,但是根本就没有发生投影).
 
 第二步,经历过上面的计算后可以得出 $w$ 设定为某个值后顶点的坐标,现在的坐标可是说是严格意义上的齐次坐标, $w$ 不再是可有可无了(当 $w=1$ 时,可以简单得通过添加/移除 $w$ 来让坐标在齐次坐标和笛卡尔坐标之间转换).
 
@@ -147,24 +147,19 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 判定条件很简单, $\left(x, y, z, w\right)$ 中, 满足 $-w < x,y,z < w$ 这个条件才能显示在最后的图片上,不满足这个条件的顶点就会被裁剪掉.
 
-第三步,把剩下的顶点再做一次变换,这一步是把第一步计算得到齐次坐标变回笛卡尔坐标,就是把这个是 =OpenGL= 本身的要求,实际上这一步是决定 $w$ 的值的选取的其中一个因素.
+第三步,把剩下的顶点再做一次变换,其实这一步其实是把第一步计算得到齐次坐标变回笛卡尔坐标,就是把这个是 =OpenGL= 本身的要求,实际上这一步是决定 $w$ 的值的选取的其中一个因素.
 
-最后得到的坐标叫做标准化设备坐标(normalized device coordinates).
+最后得到的坐标叫做标准化设备坐标(normalized device coordinates),简称 =NDC=.
 
 第四步.
 
-#+CAPTION: 三角形被裁剪
-[[../../../files/gl_frustumclip_tri.png]]
-
-以前的坐标都是 $\left(x,y,z,w\right)$ 这种形式,而 $w = 1$,经过第一步后 $w$ 才有真正的作用.
-
-第三步就是把内容投影到平面上,并且显示在屏幕上.
-
 这里第一步和第三步分别涉及两个变换,分别是投影变换以及标准化设备坐标系,接下来开始进入正题.
+
+虽然说涉及到两个变换,但其实只要找出投影变换的矩阵就可以了.
 
 ***** 从视点坐标系到裁剪坐标系的变换,再到标准化设备坐标系.
 
-那么如何选择相机看到的内容呢?有两种选择方案,分别如图.
+先看一下如何选择相机看到的内容呢?有两种选择方案,如下,
 
 #+CAPTION: 透视投影
 [[../../../files/gl_perspective.png]]
@@ -174,7 +169,7 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum),第二个是长方体.
 
-构造这两个多边体都只需要 6 个参数,分别是 $l(eft)$, $r(ight)$, $b(ottom)$, $t(op)$, $n(ear)$ 以及 $f(ar)$,这 6 个参数要满足这样的关系 $\begin{equation} \left\{ \begin{aligned} 0 < l &< r \\ 0 < b &< t \\ 0 < n &< f\end{aligned} \right. \end{equation}$.
+构造这两个多边体都只需要 6 个参数,分别是 $l(eft)$, $r(ight)$, $b(ottom)$, $t(op)$, $n(ear)$ 以及 $f(ar)$,为了区分方向,我们让这 6 个参数要满足这样的关系 $\begin{equation} \left\{ \begin{aligned} 0 < l &< r \\ 0 < b &< t \\ 0 < n &< f\end{aligned} \right. \end{equation}$.
 
 可以看到每个多边体都有两个比较深色的平面,离相机近叫做近裁剪平面(near plane / near clipping plane),远的叫做远裁剪平面(far plane / far clipping plane).
 
@@ -184,16 +179,21 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 *在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上,所以近裁剪平面也叫投影平面(projection plane)*.
 
-投影后还要经过一个变换才能出图,这个变换叫视口变换(viewport transformation),从裁剪坐标变换成达标准化设备坐标(normalized device coordinates),简称 NDC.
-
 ****** 透视投影
+
+现在找出透视投影的矩阵,首先目前已经知道的信息有:
+
+1. 经过投影变换后会先进行裁剪,再把坐标变换成标准化设备坐标系,
+2. 顶点会被投影到近裁剪平面上
 
 #+CAPTION: 透视投影2
 [[../../../files/gl_projectionmatrix01.png]]
 
-这里第一个就是透视的截头锥体,第二个是标准化设备坐标系,该坐标系用的是左手坐标系.
+这里第一个就是透视的截头锥体,第二个是标准化设备坐标系,该坐标系用的是左手坐标系,它的 3 轴范围都是 $\left[-1, 1\right]$.
 
-下图展示了一个视点空间上的点 $v_{e} = \left(x_{e}, y_{e}, z_{e}\right)$ 如何投影到近裁剪平面的 $v_{p} = \left(x_{p}, y_{p}, z_{p}\right)$ 上.
+假设投影矩阵 $M_{projection} = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ w_{l} & w_{u} & w_{f} & w \end{array}\right)$,那么变换过程就是: $\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$, 把裁剪后剩下的顶点变换成 =NDC=, $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$.
+
+下图展示了一个视点空间上的点 $v_{e} = \left(x_{e}, y_{e}, z_{e}\right)$ 如何投影到近裁剪平面的点 $v_{p} = \left(x_{p}, y_{p}, z_{p}\right)$ 上.
 
 [[../../../files/gl_projectiomat.png]]
 
@@ -205,12 +205,53 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 注意, $x_{p}$ 和 $y_{p}$ 都取决于 $z_{e}$,成反比关系.
 
-假设投影矩阵 $M_{projection} = \left(\begin{array}{c} x_{pl} & x_{pu} & x_{pf} & x \\ y_{pl} & y_{pu} & y_{pf} & y \\ z_{pl} & z_{pu} & z_{pf} & z \\ w_{pl} & w_{pu} & w_{pf} & w \end{array}\right)$,那么变换过程就是: $\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$.
+综合上面,我们可以把裁剪坐标的 $w_{p}$ 坐标设定成 $-z_{e}$,原因总结一下有两个:
 
-因为经过裁剪变换后需要把裁剪坐标变换成 NDC, $\left(\begin{array}{c}x_{ndc} \\ y_{ndc} \\ z_{ndc}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{clip}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)$.
+1. $x_{p}$, $y_{p}$ 都取决于 $z_{e}$;
 
-所以我们可以把裁剪坐标的 $w_{clip}$ 坐标设定成 $-z_{e}$,所以 $\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = \left(\begin{array}{c} x_{pl} & x_{pu} & x_{pf} & x \\ y_{pl} & y_{pu} & y_{pf} & y \\ z_{pl} & z_{pu} & z_{pf} & z \\ 0 & 0 & -z_{e} & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$.
+2. $w_{p}$ 决定了顶点是否被裁剪掉,以及 =NDC= 的坐标系的 3 轴取值范围是 $\left[-1, 1\right]$,如果 $w_{p} = -z_{e}$,那么可以保证 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 处于这个范围内.
 
-这里可以看到变换得到的坐标的 $w_{clip}$ 不再是 1,这个时候可以根据 $w$ 才确定这个点是否被舍弃,也就是确定是否裁剪.
+所以透视投影过程变成 $\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$,
 
-裁剪后所剩下的顶点的坐标就需要转换成 NDC 了.
+这样透视投影矩阵的第4行就确定了.
+
+接下来, $v_{p}$ 映射到 =NDC= 坐标系上得到 $v_{n}$: $\left(x_{n}, y_{n}, z_{n}\right)$,所以需要找出 $x_{p}$, $y_{p}$ 和 $z_{p}$ 分别到 $x_{n}$, $y_{n}$ 和 $z_{n}$ 的线性关系.
+
+先找出 $x$ 和 $y$ 坐标的, $\left[l, r\right] \longrightarrow \left[-1, 1\right]$ 以及 $\left[b, t\right] \longrightarrow \left[-1, 1\right]$.
+
+对于 $x$, 先假设 $x_{n} = k \cdot x_{p} + c$,
+
+#+CAPTION: Mapping from $x_{p}$ to $x_{n}$
+[[../../../files/gl_projectionmatrix05.png]]
+
+$k$ 实际上就是直线的斜率,也就是三角形的高比底边,所以 $k = \frac{1-\left(-1\right)}{r-l} = \frac{2}{r-l}$.
+
+最后把 $\left(l, -1\right)$ 或者 $\left(r, 1\right)$ 代入假设的等式中,这里就用 $\left(r, 1\right)$ 代入,得到 $1 = \frac{2r}{r-l} + c$, 得到
+
+$\begin{equation} \begin{aligned} c &= 1 - \frac{2r}{r-l} \\ &= \frac{r-l}{r-l} - \frac{2r}{r-l} \\ &= \frac{r-l-2r}{r-l} \\ &= -\frac{r+l}{r-l}\end{aligned}\end{equation}$,
+
+所以 $x_{n} = \frac{2x_{p}}{r-l} - \frac{r+l}{r-l}$.
+
+对于 $y$,同样先假设 先假设 $y_{n} = k \cdot y_{p} + c$,同样的推导过程(过程就省略了),最后得出 $y_{n} = \frac{2y_{p}}{t-b} - \frac{t+b}{t-b}$.
+
+然后把 $x_{p} = \frac{nx_{e}}{-z_{e}}$ 以及 $y_{p} = \frac{ny_{e}}{-z_{e}}$ 代入上面求得的等式中,
+
+$\begin{equation}\begin{aligned} x_{n} &= \frac{2x_{p}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2 \cdot \frac{n \cdot x_{e}}{-z_{e}}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2n \cdot x_{e}}{\left(r-l\right)\left(-z_{e}\right)} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} + \frac{\frac{r+l}{r-l} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$ 以及 $\begin{equation}\begin{aligned} y_{n} &= \frac{2y_{p}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2 \cdot \frac{n \cdot y_{e}}{-z_{e}}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2n \cdot y_{e}}{\left(t-b\right)\left(-z_{e}\right)} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} + \frac{\frac{t+b}{t-b} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$.
+
+从 =NDC= 逆推回去可以得到 $x_{p} = \frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}$ 以及 $y_{p} = \frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}$,因此 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$,
+
+这样一来,透视投影的矩阵就只剩下第 3 行,也就是 $z$ 轴的线性关系了.
+
+$z_{p}$ 比较不同,目前已知的信息有,
+
+1. 投影的点都是在近裁剪平面上的,
+
+2.  =OpenGL= 需要它能够用于裁剪以及深度测试(depth test) 的唯一 $z_{p}$ 值,并且还能够反投影(unproject/inverse transform),
+
+3. $x_{p}$ 以及 $y_{p}$ 取决于 $z_{e}$
+
+根据第三条信息可以知道 $z_{p}$ 不取决于 $x_{e}$ 以及 $y_{e}$, 所以可以得到 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$.
+
+再从变换到 =NDC= 的过程可以得到 $z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$,因为在视点空见上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
+
+还是根据变换到 =NDC= 的过程中: $\left[-n,-f\right] \longrightarrow \left[-1, 1\right]$,把 $\left(-n, -1\right)$ 以及 $\left(-f, -1\right)$ 代入到上面的等式中,
