@@ -234,11 +234,14 @@ $\begin{equation} \begin{aligned} c &= 1 - \frac{2r}{r-l} \\ &= \frac{r-l}{r-l} 
 
 对于 $y$,同样先假设 先假设 $y_{n} = k \cdot y_{p} + c$,同样的推导过程(过程就省略了),最后得出 $y_{n} = \frac{2y_{p}}{t-b} - \frac{t+b}{t-b}$.
 
+#+CAPTION: Mapping from $y_{p}$ to $y_{n}$
+[[../../../files/gl_projectionmatrix06.png]]
+
 然后把 $x_{p} = \frac{nx_{e}}{-z_{e}}$ 以及 $y_{p} = \frac{ny_{e}}{-z_{e}}$ 代入上面求得的等式中,
 
 $\begin{equation}\begin{aligned} x_{n} &= \frac{2x_{p}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2 \cdot \frac{n \cdot x_{e}}{-z_{e}}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2n \cdot x_{e}}{\left(r-l\right)\left(-z_{e}\right)} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} + \frac{\frac{r+l}{r-l} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$ 以及 $\begin{equation}\begin{aligned} y_{n} &= \frac{2y_{p}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2 \cdot \frac{n \cdot y_{e}}{-z_{e}}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2n \cdot y_{e}}{\left(t-b\right)\left(-z_{e}\right)} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} + \frac{\frac{t+b}{t-b} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$.
 
-从 =NDC= 逆推回去可以得到 $x_{p} = \frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}$ 以及 $y_{p} = \frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}$,因此 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$,
+从转换到 =NDC= 逆推回去可以得到 $x_{p} = \frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}$ 以及 $y_{p} = \frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}$,因此 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$,
 
 这样一来,透视投影的矩阵就只剩下第 3 行,也就是 $z$ 轴的线性关系了.
 
@@ -252,7 +255,7 @@ $z_{p}$ 比较不同,目前已知的信息有,
 
 根据第三条信息可以知道 $z_{p}$ 不取决于 $x_{e}$ 以及 $y_{e}$, 所以可以得到 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$.
 
-再从变换到 =NDC= 的过程可以得到 $z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$,因为在视点空见上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
+再根据 $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$,可以得到 $z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$,因为在视点空见上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
 
 还是根据变换到 =NDC= 的过程: $\left[-n,-f\right] \longrightarrow \left[-1, 1\right]$,把 $\left(-n, -1\right)$ 以及 $\left(-f, 1\right)$ 代入到上面的等式中, $\begin{equation}\left\{\begin{aligned} -1 = \frac{-z_{f} \cdot n + z}{n} \\ 1 = \frac{-z_{f} \cdot f + z}{f} \end{aligned} \right. \longrightarrow \left\{\begin{aligned} -n = -z_{f} \cdot n + z \\ f = -z_{f} \cdot f + z \end{aligned} \right. \end{equation}$.
 
@@ -260,7 +263,13 @@ $z_{p}$ 比较不同,目前已知的信息有,
 
 $f = -z_{f} \cdot f + z_{f} \cdot n - n \longrightarrow f + n = -\left(f - n\right)z_{f} \longrightarrow z_{f} = -\frac{f+n}{f-n}$, 这样就得到 $z_{f}$ 了,把 $z_{f}$ 再代入回第一个等式中,得到 $\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot n = -\frac{2fn}{f-n}$,
 
-
 根据结果 $\begin{equation} \left\{ \begin{aligned} z_{f} = -\frac{f+n}{f-n} \\ z = -\frac{2fn}{f-n} \end{aligned} \right. \end{equation}$,可以得出 $z_{n} = \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}}$,以及得出透视投影矩阵 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & -\frac{f+n}{f-n} & -\frac{2fn}{f-n} \\ 0 & 0 & -1 & 0 \end{array}\right)$.
 
-*再观察 $z_{n}$ 以及 $z_{e}$ 的关系可以发现它们根本就不成线性关系*,
+*再观察 $z_{n}$ 以及 $z_{e}$ 的关系可以发现它们根本就不成线性关系,且成反比关系*, $z_{e}$ 越大, $z_{n}$ 越小,并且 $z_{n}$ 的变化也会变小,这意味着在裁剪近平面附近的顶点的精准度会很高,在裁剪远平面附近的顶点精准度会很低.
+
+也就是说, *如果 $\left[-n, -f\right]$ 的范围越大,裁剪远平面附近顶点的 $z_{e}$ 的一个细微的改变越不会对该顶点转化成 =NDC= 后的 $z_{n}$ 造成影响,假设在裁剪远平面附近有位置十分接近(只是 $z_{e}$ 相差一点点)的两个顶点,这两个顶点在转化成 =NDC= 后极可能会重合在一起,这就是深度精确问题/z冲突(depth precision problem/depth buffer precision problem/z-fighting)*,
+
+这个时候需要减少 $n$ 和 $f$ 之间的距离来最小化这个问题.
+
+#+CAPTION: 比较不同深度下的精确度
+[[../../../files/gl_projectionmatrix07.png]]
