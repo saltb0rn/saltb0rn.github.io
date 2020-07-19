@@ -14,7 +14,7 @@ http://math.hws.edu/graphicsbook/c3/s3.html
 
 **** 欧几里得空间以及笛卡尔空间
 
-欧几里得空间(Euclidean space)是一套度量空间,在数学上经常用于研究二维以及三维空间,大概知道它用来干什么就可以了,这里也不详细说.
+欧几里得空间(Euclidean space)是一套度量空间,基于向量空间补充一些新定义(向量的长度),在数学上经常用于研究二维以及三维空间,大概知道它用来干什么就可以了,这里也不详细说.
 
 笛卡尔空间(Cartesian space)是基于欧几里德空间发展来的,欧几里德空间支持一套定理,而笛卡尔空间就是在欧几里得定理上加上一些表示点的表示方法.
 
@@ -46,8 +46,6 @@ http://math.hws.edu/graphicsbook/c3/s3.html
 把它改写成投影空间上的关系: $\begin{equation} \left\{ \begin{aligned} A\frac{x^{'}}{w} + B\frac{y^{'}}{w} + C = 0 \\ A\frac{x^{'}}{w} + B\frac{y^{'}}{w} + D = 0 \end{aligned} \right. \end{equation}$ $\longrightarrow$ $\begin{equation} \left\{ \begin{aligned} Ax^{'} + By^{'} + Cw = 0 \\ Ax^{'} + By^{'} + Dw = 0 \end{aligned} \right. \end{equation}$.
 
 现在这个方程组有一个解: $\left(x^{'}, y^{'}, 0\right)$,因为 $\left(C - D\right)w = 0$,所以 $w = 0$,所以它们会在 $\left(x^{'}, y^{'}, 0\right)$ 上相交.
-
-
 
 *** OpenGL 中对象的变换历程
 
@@ -171,12 +169,12 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 ***** 从视点坐标系到裁剪坐标系的变换,再到标准化设备坐标系.
 
-先看一下如何选择相机看到的内容呢?有两种选择方案,如下,
+先看一下如何选择相机看到的内容呢?有两种选择方案,分别对应两种不同的相机,如下,
 
-#+CAPTION: 透视投影
+#+CAPTION: 透视投影(投影相机看到的内容)
 [[../../../files/gl_perspective.png]]
 
-#+CAPTION: 正交投影
+#+CAPTION: 正交投影(正交相机看到的内容)
 [[../../../files/gl_orthographic.png]]
 
 图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum),第二个是长方体.
@@ -192,6 +190,10 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 *在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上,所以近裁剪平面也叫投影平面(projection plane)*.
 
 ****** 透视投影
+
+这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
+
+这有一个信息:一个点坐标的 $z$ 分量与它的 $x$ 和 $y$ 分别存在某种联系.在后面的推导中可以证明这个信息是对的.
 
 现在找出透视投影的矩阵,首先目前已经知道的信息有:
 
@@ -285,3 +287,30 @@ $f = -z_{f} \cdot f + z_{f} \cdot n - n \longrightarrow f + n = -\left(f - n\rig
 
 #+CAPTION: 比较不同深度下的精确度
 [[../../../files/gl_projectionmatrix07.png]]
+
+*题外话*,很多图形库的设定投影相机的函数需要视场角(fov), 裁剪平面的宽高比(aspect)以及近裁剪平面(n)以及远裁剪平面(f)作为输入参数.
+
+以 =three.js= 为例,并非用前面提到6个参数设定相机,不过两者其实是有联系的,毕竟内部还是使用6参数来设定相机的.
+
+$fov$ 是相机看到的视野范围的角度,从上面的图片 *透视投影* 可以看出射线会形成一个角度,那个角度就是 $fov$,再观察 *frustum的俯视图* 以及 *frustum 的侧视图* 可以知道有两个 $fov$,分别是水平方向的 *fov* 以及垂直反向的 *fov*.
+
+以 =three.js= 为例子,它就是使用的水平方向 $fov$,假设现在水平方向 $fov$ 是 $\theta$,需要根据 $fov$ 计算出6参数,其中 $n$ 和 $f$ 都知道了,可以直接根据 $n$ 和 $\theta$ 计算出 $l$ 和 $r$.
+
+根据 *frustum的俯视图* 可以看出 $\frac{\frac{r-l}{2}}{n} = \frac{r-l}{2n} = \tan\frac{\theta}{2}$,然后 $r-l = 2n\tan\frac{\theta}{2}$.
+
+$r-l$ 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 $t-b = \frac{r-l}{aspect}$,最后以宽和高各自的中心点划分,也就是 $\begin{equation}\left\{\begin{aligned}|r| = |l| = \frac{r-l}{2} \\ |t| = |b| = \frac{t-b}{2}\end{aligned} \right.\end{equation}$,
+
+这样就可以得出 $l(eft)$, $r(ight)$, $t(op)$ 以及 $b(ottom)$ 4个参数了(需要保证满足 $\begin{equation}\left\{\begin{aligned}r > l \\ t > b\end{aligned}\right.\end{equation}$ 关系),加上一开始给出的 $n(ear)$ 和 $f(ar)$ 就凑齐了6个参数来构建截头锥体.
+
+****** 正交投影
+
+#+CAPTION: 正交投影2
+[[../../../files/gl_projectionmatrix02.png]]
+
+正交投影比透视投影要简单的多,这种投影不符合人的视觉,两条平行不会在远处慢慢靠近最后相交.
+
+一开始指定6参数就决定了看到的内容,裁剪判断也很简单,只要点的坐标: $\left(x, y, z, w\right)$ 满足这个关系 $\begin{equation}\left\{\begin{aligned} l < x < r \\ b < y < t \\ n < z < f \end{aligned}\right.\end{equation}$ 就不会被裁剪,也就是说点的 $w$ 不再作为裁剪判定的根据,
+
+所以也不需要特别去计算 $w$ 的值了,也就是说再指定参数的时候裁剪处理已经完成了.
+
+首先是从裁剪坐标转换成 $ndc$ 就是单纯地分别就计算出 $x_{p}$, $y_{p}$ 以及 $z_{p}$ 到 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 是线性关系.
