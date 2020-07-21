@@ -47,6 +47,8 @@ http://math.hws.edu/graphicsbook/c3/s3.html
 
 现在这个方程组有一个解: $\left(x^{'}, y^{'}, 0\right)$,因为 $\left(C - D\right)w = 0$,所以 $w = 0$,所以它们会在 $\left(x^{'}, y^{'}, 0\right)$ 上相交.
 
+对于 3D 也是适用的,都是增加额外一个维度,不过这个额外的维度意义重大,它引入了透视这个概念,为 3D 坐标映射到 2D 坐标提供了可能(总得来说提供了高维度到低一维度转变的可能).
+
 *** OpenGL 中对象的变换历程
 
 **** 对象坐标系
@@ -143,31 +145,36 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上称成为一张 2D 图片.
 
-这一个过程经历四个步骤,
+这一个过程经历3个步骤,
 
-第一步是就是选择相机看到的内容,因为相机是不能看到完整场景的,所以要求出相机看到的内容,因此需要求出哪些顶点是在视野范围内的,
+第一步是就是选择相机看到的内容,因为相机是不能看到完整场景的(不可能看到无限远),所以要先求出相机看到空间范围,因此需要求出哪些顶点是在视野范围内的,
 
 之前几个阶段用到的顶点的坐标都是 $\left(x, y, z, w\right)$, $w=1$ 的这种形式,确定顶点是否在视野内的是由根据 $w$ 的值来决定的,
 
-不过不能单纯地把 $w$ 设定为 1,这需要计算,这个变换过程叫做投影变换(projection transformation)(,虽然名字叫做投影,但是根本就没有发生投影).
+所以不能单纯地把 $w$ 设定为 1,这需要经过计算,最后得到的坐标叫做裁剪坐标(clip coordinates): $\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$.
 
-第二步,经历过上面的计算后可以得出 $w$ 设定为某个值后顶点的坐标,现在的坐标可是说是严格意义上的齐次坐标, $w$ 不再是可有可无了(当 $w=1$ 时,可以简单得通过添加/移除 $w$ 来让坐标在齐次坐标和笛卡尔坐标之间转换).
+这个过程叫做视截体剔除(frustum culling)/裁剪(clipping),不满足这个条件 $-w_{clip} < x_{clip}, y_{clip}, z_{clip} < w_{clip}$ 的顶点都会被丢弃.
 
-然后根据 $w$ 判断哪些顶点是需要的,哪些又是不需要的,这个过程叫做裁剪(clip/frustum clip),这个过程发生在裁剪空间(clip space)中,
+最后会看到的空间形状形成一个几何体(下面会有图片).
 
-判定条件很简单, $\left(x, y, z, w\right)$ 中, 满足 $-w < x,y,z < w$ 这个条件才能显示在最后的图片上,不满足这个条件的顶点就会被裁剪掉.
+还有一个迷惑地方就是: 这个过程也叫做投影变换(projection transformation),但是根本就没有发生投影,而是发生裁剪.
 
-第三步,把剩下的顶点再做一次变换,其实这一步其实是把第一步计算得到齐次坐标变回笛卡尔坐标,就是把这个是 =OpenGL= 本身的要求,实际上这一步是决定 $w$ 的值的选取的其中一个因素.
 
-最后得到的坐标叫做标准化设备坐标(normalized device coordinates),简称 =NDC=.
+第二步,把看到的空间范围映射到一个叫做裁剪空间(clip space)的"容器"中,这个空间所使用的坐标系叫做标准化设备坐标(normalized device coordinates),简称 =NDC=.
 
-第四步.
+任何超出这个容器的顶点都不会被渲染,所以就是要把上面计算得到的空间范围缩放到这个"容器"里面.
 
-这里第一步和第三步分别涉及两个变换,分别是投影变换以及标准化设备坐标系,接下来开始进入正题.
+这个"容器"是一个立方体,使用的是左手坐标系,三轴的范围分别都是 $\left[-1, 1\right]$.(下面会有图)
 
-虽然说涉及到两个变换,但其实只要找出投影变换的矩阵就可以了.
+并且需要从上一步得到的齐次坐标: $\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$ 变成正常的 3D 坐标: $\left(\frac{x_{clip}}{w_{clip}}, \frac{y_{clip}}{w_{clip}}, \frac{z_{clip}}{w_{clip}}\right)$.
 
-***** 从视点坐标系到裁剪坐标系的变换,再到标准化设备坐标系.
+这个过程叫做 =NDC= 变换(NDC transformation).
+
+
+第三步,就是把裁剪空间里面的内容转换成 2D 图像了, $z$ 值决定了一个顶点会不会被渲染出来,比如拍照的时候被挡住的东西不会被拍到.
+
+
+***** 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.
 
 先看一下如何选择相机看到的内容呢?有两种选择方案,分别对应两种不同的相机,如下,
 
@@ -183,7 +190,7 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 可以看到每个多边体都有两个比较深色的平面,离相机近叫做近裁剪平面(near plane / near clipping plane),远的叫做远裁剪平面(far plane / far clipping plane).
 
-(你可能会问为什么看到的内容不是从相机位置到远处,而是要截头呢?想象一下,相机贴近物体还能看到什么.)
+(你可能会问为什么看到的内容不是从相机位置到远处,而是要截头呢?截掉尾部很好理解,那是因为人不可能看到无限远,而从相机位置,也就是 $z = 0$ 会影响齐次坐标到 =NDC= 的计算,看过整个推导后可以回过来重新思考一下.)
 
 这两种选择方案叫做: 透视投影(perspective projection)以及正交投影(orthographic projection).
 
@@ -197,45 +204,45 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 现在找出透视投影的矩阵,首先目前已经知道的信息有:
 
-1. 经过投影变换后会先进行裁剪,再把坐标变换成标准化设备坐标系,
+1. 计算出坐标的 $w$ 用于之后的裁剪,再把坐标变换成标准化设备坐标系,
 2. 顶点会被投影到近裁剪平面上
 
 #+CAPTION: 透视投影2
 [[../../../files/gl_projectionmatrix01.png]]
 
-这里第一个就是透视的截头锥体,第二个是标准化设备坐标系,该坐标系用的是左手坐标系,它的 3 轴范围都是 $\left[-1, 1\right]$.
+这里第一个就是透视的截头锥体,第二个是标准化设备坐标系.
 
-假设投影矩阵 $M_{projection} = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ w_{l} & w_{u} & w_{f} & w \end{array}\right)$,那么变换过程就是: $\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$, 把裁剪后剩下的顶点变换成 =NDC=, $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$.
+假设投影矩阵 $M_{projection} = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ w_{l} & w_{u} & w_{f} & w \end{array}\right)$,那么变换过程就是: $\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$, 把裁剪后剩下的顶点变换成 =NDC=, $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{p}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)$.
 
-下图展示了一个视点空间上的点 $v_{e} = \left(x_{e}, y_{e}, z_{e}\right)$ 如何投影到近裁剪平面的点 $v_{p} = \left(x_{p}, y_{p}, z_{p}\right)$ 上.
+下图展示了一个视点空间上的点 $v_{e} = \left(x_{e}, y_{e}, z_{e}\right)$ 如何投影到近裁剪平面的点 $v_{p} = \left(x_{clip}, y_{clip}, z_{clip}\right)$ 上.
 
 [[../../../files/gl_projectiomat.png]]
 
-从俯视图可以看到 $x_{e}$ 投影到 $x_{p}$ 上,可以看到原点加上 $v_{e}$ 配合 $z$ 轴可以组成一个三角形,而原点加上 $v_{p}$ 配合 $z$ 轴同样可组成一个三角形,并且两个三角形是相似三角形.
+从俯视图可以看到 $x_{e}$ 投影到 $x_{clip}$ 上,可以看到原点加上 $v_{eye}$ 配合 $z$ 轴可以组成一个三角形,而原点加上 $v_{clip}$ 配合 $z$ 轴同样可组成一个三角形,并且两个三角形是相似三角形.
 
-根据这个关系可以得到 $\frac{x_{p}}{x_{e}} = \frac{-n}{z_{e}}$,所以 $x_{p} = \frac{-nx_{e}}{z_{e}} = \frac{nx_{e}}{-z_{e}}$.
+根据这个关系可以得到 $\frac{x_{clip}}{x_{e}} = \frac{-n}{z_{e}}$,所以 $x_{clip} = \frac{-nx_{e}}{z_{e}} = \frac{nx_{e}}{-z_{e}}$.
 
-从侧视图也可以看出两个相似三角形, $y_{e}$ 投影到 $y_{p}$ 上,根据关系可以的 $\frac{y_{p}}{y_{e}} = \frac{-n}{z_{e}}$,所以 $y_{p} = \frac{-ny_{e}}{z_{e}} = \frac{ny_{e}}{-z_{e}}$.
+从侧视图也可以看出两个相似三角形, $y_{e}$ 投影到 $y_{clip}$ 上,根据关系可以的 $\frac{y_{clip}}{y_{e}} = \frac{-n}{z_{e}}$,所以 $y_{clip} = \frac{-ny_{e}}{z_{e}} = \frac{ny_{e}}{-z_{e}}$.
 
-注意, $x_{p}$ 和 $y_{p}$ 都取决于 $z_{e}$,成反比关系.
+注意, $x_{clip}$ 和 $y_{clip}$ 都取决于 $z_{e}$,成反比关系.
 
-综合上面,我们可以把裁剪坐标的 $w_{p}$ 坐标设定成 $-z_{e}$,原因总结一下有两个:
+综合上面,我们可以把裁剪坐标的 $w_{clip}$ 坐标设定成 $-z_{e}$,原因总结一下有两个:
 
-1. $x_{p}$, $y_{p}$ 都取决于 $z_{e}$;
+1. $x_{clip}$, $y_{clip}$ 都取决于 $z_{e}$;
 
-2. $w_{p}$ 决定了顶点是否被裁剪掉,以及 =NDC= 的坐标系的 3 轴取值范围是 $\left[-1, 1\right]$,如果 $w_{p} = -z_{e}$,那么可以保证 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 处于这个范围内.
+2. $w_{clip}$ 决定了顶点是否被裁剪掉,以及 =NDC= 的坐标系的 3 轴取值范围是 $\left[-1, 1\right]$,如果 $w_{clip} = -z_{e}$,那么可以保证 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 处于这个范围内.
 
-所以透视投影过程变成 $\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$,
+所以透视投影过程变成 $\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$,
 
 这样透视投影矩阵的第4行就确定了.
 
-接下来, $v_{p}$ 映射到 =NDC= 坐标系上得到 $v_{n}$: $\left(x_{n}, y_{n}, z_{n}\right)$,所以需要找出 $x_{p}$, $y_{p}$ 和 $z_{p}$ 分别到 $x_{n}$, $y_{n}$ 和 $z_{n}$ 的线性关系.
+接下来,假设有个点 $v_{clip}$, 它映射到 =NDC= 坐标系上得到 $v_{ndc}$: $\left(x_{n}, y_{n}, z_{n}\right)$,所以需要找出 $x_{clip}$, $y_{clip}$ 和 $z_{clip}$ 分别到 $x_{n}$, $y_{n}$ 和 $z_{n}$ 的线性关系.
 
 先找出 $x$ 和 $y$ 坐标的, $\left[l, r\right] \longrightarrow \left[-1, 1\right]$ 以及 $\left[b, t\right] \longrightarrow \left[-1, 1\right]$.
 
-对于 $x$, 先假设 $x_{n} = k \cdot x_{p} + c$,
+对于 $x$, 先假设 $x_{n} = k \cdot x_{clip} + c$,
 
-#+CAPTION: Mapping from $x_{p}$ to $x_{n}$
+#+CAPTION: Mapping from $x_{clip}$ to $x_{n}$
 [[../../../files/gl_projectionmatrix05.png]]
 
 $k$ 实际上就是直线的斜率,也就是三角形的高比底边,所以 $k = \frac{1-\left(-1\right)}{r-l} = \frac{2}{r-l}$.
@@ -244,32 +251,30 @@ $k$ 实际上就是直线的斜率,也就是三角形的高比底边,所以 $k =
 
 $\begin{equation} \begin{aligned} c &= 1 - \frac{2r}{r-l} \\ &= \frac{r-l}{r-l} - \frac{2r}{r-l} \\ &= \frac{r-l-2r}{r-l} \\ &= -\frac{r+l}{r-l}\end{aligned}\end{equation}$,
 
-所以 $x_{n} = \frac{2x_{p}}{r-l} - \frac{r+l}{r-l}$.
+所以 $x_{n} = \frac{2x_{clip}}{r-l} - \frac{r+l}{r-l}$.
 
-对于 $y$,同样先假设 先假设 $y_{n} = k \cdot y_{p} + c$,同样的推导过程(过程就省略了),最后得出 $y_{n} = \frac{2y_{p}}{t-b} - \frac{t+b}{t-b}$.
+对于 $y$,同样先假设 先假设 $y_{n} = k \cdot y_{clip} + c$,同样的推导过程(过程就省略了),最后得出 $y_{n} = \frac{2y_{clip}}{t-b} - \frac{t+b}{t-b}$.
 
-#+CAPTION: Mapping from $y_{p}$ to $y_{n}$
+#+CAPTION: Mapping from $y_{clip}$ to $y_{n}$
 [[../../../files/gl_projectionmatrix06.png]]
 
-然后把 $x_{p} = \frac{nx_{e}}{-z_{e}}$ 以及 $y_{p} = \frac{ny_{e}}{-z_{e}}$ 代入上面求得的等式中,
+然后把 $x_{clip} = \frac{nx_{e}}{-z_{e}}$ 以及 $y_{clip} = \frac{ny_{e}}{-z_{e}}$ 代入上面求得的等式中,
 
-$\begin{equation}\begin{aligned} x_{n} &= \frac{2x_{p}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2 \cdot \frac{n \cdot x_{e}}{-z_{e}}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2n \cdot x_{e}}{\left(r-l\right)\left(-z_{e}\right)} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} + \frac{\frac{r+l}{r-l} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$ 以及 $\begin{equation}\begin{aligned} y_{n} &= \frac{2y_{p}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2 \cdot \frac{n \cdot y_{e}}{-z_{e}}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2n \cdot y_{e}}{\left(t-b\right)\left(-z_{e}\right)} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} + \frac{\frac{t+b}{t-b} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$.
+$\begin{equation}\begin{aligned} x_{n} &= \frac{2x_{clip}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2 \cdot \frac{n \cdot x_{e}}{-z_{e}}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2n \cdot x_{e}}{\left(r-l\right)\left(-z_{e}\right)} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} + \frac{\frac{r+l}{r-l} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$ 以及 $\begin{equation}\begin{aligned} y_{n} &= \frac{2y_{clip}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2 \cdot \frac{n \cdot y_{e}}{-z_{e}}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2n \cdot y_{e}}{\left(t-b\right)\left(-z_{e}\right)} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} + \frac{\frac{t+b}{t-b} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}$.
 
-从转换到 =NDC= 逆推回去可以得到 $x_{p} = \frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}$ 以及 $y_{p} = \frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}$,因此 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$,
+从转换到 =NDC= 逆推回去可以得到 $x_{clip} = \frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}$ 以及 $y_{clip} = \frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}$,因此 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$,
 
-这样一来,透视投影的矩阵就只剩下第 3 行,也就是 $z$ 轴的线性关系了.
-
-$z_{p}$ 比较不同,目前已知的信息有,
+这样一来,透视投影的矩阵就只剩下第 3 行,也就是 $z$ 轴的关系了,$z_{clip}$ 比较不同,目前已知的信息有,
 
 1. 投影的点都是在近裁剪平面上的,
 
-2.  =OpenGL= 需要它能够用于裁剪以及深度测试(depth test) 的唯一 $z_{p}$ 值,并且还能够反投影(unproject/inverse transform),
+2.  =OpenGL= 需要它能够用于裁剪以及深度测试(depth test) 的唯一 $z_{clip}$ 值,并且还能够反投影(unproject/inverse transform),
 
-3. $x_{p}$ 以及 $y_{p}$ 取决于 $z_{e}$
+3. $x_{clip}$ 以及 $y_{clip}$ 取决于 $z_{e}$
 
-根据第三条信息可以知道 $z_{p}$ 不取决于 $x_{e}$ 以及 $y_{e}$, 所以可以得到 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$.
+根据第三条信息可以知道 $z_{clip}$ 不取决于 $x_{e}$ 以及 $y_{e}$, 所以可以得到 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$.
 
-再根据 $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$,可以得到 $z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$,因为在视点空见上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
+再根据 $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{clip}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)$,可以得到 $z_{n} = z_{clip}/w_{clip} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$,因为在视点空间上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
 
 还是根据变换到 =NDC= 的过程: $\left[-n,-f\right] \longrightarrow \left[-1, 1\right]$,把 $\left(-n, -1\right)$ 以及 $\left(-f, 1\right)$ 代入到上面的等式中, $\begin{equation}\left\{\begin{aligned} -1 = \frac{-z_{f} \cdot n + z}{n} \\ 1 = \frac{-z_{f} \cdot f + z}{f} \end{aligned} \right. \longrightarrow \left\{\begin{aligned} -n = -z_{f} \cdot n + z \\ f = -z_{f} \cdot f + z \end{aligned} \right. \end{equation}$.
 
@@ -309,8 +314,14 @@ $r-l$ 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 
 
 正交投影比透视投影要简单的多,这种投影不符合人的视觉,两条平行不会在远处慢慢靠近最后相交.
 
-一开始指定6参数就决定了看到的内容,裁剪判断也很简单,只要点的坐标: $\left(x, y, z, w\right)$ 满足这个关系 $\begin{equation}\left\{\begin{aligned} l < x < r \\ b < y < t \\ n < z < f \end{aligned}\right.\end{equation}$ 就不会被裁剪,也就是说点的 $w$ 不再作为裁剪判定的根据,
+看到的视体就是一个由6参数计算得到的长方体,所以裁剪判断很简单,只要点的坐标: $\left(x, y, z, w\right)$ 满足这个关系 $\begin{equation}\left\{\begin{aligned} l < x < r \\ b < y < t \\ n < z < f \end{aligned}\right.\end{equation}$ 就不会被裁剪,
 
-所以也不需要特别去计算 $w$ 的值了,也就是说再指定参数的时候裁剪处理已经完成了.
+所以不再需要特别去计算 $w$ 的值了,它已经不重要了,考虑到还有 =NDC= 变换这个过程,直接让 $w = 1$ 就可以了.
 
-首先是从裁剪坐标转换成 $ndc$ 就是单纯地分别就计算出 $x_{p}$, $y_{p}$ 以及 $z_{p}$ 到 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 是线性关系.
+从上面的图可以看到 $x_{clip}$, $y_{clip}$ 以及 $z_{clip}$ 到 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 分别就是单纯的线性关系,所以分别计算出这三条关系就可以得出正交投影的矩阵: $\begin{equation} \left\{ \begin{aligned} x_{n} &= k \cdot x_{clip} + c \\ y_{n} &= k \cdot y_{clip} + c \\ z_{n} &= k \cdot z_{clip} + c \end{aligned} \right. \end{equation}$.
+
+比如 $x_{clip}$ 与 $x_{n}$ 的线性关系,参考图片透视投影的 $x_{clip}$ 到 $x_{n}$ 的关系图,可以得出 $k = \frac{2}{r-l}$.
+
+然后把 $\left(r, 1\right)$ (当然 $\left(l, -1\right)$ 也可以)和 $k$ 代入回原来式子中,得到 $1 = \frac{2}{r-l}r + c \longrightarrow c = 1 - \frac{2r}{r-1} = -\frac{r+l}{r-l}$.
+
+最后把 $c$ 代入回去得到 $x_{n} = \frac{2}{r-l} \cdot x_{clip} - \frac{r+l}{r-l}$.其它同理,最终关系为 $\begin{equation} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{clip} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{clip} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{clip} - \frac{f+n}{f-n} \end{aligned} \right. \end{equation}$.所以 $M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & -\frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
