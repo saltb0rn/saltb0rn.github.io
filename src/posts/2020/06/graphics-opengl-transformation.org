@@ -178,7 +178,7 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 *第三步*,就是把裁剪空间里面的内容转换成像素,这一步叫光栅化(Raterization),也就是平时常说的"矢量图转像素图",这个时候已经是 2D 的了.
 
-*这已经是 =Primitive Assembly= 下一个环节了,之所以写它,那么是为了加深对 =NDC= 的理解.*
+*这已经是 =Primitive Assembly= 下一个环节了,之所以写它,那么是为了加深对 =NDC= 的理解,不过还有另外一个原因(在结尾处我会解释).*
 
 这一步其实就是要计算出像素在视口中的位置,如何描述像素的位置呢?这就需要一个概念叫做窗口坐标(window coordinate)/屏幕坐标(screen coordinates)了.
 
@@ -186,7 +186,7 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 那么 =NDC= 显示在屏幕的位置,也就是对应的屏幕坐标就是 $\left(\begin{array}{c}x_{w} \\ y_{w} \\ z_{w}\end{array}\right) = \left(\begin{array}{c} \frac{w}{2} \cdot x_{ndc} + (x + \frac{w}{2}) \\ \frac{h}{2} \cdot y_{ndc} + (x + \frac{h}{2}) \\ \frac{f-n}{2} \cdot z_{ndc} + \frac{f+n}{2} \end{array}\right)$.
 
-在这一步中,$z_{w}$ 值决定了一个顶点会不会被渲染出来,比如拍照的时候被挡住的东西不会被拍到,这里以后会详细简述的.
+$z_{w}$ 值决定了一个顶点会不会被渲染出来,比如拍照的时候被挡住的东西不会被拍到,这里以后会详细简述的.
 
 
 ***** 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.
@@ -340,3 +340,27 @@ $r-l$ 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 
 然后把 $\left(r, 1\right)$ (当然 $\left(l, -1\right)$ 也可以)和 $k$ 代入回原来式子中,得到 $1 = \frac{2}{r-l}r + c \longrightarrow c = 1 - \frac{2r}{r-1} = -\frac{r+l}{r-l}$.
 
 最后把 $c$ 代入回去得到 $x_{n} = \frac{2}{r-l} \cdot x_{clip} - \frac{r+l}{r-l}$.其它同理,最终关系为 $\begin{equation} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{clip} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{clip} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{clip} - \frac{f+n}{f-n} \end{aligned} \right. \end{equation}$.所以 $M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & -\frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
+
+*** 实现参考
+
+学习概念后需要检验自己的理解是否到位,最有效方法就是按照优秀的实践参考进行实践,优秀的参考要保证内容的正确性以及跟所学内容的相关性.
+
+保证正确性是因为在自己在遇到问题的第一时间可以马上断定问题是出在自己身上,而不是给自己一个"辩解"的机会: 这教程有问题吧?
+
+保证相关性则是为了做到和自己本身条件匹配,避免遇到一些超出自己的理解知识点/概念,这样会让自己在实践过程中更加专注于检验理解这个过程中.
+
+根据这两个要求,本人推荐以下教程:
+
+1. [[https://www.davrous.com/2013/06/13/tutorial-series-learning-how-to-write-a-3d-soft-engine-from-scratch-in-c-typescript-or-javascript/][Tutorial series: learning how to write a 3D soft engine from scratch in C#, TypeScript or JavaScript]]
+
+   这个是系列教程的第一个部分: 编写一个软件加速的 3D 引擎的核心部分,相对于整个 =OpenGL= 管线来说,这部分的教程实现了 =Vertex Operation=, =Primitive Assembly= 以及 =Raterization= 这三个环节.
+
+   这就是为什么我要把光栅化这一步也写上去(其实仔细想一下,把光栅化变为本文的一个重要介绍环节不就好了吗?之后有时间再补上吧).这个教程需要读者掌握 =C#=, =TypeScript= 和 =JavaScript= 的其中一门编程语言,
+
+   个人不建议只是读代码的,最好自己动手敲一遍,但是读者一味照"敲"也容易陷入在一些细节上思考不到位的情况,本人是 =JavaScript= 用户,从自己身经验来说,推荐把 =babylon.math.js= 换成 =gl-matrix.js=.
+
+   =gl-matrix.js= 的 =API= 比起 =babylon.math.js= 的 =API= 更加底层和贴近 =OpenGL= 的 =API=.
+
+2. [[http://glmatrix.net/][glMatrix]]
+
+   如果读者是 =JavaScript= 用户,那么本人推荐去阅读以下 =gl-matrix.js= 的源代码,这对于检测线性代数以及矩阵推导过程的理解有帮助,如果理解到位了, =gl-matrix.js= 源代码就很好懂.
