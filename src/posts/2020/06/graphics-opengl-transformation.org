@@ -53,7 +53,7 @@
 
 **** 平面方程
 
-在欧几里得空间中,指定任意平面 $P$ 的某个点 $p_{1}$ 位置延伸一条法线向量 $\vec{n}$: $\left(a, b, c\right)$,该法线向量表示了平面 $P$ 的面向方向,而 $p_{1}$ 确定了平面的位置,可以反过来说 $p_{1}$ 和 $\vec{n}$ 确定了 $P$,
+在欧几里得空间中,指定任意平面 $P$ 的某个点 $p_{1}$, 从该点的位置延伸一条法线向量 $\vec{n}$: $\left(a, b, c\right)$,该法线向量表示了平面 $P$ 的面向方向,而 $p_{1}$ 确定了平面的位置,可以反过来说 $p_{1}$ 和 $\vec{n}$ 确定了 $P$,
 
 可以想像成一根棒子 $\vec{n}$ 穿过一块有孔 $p_{1}$ 的木板 $P$,如图所示,
 
@@ -71,7 +71,7 @@ $a\left(x - x_{1}\right) + b\left(y - y_{1}\right) + c\left(z - z_{1}\right) = 0
 
 $ax + by + cz - \left(ax_{1} + by_{1} + cz_{1}\right) = 0$.
 
-如果 $\vec{n}$ 是单位向量,并且 $p_{1}$ 到原点的距离为 $d$, 那么 $p_{1}$ 可以表示成 $\left(da, db, dc\right)$ (\vec{n} 就是原点到 $p_{1}$ 的方向),整个等式变为 $ax + by + cz - d \cdot \left(a^{2} + b^{2} + c^{2}\right) = 0$,
+如果 $\vec{n}$ 是单位向量,并且 $p_{1}$ 到原点的距离为 $d$, 那么 $p_{1}$ 可以表示成 $\left(da, db, dc\right)$ ($\vec{n}$ 就是 $\vec{p_{1}}$ 的方向),整个等式变为 $ax + by + cz - d \cdot \left(a^{2} + b^{2} + c^{2}\right) = 0$,
 
 又因为 $\vec{n}$ 是单位向量,所以 $a^{2} + b^{2} + c^{2} = 1$,所以最终等式为: $ax + by + cz - d = 0$.如果 $\vec{n}$ 不是单位向量,那就自己对 $\vec{n}$ 进行一般化,也就是求出它的单位向量,然后进行同样的推导.
 
@@ -185,18 +185,20 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 所以现在不能单纯地把 $w$ 设定为 1,这需要经过计算,最后得到的坐标叫做裁剪坐标(clip coordinates): $\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$.
 
-这个过程叫做视截体剔除(frustum culling)/裁剪(clipping),不满足这个条件 $-w_{clip} < x_{clip}, y_{clip}, z_{clip} < w_{clip}$ 的顶点都会被丢弃.
+这个过程叫做视截体剔除(frustum culling)/裁剪(clipping),最后会看到的空间形状形成一个几何体(下面会有图片),
 
-最后会看到的空间形状形成一个几何体(下面会有图片),这个步骤除了裁剪外,还会计算顶点投影后的坐标,所以这个过程也叫做投影变换(projection transformation).
+这个步骤除了裁剪外,还会计算顶点投影后的坐标,所以这个过程也叫做投影变换(projection transformation).
 
 
 *第二步*,把看到的空间范围映射到一个"容器"中,这个"容器"使用了一个坐标系叫做标准化设备坐标(normalized device coordinates),简称 =NDC=.
 
 任何超出这个"容器"的顶点都不会被渲染,这一步就是把上面计算得到的空间范围缩放到这个"容器"里面.
 
-这个"容器"是一个立方体,使用的是左手坐标系,三轴的范围分别都是 $\left[-1, 1\right]$.(下面会有图),除此以外还需要把从上一步得到的齐次坐标转化成 3D 坐标,这所有的工作其实只需要一步即可:
+这个"容器"是一个立方体,使用的是左手坐标系,三轴的范围分别都是 $\left[-1, 1\right]$.(下面会有图),除此以外还需要把从上一步得到的齐次坐标转化成 3D 坐标,
 
-$\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$ 变成正常 3D 坐标 =NDC=: $\left(x_{ndc}, y_{ndc}, z_{ndc}\right) = \left(\frac{x_{clip}}{w_{clip}}, \frac{y_{clip}}{w_{clip}}, \frac{z_{clip}}{w_{clip}}\right)$.
+这所有的工作其实只需要一步即可, $\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$ 变成正常 3D 坐标 =NDC=: $\left(x_{ndc}, y_{ndc}, z_{ndc}\right) = \left(\frac{x_{clip}}{w_{clip}}, \frac{y_{clip}}{w_{clip}}, \frac{z_{clip}}{w_{clip}}\right)$.
+
+所以,不满足这个条件 $-w_{clip} \leq x_{clip}, y_{clip}, z_{clip} \leq w_{clip}$ 的顶点都会被丢弃,因为 $-1 \leq x_{ndc}, y_{ndc}, z_{ndc} \leq 1$.
 
 这个过程叫做 =NDC= 变换(NDC transformation).相信你已经发现 =NDC= 的每个分量其实就是一个比例,什么之间比例呢?这就涉及到 =NDC= 的作用了,它是用来适配视口(viewport)的,
 
