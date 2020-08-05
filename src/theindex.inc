@@ -1,5 +1,23 @@
-*** [[file:posts/2019/12/economic-machine.html][30分钟看懂经济机器如何运转]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html][图形学-OpenGL坐标变换]]
+之前只讲了几何变换,也就是最简单的变换, =OpenGL= 里面还有很多其它变换,本文主要讲述 =OpenGL= 的各种坐标系以及它们之间的转换,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 
+不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
+
+=OpenGL Shader Language= (GLSL) 也是从这个版本出来的,其实也就是固定管线的一部分环节"放开权限"给开发人员编码,所以从 =OpenGL 1.X= 开始学习也是没问题的,
+
+关于更多的本版变迁问题,可以在官方维基的这个[[https://www.khronos.org/opengl/wiki/History_of_OpenGL#OpenGL_1.0_.281992.29][页面]]看到,本文是按照 =1.X= 渲染管线来写的, =OpengL 1.X= 渲染管线的文章有很多,比如这里这[[http://www.songho.ca/opengl/gl_pipeline.html][一篇]],还是同一位作者,本文是参考了他的这篇文章: [[http://www.songho.ca/opengl/gl_transform.html][OpenGL Transformation]] 写的.
+
+本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
+
+	
+*** [[file:posts/2020/06/graphics-coordinate-transform.html][图形学-坐标系统之间的变换]]
+坐标变换
+
+	
+*** [[file:posts/2020/02/et-project-day-.html][英语消灭计划-Day2]]
+距离上一次英语消灭进行经是几个月前了,当时还是没有坚持下来,现在要开始重启这个计划了,还是不能小看"积累"的力量.
+
+这次的阅读材料取自于 =VA-11 HALL-A:Cyberpunk Bartender Action=,游戏里的日期是 =Tue 13/12=.
 
 	
 *** [[file:posts/2019/11/canvas-intro.html][Canvas入门而不入土]]
@@ -51,20 +69,34 @@
 对 =codec= , =format= 等基础概念的不理解会造成对 =ffmpeg= 的工作流程的不理解.
 
 	
+*** [[file:posts/2019/05/et-project-day1.html][英语消灭计划-Day1]]
+从今天开始要拓展自己英语的词汇量了,起始之前很久就想拓展了,只不过没想到用博客这种形式来学习.
+
+有一个准则,由于英语的一词多意的特征,所有笔记都会只介绍示例文本中的单词的当前用法.
+
+关于单词的发音,由于本人用的是 =Merriam Webster= 词典,所以我是通过它使用的音标学习单词发音的,
+
+官方音标指南在[[https://merriam-webster.com/assets/mw/static/pdf/help/guide-to-pronunciation.pdf,][这里]],要注意它的是美式发音,这套音标比起其他音标好记易学很多,真是相见恨晚.
+
+针对里面 =\ə\=, =\a\=, =\e\= 这几个比较容易记忆混乱的音标,我这里大概写一下个人学习的感悟:
+
+在不考虑重读的情况下, =\ə\= 的读音和 [[https://www.merriam-webster.com/dictionary/uh][uh]] 这个拟声词的发音完全一致;
+
+=\a\= 和 =\e\= 的读音十分类似,想听具体差别可以参考 [[https://www.merriam-webster.com/dictionary/bat][bat]] 和 [[https://www.merriam-webster.com/dictionary/bet][bet]] 这两个单词,两者读音差不多,口的运动模式也是差不多的,
+
+区别在于前者口的动作幅度比后者的大.其实不追求太精确也是可以的,这三个是比较容易记混的,知道大概发音就行.
+
+至于重读和弱读,就是前者的发音时间更长更清晰,后者则相反.
+
+今天的示例文本来源于"八方旅人" 中 Primrose 的序章剧情. Primrose's Journal 1-1
+
+	
 *** [[file:posts/2019/05/bash-eliminating-project.html][Bash消灭计划]]
 用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
 
 出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
 
 这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
-
-	
-*** [[file:posts/2019/05/et-project-day1.html][英语消灭计划-Day1]]
-从今天开始要拓展自己英语的词汇量了,起始之前很久就想拓展了,只不过没想到用博客这种形式来学习.
-
-有一个准则,由于英语的一词多意的特征,所有笔记都会只介绍示例文本中的单词的当前用法.
-
-今天的示例文本来源于"八方旅人" 中 Primrose 的序章剧情. Primrose's Journal 1-1
 
 	
 *** [[file:posts/2019/04/data-transfer-unit.html][网络数据传输单位]]

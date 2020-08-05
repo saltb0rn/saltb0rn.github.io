@@ -1,5 +1,3 @@
-* 3
-  - [[file:2019/12/economic-machine.org][30分钟看懂经济机器如何运转]]
 * A
   - [[file:2018/07/a-simple-websocket-echo-server.org][A Simple WebSocket Echo Server]]
   - [[file:2018/06/about-python.org][About Python]]
@@ -18,13 +16,11 @@
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
-* L
-  - [[file:2019/12/latex-intro.org][LaTex入门]]
+* K
+  - [[file:2020/02/kvm-experience-note.org][KVM体验笔记]]
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]
-* O
-  - [[file:2019/11/opengl-rendering-pipeline.org][OpenGL渲染管线]]
 * P
   - [[file:2019/12/pokemon-pvp-notes.org][Pokemon对战入坑笔记]]
 * R
@@ -48,8 +44,10 @@
   - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
-* 大
-  - [[file:2019/10/art-of-ssbu.org][大乱斗SP"Art Of"系列]]
+* 图
+  - [[file:2020/06/graphics-opengl-transformation.org][图形学-OpenGL坐标变换]]
+  - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
+  - [[file:2020/06/graphics-coordinate-transform.org][图形学-坐标系统之间的变换]]
 * 用
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直
@@ -64,6 +62,7 @@
   - [[file:2019/03/laziness-is-a-habit.org][自身经历谈懒惰]]
 * 英
   - [[file:2019/05/et-project-day1.org][英语消灭计划-Day1]]
+  - [[file:2020/02/et-project-day-.org][英语消灭计划-Day2]]
 * 视
   - [[file:2019/08/digital-video-file.org][视频文件简单了解]]
 * 设
