@@ -243,11 +243,14 @@ TfExp        ::= (SimpleExp SimpleExp*)
 
 **** 最后一个例子
 
-分别定义累加从1到n的函数 =bad-acc,acc-tail和acc=.
+分别定义累加从1到n的函数 =bad-acc,acc-tail和acc=, 以及(Fibonacci) =bad-fib= 和 =fib=.
 
 #+begin_src scheme
+#lang racket
+(require racket/trace)
+
 ;; bad acc
-(define (bad-acc n)
+(trace-define (bad-acc n)
     (if (= n 0)
         0
         (+ n (bad-acc (- n 1)))))
@@ -256,16 +259,16 @@ TfExp        ::= (SimpleExp SimpleExp*)
 (define (acc-tail n)
     (acc-tail-inner n 0))
 
-(define (acc-tail-inner n res)
+(trace-define (acc-tail-inner n res)
     (if (= n 0)
-        (cont res)
+        res
         (acc-tail-inner (- n 1) (+ res n))))
 
 ;; cps
 (define (acc n)
     (acc/k n (lambda (val) val)))
 
-(define (acc/k n cont)
+(trace-define (acc/k n cont)
     (if (= n 0)
         (cont 0)
         (acc/k (- n 1)
@@ -277,19 +280,53 @@ TfExp        ::= (SimpleExp SimpleExp*)
         (cont res)
         (acc-tail-inner/k
           (- n 1) (+ res n) cont)))
+
+;;; bad fib
+(trace-define (bad-fib n)
+  (if (or (= n 1) (= n 2))
+      1
+      (+ (bad-fib (- n 2)) (bad-fib (- n 1)))))
+
+;; cps
+(trace-define (fib/k n cont)
+  (if (or (= n 1) (= n 2))
+      (cont 1)
+      (fib/k
+       (- n 2)
+       (lambda (res1)
+         (fib/k
+          (- n 1)
+          (lambda (res2)
+            (cont (+ res1 res2))))))))
+
+(define (fib n)
+    (fib/k n (lambda (val) val)))
+
+;;; tests
+(bad-acc 10)
+
+(acc-tail 10)
+
+(acc 10)
+
+(bad-fib 7)
+
+(fib 7)
 #+end_src
 
-利用 =racket/trace= 中的 =trace= 跟踪计算过程,会发现在3者中, =acc-tail= 和 =acc= 的计算行为是一样的,只有一步,对于 =bad-acc=,可以明显观察到每一步,并且有明显的起伏.
+利用 =racket/trace= 中的 =trace= 跟踪计算过程,会发现在3者中, =acc-tail= 和 =acc= 的计算行为和迭代是一样的,对于 =bad-acc=,可以明显观察到每一步,并且有明显的起伏.
 
-在 =Racket= 里面, =acc-tail= 和 =acc= 的计算行为和迭代是一样的, =trace= 的跟踪都会只显示一步.
+这是因为 =Racket= 支持尾递归优化,把尾递归优化成迭代,显然 =bad-acc= 没能优化成功.
 
 [[file:../../../files/cps.jpg]]
 
+和前面三个函数的迭代计算行为不一样, =Fibonacci= 的计算行为是树形递归,同样可以通过 =CPS= 得到优化.
+
 仔细看你会发现 =acc-tail-inner/k= 的 =cont= 是多余的,在实际开发中如果遇到尾递归的话可以绕路不写,因为那样意义不大,因为 =CPS= 的其中一个目的就是为了保证尾递归的发生,就没必要改成 =CPS= 了.
 
-=CPS= 虽然很好,但如果把它直接用在像 =Python= 和 =Emacs Lisp= 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言上面就不行了,不过既然改成 =CPS= 了,
+=CPS= 只能保证尾调用,像在 =Python= 和 =Emacs Lisp= 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言中,尾递归也不能解决爆栈的问题,
 
-那就可以把 =CPS= 转化成迭代/循环,并且 =Python= 和 =Emacs Lisp= 这些语言都有循环语句,可以很好避免爆栈的缺陷.
+不过既然改成 =CPS= 了,那就很容易地把 =CPS= 转化成迭代/循环,并且 =Python= 和 =Emacs Lisp= 这些语言都有循环语句.
 
 
 *** Trampoline 和 Bounce
@@ -310,7 +347,9 @@ TfExp        ::= (SimpleExp SimpleExp*)
 
 比如我们把上面的 =acc/k= 改写成可以供 =Trampoline= 使用的形式,也就是把 =acc/k= 改成 =bounce= 版本 =acc-bounce=.
 
-为了断开函数调用链,我们需要 *把 =acc/k= 中所有的函数调用换成 =bounce= 值,尾递归的调用是发生在尾部的,也就是说把返回值需要变为 =bounce=* ,这是使用 =Trampoline= 技术的关键.
+为了断开函数调用链,我们需要 *把 =acc/k= 中所有的尾调用换成 =bounce= 值,也就是说把返回值需要变为 =bounce=* ,这是使用 =Trampoline= 技术的关键.
+
+(至于 =Fibonacci= 的,这里只给出 =Racket= 版本,一是为了让读者-我专注于简单)
 
 #+BEGIN_SRC scheme
 ;; bounce 的定义,
@@ -327,6 +366,22 @@ TfExp        ::= (SimpleExp SimpleExp*)
                             (lambda (res) (bounce (+ t res) cont)))))))
 ;; 由于 Racket 没有什么类似与 Python while statement 那种东西,所以我还是用了递归,在 Python 中可以改写成 while
 
+(define (fib-bounce n cont)
+  (if (or (= n 1) (= n 2))
+      (bounce 1 cont) ;; <= (cont 0), 直接拆
+      (bounce n       ;; <= 拆开第一个调用 (fib/k (- n 2) ...)
+              (lambda (t)
+                (fib-bounce
+                 (- t 2)
+                 (lambda (res1)
+                   (bounce  ;; <= 拆开第二个调用 (fib/k (-n 1) ...),这里其实可以不拆,
+                    (- t 1) ;; 不过为了和把尾调用换成bounce的说法保持一致,应该拆开
+                    (lambda (t1)
+                      (fib-bounce
+                       t1
+                       (lambda (res2)
+                         (bounce (+ res1 res2) cont))))))))))) ;; <= 最后一次拆开
+
 (define trampoline
   [lambda (b)
     ;; let* 操作符可以暂时理解为其它语言中的局部定义
@@ -341,6 +396,8 @@ TfExp        ::= (SimpleExp SimpleExp*)
           res))])
 
 (trampoline (acc-bounce 10000000 (lambda (x) x))
+
+(trampoline (fib-bounce 7 (lambda (x) x))
 #+END_SRC
 
 由于 =Racket= 本身就支持尾递归优化,所以上面的代码其实只要能保证尾递归就能用的了,根本不需要确保 =bounce= 版的 =acc/k= 去掉所有调用.
