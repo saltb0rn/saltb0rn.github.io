@@ -119,12 +119,16 @@
 
 顾名思意, =CPS= 就是一种风格,这种风格就是把 =continuation= 作为参数传递.类似的还有 =Environment Passing Style=.
 
+用这个参数记录运行时的内容.
+
 
 **** CPS 的意义
 
-坦白说,我本人也不敢说有什么意义,个人了解到的有两个,对控制上下文(control context)进行抽象和实例化以及把递归转化成尾递归.
+其实就是对控制上下文(control context)进行抽象和实例化以及把递归转化成尾递归.
 
 对控制上下文进行抽象就是说程序执行的下一步可以被抽象成数据表示,就像上面的说明例子那样,就是使用了函数来表示下一步要执行的动作.
+
+然后就是能够把递归变成尾递归,在支持尾递归优化的语言中是可以获得优化的.
 
 
 **** 把上面的 ans 改写成 CPS 程序 ans/k
@@ -318,7 +322,142 @@ TfExp        ::= (SimpleExp SimpleExp*)
 
 这是因为 =Racket= 支持尾递归优化,把尾递归优化成迭代,显然 =bad-acc= 没能优化成功.
 
-[[file:../../../files/cps.jpg]]
+这下面是计算时候的进出栈的变化,可以看到 =bad-acc= 以及 =fib= 的栈深是先增长后缩小.
+
+而经过 =cps= 转换的则是栈深没有发生任何改变.
+
+#+BEGIN_SRC sh
+Welcome to Racket v7.5.
+racket@> ,enter "/home/saltb0rn/.config/emacs/site-lisp/test.rkt"
+>(bad-acc 10)
+> (bad-acc 9)
+> >(bad-acc 8)
+> > (bad-acc 7)
+> > >(bad-acc 6)
+> > > (bad-acc 5)
+> > > >(bad-acc 4)
+> > > > (bad-acc 3)
+> > > > >(bad-acc 2)
+> > > > > (bad-acc 1)
+> > > >[10] (bad-acc 0)
+< < < <[10] 0
+< < < < < 1
+< < < < <3
+< < < < 6
+< < < <10
+< < < 15
+< < <21
+< < 28
+< <36
+< 45
+<55
+55
+>(acc-tail-inner 10 0)
+>(acc-tail-inner 9 10)
+>(acc-tail-inner 8 19)
+>(acc-tail-inner 7 27)
+>(acc-tail-inner 6 34)
+>(acc-tail-inner 5 40)
+>(acc-tail-inner 4 45)
+>(acc-tail-inner 3 49)
+>(acc-tail-inner 2 52)
+>(acc-tail-inner 1 54)
+>(acc-tail-inner 0 55)
+<55
+55
+>(acc/k 10 #<procedure:...te-lisp/test.rkt:78:13>)
+>(acc/k 9 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 8 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 7 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 6 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 5 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 4 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 3 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 2 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 1 #<procedure:...te-lisp/test.rkt:84:15>)
+>(acc/k 0 #<procedure:...te-lisp/test.rkt:84:15>)
+<55
+55
+>(bad-fib 7)
+> (bad-fib 5)
+> >(bad-fib 3)
+> > (bad-fib 1)
+< < 1
+> > (bad-fib 2)
+< < 1
+< <2
+> >(bad-fib 4)
+> > (bad-fib 2)
+< < 1
+> > (bad-fib 3)
+> > >(bad-fib 1)
+< < <1
+> > >(bad-fib 2)
+< < <1
+< < 2
+< <3
+< 5
+> (bad-fib 6)
+> >(bad-fib 4)
+> > (bad-fib 2)
+< < 1
+> > (bad-fib 3)
+> > >(bad-fib 1)
+< < <1
+> > >(bad-fib 2)
+< < <1
+< < 2
+< <3
+> >(bad-fib 5)
+> > (bad-fib 3)
+> > >(bad-fib 1)
+< < <1
+> > >(bad-fib 2)
+< < <1
+< < 2
+> > (bad-fib 4)
+> > >(bad-fib 2)
+< < <1
+> > >(bad-fib 3)
+> > > (bad-fib 1)
+< < < 1
+> > > (bad-fib 2)
+< < < 1
+< < <2
+< < 3
+< <5
+< 8
+<13
+13
+>(fib/k 7 #<procedure:...te-lisp/test.rkt:112:13>)
+>(fib/k 5 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 3 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 1 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 4 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 3 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 1 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 6 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 4 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 3 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 1 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 5 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 3 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 1 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 4 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 3 #<procedure:...te-lisp/test.rkt:108:10>)
+>(fib/k 1 #<procedure:...te-lisp/test.rkt:105:7>)
+>(fib/k 2 #<procedure:...te-lisp/test.rkt:108:10>)
+<13
+13
+racket@test.rkt> 
+#+END_SRC
 
 和前面三个函数的迭代计算行为不一样, =Fibonacci= 的计算行为是树形递归,同样可以通过 =CPS= 得到优化.
 
@@ -478,6 +617,66 @@ function accBounce(n, cont) {
 }
 
 console.log(trampoline(accBounce(50000, x => x)));
+#+END_SRC
+
+**** Emacs Lisp 突破 Fibonacci 的递归限制
+
+个人也还挺喜欢 =Emacs Lisp=,所以展示一个在 =Emacs Lisp= 下的 =fib= 逐渐改成 =fib-bounce= 的过程.
+
+#+BEGIN_SRC elisp
+;; bounce
+(defstruct (bounce
+            (:constructor nil)
+            (:constructor bounce (res cont)))
+  res cont)
+
+;; tampoline
+(defun tampoline (b)
+  (let* ((kont (bounce-cont b))
+         (val (bounce-res b))
+         (res (funcall kont val)))
+    (while (bounce-p res)
+      (setq
+       kont (bounce-cont res)
+       val (bounce-res res)
+       res (funcall kont val)))
+    res))
+
+;; 常规版本
+(defun fib (n)
+  (if (or (= n 1) (= n 2))
+      1
+    (+ (fib (- n 2)) (fib (- n 1)))))
+
+;; cps版本
+(defun fib/k (n cont)
+  (if (or (= n 1) (= n 2))
+      (funcall cont 1)
+    (fib/k (- n 2)
+           (lambda (res1)
+             (fib/k (- n 1)
+                    (lambda (res2)
+                      (funcall cont (+ res1 res2))))))))
+
+;; 基于cps改写的bounce版本
+(defun fib-bounce (n cont)
+  (if (or (= n 1) (= n 2))
+      (bounce 1 cont)
+    (bounce n
+            (lambda (t1)
+              (fib-bounce
+               (- t1 2)
+               (lambda (res1)
+                 (bounce
+                  (- t1 1)
+                  (lambda (t2)
+                    (fib-bounce
+                     t2
+                     (lambda (res2)
+                       (bounce (+ res1 res2) cont)))))))))))
+
+(fib 1000) ;; 直接报错: Lisp nesting exceeds ‘max-lisp-eval-depth’
+(tampoline (fib-bounce 1000 (lambda (v) v))) ;; 需要很长时间来得出计算结果,但是不会触发递归限制而报错
 #+END_SRC
 
 
