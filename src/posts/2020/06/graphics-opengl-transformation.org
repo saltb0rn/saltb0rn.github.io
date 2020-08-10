@@ -195,11 +195,11 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 这是因为在现实世界中,表面可能不是平的,如果给表面找法线可以找到无数法线,而计算机的曲面都是由多个小平面堆砌而成的,同样道理,曲线是由多条短小直线构成的,所以法线干脆给到构成平面的所有顶点上.
 
-=OpenGL= 会先找出顶点 $v_{1}$ 附近的其它顶点($v_{2}$ 和 $v_{3}$),这些顶点能够构成平面,三个顶点就能确定一个平面了,根据这些点构成的平面计算出平面的法线向量 $\vec{n}$,它就是顶点($v_{1}$, $v_{2}$ 和 $v_{3}$)的法线向量了.
+=OpenGL= 会先找出顶点 $v_{1}$ 附近的其它顶点($v_{2}$ 和 $v_{3}$),这些顶点能够构成平面,三个顶点就能确定一个平面了,根据这些点构成的平面就能计算出平面的法线向量 $\vec{n}$ (就是用三个点构造出两个向量,然后通过这两个向量的叉积求出法线向量),
+
+它就是顶点($v_{1}$, $v_{2}$ 和 $v_{3}$)的法线向量了,为了到光照计算得到正确结果, =OpenGL= 要求法线向量规范化,也就是变成单位向量.
 
 要注意,$\vec{n}$ 是同时垂直于三个顶点才能说垂直于其中某一个顶点,同时垂直于三个顶点意味垂直三个顶点所处的平面上(所以这并非说 $\vec{n}$ 垂直于 $\vec{v_{1}}$ 这条由原点和顶点 $\vec{v_{1}}$ 定义的直线, $v_{2}$, $v_{3}$ 同理).
-
-还有为了到光照计算得到正确结果, =OpenGL= 要求法线向量规范化,也就是变成单位向量.
 
 [[../../../files/gl_normaltransform02.png]]
 
@@ -209,15 +209,21 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 沿 $y$ 轴正方向平移2个单位得到 $\left(1, 2, 0\right)$ 以及 $\left(0, 3, 0\right)$,法线向量变成 $\left(0, 0, 3\right)$,而不是变成 $\left(0, 2, 1\right)$,按照单位向量标准来看法线变量还没变.
 
-我们先换到齐次坐标系下看待这问题,可以把 $\vec{n} = \left(n_{x}, n_{y}, n_{z}, n_{w}\right)$ 看做一个齐次平面 $P$, $v = \left(x, y, z, w\right)$ 是该平面上的任意一点,所以 $n \cdot v = 0$.
+我们先换到齐次坐标系下看待这问题,可以把 $\vec{n} = \left(n_{x}, n_{y}, n_{z}, n_{w}\right)$ 看做一个齐次平面 $P$, $v = \left(x, y, z, w\right)$ 是该平面上的任意一点,
 
+所以 $n \cdot v =  \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0$,而 $\vec{n}$ 已经是一个变换了.
+
+把这个平面方程改一下就可以推导出法线变换了: $nM_{modelview}^{-1}M_{modelview}v =  \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0$.
+
+其中 $M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right)$ 就是我们前面提到从对象坐标变换到视点坐标的过程,那么 $\left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}$ 就是我们想要法线向量变换.
+
+整个方程是这样的意思: 从对象坐标到视点坐标变换得到的顶点 $M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right)$ 是变换后的平面 $\left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}$ 上的一个点.
 
 https://www.cs.upc.edu/~robert/teaching/idi/normalsOpenGL.pdf
 
 https://wordsandbuttons.online/interactive_guide_to_homogeneous_coordinates.html
 
 http://www.glprogramming.com/red/appendixf.html
-
 
 **** 3D转化成2D图像
 
