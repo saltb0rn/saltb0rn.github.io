@@ -46,6 +46,16 @@
 
 对于 3D 也是适用的,都是增加额外一个维度,不过这个额外的维度意义重大,它引入了透视这个概念,为 3D 坐标映射到 2D 坐标提供了可能(总得来说提供了高维度到低一维度转变的可能).
 
+更多关于齐次空间的内容可以参考这些资源:
+
+1. http://morpheo.inrialpes.fr/people/Boyer/Teaching/M2R/geoProj.pdf
+
+   有涉及到欧几里得空间,仿射空间还有投影空间三者的关系,还有不同变换的效果的直观展示.
+
+2. http://kahrstrom.com/mathematics/documents/OnProjectivePlanes.pdf
+
+   直接给出了相关概念的定义,可以作为参考.
+
 
 **** 平面方程
 
@@ -77,7 +87,7 @@ $ax + by + cz - \left(ax_{1} + by_{1} + cz_{1}\right) = 0$.
 
 如果 $\vec{n}$ 是单位向量,因为 $a^{2} + b^{2} + c^{2} = 1$,所以整个等式变为 $ax + by + cz - k = 0$,这种情况下 $k$ 就是平面 $P$ 到原点的距离 $d$ 了, 而 $d = - \left(ax_{1} + by_{1} + cz_{1}\right)$,那么等式变成 $ax + by + cz + d = 0$.
 
-根据上面说过的可以根据方向以及平面到原点的距离确定平面,也就是平面 $P$ 可以由 $\vec{n}$ 和 $d$ 决定,这可以通过齐次空间的角度来看待平面 $P$, 平面 $P$ 由平面 $P^{'}$ 沿着它面向的方向平移距离 $d$ 得到, $ P = \left(\begin{array}{c|c}\vec{n} | d\end{array}\right) = \left(a, b, c, d\right)$.
+根据上面说过的可以根据方向以及平面到原点的距离确定平面,也就是平面 $P$ 可以由 $\vec{n}$ 和 $d$ 决定,这可以通过齐次空间的角度来看待平面 $P$, 平面 $P$ 由平面 $P^{'}$ 沿着它面向的方向平移距离 $d$ 得到, $P = \left(\begin{array}{c|c}\vec{n} | d\end{array}\right) = \left(a, b, c, d\right)$.
 
 假设点 $p = \left(x, y, z, w\right)$ 满足 $P \cdot p = ax + by + cz + dw = 0$,那么点 $p$ 就在平面 $P$ 上.这里 $d = \frac{-\left(ax_{1} + by_{1} + cz_{1}\right)}{w}$,如果 $w = 1$,那整个等式就和欧几里得空间下的平面方程一样.
 
@@ -187,11 +197,27 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案, *于是, =OpenGL= 用了法线向量来计算特定的顶点或者平面接收了多少光(光的强度)*,
 
-光照的具体计算以后再讨论,目前先了解法线向量的变换.
+光照的具体计算以后再讨论,目前先了解法线向量,=OpenGL= 里面的法线向量只能添加到顶点上,这和在数学中学到的不一样: 在三维空间中,点没有方向,没有线和点垂直的说法,只垂直于表面.
 
-=OpenGL= 里面的法线向量只能添加到顶点上,这和在数学中学到的不一样: 在三维空间中,点没有方向,没有线和点垂直的说法,只垂直于表面.
+这是因为在现实世界中,表面可能不是平的,如果给表面找法线可以找到无数法线,而计算机的曲面都是由多个小平面堆砌而成的,同样道理,曲线是由多条短小直线构成的,所以法线干脆给到构成平面的所有顶点上,而法线向量就很合理地成为顶点的属性.
 
-这是因为在现实世界中,表面可能不是平的,如果给表面找法线可以找到无数法线,而计算机的曲面都是由多个小平面堆砌而成的,同样道理,曲线是由多条短小直线构成的,所以法线干脆给到构成平面的所有顶点上,所以法线向量其实是顶点的属性.
+法线向量有两种,比如 [[http://math.hws.edu/graphicsbook/c4/s1.html][graphicsbook]] 这里的例子:由多个平面构成几何体.
+
+[[../../../files/flat-vs-smooth-2.png]]
+
+这两个实际上是同一个几何体(由多个长方形平面构成),但是由于法线向量的不同导致看起来不一样,前者更光滑(smooth),后者更扁平(flat).
+
+它们的法线分别是这样的,
+
+[[../../../files/flat-vs-smooth.png]]
+
+可以看出一个顶点可以拥有不止一个法线向量,两种不同的法线向量分配方法反映了对一个几何体的不同看法:
+
+前者是把几何体看做一个整体表面,而不是一个一个长方形,近似地为每个顶点添加法线向量(Normal Per Vertex);后者是把几何体看做一个一个长方形,为每个平面添加法线(Normal Per Face).
+
+这两种分配法分别叫做 =Smooth shading= 和 =Flat shading=,如果是为了突出整体表面,那么就用 =Smooth shading=,如果是为了突出几何体不同的面就用 =Flat shading=.
+
+现在开始了解法线向量的变换,这里用单个平面作为例子开始着手.
 
 =OpenGL= 会先找出顶点 $v_{1}$ 附近的其它顶点($v_{2}$ 和 $v_{3}$),这些顶点能够构成平面,三个顶点就能确定一个平面了,根据这些点构成的平面就能计算出平面的法线向量 $\vec{n}$ (就是用三个点构造出两个向量,然后通过这两个向量的叉积求出法线向量),
 
@@ -207,21 +233,22 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 沿 $y$ 轴正方向平移2个单位得到 $\left(1, 2, 0\right)$ 以及 $\left(0, 3, 0\right)$,法线向量变成 $\left(0, 0, 3\right)$,而不是变成 $\left(0, 2, 1\right)$,按照单位向量标准来看法线变量还没变.
 
-我们先换到齐次坐标系下看待这问题,可以把 $\vec{n} = \left(n_{x}, n_{y}, n_{z}, n_{w}\right)$ 看做一个齐次平面 $P$, $v = \left(x, y, z, w\right)$ 是该平面上的任意一点,
+我们先换到齐次坐标系下看待这问题,根据法线向量 $\vec{n}$ 构建出齐次平面 $P = \left(\begin{array}{c|c} n & n_{w}\end{array}\right) = = \left(n_{x}, n_{y}, n_{z}, n_{w}\right)$,可看做该平面是由经过原点的平面 $P^{'}$ 朝它面向的方向移动 $n_{w}$ 距离后得到的.
 
-所以 $n \cdot v =  \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0$,而 $\vec{n}$ 已经是一个变换了.
+$v = \left(x, y, z, w\right)$ 是该平面上的任意一点,所以 $P \cdot v =  \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0$.
 
-把这个平面方程改一下就可以推导出法线变换了: $nM_{modelview}^{-1}M_{modelview}v =  \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0$.
+把这个平面方程改一下就可以推导出法线变换了: $PM_{modelview}^{-1}M_{modelview}v = \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0$.
 
 其中 $M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right)$ 就是我们前面提到从对象坐标变换到视点坐标的过程,那么 $\left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}$ 就是我们想要法线向量变换.
 
 整个方程是这样的意思: 从对象坐标到视点坐标变换得到的顶点 $M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right)$ 是变换后的平面 $\left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}$ 上的一个点.
 
+下面这些是关于法线向量变换的额外的资料,有兴趣的可以看一下:
+
 https://www.cs.upc.edu/~robert/teaching/idi/normalsOpenGL.pdf
 
-https://wordsandbuttons.online/interactive_guide_to_homogeneous_coordinates.html
-
 http://www.glprogramming.com/red/appendixf.html
+
 
 **** 3D转化成2D图像
 
