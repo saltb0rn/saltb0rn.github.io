@@ -2101,6 +2101,10 @@ the documentation string."
 
 *** 宏 (Macros)
 
+=Lisp= 存在宏就说明了 =Lisp= 的编译时(compile time)和运行时(runtime)是相互交错的,也就是运行时中可以进入编译时进行编译,编译后回到运行时运行编译结果.
+
+可以把宏看作一个功能:展开生成运行时可以执行代码. =C= 语言也有宏,但是 =C= 语言的编译时和运行时不能交错发生,是完全分开的,必定先全部编译完后才能进入运行时,并且不能从运行时进入编译时.
+
 宏能够做到函数做不了的事情:定义新的控制结构以及定义新的语言特性.
 
 定义宏和定义函数的方式十分相似,不同在于函数是直接计算出值,而宏是表达如何计算出另一个 =Lisp= 表达式,再计算出这个表达式的值.
@@ -2127,6 +2131,19 @@ the documentation string."
 
 这么一来就不是和 =if= 做一样的事情了,
 
+再来一个,
+
+#+BEGIN_SRC elisp
+(defmacro test-macro (&rest body)
+  `(let ((a 1)
+         (b 2))
+     ,@body))
+
+(test-macro
+  (let ((c (+ a b))
+        (d (- b a)))
+    (+ c d))))       ;; => 4
+#+END_SRC
 
 **** 宏调用的展开式 (Expansion)
 
@@ -2154,16 +2171,17 @@ the documentation string."
 (+ prefixed-var 1)
 #+END_SRC
 
-
 **** 宏和编译 (Compiling Macros)
 
 当宏调用出现在正在被编译的程序中, =Lisp= 编译器会像 =Lisp= 解析器那样调用宏,然后得到一个展开式.
 
-不过在得到展开式后编译器并不是运算展开式,而是把展开式编译到程序中,就好像是直接嵌入到程序里面一样.
+不过在得到展开式后编译器并不会运算展开式,而是把展开式编译到程序中,就好像是直接嵌入到程序里面一样,或者说改了程序的代码一样.
 
-编译代码时候会得到的编译后的代码,值以及 =macro= 打算产生的副作用,并且以全速执行.
+编译代码时候会得到的编译后的代码,但也可能会产生运算的值以及副作用.
 
-注意,值以及副作用只会在出现在编译的时候,对于某些原本就是冲着副作用的宏来说并不是什么好事,比如
+注意,值以及副作用只会在出现在编译时中,不会出现在运行时中,因为这些东西没有被编译进去.
+
+对于某些原本就是冲着副作用的宏来说并不是什么好事,比如
 
 #+BEGIN_SRC elisp
 (defmacro myif (cond-expr if-branch else-branch)
@@ -2173,21 +2191,26 @@ the documentation string."
         else-branch))
 #+END_SRC
 
-为了保证宏调用的编译通过,需要 =macro= 在调用被编译前定义.对于这个问题,编译器有一个特性做出这样的处理:
+编译后大概是这个样子,
+
+#+BEGIN_SRC elisp
+(if cond-expr if-branch else-branch)
+#+END_SRC
+
+为了保证宏调用的编译通过,要求 =macro= 在调用前被编译器定义.对于这个问题,编译器有一个特性做出这样的处理:
 
 如果被编译的文件包含了 =defmacro= =form=,那么宏就会被临时定义,这样该文件的剩余编译部分都能够看到这个定义.
 
 编译文件的时候需要在文件的 =top-level= 执行 =require= 调用来保证所需的宏定义在编译时候可用.要注意一个问题,
 
-编译得到的程序里面还是会有 =require= 调用的,它们会加载宏的定义,然后对于编译得到的程序来说是没必要的,针对这个问题,
+编译得到的程序里面还是会有 =require= 调用的,它们会加载宏的定义,然而对于编译得到的程序来说是没必要的,针对这个问题,
 
-可以在 =require= 调用外边使用 =eval-when-compile= =form=,这样 =require= 调用就会在编译/直译时候运行,而不回在加载编译后的程序时运行.
+可以在 =require= 调用外边使用 =eval-when-compile= =form=,这样 =require= 调用就会在编译模式/直译模式下运行,而不会在编译后得到的程序中运行.
 
 #+BEGIN_SRC elisp
 (eval-when-compile
   (require 'macro-definition))
 #+END_SRC
-
 
 **** 定义宏 (Defining Macros)
 
@@ -2209,7 +2232,6 @@ the documentation string."
 #+END_SRC
 
 具体关于 =backquote= 的内容可以查看 =M-: (info "(elisp) Backquote")=.
-
 
 **** 宏的问题 (Problems With Macros)
 
@@ -2387,7 +2409,6 @@ the documentation string."
 只有一种副作用不能避免: 构建 =Lisp= 对象.这是大部份宏的重点,这是没问题的,只有一种情况需要注意:
 
 构建的对象是宏展开式的一个被引用常量(=quoted constant=)的一部分.
-
 
 **** 缩进宏 (Indenting Macros)
 
