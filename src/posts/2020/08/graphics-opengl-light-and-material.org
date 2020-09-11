@@ -129,7 +129,7 @@
 
      估计你也猜到了(没猜到也没关系), *光照计算就是为了得出物体在眼中的颜色*, 在 =OpenGL= 中是先计算出图元(primitives,比如一个三角形)各个顶点的颜色,然后通过插值(interpolation)来获取图元内的点的颜色.
 
-     最早的光照模型叫做冯氏光照模型/ =Phong= 光照模型(Phong lighting model),这个模型也叫做基础光照模型,因为有不少光照模型是基于它进行拓展或者改进,所以说这套模型虽然老,但依然有学习地价值.
+     最早的光照模型叫做冯氏光照模型/ =Phong= 光照模型(Phong lighting model),因为有不少光照模型是基于它进行拓展或者改进,比如 =OpenGL=, 所以说这套模型虽然老,但依然有学习地价值.
 
      =Phong= 光照模型认为一个光源放出的光分解为三部分: 环境反射光,镜面反射光和漫反射光.因为环境反射光是经过无数次反射而成的,来自各个方向并且无法确认,为了减少运算量,因此不考虑其中的反射情况;
 
@@ -267,6 +267,28 @@
      glPopMatrix();
      // 还原到最开始的状态
      #+END_SRC
+
+     
+     *让光源跟着视点(viewpoint)移动*,也就是光源的位置要和相机位置保持一致,让光从相机的镜头发射出去,这个实现起来很容易,只要在 =viewing= 变换前让光源位置和相机位置一样就可以.
+
+     #+BEGIN_SRC cpp
+     glMatrixModel(GL_MODELVIEW);
+     glLoadIdentity();
+     GLfloat light_position() = { 0.0, 0.0, 0.0, 1.0 };
+     // 位置光源位于 (0.0, 0.0, 0.0) 上,相机默认位置也是 (0.0, 0.0, 0.0)
+     glLightfv(GL_LIGHT0, GL_POSITION, light_position);     
+     
+     // 下面可以作为循环体
+     glClear(GL_COLOR_BUFFER_MASK | GL_DEPTH_BUFFER_MASK);
+     glPushMatrix();
+         gluLookAt(ex, ey, ez, 0.0, 0.0, 0.0, upx, upy, upz);
+         // 设定相机也就是设定了 modelview 矩阵,对位置光源的位置也有影响,
+         glutSolidTorus (0.275, 0.85, 8, 15);
+     glPopMatrix();
+     glFlush();
+     #+END_SRC
+
+     位置光源的位置 $(x, y, z, w)$ 减去相机的位置坐标 $(ex, ey, ez, ew)$ 就是光源到相机的距离,只要保证距离为 $(0, 0, 0)$,就能实现这种效果.
 
 
 *** 光线计算
