@@ -348,12 +348,37 @@
 
     *$Scaled\_Global\_Ambient\_Light$* 是指被材质缩放(scaled)/反射过的全局环境光,所以 $Scaled\_Global\_Ambient\_Light = GL\_AMBIENT \times GL\_LIGHT\_MODEL\_AMBIENT$.
 
-    *$Contributions\_From\_Light\_Sources$* 则是比较复杂,一个光源由环境反射光,漫反射光以及镜面反射光共同构成(三项的和),另外还有两个因素需要考虑,光也没有经过衰减,以及光源是否为聚光灯.
+    *$Contributions\_From\_Light\_Sources$* 则是比较复杂,它指所有光源的总和.
 
-    如果有多个光源,那么需要把所有光源的构成全部加在一起,总的计算过程如下:
+    一个光源由环境反射光,漫反射光以及镜面反射光共同构成(三项的和),另外还有两个因素需要考虑,光也没有经过衰减,以及光源是否为聚光灯.
+
+    假设现有 =n= 个光源,把所有光源的构成全部加在一起,总的计算过程如下:
 
     $contribute = attenuation\_factor * spotlight\_effect * (ambient\_term + diffuse\_term + specular\_term)$
 
-    $Contributions\_From\_Light\_Sources = \displaystyle\sum_{i=0}^{n}contribute_{i}$
+    $Contributions\_From\_Light\_Sources = \displaystyle\sum_{i=0}^{n}contribute_{i}$.
 
+    接下来分别对 $contribute$ 的每一项计算进行深入了解.
+
+    - $attenuation\_factor$
+
+      光线的衰减因素.
+
+      *如果光源是位置光源*,那么计算如下: $attenuation\_factor = \frac{1}{k_{c} + k_{l}d + k_{q}d^{2}}$,
+
+      其中,
+
+      $d$ 是指 $GL\_POSITION = (X, Y, Z, 1)$ 的光源到顶点 $(x_{v}, y_{v}, z_{v}, 1)$ 的距离, $d = \sqrt{(X - x_{v})^{2} + (Y - y_{v})^{2} + (Z - z_{v})^{2} + (1 - 1)^{2}}$,
+
+      $k_{c} = GL\_CONSTANT\_ATTENUATION$,
+
+      $k_{l} = GL\_LINEAR\_ATTENUATION$
+
+      $k_{q} = GL\_QUADRATIC\_ATTENUATION$.
+
+      *如果光源是定向光源*,那么结果直接固定为1: $attenuation\_factor = 1$.
+
+    - $spotlight\_effect$
+
+      
 
