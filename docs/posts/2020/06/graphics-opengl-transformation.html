@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-08-05 周三 11:25 -->
+<!-- 2020-10-19 周一 09:45 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>图形学-OpenGL坐标变换</title>
@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
+    overflow: auto;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -198,50 +198,26 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
@@ -280,7 +256,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="content">
 <h1 class="title">图形学-OpenGL坐标变换</h1>
-<div class="abstract">
+<div class="abstract" id="org4347eee">
 <p>
 之前只讲了几何变换,也就是最简单的变换, <code>OpenGL</code> 里面还有很多其它变换,本文主要讲述 <code>OpenGL</code> 的各种坐标系以及它们之间的转换,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 </p>
@@ -308,43 +284,26 @@ for the JavaScript code in this tag.
 <h2 id="org167b29b">几个该清楚的概念</h2>
 <div class="outline-text-2" id="text-org167b29b">
 </div>
-<div id="outline-container-org96f5f6b" class="outline-3">
-<h3 id="org96f5f6b">欧几里得空间以及笛卡尔坐标系</h3>
-<div class="outline-text-3" id="text-org96f5f6b">
-<p>
-欧几里得空间(Euclidean space)是一套度量空间,基于向量空间补充一些新定义(向量的长度),在数学上经常用于研究二维以及三维空间,大概知道它用来干什么就可以了,这里也不详细说.
-</p>
-
-<p>
-笛卡尔坐标系(Cartesian coordinate system) 是一套坐标系,分为正交坐标系以及斜交坐标系(区别就是坐标轴之间是否相互垂直,是的话就是正交坐标系,否的话就是斜交坐标系).
-</p>
-
-<p>
-正交坐标系刚好和欧几里得基于三个相互垂直的向量构成一个3维空间这点一致,所以可以认为笛卡尔坐标系为欧几里得空间提供了一把标尺.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org8cbf238" class="outline-3">
-<h3 id="org8cbf238">齐次坐标系</h3>
-<div class="outline-text-3" id="text-org8cbf238">
+<div id="outline-container-orgdec345c" class="outline-3">
+<h3 id="orgdec345c">齐次空间</h3>
+<div class="outline-text-3" id="text-orgdec345c">
 <p>
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 </p>
 
 
-<div class="figure">
+<div id="orgf86ee4f" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg">
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
 </div>
 
 <p>
-为了解决计算问题,数学家给投影空间找到一种坐标系:齐次坐标系(Homogeneous coordinate system).
+为了解决计算问题,数学家给投影空间找到一种坐标系:齐次坐标系(Homogeneous coordinate system).所以投影空间又叫齐次空间(Homogeneous space).
 </p>
 
 <p>
-齐次坐标系是用来处理投影空间上的图形以及几何的计算.齐次坐标就是 \(n\) 维坐标的 \(n+1\) 维坐标表示,还有就是投影空间也是基于向量空间的.
+齐次空间是用来处理投影空间上的图形以及几何的计算.齐次坐标就是 \(n\) 维坐标的 \(n+1\) 维坐标表示,是投影空间也基于向量空间.
 </p>
 
 <p>
@@ -357,6 +316,10 @@ for the JavaScript code in this tag.
 
 <p>
 当 \(\left(1, 2\right)\) 向原处无限移动,相当于 \(w = 0\), \(\left(\frac{1}{0}, \frac{2}{0}\right) \approx \left(\infty, \infty\right)\).
+</p>
+
+<p>
+这里结合仿射空间来理解,你可能会发现这不就是仿射变换吗?答案也的确如此,一个三维的点可以看成一个二维的点平移到平面外所得到的结果.所以说, <b>仿射空间由向量空间派生得来,而投影空间由仿射空间派生得来.</b>
 </p>
 
 <p>
@@ -378,12 +341,39 @@ for the JavaScript code in this tag.
 <p>
 对于 3D 也是适用的,都是增加额外一个维度,不过这个额外的维度意义重大,它引入了透视这个概念,为 3D 坐标映射到 2D 坐标提供了可能(总得来说提供了高维度到低一维度转变的可能).
 </p>
+
+<p>
+更多关于齐次空间的内容可以参考这些资源:
+</p>
+
+<ol class="org-ol">
+<li><p>
+<a href="http://morpheo.inrialpes.fr/people/Boyer/Teaching/M2R/geoProj.pdf">http://morpheo.inrialpes.fr/people/Boyer/Teaching/M2R/geoProj.pdf</a>
+</p>
+
+<p>
+有涉及到欧几里得空间,仿射空间还有投影空间三者的关系,还有不同变换的效果的直观展示.
+</p></li>
+
+<li><p>
+<a href="http://kahrstrom.com/mathematics/documents/OnProjectivePlanes.pdf">http://kahrstrom.com/mathematics/documents/OnProjectivePlanes.pdf</a>
+</p>
+
+<p>
+直接给出了相关概念的定义,可以作为参考.
+</p></li>
+</ol>
 </div>
 </div>
+
 
 <div id="outline-container-org981252f" class="outline-3">
 <h3 id="org981252f">平面方程</h3>
 <div class="outline-text-3" id="text-org981252f">
+<p>
+这里先强调一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
+</p>
+
 <p>
 在欧几里得空间中,指定任意平面 \(P\) 的某个点 \(p_{1}\), 从该点的位置延伸一条法线向量 \(\vec{n} = \left(a, b, c\right)\),(可以从任意点延伸出相同方向的法线变量),
 </p>
@@ -397,25 +387,21 @@ for the JavaScript code in this tag.
 </p>
 
 
-<div class="figure">
+<div id="orgd6985f3" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png">
 </p>
 </div>
 
 <p>
-然而事实是,没有点和线垂直的这种说法,(注意,这里的"点"是指 <code>point</code>,不是 <code>vector</code>,前者没有方向,而后者有,而后者的方向一般是指从原点出发到 <code>vector</code> 的方向,除非有特别说明不是从原点出发),
+因为平面 \(P\) 不包含原点,所以可以把它看做一个仿射空间,在该空间上, \(p_{1}\) 和 \(p\) 分别是已知的点和 <b>任意的点</b>,而不是从原点出发的向量, 并且 \(p_{1}\) 和 \(p\) 构成直线(向量):
 </p>
 
 <p>
-针对现在的情况就只有线与线条,或者平面与线垂直,又或者平面与平面这些说法.最低限度也要通过线与线表明 \(\vec{n}\) 与 \(P\) 垂直.
+\(\vec{p} - \vec{p_{1}} = \left(x - x_{1}, y - y_{1}, z - z_{1}\right)\).
 </p>
 
 <p>
-所以需要在 \(P\) 上任意再找一个点 \(p\) (\(p \ne p_{1}\)) 形成直线(也就是平面 \(P\) 上的一个向量): \(\vec{p} - \vec{p_{1}} = \left(x - x_{1}, y - y_{1}, z - z_{1}\right)\),
-</p>
-
-<p>
-用等式表示就是: \(\vec{n} \cdot \left(\vec{p} - \vec{p_{1}}\right) = 0\), 这个就是平面方程 (plane equation),可以表示平面 \(P\).根据这条等式可以得到:
+因为 \(\vec{n}\) 垂直平面 \(P\),所以也垂直与 \(P\) 上的任意直线(向量),所以关系成立 \(\vec{n} \cdot \left(\vec{p} - \vec{p_{1}}\right) = 0\),这个就是平面方程 (plane equation),可以用来表示平面 \(P\).根据这条等式可以得到:
 </p>
 
 <p>
@@ -431,57 +417,58 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-如果 \(\vec{n}\) 是单位向量,并且 \(p_{1}\) 到原点的距离为 \(d\), 那么 \(p_{1}\) 可以表示成 \(\left(da, db, dc\right)\) (\(\vec{n}\) 就是 \(\vec{p_{1}}\) 的方向),整个等式变为 \(ax + by + cz - d \cdot \left(a^{2} + b^{2} + c^{2}\right) = 0\),
+反过来说, <b>如果点 \(v\) 满足 \(P \cdot v = 0\),那么 \(v\) 就属于平面 \(P\) 上.</b>
 </p>
 
 <p>
-又因为 \(\vec{n}\) 是单位向量,所以 \(a^{2} + b^{2} + c^{2} = 1\),所以最终等式为: \(ax + by + cz - d = 0\),也有不少人写成 \(ax + by + cz + d\) 的,两种都可以.
+因为 \(\vec{p_{1}}\) 和 \(\vec{n}\) 是共线且同向的,所以它们关系满足 \(\vec{p_{1}} = k \cdot \vec{n} = \left(ka, kb, kc\right)\), \(k\) 是一个常量,也就是说 \(ax + by + cz - k \cdot \left(a^{2} + b^{2} + c^{2}\right) = 0\).
 </p>
 
 <p>
-如果 \(\vec{n}\) 不是单位向量,那就自己对 \(\vec{n}\) 进行一般化,也就是求出它的单位向量,然后进行同样的推导.反过来说,如果 \(p\) 满足这个等式就证明 \(p\) 来自与平面 \(P\).
+如果 \(\vec{n}\) 是单位向量,因为 \(a^{2} + b^{2} + c^{2} = 1\),所以整个等式变为 \(ax + by + cz - k = 0\),这种情况下 \(k\) 就是平面 \(P\) 到原点的距离 \(d\) 了, 而 \(d = - \left(ax_{1} + by_{1} + cz_{1}\right)\),那么等式变成 \(ax + by + cz + d = 0\).
 </p>
 
 <p>
-这是在欧几里得坐标系下的平面方程,那在齐次坐标系下呢?其实推导结果都差不多的,假设 \(p = \left(x, y, z, w\right)\), \(\vec{n} = \left(a, b, c, k\right)\) 并且是单位向量, \(p_{1} = \left(da, db, dc, dk\right)\),
+根据上面说过的可以根据方向以及平面到原点的距离确定平面,也就是平面 \(P\) 可以由 \(\vec{n}\) 和 \(d\) 决定,这可以通过齐次空间的角度来看待平面 \(P\), 平面 \(P\) 由经过原点的平面 \(P^{'}\) 沿着它面向的方向平移距离 \(d\) 得到, \(P = \left(\begin{array}{c|c}\vec{n} | d\end{array}\right) = \left(a, b, c, d\right)\).
 </p>
 
 <p>
-\(\vec{n} \cdot \left(\vec{p} - \vec{p_{1}}\right) = 0\)
-</p>
-
-<p>
-\(\left(a, b, c, k\right) \cdot \left(x - da, y - db, z - dc, w - dk\right) = 0\)
-</p>
-
-<p>
-\(ax + by + cz + kw - d \cdot \left(a^{2} + b^{2} + c^{2} + k^{2}\right) = 0\)
-</p>
-
-<p>
-<a href="https://www.cs.upc.edu/~robert/teaching/idi/normalsOpenGL.pdf">https://www.cs.upc.edu/~robert/teaching/idi/normalsOpenGL.pdf</a>
-</p>
-
-<p>
-<a href="https://wordsandbuttons.online/interactive_guide_to_homogeneous_coordinates.html">https://wordsandbuttons.online/interactive_guide_to_homogeneous_coordinates.html</a>
-</p>
-
-<p>
-<a href="http://www.glprogramming.com/red/appendixf.html">http://www.glprogramming.com/red/appendixf.html</a>
+假设点 \(p = \left(x, y, z, w\right)\) 满足 \(P \cdot p = ax + by + cz + dw = 0\),那么点 \(p\) 就在平面 \(P\) 上.这里 \(d = \frac{-\left(ax_{1} + by_{1} + cz_{1}\right)}{w}\),如果 \(w = 1\),那整个等式就和欧几里得空间下的平面方程一样.
 </p>
 </div>
 </div>
 </div>
+
 
 <div id="outline-container-org03670c8" class="outline-2">
 <h2 id="org03670c8">OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-org03670c8">
 
-<div class="figure">
+<div id="org0aa2139" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>OpenGL vertex transformation</p>
 </div>
+
+<p>
+理解其中的每个环节对以后掌握编写 <code>Shader</code> 是十分有必要的:其中发生了什么,要怎么计算.
+</p>
+
+<p>
+比如在学习 <code>GLSL</code> 的编写时,通常会有说某个坐标是什么坐标系,意思就是这个坐标系是通过了什么变换后得到的结果,
+</p>
+
+<p>
+比如坐标用的世界坐标系,那么它就是顶点经过模型变换得到的结果;
+</p>
+
+<p>
+再比如坐标用的是视点坐标系,那么它就是顶点先经过模型变换然后再经过视点变换得到的结果,等等.
+</p>
+
+<p>
+如果这些都不理解的话,很容易会因为用错坐标系得到错误的计算结果,比如在以后的光照计算中.
+</p>
 </div>
 
 <div id="outline-container-org68f8eb5" class="outline-3">
@@ -533,7 +520,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 其中 \(\left(\begin{array}{c}m_{1x} \\ m_{1y} \\ m_{1z}\end{array}\right)\), \(\left(\begin{array}{c}m_{2x} \\ m_{2y} \\ m_{2z}\end{array}\right)\) 以及 \(\left(\begin{array}{c}m_{3x} \\ m_{3y} \\ m_{3z}\end{array}\right)\) 分别是 \(x\), \(y\) 以及 \(z\) 轴, 至于 \(\left(\begin{array}{c}d_{x} \\ d_{y} \\ d_{z} \end{array}\right)\) 是负责平移.
 </p>
 
-<pre class="example">
+<pre class="example" id="orge4fb8e5">
 通过一个 2D 例子想象一下 ,我们已经画了一个三角形,要把它放到已经画好的正方形上,它们都有各自的坐标系,也就是上面提到的对象坐标系,
 
 通常来说都希望系统对象都是居中到坐标系的中心,也就是原点上,或者至少使用原点作为参考点(reference point),
@@ -546,6 +533,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </pre>
 </div>
 </div>
+
+
 
 <div id="outline-container-orgd48caba" class="outline-3">
 <h3 id="orgd48caba">视点坐标系</h3>
@@ -608,18 +597,18 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div class="figure">
+<div id="org9ea8d09" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif">
 </p>
 <p><span class="figure-number">Figure 4: </span>相机看小黄鸭的顶部</p>
 </div>
 
 <p>
-这个图的意思是相机还是在原来的位置(也就是浅色橙线)看着原来的方向,小黄鸭往下旋转相当于相机围绕小黄鸭反方向旋转.
+这个图的意思是相机还是相对小黄鸭原来的位置(也就是浅色橙线)看着原来的方向,小黄鸭往下旋转相当于相机围绕小黄鸭反方向旋转(单独把相机从旋转后的位置摆放回原来的位置上就看出来了).
 </p>
 
 
-<div class="figure">
+<div id="org181eae2" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif">
 </p>
 <p><span class="figure-number">Figure 5: </span>相机看小黄鸭的正前方</p>
@@ -666,73 +655,129 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 
-<div id="outline-container-org80af28c" class="outline-4">
-<h4 id="org80af28c">光线变换</h4>
-<div class="outline-text-4" id="text-org80af28c">
+<div id="outline-container-org87874a1" class="outline-4">
+<h4 id="org87874a1">法线向量变换</h4>
+<div class="outline-text-4" id="text-org87874a1">
 <p>
-别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的.
+别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的,目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案,这个方案用到法线向量.
 </p>
 
 <p>
-目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案, <b>于是, <code>OpenGL</code> 用了法线向量来计算计算特定的顶点或者平面接收了多少光(光的强度)</b>,
+光线计算并非完全就是法线向量变换,具体内容计算以后再讨论,目前先了解 <code>OpenGL</code> 中的法线向量,法线向量只能添加到顶点上,这和在数学中学到的不一样: 在三维空间中,点没有方向,没有线和点垂直的说法,只垂直于表面.
 </p>
 
 <p>
-光照的具体计算以后再讨论,目前先了解法线向量的变换.
+这是因为在现实世界中表面不可能是平的,放大看会非常粗糙,这样的凹凸不平的表面上可以找到无数个不同方向的法线,非常乱并且运算量十分庞大,
 </p>
 
 <p>
-<code>OpenGL</code> 法线向量只能添加到顶点上,这和在数学中学到的不一样: 点没有方向,所以没办法和点垂直.而 <code>OpenGL</code> 会先找出该点的平面,然后计算垂直于该平面的法线变量.
+而在计算机中所有面可以说是平的,哪怕曲面都是由多个小平面堆砌而成的近似结果,越是放大曲面就越能看到它的小平面,这对应现实中一个例子:地球,行走在地面上感觉地面是平的,但是通过卫星却看到地球是圆的,
 </p>
 
 <p>
-光线的计算需要法线向量变换(normal vector transformation),光线的计算,也叫光照处理(lighting processing),是发生在视点坐标系下的.
+计算机中的曲线也一样的,用图形处理软件放大像素图中的圆形可以看到它的边是由多条短小直线构成的.法线都是垂直于这些小平面的,由于小平面是由顶点构成的,所以法线向量就很合理地成为顶点的属性.
 </p>
 
 <p>
-所以法线向量变换也是发生在从对象坐标到视点坐标变换(the modelview matrix)这个过程中的,不过法线向量变换和这变换不一样.
+法线向量有两种,比如 <a href="http://math.hws.edu/graphicsbook/c4/s1.html">graphicsbook</a> 这里的例子:由多个平面构成几何体.
+</p>
+
+
+<div id="orgac69660" class="figure">
+<p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png">
+</p>
+</div>
+
+<p>
+这两个实际上是同一个几何体(由多个长方形平面构成),但是由于法线向量的不同导致看起来不一样,前者更光滑(smooth),后者更扁平(flat).
 </p>
 
 <p>
-从数学上来说,最好把法线向量看作一个平面,垂直于几个向量(最少3个,3个顶点就能够构成一个平面,少1个不行,多1个可能不行),
+它们的法线分别是这样的,
+</p>
+
+
+<div id="orgdd1a78b" class="figure">
+<p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png">
+</p>
+</div>
+
+<p>
+可以看出一个顶点可以拥有不止一个法线向量,两种不同的法线向量分配方法反映了对一个几何体的不同看法:
 </p>
 
 <p>
-那么法线向量的变换就是垂直平面的变换了.
+前者是把几何体看做一个整体表面,而不是一个一个长方形,近似地为每个顶点添加法线向量(Normal Per Vertex);后者是把几何体看做一个一个长方形,为每个平面添加法线(Normal Per Face).
 </p>
 
 <p>
-假设现在有一个平面 \(v_{1}-v_{2}-v_{3}\) (三个顶点够构成一个平面,多一个或者少一个都不行),它的法线向量的齐次坐标形式是 \(\vec{n} = \left(n_{x}, n_{y}, n_{z}, n_{w}\right)\),
+这两种分配法分别叫做 <code>Smooth shading</code> 和 <code>Flat shading</code>,如果是为了突出整体表面,那么就用 <code>Smooth shading</code>,如果是为了突出几何体不同的面就用 <code>Flat shading</code>.
 </p>
 
 <p>
-欧几里得形式则是 \(\left(n_{x}, n_{y}, n_{z}\right)\).如图所示,
+现在开始了解法线向量的变换,这里用单个平面作为例子开始着手.
+</p>
+
+<p>
+<code>OpenGL</code> 会先找出顶点 \(v_{1}\) 附近的其它顶点(\(v_{2}\) 和 \(v_{3}\)),这些顶点能够构成平面,三个顶点就能确定一个平面了,根据这些点构成的平面就能计算出平面的法线向量 \(\vec{n}\) (就是用三个点构造出两个向量,然后通过这两个向量的叉积求出法线向量),
+</p>
+
+<p>
+它就是顶点(\(v_{1}\), \(v_{2}\) 和 \(v_{3}\))的法线向量了,为了到光照计算得到正确结果, <code>OpenGL</code> 要求法线向量规范化,也就是变成单位向量.
+</p>
+
+<p>
+要注意,\(\vec{n}\) 是同时垂直于三个顶点才能说垂直于其中某一个顶点,同时垂直于三个顶点意味垂直三个顶点所处的平面上(所以这并非说 \(\vec{n}\) 垂直于 \(\vec{v_{1}}\) 这条由原点和顶点 \(\vec{v_{1}}\) 定义的直线, \(v_{2}\), \(v_{3}\) 同理).
 </p>
 
 
-<div class="figure">
+<div id="orgd38ce7d" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png">
 </p>
 </div>
 
 <p>
-在齐次坐标系下,平面是用 \(\left(a, b, c, d\right)\) 这种形式表示的,而 \(a\), \(b\), \(c\), \(d\) 都不为 0.
+那么问题来了,如果三个顶点发生经过 \(M_{modelview}\) 变换后,\(\vec{n}\) 会发生什么变化呢?
 </p>
 
 <p>
-其中 \(a, b, c\) 代表法线向量的分量,也是平面的方向, \(d\) 表示平面距离原点的距离.
+可以肯定的是 \(\vec{n}\) 和 \(v_{1}\), \(v_{2}\) 以及 \(v_{3}\) 的经历的变换肯定是不一样的,找个反例就知道了: \(\left(1, 0, 0\right)\) 和 \(\left(0, 1, 0\right)\) 的法线向量 \(\left(0, 0, 1\right)\),
 </p>
 
 <p>
-如果 \(q\) 不为 0,那么 \(\left(qa, qb, qc, qd\right)\) 和 \(\left(a, b, c ,d\right)\) 表示同一个平面.
+沿 \(y\) 轴正方向平移2个单位得到 \(\left(1, 2, 0\right)\) 以及 \(\left(0, 3, 0\right)\),法线向量变成 \(\left(0, 0, 3\right)\),而不是变成 \(\left(0, 2, 1\right)\),按照单位向量标准来看法线变量还没变.
 </p>
 
 <p>
-如果有一个点 \(\left(x, y, z, w\right)\) 满足关系: \(ax + by + cz + dw = 0\),那么该点就在该平面上,
+我们先换到齐次坐标系下看待这问题,根据法线向量 \(\vec{n}\) 构建出齐次平面 \(P = \left(\begin{array}{c|c} n & n_{w}\end{array}\right) = \left(n_{x}, n_{y}, n_{z}, n_{w}\right)\),该平面可看作由经过原点的平面 \(P^{'}\) 朝它面向的方向 \(\vec{n}\) 移动 \(n_{w}\) 距离后得到的.
 </p>
 
 <p>
-如果 \(w = 1\),那么就是标准的欧几里得平面方程了.
+\(v = \left(x, y, z, w\right)\) 是该平面上的任意一点,所以 \(P \cdot v =  \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0\).
+</p>
+
+<p>
+把这个平面方程改一下就可以推导出法线变换了: \(PM_{modelview}^{-1}M_{modelview}v = \left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right) = 0\).
+</p>
+
+<p>
+其中 \(M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right)\) 就是我们前面提到从对象坐标变换到视点坐标的过程,那么 \(\left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}\) 就是我们想要法线向量变换,这种写法可能会更加熟悉一点: \(\left(M_{modelview}^{-1}\right)^{T} \left(\begin{array}{c}n_{x} \\ n_{y} \\ n_{z} \\ n_{w}\end{array}\right)\).
+</p>
+
+<p>
+整个方程是这样的意思: 从对象坐标到视点坐标变换得到的顶点 \(M_{modelview} \left(\begin{array}{c}x \\ y \\ z \\ w\end{array}\right)\) 是变换后的平面 \(\left(\begin{array}{c} n_{x} & n_{y} & n_{z} & n_{w}\end{array}\right) M_{modelview}^{-1}\) 上的一个点.
+</p>
+
+<p>
+所以说白了,法线变换就是平面变换,下面这些是关于法线向量变换的额外的资料,有兴趣的可以看一下:
+</p>
+
+<p>
+<a href="https://www.cs.upc.edu/~robert/teaching/idi/normalsOpenGL.pdf">https://www.cs.upc.edu/~robert/teaching/idi/normalsOpenGL.pdf</a>
+</p>
+
+<p>
+<a href="http://www.glprogramming.com/red/appendixf.html">http://www.glprogramming.com/red/appendixf.html</a>
 </p>
 </div>
 </div>
@@ -841,17 +886,17 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div class="figure">
+<div id="orgb55fdfb" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png">
 </p>
-<p><span class="figure-number">Figure 7: </span>透视投影(投影相机看到的内容)</p>
+<p><span class="figure-number">Figure 9: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div class="figure">
+<div id="orgbbf3bcc" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png">
 </p>
-<p><span class="figure-number">Figure 8: </span>正交投影(正交相机看到的内容)</p>
+<p><span class="figure-number">Figure 10: </span>正交投影(正交相机看到的内容)</p>
 </div>
 
 <p>
@@ -896,10 +941,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </ol>
 
 
-<div class="figure">
+<div id="org4cdcdc7" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png">
 </p>
-<p><span class="figure-number">Figure 9: </span>透视投影2</p>
+<p><span class="figure-number">Figure 11: </span>透视投影2</p>
 </div>
 
 <p>
@@ -915,7 +960,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div class="figure">
+<div id="orga998760" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png">
 </p>
 </div>
@@ -953,10 +998,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div class="figure">
+<div id="orgbaaf7b9" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png">
 </p>
-<p><span class="figure-number">Figure 11: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
+<p><span class="figure-number">Figure 13: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
 </div>
 
 <p>
@@ -980,10 +1025,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div class="figure">
+<div id="org5240d60" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png">
 </p>
-<p><span class="figure-number">Figure 12: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
+<p><span class="figure-number">Figure 14: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
 </div>
 
 <p>
@@ -1047,10 +1092,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div class="figure">
+<div id="org933df66" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png">
 </p>
-<p><span class="figure-number">Figure 13: </span>比较不同深度下的精确度</p>
+<p><span class="figure-number">Figure 15: </span>比较不同深度下的精确度</p>
 </div>
 
 <p>
@@ -1086,10 +1131,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 <li><a id="org6d32fb3"></a>正交投影<br>
 <div class="outline-text-5" id="text-org6d32fb3">
 
-<div class="figure">
+<div id="orgc8c2a37" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png">
 </p>
-<p><span class="figure-number">Figure 14: </span>正交投影2</p>
+<p><span class="figure-number">Figure 16: </span>正交投影2</p>
 </div>
 
 <p>
@@ -1152,7 +1197,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-这个是系列教程的第一个部分: 编写一个软件加速的 3D 引擎的核心部分,相对于整个 <code>OpenGL</code> 管线来说,这部分的教程实现了 <code>Vertex Operation</code>, <code>Primitive Assembly</code> 这两个环节.
+这个是系列教程的第一个部分: 编写一个软件加速的 3D 引擎的核心部分,相对于整个 <code>OpenGL</code> 管线来说,这部分的教程实现了 <code>Vertex Operation</code>, <code>Primitive Assembly</code> 这两个环节,但不包括法线向量变换.
 </p>
 
 <p>
@@ -1182,6 +1227,66 @@ B. 把对象放到场景(scene)/世界(world)中.
 <p>
 如果读者是 <code>JavaScript</code> 用户,那么本人推荐去阅读以下 <code>gl-matrix.js</code> 的源代码,它的源码很简单,并且对于检测自己对矩阵推导的理解很有帮助.
 </p></li>
+
+<li><p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial">Mozilla WebGL Tutorial</a>
+</p>
+
+<p>
+这个教程简单的介绍了如何使用 <code>WebGL</code>,对于目前已经掌握的知识来说,可以通过阅读其中以下章节来实践所学知识:
+</p>
+
+<p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Getting_started_with_WebGL">Getting started with WebGL</a>
+</p>
+
+<p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context">Adding 2D content to a WebGL context</a>
+</p>
+
+<p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Animating_objects_with_WebGL">Animating objects with WebGL</a>
+</p>
+
+<p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL">Creating 3D objects using WebGL</a>
+</p>
+
+<p>
+除了前端知识以外,还使用 <code>GLSL</code> 编写 <code>shaders</code>,我们目前都是基于 <code>OpenGL 1.x</code> 的 <code>APIs</code> 去学习的,
+</p>
+
+<p>
+从 <code>OpenGL 2.x</code> 开始就用 <code>shaders</code> 替换掉里面的固定管线了,所以学会编写 <code>Shader</code> 是我们学习的最终目标,
+</p>
+
+<p>
+这教程正是一个好的开始,不过它忽略了一个重要的细节: <code>OpenGL</code> 如何读取顶点.
+</p>
+
+<p>
+关于这方面的内容就详细写了,这里给出两个地址:
+</p>
+
+<p>
+<a href="https://learnopengl.com/Getting-started/Hello-Triangle">LearnOpenGL 的 Hello Triangle(个人推荐这个)</a>
+</p>
+
+<p>
+<a href="https://www.khronos.org/opengl/wiki/Vertex_Specification">官方的 Vertex Specification</a>
+</p>
+
+<p>
+目前阅读这个教程只需要专注于 <code>vertex shader</code>, <code>fragment shader</code> 是以后学习的内容,
+</p>
+
+<p>
+还有这个教程上面推荐的其它教程也是相当不错的,有时间的或者读这篇教程是有疑惑的可以去阅读一下.
+</p>
+
+<p>
+最后要注意 <code>WebGL</code> 默认用的是 1.3 版的 <code>GLSL</code>,这里顺便给出 <a href="https://www.khronos.org/registry/OpenGL/index_gl.php#oldspecs">GLSL的参考文档</a>.
+</p></li>
 </ol>
 </div>
 </div>
@@ -1189,8 +1294,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2020-06-19</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.3 (<a href="https://orgmode.org">Org</a> mode 9.3.7)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.3 (<a href="https://orgmode.org">Org</a> mode 9.4)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

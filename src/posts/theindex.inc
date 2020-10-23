@@ -46,8 +46,9 @@
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 * 图
   - [[file:2020/06/graphics-opengl-transformation.org][图形学-OpenGL坐标变换]]
+  - [[file:2020/08/graphics-opengl-light-and-material.org][图形学-光和材质]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
-  - [[file:2020/06/graphics-coordinate-transform.org][图形学-坐标系统之间的变换]]
+  - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
 * 用
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直

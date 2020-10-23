@@ -1,6 +1,5 @@
 #+title: 图形学-几何变换
 #+date: 2020-06-10
-#+status: wd
 #+index: 图形学-几何变换
 #+tags: Graphics
 #+begin_abstract
@@ -102,10 +101,6 @@
      这里还有一个有趣的事实,就是 $translate(p, d_{x}, d_{y})$ 后到达 $p^{'}$,如果 $p^{'}$ 再发生一次平移 $translate(p^{'}, dx^{'}, dy^{'})$ 到达 $p^{''}$,这整个过程等于 $translate(p, d_{x} + d_{x}^{'}, d_{y} + d_{y}^{'})$.
 
      还有就是三种变换中只有平移会导致 $p$ 偏移了原点,这个事实会在以后的坐标系变换学习里面提到.
-
-     #+BEGIN_SRC elisp
-
-     #+END_SRC
 
 **** 平面伸缩
 
@@ -233,29 +228,60 @@
 
 ***** 围绕任意通过原点的轴进行旋转
 
-      这里需要对向量要有一定的了解才能看懂推理过程,至少要先了解向量的一些特性以及向量点积.
+      这部分推导相比之前的会更加有难度,为此需要使用一些以前没有了解过的概念作为准备.
 
-      这里也稍微提一下,向量 $\vec{r}$ 是一段有方向的线段,长度叫模长,用 $\|r\|$ ,用单位向量表示方向,单位向量就是长度为1的有向线段(只要线条有一点长度就能看出方向,用1是为了方便计算),用 $\hat{r}$ 表示.
+****** 向量模,向量之间的夹角以及向量积
 
-      所以 $\vec{r}$ 可以描述为在 $\hat{r}$ 方向长为 $\|\vec{r}\|$,或者有 $\|\vec{r}\|$ 个 $\hat{r}$,得到关系 $\vec{r} = \|\vec{r}\|\hat{r}$.
+       那就是欧几里得空间的一些概念: 向量模(norm of vector),向量之间的夹角(angle between vectors)以及向量积(product of vectors)
 
-      假设现在知道另外一个向量 $\vec{s}$, $\vec{r}$ 在 $\vec{s}$ 上的投影如图所示,它们的夹角为 $\theta$,这可以用 *向量点积* (dot product) 表示它们之间的关系: $\vec{r} \cdot \vec{s} = \|\vec{r}\|\|\vec{s}\|\cos\theta$.
+       在欧几里得空间里面,向量 $\vec{r}$ 是一段有方向的线段,它的长度叫 *模(norm)*, 标记为 $\|r\|$,
 
-      *补图*
+       它的方向用单位向量表示,单位向量就是长度为1的有向线段(只要线条有一点长度就能看出方向,用1是为了方便计算),标记为 $\hat{r}$.
 
-      投影其实就是 $\vec{r}$ 的一个分量,标记为 $\vec{r}_{1}$,投影长度为 $\|\vec{r}\|\cos\theta$,所以 $\vec{r}$ 和 $\vec{s}$ 之间的点积就是 $\vec{r}$ 的分量 $\vec{r}_{1}$ 的模长以及 $\vec{s}$ 的模长的乘积.
+       $\vec{r}$ 可以描述为在 $\hat{r}$ 方向长为 $\|\vec{r}\|$, 或者有 $\|\vec{r}\|$ 个单位向量 $\hat{r}$, 因此得到关系 $\vec{r} = \|\vec{r}\|\hat{r}$.
 
-      而 $\frac{\vec{r} \cdot \vec{s}}{\|\vec{r}\|\|\vec{s}\|} = \cos\theta$,所以 $\|\vec{r}_{1}\| = \|\vec{r}\|\frac{\vec{r} \cdot \vec{s}}{\|\vec{r}\|\|\vec{s}\|} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|}$,由于 $\vec{r}_{1}$ 和 $\vec{s}$ 的方向是一样的,所以 $\vec{r}_{1} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|}\hat{s} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|}\frac{\vec{s}}{\|\vec{s}\|} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|^{2}}\vec{s}$.
+       假设 $\vec{r}$ 是由 $\left(x1, y1, z1\right)$ 到 $\left(x2, y2, z2\right)$, 也就是 $\vec{r} = \left(x2 - x1, y2 - y1, z2 - z1\right)$,
 
-      求出其中一个分量后再求出另外一个分量就不难了.
+       那么 $\vec{r}$ 的模就是 $\|\vec{r}\| = \sqrt{(x2 - x1)^{2} + (y2 - y1)^{2} + (z2 - z1)^2}$.
 
-      还需要多一个概念: *向量叉积* (cross product),它是用来求出与 $\vec{a}$ 和 $\vec{b}$ 都垂直的向量 $\vec{c}$,像这种垂直于整个平面的向量称为法线向量(normal vector),并且 $\vec{c}$ 的长度是 $\vec{a}$ 和 $\vec{b}$ 组成的平行四边形的面积.
-
-      公式如下: $\vec{a} \times \vec{b} = \|\vec{a}\|\|\vec{b}\|sin\theta \hat{n}$, 其中 $\theta$ 是 $\vec{a}$ 和 $\vec{b}$ 的夹角, $\hat{n}$ 是 $\vec{c}$ 的单位向量.
+       一旦知道 $\vec{r}$ 的模,那么 $\hat{r}$ 就很好办了: $\hat{r} = \frac{\vec{r}}{\|\vec{r}\|} = \frac{\left(x2 - x1, y2 - y1, z2 - z1\right)}{\sqrt{(x2 - x1)^{2} + (y2 - y1)^{2} + (z2 - z1)^2}}$.
 
 
-      这些都是基于模长和夹角介绍向量积的,预备概念已经够了,可以开始推导,要确保你能够理解这些,否则是看不懂接下来的内容的了.
 
+       假设现在知道另外一个向量 $\vec{s} = \left((x3, y3, z3\right)$, $\vec{r}$ 在 $\vec{s}$ 上的投影如图所示,它们的夹角为 $\theta$,
+
+       [[../../../files/vector-projection.png]]
+
+       这里可以用 *向量点积* (dot product) 表示它们之间的关系: $\vec{r} \cdot \vec{s} = \|\vec{r}\|\|\vec{s}\|\cos\theta = x3(x2 - x1) + y3(y2 - y1) + z3(z2 - z1)$.
+
+       $\vec{r}$ 在 $\vec{s}$ 上的投影其实就是 $\vec{r}$ 在 $\vec{s}$ 的方向一个分量,标记为 $\vec{r}_{1}$,
+
+       根据三角函数可以得到投影长度为 $\|\vec{r}\|\cos\theta$,
+
+       所以 $\vec{r}$ 和 $\vec{s}$ 之间的点积就是 $\vec{r}_{1}$ 的模以及 $\vec{s}$ 的模的乘积,计算结果是一个标量.
+
+       而 $\frac{\vec{r} \cdot \vec{s}}{\|\vec{r}\|\|\vec{s}\|} = \cos\theta$, 所以 $\|\vec{r}_{1}\| = \|\vec{r}\|\frac{\vec{r} \cdot \vec{s}}{\|\vec{r}\|\|\vec{s}\|} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|}$,由于 $\vec{r}_{1}$ 和 $\vec{s}$ 的方向是一样的,所以 $\vec{r}_{1} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|}\hat{s} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|}\frac{\vec{s}}{\|\vec{s}\|} = \frac{\vec{r} \cdot \vec{s}}{\|\vec{s}\|^{2}}\vec{s}$.
+
+       求出其中一个分量后再求出另外一个分量就不难了: $\vec{r} - \vec{r}_{1}$.
+
+
+
+       向量积还有一个: *向量叉积* (cross product),它是用来求出与 $\vec{a}$ 和 $\vec{b}$ 都垂直的向量 $\vec{c}$,
+
+       [[../../../files/cross-product.png]]
+
+       向量 $\vec{a}$ 和 $\vec{b}$ 可以构成一个平面,像这种垂直于整个平面的向量 $\vec{c}$ 称为法线向量(normal vector),
+
+       并且 $\vec{c}$ 的长度是 $\vec{a}$ 和 $\vec{b}$ 组成的平行四边形的面积.
+
+       公式如下: $\vec{a} \times \vec{b} = \|\vec{a}\|\|\vec{b}\|sin\theta \hat{n}$, 其中 $\theta$ 是 $\vec{a}$ 和 $\vec{b}$ 的夹角, $\hat{n}$ 是 $\vec{c}$ 的单位向量,
+
+       计算结果是一个向量,至于基于坐标的向量叉积计算会放到后面进行介绍.
+
+
+       预备概念已经够了,可以开始推导,要确保你能够理解这些,否则是看不懂接下来的内容的了.
+
+****** 推导
 
       假设现在是 $p$ 围绕从原点到点 $s$: $\left(s_{x}, s_{y}, s_{z}\right)$ 直线旋转 \theta 度到达 $p^{'}$.
 
@@ -307,13 +333,15 @@
 
       现在要写成矩阵的形式,也就是找到一个矩阵 $R$ 满足这样的关系 $T\left(\vec{p}\right) = R\vec{p}$.
 
-      这里需要进一步对向量的点积和叉积进行了解,之前提到关于点积和叉积的计算都不是基于坐标系的,如果只给出了向量的坐标,那么如何计算呢?
+      这里需要进一步对向量叉积进行了解,之前只提到不基于坐标的向量叉积的计算,如果只给出了向量的坐标,那么如何计算呢?
 
-      假设现在有 $\vec{u} = \left(x_{u}, y_{u}, z_{u}\right)$ 以及 $\vec{v} = \left(x_{v}, y_{v}, z_{v}\right)$, 叉积为 $\vec{u} \times \vec{v} = \left(\begin{array}{c}0 & -z_{u} & y_{u} \\ z_{u} & 0 & -u_{x} \\ -y_{u} & u_{x} & 0 \end{array}\right)\vec{v}$, 点积为 $\vec{u} \cdot \vec{v} = x_{u}x_{v} + y_{u}y_{v} + z_{u}z_{v}$.
+      假设现在有 $\vec{u} = \left(x_{u}, y_{u}, z_{u}\right)$ 以及 $\vec{v} = \left(x_{v}, y_{v}, z_{v}\right)$, 叉积为 $\vec{u} \times \vec{v} = \left(\begin{array}{c}0 & -z_{u} & y_{u} \\ z_{u} & 0 & -x_{u} \\ -y_{u} & x_{u} & 0 \end{array}\right)\vec{v}$,
 
-      其中针对与叉积的推导是这样的,假设 $\vec{u}$, $\vec{v}$ 以及它们的叉积结果的向量都是通过基底 $\left(\begin{array}{c}i & j & k\end{array}\right)$ 进行描述的,(提醒一下, $i$, $j$ 和 $k$ 都是单位向量,并且三者相互垂直).
+      *叉积的推导* 是这样的:
 
-      所以就有这样的关系 $\vec{u} = x_{u}i + y_{u}j + z_{u}k$ 以及 $\vec{v} = x_{v}i + y_{v}j + z_{v}k$,现在这个关系:
+      假设 $\vec{u}$, $\vec{v}$ 以及它们的叉积结果的向量都是通过基底 $\left(\begin{array}{c}i & j & k\end{array}\right)$ 进行描述的,(提醒一下, $i$, $j$ 和 $k$ 都是单位向量,并且三者相互垂直).
+
+      也就是说 $\vec{u}$ 和 $\vec{v}$ 分别是 $i$, $j$, $k$ 的一个线性组合,所以 $\vec{u} = x_{u}i + y_{u}j + z_{u}k$ 以及 $\vec{v} = x_{v}i + y_{v}j + z_{v}k$,
 
       \begin{equation}
       \begin{aligned}
@@ -324,7 +352,11 @@
 
       因为 $i$, $j$ 以及 $k$ 都是单位向量并且相互垂直,根据 $\vec{a} \times \vec{b} = \|\vec{a}\|\|\vec{b}\|\sin\theta$ 可以得到 $i \times i$, $j \times j$ 以及 $k \times k$ 都为零向量, 还存在这种类型的关系 $i = j \times k$, $-i = k \times j$.
 
-      最后的化简结果是 $\vec{u} \times \vec{v} = (y_{u}z_{v} - z_{u}y_{v})i + (z_{u}x_{v} - x_{u}z_{v})j + (x_{u}y_{v} - y_{u}x_{v})k$,得到的法线向量是 $\left(y_{u}z_{v} - z_{u}y_{v}, z_{u}x_{v} - x_{u}z_{v}, x_{u}y_{v} - y_{u}x_{v}\right)$,(把 $\vec{v}$ 看做因变量集合写出方程组)就很容易写成矩阵乘以向量的形式,也就是上面的结论了.
+      最后的化简结果是 $\vec{u} \times \vec{v} = (y_{u}z_{v} - z_{u}y_{v})i + (z_{u}x_{v} - x_{u}z_{v})j + (x_{u}y_{v} - y_{u}x_{v})k$, 得到的法线向量是 $\left(y_{u}z_{v} - z_{u}y_{v}, z_{u}x_{v} - x_{u}z_{v}, x_{u}y_{v} - y_{u}x_{v}\right)$,
+
+      再把 $\vec{v}$ 看作自变量集合,并且按照 $x_{v}y_{v}z_{v}$ 的顺序排列项的方式写出方程组: $\begin{equation} \left\{ \begin{aligned} - z_{u}y_{v} + y_{u}z_{v}  = X \\ z_{u}x_{v} - x_{u}z_{v} = Y \\  - y_{u}x_{v} + x_{u}y_{v} = Z \end{aligned} \right. \end{equation}$,
+
+      把方程组里面的 $\vec{v}$ 的分量全部拿掉就得到左乘 $v$ 的矩阵了,也就是上面的结论了.
 
       再根据这个结论来推导 $\left(\vec{u} \cdot \vec{v}\right)\vec{u} = \left(\begin{array}{c} x_{u}^{2} & x_{u}y_{u} & x_{u}z_{u} \\ x_{u}y_{u} & y_{u}^{2} & y_{u}z_{u} \\ x_{u}z_{u} & y_{u}z_{u} & z_{u}^{2} \end{array}\right)\vec{v}$,根据上面的向量点积可以写成,
 
@@ -362,6 +394,7 @@
 
 *** 关于变换的一些其它概念
 
-**** 欧拉角    
+**** 欧拉角
+
 
 **** 四元数

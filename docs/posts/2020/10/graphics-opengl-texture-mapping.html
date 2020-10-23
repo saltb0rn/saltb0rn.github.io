@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2020-10-23 周五 14:23 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图形学-纹理映射</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">图形学-纹理映射</h1>
+<div class="abstract" id="org674e3f0">
+<p>
+在 <code>3D</code> 建模中经常会听到纹理映射(texture mapping)这个词,就是把一张图片映射到物体表面上,
+</p>
+
+<p>
+也就是把图片贴在物体上,这张图片储存了一些用于物体表面的细节,这些细节就是我们说的物体纹理.
+</p>
+
+<p>
+之所以会有这种技术是因为现实中的物体表面细节十分复杂,比如墙壁的砖头纹理,每块砖头的表面凹凸程度不一样,
+</p>
+
+<p>
+这种情况通过建模(顶点描绘)实现是一件很费力的事情,并且还要考虑变换的问题;
+</p>
+
+<p>
+所以一般是先建一个墙形状的物体,然后通过纹理映射让开发者把现实墙壁照片"贴"到物体模型上,
+</p>
+
+<p>
+这样建模看起来就像是现实的墙了,并且不需要考虑变换问题,因为 <b>图片本身就是像素集合</b>,也就是在 <code>Fragment Shader</code> 中进行处理的.
+</p>
+
+<p>
+这种图片有很多种叫法: 纹理贴图(texture map), 纹理图片(texture image)或者就纹理(texture),下面统一采用用纹理这个叫法.
+</p>
+
+<p>
+此外,纹理映射还能用来实现阴影,反射光,自发光以及不透明度等等效果,所要实现的效果可以作为一种纹理类别,比如这<a href="https://help.poliigon.com/en/articles/1712652-what-are-the-different-texture-maps-for">文章</a>上就提到有个网站就对纹理进行分类.
+</p>
+
+</div>
+
+<div id="outline-container-org656dfce" class="outline-2">
+<h2 id="org656dfce">开篇"废话"</h2>
+<div class="outline-text-2" id="text-org656dfce">
+<p>
+对于这部分没有兴趣的可以直接跳过.
+</p>
+
+<p>
+这篇笔记和前面的几何变换,坐标变换以及光照计算是同一个系列,实际上还有一篇线性代数的自学笔记的,它为我学习前面三个东西提供了基础,
+</p>
+
+<p>
+之后我会为这几篇文章写个独立页面的,之所以要写这个系列是因为工作上需要,还有我自身对图形学这块有兴趣,
+</p>
+
+<p>
+所以这个系列的内容是围绕 <code>OpenGL</code> 来写的,但是我也不忘学习背后的数学原理, <code>OpenGL</code> 和图形学只是看着相似,但不能画等号.
+</p>
+
+<p>
+这篇笔记是这个系列的最后一篇,学完这个在工作上弄些简单 <code>3D</code> 场景基本上没什么问题的了(不对,你还要学建模),
+</p>
+
+<p>
+但是对于图形学来说还是不够全面的,所以为了更加系统地学习,在完结这个系列后会开一个新系列,旧系列就是新系列的前导,我最初就是这么打算的.
+</p>
+
+<p>
+新系列基本上就是数学配套实际代码的风格了,这是为了对(前端)开发人员友好,我会也尽可能得把它们写得简单易懂.
+</p>
+
+<p>
+这个篇笔记是阅读 <code>Fundamentals Of Computer Graphics 4th</code> 的 <code>Texture Mapping</code> 后的总结,这本书的风格是数学结合伪代码的形式,
+</p>
+
+<p>
+比较贴近新系列的风格.
+</p>
+
+<p>
+关于数学我说一下我自己的感受,老实说本人的数学并不算好,在学习几何变换和坐标变换之前就补了一个月的线性代数了,
+</p>
+
+<p>
+在实际学变换的时候还再要补充欧几里空间和仿射空间的知识.到现在为止我也只是敢说掌握了学习图形学所需线性代数概念.
+</p>
+
+<p>
+如果你问我用一个月时间学习线性代数值不值得,我可以肯定的告诉你:值得.一是在学习图形学的路上数学,特别是线性代数是不可避免的,
+</p>
+
+<p>
+二是线性代数可以用在很多其它方向,比如深度学习.
+</p>
+
+<p>
+数学不好的人其实也不需要灰心,我理解这些人灰心的原因: 它很有用但又难以接触,所以就有了不会数学对编程没有影响这种论调.
+</p>
+
+<p>
+灰心的人大多数都是在上学的时候被成绩打击的体无完肤,对于大多数新手而言一开始不行就很难有后面的成长了.
+</p>
+
+<p>
+学校没有很好的教我们如何去学数学,只是教如何应付考试而已,相信大部分人都不因为想成为数学家而学数学的,
+</p>
+
+<p>
+很多人都只是想用于实际,数学很庞大,并不是所有东西都能用在实际上,所以在实际中掌握需要的数学概念就可以了.
+</p>
+
+<p>
+我还记得以前上学时就有教师抽查学生背概念,因此很多学生误以为这就是数学的学习方式,哪怕在工作中我也遇到不少同事还是这么认为!
+</p>
+
+<p>
+<b>掌握概念</b> 是指 <b>理解概念是怎么来,意味着什么,能做什么</b>,不是 <b>记忆对概念定义以及其证明过程</b>,在这个过程里面可以通过各种手段去帮助理解,比如:
+</p>
+
+<p>
+找一本更适合自己的书籍,每本书的面向人群是不一样的,很多问别人推荐书的人或者给别人推荐书的人都没有考虑过这一点:你的水平是否适合阅读这本书,
+</p>
+
+<p>
+书的水平太高会妨碍你学习下去,因此不要看不起那些面向新手的书,能够带领你学下去才是最重要的,
+</p>
+
+<p>
+知识面不够可以通过别的书补全,慢慢的水平就提高了,就有能力阅读水平更高的书,逐渐成为另外一个群体的人;
+</p>
+
+<p>
+把概念和其它事物进行类比再进行理解,这种转换角度的理解方式是我最常用的,经常有不少新的发现;
+</p>
+
+<p>
+结合别人的文章校对自己的理解;
+</p>
+
+<p>
+还可以利用计算机计算来进行验证,所以 <b>学习编程</b> 有利于 <b>学习数学</b> 不是没有道理的.
+</p>
+
+<p>
+其实大部分人害怕数学只是因为看不懂而已,把数学类比成一门外语,你会发现它和英语的地位在很多人眼中差不多,
+</p>
+
+<p>
+<b>数学概念</b> 相当于 <b>单词</b>, 掌握 <b>单词</b> 基本就能达到看懂句子的第一层了,也不需要掌握完所有单词,
+</p>
+
+<p>
+只是不能通过记忆掌握数学的"单词",要通过理解,而数学的"语法"就是逻辑,这个没什么好讲的.
+</p>
+
+<p>
+不过句子表面和说出句子的人想要表达的可能不一样,比如反嘲,看懂句子的第二层就是理解人想要表达的真正含义,
+</p>
+
+<p>
+和自然语言的差别在于: 数学真正晦涩难懂的地方就只有编写推理或证明过程的作者对非必要描述的省略,因为描述之间有着很强的因果关系,
+</p>
+
+<p>
+这种"因"或"果"的缺失对读者造成了很强的跳跃感,一时间跟不上作者的思路,对读者本身的阅读经验有不低的要求,
+</p>
+
+<p>
+唯一解决方法就只有多阅读多去理解,万幸的是,作为开发人员你可以完全不用管这个.
+</p>
+
+<p>
+不过我个人对阅读证明还是有一定的兴趣的,自学材料也准备好了,等以后有空我会针对它单独写一篇笔记.
+</p>
+
+<p>
+这是我本人对数学的感觉,比喻不一定恰当,不过我相信大部分人都会有这种感觉,如果不信的话可以看看这位大佬的<a href="http://www.nowamagic.net/librarys/veda/detail/958">文章</a>.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orge179445" class="outline-2">
+<h2 id="orge179445">一些需要用到的数学概念</h2>
+<div class="outline-text-2" id="text-orge179445">
+<p>
+这里需要用到的知识大多数来自于微积分(calculus),微积分其实不算难,它主要研究关于连续体(continuum)的,包括变化率,曲线面积和立体的体积.
+</p>
+
+<p>
+感觉后面要继续走下去就只能把微积分也学了.
+</p>
+
+<p>
+短时间补充知识的话推荐 <code>The Calculus Lifesaver: All the Tools You Need to Excel at Calculus</code>,有中文译本,
+</p>
+
+<p>
+它针对的是一元微积分(single-variable calculus).
+</p>
+
+<p>
+这本书的缺点是"废话多",但是有点也是"废话多",这些"废话"能够让你很好的理解,书写风格十分诙谐幽默.
+</p>
+
+<p>
+这里主要是针对 <code>Fundamentals Of Computer Graphics 4th</code> 的 <code>Texture Mapping</code> 用到的概念进行总结,
+</p>
+
+<p>
+大部分来源于于上面推荐的书(基本是第五章的内容),书本没有的内容也会进行补充.
+</p>
+</div>
+
+
+<div id="outline-container-orgfd40217" class="outline-3">
+<h3 id="orgfd40217">多元函数(function of several variables)</h3>
+<div class="outline-text-3" id="text-orgfd40217">
+<p>
+所谓 n 元函数就是一个函数的值由 n 个(自)变量决定,比如:
+</p>
+
+<p>
+\(f(x)\) 这种是一元函数;
+</p>
+
+<p>
+\(f(x_{1}, x_{2})\) 是二元函数;
+</p>
+
+<p>
+\(f(x_{1}, x_{2}, ..., x_{n})\) 是 n 元函数,只要 \(n \geq 2\) 的函数就是多元函数.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org5d51ef0" class="outline-3">
+<h3 id="org5d51ef0">隐函数(Implicit function)</h3>
+<div class="outline-text-3" id="text-org5d51ef0">
+<p>
+在一些关系(relation)中,如果能够看到一种关系: 一个变量的值完全由其它变量决定的关系,
+</p>
+
+<p>
+那个这种关系就叫做显函数(Explicit function),比如下面这些方程,
+</p>
+
+<p>
+\(y = 3x + 4\),
+</p>
+
+<p>
+\(y = 2^{x} + x\);
+</p>
+
+<p>
+\(y = 3x_{1} + 4x_{2}\);
+</p>
+
+<p>
+这些例子都由一个共同点: \(y\) 完全单独写在等式的一边,并且等式的另外一边完全没有它的身影,
+</p>
+
+<p>
+也就是 $y = $ 这样, \(y\) 完全由 \(x\) 决定,这完全符合上面说到的 <b>一个变量完全由其它变量决定</b>,
+</p>
+
+<p>
+简单来说就是一眼就看出 \(y\) 与 \(x\) 的关系,所以才叫显函数.
+</p>
+
+<p>
+像这种 \(f(x, y) = y - 3x = 4\) 关系,一眼看不出来 \(y\) 和 \(x\) 之间关系,
+</p>
+
+<p>
+但是仔细看的话可以发现它就是 \(y = 3x + 4\) 的变形,
+</p>
+
+<p>
+那么这个 \(f(x) = y = 3x + 4\) 就是 \(f(x, y) = y - 3x = 4\) 的隐函数(Implicit function).
+</p>
+
+<p>
+这种不能被一眼看出来的 \(y\) 和 \(x\) 关系的都叫做隐函数.
+</p>
+
+<p>
+圆形方程 \(x^{2} + y^{2} = 1\) 就是一个很经典的例子,就解决 \(y\) 而言,
+</p>
+
+<p>
+它存在隐函数为 \(f(x) = y = \sqrt{1 - x^{2}}\) 以及 \(f(y) = x = \sqrt{1 - y^{2}}\).
+</p>
+
+<p>
+显函数和隐函数是相对的概念,有些关系可以在这两种形式中转换,也有一些是完全没有显函数的,
+</p>
+
+<p>
+比如 \(x^{2} + 3x + 4y^{3} + 3y = 4\) 就没有办法完全把 \(y\) 或者 \(x\) 单独写在某一变来得到一个函数.
+</p>
+
+<p>
+观察下来可以看到,一个关系可能有 0 到 多个隐函数.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orga9b6fb5" class="outline-3">
+<h3 id="orga9b6fb5">参数方程组(Parametric equations)</h3>
+<div class="outline-text-3" id="text-orga9b6fb5">
+<p>
+\(y = f(x)\) 这样形式的等式就是说明 \(x\) 和 \(y\) 有直接的关联,参数方程却不是这样,
+</p>
+
+<p>
+参数方程的 \(x\) 和 \(y\) 没有直接关系,但它们都会与一个参数 \(t\) 存在某种关系,因此 \(x\) 和 \(y\) 有了间接关系.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org8710c1d" class="outline-3">
+<h3 id="org8710c1d">微分以及导数(Differentiability And The Derivative)</h3>
+<div class="outline-text-3" id="text-org8710c1d">
+<p>
+假设有函数 \(y = f(x)\), 随着 \(x\) 的变化, \(y\) 也会发生变化,
+</p>
+
+<p>
+比如 \(x\) 产生了变化量 \(\triangle x\), \(y\) 随之产生了变化量 \(\triangle y\),
+</p>
+
+<p>
+如果 \(\triangle x\) 和 \(\triangle y\) 非常非常微小,那么它们就分别是 \(x\) 和 \(y\) 的 <b>微分</b>,标记为 \(dx\) 和 \(dy\),
+</p>
+
+<p>
+\(dy\) 还可以写作 \(d(f(x))\).
+</p>
+
+<p>
+对于这个 <b>微小</b> 的定义,曾经对微分产生过两种定义: <b>古典微分</b> 和 <b>极限微分</b>.
+</p>
+
+<p>
+<b>古典微分</b> 是定义微分为无穷小的变化.但是无穷小是在当时是一个不严谨的概念,
+</p>
+
+<p>
+所以为了移除这个不靠谱的说法,后面用 <b>极限</b> 来对微分重新进行定义(描述),也就是现在的 <b>极限微分</b>.
+</p>
+
+<p>
+与 <b>古典微分</b> 直接 <b>等于</b> 无穷小量的变化不同, <b>极限微分</b> 可以理解是 <b>约等于</b> 变化量,也就是逼近某一个值,
+</p>
+
+<p>
+(极限的概念(limit)请自行阅读书的第三章.)
+</p>
+
+<p>
+来结合实际例子要理解一下:
+</p>
+
+<p>
+有辆车在路上行驶,在第 \(t_{1}\) 秒时处于位置 \(s_{1}\) 上,在 \(t_{2} = t_{1} + t\) 秒时处于位置 \(s_{2} = s_{1} + s\) 上,
+</p>
+
+<p>
+可以得到平均速度 \(v = \frac{s}{t}\), 用函数表示 \(s\) 和 \(t\) 的关系: \(s = f(t) = vt\).
+</p>
+
+<p>
+移动中速度随时都可能发生改变,如何得出某一个瞬间的速度呢?
+</p>
+
+<p>
+所谓的一瞬间就是一个时间点,一个点是线段的一部分,那么这个点该占据线段的多少呢?
+</p>
+
+<p>
+按照 <b>古典微分</b> 的说法,这个时间点就是一无穷小的时间段,但是无穷小是一个变量,无法确定它的值,
+</p>
+
+<p>
+只要 \(t\) 大于 0(时间不能为负),它可以是任何值: 10, 0.1, 0.001, 0.0001, 这样话上面的平均速度就是我们要找的瞬时速度了,
+</p>
+
+<p>
+所以 \(ds = s\), \(dt = t\).
+</p>
+
+<p>
+<b>极限微分</b> 不需要知道无穷小是多少,只需要让 \(t\) 无限逼近 0 就行了,也就是说 \(t\) 没有办法等于 \(dt\), \(s\) 和 \(ds\) 同理,
+</p>
+
+<p>
+所以 \(ds \approx s\), \(dt \approx t\),那么瞬时速度就是这样的: \({v = \lim\limits_{t \to 0}f(t)}  = \lim\limits_{t \to 0}\frac{s}{t}\).
+</p>
+
+<p>
+这就是两者直觉上的差别,再来翻译一下两者的表达,
+</p>
+
+<p>
+<b>古典微分</b>: 当时间变化 \(t\) 等于无穷小时,车辆移动了 \(s\),那么车在个时间的瞬时速度为 \(v = \frac{s}{t}\);
+</p>
+
+<p>
+<b>极限微分</b>: 在时间变化 \(t\) 逼近 0 时,车辆移动了 \(s\),那么车在这个事件的瞬时速度为 \({v = \lim\limits_{t \to 0}\frac{s}{t}}\).
+</p>
+
+<p>
+仔细观察的话你会发现 \(v\) 就是微分的比率,这叫做 <b>导数</b>,不过老问题,导数也分古典和极限定义:
+</p>
+
+<p>
+在 <b>古典微分</b> 中,导数就是微分之商 \(f'(t) = v = \frac{ds}{dt} = \frac{s}{t}\),简称微商;
+</p>
+
+<p>
+在 <b>极限微分</b> 中,导数就是 \(f'(t) = v = \frac{ds}{dt} = {\lim\limits_{t \to 0}\frac{s}{t}}\).
+</p>
+
+<p>
+\(dt\) 作为分母就是告诉我们 \(v\) 是关于 \(t\) 的导数.
+</p>
+
+<p>
+总体来看, <b>古典微分</b> 和 <b>极限微分</b> 其实挺接近的,也就差了一个微分.
+</p>
+
+<p>
+好,例子和概念的介绍到此为止,关于导数的计算部分可以去看第六,七和八章.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org1cc7b9b" class="outline-2">
+<h2 id="org1cc7b9b">纹理映射的总体过程</h2>
+<div class="outline-text-2" id="text-org1cc7b9b">
+<ul class="org-ul">
+<li><p>
+<code>texture lookup</code>
+</p>
+
+<p>
+先从纹理图片上找出像素点 \(a\) 的位置,再从物体表面上找出对应的着色点(shading point) \(b\) 的位置,
+</p>
+
+<p>
+读取纹理图片上的 \(a\) 的颜色 \(c\) 得到纹理样本(texture sample),获得的 \(c\) 用于着色(shading),
+</p>
+
+<p>
+物体的 \(b\) 位置会使用 \(c\) 作为颜色(可能会经过一点额外的计算).
+</p>
+
+<p>
+纹理上每一个点都会被读取并且用于着色,所以最后纹理图片就会显示在物体表面上.
+</p></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2020-10-05</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.3 (<a href="https://orgmode.org">Org</a> mode 9.4)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
