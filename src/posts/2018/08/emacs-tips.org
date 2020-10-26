@@ -316,6 +316,55 @@ see any project of blog, vice versa."
 #+END_SRC
 
 
+*** 如果读取JSON文件
+#+BEGIN_EXAMPLE
+写于 2020/10/26
+#+END_EXAMPLE
+=Emacs Lisp= 读取 =JSON= 文件的方式比很多语言自带的灵活得多.
+
+假设现有个JSON文件,
+
+#+BEGIN_SRC json
+{
+  "name": "xxxxx",
+  "job": "xxxxxx",
+  "projects": [
+    {
+      "name": "xxxxx",
+      "date": "xxxxx",
+      "about": "xxxxxxxxxx"
+    },
+    {
+      "name": "xxxxx",
+      "date": "xxxxx",
+      "about": "xxxxxxxxxx"
+    },
+    {
+      "name": "xxxxx",
+      "date": "xxxxx",
+      "about": "xxxxxxxxxx"
+    }
+  ]
+}
+#+END_SRC
+
+现在需要读取它的 "projects" 值并且重新封装成一个 =JSON=,在 =Emacs Lisp= 里面可以这么做,
+
+#+BEGIN_SRC elisp
+(require 'json)
+
+(let* ((json-object-type 'alist)              ;; 指定 JSON 的对象解析为 alist 类型
+       (json-array-type 'list)                ;; 指定 JSON 的数组解析为 list 类型
+       (json-key-type 'keyword)               ;; 指定 JSON 的键解析为 keyword 类型
+       (json (json-read-file "~/test.json")))
+  (json-encode (alist-get :projects json)))
+#+END_SRC
+
+如果你不喜欢把 =JSON= 的对象解析成 =alist=, 可以把 =json-object-type= 设置为 =hash-table=, =plist= 这样的值,
+
+自由设置解析的类型正是 =Emacs Lisp= 的 =json.el= 的灵活之处.
+
+
 ** Emacs Lisp 学习笔记
 
 #+BEGIN_EXAMPLE
@@ -452,13 +501,17 @@ see any project of blog, vice versa."
 
     =Lisp-1= 和 =Lisp-2= 也分别叫做 =Scheme model= 和 =Common Lisp model=.
 
-    区别就是是否分离变量名字和函数的命名空间.通俗地说就是函数和变量能否用同一个名字并且不会冲突,如果冲突了就是 =Lisp-1=,否则就是 =Lips-2=.
+    区别就是 *是否分离变量名字和函数的命名空间*.通俗地说就是函数和变量能否用同一个名字并且不会冲突,如果冲突了就是 =Lisp-1=,否则就是 =Lips-2=.
 
     而 =Emacs Lisp= 跟它的偶像一样是 =Lisp-2=.
 
   - Macro Type
 
     =Emacs Lisp= 中有 =Lisp= {{{macro}}}(macro)和键盘{{{macro}}}(keyboard macro).两种是不一样的.
+
+    这种类型的对象会在执行的时候张开成其它内容,类似编译时候那样,也正是因为这种类型才让 =Lisp= 和其它语言产生区别:
+
+    =Lisp= 编译时和运行时两种状态可以随意交错,其它语言基本都是编译时和运行时分开,不能运行时进行编译.
 
   - Primitive Function Type
 
@@ -472,13 +525,17 @@ see any project of blog, vice versa."
 
   - Finalizer Type
 
-    一个{{{finalizer}}}对象(=finalizer object=)会清理不可到达的对象.一个 {{{finalizer}}} 拥有一个函数对象.
+    =make-finalizer= 接收一个函数作为参数,并且返回一个对象,在 =Emacs= 进行垃圾回收后,如果这个对象被 =Emacs Lisp= 认为不可到达(=unreachable=),
 
-    当{{{finalizer}}}对象在 =GC= 后不可到达,=Emacs= 就会调用它关联的函数对象来清理它自己.
+    那么这个对象关联的函数就会执行,这种对象就叫做{{{finalizer}}}对象(=finalizer object=),它关联的函数一般用来执行相关清理工作.
 
-    当断定一个{{{finalizer}}}是否可以到达,=Emacs= 是不会计算{{{finalizer}}}对象的引用,完全不用担心会意外捕获到{{{finalizer}}}对象的引用.
+    如果一个{{{finalizer}}}对象只被别的{{{finalizer}}}对象引用,这种情况=Emacs= *不* 认为它可到达(=reachable=).
 
-
+    #+BEGIN_SRC elisp
+      (setq obj (make-finalizer #'(lambda () (message "Do something"))))
+      (setq obj 1)
+      (garbage-collect)      ;; 手动执行垃圾回收
+     #+END_SRC
 
 - =Editing Types=
 
@@ -2522,6 +2579,7 @@ the documentation string."
 
 典型的例子 =lisp/loaddefs.el=, 可以通过 =(find-library "loaddefs")= 查找到里面的内容.
 
+
 *** 字节编码 (Byte Compilation)
 
 =Emacs= 拥有两个直译器和一个编译器,编译器可以把 =Emacs Lisp= 代码编译成字节码(byte-code),
@@ -2537,8 +2595,6 @@ the documentation string."
 #+BEGIN_SRC emacs-lisp
 ;; -*-no-byte-compile: t; -*-
 #+END_SRC
-
-
 
 **** 编译字节函数 (Compilation Functions)
 
@@ -2565,7 +2621,7 @@ the documentation string."
 
 
 
-**** 编译时运行 (Eval During Compile)
+**** 在编译期间运行 (Eval During Compile)
 
 要清楚编译时和运行时是不同的两个阶段, =Emacs= 提供了两个 =forms= 来允许代码在运行时候执行: =eval-and-compile= 和 =eval-when-compile=.
 
@@ -2596,7 +2652,6 @@ the documentation string."
 3. 把不想提示错误和警告表达式放到 =with-no-warnings= 里面;
 
 4. 通过设置 =byte-compile-warnings= 做更精确的控制.
-
 
 
 **** 字节码函数对象 (Byte-Code Objects)
@@ -2656,14 +2711,15 @@ the documentation string."
 
 字节码编译器是一个简单的 =stack machine=.它是这么工作的:
 
-1. 把值/引用压进 =stack= 中;
+1. 把值/引用压进(push) =stack= 中;
 
-2. 当需要使用这些值计算的时候弹出(pop)它们/当调用函数计算,把计算结果压进 =stack= 中.
+2. 在调用函数时,弹出(pop)相应的值(栈顶的几个)作为参数进行计算,把函数结果压进 =stack= 中.
 
-3. 当函数返回的时候弹出 =stack= 里面的一个值并且把它作为函数的返回值.
+你还可以通过 =Calc= 的 =RPN= 模式来感受一下它的工作方式: =C-x * t=.
 
 文档通过例子很好地告诉你怎么看汇编了,可以直接看 =M-: (info "(elisp) Disassembly")=.
 
+如果没有看懂的,那么就需要去学习一下汇编了,推荐 "ASSEMBLY LANGUAGE STEP BY STEP PROGRAMMING WITH LINUX".
 
 
 *** 调试 (Debugging)
