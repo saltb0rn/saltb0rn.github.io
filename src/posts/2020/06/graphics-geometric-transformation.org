@@ -118,6 +118,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
      还有就是三种变换中只有平移会导致 $p$ 偏移了原点,这个事实会在以后的坐标系变换学习里面提到.
 
+
 **** 平面伸缩
 
      和平面平移类似,伸缩也分两个方面: 坐标系的 $x$ 轴变为原来的 $r_{x}$ 倍, 坐标系的 $y$ 轴变为原来的 $r_{y}$ 倍.
@@ -130,6 +131,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
      用矩阵表示这个伸缩的过程就是 $\left(\begin{array}{c}x_{p}^{'} \\ y_{p}^{'}\end{array}\right) = \left(\begin{array}{c}r_{x} & 0 \\ 0 & r_{y}\end{array}\right)\left(\begin{array}{c}x_{p} \\ y_{p}\end{array}\right)$.
 
      这里用函数 $scale(p, r_{x}, r_{y})$ 表示.
+
 
 **** 平面旋转
 
@@ -166,6 +168,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
      这里用函数 $rotate(p, \theta)$ 表示.
 
+
 **** 综合三种平面变换
 
      上面三种变换可以通过一个通用的矩阵表示,而实际开发中很多工具都提供了对应的接口,综合起来就是 $\left(\begin{array}{c}a & b & e \\ c & d & f \\ 0 & 0 & 1\end{array}\right)$.
@@ -173,6 +176,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
      可以只通过一个矩阵表示多次变换,也就是多个变换的矩阵全部相乘得到的那个矩阵.
 
      这里用函数 $matrix(a, b, c, d, e, f)$ 表示,实际中不同工具中的参数顺序可能是不一样的,所以这个不用太在意.
+
 
 **** 拓展思考
 
@@ -190,7 +194,19 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
      最后再把原点平移回去,$p^{'}$ 的坐标就变成 $\left(\begin{array}{c} (x_{p} - x_{q})\cos \theta - (y_{p} - y_{q})\sin \theta + x_{q} \\ (x_{p} - x_{q})\sin \theta + (y_{p} - y_{q})\cos \theta + y_{q} \end{array}\right)$.
 
-     (这个矩阵写起来有点蛋疼,就不写了).要注意,这个不是线性变换.这个推导最好还是要掌握,说不定就用上了.
+     说到这里,如何用矩阵表示这个变换过程就很明了了:
+
+     按照 $q$ 的分量平移 $p$ : $\left(\begin{array}{c} 1 & 0 & -x_{q} \\ 0 & 1 & -y_{q} \\ 0 & 0 & 1 \end{array}\right)$;
+
+     然后围绕新原点 $p$ 旋转 $\theta$: $\left(\begin{array}{c} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{array}\right)$;
+
+     最后 $p$ 平移回去: $\left(\begin{array}{c} 1 & 0 & x_{q} \\ 0 & 1 & y_{q} \\ 0 & 0 & 1 \end{array}\right)$;
+
+     把这三个矩阵依次乘起来: $M = \left(\begin{array}{c} 1 & 0 & x_{q} \\ 0 & 1 & y_{q} \\ 0 & 0 & 1 \end{array}\right)\left(\begin{array}{c} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{array}\right)\left(\begin{array}{c} 1 & 0 & -x_{q} \\ 0 & 1 & -y_{q} \\ 0 & 0 & 1 \end{array}\right)$,
+
+     经过旋转 $p$ 的坐标为: $Mp = \left(\begin{array}{c} (x_{p} - x_{q})\cos \theta - (y_{p} - y_{q})\sin \theta + x_{q} \\ (x_{p} - x_{q})\sin \theta + (y_{p} - y_{q})\cos \theta + y_{q} \end{array}\right \\ 1)$.
+
+     和之前推导的结果是一样的(如果你会用 =Emacs= 的 =Calc=,强烈建议使用它来验证推导结果).
 
 
 *** 3D变换
@@ -410,6 +426,10 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 *** 关于变换的一些其它概念
 
+    很多图形软件都不是让用户使用矩阵来对图形进行变换的,除了旋转多少度这样比较符合直觉的常见变换以外,
+
+    还有以下方式来描述变换,实际上它们的核心和上面的矩阵基本是一样的.
+    
 **** 欧拉角
 
 
