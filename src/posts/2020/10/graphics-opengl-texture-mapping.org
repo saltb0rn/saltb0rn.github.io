@@ -101,7 +101,9 @@
 
     它针对的是一元微积分(single-variable calculus).
 
-    这本书的缺点是"废话多",但是有点也是"废话多",这些"废话"能够让你很好的理解,书写风格十分诙谐幽默.
+    这本书的风格是故意用"废话"(wordy)去描述一个问题,通过"废话"是用来读者交谈,从而诱导读者对问题进行思考,让读者对要学习的概念有个直观上的认知,
+
+    这个道理其实同样适用在阅读证明(proofs)上.这种 *通过实例对于概念建立直觉(intuition)* 的学习方式是一门重要的学习技能.
 
     这里主要是针对 =Fundamentals Of Computer Graphics 4th= 的 =Texture Mapping= 用到的概念进行总结,
 
@@ -221,13 +223,13 @@
 
      *古典微分*: 当时间变化 $t$ 等于无穷小时,车辆移动了 $s$,那么车在个时间的瞬时速度为 $v = \frac{s}{t}$;
 
-     *极限微分*: 在时间变化 $t$ 逼近 0 时,车辆移动了 $s$,那么车在这个事件的瞬时速度为 ${v = \lim\limits_{t \to 0}\frac{s}{t}}$.
+     *极限微分*: 在时间变化 $t$ 逼近 0 时,车辆移动了 $s$,那么车在这个时间的瞬时速度为 ${v = \lim\limits_{t \to 0}\frac{s}{t}}$.
 
      仔细观察的话你会发现 $v$ 就是微分的比率,这叫做 *导数*,不过老问题,导数也分古典和极限定义:
 
      在 *古典微分* 中,导数就是微分之商 $f'(t) = v = \frac{ds}{dt} = \frac{s}{t}$,简称微商;
 
-     在 *极限微分* 中,导数就是 $f'(t) = v = \frac{ds}{dt} = {\lim\limits_{t \to 0}\frac{s}{t}}$.
+     在 *极限微分* 中,导数就是在点 $t$ 上的变化率 $f'(t) = v = \frac{ds}{dt} = {\lim\limits_{t \to 0}\frac{s}{t}}$.
 
      $dt$ 作为分母就是告诉我们 $v$ 是关于 $t$ 的导数.
 
@@ -238,12 +240,60 @@
 
 *** 纹理映射的总体过程
 
-    - =texture lookup=
+    前面有提到过,纹理映射就像是给一个物体贴贴纸,比如: 把地图贴在球体上得到一个地球仪.
 
-      先从纹理图片上找出像素点 $a$ 的位置,再从物体表面上找出对应的着色点(shading point) $b$ 的位置,
+    计算机里面贴的过程是这样的:
 
-      读取纹理图片上的 $a$ 的颜色 $c$ 得到纹理样本(texture sample),获得的 $c$ 用于着色(shading),
+    1. 根据球体(物体)表面的点 $p_{s}$ 的位置 $\left(x, y, z\right)$ 计算出地图(纹理图片)的对应点 $p_{i}$ 的位置 $\left(u, v\right)$;
 
-      物体的 $b$ 位置会使用 $c$ 作为颜色(可能会经过一点额外的计算).
+    2. 读取地图点 $p_{i}$ 上的颜色 $c$, $c$ 叫做纹理样本(texture smaple),这一步叫做 =texture lookup=;
 
-      纹理上每一个点都会被读取并且用于着色,所以最后纹理图片就会显示在物体表面上.
+    3. 利用 $c$ 作为 $p_{i}$ 点的漫反射色,然后进行光照计算,这一步叫做 =shading surface point=.
+
+
+    用代码描述大概是这样:
+
+    #+BEGIN_SRC cpp
+      Color shade_surface_point(Surface s, Point p, Texture t) {
+          Vector normal = s.get_normal(p);
+          (u, v) = s.get_texcoord(p);
+          Color diffuse_color = texture_lookup(t, u, v);
+          // compute shading using diffuse_color and normal,
+          // let it just be the final color
+          Color color = diffuse_color;
+          s.shading_point(p, color);
+          return color;
+      }
+
+      Color texture_lookup(Texture t, float u, float v) {
+          int i = round(u * t.width() - 0.5);
+          int j = round(v * t.height() - 0.5);
+          return t.get_pixel(i, j);
+      }
+    #+END_SRC
+
+    这里有一个关键点,那就是函数 =s.get_texcoord(p)=: 从物体表面的点 $p_{s}$ 到纹理图片的点 $p_{i}$ 的映射.
+
+    这个函数叫做 =texture coordinate function=,它给物体表面上每个点定义了一个纹理坐标(texture coordinate),
+
+    [[../../../files/globe-mapping.png]]
+
+    图中的 $\phi$ 就是 =texture coordinate function=,$\pi$ 就是以前学习过的投影: 把 =3D= 到 =2D= 的映射,仔细看的话 $\phi$ 也是一样.
+
+    从数学上来讲就是从表面(surface) $S$ 到纹理(texture) $T$ 的域(domain)的映射: $\phi: S \rightarrow T : (x, y, z) \mapsto (u, v)$.
+
+    集合 $T$ 经常被叫做纹理空间(texture space),通常就是一个包含了图片的矩形,并且使用一个单位方形(unit square)进行度量,
+
+    也就是 $u$ 和 $v$ 两个坐标轴的范围都是 $[0, 1]$ (如上图).
+
+    $\pi$ 只有透视投影(perspective projection)和正交投影(orthgraphic projection)两种可能, 而 $\phi$ 的情况是非常复杂的,不同情况下映射方式也不一样.
+
+    比如把一张图片贴在一块矩形地板上,正好这块地板位于 $z$ 轴固定并且对齐 $x$ 轴和 $y$ 轴.
+
+    那么映射就很简单了 $\begin{equation} \left\{ \begin{aligned} u = ax \\ v = by \end{aligned} \right. \end{equation}$, 其中 $a$ 和 $b$ 是合适的缩放因素(scale factors),
+
+    
+
+    还有纹理映射实际上是一个重采样(resampling)的过程,很容易产生混叠(aliasing),(采样是属于 =singal processing= 的知识,这里就先知道是这样就好了),
+
+    改变图像的大小(rescale)就是图像重采样(resampling),一旦产生混叠,图像就有锯齿(jaggies).
