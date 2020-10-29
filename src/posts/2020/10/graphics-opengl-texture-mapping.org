@@ -238,15 +238,60 @@
      好,例子和概念的介绍到此为止,关于导数的计算部分可以去看第六,七和八章.
 
 
+
+*** 纹理
+
+    关于纹理的介绍, =Direct3D= 的一篇文档写得很棒: https://docs.microsoft.com/en-us/windows/uwp/graphics-concepts/introduction-to-textures.
+
+    =OpenGL= 基本也是这样的,不过 =OpenGL= 的纹理坐标系(texture coordinate system)原点和 =Direct3D= 不一样.
+
+    =OpenGL= 的纹理分很多种,因此本文对纹理映射过程学习都是针对2D纹理(2D texture)的,也就是我们最熟悉的图片.
+
+    2D纹理映射就是把图片贴到一个物体上,比如把尺寸 $w \times h$ 海报贴到尺寸 $x times y$ 的墙壁上,有三种可能的情况以及要求:
+
+    1. 墙壁的尺寸比海报大或者一样大: $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$, 并且想按照原尺寸把海报贴到墙壁上;
+
+    2. 在保持墙壁的尺寸比海报大或者一样大的情况下: $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$, 对海报放大(magnification)并且贴到墙壁上;
+
+    3. 墙壁的尺寸比海报小: $\begin{equation} \left\{ \begin{aligned} w > x \\ h > y \end{aligned} \right. \end{equation}$, 要把海报缩小(minification)到 $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$ 贴到墙上.
+
+
+    在现实中改变海报的尺寸会比较麻烦,但是在计算机中就很方便,我们把墙壁看作是一个 $x \times y$ 像素的显示屏,海报就是一张 $w \times h$ 的图片.
+
+    在情况1中,图片的1个像素内容只需要占用显示屏的1个物理像素;
+
+    在情况2中,如果图片尺寸放大为 $2w \times 2h$,那么图片原本1个像素的内容就需要占用显示屏的 4 个物理像素;
+
+    在情况3中,如果图片尺寸缩小为 $\frac{w}{2}w \times \frac{h}{2}$,那么图片原本4个像素的内容就只需要占用显示屏的1个物理像素.
+
+
+    说了这么多,其实我是想说区分 *图片的原本像素* 和 *显示出来的像素*.
+
+    图片的像素量反映了图片包含的信息量, *图片的原本像素量* 反映图片包含的真正信息量,能够显示处多少真正信息量取决于显示的容器.
+
+    在情况1和2中,显示出来的真正信息量都是没变的;但是情况2中, *真正信息量* 和 *显示出来的信息量* (也就是放大后的图片像素量) 之间的比例变低了,图片原本的像素衔接地方被放大了,就出现了锯齿(jaggies).
+
+    而在情况3中,显示出来的图片信息量变少了,很多图像细节就没显示出来.
+
+    我们把纹理图片上的像素称为 =texture pixels= 或者 =texels=.
+
+
+
+
+
 *** 纹理映射的总体过程
 
     前面有提到过,纹理映射就像是给一个物体贴贴纸,比如: 把地图贴在球体上得到一个地球仪.
 
     计算机里面贴的过程是这样的:
 
-    1. 根据球体(物体)表面的点 $p_{s}$ 的位置 $\left(x, y, z\right)$ 计算出地图(纹理图片)的对应点 $p_{i}$ 的位置 $\left(u, v\right)$;
+    1. 根据球体(物体)表面的点 $p_{s}$ 的位置 $\left(x, y, z\right)$ 计算出地图(纹理图片)的对应点 $p_{i}$ 的位置 $\left(u, v\right)$,
 
-    2. 读取地图点 $p_{i}$ 上的颜色 $c$, $c$ 叫做纹理样本(texture smaple),这一步叫做 =texture lookup=;
+       $p_{i}$ 的坐标是纹理坐标(=texture coordinate=), 并不一定等于图片的像素坐标(=pixel coordinate=),
+
+       $p_{i}$ 不代表图片的像素,而是纹理像素(texture pixel, or texel)
+
+    2. 读取地图点 $p_{i}$ 上的颜色 $c$,$c$ 叫做纹理样本(texture smaple),这一步叫做 =texture lookup=,
 
     3. 利用 $c$ 作为 $p_{i}$ 点的漫反射色,然后进行光照计算,这一步叫做 =shading surface point=.
 
@@ -274,7 +319,7 @@
 
     这里有一个关键点,那就是函数 =s.get_texcoord(p)=: 从物体表面的点 $p_{s}$ 到纹理图片的点 $p_{i}$ 的映射.
 
-    这个函数叫做 =texture coordinate function=,它给物体表面上每个点定义了一个纹理坐标(texture coordinate),
+    这个函数叫做 =texture coordinate function=,它给物体表面上每个点定义了一个纹理坐标,
 
     [[../../../files/globe-mapping.png]]
 
@@ -286,13 +331,19 @@
 
     也就是 $u$ 和 $v$ 两个坐标轴的范围都是 $[0, 1]$ (如上图).
 
+    比如上面地图的尺寸是 $300 \times 200$,假设现在有一个点的纹理坐标是 $(0.5, 0.1)$,那么该点的像素坐标是 $(0.5 * 300, 0.1 * 200)$.
+
     $\pi$ 只有透视投影(perspective projection)和正交投影(orthgraphic projection)两种可能, 而 $\phi$ 的情况是非常复杂的,不同情况下映射方式也不一样.
 
-    比如把一张图片贴在一块矩形地板上,正好这块地板位于 $z$ 轴固定并且对齐 $x$ 轴和 $y$ 轴.
+    比如把一张 $w \times h$ 的图片贴在一块矩形地板上,正好这块地板位于 $z$ 轴固定并且对齐 $x$ 轴和 $y$ 轴.
 
-    那么映射就很简单了 $\begin{equation} \left\{ \begin{aligned} u = ax \\ v = by \end{aligned} \right. \end{equation}$, 其中 $a$ 和 $b$ 是合适的缩放因素(scale factors),
+    那么最简单的映射是: $\begin{equation} \left\{ \begin{aligned} u = ax \\ v = by \end{aligned} \right. \end{equation}$, 其中 $a$ 和 $b$ 是合适的缩放因素(scale factors),
 
-    
+    但是如果地板发生旋转了(比如地板垂直于 $x$ 和 $z$ 轴, 固定于 $y$ 轴固),或者如果图片是贴在一个物体的背后,那么这个映射的计算方式就不行了.
+
+    也就是说纹理坐标系也要跟随着物体变换而变换.
+
+
 
     还有纹理映射实际上是一个重采样(resampling)的过程,很容易产生混叠(aliasing),(采样是属于 =singal processing= 的知识,这里就先知道是这样就好了),
 
