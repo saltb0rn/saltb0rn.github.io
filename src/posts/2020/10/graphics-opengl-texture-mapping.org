@@ -2,6 +2,7 @@
 #+date: 2020-10-05
 #+index: 图形学-纹理映射
 #+tags: Graphics
+#+HTML_HEAD: <style> div.figure { display: inline-block; } </style>
 #+begin_abstract
 在 =3D= 建模中经常会听到纹理映射(texture mapping)这个词,就是把一张图片映射到物体表面上,
 
@@ -19,6 +20,8 @@
 
 此外,纹理映射还能用来实现阴影,反射光,自发光以及不透明度等等效果,所要实现的效果可以作为一种纹理类别,比如这[[https://help.poliigon.com/en/articles/1712652-what-are-the-different-texture-maps-for][文章]]上就提到有个网站就对纹理进行分类.
 #+end_abstract
+
+
 
 *** 开篇"废话"
 
@@ -239,7 +242,7 @@
 
 
 
-*** 纹理
+*** 纹理以及纹理过滤
 
     关于纹理的介绍, =Direct3D= 的一篇文档写得很棒: https://docs.microsoft.com/en-us/windows/uwp/graphics-concepts/introduction-to-textures.
 
@@ -247,7 +250,7 @@
 
     =OpenGL= 的纹理分很多种,因此本文对纹理映射过程学习都是针对2D纹理(2D texture)的,也就是我们最熟悉的图片.
 
-    2D纹理映射就是把图片贴到一个物体上,比如把尺寸 $w \times h$ 海报贴到尺寸 $x times y$ 的墙壁上,有三种可能的情况以及要求:
+    2D纹理映射就是把图片贴到一个物体上,比如把尺寸 $w \times h$ 海报贴到尺寸 $x times y$ 的墙壁上,并且海报对齐墙壁的 $x$ 和 $y$ 轴,有三种可能的情况以及要求:
 
     1. 墙壁的尺寸比海报大或者一样大: $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$, 并且想按照原尺寸把海报贴到墙壁上;
 
@@ -256,42 +259,62 @@
     3. 墙壁的尺寸比海报小: $\begin{equation} \left\{ \begin{aligned} w > x \\ h > y \end{aligned} \right. \end{equation}$, 要把海报缩小(minification)到 $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$ 贴到墙上.
 
 
-    在现实中改变海报的尺寸会比较麻烦,但是在计算机中就很方便,我们把墙壁看作是一个 $x \times y$ 像素的显示屏,海报就是一张 $w \times h$ 的图片.
+    在现实中改变海报的尺寸会比较麻烦,但是在计算机中就很方便,我们把墙壁看作是一个 $x \times y$ 像素的显示屏,海报就是一张 $w \times h$ 的图片,
+
+    把图片显示在屏幕上就是把图片的像素按照顺序逐个输出到屏幕上.
 
     在情况1中,图片的1个像素内容只需要占用显示屏的1个物理像素;
 
     在情况2中,如果图片尺寸放大为 $2w \times 2h$,那么图片原本1个像素的内容就需要占用显示屏的 4 个物理像素;
 
-    在情况3中,如果图片尺寸缩小为 $\frac{w}{2}w \times \frac{h}{2}$,那么图片原本4个像素的内容就只需要占用显示屏的1个物理像素.
+    在情况3中,如果图片尺寸缩小为 $\frac{w}{2} \times \frac{h}{2}$,那么图片原本4个像素的内容就只需要占用显示屏的1个物理像素.
 
+    [[../../../files/magnification-minification.png]]    
 
-    说了这么多,其实我是想说区分 *图片的原本像素* 和 *显示出来的像素*.
+    说了这么多,其实我是想说要区分 *图片的原本像素* 和 *显示出来的像素*.
 
     图片的像素量反映了图片包含的信息量, *图片的原本像素量* 反映图片包含的真正信息量,能够显示处多少真正信息量取决于显示的容器.
 
     在情况1和2中,显示出来的真正信息量都是没变的;但是情况2中, *真正信息量* 和 *显示出来的信息量* (也就是放大后的图片像素量) 之间的比例变低了,图片原本的像素衔接地方被放大了,就出现了锯齿(jaggies).
 
-    而在情况3中,显示出来的图片信息量变少了,很多图像细节就没显示出来.
+    #+CAPTION: $75px \times 75px$ GIMP logo
+    [[../../../files/gimp-logo.png]]
 
-    我们把纹理图片上的像素称为 =texture pixels= 或者 =texels=.
+    #+CAPTION: $150px \times 150px$ GIMP logo
+    [[../../../files/gimp-logo-150x150.png]]    
 
+    而在情况3中,显示出来的图片信息量变少了,你会发现把缩小后的图放大回 $75px \times 75px$ 后细节相比情况1的图少了很多细节.
 
+    #+CAPTION: $38px \times 38px$ GIMP logo
+    [[../../../files/gimp-logo-38x38.png]]
 
+    回到纹理图片话题上,纹理图片原本的1个像素称为1个纹理元素(=texture pixel=, =texture element= 或者 =texel=).
+
+    对纹理图片放大/缩小就是对纹理图片进行纹理过滤(texture filtering),也就是对纹理图片进行像素取值以及插值,从而构成一张新的图片,
+
+    事实上除了放大/缩小这种情况外,如果情况1中的纹理发生旋转了,1个纹理元素也未必等于1个物理像素,
+
+    #+CAPTION: 旋转后的像素
+    [[../../../files/pixel-rotation.png]]
+
+    可以看到现在1个纹理元素占据了5个物理像素,这样的话计算机同样需要进行纹理过滤.
+
+    除此以外还有扭曲的情况,把纹理贴到曲面物体上就会这样,总的来说,不同情况下具体的纹理过滤处理是不一样的.
+
+    这方面的内容展开讲的话很大,目前只需要知道纹理过滤的目的是为了让纹理图片"适配"到物体表面就可以了.
+
+    
 
 
 *** 纹理映射的总体过程
 
-    前面有提到过,纹理映射就像是给一个物体贴贴纸,比如: 把地图贴在球体上得到一个地球仪.
+    了解了纹理之后就可以去了解纹理映射这一个过程了,就拿地图(纹理图片)贴在球体(物体)得到一个地球仪作为例子开始吧.
 
-    计算机里面贴的过程是这样的:
+    在计算机里面贴的话是这样的:
 
-    1. 根据球体(物体)表面的点 $p_{s}$ 的位置 $\left(x, y, z\right)$ 计算出地图(纹理图片)的对应点 $p_{i}$ 的位置 $\left(u, v\right)$,
+    1. 根据球体表面的点 $p_{s}$ 的位置 $\left(x, y, z\right)$ 计算出地图上对应点 $p_{i}$ 的位置 $\left(u, v\right)$,
 
-       $p_{i}$ 的坐标是纹理坐标(=texture coordinate=), 并不一定等于图片的像素坐标(=pixel coordinate=),
-
-       $p_{i}$ 不代表图片的像素,而是纹理像素(texture pixel, or texel)
-
-    2. 读取地图点 $p_{i}$ 上的颜色 $c$,$c$ 叫做纹理样本(texture smaple),这一步叫做 =texture lookup=,
+    2. 读取地图点 $p_{i}$ 纹理元素的颜色 $c$, $c$ 叫做纹理样本(texture smaple),这一步叫做 =texture lookup=,
 
     3. 利用 $c$ 作为 $p_{i}$ 点的漫反射色,然后进行光照计算,这一步叫做 =shading surface point=.
 

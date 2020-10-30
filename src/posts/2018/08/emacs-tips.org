@@ -4215,14 +4215,23 @@ F addition-test
 =(interactive arg-descriptor)=,调用命令的时候会根据 =arg-descriptor= 读取命令的参数, =arg-descriptor= 有三种可能:
 
 - =nil= 或者放着不管,就是指命令不需要任何参数.
+
 - =string=,它的内容是一个由 =newlines= 分割做为分割符的元素序列,每一个元素代表一个参数,每个元素是一个 =Interactive Code= 后面跟着一个可选的提示字符串(prompt). =Interactive Code= 可以在这里看 =M-: (info "elisp("Interactive Codes")")=.
+
   提示字符串可以使用 =%= 来获取上一个参数的值.
+
   如果 =arg-descriptor= 以 =*= 字符开头,并且如果在 =read-only= {{{buffer}}} 调用该命令就会引发错误;
+
   如果以 =@= 字符开头,并且如果按键序列包含任何鼠标事件,那么与第一个事件关联的{{{window}}}就会在命令执行前被选中;
+
   如果以 =^= 字符开头,并且如果命令在 =shift-translation= 下唤醒,那么命令在执行前就会临时设定 =mark= 和激活区域(region),或者拓展一个早已激活的区域,
+
   如果命令在没有 =shift-translation= 的情况下激活,那么区域尖或被临时激活,然后在运行前取消激活(deactivate).
+
   可以三个字符一起使用,并且顺序无关要紧.
+
   比如,
+
   #+BEGIN_SRC elisp
   (defun pesudo-rename (oldname newname)
     (interactive "sOldname to rename: \nsRename %s to: ")
@@ -4281,33 +4290,39 @@ F addition-test
 
 ***** 键盘事件 (Keyboard Events)
 
-从键盘中能够获取的输入类型有两种,普通键(ordinary keys)和功能键(function keys).普通建对应字符,它们所生成的事件是用 =Lisp= 的字符表示.
+从键盘中能够获取的输入类型有两种,普通键(ordinary keys)和功能键(function keys).一个普通键实际上就是对应一个字符;
 
-字符事件的事件类型是字符本身(整数),会设定一些 =modifier bits=,一个输入字符事件由一个0到524287之间的 =basic code= 和任意或者所有 =modifier bits= 组成.
+字符有可能被修饰过,也就是配合修饰键(=meta=, =control=, =shift=, =hyper=, =super=, =alt=)一起输入.
 
-以 =XX modifier= 键开头的字符就叫做 =XX= 字符,以下是它们的设定:
+输入普通键的时候会产生一个事件,该事件的值就是一个 =Lisp= 字符对象,也就是一个整数,这种事件叫做字符事件(character event).
 
-- meta键: 2**27 bit (the 28th bit)
+一个字符事件的值是这计算的:
 
-- control键: 2**26 bit (the 27th bit) 表示 =non-ASCII= 的 =control= 字符,对于 =ASCII= 的control字符,它们对于 =Emacs Lisp= 是有特殊意义的,比如 =C-a= 就是1, =C-b= 是2, =C-c= 是3,如此类推.
+有524288($2^{19}$)个基础字符,从 0 开始对所有基础字符进行编码: 0 ~ 524287,基础字符的编码叫做基础码(basic code),也就是说一个基础码需要 20 位字节;
 
-  对于 =non-ASCII= 的 =control= 字符组合,比如 =%= 计算方式是这样的: =%= 的数值是37(可以通过直接运算?\%看到),加上 2**26就是67108901.
+有6种修饰键,每种都有它们各自的值;
 
-- shift键: 2**25 bit (the 26th bit),还是针对 =control= 字符,因为 =ASCII= =control= 字符本身不能区分大小写的区别,比如 =C-a= 和 =C-A= 都是1,
+如果没有配合修饰键输入,那么字符事件的值就是基础码的其中一个(0 ~ 524287),比如输入 =a= 键所产生的事件的值就是 =?a=,也就是 97.
 
-  在输入过程中,如果按下 =shift= 键,也就是相当与输入 =C-A=,这个时候就是1加上2**25.
+如果配合修饰键一起输入,那么 *大部分的* 字符事件的值就等于所有修饰键事件的值加上基础码:
 
-  #+BEGIN_SRC elisp
-  (event-convert-list '(shift control c))
-  (event-convert-list '(control shift a))
-  ;; 33554433
-  #+END_SRC
+*meta*: 2**27 (the 28th bit);
 
-- hyper键: 2**24 bit (the 25th bit)
+*control*: 2**26 (the 27th bit),但是有一些特殊情况,
 
-- super键: 2**23 bit (the 24th bit)
+=control + ASCII= 这种组合对 =Emacs Lisp= 是有特殊意义的,它们都有自己的值,比如 =Ctrl + a= 就是1, =Ctrl + b= 是2, =Ctrl + c= 是3,如此类推,
 
-- alt键: 2** 22 bit (the 23th bit),大部份键盘的alt键都会被当作meta键.
+而对于 =control + non-ASCII= 这种组合才是 =control= 的值和字符的值加起来,比如 =Ctrl + %= 的值就是37(?\%)加上 2**26 得到 67108901;
+
+*shift*: 2**25 bit (the 26th bit), 要注意 =Shift + a= 得到的值不等于 =?A=, =Shift + letter= 这种组合不代表切换字符的大小写;
+
+*hyper*: 2**24 bit (the 25th bit);
+
+*super*: 2**23 bit (the 24th bit);
+
+*alt*: 2** 22 bit (the 23th bit),不过注意的是,大部份键盘的 =Alt= 键都会被当作 *meta* 来处理的.
+
+总得来说,一个字符事件需要 28 位字节来储存: =0000 0000 0000 0000 0000 0000 0000=.
 
 
 ***** 功能键 (Function Keys)
