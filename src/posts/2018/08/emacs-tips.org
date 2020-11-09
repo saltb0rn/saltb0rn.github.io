@@ -6413,7 +6413,9 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     假设计算机允许显示 =a= 到 =z= 的 26 个字母,计算机给它们每个字符编个号:
 
-    =a= 的编号为 0, =b= 的编号为 1, 如此类推, =z= 的编号就为 25,这些编号叫做字符码(character code).
+    =a= 的编号为 0, =b= 的编号为 1, 如此类推, =z= 的编号就为 25,这些编号叫做字符码(character code / codepoint),
+
+    字符码的范围叫做字符码空间 (codespace),这里套编码标准的 codespace 是 =0..26= (不包括 26).
 
     因为计算机器储存/读取文件都是二进制,这里就用 =<n>= 这种符号来直观表示数字 n 的二进制.
 
@@ -6442,7 +6444,53 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
     (PS: 上面的两个例子是没有办法转码,因为彼此没有对方的字符).
 
 
-    =Emacs= 作为文本编辑器,和文本打交道自然不可避免的,
+    =Emacs= 作为文本编辑器,和文本打交道自然不可避免的,有一种编码标准叫做 *Unicode Standard*,也叫 *UTF-8*, 它支持多种语言的字符,
+
+    到目前为止(Unicode 4.0)总共支持 =#x10FFFF= 个字符,字符码范围是 =0..#x10FFFF=.
+
+    =Emacs= 没有直接使用这套标准,而是在 =Unicode 4.0= 的基础上进行拓展,在 =#x110000..#x3FFFFF= 的范围给一些 *无法用 Unicode 和 raw 8-bit bytes 标准解析的字符* 进行编码,
+
+    所以理论上 =Emacs= 的一个字符需要占用用22位(bit)空间,这就是 Emacs 如何表示一个字符,也就是 =Emacs= 的文本的内部表示(text representation).
+
+    为了节省内存, =Emacs= 并没固定用(fixed-length)22位空间储存一个字符,而是用一个长度可变(variable-length)字节序列(a squence of 8-bit bytes)储存一个字符,
+
+    序列的长度范围在 1 到 5 个字节内(包括5).比如 =ASCII= 字符只需要 1 个字节, =NON-ASCII= 字符则大于 1 个字节,1 个中文字符需要 2 个字节.
+
+    因为并不是所有文件都是用的 *Unicode Standard* 储存
+
+    每次 =Emacs= 打开文件都需要先把文件内容写入到{{{buffer}}}中,这时候的文件内容叫做 =encoded text=,它不是真的 =text=,它是一个由多个独立字节排列成的序列,
+
+    然后根据文件储存时的编码标准把 =encoded text= 转换为 =Emacs= 编码标准能够解析的结构(另外一个种形式的字节序列),文件内容就显示为平时看到的文本,
+
+    这编码之间的转换叫做编码转码(character code conversion);
+
+    保存文件则是上面的逆过程: 根据 =Emacs= 编码标准把{{{buffer}}}的内容转换为文件的编码标准所能够解析的结构,也就是转回 =encoded text=,
+
+    最后写入到文件中.
+
+    =Emacs= 也可以不对文件进行转码显示,允许用户在这种状态下对文件进行编辑,通常情况是对非本文文件进行编辑.
+
+    在 =Emacs= 里,这种直接储存 =encoded text= 的{{{buffer}}}和字符串叫做 =unibyte= {{{buffer}}}和字符串,
+
+    =unibyte= {{{buffer}}}和字符串在 =Emacs= 里面是以八进制的形式显示的,比如 =\237=.
+
+    用户平时看到的每个字符都是由1到多个字节解析得到的,储存这种字节序列的{{{buffer}}}和字符串叫做 =multibyte= {{{buffer}}}和字符串.
+
+    总的来说, =unibyte= {{{buffer}}}和字符串不是给人看的,=multibyte= {{{buffer}}}和字符串才是.
+
+    #+BEGIN_SRC elisp
+    (url-retrieve
+ "https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml"
+ (lambda (status)
+   (let ((buf (current-buffer)))
+     (with-current-buffer buf
+       ;; (encode-coding-region (point-min) (point-max) 'utf-8)
+       (set-buffer-multibyte 'to)
+       ;; (prin1 (decode-coding-string (buffer-substring-no-properties (point-min) (point-max)) 'utf-8-dos))
+       (decode-coding-region (point-min) (point-max) 'utf-8-dos)
+       (prin1 (libxml-parse-html-region (point-min) (point-max)))
+       ))))
+    #+END_SRC
 
 
 *** 文档 (Documentation)
