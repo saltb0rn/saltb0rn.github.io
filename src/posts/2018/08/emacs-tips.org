@@ -6454,7 +6454,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     为了节省内存, =Emacs= 并没固定用(fixed-length)22位空间储存一个字符,而是用一个长度可变(variable-length)字节序列(a squence of 8-bit bytes)储存一个字符,
 
-    序列的长度范围在 1 到 5 个字节内(包括5).比如 =ASCII= 字符只需要 1 个字节, =NON-ASCII= 字符则大于 1 个字节,1 个中文字符需要 2 个字节.
+    序列的长度范围在 1 到 5 个字节内(包括5). =ASCII= 字符只需要 1 个字节, =NON-ASCII= 字符则大于 1 个字节.
 
     因为并不是所有文件都是用的 *Unicode Standard* 储存
 
@@ -6480,17 +6480,26 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     #+BEGIN_SRC elisp
     (url-retrieve
- "https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml"
- (lambda (status)
-   (let ((buf (current-buffer)))
-     (with-current-buffer buf
-       ;; (encode-coding-region (point-min) (point-max) 'utf-8)
-       (set-buffer-multibyte 'to)
-       ;; (prin1 (decode-coding-string (buffer-substring-no-properties (point-min) (point-max)) 'utf-8-dos))
-       (decode-coding-region (point-min) (point-max) 'utf-8-dos)
-       (prin1 (libxml-parse-html-region (point-min) (point-max)))
-       ))))
+      "https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml"
+      (lambda (status)
+        (let ((buf (current-buffer)))
+          (with-current-buffer buf
+            (set-buffer-multibyte t)
+            ;; (prin1 (decode-coding-string (buffer-substring-no-properties (point-min) (point-max)) 'utf-8-dos))
+            (decode-coding-region (point-min) (point-max) 'utf-8-dos)
+            (prin1 (libxml-parse-html-region (point-min) (point-max)))
+            ))))
     #+END_SRC
+
+    这里有个例子: 请求一个中文页面,请求得到的内容会写入到{{{buffer}}}里面,然后把把请求内容解析成 =DOM= 树.
+
+    请求得到的内容是字节流,英文字符是正常显示但中文字符是八进制的,因为一个英文字母字只要占一个字节,而一个中文字符需要多个字节,所以这个{{{buffer}}}是 =unibyte= {{{buffer}}},
+
+    直接调用 =libxml-parse-html-region= 会解析不出正确结果,因此要调用 =set-buffer-multibyte= 把 {{{buffer}}} 变成 =multibyte= {{{buffer}}} 正常显示出文本.
+
+    解析前还可以调用 =decode-coding-region= 对当前{{{buffer}}}进行解码,这个例子是最早应该是写在 =Windows= 上的,因为 =Windows= 的 =utf-8= 特有的行尾符号(=^M=)显示出来了,
+
+    这个本不应该显示的,所以这里使用正确的编码标准对{{{buffer}}}重新解码让行尾符号隐藏起来.当然,这个行尾符号不影响 =libxml-parse-html-region= 的解析结果.
 
 
 *** 文档 (Documentation)
