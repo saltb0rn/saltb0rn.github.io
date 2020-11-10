@@ -303,6 +303,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
         (with-temp-buffer
           (insert-buffer (url-retrieve-synchronously url)) ;; the message containing the headers and body
           (set-buffer-multibyte t)
+          (decode-coding-region (point-min) (point-max) 'utf-8) ;; needed if text contains non-ascii character
           (goto-char (point-min))
           (re-search-forward "^$" nil 'move)
           (make-response :headers (buffer-substring-no-properties (point-min) (point))
@@ -6444,11 +6445,21 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
     (PS: 上面的两个例子是没有办法转码,因为彼此没有对方的字符).
 
 
-    =Emacs= 作为文本编辑器,和文本打交道自然不可避免的,有一种编码标准叫做 *Unicode Standard*,也叫 *UTF-8*, 它支持多种语言的字符,
+    =Emacs= 作为文本编辑器,和文本打交道自然不可避免的.
 
-    到目前为止(Unicode 4.0)总共支持 =#x10FFFF= 个字符,字符码范围是 =0..#x10FFFF=.
+    最早的时候计算机只支持英文,数字和一些基础的标点符号,后来有别的语言的需求,可以看到上面例子中两门语言的麻烦,
 
-    =Emacs= 没有直接使用这套标准,而是在 =Unicode 4.0= 的基础上进行拓展,在 =#x110000..#x3FFFFF= 的范围给一些 *无法用 Unicode 和 raw 8-bit bytes 标准解析的字符* 进行编码,
+    最好的解决办法就是把上面两门语言的字符集合并在一起,然后给每个字符重新编号.
+
+    现实中就是这样定义了一套支持多种主流语言字符的字符集: *Unicode Standard*, *Unicode 4.0* 总共支持 =#x10FFFF= 个字符,字符码范围是 =0..#x10FFFF=,
+
+    由于这个字符集实在是太大了,如果像上面的例子中那样直接按照字符集的元素个数来给每个字符分配空间的话,那么每个字符需要 =#x10FFFF= 位空间,
+
+    所以编码标准需要一些优化,比如英文以及基础标点符号只有 256 个字符,那么这种字符就用一个字节空间储存,其它字符则占用对应空间.
+
+    为了节省空间, *Unicode Standard* 定义了三套编码标准: *UTF-8*, *UTF-16* 以及 *UTF-32*, *UTF-8* 是最常见的一套编码标准.[[https://www.unicode.org/standard/principles.html][这方面的更多内容就看这里吧.]]
+
+    =Emacs= 没有直接使用 *Unicode Standard*,而是在 =Unicode 4.0= 的基础上进行拓展,在 =#x110000..#x3FFFFF= 的范围给一些 *无法用 Unicode 和 raw 8-bit bytes 标准解析的字符* 进行编码,
 
     所以理论上 =Emacs= 的一个字符需要占用用22位(bit)空间,这就是 Emacs 如何表示一个字符,也就是 =Emacs= 的文本的内部表示(text representation).
 
@@ -6464,9 +6475,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     这编码之间的转换叫做编码转码(character code conversion);
 
-    保存文件则是上面的逆过程: 根据 =Emacs= 编码标准把{{{buffer}}}的内容转换为文件的编码标准所能够解析的结构,也就是转回 =encoded text=,
-
-    最后写入到文件中.
+    保存文件则是上面的逆过程: 根据 =Emacs= 编码标准把{{{buffer}}}的内容转换为文件的编码标准所能够解析的结构,也就是转回 =encoded text=,最后写入到文件中.
 
     =Emacs= 也可以不对文件进行转码显示,允许用户在这种状态下对文件进行编辑,通常情况是对非本文文件进行编辑.
 
