@@ -49,17 +49,17 @@
             htable)
 
            (puthash
-            "level"
+            "rank"
             (string-trim (dom-text (nth 4 (dom-by-tag item 'td))))
             htable)
 
            (puthash
-            "lvl1-collage"
+            "top-college"
             (if (dom-by-tag (nth 5 (dom-by-tag item 'td)) 'i) t nil)
             htable)
 
            (puthash
-             "lvl1-hight-school"
+             "top-high-school"
              (if (dom-by-tag (nth 6 (dom-by-tag item 'td)) 'i) t nil)
             htable)
 
