@@ -1,7 +1,10 @@
+(require 'cl-lib)
+(require 'dom)
 (require 'json)
+(require 'subr-x)
 (require 'url)
 
-(defstruct response headers body)
+(cl-defstruct response headers body)
 
 (defun url-open (url)
   "Return the response by requesting the url."
@@ -87,8 +90,10 @@
         dom-trees)
     (while (<= cur total)
       (let ((rsp (url-open (format "https://gaokao.chsi.com.cn/sch/search--ss-on,searchType-1,option-qg,start-%s.dhtml" cur))))
-        (setq dom-trees (concatenate 'list dom-trees (data-filter rsp))))
+        (setq dom-trees (cl-concatenate 'list dom-trees (data-filter rsp))))
       (setq cur (+ cur 20)))
-    (write-to-file (json-encode dom-trees) "~/school-data.json")))
+    (with-temp-buffer
+      (insert (json-encode dom-trees))
+      (write-file "~/school-data.json" nil))))
 
 (main)

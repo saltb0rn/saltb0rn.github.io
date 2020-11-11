@@ -6448,31 +6448,37 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     于是人们定义了一套支持多种主流语言字符的字符集: *Unicode Standard*, *Unicode 4.0* 总共支持 =#x10FFFF= 个字符,字符码范围是 =0..#x10FFFF=,
 
-    由于这个字符集实在是太大了,如果像上面的例子那样直接按照字符集元素个数来分配每个字符的空间,那么每个字符需要 =#x10FFFF= 位空间,
+    每种语言的字符集都有自己的一个区间,详细内容可以看 [[http://www.unicode.org/charts/][官方文档]] 或者 [[https://unicode-table.com/en/][这里(更加直观)]].
 
-    所以编码标准需要一些优化,比如英文以及基础标点符号只有 256 个字符,那么这种字符就用一个字节空间储存,中文字符需要更多,高达两个字节,其它字符也占用对应空间.
+    由于这个字符集实在是太大了,如果直接按照字符集元素个数来分配每个字符的空间,那么每个字符需要 =#x10FFFF= 位空间,
 
-    为了节省空间, *Unicode Standard* 定义了三套编码标准: *UTF-8*, *UTF-16* 以及 *UTF-32*, *UTF-8* 是最常见的一套编码标准.[[https://www.unicode.org/standard/principles.html][这方面的更多内容就看这里吧.]]
+    因此出于对空间节省的考虑,编码标准需要一些优化,比如英文以及基础标点符号只有 256 个字符,那么这种字符就用一个字节空间储存,中文字符需要更多,高达两个字节,其它字符也占用对应空间.
 
-    =Emacs= 做为文本编辑器,是不可能避开编码问题的,而如果要编写 =Emacs Lisp= 处理文本的话,那么 =Emacs= 内部文本机制是基础了.
+    *Unicode Standard* 为此定义了三套编码标准: *UTF-8*, *UTF-16* 以及 *UTF-32*, *UTF-8* 是最常见的一套编码标准.[[https://www.unicode.org/standard/principles.html][这方面的更多内容就看这里吧.]]
+
+    =Emacs= 做为文本编辑器,是不可能避开编码问题的,而如果要编写 =Emacs Lisp= 处理文本的话,那么理解 =Emacs= 内部文本机制是必要基础了.
 
     =Emacs= 没有直接使用 *Unicode Standard*,而是在 =Unicode 4.0= 的基础上进行拓展,在 =#x110000..#x3FFFFF= 的范围给一些 *无法用 Unicode 和 raw 8-bit bytes 标准解析的字符* 进行编码,
 
-    所以理论上 =Emacs= 的一个字符需要占用用22位(bit)空间,这就是 Emacs 如何表示一个字符,也就是 =Emacs= 的文本的内部表示(text representation).
+    所以理论上 =Emacs= 的一个字符需要占用用22位(bit)空间,这就是 =Emacs= 的文本的内部表示(text representation).
 
-    为了节省内存, =Emacs= 并没固定用(fixed-length)22位空间储存一个字符,而是用一个长度可变(variable-length)字节序列(a squence of 8-bit bytes)储存一个字符,
+    同样为了节省内存, =Emacs= 也没有使用固定22位空间储存一个字符,而是用一个长度可变(variable-length)字节序列(a squence of 8-bit bytes)储存一个字符,
 
     序列的长度范围在 1 到 5 个字节内(包括5). =ASCII= 字符只需要 1 个字节, =NON-ASCII= 字符则大于 1 个字节.
 
-    因为并不是所有文件都是用的 *Unicode Standard* 储存的,而 =Emacs= 做为一款灵活的文本编辑器可不能只支持一种编码标准的文件,
+    并不是所有文件都是用的 *Unicode Standard* 储存的,而 =Emacs= 做为一款灵活的文本编辑器可不能只支持一种编码标准的文件,
 
-    每次 =Emacs= 打开文件都需要先把文件内容写入到{{{buffer}}}中,这时候的文件内容叫做 =encoded text=,它不是真的 =text=,在 =Emacs= 眼里是一个由多个独立字节排列成的序列,
+    每次 =Emacs= 打开文件都需要先把文件内容写入到{{{buffer}}}中,文件内容叫做 =encoded text=,
 
-    然后 =Emacs= 根据文件储存时的编码标准把 =encoded text= 转换为 =Emacs= 编码标准能够解析的结构(另外一个种形式的字节序列),最后才显示为平时看到的文本,
+    它不是真的 =text=,在 =Emacs= 眼里是一个由多个独立字节排列成的序列,在人类的眼里也不是人类使用的字符,
 
-    这编码之间的转换叫做编码转码(character code conversion);
+    然后 =Emacs= 根据文件储存时使用的编码标准把 =encoded text= 转换为 =Emacs= 编码标准能够解析的结构(另外一个种形式的字节序列),
 
-    保存文件则是上面的逆过程: 根据 =Emacs= 编码标准把{{{buffer}}}的内容转换为文件的编码标准所能够解析的结构,也就是转回 =encoded text=,最后写入到文件中.
+    这个时候{{{buffer}}}的内容不再是 =encoded text= 了,而是给人类看的字符,这编码之间的转换叫做字符码转换(character code conversion);
+
+    保存文件则是上面的逆过程: 根据 =Emacs= 编码标准把{{{buffer}}}的内容转换为文件的编码标准所能够解析的结构,
+
+    也就是把{{{buffer}}}的内容转回 =encoded text=,最后写入到文件中.
 
     =Emacs= 也可以不对文件进行转码显示,用户同样可以在这种状态下对文件进行编辑,这种情况基本是编辑非本文文件.
 
@@ -6482,7 +6488,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     用户平时看到的每个字符都是由1到多个字节解析得到的,储存这种字节序列的{{{buffer}}}和字符串叫做 =multibyte= {{{buffer}}}和字符串.
 
-    总的来说, =unibyte= {{{buffer}}}和字符串不是给人看的,=multibyte= {{{buffer}}}和字符串才是.
+    总的来说, =unibyte= {{{buffer}}}和字符串不是给人看的, =multibyte= {{{buffer}}}和字符串才是.
 
     #+BEGIN_SRC elisp
     (url-retrieve
