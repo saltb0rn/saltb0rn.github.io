@@ -6428,7 +6428,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     要想正常看到字符串 =halo=,就必须使用遵从这套编码标准的程序来打开文件,程序根据标准解析:每 5 位翻译得到一个字符,
 
-    这个过程会根据编号找到对应的字体,最后才显示出我们看到的字符串.
+    这个过程会根据编号找到对应的符号(symbol),最后才显示出我们看到的字符串.
 
     假设现在有另外一门语言,它的字符有从 =0= 到 =9= 的 10 个字符,按顺序进行从 0 开始进行编码,因为有 10 种可能的字符,那么至少需要 4 位来表示一个字符.
 
@@ -6458,7 +6458,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     =Emacs= 做为文本编辑器,是不可能避开编码问题的,而如果要编写 =Emacs Lisp= 处理文本的话,那么理解 =Emacs= 内部文本机制是必要基础了.
 
-    =Emacs= 没有直接使用 *Unicode Standard*,而是在 =Unicode 4.0= 的基础上进行拓展,在 =#x110000..#x3FFFFF= 的范围给一些 *无法用 Unicode 和 raw 8-bit bytes 标准解析的字符* 进行编码,
+    =Emacs= 没有直接使用 *Unicode Standard*,而是在 =Unicode= 的基础上进行拓展,在 =#x110000..#x3FFFFF= 的范围给一些 *无法用 Unicode 和 raw 8-bit bytes 标准解析的字符* 进行编码,
 
     所以理论上 =Emacs= 的一个字符需要占用用22位(bit)空间,这就是 =Emacs= 的文本的内部表示(text representation).
 
@@ -6474,7 +6474,9 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     然后 =Emacs= 根据文件储存时使用的编码标准把 =encoded text= 转换为 =Emacs= 编码标准能够解析的结构(另外一个种形式的字节序列),
 
-    这个时候{{{buffer}}}的内容不再是 =encoded text= 了,而是给人类看的字符,这编码之间的转换叫做字符码转换(character code conversion);
+    这编码之间的转换叫做字符码转换(character code conversion),最后把解析后的内容翻译成给人类看的字符,这个时候{{{buffer}}}的内容不再是 =encoded text=,
+
+    关于 =Emacs= 是显示字符的细节可以看这里 =M-: (info "(elisp)Character Display")=;
 
     保存文件则是上面的逆过程: 根据 =Emacs= 编码标准把{{{buffer}}}的内容转换为文件的编码标准所能够解析的结构,
 
@@ -6490,6 +6492,10 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     总的来说, =unibyte= {{{buffer}}}和字符串不是给人看的, =multibyte= {{{buffer}}}和字符串才是.
 
+    =Emacs Lisp= 的字符和字符串数据类型支持直接使用字符码来表示对应字符,具体可以看 =M-: (info "(elisp)Character Codes")=.
+
+    这下面有个例子: 请求一个中文页面,请求得到的内容会写入到{{{buffer}}}里面,然后把把请求内容解析成 =DOM= 树.
+
     #+BEGIN_SRC elisp
     (url-retrieve
       "https://gaokao.chsi.com.cn/sch/search--ss-on,option-qg,searchType-1,start-0.dhtml"
@@ -6503,8 +6509,6 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
             ))))
     #+END_SRC
 
-    这里有个例子: 请求一个中文页面,请求得到的内容会写入到{{{buffer}}}里面,然后把把请求内容解析成 =DOM= 树.
-
     请求得到的内容是字节流,默认情况下, =Emacs= 的编码标准是 =utf-8=, 所以英文字符是正常显示的,但是由于字节流是 =unibyte= 字符串,中文字符不能被正确解析,只能显示为八进制.
 
     这种情况下直接调用 =libxml-parse-html-region= 是不会解析出正确结果,因此要调用 =set-buffer-multibyte= 把 {{{buffer}}} 变成 =multibyte= {{{buffer}}} 正常显示出文本.
@@ -6513,7 +6517,9 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     因为使用 =utf-8= 对该页面的字节流解码的话会显示 =Windows utf-8= 特有的行尾符号(=^M=),所以这里使用正确的编码标准对{{{buffer}}}重新解码让行尾符号隐藏起来.
 
-    当然,这个行尾符号不影响 =libxml-parse-html-region= 的解析结果.有兴趣的话这里有一个完整的爬虫[[../../../files/web-scrapy-example.el][例子]],可以参考一下.
+    当然,这个行尾符号不影响 =libxml-parse-html-region= 的解析结果.
+
+    最后这里有一个完整的爬虫[[../../../files/web-scrapy-example.el][例子]],有兴趣可以参考一下.
 
 
 *** 文档 (Documentation)
