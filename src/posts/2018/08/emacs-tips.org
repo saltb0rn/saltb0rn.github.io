@@ -1078,7 +1078,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
       (prin1 a) ;; 打印结果是 1,这里也属于 a = 1 这个绑定的作用域
     #+END_SRC
 
-    然而这里有一个关键点没有提到: 函数 =set-a= 里面引用的自由变量 =a= 呢?它是 $a = 1$ 这个绑定的变量么?
+    然而这里有一个关键点没有提到: 函数 =set-a= 里面的自由变量 =a= 呢?它引用的是 $a = 1$ 这个绑定吗?
 
     这里的回答为是和否都可以,取决于接下来语言采用的作用域规则,分两种:
 
@@ -1088,7 +1088,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     两者的差别体现在对自由变量的引用上,
 
-    *在动态作用域下*, =set-a= 引用的 =a= 访问到的是最近一次创建的 =a= 绑定,也就是说这是由调用 =set-a= 的时机决定的,
+    *在动态作用域下*, =set-a= 的 =a= 引用的是最近一次创建的 =a= 绑定,也就是说这是由调用 =set-a= 的时机决定的,
 
     如果在空白处后面加上代码 =A=:
 
@@ -1109,267 +1109,45 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     因此被改变绑定也是这个;
 
-    *在词法作用域下*, =set-a= 引用的 =a= 访问到的是
+    *在词法作用域下*, =set-a= 里面的 =a= 引用到的是 $a = 1$, 就是引用到的绑定处于在 *文本上* 绑定创建的范围内,
 
+    通俗点就是, =set-a= 里面的自由变量 =a= 是引用 =set-a= 定义附近的绑定,所以就是 =(setq a 1)=,
 
+    把 =(setq a 1)= 移动到 =set-a= 定义后一句的位置也是完全一样的结果.
 
+    关于如何在 =Emacs= 里面开启词法作用域可以看文档: =M-: (info "(elisp)Using Lexical Binding")=.
 
 
-**** 全局变量 (Global Variables)
+    大部分语言采取词法作用域的原因应该能够看出来了: 动态作用域容易得到意料之外的结果.
 
-     影响整个 =Lisp= 系统的变量,一个时间点只能有一个值,全局变量的值会一直保持直到重新定义或者改变它们.用 =setq= 定义或者改变一个全局变量.
+    就好比上面动态作用域下的 =set-a= 在代码 =B= 的情况下修改到的居然是同名的局部变量 =a=,
 
+    这点对于开发模块而言是很糟糕的,这没办法保证模块能够在任何上下文中都能够达到期待的结果.
 
-**** 变量作用域 (Variable Scoping)
 
+    =Emacs= 的变量除了作用域以外,还有一些地方和其它语言的变量不同.
 
-**** 永远不会改变的变量 (Constant Variables)
+    在常量方面, =Emacs Lisp= 的常量分两种,分别含义是: *值不能发生改变的变量* 以及 *值不应该发生改变的变量*.
 
-     包括 =nit, t= 和关键字(keyword),也就是 =:= 开头的 =symbol=,不可以重新绑定,也不可以改变它们的值,
+    前者只有 =nil=, =t= 以及关键词(就是以 =:= 开头的 =symbols=)这三种,一旦试图给它们赋值就会引发 =setting-constant= 异常,这种是真正意义上的常量,
 
-     它们是真正意义上的常量,一旦试图改变它们的值就会引发 =setting-constant= 的错误.
+    具体看 =M-: (info "(elisp)Constant Variables")=.
 
-     不过 =Emacs Lisp= 所指的常量是由 =defconst= 定义的,它们的值是可以改变的,它们的"常量"的意思是告诉人们不应该修改它们的值,
+    后者则只是警告用户不应该改变的变量,具体看 =M-: (info "(elisp)Defining Variables")= 中对 =defconst= 的说明.
 
-     而不是不能修改.
+    在变量方面, =Emacs Lisp= 除了全局变量以及局部变量以外还支持 =buffer-local= 变量,也就是针对特定{{{buffer}}}的变量,
 
+    用于创建 =buffer-local= 变量的基础上还有 =file-local= 变量, =directory-local= 变量以及 =connection-local= 变量,
 
-**** 局部变量 (Local Variables)
+    =file-local= 变量是由文件(只能是 =Emacs Lisp= 代码文件)本身定义的,用来给文件关联的{{{buffer}}}创建 =buffer-local= 变量;
 
-     跟全局变量相对,局部变量的值只影响 =Lisp= 程序的一部分,比如 =let绑定的变量= 和 =函数的参数=.可以同时存在同名的全局和局部变量,
+    =directory-local= 变量由目录(其实是目录下特别的文件指定: =M-: (info "(elisp)Directory Local Variables")=)指定,
 
-     最内层的变量会遮掩(shadows)外层变量,也就是局部变量遮掩全局变量.实际上每个编程语言都需要一个作用域规则(scoping rule)来判断发生作用的局部绑定.
+    作为目录下所有文件的 =file-local= 变量,并且文件本身就有的 =file-local= 变量也会被覆盖掉,当然也可以通过设置来让文件本身的 =file-local= 变量优先于 =directory-local= 变量;
 
-     =Emacs Lisp= 默认是 =dynamic scoping=: *程序当前执行点上的绑定就是为最新创建的同名绑定*. =Emacs Lisp= 还可以启用 =lexical scoping=.
+    =connection-local= 变量则是针对和远程连接关联的{{{buffer}}}定义的,具体就看 =M-: (info "(elisp)Connection Local Variables")=.
 
-     创建局部变量的方法有 =let, let*, 函数调用, 宏调用, condition-case异常处理=.局部变量还有 =file-local=, =buffer-local=, =diretory-local= 和 =terminal-local=.
-
-     =max-specpdl-size= 定义了局部变量的和 =unwind-protect= 清理(cleanup)的总数量,默认值是1300,如果突破这个数量就会引发一个错误.
-
-     进入 =Lisp debugger= 的时候会增加这个值.这个值的作用是避免不良定义的函数无限递归.解决这个问题还可以通过设置 =max-lisp-eval-depth= 限制递归层数.
-
-
-**** Void变量 (Void Variables)
-
-     未赋值的变量和赋值为 =nil= 的变量是不一样的,前者是未绑定的,所以前者情况中的变量为 =void=.
-
-     具体就是 =symbol= 的 =value cell= 是否为 =void=,是的话就为 =void= 变量,使用 =void= 变量会引发 =void-variable= 错误.
-
-     可以通过 =makeunbound= 解绑当前变量的绑定; =boundp= 判断当前变量是否绑定.
-
-
-**** 定义全局变量 (Defining Variables)
-
-     还可以通过 =defvar, defconst 和 defcustom= 定义全局变量.
-
-     一个变量的定义有3个目的:
-
-     1. 告知读代码的人们变量的意图.
-
-     2. 告知 =Lisp= 系统,并且可选的给变量提供初始值和文档字符串.
-
-     3. 给类似 =etags= 这样的编程工具提供信息,允许它们找出变量定义的位置.
-
-     =defvar= 只有在变量为 =void= 的情况下初始变量,而 =defconst= 是无条件初始变量; =defcustom= 则是使用了 =defvar= 做为子程序,也是在变量为 =void= 才初始化变量.
-
-     然而还是有些特殊情况,
-
-     - =defvar=
-
-       1. 如果 =symbol= 在当前{{{buffer}}}有一个 =buffer-local= 绑定,那么 =defvar= 设定的就是全局变量/动态绑定.
-
-       2. 如果 =symbol= 早就被词法绑定(由=let=或者函数参数获得),那么 =defvar= 就设定变量的动态值.
-
-       3. 如果在 =Emacs Lisp mode= 下通过 =C-M-x= (=eval-defun=) 运算 =defvar= 表达式,它会无条件设置变量,不管变量是否为 =void=.
-
-     - =defconst=
-
-       1. 如果 =symbol= 在当前{{{buffer}}}有一个 =buffer-local= 绑定,那么 =defconst= 设定的就是全局变量/动态绑定.
-
-       2. 如果 =symbol= 早就被词法绑定(由=let=或者函数参数获得),那么 =defconst= 设定的就是局部变量的值.
-
-     #+BEGIN_SRC emacs-lisp
-       (let ((d 0))
-         (defconst d 4)
-         d) ;; => 4
-
-       d    ;; => void,报错
-
-       (let ((e 0))
-         (defvar e 5)
-         e) ;; => 0
-
-       e    ;; => 5
-     #+END_SRC
-
-
-**** 定义健壮变量的提示 (Tips for Defining)
-
-     一些定义变量的规范和正确做法.规范自己看,正确做法现在总结.
-
-     当定义和初始话一个变量来保存复杂的值,最好的做法就是把整个值的计算放到 =defvar= 里面.
-
-     这样有三个好处和一个坏处:
-
-     - 好处
-
-       1. 如果加载文件的时候被用户中断,变量只有未初始化和已经正确初始化两种情况.
-
-          如果没有加载,重新加载会正确初始化它.
-
-       2. 一旦变量已经初始化,重新加载文件是不会修改变量.
-
-       3. 可以通过 =eval-defun= (默认 =C-M-x=)完全重新初始化变量.
-
-     - 坏处
-
-       =defvar= 的设定文档字符串的行和命名变量的行离得远.(这也是坏处吗?)可以初始化变量为 =nil=,然后再设定值,
-
-       不过如果要重新初始化变量就得运行 =eval-defun= 两次.
-
-
-
-**** 访问变量 (Accessing Variables)
-
-     通常引用一个变量就是写下用来命名变量的 =symbol=.
-
-     如果想要引用一个只能在运行时才能知道 =symbol= 或者名字的变量,也就是不能在代码中确定它的名字.
-
-     可以使用 =symbol-value= 来获取 =symbol= 当前绑定的值.
-
-     如果该变量没有局部绑定,那么就是全局的值.如果变量为 =void=,就会报错.
-
-
-
-**** 设定变量 (Setting Variables)
-
-     可以用 =setq= 宏或者 =set= 函数进行对变量进行赋值,使用差别如下
-
-     #+BEGIN_SRC emacs-lisp
-       (defvar var1 nil)
-
-       (defvar var2 nil)
-
-       (setq var1 1)
-
-       (set 'var2 2)
-     #+END_SRC
-
-     本质差别就是宏和函数了.前者的第一个参数是不会进行运算的,而函数是一定会运行所有参数.
-
-     原则上它们也可以用来定义变量,但是为了规范你不应该这么用.
-
-
-
-**** 监视变量 (Watching Variables)
-
-     #+BEGIN_EXAMPLE
-     在 26.1 引入
-     #+END_EXAMPLE
-
-     可以给变量添加 =watcher=,如果变量发生改变的时候就会触发 =watcher=,不过只能够用于动态作用域的 =symbol= 变量.
-
-     具体查看文档.
-
-
-**** 变量作用域 (Variable Scoping)
-
-     每个局部绑定都有一个明确的作用域(scope)和生命周期(extent).分别指 *可以在文本源码的什么地方访问绑定* 和 *在程序执行过程中,绑定在什么时候存在*.
-
-     默认情况下, =Emacs= 创建的局部绑定都是动态绑定(dynamic binding),它们有着动态作用域(dynamic scope),意味着在程序的任何一个地方都可以访问这些绑定,同时它们也有着动态生命周期(dynamic extent),意味着这些变量的绑定只会在绑定创建之后存在.
-
-     =Emacs= 也支持词法绑定(lexical binding),词法绑定有着词法作用域(lexical scope),意味着任何变量的引用(reference to variable)必须在文本源码上处于绑定创建的位置(有几个例外,比如 =Lisp Debugger= 中就可以访问词法绑定),同时有着不定生命周期(indefinite extent),意味着在某些情况(circumstances)下,绑定在创建后借助于一种叫做闭包(closure)的对象存活一段时间.
-
-
-**** {{{buffer}}}局部变量 (Buffer-Local Variables)
-
-     大部份语言都有全局和局部变量的概念,而 =Emacs= 在局部变量的基础上进行更加细的划分,{{{buffer}}}局部变量,目录局部变量以及文件局部变量.
-
-     {{{buffer}}}局部变量就是只作用于一个{{{buffer}}},每个{{{buffer}}}都可以拥有同一个名字但是不同值的变量,也就是 =buffer-local binding=.
-
-     这种变量一般用于 =major-mode=.变量原本的绑定一般就是全局变量,对于特定{{{buffer}}}来说就是默认绑定(default binding).
-
-     使用变量的时候,{{{buffer}}}会先看自己有没有这个变量的{{{buffer}}}局部绑定,有的话就使用它,否则查找它的全局绑定.
-
-     其实很好理解,就是这条规则:局部绑定遮掩/shadows外层绑定,不仅仅是访问变量,修改变量也是同样适用.
-
-     如果一个{{{buffer}}}没有某个变量的{{{buffer}}}局部绑定,而其它{{{buffer}}}有,并且如果在这个{{{buffer}}}里面修改(=setq/set=)它的值就相当与直接修改默认绑定.
-
-     一般把一个变量设定为{{{buffer}}}局部变量有两种方法: =make-local-variable= 和 =make-variable-buffer-local=,前者只影响单个{{{buffer}}},后者会自动给所有{{{buffer}}}设定一个{{{buffer}}}局部变量.
-
-     =make-variable-buffer-local= 可以很好的避免{{{buffer}}}局部变量不存在而不小心修改默认绑定的情况,但是真的使用了 =make-variable-buffer-local= 并且又真的想修改默认绑定,那么可以使用 =setq-default=.
-
-     如果一个文件指定了局部变量,也叫文件局部变量,那么读取这个文件的时候就会把这些变量变成{{{buffer}}}局部变量.
-
-
-     除了上面提到的创建以及修改{{{buffer}}}局部绑定的方法外, =Emacs= 还提供了其他的变种,具体就不多说,直接阅读这里 =M-: (info "(elisp) Creating Buffer-Local")=,
-
-     值得一提的是,还能删除{{{buffer}}}局部绑定,可以通过 =makunbound= 和 =kill-local-variables= 来达到目的,
-
-     但是要注意,前者如果在没有{{{buffer}}}局部绑定的情况下会删除掉默认绑定,所以用它删除绑定时最好先判断是否存在{{{buffer}}}局部绑定.
-
-     而后者则是删除 =permanent-local-hook= 属性为 =non-nil= 的之外所有{{{buffer}}}的{{{buffer}}}局部变量绑定,也可以通过给{{{buffer}}}局部变量设定 =permanent-local= 属性为 =nil= 来达到同样的效果.
-
-
-     还有注意一点,默认绑定不一定是全局变量,更多关于默认绑定的可以直接阅读 =M-: (info "(elisp) Default Value")=,没什么好说的.
-
-
-**** 文件局部变量 (File local Variables)
-
-     和在{{{buffer}}}局部变量体提到一样,当 =Emacs= 打开了文件就会把文件变量变为{{{buffer}}}局部变量.
-
-     出于一些安全考虑,文件局部变量并非是一定会被转化为{{{buffer}}}局部变量的,只有安全的文件变量才可以,其他则需要用户同意才可以.
-
-     另外,在 =Emacs= 读取文件变量的时候还能通过临时设置 =read-circle= 为 =nil= 来禁用 =Emacs= 识别环状的 =Lisp= 结构.
-
-     关于文件局部变量的访问控制可以直接阅读文档来了解更多,这里就不详细讲了.
-
-     关于文件局部变量的具体细节可以直接阅读这里 =M-: (info "(elisp) File Variables")=,(懒得记录了,而且这部分文档内容也好懂).
-
-
-**** 目录局部变量 (Directory Local Variables)
-
-
-     目录局部变量的作用域是比文件局部变量的更大,根据局部绑定 =shadows= 外层绑定的规则,文件局部变量可以覆盖目录局部变量.
-
-     有两种方法指定目录局部变量:在目录下放置一个 =.dir-locals.el= 文件;给目录设置一个 ="project class"=.
-
-     两种方法使用场景各有不同,前者适用于共享的库而不是个人定制,比如一些 =github= 上 =Emacs Lisp= 项目;而后者更适合一些没有 =write= 权限的目录.
-
-     具体使用方法看这里 =M-: (info "(elisp) Directory Variables")=
-
-
-**** 链接局部变量 (Connection Local Variables)
-
-     #+BEGIN_EXAMPLE
-     不存在于 25.2.2 版本中
-     #+END_EXAMPLE
-
-     根据远程链接来设定{{{buffer}}}局部变量.
-
-
-**** 变量别名 (Variable Aliases)
-
-     给变量取一个别名,两个名字指向同一个对象,更改其中一个会影响另外一个,一般用于兼容.
-
-
-**** 值受限制的变量 (Variables with Restricted Values)
-
-     这部分是关于如何通过编写 =Emacs= 底层代码来让实现变量的类型限制,具体请阅读 =M-: (info "(elisp) Writing Emacs Primitives")=.
-
-
-**** 通用变量 (Generalized Variables)
-
-     所谓的通用变量就是内存上能够存放值的地方,又叫 =place form=, =Emacs Lisp= 里面最常见的就是变量.
-
-     此外还有 =list= 的 =CARs= 和 =CDRs=, =arrays= 的元素, =symbols= 的属性和许多其它能够储存 =Lisp= 值的 =locations=.
-
-     在 =Lisp= 的世界就是 =lhs=,全称 =left hand side=,对比 =C= 语言就是 =lvalues=.
-
-     =Emacs Lisp= 提供类似于 =Common Lisp= 的 =setf= 同名宏 =setf=,比 =Common Lisp= 的多一点限制,可以通过使用 =cl-lib= 的功能来拓展一下.
-
-     还能够定义新类型 =forms= 来给 =setf= 操作,具体查看 =M-: (info "(elisp) Adding Generalized Variables")=.
-
+    关于变量方面的细节就不展开说了,基本比较重要的内容(包括了 =Emacs Lisp= 变量不同的总结)都在上面了.
 
 
 *** 函数 (Functions)
