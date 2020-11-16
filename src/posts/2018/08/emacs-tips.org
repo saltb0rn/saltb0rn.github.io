@@ -1129,7 +1129,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
     在常量方面, =Emacs Lisp= 的常量分两种,分别含义是: *值不能发生改变的变量* 以及 *值不应该发生改变的变量*.
 
-    前者只有 =nil=, =t= 以及关键词(就是以 =:= 开头的 =symbols=)这三种,一旦试图给它们赋值就会引发 =setting-constant= 异常,这种是真正意义上的常量,
+    前者只有 =nil=, =t= 以及关键字(keyword)类型(就是以 =:= 开头的 =symbols=)这三种,一旦试图给它们赋值就会引发 =setting-constant= 异常,这种是真正意义上的常量,
 
     具体看 =M-: (info "(elisp)Constant Variables")=.
 
@@ -1154,19 +1154,36 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 **** 什么是函数 (What is a Function)
 
-     =Emacs Lisp= 中的函数是函数对象(=function object=)和函数名字(=function name=)组成的,其中函数名字是可选的,函数对象是可以执行计算,支持函数式编程的语言都拥有这特性.
+     广而言之(In a general sense),函数就是一套计算规则: 给出一些名为参数(arguments)的值作为输入,然后进行计算,计算最终结果叫做函数的值(value)或者返回值(return value),
 
-     =Emacs Lisp= 除了函数还有类函数(=function-like=)的对象,和函数一样都能够执行计算,当并不被认为是函数: =Special Forms 和 Macros=.
+     计算可能会产生副作用(side effects),比如对变量或者数据结构的内容产生持久改变(lasting changes),参见的 =print= 语句也是一种;
 
-     在使用 =Emacs Lisp= 进行编程的时候要分清楚以下几个概念:
+     有的函数在计算过程中不会产生任何副作用,并且不管处于何种外部因素下(比如机器类型,系统状态),每次输入同样参数总能产生一样的计算结果,这种函数叫做纯函数(pure function).
 
-     - *=Lambda Expression=*: 函数对象,常说的匿名函数,也就是没有名字的函数;
-     - *=Primitive=*: 用 =C= 语言编写并且能够被 =Emacs Lisp= 调用的函数,也就是 =built-in function=, 比如 =car= 和 =append=, 关于如何编写 =primitive= 请参考 =(info "Writing Emacs Primitives")=;
+     
+     大部分的编程语言的每个函数都有自己的名字,不过 =Lisp= 的函数在严格意义上是没有名字(function name)的,它只是一个可以和 =symbol= 关联的对象(function object),
+
+     一旦关联上,我们就把关联的 =symbol= 称作(refer to ... as)函数,话虽如此,我们还是需要把 *函数名字* 和 *函数对象* 的区别铭记于心.
+     
+
+     =Emacs Lisp= 有类函数(=function-like=)的对象,和函数一样都能够执行计算,但并不被认为是函数: =Special Forms 和 Macros=,
+
+     因此在使用 =Emacs Lisp= 进行编程的时候要分清楚以下几个概念:
+
+     - *=Lambda Expression=*: 函数对象,常说的匿名函数;
+
+     - *=Primitive=*: 用 =C= 语言编写并且能够被 =Emacs Lisp= 调用的函数,也叫 =built-in function= 或者 =subrs=,请参考 =(info "Writing Emacs Primitives")=;
+
      - *=Special Form=*: 属于 =primitive=,和函数一样可以执行计算,但是不像函数一样以正常顺序运算完所有参数,或者说只运行部分参数,又或者所不按照正常顺序执行,又又或者运算几遍,比如 =if, and 和 while=;
+
      - *=Macro=*: 和函数一样可以调用,不同的是 =macro= 把 =Emacs Lisp= 表达式翻译成另外一个表达式再进行运算,开发人员可以通过它来做到 =special form= 能够做到的事情;
+
      - *=Command=*: 可以通过 =command-execute= =primitive= 激活的对象叫做 =command=,一个命令通常就是一个使用了 =interactive form= 定义的函数.尽管键盘宏(=Keyboard macros=,本质是字符串和向量)不是函数,但也是 =commands=.
+
      - *=Closure=*: 类似 =Lambda Expression=,除了它还闭合了一个包含词法变量绑定的环境;
+
      - *=Byte-code Function=*: 被字节码编译器编译过的函数;
+
      - *=Autoload Object=*: 函数的占位符(place-holder). =Emacs= 一旦调用 =autoload object= 就会加载包含函数定义的文件然后调用真正的函数.
 
 
@@ -1186,19 +1203,16 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
       第一个元素 =lambda= 是必定要有的,目的是为了与其他列表进行区分,以及告诉 =Emacs= 这个列表是一个函数.
 
       第二个元素 =(ARG-VARIABLES...)= 就是一个 =symbol list=,这些 =symbols= 都是参数(=arguments=)的名字.
+
       在调用函数的时候,参数的值就会根据该列表来进行匹配,形成 =local bindings=.
 
       第三个元素 =DOCUMENTATION-STRING= 是可选的,是一个 =string= 对象,用来描述该函数.
 
       第四个元素 =INTERACTIVE-DECLARATION= 也是可选的,是一个形式为 =(interactive CODE-STRING)= 的列表.
+
       这是用来声明在函数成为命令时候提供参数的方式,成为命令的函数可以通过 =M-x= 来调用或者被绑定到一个按键上.
 
       剩下部分就是函数体,在 =Lisp= 下我们叫做 =a list of Lisp forms to evaluate=,函数的返回值就是 =BODY-FORMS= 里的最后一个 =form=.
-
-
-***** 简单的Lambda (Simple Lambda)
-
-      就是对上个小节的演示,不写了.
 
 
 ***** 参数列表 (Argument List)
@@ -1221,9 +1235,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
       结合上面的描述你会发现 =&optional= 以及 =&rest= 的参数在调用时是可以不传入的,不传入的情况下默认值是 =nil=.
 
-      函数没有办法区分显示传入 =nil= 以及默认 =nil=.和 =Common Lisp= 不同, =Emacs Lisp= 不支持给可选参数设定默认值,也不支持关键字参数(keyword arguments).
-
-      =EmacsWiki= 上有关于 =Keyword Arguments= 的[[https://emacswiki.org/emacs/KeywordArguments][话题]]:利用 =&rest= 以及 =make-hash-table= 来实现类似与 =Common Lisp= 的关键字参数.
+      函数没有办法区分显示传入 =nil= 以及默认 =nil=.
 
       比如有一个这样的参数列表:
 
@@ -1234,10 +1246,44 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
       调用时候的参数数量:
 
       - =2个=: =a= 和 =b= 分别绑定, =c,d,e= 都为 =nil=;
+
       - =3个=: =a=, =b= 和 =c= 分别绑定, =d,e= 为 =nil=;
+
       - =大于等于5个=: =a,b,c,d= 分别绑定传入的前四个参数,剩下的参数都被打包成一个列表和 =e= 进行绑定.
 
       和 =Python= 这些语言不一样, =Emacs Lisp= 不能在不传入 =c, d= 的情况下直接给 =e= 传入参数,必须给 =c,d= 传入 =nil=.
+
+      和 =Common Lisp= 不同, =Emacs Lisp= 的函数不支持用户给可选参数设定默认值,也不支持原生定义关键字参数(keyword arguments),
+
+      其实 =Emacs Lisp= 里面也是有使用了关键字参数的函数,比如 =make-hash-table=,
+
+      =EmacsWiki= 上有如何自己实现 =Keyword Arguments= 的[[https://emacswiki.org/emacs/KeywordArguments][话题]]: 把 =&rest= 当作 =plist= 处理来实现类似与 =Common Lisp= 的关键字参数.
+
+      比如这下面使用 =Emacs= 的关键字(keyword)类型作为参数列表中的关键字,
+
+      #+BEGIN_SRC elisp
+        (defun keyword-support-func (&rest keywords)
+          (let ((key1 (plist-get keywords :key1))
+                (key2 (plist-get keywords :key2)))
+            (+ key1 key2)))
+
+        (keyword-support-func :key2 2 :key1 1)
+      #+END_SRC
+
+      也不一定要用关键字类型的,能够正确访问就可以,比如下面用普通 =symbol= 作为关键字,
+
+      #+BEGIN_SRC elisp
+        (defun keyword-support-func (&rest keywords)
+          (let ((key1 (plist-get keywords 'key1))
+                (key2 (plist-get keywords 'key2)))
+            (+ key1 key2)))
+
+        (keyword-support-func 'key2 2 'key1 1)
+      #+END_SRC
+
+      不过这样不符合(=Common Lisp= 的)"规范",因此在实际中看到的都是第一种.
+
+      除此以外可以通过 =cl-lib= 的 =cl-defun= 宏来使用 =Common Lisp= 那样的函数定义方式.
 
 
 ***** 函数文档 (Function Documentation)
@@ -1309,12 +1355,16 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
      =Emacs Lisp= 定义函数有几种方式,
 
      - =defun= (重新)定义函数(甚至是原函数);
-     - =defalias= 给函数一个别名,一般在内部它用了 =fset= 来设定函数定义,
-       如果该别名有一个 =defalias-fset-function= 属性,该属性关联的值酒会做为函数来使用,替代 =fset=.
-       =defalias= 像 =defun= 记录函数定义的位置一样来记录赋予别名的时候的位置.
-     - =define-inline= 宏定义内联函数,比起同样作用的 =defsubst=, =define-inline= 可以作为 =mapcar= 的参数,
-       并且更加有效率,还能作为 =place forms= 储存值.还有一些应该用在 =define-inline= 内部的宏,具体看文档.
 
+     - =defalias= 给函数一个别名,一般在内部它用了 =fset= 来设定函数定义,
+
+       如果该别名有一个 =defalias-fset-function= 属性,该属性关联的值酒会做为函数来使用,替代 =fset=.
+
+       =defalias= 像 =defun= 记录函数定义的位置一样来记录赋予别名的时候的位置.
+
+     - =define-inline= 宏定义内联函数,比起同样作用的 =defsubst=, =define-inline= 可以作为 =mapcar= 的参数,
+
+       并且更加有效率,还能作为 =place forms= 储存值.还有一些应该用在 =define-inline= 内部的宏,具体看文档.
 
 
 **** 调用函数 (Calling Functions)
@@ -1449,8 +1499,6 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
        ;; 辅助函数对通用函数有一个要求: 通用函数的参数数量要和辅助方法的参数数量一样,因为辅助方法的参数会传入到通用函数里面,这个时候需要参数数量一致.
 
      #+END_SRC
-
-
 
 
 **** Function Cells
@@ -4656,19 +4704,50 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 *** 线程 (Threads)
 
-    =Emacs Lisp= 提供有限的并发机制-线程的支持, =Emacs Lisp= 的线程模型基本上是协作式(most cooperative, or non-preemetive)线程模型,也就是只有在规定的时间(well-defined time)切换线程的执行(switch execution),
+    以前的计算机的 =CPU= 都只有一个核心,也就是一时间只能处理一个任务,
 
-    而线程的切换/调度是由线程们自身决定的,和由操作系统调度的抢占式(preemetive)线程模型不同,协作式线程容易因为其中一个线程不让出 =CPU= 而导致其它线程没有占用 =CPU= 的机会;而抢占式线程模型不会发生这种情况,线程可以主动让出 =CPU=,
+    为了让计算机 *看上去* 能够像忍者那样(通过高速移动)分身同时处理多个任务,人们想到了让 =CPU= 在一段时间内执行任务 =A=,
 
-    但如果有其中一个不让出 =CPU=,操作系统就会规定的执行时间后强迫线程让出 =CPU=.
+    这个时间是非常短的,时间结束后记录下任务 =A= 的进度,然后 =CPU= 去执行任务 =B=,执行一段时间后同样记录下任务 =B= 的进度,
 
-    然而, =Emacs= 的线程支持已经被设计成方便以后支持更加细粒度(fine-grained)的并发,让程序不再依赖与协作式线程.
+    接着 =CPU= 去执行任务 =C= ,..., 如此类推,经过一轮切换又回到 =A= 这个未完成的任务上,
 
-    目前,线程切换会出现在通过 =thread-yield= 发送的请求时候;或者在等到键盘输入/异步进程的输出的时候;又或者是于线程相关的阻塞操作时候,比如 =mutex locking= 或 =thread-join=.
+    假如 =A= 在上一轮中已经完成了,那么这一轮以及之后的切换都不会切换到 =A= 而是下一个未完成的任务的执行上了;
+
+    如果其中个任务的优先级比较高,不需要等到所有任务都切换一轮地情况下,更频繁地切换到它的执行上,
+    
+    整个过程会一直持续直到所有任务完成.
+
+    请务必理解这种 *CPU逐个执行不同任务的"切片"* 的方式, 这个概念以后会在进程以及异步编程中出现.
+
+    任务的调度方式有两种: 协作式(cooperative or non-preemetive)以及抢占式(preemetive).
+
+    第一种就是在定义任务时设定好计划进度:执行到什么时候为一个阶段,什么时候为下一个阶段,在执行时按照计划进度来执行,
+
+    每当执行完任务的一个阶段时就暂停下来把 =CPU= 让出去执行下一个任务,如此类推,直到所有任务都完成, *任务之间的调度由任务自身决定*,
+
+    不过容易出现一个问题,不能保证所有的任务都能设定好计划进度,如果其中一个任务完全没有设计计划进度,
+
+    那么当 =CPU= 执行到它时就会被一直占领,直到这整个任务完成为止,其它任务就会处于长时间等待 =CPU= 的状态,看起里就是卡住了,
+
+    只是单纯执行时间比较长的话还好,如果这个任务是意外永久占据了 =CPU=,那么其它任务就一直处于等待 =CPU= 的状态,
+
+    第二种则是 *由操作系统对任务进行调度*,操作系统决定任务能够执行多久,一旦时间到了就会强迫当前执行的任务把 =CPU= 让出执行下一个任务,
+
+    这就没有第一种调度方式的弊端了,只是相比第一种调度方式而言开销更大一点,因为任务进度,状态都需要操作系统记录.
+
+
+    一个线程本质上就是一个任务, =Emacs Lisp= 提供有限的并发机制-线程的支持,它的线程模型基本上是协作式(mostly cooperative, or non-preemetive)线程模型,
+
+    然而, =Emacs= 的线程支持已经被设计成方便以后支持更加细粒度(fine-grained)的并发,让程序不再依赖协作式线程.
+
+    在调用 =thread-yield= 发送请求时,或者在等待键盘输入/异步进程的输出时,又或者是与线程相关的阻塞操作时(比如 =mutex locking= 或者 =thread-join=),线程切换会出现.
 
     =Emacs Lisp= 提供原操作来创建以及控制线程,同时也提供创建和控制互斥锁(=mutexes=)和条件变量(=condition variables=)用于线程同步.
 
-    全局变量被所有 =Emacs Lisp= 线程共享,而局部变量不是,一个动态的 =let= 绑定是局部的.每个线程都有自己的当前{{{buffer}}}以及匹配数据(=match data=).
+    全局变量被所有 =Emacs Lisp= 线程共享,而局部变量不是,一个动态的 =let= 绑定是局部的.
+    
+    每个线程都有自己的当前{{{buffer}}}以及匹配数据(=match data=).
 
     注意, =let= 绑定在 =Emacs Lisp= 的实现中是被特别对待的,没有任何方法可也复制 =let= 的 =unwinding= 以及 =rewinding= 行为.
 
@@ -4747,6 +4826,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
        当线程执行的代码发送了一个错误信号并且没被处理,那么线程结束.其他线程可以通过这个函数来访问造成线程错误的原因.
 
        只要有线程发生错误,结果就会被重写.
+
 
 **** 互斥锁 (Mutexes)
 
