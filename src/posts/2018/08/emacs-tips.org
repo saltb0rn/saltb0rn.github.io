@@ -2343,11 +2343,34 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 *** 调试 (Debugging)
 
-    针对 =Emacs Lisp= 进行调试可以采取以下几种手段,掌握之后可以节省不少排错的时间.
+    =Emacs Lisp= 有几种调试手段排查问题,不同手段针对不同情况下的问题:
+
+    - 如果在程序运行时发生错误, =Emacs Lisp= 内置的调试器会挂起执行中的程序, 可以在这个时候检查/修改运行时的状态.
+
+    - 如果知道源代码的定义在哪里,可以使用 =Edebug= 这个源码层级的调试器,这功能可以用来高效了解源码.
+
+    - 如果是想要跟踪函数的执行,或者跟踪变量的变化,可以使用 =trace.el=.
+
+    - 如果是语法问题,只需要使用 =Emacs Lisp= 的编辑命令就好了.
+
+    - 如果是编译时产生的错误或者警告,那么只要通过查看错误/警告内容就可以了.
+
+    - 如果是想做回归测试,可以使用 =ERT= 包.
+
+    - 如果是优化程序,那么可以查看文档这里: =M-: (info "(elisp)Profiling")=.
+
 
 **** Debugger
 
-     正常的 =Lisp debugger= 提供挂起 =form= 执行的能力.在 =Emacs= 中的一个挂起(suspended,或者叫中断,break)实际是一个递归编辑(recursive edit),
+     =Debugger= 提供挂起 =form= 执行的能力,挂起(suspended)通常也被叫做中断(break),
+
+     这个状态实际上就是 =Emacs= 的一个递归编辑(recursive edit)
+
+     可以在这个状态下检查运行时栈(run time stack),检查局部或者全局变量,甚至还能改变这些变量.
+
+
+
+     当执行中的一个挂起(suspended,或者叫中断,break)实际是一个递归编辑(recursive edit),
 
      在挂起的时候可以执行普通的编辑,比如检查运行时的栈,变量的值或者改变这些值等等.关于 =Recursive Editing= 可以查看 =M-: (info "(elisp) Recursive Editing")=.
 
@@ -3768,6 +3791,7 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
      如果要读取一个密码并且把密码传递给另外一个程序,可以使用 =read-password=.
 
 **** 在Minibuffer中使用的命令 (Minibuffer Commands)
+
      一些在 =minibuffer= 里面使用的命令.
 
 **** Minibuffer{{{window}}} (Minibuffer Windows)
@@ -3789,26 +3813,43 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 *** 命令循环 (Command Loop)
 
-**** 命令概览 (Command Overview)
+    在启动 =Emacs= 时,它会马上进入一个无限循环:
 
-     命令循环的最重要的工作就是读取按键序列(a key sequence),按键序列实际就是一个能够被翻译成一个命令的序列,通过 =read-key-sequence= 函数来完成读取以及翻译工作.
+    每一轮循环是为了读取用户的按键序列(=key sequence=),一个按键序列就是一个输入事件序列(a sequence input events);
 
-     =read-key= 或者 =read-event= 比 =read-key-sequence= 更加低级,只能针对一个按键或者事件进行处理, =discard-input= 可以舍弃终端输入 {{{buffer}}} 的内容
+    一旦等到到用户的输入,就会根据按键序列找到对应的命令;执行命令并且显示结果.
 
-     按键序列根据当前激活的 =keymaps= 来翻译成命令的,这个过程叫做按键查找(Key Lookup),最终结果是一个键盘宏(keyboard macro)或者可调用函数(callable function).
+    然后进行下一次循环,这和 =shell= 解析器的 =REPL= (=Read-Eval-Print Loop=) 一样,用代码描述大概如下:
 
-     如果按键是 =M-x= 就会读取另外一个命令的名字然后进行调用, =M-x= 翻译成 =execute-extended-command=.
+    #+BEGIN_SRC elisp
+      (while is-emacs-running               ;; is-emacs-running is t
+        (let* ((input (func-to-read))       ;; func-to-read 在读取到输入前会一直暂停循环
+               (command (command-lookup input))
+               (res (func-to-eval command)))
+          (func-to-print res)))
+    #+END_SRC
 
-     在执行命令之前 =Emacs= 会运行 =undo-boundary= 来创建一个撤销边界 ( =undo boundary= ),撤销边界是用来记录操作动作的,以后能够根据这些记录来进行撤销,详情 =M-: (info "elisp(Maintaining Undo)")=.
+    这个无限循环叫做编辑器命令循环(=editor command loop=),用户可以通过一些特别的输入来中断这个循环.
 
-     执行命令的时候, =Emacs= 会首先通过调用 =command-execute= 来读取命令的参数, =command-execute= 会根据函数的 =interactive= (只有 =interactive= 函数才有,也就是能够通过命令方式使用的函数)规范来读取参数.
+    实际上 =Emacs= 的处理远比上面的描述要复杂,先抛开复杂的情况不谈,举个简单的例子:
 
-     如果翻译所得的命令是一个键盘宏(也就是一个 =string= 或者 =vector=), =Emacs= 就会通过 =execute-kbd-macro= 来执行它.
+    假设用户现在输入 =C-n= 来进行移动到下一行.
 
-     有两个值得注意的钩子: =pre-command-hook= 和 =post-command-hook=,分别会在命令执行的前后分别执行,就算执行命令的时候被 =C-g= 结束也不能阻止这两个钩子的运行.
+    首先 =Emacs= 通过 =read-key-sequence= 来读取用户输入的,也就是上面的 =func-to-read=,得到的 =input= 是一个字符串或者向量(vector),
 
-     如果钩子执行的时候发生错误,错误就会被"沉默"并且发生错误钩子函数会被移除.
+    这里是字符串 ="^N"=;
 
+    然后 =Emacs= 根据 =input= 查找对应命令的,上面的 =(command-lookup input)= 大概就是 =(lookup-key (current-global-map) input)=,
+
+    得到的 =command= 是命令的定义,这里是 =next-line= 的定义;
+
+    最后就是执行命令然后显示结果了, =Emacs= 会用 =command-execute= 执行 =command=,也就是上面的 =func-to-eval=,
+
+    至于 =func-to-print= 就不太清楚了,本人也没有在文档上看到有写是哪个函数.
+
+    之所以说 =Emacs= 的实际处理要更复杂是因为输入有很多种类型,并且 =Emacs= 本身也要做一些别的处理,
+
+    具体内容就看这里: =M-: (info "(elisp)Command Overview")=
 
 
 **** 定义命令 (Defining Commands)
@@ -4202,19 +4243,21 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 **** 递归编辑 (Recursive Editing)
 
-     当 =Emacs= 启动的时候就会自动进入一个命令循环,是第一个命令循环,并且只有 =Emacs= 结束的时候这个循环才会结束.
+     当 =Emacs= 启动的时候就会自动进入一个命令循环(command loop),这是 *第一个命令循环*,并且只有 =Emacs= 结束的时候这个循环才会结束.
 
-     在 =Emacs= 中,第一个命令循环也叫做 =top-level=.因为可以在命令循环的基础上再调用更多的命令循环,我们称呼新调用的命令循环为递归编辑.
+     =Lisp= 程序可以在 *第一个命令循环* 下创建新的命令循环,这里暂且把新的命令循环叫做 *子命令循环*, 这种命令循环中嵌套子命令循环的情况叫做 *递归编辑*.
 
-     只要有命令唤醒一个的递归编辑就会被挂起并且会允许用户在命令恢复之前任意编辑.递归编辑和 =top-level= 中所支持的命令和 =keymaps= 都是一样的.
+     我们把 *第一个命令循环* 叫做顶层(=top-level=)命令循环,把 *子命令循环* 叫做递归编辑层(=recursive editing level=)命令循环.
 
-     只有小部分命令会结束递归编辑(或者说退出递归编辑级/recursive editing level),其他命令会在结束的时候返回到递归编辑级上.
+     一旦一个命令创建了一个递归编辑层命令循环,那么这个命令就会被挂起,用户可以在继续命令的执行前做任意的编辑.
+
+     顶层和递归编辑层的命令循环下可用的命令(=commands=)以及按键映射(=keymaps=)是一样的,
+
+     不过有少部分命令是针对递归编辑层命令循环的,这些命令是一直都可用的,另外有些命令只会在递归编辑层循环没有结束时可用.
 
      这一小部分命令在任何时候都是可用的,但是在递归编辑以外的情况下使用是没任何作用的.
 
-     所有的命令循环都设立了 (=all-purpose error handlers=) 通用错误处理,目的是避免命令引发的错误导致所在的命令循环被结束.
-
-
+     所有的命令循环都设立了 (=all-purpose error handlers=) 通用错误处理,所以命令循环里面引发的异常不会导致命令循环结束.
 
 
 
