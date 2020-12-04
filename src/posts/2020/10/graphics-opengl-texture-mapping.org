@@ -248,9 +248,9 @@
 
     =OpenGL= 基本也是这样的,不过 =OpenGL= 的纹理坐标系(texture coordinate system)原点和 =Direct3D= 不一样.
 
-    =OpenGL= 的纹理分很多种,因此本文对纹理映射过程学习都是针对2D纹理(2D texture)的,也就是我们最熟悉的图片.
+    =OpenGL= 的纹理分很多种: 1D, 2D 和 3D,因此本文对纹理映射过程学习都是针对2D纹理(2D texture)的,也就是我们最熟悉的图片.
 
-    2D纹理映射就是把图片贴到一个物体上,比如把尺寸 $w \times h$ 海报贴到尺寸 $x times y$ 的墙壁上,并且海报对齐墙壁的 $x$ 和 $y$ 轴,有三种可能的情况以及要求:
+    2D纹理映射就是把图片贴到一个物体上,比如把尺寸 $w \times h$ 海报贴到尺寸 $x \times y$ 的墙壁上,并且海报对齐墙壁的 $x$ 和 $y$ 轴,有三种可能的情况以及要求:
 
     1. 墙壁的尺寸比海报大或者一样大: $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$, 并且想按照原尺寸把海报贴到墙壁上;
 
@@ -258,6 +258,8 @@
 
     3. 墙壁的尺寸比海报小: $\begin{equation} \left\{ \begin{aligned} w > x \\ h > y \end{aligned} \right. \end{equation}$, 要把海报缩小(minification)到 $\begin{equation} \left\{ \begin{aligned} w \leq x \\ h \leq y \end{aligned} \right. \end{equation}$ 贴到墙上.
 
+
+    \\
 
     在现实中改变海报的尺寸会比较麻烦,但是在计算机中就很方便,我们把墙壁看作是一个 $x \times y$ 像素的显示屏,海报就是一张 $w \times h$ 的图片,
 
@@ -271,24 +273,34 @@
 
     [[../../../files/magnification-minification.png]]
 
-    说了这么多,其实我是想说要区分 *图片的原本像素* 和 *显示出来的像素*.
+    说了这么多,其实我是想说要区分图片 *原本的像素* 和 *显示出来的像素*.
 
-    图片的像素量反映了图片包含的信息量, *图片的原本像素量* 反映图片包含的真正信息量,能够显示处多少真正信息量取决于显示的容器.
+    图片的像素量反映了图片包含的信息量, 图片 *原本的像素量* 反映图片包含的 *真正信息量*, *能够显示出多少真正信息量* 取决于 *能够用多少个物理像素来显示*.
 
-    在情况1和2中,显示出来的真正信息量都是没变的;但是情况2中, *真正信息量* 和 *显示出来的信息量* (也就是放大后的图片像素量) 之间的比例变低了,图片原本的像素衔接地方被放大了,就出现了锯齿(jaggies).
+    在情况1和2中,显示出来的真正信息量都是没变的;
 
-    #+CAPTION: $75px \times 75px$ GIMP logo
+    情况1中 *真正信息量* 和 *显示出来的信息量* 的比是 1,也就是按照纹理图片的 *原本尺寸以及原有信息* 显示;
+
+    但是情况2中, *真正信息量* 和 *显示出来的信息量* (也就是放大后的图片像素量) 之间的比例变低了,图片原本的像素衔接地方被放大了,就出现了锯齿(jaggies).
+
+    #+CAPTION: $75px \times 75px$ GIMP logo (情况1)
     [[../../../files/gimp-logo.png]]
 
-    #+CAPTION: $150px \times 150px$ GIMP logo
+    #+CAPTION: $150px \times 150px$ GIMP logo (情况2)
     [[../../../files/gimp-logo-150x150.png]]
 
-    而在情况3中,显示出来的图片信息量变少了,你会发现把缩小后的图放大回 $75px \times 75px$ 后细节相比情况1的图少了很多细节.
+    而在情况3中, *显示出来的信息量* 变少了,你会发现把这图放大成 $75px \times 75px$ 再对比情况1的图少很多细节.
 
-    #+CAPTION: $38px \times 38px$ GIMP logo
+    #+CAPTION: $38px \times 38px$ GIMP logo (情况3)
     [[../../../files/gimp-logo-38x38.png]]
 
-    回到纹理图片话题上,纹理图片原本的1个像素称为1个纹理元素(=texture pixel=, =texture element= 或者 =texel=).
+    纹理图片原本的1个像素称为1个纹理元素(=texture pixel=, =texture element= 或者 =texel=),是纹理的基本单位,
+
+    比如上面的 $75px \times 75px$ =GIMP logo= 纹理一共有 $75 \times 75$ 个纹理元素.
+
+    *但* 不要忘记了还有 1D 和 3D 纹理,它们的纹理元素不能用一个像素就能概括的,这不在本文的讨论范围内,有兴趣的可以去看看上面 =Direct3D= 的文章了解一下.
+
+    \\
 
     对纹理图片放大/缩小就是对纹理图片进行纹理过滤(texture filtering),也就是对纹理图片进行像素取值以及插值,从而构成一张新的图片,
 
@@ -312,7 +324,7 @@
 
     前面我们对纹理映射的过程有一个直观上的了解,接下来要看一下是如何具体实现这一个过程的,
 
-    和前面一样,我们举一个简单的例子开始学习: 在计算机的世界中有一张[[../../../files/Brick-Texture-Walll.jpg][长方形的图片]]和一面[[../../../files/wall.png][三角形的墙]],要求把图片贴到在墙上.
+    和前面一样,我们举一个简单的例子开始学习: 在计算机的三维世界中有一张[[../../../files/Brick-Texture-Walll.jpg][长方形的图片]]和一面[[../../../files/wall.png][三角形的墙]],要求把图片贴到在墙上.
 
     首先要做的是确定图片的哪一部分要被贴到墙壁上以及怎么贴到墙上,为此需要纹理坐标(texture coordinate)来指定要贴的图片部分,
 
@@ -323,13 +335,13 @@
 
     $x$ 和 $y$ 已经在其它地方上用到了,因此通常用 $u$ 和 $v$ 分别表示 $x$ 和 $y$,
 
-    这里用 $p_{1} = (0.16, 0)$, $p_{2} = (0.84, 0)$ 以及 $p_{3} = (0.5, 1)$ 来指定图片的哪一部分贴到墙上,
+    这里用 $t_{1} = (0.16, 0)$, $t_{2} = (0.84, 0)$ 以及 $t_{3} = (0.5, 1)$ 来指定图片的哪一部分贴到墙上,
 
-    并且指定这三个坐标如何对应墙的点,为了方便描述,我们把所有纹理坐标统一定义为 $P = \set{ p_{1}, p_{2}, p_{3}, ..., p_{n} }$,把任意一个纹理坐标标记为 $p_{i}$ (0 < i \le n),
+    并且指定这三个坐标如何对应墙的点,为了方便描述,我们把所有纹理坐标统一定义为 $T = \set{ t_{1}, t_{2}, t_{3}, ..., t_{n} }$,把任意一个纹理坐标标记为 $t_{i}$ (0 < i \le n),
 
     把墙上的所有点统一定义为 $S = \set{ s_{1}, s_{2}, s_{3}, ..., s_{n} }$,把任意一个点标记为 $s_{i}$ (0 < i \le n);
 
-    然后根据 $p_{i}$ 找到的对应的纹理元素,获取对应颜色 $c_{i}$,这个过程叫做采样(sampling),也叫 =texture lookup=,获取到的颜色叫做纹理样本(texture sample);
+    然后根据 $t_{i}$ 找到的对应的纹理元素,获取对应颜色 $c_{i}$,这个过程叫做采样(sampling),也叫 =texture lookup=,获取到的颜色叫做纹理样本(texture sample);
 
     最后把 $c_{i}$ 作为 $s_{i}$ 上的颜色,进行光照计算,这一步叫做 =shading surface point=.
 
@@ -337,11 +349,12 @@
 
     #+BEGIN_SRC cpp
       Color shade_surface_point(Surface s, Point p, Texture t) {
+          // p is like (x, y, z)
           Vector normal = s.get_normal(p);
           (u, v) = s.get_texcoord(p);
           Color diffuse_color = texture_lookup(t, u, v);
           // compute shading using diffuse_color and normal,
-          // let it just be the final color
+          // just cut to the chase, let it be the final color
           Color color = diffuse_color;
           s.shading_point(p, color);
           return color;
@@ -354,10 +367,44 @@
       }
     #+END_SRC
 
-    这里有一个关键点,那就是函数 =s.get_texcoord(p)=: 从物体表面的点 $s_{i}$ 到纹理图片的点 $p_{i}$ 的映射,
+    这里有一个关键点,那就是函数 =s.get_texcoord(p)=: 从物体表面的点 $p = s_{i}$ 到纹理图片的点 $t_{i}$ 的映射,
 
-    这个函数叫做 =texture coordinate function=,我们说它给物体表面上每个点定义了一个纹理坐标.
+    这个函数叫做 =texture coordinate function=,我们说它给物体表面上每个点定义了一个纹理坐标,它还有别的名字:
 
-    从数学上来讲就是从表面(surface) $S$ 到纹理(texture) $T$ 的域(domain)的映射: $\phi: S \rightarrow T : (x, y, z) \mapsto (u, v)$.
+    =UV mapping= 或者 =Surface parameterization=.
 
-    集合 $T$ 叫做纹理空间(texture space),它通常就是一个包含了图片的矩形(rectangle).
+    从数学上来讲就是从表面(surface) $S$ 到纹理(texture)的域(domain) $T$ 的映射, $\phi: S \rightarrow T : (x, y, z) \mapsto (u, v)$.
+
+    集合 $T$ 叫做纹理空间(texture space),它通常就是一个包含了图片的矩形(rectangle),就像上面的纹理坐标图一样.
+
+    那么函数 $\phi$ 应该具备什么特性,要怎么定义呢?这得看要纹理映射时可能会遇到什么问题.
+
+    首先要是物体可以发生变换,相机也可以发生变换,理所当然的物体的纹理也要跟着变换,
+
+    并且物体形状可能十分复杂,可能是一个球体,一个多面体等等,不同形状的物体需要不同的映射方法,
+
+    因此要考虑如何把纹理到物体表面;
+
+    其次是纹理过滤处理问题,如果纹理的纹理元素很少(也就是常说的图片分辨率/解析度很低),那么贴在大的物体表面会有很多锯齿,
+
+    因此要考虑如何减少锯齿.
+
+    $\phi$ 是可以完全按照我们的想法去定义的,但是有几个不可能同时实现的目标(competing goals)需要考虑:
+
+    1. 双射性(Bijectivity),大部分情况下 $\phi$ 应该满足双射,这样才能保证物体表面上的点和纹理空间上的点是一对一关系;
+
+       如果表面上有几个点映射到同一个纹理空间上的点,那么这个纹理空间的点会一次影响这个几个物体表面的点,
+
+       这种一般是用在重复贴一张图上,但你绝对不会想意外出现这种情况.
+
+    2. 避免大小畸变(size distortion),纹理的缩放要相对于表面保持大概固定,
+
+       也就是 *物体表面上点之间的距离* 要和 *纹理上对应点之间的距离* 保持一致,
+
+       从函数的角度来说, $\phi$ 的导数大小变化不应该太大.
+
+    3. 避免形状畸变(shape distortion),纹理不应该变形的太厉害,比如,在物体表面上贴一个圆形的纹理,
+
+       最后的显示结果不应该是
+
+    4. 连续性(Continuity)
