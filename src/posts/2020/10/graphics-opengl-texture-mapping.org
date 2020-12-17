@@ -505,11 +505,61 @@
 
 ***** 球面坐标 (Spherical Coordinates)
 
-      经纬度坐标系(latitude and longitude coordinate system)经常用在球体表面的定位上,用两个参数(lat-long)就可以进行定位了.
+      对于在球面上定位,有两种方法: 经纬度坐标(latitude and longitude coordinate system)以及球面坐标,
 
-      把球体的中心放置在右手坐标系的原点上,球体的半径为 $r$,现在来看看经纬度坐标系和笛卡尔坐标系之间是如何转换的.
+      这两种方法之间其实是有一些联系的,并且这两个者都可以变换成笛卡尔坐标系,或者反过来变换.
 
-      #+CAPTION: 笛卡尔坐标系和经纬度坐标系
+      \\
+
+
+      首先是经纬度坐标系,它用两个参数(lat-long)进行定位.
+
+      假设现有一个球,把球体的中心放置在右手坐标系的原点上,球体的半径为 $r$, $p = (x, y, z)$ 是球体表面上的一个点,如图所示,
+
+      #+CAPTION: 右手坐标系和经纬度坐标系
       [[../../../files/lat-long-coordinates.png]]
 
-      假设$p = (x, y, z)$ 是球体表面的一个点,根据这个图可以得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \cos(long) \times \sin(lat) \\ y &= r \times \cos(lat) \\ z &= r \times \sin(90^{\circ} - long) \times sin(lat) = r \times \sin(long) \times \sin(lat) \end{aligned} \right. \end{equation}$, 其中 $lat, long \in \left(-\pi, \pi\right]$.
+      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \cos(long) \times \sin(lat) \\ y &= r \times \cos(lat) \\ z &= r \times \sin(90^{\circ} - long) \times sin(lat) = r \times \sin(long) \times \sin(lat) \end{aligned} \right. \end{equation}$,
+
+      其中 $lat, long \in \left(-\pi, \pi\right]$.
+
+      那么如何反来在只知道 $x$, $y$ 和 $z$ 的情况下得到 $lat$ 和 $long$ 呢?
+
+      首先求出球体的半径 $r$,也就是 $\vec{Op}$ 的模长: $r = \sqrt{x^{2} + y^{2} + z^{z}}$;
+
+      通过上面的图可以看到 $y = r \times \cos(lat)$,那么通过反余弦(arccosine)求出 $lat$: $lat = acos(\frac{y}{r})$;
+
+      最后就是在 $X$ 轴和 $Y$ 轴构成的平面上求出 $long$,根据图可以知道 $tan(long) = \frac{z}{x}$,那么再通过反正切(arctan)就可以得到 $long = atan(\frac{z}{x}) = atan2(z, x)$.
+
+      再把方程组 $\begin{equation} \left\{ \begin{aligned} lat &= acos(\frac{y}{\sqrt{x^{2} + y^{2} + z^{2}}}) \\ long &= atan(\frac{z}{x}) = atan2(z, x) \end{aligned} \right. \end{equation}$ 改成函数形式 $f: \mathbb{R}^{3} \mapsto \mathbb{R}^{2}$.
+
+      这就是笛卡尔坐标系和经纬度坐标系之间的变换.
+
+      \\
+
+      球面坐标使用 $\rho$, $lat$ 和 $long$  三个参数描述一个点的位置的,
+
+      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $lat$ 和 $long$ 依然分别是经度和纬度.
+
+      和经纬度坐标系相比多了一个半径参数,球面坐标所表达的信息相比经纬度坐标更加完整,此外两者本质上没有任何区别.
+
+      \\
+
+      那么这和 $\phi$ 之间有什么关系呢?
+
+      仔细观察 $f$ 你会发现它的形式和 $\phi$ 很像,除了两者空间的坐标系原点和范围不一样外,基本上是一致了.
+
+      只要把坐标系平移为纹理坐标系那样,并且把 $lat$ 和 $long$ 各自映射到 $\left[0, 1\right]$, $\phi$ 就能求出来了,
+
+      我们把球的其中一面沿着中间垂直切下,得到一张 *近似* 长方形的图,
+
+      假设球体的半径为 $r$,那么这张图的高度为 $\pi r$,长度为 $2 \pi r$,
+
+      #+CAPTION: 314px * 157px 平铺后的球体表面和纹理坐标系的关系
+      [[../../../files/spherical-coordinates-to-texture-coordinates.png]]
+
+      那么可以得到 $\phi(x, y, z) = (\frac{\pi r + atan2(z, x) r}{2 \pi r}, \frac{\pi r - acos(\frac{y}{r})}{\pi})$,
+
+      其中 $r = \sqrt{x^{2} + y^{2} + z^{2}}$.
+
+      # https://math.libretexts.org/Courses/Mount_Royal_University/MATH_2200:_Calculus_for_Scientists_II/5:_Vector_Spaces/5.7:_Cylindrical_and_Spherical_Coordinates#:~:text=Spherical%20Coordinates%201%20%CF%81%20%28the%20Greek%20letter%20rho%29,the%20origin%20and%200%20%E2%89%A4%20%CF%86%20%E2%89%A4%20%CF%80.
