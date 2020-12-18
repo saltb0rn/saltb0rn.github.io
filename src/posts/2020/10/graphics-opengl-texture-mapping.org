@@ -474,6 +474,8 @@
 
      之后就用[[../../../files/test-image.png][测试图片]]作为纹理映射到物体表面上,网格可以直观展示出映射的扭曲程度.
 
+     这个章节需要大量的球面坐标系和柱坐标系的知识,需要的话请看[[https://math.libretexts.org/Courses/Mount_Royal_University/MATH_2200:_Calculus_for_Scientists_II/5:_Vector_Spaces/5.7:_Cylindrical_and_Spherical_Coordinates#:~:text=Spherical%20Coordinates%201%20%CF%81%20%28the%20Greek%20letter%20rho%29,the%20origin%20and%200%20%E2%89%A4%20%CF%86%20%E2%89%A4%20%CF%80.][这里]].
+
 
 ***** 平面投影(Planar Projection)
 
@@ -519,27 +521,31 @@
       #+CAPTION: 右手坐标系和经纬度坐标系
       [[../../../files/lat-long-coordinates.png]]
 
-      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \cos(long) \times \sin(lat) \\ y &= r \times \cos(lat) \\ z &= r \times \sin(90^{\circ} - long) \times sin(lat) = r \times \sin(long) \times \sin(lat) \end{aligned} \right. \end{equation}$,
+      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \cos(β) \times \sin(α) \\ y &= r \times \cos(α) \\ z &= r \times \sin(90^{\circ} - β) \times sin(α) = r \times \sin(β) \times \sin(α) \end{aligned} \right. \end{equation}$,
 
-      其中 $lat, long \in \left(-\pi, \pi\right]$.
+      其中 $α, β \in \left(-\pi, \pi\right]$.
 
-      那么如何反来在只知道 $x$, $y$ 和 $z$ 的情况下得到 $lat$ 和 $long$ 呢?
+      那么如何反来在只知道 $x$, $y$ 和 $z$ 的情况下得到 $α$ 和 $β$ 呢?
 
       首先求出球体的半径 $r$,也就是 $\vec{Op}$ 的模长: $r = \sqrt{x^{2} + y^{2} + z^{z}}$;
 
-      通过上面的图可以看到 $y = r \times \cos(lat)$,那么通过反余弦(arccosine)求出 $lat$: $lat = acos(\frac{y}{r})$;
+      通过上面的图可以看到 $y = r \times \cos(α)$,那么通过反余弦(arccosine)求出 $α$: $α = acos(\frac{y}{r})$;
 
-      最后就是在 $X$ 轴和 $Y$ 轴构成的平面上求出 $long$,根据图可以知道 $tan(long) = \frac{z}{x}$,那么再通过反正切(arctan)就可以得到 $long = atan(\frac{z}{x}) = atan2(z, x)$.
+      最后就是在 $X$ 轴和 $Y$ 轴构成的平面上求出 $β$,根据图可以知道 $tan(β) = \frac{z}{x}$,
 
-      再把方程组 $\begin{equation} \left\{ \begin{aligned} lat &= acos(\frac{y}{\sqrt{x^{2} + y^{2} + z^{2}}}) \\ long &= atan(\frac{z}{x}) = atan2(z, x) \end{aligned} \right. \end{equation}$ 改成函数形式 $f: \mathbb{R}^{3} \mapsto \mathbb{R}^{2}$.
+      那么再通过反正切(arctan)就可以得到 $β = atan(\frac{z}{x}) = atan2(z, x)$.
+
+      再把方程组 $\begin{equation} \left\{ \begin{aligned} α &= acos(\frac{y}{\sqrt{x^{2} + y^{2} + z^{2}}}) \\ β &= atan(\frac{z}{x}) = atan2(z, x) \end{aligned} \right. \end{equation}$ 改成函数形式 $f: \mathbb{R}^{3} \mapsto \mathbb{R}^{2}$.
+
+      那么 $p$ 的经纬度坐标就是 $(,  \pi - \alpha)$
 
       这就是笛卡尔坐标系和经纬度坐标系之间的变换.
 
       \\
 
-      球面坐标使用 $\rho$, $lat$ 和 $long$  三个参数描述一个点的位置的,
+      球面坐标使用 $\rho$, $α$ 和 $β$  三个参数描述一个点的位置的,
 
-      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $lat$ 和 $long$ 依然分别是经度和纬度.
+      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $α$ 和 $β$ 依然分别是经度和纬度.
 
       和经纬度坐标系相比多了一个半径参数,球面坐标所表达的信息相比经纬度坐标更加完整,此外两者本质上没有任何区别.
 
@@ -549,7 +555,7 @@
 
       仔细观察 $f$ 你会发现它的形式和 $\phi$ 很像,除了两者空间的坐标系原点和范围不一样外,基本上是一致了.
 
-      只要把坐标系平移为纹理坐标系那样,并且把 $lat$ 和 $long$ 各自映射到 $\left[0, 1\right]$, $\phi$ 就能求出来了,
+      只要把坐标系平移为纹理坐标系那样,并且把 $α$ 和 $β$ 各自映射到 $\left[0, 1\right]$, $\phi$ 就能求出来了,
 
       我们把球的其中一面沿着中间垂直切下,得到一张 *近似* 长方形的图,
 
@@ -558,8 +564,34 @@
       #+CAPTION: 314px * 157px 平铺后的球体表面和纹理坐标系的关系
       [[../../../files/spherical-coordinates-to-texture-coordinates.png]]
 
-      那么可以得到 $\phi(x, y, z) = (\frac{\pi r + atan2(z, x) r}{2 \pi r}, \frac{\pi r - acos(\frac{y}{r})}{\pi})$,
+      $p$ 的经纬度坐标为 $(atan2(z, x), acos(\frac{y}{r}))$,那么在这图上的坐标就是 $(atan2(z, x), \pi - acos(\frac{y}{r}))$
+
+      那么可以得到 $\phi(x, y, z) = (\frac{\pi r + atan2(z, x) r}{2 \pi r}, \frac{\pi r - acos(\frac{y}{r}) r}{\pi r})$,
 
       其中 $r = \sqrt{x^{2} + y^{2} + z^{2}}$.
 
+      但是这并非完美的双射,在球体的两极会发生一个极点映射到多个纹理坐标的情况,从而两极发生扭曲,
+
+      这也是为什么前面说了得到的是一张近似长方形的图.
+
       # https://math.libretexts.org/Courses/Mount_Royal_University/MATH_2200:_Calculus_for_Scientists_II/5:_Vector_Spaces/5.7:_Cylindrical_and_Spherical_Coordinates#:~:text=Spherical%20Coordinates%201%20%CF%81%20%28the%20Greek%20letter%20rho%29,the%20origin%20and%200%20%E2%89%A4%20%CF%86%20%E2%89%A4%20%CF%80.
+
+
+***** 柱坐标系 (Cylindrical Coordinates)
+
+      在柱体上进行定位其实和在球体上面定位是差不多的,柱坐标使用($\rho, \theta, y$)三个参数进行描述.
+
+      #+CAPTION: 柱坐标系
+      [[../../../files/cylindrical-coordinates.png]]
+
+      $\rho$ 是柱体的半径, $\theta$ 是点 $p = (x, y, z)$ 的 $x$ 和 $z$ 坐标的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
+
+      像球体那样把柱切开,得到一张 *近似* 长方形的图,长是 $2 \pi \rho$,高度就是 $y$,也就是说高度是不定的,由 $p$ 决定.
+
+      同样还是平移原点和映射到 $[0, 1]$ 上,
+      
+
+
+***** 立方体映射 (Cubemaps)
+
+      
