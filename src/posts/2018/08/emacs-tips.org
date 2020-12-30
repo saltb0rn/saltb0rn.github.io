@@ -2189,25 +2189,33 @@ P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为�
 
 **** 程序的加载过程 (How Programs Do Loading)
 
-     =Emacs Lisp= 有几个用于加载的接口,不过所有接口最后都是调用 =load= 函数来加载文件,因此,这里只了解 =load=.
+     =Emacs Lisp= 有几个用于加载的接口,不过所有接口最后都是调用 =load= 函数来加载文件,因此,这里只了解 =load= 就可以.
 
-     比如现在用 =load= 加载一个叫做 =FILENAME= 文件, =(load 'FILENAME')=:
+     假设现在执行一个表达式 =(load "FILENAME")=,那么就会按照以下程序执行:
 
-     1. 先查找 =FILENAME.elc=,如果找到就打开并且读取文件内容,然后运算,最后关闭文件,然后返回 =t= 这就是加载;
+     1. 先查找 =FILENAME.elc=, =.elc= 文件格式是 =.el= 文件的字节码编译格式,
 
-     2. 如果文件不存在就,尝试查找 =FIELNAME.el=, =.elc= 文件格式是 =.el= 文件的字节码编译格式,如果找到就加载.
+        如果找到就打开并且读取文件内容,然后运算,最后关闭文件,然后返回 =t= 表示加载完毕,
 
-     3. 如果 Emacs 支持加载动态模块并且步骤2也没有找到 =FILENAME.el= 就尝试查找 =FILENAME.EXT=,
+        否则进行下一步;
 
-        =EXT= 表示动态模块的后缀,不同的系统后缀不一样.如果找到后就加载.
+     2. 如果编译文件不存在就尝试查找 =FIELNAME.el=,如果找到就加载,否者进行下一步;
 
-     4. 如果步骤3也找不到就尝试查找 =FILENAME=,不带任何后缀,如果找到就加载.
+     3. 如果编译的 =Emacs= 支持加载动态模就尝试查找 =FILENAME.EXT=, =EXT= 表示动态模块的后缀,不同的系统后缀不一样.
 
-     5. 如果还没找到,并且启用了 =Auto Compression mode=,就尝试查找文件压缩版本,查找压缩文件顺序由 =jka-compr-load-suffixes= 决定,
+        如果找到后就加载,如果没有找到或者 =Emacs= 不支持加载动态模块,那么就进行下一步;
 
-        =jka-compr-load-suffixes= 的标准值是 =(.gz)=,会按照 =("FILENAME.elc.gz" "FILENAME.elc.gz" "FILENAME.el.gz" "FILENAME.gz")= 顺序查找,
+     4. 其实前 3 步是由 =load-suffixes= 变量决定的, =load-suffixes= 记录了文件后缀,前面的查找顺序就根据这个执行的.
 
-        找到后在其中尝试查找 =FILENAME= 文件: =(load FILENAME)=,找到后进行解压加载,这是一个递归过程.
+        一旦前 3 个步骤都没找到文件,那么就尝试查找 =FILENAME=,如果找到就加载,否者进行下一步;
+
+     5. 如果启用了 =Auto Compression mode=,就尝试查找压缩版本,默认是 =FILENAME.gz=,
+
+        =Emacs= 是通过文件后缀判断文件是否被压缩, =jka-compr-load-suffixes= 记录了若干个压缩文件后缀,默认值是 =(.gz)=.
+
+        会按照 =("FILENAME.elc.gz" "FILENAME.el.gz" "FILENAME.gz")= 顺序查找(这个说法可能有误,不过经过验证的确是会加载这三个其中一个,有时间的话用三个类似名字但代码不同的包做验证),
+
+        找到后在其中尝试查找 =FILENAME= 文件: =(load "FILENAME")=,找到后进行解压加载,这是一个递归过程.
 
      6. 如果都没找到,默认引发 =file-error= 错误,可以在参数 =missing-ok= 位置传入 =non-nil= 让它不报错并且返回 =nil=.
 
