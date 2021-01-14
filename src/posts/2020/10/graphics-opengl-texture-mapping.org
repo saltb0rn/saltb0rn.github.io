@@ -426,7 +426,7 @@
 
     从数学上来讲就是从表面(surface) $S$ 到纹理(texture)的域(domain) $T$ 的映射, $\phi: S \rightarrow T : (x, y, z) \mapsto (u, v)$.
 
-    集合 $T$ 叫做纹理空间(texture space),它通常就是一个包含了图片的矩形(rectangle),就像上面的纹理坐标图一样.
+    集合 $T$ 叫做纹理空间(texture space),它 *通常* 就是一个包含了图片的矩形(rectangle),就像上面的纹理坐标图一样.
 
     总体上来说,纹理映射做的基本事情基本上就是定义 *纹理坐标函数* 和* 纹理查找*.
 
@@ -535,6 +535,8 @@
 
 ***** 球面坐标 (Spherical Coordinates)
 
+      正如这小节的标题所展示的那样,这是针对球状物体的纹理映射.
+
       对于在球面上定位,有两种方法: 经纬度坐标(latitude and longitude coordinate system)以及球面坐标,
 
       这两种方法之间其实是有一些联系的,并且这两个者都可以变换成笛卡尔坐标系,或者反过来变换.
@@ -551,7 +553,7 @@
       #+CAPTION: 右手坐标系和经纬度坐标系
       [[../../../files/lat-long-coordinates.png]]
 
-      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \cos(\beta) \times \sin(\alpha) \\ y &= r \times \cos(\alpha) \\ z &= r \times \sin(90^{\circ} - \beta) \times sin(\alpha) = r \times \sin(\beta) \times \sin(\alpha) \end{aligned} \right. \end{equation}$,
+      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \sin(\alpha) \times \cos(\beta) \\ y &= r \times \cos(\alpha) \\ z &= r  \times sin(\alpha) \times \sin(90^{\circ} - \beta) = r  \times \sin(\alpha) \times \sin(\beta) \end{aligned} \right. \end{equation}$,
 
       其中 $\alpha, \beta \in \left(-\pi, \pi\right]$.
 
@@ -567,7 +569,7 @@
 
       再把方程组 $\begin{equation} \left\{ \begin{aligned} \alpha &= acos(\frac{y}{\sqrt{x^{2} + y^{2} + z^{2}}}) \\ \beta &= atan(\frac{z}{x}) = atan2(z, x) \end{aligned} \right. \end{equation}$ 改成函数形式 $f: \mathbb{R}^{3} \mapsto \mathbb{R}^{2}$.
 
-      $atan2$ 和 $acos$ 的值域分别是 $\left[-\frac{\pi}{2}, \frac{\pi}{2}\right]$ 和 $\left[0, \pi\right]$,
+      $atan2$ 和 $acos$ 的结果是弧度,值域分别是 $\left[-\frac{\pi}{2}, \frac{\pi}{2}\right]$ 和 $\left[0, \pi\right]$,
 
       而经度和纬度的范围分别是 $\left[-{\pi}, {\pi}\right]$ 和 $\left[\frac{\pi}{2}, -\frac{\pi}{2}\right]$,
 
@@ -585,7 +587,7 @@
 
       和经纬度坐标系相比多了一个半径参数,球面坐标所表达的信息相比经纬度坐标更加完整,此外两者本质上没有任何区别.
 
-      所以 $p$ 的球面坐标就是 $(atan2(z, x), \frac{\pi}{2} - acos(\frac{y}{r}))$.
+      所以 $p$ 的球面坐标就是 $(r, atan2(z, x), \frac{\pi}{2} - acos(\frac{y}{r}))$.
 
       \\
 
@@ -602,7 +604,7 @@
       #+CAPTION: 314px * 157px 平铺后的球体表面和纹理坐标系的关系
       [[../../../files/spherical-coordinates-to-texture-coordinates.png]]
 
-      可以得知在球面坐标系下 $p$ 的坐标就是 $(atan2(z, x) r, \frac{\pi}{2} r - acos(\frac{y}{r}) r)$,
+      可以得知在以 $O_{sphere}$ 为原点的坐标系下, $p$ 的坐标就是 $(atan2(z, x) r, \frac{\pi}{2} r - acos(\frac{y}{r}) r)$,
 
       平移原点后 $p = (\pi r + atan2(z, x)r, \frac{\pi}{2} r - acos(\frac{y}{r}) r + \frac{\pi}{2} r) = (\pi r + atan2(z, x) r, \pi r - acos(\frac{y}{r}) r)$;
 
@@ -616,23 +618,40 @@
 
       # https://math.libretexts.org/Courses/Mount_Royal_University/MATH_2200:_Calculus_for_Scientists_II/5:_Vector_Spaces/5.7:_Cylindrical_and_Spherical_Coordinates#:~:text=Spherical%20Coordinates%201%20%CF%81%20%28the%20Greek%20letter%20rho%29,the%20origin%20and%200%20%E2%89%A4%20%CF%86%20%E2%89%A4%20%CF%80.
 
+      *(这里和书上的结果也是有差异,不确定是否推错了)*
+
 
 ***** 柱坐标系 (Cylindrical Coordinates)
+
+      对于柱状物体,可以采用上面的球面的纹理映射方法,但这样会有不少扭曲,因此针对柱体有柱体的做法.
 
       在柱体上进行定位其实和在球体上面定位是差不多的,柱坐标使用($\rho, \theta, y$)三个参数进行描述.
 
       #+CAPTION: 柱坐标系
       [[../../../files/cylindrical-coordinates.png]]
 
-      $\rho$ 是柱体的半径,等于 $\sqrt{x^{2} + z^{2}}$, $\theta$ 是点 $p$ 的空间坐标 $(x, y, z)$ 的 $x$ 和 $z$ 坐标的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
+      $\rho$ (注意,这不是字母 $p$) 是柱体的半径,等于 $\sqrt{x^{2} + z^{2}}$, $\theta$ 是点 $p$ 的空间坐标 $(x, y, z)$ 在上图的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
 
-      像球体那样把柱切开,得到一张 *近似* 长方形的图,长是 $2 \pi \rho$,也就是说 $x \in \left[-\pi \rho, \pi \rho\right]$,
+      # 根据上图以及三角函数可以计算出 $x$, $y$, $z$ 的关系: $\begin{equation} \left\{ \begin{aligned} \sin\theta &= \frac{z}{\rho} \\ \cos\theta &= \frac{x}{\rho} \end{aligned} \right. \rightarrow \left\{ \begin{aligned} z &= \rho \sin\theta \\ x &= \rho \cos\theta \end{aligned} \right. \end{equation}$.
+
+      像球体那样把柱切开,得到一张 *近似* 长方形的图,宽是 $2 \pi \rho$,也就是说 $x \in \left[-\pi \rho, \pi \rho\right]$,
 
       柱体的高不定,假设为 $h$,那么$y \in \left[-\frac{h}{2}, \frac{h}{2}\right]$.
 
+      #+CAPTION: 平铺后的柱面和纹理坐标系的关系
+      [[../../../files/cylindrical-coordinates-to-texture-coordinates.png]]
+
       同样还是平移原点和映射到 $[0, 1]$ 上,
 
-      $\frac{y + \frac{h}{2}}{h}$
+      在以 $O_{cylinder}$ 为原心的坐标下, $p$ 的坐标就是 $(atan2(z, x)r, y)$,
+
+      平移原点 $(\pi\rho + atan2(z, x)\rho, \frac{h}{2} + y)$,
+
+      映射到 $[0, 1]$ 上 $(\frac{\pi\rho + atan2(z, x)\rho}{2\pi\rho}, \frac{\frac{h}{2} + y}{h}) \rightarrow (\frac{\pi + atan2(z, x)}{2\pi}, \frac{1}{2} + \frac{y}{h})$.
+
+      *(这里的推导可能有误/也有可能是书上的公式有问题 ,暂时推导不出和书上一样的结果).*
 
 
 ***** 立方体映射 (Cubemaps)
+
+      用球体映射的方法作用于球状或类球状物体会有一个问题,那就是两极(poles)附近的地方会有很严重的扭曲.
