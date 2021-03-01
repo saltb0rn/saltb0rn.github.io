@@ -730,9 +730,9 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
       其实我们上面就已经见过一个例子: =rotors=.
 
-***** 复数的指数
-
 ***** 四元数基础
+
+      说实话,四元数已经超出我个人的水平了,在看了很多篇文章后,我决定总结 https://www.3dgep.com/understanding-quaternions/ 这篇文章上的内容.
 
       对复数有一定了解后可以开始看一下四元数是如何应用于3D旋转的了.
 
@@ -777,7 +777,9 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
       为了更加贴近才学过的复数知识,更加容易学习四元数,所以后面采用 *有序对(ordered pair)* 来表示四元数: $q = \left[w, v\right] \ \  w \in \mathbb{R}, v \in \mathbb{R^{3}}$,
 
-      其中 $v$ 也可以用复数表示 $v = xi + yj + zk \ \  x,y,z \in \mathbb{R}$.
+      其中 $v$ 叫做 =vector part=,可以把它看作一个整体的虚数,而这个虚数可以分解为 $v = xi + yj + zk \ \  x,y,z \in \mathbb{R}$,
+
+      看作一个整体之后就可以按照研究 $a + bi$ 这样的复数的方法去研究四元素.
 
       像 $\left[s, 0\right] \ s \ne 0$ 这样的四元数叫做 *实四元数(real quaternion)*;
 
@@ -837,15 +839,13 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 ***** 四元数与3D旋转
 
-      四元数的旋转和矩阵旋转的核心是一样的: 一个点围绕某一轴旋转多少度.
+      四元数的旋转和矩阵旋转的核心是一样的: 一个点围绕某一旋转轴旋转多少度.
 
-      这里我们需要一个能够进行旋转的变换,和一个需要进行旋转的点.
+      之前有提到过 =rotors= 用于复平面上进行旋转,这 *应该* 适用于所有复数,包括四元数,其中 =rotors= 的 =vector parts= 就是旋转轴.
 
-      之前有提到过 =rotors= 用于复平面上进行旋转,这 *应该* 适用于所有复数,包括四元数.
+      因此假设有一个 =rotor=: $q = \left[s, \lambda\hat{v}\right]$, 那么 *应该* 存在这样的关系: $\left[\cos\theta, \sin\theta\lambda\hat{v}\right]$.
 
-      因此假设有一个四元数: $q = \left[s, \lambda\hat{v}\right]$, 那么 *应该* 存在这样的关系: $\left[\cos\theta, \sin\theta\lambda\hat{v}\right]$.
-
-      我们需要测试一下这个猜测是否可行,做法就是通过这让 $q$ 和一个点对应的纯四元数相乘,看看对应的结果是不是我们想要的.
+      我们需要测试一下这个猜测是否可行,做法就是通过这让 $q$ 和一个点对应的纯四元数 $P$ 相乘,其中 $P$ 的 =vector part= 就是点的坐标.
 
       我们设这个点为: $P = \left[0, p\right]$,得到旋转后的点 $P^{'}$:
 
@@ -887,4 +887,20 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
       $\begin{aligned}P^{'} & = qP \\ & = \left[\frac{\sqrt{2}}{2}, \frac{\sqrt{2}}{2}(\frac{\sqrt{2}}{2}i + \frac{\sqrt{2}}{2}k)\right]\left[0, 2i\right] \\ & = \left[-\frac{\sqrt{2}}{2}(\frac{\sqrt{2}}{2}i + \frac{\sqrt{2}}{2}k) \cdot 2i, \frac{\sqrt{2}}{2} \times 2i + \frac{\sqrt{2}}{2}(\frac{\sqrt{2}}{2}i + \frac{\sqrt{2}}{2}k) \times 2i \right] \\ & = \left[-1, \sqrt{2}i + j\right] \end{aligned}$.
 
-      # https://www.3dgep.com/understanding-quaternions/#Rotors
+      从 $P^{'}$ 的 =vector part= 就看出没有旋转到 $45^{\circ}$,长度也变了: $\sqrt{(\sqrt{2}^{2} + 1)}$,而且 $P^{'}$ 还不是纯四元素.
+
+      # 补图 https://www.3dgep.com/wp-content/uploads/2012/06/Quaternion-Rotation-2.png
+
+      不过, =Hamilton= 发现了只要再让 $qP$ 乘以 $q^{-1}$, $P^{'}$ 就会又变成纯四元素并且 =vector part= 的长度就会维持原样.
+
+      $q^{-1} = \frac{q^{*}}{|q|^{2}} = \frac{\left[s, -\lambda\hat{v}\right]}{|s^{2} + \lambda^{2}|^{2}}$,
+
+      其中, $s = \cos 45^{\circ}$, $\lambda = \sin 45^{\circ}$,也就是说 $|q| = 1$,
+
+      因此 $q^{-1} = \left[\frac{\sqrt{2}}{2}, -\frac{\sqrt{2}}{2}(\frac{\sqrt{2}}{2}i + \frac{\sqrt{2}}{2}k)\right]$.
+
+      最后计算得出 $P^{'} = qPq^{-1} = \left[0, i + \sqrt{2}j + k\right]$.
+
+      可以看到 $P^{'}$ 的模 $|P^{'}| = \sqrt{1^{2} + \sqrt{2}^{2} + 1^{2}} = 2$.
+
+      # 补图 https://www.3dgep.com/wp-content/uploads/2012/06/Quaternion-Rotation-3.png
