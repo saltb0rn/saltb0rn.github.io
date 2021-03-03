@@ -3,6 +3,7 @@
   - [[file:2018/06/about-python.org][About Python]]
 * B
   - [[file:2019/05/bash-eliminating-project.org][Bash消灭计划]]
+  - [[file:2021/01/blender-notes.org][Blender学习笔记]]
   - [[file:2018/05/blog-with-emacs.org][Blog with Emacs and Org mode]]
 * C
   - [[file:2019/11/canvas-intro.org][Canvas入门而不入土]]
@@ -49,6 +50,10 @@
   - [[file:2020/08/graphics-opengl-light-and-material.org][图形学-光和材质]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
   - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
+* 汇
+  - [[file:2020/12/assembly.org][汇编]]
+* 理
+  - [[file:2021/02/understand-perspective-in-css.org][理解CSS中的透视]]
 * 用
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直

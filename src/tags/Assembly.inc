@@ -1,0 +1,1 @@
+- [[file:../posts/2020/12/assembly.org][汇编]]

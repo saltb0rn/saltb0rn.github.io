@@ -1,19 +1,7 @@
-*** [[file:posts/2020/10/graphics-opengl-texture-mapping.html][图形学-纹理映射]]
-在 =3D= 建模中经常会听到纹理映射(texture mapping)这个词,就是把一张图片映射到物体表面上,
+*** [[file:posts/2021/02/understand-perspective-in-css.html][理解CSS中的透视]]
+我以为在学习了透视投影以后就知道怎么使用CSS中的 =perspective= 属性了,然而我错了.
 
-也就是把图片贴在物体上,这张图片储存了一些用于物体表面的细节,这些细节就是我们说的物体纹理.
-
-之所以会有这种技术是因为现实中的物体表面细节十分复杂,比如墙壁的砖头纹理,每块砖头的表面凹凸程度不一样,
-
-这种情况通过建模(顶点描绘)实现是一件很费力的事情,并且还要考虑变换的问题;
-
-所以一般是先建一个墙形状的物体,然后通过纹理映射让开发者把现实墙壁照片"贴"到物体模型上,
-
-这样建模看起来就像是现实的墙了,并且不需要考虑变换问题,因为 *图片本身就是像素集合*,也就是在 =Fragment Shader= 中进行处理的.
-
-这种图片有很多种叫法: 纹理贴图(texture map), 纹理图片(texture image)或者就纹理(texture),下面统一采用用纹理这个叫法.
-
-此外,纹理映射还能用来实现阴影,反射光,自发光以及不透明度等等效果,所要实现的效果可以作为一种纹理类别,比如这[[https://help.poliigon.com/en/articles/1712652-what-are-the-different-texture-maps-for][文章]]上就提到有个网站就对纹理进行分类.
+确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
 *** [[file:posts/2020/08/graphics-opengl-light-and-material.html][图形学-光和材质]]
@@ -73,7 +61,15 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 实际上如果单纯只是为了应用的话,记住结论就可以了,但是个人认为,如果真的打算与图形学打交道,那么只有理解了为什么才能愉快地与图形学相处,
 
-否者会过的很痛苦.很多参考资料都是直接给出变换的结论,没有推导过程,或者有不完全的推导过程,所以我才下定注意写下自己思考.
+否者会过得很痛苦.很多参考资料都是直接给出变换的结论,没有推导过程,或者有不完全的推导过程,所以我才下定注意写下自己思考.
+
+在 [[https://betterexplained.com][Better Explained]] 的 [[https://betterexplained.com/articles/intuitive-understanding-of-eulers-formula][Intuitive Understanding Of Euler's Formula]] 上有一句话我非常喜欢:
+
+=Formulas are not magical spells to be memorized: we must, must, must find an insight=,
+
+而 =insight= 的其中一个解释是 =a deep intuitive understanding of a person or thing=,
+
+所以这句话的意思是: 公式不是需要记忆的魔法咒语,我们要对公式有一个直观了解,包括公式是如何推导(reason)得到的,有什么意义,解决什么问题.
 
 	
 *** [[file:posts/2020/02/et-project-day-.html][英语消灭计划-Day2]]
