@@ -1,3 +1,9 @@
+*** [[file:posts/2021/03/remainder-vs-modulo.html][取余和取模的区别]]
+说来惭愧,一直以来都没有真正明白取余(remainder operation)和取模(modulo operation)的区别,不是说他们计算的区别,而是用途上区别,
+
+当然了,计算上的区别我也是不知道的,但是总有一两次会遇得到这其中所暴露的问题,所以今天就想办法理解它们的区别.
+
+	
 *** [[file:posts/2021/02/understand-perspective-in-css.html][理解CSS中的透视]]
 我以为在学习了透视投影以后就知道怎么使用CSS中的 =perspective= 属性了,然而我错了.
 

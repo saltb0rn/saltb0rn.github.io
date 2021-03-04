@@ -43,6 +43,8 @@
 * 前
   - [[file:2018/11/gimp-for-webfe-dev.org][前端人员的GIMP]]
   - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
+* 取
+  - [[file:2021/03/remainder-vs-modulo.org][取余和取模的区别]]
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 * 图

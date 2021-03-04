@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-03-04 ���� 18:32 -->
+<!-- 2021-03-04 ���� 18:31 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Warframe</title>
+<title>取余和取模的区别</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="saltb0rn">
 <style type="text/css">
@@ -191,12 +191,12 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
-<link rel="stylesheet" type="text/css" href="../css/stylesheet.css"/>
-<link rel="icon" type="image/png" href="../img/icon.png" />
-<!-- <script type="text/javascript" src="../js/live.js" defer></script> -->
-<script src="../js/main.js" defer></script>
-<link rel="stylesheet" type="text/css" href="css/tags.css"/>
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
 // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
@@ -219,28 +219,270 @@
     /*]]>*///-->
 // @license-end
 </script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
     <nav>
-        <a href="../"><img src="../img/logo.png" alt="Logo is on the way"/></a>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
         <ul>
-            <li><a accesskey="H" href="../"> Home </a></li>
-            <li><a accesskey="T" href="../tags"> Tags </a></li>
-            <li><a accesskey="A" href="../about"> About </a></li>
-            <li><a accesskey="L" href="../todos"> Todos </a></li>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
         </ul>
     </nav>
 </div>
 <div id="content">
-<h1 class="title">Warframe</h1>
-<ul class="org-ul">
-<li><a href="../posts/2018/11/warframe-damage-cal.html">Warframe伤害计算</a></li>
-</ul>
+<h1 class="title">取余和取模的区别</h1>
+<div class="abstract" id="org011aef4">
+<p>
+说来惭愧,一直以来都没有真正明白取余(remainder operation)和取模(modulo operation)的区别,不是说他们计算的区别,而是用途上区别,
+</p>
+
+<p>
+当然了,计算上的区别我也是不知道的,但是总有一两次会遇得到这其中所暴露的问题,所以今天就想办法理解它们的区别.
+</p>
+
+</div>
+
+<div id="outline-container-orga3a863a" class="outline-2">
+<h2 id="orga3a863a">除法的含义</h2>
+<div class="outline-text-2" id="text-orga3a863a">
+<p>
+如果不理解它们的区别,那么在使用编程语言的 <code>%</code> 操作符号是很容易出问题的.
+</p>
+
+<p>
+在理解它们的区别之前先问一下自己是否还记得除法的含义,很多人都知道怎么计算,但可能很多人没有仔细想过,或者说回忆除法的含义.
+</p>
+
+<p>
+就说我个人的理解,假设要计算 \(a \div b\),那么它的计算结果就是在回答: \(a\) 是由多少个 \(b\) 相加而成.
+</p>
+
+<p>
+这就是为什么在日常计算中不会让任何数除以 0,包括 0 本身也不能除以自己,
+</p>
+
+<p>
+比如 \(a \div 0\) 就是在问 \(a\) 是由多少 0 相加而成,
+</p>
+
+<p>
+如果 \(a \ne 0\), 那么无论多少个 0 相加都不会得到 \(a\);
+</p>
+
+<p>
+如果 \(a = 0\), 那么结果就不是唯一的了,1 个 0 也行, 2 个 0 也行,多少个 0 都行,也就是无限个 0.
+</p>
+
+<p>
+因此大部分编程语言在遇到除以 0 的计算是直接选择引发异常,有些语言比如 <code>Javascript</code> 则是直接给一个 <code>Infinity</code> (无限).
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc3eb0f2" class="outline-2">
+<h2 id="orgc3eb0f2">取余</h2>
+<div class="outline-text-2" id="text-orgc3eb0f2">
+<p>
+"取余"还是名符其实的,这里的"余"(remainder)就是多余个数的意思.
+</p>
+
+<p>
+除法并不是每次都能得到整数结果的,比如 \(3 \div 2 = 1.5\),你可能会说没有得到整数结果有什么问题吗?
+</p>
+
+<p>
+那么假设这是一个生活中问题: 现在有 3 个私人教师和两个学生,要给每个学生分配相同人数的老师,
+</p>
+
+<p>
+只能一个学生对应一个老师,不能一个老师对应多个学生,问平均每个学生有多少个老师.
+</p>
+
+<p>
+总不能是 1.5 老师吧!?老师可是人啊.
+</p>
+
+<p>
+这种 <b>无法完全分配</b> 的问题就衍生出了另外一个问题: 有多少个老师是多余的呢?
+</p>
+
+<p>
+当然这里答案很明显是 1 了.这类问题需要用"取余"解决的问题了,我们这里用 \(rem\) 表示"取余"符号.
+</p>
+
+<p>
+因此上面的分配问题可以表示成 \(3\ rem\ 2 = 1\).
+</p>
+
+<p>
+再来一个问题: \(A\) 和 \(B\) 是关系很好的朋友, \(B\) 见 \(A\) 经济上有困难,于是仗义地给了 \(A\) 5 块黄金,
+</p>
+
+<p>
+可 \(A\) 坚持要给 \(B\) 还钱, \(B\) 见此就是向 \(A\) 提出"条件",每次一定只能还 2 块黄金,剩下多出来的就不用还了,
+</p>
+
+<p>
+请问最后 \(A\) 还欠多少块黄金是不用还的?
+</p>
+
+<p>
+这里我们用负数表示 \(A\) 欠 \(B\) 的黄金数,正数表示 \(A\) 给 \(B\) 的还钱黄金数.
+</p>
+
+<p>
+也就是需要计算出 \(-5\ rem\ 2\) 的结果,这个想一下就能得出结果了,\(A\) 只需要还两次钱,所以结果是 -1.
+</p>
+
+<p>
+来看一下 <code>MATLAB</code> 对取余运算符 <code>rem</code> 的定义: <code>a - b .* fix(a ./ b)</code>,
+</p>
+
+<p>
+也就是 \(a - b \times fix(a \div b)\), 这里的 <code>fix</code> 是指向 0 取整(round toward zero).
+</p>
+
+<p>
+可以再用这条公式验证上面的两个例子.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge6f8188" class="outline-2">
+<h2 id="orge6f8188">取模</h2>
+<div class="outline-text-2" id="text-orge6f8188">
+<p>
+相比多余个数,取模更倾向于解决那些周期结构(cyclic structures)的问题,
+</p>
+
+<p>
+我个人对取模也没有一个很"一般化"的定义,很"一般化"的定义又难以理解.
+</p>
+
+<p>
+因此我会用一个很通俗的例子来表达取模在我直觉中是怎样的,适合用于什么问题.
+</p>
+
+<p>
+一个钟的时针,分针以及秒针的初始位置都指向 12 点刻度上,问经过了 80 分钟后分针的位置在哪个数字的刻度上.
+</p>
+
+<p>
+一个小时 60 分钟, 80 分钟就是说秒针走了 \(80 \div 60 = 1 + \frac{1}{3}\) 圈,
+</p>
+
+<p>
+\(\frac{1}{3}\) 圈就是 20 分钟, 因此分针位于 4 上,这个 20 就是要取的模.
+</p>
+
+
+<div id="orgd45756f" class="figure">
+<p><img src="../../../files/12-4.png" alt="12-4.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>分针处于4上</p>
+</div>
+
+<p>
+我们这里用 \(mod\) 来表示取模符号,因此上面的求模可以表达成 \(80\ mod\ 60 = 20\).
+</p>
+
+<p>
+你可能会想这个问题好像也可以用取余的角度来看: 分针跑完了几个完整圈还剩多少圈.
+</p>
+
+<p>
+确实是这样, \(80 - 60 \times fix(\frac{4}{3}) = 20\),
+</p>
+
+<p>
+但如果说取模和取余一样的话就大错特错了.
+</p>
+
+<p>
+我们改一下时钟的刻度如下,
+</p>
+
+
+<div id="org885f347" class="figure">
+<p><img src="../../../files/12-8.png" alt="12-8.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>分针处于8上</p>
+</div>
+
+<p>
+分针的旋转方向保持不变,暂且把逆转后的刻度叫做新刻度,逆转前的刻度叫做旧刻度.
+</p>
+
+<p>
+在新刻度下分针逆向走了 \(80 \div -60 = -(1 + \frac{1}{3})\) 圈,分针位于 8 上,
+</p>
+
+<p>
+也就说分针从 12 点位置开始按照"新顺时针"方向旋转 40 分钟才能走到旧刻度的 4 上,
+</p>
+
+<p>
+对于旧刻度而言,"新顺时针"方向就是"旧逆时针"方向,也就是 -40 分钟,这个 -40 就是要取的模,所以是 \(80\ mod\ -60 = -40\).
+</p>
+
+<p>
+如果用取余的方法计算呢?遗憾是结果不一样: \(80 - 60 \times fix(\frac{4}{3}) = 20\),
+</p>
+
+<p>
+这点可以从取余的含义看出来,不管分针往哪个方向跑 80 分钟,最终多出的还是 \(\frac{1}{3}\) 圈.
+</p>
+
+<p>
+回到取模上,模到底是什么呢?
+</p>
+
+<p>
+这个我也不好说,但是我知道取模的 <b>含义</b> 大概是怎么样的,比如  \(a\ mod\ b\),
+</p>
+
+<p>
+它的含义 <b>大概</b> 就是从起点位置沿着 \(b\) 的方向运动多少才能达到运动了 \(a\) 后所达到的位置,而 \(b\) 就是一个周期.
+</p>
+
+<p>
+来看看 <code>MATLAB</code> 对取模符号 <code>mod</code> 的定义: <code>a - b .* floor(a ./ b)</code>
+</p>
+
+<p>
+也就是 \(a - b \times floor(a \div b)\), 这里的 <code>floor</code> 是指向负无穷取整(round toward negative infinity).
+</p>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
-<p class="date">Date: </p>
+<p class="date">Date: 2021-03-04</p>
 <p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.3 (<a href="https://orgmode.org">Org</a> mode 9.4)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
