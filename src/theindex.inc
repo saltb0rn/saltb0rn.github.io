@@ -134,7 +134,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 关于单词的发音,由于本人用的是 =Merriam Webster= 词典,所以我是通过它使用的音标学习单词发音的,
 
-官方音标指南在[[https://merriam-webster.com/assets/mw/static/pdf/help/guide-to-pronunciation.pdf,][这里]],要注意它的是美式发音,这套音标比起其他音标好记易学很多,真是相见恨晚.
+官方音标指南在[[https://merriam-webster.com/assets/mw/static/pdf/help/guide-to-pronunciation.pdf][这里]],要注意它的是美式发音,这套音标比起其他音标好记易学很多,真是相见恨晚.
 
 针对里面 =\ə\=, =\a\=, =\e\= 这几个比较容易记忆混乱的音标,我这里大概写一下个人学习的感悟:
 
@@ -297,7 +297,7 @@ P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端
 
 	
 *** [[file:posts/2018/08/emacs-tips.html][Emacs Tips(持续更新)]]
-如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten这样的循环中,记得读书时候有人说,看那个人做笔记那么
+如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔
 
