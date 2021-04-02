@@ -7,7 +7,9 @@
 ;                    demonstrating the use of Linux INT 80H syscalls
 ;                    to display text.
 ; Build using these commands:
-;   nasm -f elf -g -F stabs eatsyscall.asm
+;   nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)
+;   or
+;   nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)
 ;   ld -o eatsyscall eatsyscall.o
 
 SECTION .data                   ; Section containing initialized data
