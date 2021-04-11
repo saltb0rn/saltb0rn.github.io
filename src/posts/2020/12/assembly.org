@@ -1178,7 +1178,9 @@
 
     你看这是不是很符合前面的说明.
 
-    第二个系统调用 =sys_exit= 也是一样的,因此生成的程序应该就是打印一句话 "Eat at Joe’s" 然后退出.
+    第二个系统调用 =sys_exit= 也是一样的,因此生成的程序应该就是打印一句话 "Eat at Joe’s" 然后退出,
+
+    每个程序都必须有一个 =sys_exit= 的系统调用来结束程序,否则会出现 =Segementation fault= 的错误.
 
     \\
 
@@ -1358,13 +1360,13 @@
     比如 =nexti= 的别名 =ni=,具体可以去看 aliases 类的说明.
 
 
-*** 接触指令
+*** 指令的相关基础
 
     经过前期大量的基础工作,在前面已经体验过一把简单的开发了,现在可以开始认真学习指令了.
 
-    准确来说,我们学习的是 =x86= 指令集.汇编里面最常见的指令是 =MOV= 了.
+    我们学习的是 =x86= 指令集,但在这之前先从整体上来学习一下指令.
 
-    大部分指令(包括 =MOV=)都有1到多个操作数,有些则不需要操作数(这些是隐式操作寄存器或内存).
+    大部分指令(包括最常见的 =MOV=)都有1到多个操作数,有些则不需要操作数(这些是隐式操作寄存器或内存).
 
     比如,
 
@@ -1560,17 +1562,33 @@
 
       现在已经很少用上了,所以这个 =flag= 可以不用太过关注.
 
-    - *OF* (Overflow flag)
+    - *AF* (Auxiliary carry flag)
 
-      在有符号整数运算中,如果运算结果超出操作数的储存能力(计算结果溢出),那么就会采用像 =CF= 一样的进位处理.
+      这是用于 =BCD (Binary-Coded Decimal‎)= 运算的,所谓 =BCD= 就是一种用二进制编码成十进制数,这个数由整数部分和小数部分组成.
 
-    - *DF* (Direction flag)
+      =BCD= 运算把每一个操作数的字节平均分成两半,其中一半看作整数部分,另外的半看作小数部分,两个部分组成一个浮点数.
 
-      这和关于字符串处理的指令有关系,告诉 =CPU= 要从哪个方向(up-memory or down-memory)处理字符串.
+      当 =BCD= 运算的结果在16进制表示下发生了进位或者借位,就会把 =AF= 设置为 1,否则清 0.
 
-      当 =DF= 被设置为 1,字符串指令就会从字符串的"高位字节"往"低位字节"的方向开始处理;
+      比如 $5 + 11 = 16 = 10H$ 就会把 =AF= 设置为 1,而 $5 + 10 = 15 = FH$ 则会把 =AF= 清 0.
 
-      当 =DF= 被清 0,就从"低位字节"往"高位字节"方向处理.
+      如今 =BCD= 运算的相关指令已经很少用了.
+
+    - *ZF* (Zero flag)
+
+      当目的操作数是变成0, =ZF= 就会被设为1,否则清0. =ZF= 经常用来做条件跳转(conditional jumps).
+
+    - *SF* (Sign flag)
+
+      当一个操作的结果是把一个操作数变为负数(negative)时, =SF= 会被设置为1,否则清0.
+
+      我们说的变为负数是指,在进行有符号运算(signed arithmetic operation)的过程中,操作数的最高位(这个位也叫符号位,sign bit)变为1.
+
+    - *TF* (Trap flag)
+
+      =TF= 是能够单步执行程序的原因,通过强迫 =CPU= 在调用其中断程序(interrupt routine)前只执行一条指令.
+
+      这个 =flag= 在正常开发中并不是特别有用.
 
     - *IF* (Interrupt enable flag)
 
@@ -1592,30 +1610,167 @@
 
       在使用 =gdb= 调试器中暂停程序时可以看到这个 =flag= 被设置为 1.
 
-    - *TF* (Trap flag)
+    - *DF* (Direction flag)
 
-      =TF= 是能够单步执行程序的原因,通过强迫 =CPU= 在调用其中断程序(interrupt routine)前只执行一条指令.
+      这和关于字符串处理的指令有关系,告诉 =CPU= 要从哪个方向(up-memory or down-memory)处理字符串.
 
-      这个 =flag= 在正常开发中并不是特别有用.
+      当 =DF= 被设置为 1,字符串指令就会从字符串的"高位字节"往"低位字节"的方向开始处理;
 
-    - *SF* (Sign flag)
+      当 =DF= 被清 0,就从"低位字节"往"高位字节"方向处理.
 
-      当一个操作的结果是把一个操作数变为负数(negative)时, =SF= 会被设置为1,否则清0.
+    - *OF* (Overflow flag)
 
-      我们说的变为负数是指,在进行有符号运算(signed arithmetic operation)的过程中,操作数的最高位(这个位也叫符号位,sign bit)变为1.
+      在有符号整数运算中,如果运算结果超出操作数的储存能力(计算结果溢出),那么就会采用像 =CF= 一样的进位处理.
 
-    - *ZF* (Zero flag)
+    \\
 
-      当目的操作数是变成0, =ZF= 就会被设为1,否则清0. =ZF= 经常用来做条件跳转(conditional jumps).
+    前面的 =flags= 的描述都是一般化的,有些指令会对 =flags= 造成影响,然而造成的影响不一定和 =flags= 的一般化描述一样.
 
-    - *AF* (Auxiliary carry flag)
+    比如,一些指令的作用是产生一个 0 并且保存在操作数上,而这其中有些会把 =ZF= 设置为 1,而其它指令则不会.
 
-      这是用于 =BCD (Binary-Coded Decimal‎)= 运算的,所谓 =BCD= 就是一种用二进制编码成十进制数,这个数由整数部分和小数部分组成.
+    再比如,
 
-      =BCD= 运算把每一个操作数的字节平均分成两半,其中一半看作整数部分,另外的半看作小数部分,两个部分组成一个浮点数.
+    #+BEGIN_SRC nasm
+      mov eax, 0FFFFFFFFH
+      inc eax
+    #+END_SRC
 
-      当 =BCD= 运算的结果在16进制表示下发生了进位或者借位,就会把 =AF= 设置为 1,否则清 0.
+    =INC= 的作用是对操作数加 1 并且把结果保存在操作数上,然而这并不像 =add eax, 1= 把 =CF= 设为 1.
 
-      比如 $5 + 11 = 16 = 10H$ 就会把 =AF= 设置为 1,而 $5 + 10 = 15 = FH$ 则会把 =AF= 清 0.
+    #+BEGIN_SRC nasm
+      mov eax, 0
+      dec eax
+    #+END_SRC
 
-      如今 =BCD= 运算的相关指令已经很少用了.
+    =DEC= 的作用是对操作数减 1 并且把结果保存在操作数上,同样也不像 =sub eax, 1= 那样把 =CF= 设为 1.
+
+    因此使用指令时需要提前去查看参考文档了解指令对 =flags= 的影响.
+
+
+    *根据flags进行条件跳转*
+
+    有一种指令用来跳转到某个位置进行执行,这种指令叫做条件跳转指令(conditional jump).
+
+    =C= 语言有一个 =goto= 语句就是干的这种事情,可是 =C= 语言不太建议使用 =goto=,不过汇编语言可不一样.
+
+    条件跳转指令是先测试某一个 =flag= 的值,如果它的值符合条件就跳转到程序中的其它地方.
+
+    比如 =JNZ= 指令就是先测试 =ZF= 是否被清 0,如果 =ZF= 清 0了就开始执行跳转,否则执行下一条指令.
+
+    #+BEGIN_SRC nasm
+             mov eax, 5
+      DoMore:
+             dec eax
+             jnz DoMore
+    #+END_SRC
+
+    这里 =DoMore:= 是一个标签(label).
+
+    在 =NASM= 里面,一个标签就是一个字符串后面跟着一个冒号(:), *通常* 标签放在包含指令的代码行上.
+
+    还可以把一个标签变成一个函数(procedures),
+
+    #+BEGIN_SRC nasm
+      section .data
+      section .bss
+      section .text
+
+      global _start
+      _start:
+              nop
+              mov eax, 5
+              call DoMore
+              mov eax, 1,
+              mov ebx, 0
+              int 80H
+
+      DoMore:
+              dec eax
+              jnz DoMore
+              ret
+    #+END_SRC
+
+    上面的例子中的 =DoMore= 就变成一个函数了,可以使用 =CALL= 指令进行调用.
+
+    一个函数的结构要有以下这些点:
+
+    - 必须以标签开始,标签的名字就是函数的名字;
+
+    - 函数内部必须至少有一个 =RET= 指令,这个指令是作为函数的"出口",
+
+      该命令可以选择一个值来作为函数的计算结果,
+
+      在有多个 =RET= 指令情况下,使用哪个 =RET= 取决于条件跳转;
+
+    - 函数可以通过使用 =CALL= 调用另外一个函数;
+
+    \\
+
+    你可能很好奇: 如何在函数内部进行内部跳转呢?
+
+    毕竟跳转只能依靠条件跳转指令,而这些指令又依靠标签,但是函数就是以标签开头的,那在函数内部的标签不就是另外一个函数吗?
+
+    =NASM= 提供一种标签叫做局部标签(local labels),它们是以句号(.)开头的标签;没有以句号开头的标签都叫做全局标签(global labels).
+
+    上面的 =_start= 和 =DoMore= 就是全局标签.
+
+    我们把上面的例子改成如下:
+
+    #+BEGIN_SRC nasm
+      section .data
+      section .bss
+      section .text
+
+      global _start
+      _start:
+              nop
+              mov eax, 5
+              call DoMore
+              mov eax, 1,
+              mov ebx, 0
+              int 80H
+
+      DoMore:
+              cmp eax, 3
+              jz .exit1
+              sub eax, 1
+              jnz DoMore
+              ret 2
+
+      .exit1: ret 1
+    #+END_SRC
+
+    在 =EAX= 减小的过程中,如果 =EAX= 的值等于 3,那么就直接进入 =.exit1= 进行退出.
+
+    局部标签是属于它前面所遇到的第一个全局标签的,所以 =.exit= 是属于 =DoMore= 的,而不是 =_start= 的.
+
+    =NASM= 支持从一个全局标签里面跳转到另外一个全局标签的局部标签上,我们把上面的例子再改一下,
+
+    把 =.exit1= 定义为 =OutSide= 的局部标签,从 =DoMore= 跳转到 =OutSide= 的 =.exit= 上,
+
+    #+BEGIN_SRC nasm
+      section .data
+      section .bss
+      section .text
+
+      global _start
+      _start:
+              nop
+              mov eax, 5
+              call DoMore
+              mov eax, 1,
+              mov ebx, 0
+              int 80H
+
+      DoMore:
+              cmp eax, 3
+              jz OutSide.exit1
+              sub eax, 1
+              jnz DoMore
+              ret 2
+
+      OutSide:
+      .exit1: ret 1
+    #+END_SRC    
+
+    但是这样很容易因逻辑混乱而出 =bugs=,因此不建议这么做.
