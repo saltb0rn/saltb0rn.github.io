@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-04-14 ���� 11:02 -->
+<!-- 2021-04-19 Mon 23:30 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>汇编</title>
@@ -40,7 +40,7 @@
   }
   pre.src {
     position: relative;
-    overflow: auto;
+    overflow: visible;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -52,7 +52,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline; margin-top: 14px;}
+  pre.src:hover:before { display: inline;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -161,19 +161,6 @@
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
-  .equation-container {
-    display: table;
-    text-align: center;
-    width: 100%;
-  }
-  .equation {
-    vertical-align: middle;
-  }
-  .equation-label {
-    display: table-cell;
-    text-align: right;
-    vertical-align: middle;
-  }
   .inlinetask {
     padding: 10px;
     border: 2px solid gray;
@@ -194,26 +181,50 @@
   /*]]>*/-->
 </style>
 <script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
 <!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
 </script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
@@ -245,19 +256,19 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgdda2be9">1. 什么是汇编</a></li>
-<li><a href="#org476c019">2. 计算机内存</a></li>
-<li><a href="#org5cc36d9">3. 程序的本质</a></li>
-<li><a href="#org584029a">4. 操作系统</a></li>
-<li><a href="#orgf74c25c">5. 内存寻址(上)</a></li>
-<li><a href="#org63c8506">6. 内存寻址(下)</a></li>
-<li><a href="#org638fa71">7. 使用汇编语言开发的流程(上)</a></li>
-<li><a href="#org57f02be">8. 使用汇编语言开发的流程(下)</a></li>
-<li><a href="#orgfeda75e">9. 指令的相关基础</a></li>
+<li><a href="#org448bbb8">1. 什么是汇编</a></li>
+<li><a href="#orgcfda61d">2. 计算机内存</a></li>
+<li><a href="#org69d2ff4">3. 程序的本质</a></li>
+<li><a href="#orgec95b1d">4. 操作系统</a></li>
+<li><a href="#org99a5c1a">5. 内存寻址(上)</a></li>
+<li><a href="#org2b4d290">6. 内存寻址(下)</a></li>
+<li><a href="#orgf90f26d">7. 使用汇编语言开发的流程(上)</a></li>
+<li><a href="#orga9f4bf2">8. 使用汇编语言开发的流程(下)</a></li>
+<li><a href="#orgac1176d">9. 指令的相关基础</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orge9b452d">
+<div class="abstract">
 <p>
 这篇笔记的主要参考资料是 <code>Assembly Language Step-by-Step: Programming with Linux 3rd Edition</code>.
 </p>
@@ -332,8 +343,8 @@
 
 </div>
 
-<div id="outline-container-orgdda2be9" class="outline-2">
-<h2 id="orgdda2be9"><span class="section-number-2">1</span> 什么是汇编</h2>
+<div id="outline-container-org448bbb8" class="outline-2">
+<h2 id="org448bbb8"><span class="section-number-2">1</span> 什么是汇编</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 这里的汇编是个名词,一般是指汇编语言(assembly language),是一门低级编程语言,和机器码(machine code)是一对一的关系(1-to-1 correspondence).
@@ -385,8 +396,8 @@
 </div>
 </div>
 
-<div id="outline-container-org476c019" class="outline-2">
-<h2 id="org476c019"><span class="section-number-2">2</span> 计算机内存</h2>
+<div id="outline-container-orgcfda61d" class="outline-2">
+<h2 id="orgcfda61d"><span class="section-number-2">2</span> 计算机内存</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 一张内存(memory)是由很多块芯片(chip)组成的,而每张芯片是由很多个晶体管(transistor)构成的,一个晶体管叫做一个内存单元(memory cell),
@@ -397,7 +408,7 @@
 </p>
 
 
-<div id="org8b0ee6d" class="figure">
+<div class="figure">
 <p><img src="../../../files/memory-cell.png" alt="memory-cell.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>内存单元</p>
@@ -460,7 +471,7 @@
 </p>
 
 
-<div id="org5a30bfa" class="figure">
+<div class="figure">
 <p><img src="../../../files/memory-chip.png" alt="memory-chip.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>内存芯片</p>
@@ -527,7 +538,7 @@
 </p>
 
 
-<div id="orgc69e4bd" class="figure">
+<div class="figure">
 <p><img src="../../../files/memory.png" alt="memory.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>内存系统</p>
@@ -622,7 +633,7 @@
 </p>
 
 
-<div id="org29040ad" class="figure">
+<div class="figure">
 <p><img src="../../../files/memory-connected-to-cpu.png" alt="memory-connected-to-cpu.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>CPU和内存</p>
@@ -717,8 +728,8 @@
 </div>
 </div>
 
-<div id="outline-container-org5cc36d9" class="outline-2">
-<h2 id="org5cc36d9"><span class="section-number-2">3</span> 程序的本质</h2>
+<div id="outline-container-org69d2ff4" class="outline-2">
+<h2 id="org69d2ff4"><span class="section-number-2">3</span> 程序的本质</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 程序本质上就是数据(data),这些所谓的数据就是字节集合,而字节本身就是由 0 和 1 组成的,这些前面都介绍过了,就不再赘述.
@@ -818,8 +829,8 @@
 </div>
 </div>
 
-<div id="outline-container-org584029a" class="outline-2">
-<h2 id="org584029a"><span class="section-number-2">4</span> 操作系统</h2>
+<div id="outline-container-orgec95b1d" class="outline-2">
+<h2 id="orgec95b1d"><span class="section-number-2">4</span> 操作系统</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 <b>本质</b>
@@ -866,7 +877,7 @@
 </p>
 
 <p>
-可以看出 <code>CP/M</code> 操作系统只是一个调用其它程序的程序.
+可以看出 <code>CP/M</code> 操作系统只是一个调用其它程序的程序.
 </p>
 
 <p>
@@ -998,7 +1009,7 @@
 </p>
 
 
-<div id="org31d46ee" class="figure">
+<div class="figure">
 <p><img src="../../../files/multitasking.png" alt="multitasking.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>多任务</p>
@@ -1021,7 +1032,7 @@
 </p>
 
 
-<div id="org206c007" class="figure">
+<div class="figure">
 <p><img src="../../../files/operating-system.png" alt="operating-system.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>成熟的操作习系统</p>
@@ -1065,8 +1076,8 @@
 </div>
 </div>
 
-<div id="outline-container-orgf74c25c" class="outline-2">
-<h2 id="orgf74c25c"><span class="section-number-2">5</span> 内存寻址(上)</h2>
+<div id="outline-container-org99a5c1a" class="outline-2">
+<h2 id="org99a5c1a"><span class="section-number-2">5</span> 内存寻址(上)</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 <b>什么是内存寻址</b>
@@ -1173,7 +1184,7 @@
 </p>
 
 
-<div id="org4933bb4" class="figure">
+<div class="figure">
 <p><img src="../../../files/intel-8080-memory-model.png" alt="intel-8080-memory-model.png" />
 </p>
 <p><span class="figure-number">Figure 7: </span>英特尔-8080 内存模型</p>
@@ -1244,7 +1255,7 @@
 </p>
 
 
-<div id="org20c4502" class="figure">
+<div class="figure">
 <p><img src="../../../files/intel-8086-memory-model.png" alt="intel-8086-memory-model.png" />
 </p>
 <p><span class="figure-number">Figure 8: </span>英特尔-8086 内存模型</p>
@@ -1283,7 +1294,7 @@
 </p>
 
 
-<div id="org7a47473" class="figure">
+<div class="figure">
 <p><img src="../../../files/intel-8086-memory-model.png" alt="intel-8086-memory-model.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>英特尔-8086 内存模型</p>
@@ -1302,7 +1313,7 @@
 </p>
 
 
-<div id="org25fa4c3" class="figure">
+<div class="figure">
 <p><img src="../../../files/a-megabyte-through-64k.png" alt="a-megabyte-through-64k.png" />
 </p>
 <p><span class="figure-number">Figure 10: </span>任何时候只能访问64K个字节</p>
@@ -1345,7 +1356,7 @@
 </p>
 
 
-<div id="org5c9760e" class="figure">
+<div class="figure">
 <p><img src="../../../files/terms-of-memory.png" alt="terms-of-memory.png" />
 </p>
 <p><span class="figure-number">Figure 11: </span>内存术语</p>
@@ -1368,7 +1379,7 @@
 </p>
 
 
-<div id="orge4922fd" class="figure">
+<div class="figure">
 <p><img src="../../../files/mem-addr-vs-seg-addr.png" alt="mem-addr-vs-seg-addr.png" />
 </p>
 <p><span class="figure-number">Figure 12: </span>段地址对内存地址</p>
@@ -1451,7 +1462,7 @@
 </p>
 
 
-<div id="org98f2bad" class="figure">
+<div class="figure">
 <p><img src="../../../files/segements-and-offsets.png" alt="segements-and-offsets.png" />
 </p>
 <p><span class="figure-number">Figure 13: </span>同一个字节,不同地址</p>
@@ -1591,7 +1602,7 @@
 </p>
 
 
-<div id="org67e53e0" class="figure">
+<div class="figure">
 <p><img src="../../../files/stack.png" alt="stack.png" />
 </p>
 <p><span class="figure-number">Figure 14: </span>栈</p>
@@ -1699,7 +1710,7 @@
 </p>
 
 
-<div id="orge045d18" class="figure">
+<div class="figure">
 <p><img src="../../../files/32-bit-register.png" alt="32-bit-register.png" />
 </p>
 <p><span class="figure-number">Figure 15: </span>32位寄存器</p>
@@ -1726,7 +1737,7 @@
 </p>
 
 
-<div id="orgb698cd1" class="figure">
+<div class="figure">
 <p><img src="../../../files/8-16-32-bit-register.png" alt="8-16-32-bit-register.png" />
 </p>
 <p><span class="figure-number">Figure 16: </span>8位,16位和32位寄存器</p>
@@ -1814,8 +1825,8 @@
 </div>
 </div>
 
-<div id="outline-container-org63c8506" class="outline-2">
-<h2 id="org63c8506"><span class="section-number-2">6</span> 内存寻址(下)</h2>
+<div id="outline-container-org2b4d290" class="outline-2">
+<h2 id="org2b4d290"><span class="section-number-2">6</span> 内存寻址(下)</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 三个内存模型的主要区别在于寄存器的使用上,下面会直观地介绍它们的区别.
@@ -1834,7 +1845,7 @@
 </p>
 
 
-<div id="orgb1d9fbe" class="figure">
+<div class="figure">
 <p><img src="../../../files/real-mode-flat-model.png" alt="real-mode-flat-model.png" />
 </p>
 <p><span class="figure-number">Figure 17: </span>CP/M-80与实模式平面模型</p>
@@ -1877,7 +1888,7 @@
 </p>
 
 
-<div id="orgb505c7c" class="figure">
+<div class="figure">
 <p><img src="../../../files/real-mode-segmented-model.png" alt="real-mode-segmented-model.png" />
 </p>
 <p><span class="figure-number">Figure 18: </span>DOS与实模式分段模型</p>
@@ -1952,7 +1963,7 @@
 </p>
 
 
-<div id="orgc096992" class="figure">
+<div class="figure">
 <p><img src="../../../files/protected-mode-flat-model.png" alt="protected-mode-flat-model.png" />
 </p>
 <p><span class="figure-number">Figure 19: </span>保护模式平面模型</p>
@@ -2028,8 +2039,8 @@
 </div>
 </div>
 
-<div id="outline-container-org638fa71" class="outline-2">
-<h2 id="org638fa71"><span class="section-number-2">7</span> 使用汇编语言开发的流程(上)</h2>
+<div id="outline-container-orgf90f26d" class="outline-2">
+<h2 id="orgf90f26d"><span class="section-number-2">7</span> 使用汇编语言开发的流程(上)</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 编程本质上就是一种处理文件的方式,使用一个或多个的人类可读(human-readable)文本文件,根据它们进行处理来得到一个可执行程序文件,这个文件可以在当前系统下运行.
@@ -2145,7 +2156,7 @@
 </p>
 
 
-<div id="org3710ec4" class="figure">
+<div class="figure">
 <p><img src="../../../files/what-does-assembler-do.png" alt="what-does-assembler-do.png" />
 </p>
 <p><span class="figure-number">Figure 20: </span>汇编编译器的工作</p>
@@ -2204,7 +2215,7 @@
 </p>
 
 
-<div id="org4244883" class="figure">
+<div class="figure">
 <p><img src="../../../files/assembler-and-linker.png" alt="assembler-and-linker.png" />
 </p>
 <p><span class="figure-number">Figure 21: </span>汇编编译器和连接器</p>
@@ -2351,15 +2362,15 @@
 </div>
 </div>
 
-<div id="outline-container-org57f02be" class="outline-2">
-<h2 id="org57f02be"><span class="section-number-2">8</span> 使用汇编语言开发的流程(下)</h2>
+<div id="outline-container-orga9f4bf2" class="outline-2">
+<h2 id="orga9f4bf2"><span class="section-number-2">8</span> 使用汇编语言开发的流程(下)</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 整个开发流程大概就是这样,
 </p>
 
 
-<div id="orged0efbc" class="figure">
+<div class="figure">
 <p><img src="../../../files/the-assembly-language-development-process.png" alt="the-assembly-language-development-process.png" />
 </p>
 <p><span class="figure-number">Figure 22: </span>使用汇编语言进行开发的流程</p>
@@ -2422,41 +2433,41 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">; Executable name : EATSYSCALL
-; Version         : 1.0
-; Created date    : 1/7/2009
-; Last update     : 1/7/2009
-; Author          : Jeff Duntemann
-; Description     :  A simple assembly app for Linux, using NASM 2.05,
-;                    demonstrating the use of Linux INT 80H syscalls
-;                    to display text.
-; Build using these commands:
-;   nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)
-;   or
-;   nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)
-;   ld -o eatsyscall eatsyscall.o
+<pre class="src src-nasm"><span style="color: #7F9F7F;">; Executable name : EATSYSCALL</span>
+<span style="color: #7F9F7F;">; Version         : 1.0</span>
+<span style="color: #7F9F7F;">; Created date    : 1/7/2009</span>
+<span style="color: #7F9F7F;">; Last update     : 1/7/2009</span>
+<span style="color: #7F9F7F;">; Author          : Jeff Duntemann</span>
+<span style="color: #7F9F7F;">; Description     :  A simple assembly app for Linux, using NASM 2.05,</span>
+<span style="color: #7F9F7F;">;                    demonstrating the use of Linux INT 80H syscalls</span>
+<span style="color: #7F9F7F;">;                    to display text.</span>
+<span style="color: #7F9F7F;">; Build using these commands:</span>
+<span style="color: #7F9F7F;">;   nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)</span>
+<span style="color: #7F9F7F;">;   or</span>
+<span style="color: #7F9F7F;">;   nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)</span>
+<span style="color: #7F9F7F;">;   ld -o eatsyscall eatsyscall.o</span>
 
-SECTION .data                   ; Section containing initialized data
-EatMsg: db "Eat at Joe’s!", 10
-EatLen: equ $-EatMsg
+<span style="color: #F0DFAF; font-weight: bold;">SECTION</span> <span style="color: #7CB8BB;">.data</span>                   <span style="color: #7F9F7F;">; Section containing initialized data</span>
+<span style="color: #93E0E3;">EatMsg</span>: <span style="color: #DCDCCC; font-weight: bold;">db</span> <span style="color: #CC9393;">"Eat at Joe&#8217;s!"</span>, <span style="color: #BFEBBF;">10</span>
+<span style="color: #93E0E3;">EatLen</span>: <span style="color: #DCDCCC; font-weight: bold;">equ</span> $-EatMsg
 
-SECTION .bss                    ; Section containing unintialized data
-SECTION .text                   ; Section containing code
+<span style="color: #F0DFAF; font-weight: bold;">SECTION</span> <span style="color: #7CB8BB;">.bss</span>                    <span style="color: #7F9F7F;">; Section containing unintialized data</span>
+<span style="color: #F0DFAF; font-weight: bold;">SECTION</span> <span style="color: #7CB8BB;">.text</span>                   <span style="color: #7F9F7F;">; Section containing code</span>
 
-global _start                   ; Linker (ld) needs this to find the entry point!
-                                ; The name of entry point MUST be _start!
-                                ; otherwise error will be raised during linking
-_start:                         ; A function definition, named _start
-        nop                     ; This no-op keeps gdb happy (see text)
-        mov eax, 4              ; Specify sys_write syscall
-        mov ebx, 1              ; Specify File Descriptor 1: Standard Output
-        mov ecx, EatMsg         ; Pass offset of the message
-        mov edx, EatLen         ; Pass the length of the message
-        int 80H                 ; Make syscall to output the text to stdout
+<span style="color: #F0DFAF; font-weight: bold;">global</span> _start                   <span style="color: #7F9F7F;">; Linker (ld) needs this to find the entry point!</span>
+                                <span style="color: #7F9F7F;">; The name of entry point MUST be _start!</span>
+                                <span style="color: #7F9F7F;">; otherwise error will be raised during linking</span>
+<span style="color: #93E0E3;">_start</span>:                         <span style="color: #7F9F7F;">; A function definition, named _start</span>
+        <span style="color: #DCDCCC; font-weight: bold;">nop</span>                     <span style="color: #7F9F7F;">; This no-op keeps gdb happy (see text)</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">4</span>              <span style="color: #7F9F7F;">; Specify sys_write syscall</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #BFEBBF;">1</span>              <span style="color: #7F9F7F;">; Specify File Descriptor 1: Standard Output</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ecx</span>, EatMsg         <span style="color: #7F9F7F;">; Pass offset of the message</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">edx</span>, EatLen         <span style="color: #7F9F7F;">; Pass the length of the message</span>
+        <span style="color: #DCDCCC; font-weight: bold;">int</span> <span style="color: #BFEBBF;">80H</span>                 <span style="color: #7F9F7F;">; Make syscall to output the text to stdout</span>
 
-        mov eax, 1              ; Specify Exit syscall
-        mov ebx, 0              ; Return a code of zero
-        int 80H                 ; Make syscall to termninate the program
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>              <span style="color: #7F9F7F;">; Specify Exit syscall</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #BFEBBF;">0</span>              <span style="color: #7F9F7F;">; Return a code of zero</span>
+        <span style="color: #DCDCCC; font-weight: bold;">int</span> <span style="color: #BFEBBF;">80H</span>                 <span style="color: #7F9F7F;">; Make syscall to termninate the program</span>
 </pre>
 </div>
 
@@ -2526,7 +2537,7 @@ _start:                         ; A function definition, named _start
 </p>
 
 
-<div id="orgbb4892b" class="figure">
+<div class="figure">
 <p><img src="../../../files/system-calls-and-registers.png" alt="system-calls-and-registers.png" />
 </p>
 <p><span class="figure-number">Figure 23: </span>系统调用和寄存器</p>
@@ -2557,14 +2568,14 @@ _start:                         ; A function definition, named _start
 </p>
 
 
-<div id="org7a1fe31" class="figure">
+<div class="figure">
 <p><img src="../../../files/man-2-syscall.png" alt="man-2-syscall.png" />
 </p>
 <p><span class="figure-number">Figure 24: </span>man 2 syscall caller</p>
 </div>
 
 
-<div id="orga8bbf38" class="figure">
+<div class="figure">
 <p><img src="../../../files/man-2-syscall-2.png" alt="man-2-syscall-2.png" />
 </p>
 <p><span class="figure-number">Figure 25: </span>man 2 syscall args</p>
@@ -2649,7 +2660,7 @@ _start:                         ; A function definition, named _start
 如果在前面汇编时没有把 <code>nasm</code> 的 <code>-f</code> 参数设置为和目前架构一样的话,那么你会遇到你人生的第一个连接错误:
 </p>
 
-<pre class="example" id="orgb65e565">
+<pre class="example">
 ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86-64 output.
 </pre>
 
@@ -2684,7 +2695,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 
-<div id="org731d7b5" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-eatsyscall-part1.png" alt="gdb-eatsyscall-part1.png" />
 </p>
 <p><span class="figure-number">Figure 26: </span>初次进入调试</p>
@@ -2719,7 +2730,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgdac3b16" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-help.png" alt="gdb-help.png" />
 </p>
 <p><span class="figure-number">Figure 27: </span>gdb help</p>
@@ -2738,7 +2749,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org69f44dd" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-files-list.png" alt="gdb-files-list.png" />
 </p>
 <p><span class="figure-number">Figure 28: </span>gdb list</p>
@@ -2766,7 +2777,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orga453821" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-files-list-start.png" alt="gdb-files-list-start.png" />
 </p>
 <p><span class="figure-number">Figure 29: </span>找到需要暂停的位置</p>
@@ -2797,7 +2808,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org2b83fab" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-break.png" alt="gdb-break.png" />
 </p>
 <p><span class="figure-number">Figure 30: </span>设置断点</p>
@@ -2808,7 +2819,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgaf7f519" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-run.png" alt="gdb-run.png" />
 </p>
 <p><span class="figure-number">Figure 31: </span>gdb run</p>
@@ -2823,7 +2834,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgc750d65" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-where.png" alt="gdb-where.png" />
 </p>
 <p><span class="figure-number">Figure 32: </span>gdb where</p>
@@ -2878,7 +2889,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org237b2df" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-info-registers.png" alt="gdb-info-registers.png" />
 </p>
 <p><span class="figure-number">Figure 33: </span>gdb info registers</p>
@@ -2897,7 +2908,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org154b1dd" class="figure">
+<div class="figure">
 <p><img src="../../../files/gdb-examine-data.png" alt="gdb-examine-data.png" />
 </p>
 <p><span class="figure-number">Figure 34: </span>检查数据</p>
@@ -2925,8 +2936,8 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 </div>
 
-<div id="outline-container-orgfeda75e" class="outline-2">
-<h2 id="orgfeda75e"><span class="section-number-2">9</span> 指令的相关基础</h2>
+<div id="outline-container-orgac1176d" class="outline-2">
+<h2 id="orgac1176d"><span class="section-number-2">9</span> 指令的相关基础</h2>
 <div class="outline-text-2" id="text-9">
 <p>
 经过前期大量的基础工作,在前面已经体验过一把简单的开发了,现在可以开始认真学习指令了.
@@ -2970,7 +2981,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org44a227d" class="figure">
+<div class="figure">
 <p><img src="../../../files/MOV-and-operands.png" alt="MOV-and-operands.png" />
 </p>
 <p><span class="figure-number">Figure 35: </span>MOV和它的操作数</p>
@@ -3053,8 +3064,8 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">mov eax, 'WXYZ'
-mov bx, ax
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #CC9393;">'WXYZ'</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">bx</span>, <span style="color: #DFAF8F;">ax</span>
 </pre>
 </div>
 
@@ -3067,11 +3078,11 @@ mov bx, ax
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">mov eax, 1
-mov ebx, 2
-mov ecx, eax
-mov eax, ebx
-mov ebx, ecx
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #BFEBBF;">2</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ecx</span>, <span style="color: #DFAF8F;">eax</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #DFAF8F;">ebx</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #DFAF8F;">ecx</span>
 </pre>
 </div>
 
@@ -3104,7 +3115,7 @@ mov ebx, ecx
 </p>
 
 <p>
-我们来讨论几种基本的情况:
+我们先来讨论几种基本的情况:
 </p>
 
 <p>
@@ -3144,26 +3155,48 @@ mov ebx, ecx
 </p>
 
 <p>
-上面都是基础情况,下面有几个例子可以看一下,
+上面都是基础情况,开发人员可以通过一个多项式来计算出有效地址,这就是一般以外的情况了,
+</p>
+
+<p>
+这也是开发人员必须掌握的内存寻址技能的一部分,它有一套计算规则,
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/protected-mode-memory-addressing.png" alt="protected-mode-memory-addressing.png" />
+</p>
+</div>
+
+<p>
+这个多项式就是计算规则,每一项都是可选的,其中第二项目的括号不是必须的.这里只是为了突出第二项整体而已;
+</p>
+
+<p>
+这里的 <code>GP register</code> 全称是通用寄存器(general purpose register),要注意,16位和8位寄存器不能用这条式子,
+</p>
+
+<p>
+位移(displacement)就是一个地址到另外一个地之间的距离,和偏移(offset)有点类似.
+</p>
+
+<p>
+下面有几个例子可以看一下,
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">mov eax, [ebx]
-mov eax, [EatMsg]
-mov [eax], ebx
-mov [EatMsg], byte 'R'
-mov eax, [0x6000e8]
-mov eax, [ebx+16]
-mov eax, [ebx+ecx+11]
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, [<span style="color: #DFAF8F;">ebx</span>]
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, [EatMsg]
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> [<span style="color: #DFAF8F;">eax</span>], <span style="color: #DFAF8F;">ebx</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, [<span style="color: #BFEBBF;">0x6000e8</span>]
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> [EatMsg], <span style="color: #7CB8BB;">byte</span> <span style="color: #CC9393;">'R'</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, [<span style="color: #DFAF8F;">ebx</span>+<span style="color: #BFEBBF;">16</span>]
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, [<span style="color: #DFAF8F;">ebx</span>+<span style="color: #DFAF8F;">ecx</span>+<span style="color: #BFEBBF;">11</span>]
 </pre>
 </div>
 
 <p>
-最后两条指令就不是基础情况了,它的地址计算比较复杂,之后会展开讲,目前只要知道有这种情况就好.
-</p>
-
-<p>
-此外, <code>mov [EatMsg], byte 'R'</code> 可能不太好理解,它是把字符'R'复制到 <code>[EatMsg]</code> 高位的第一个字节上,
+你可能注意到 <code>mov [EatMsg], byte 'R'</code> 可能不太好理解,它是把字符'R'复制到 <code>[EatMsg]</code> 高位的第一个字节上,
 </p>
 
 <p>
@@ -3191,7 +3224,11 @@ mov eax, [ebx+ecx+11]
 </p>
 
 <p>
-像 <code>AX, CX</code> 和 <code>DX</code> 就不行.在当年要访问内存地址上的数据是需要像这样: <code>[DS:BX]</code>, <code>[ES:BP]</code>.
+像 <code>AX, CX</code> 和 <code>DX</code> 就不行.在当年要访问内存地址上的数据是需要像这样的: <code>[DS:BX]</code>, <code>[ES:BP]</code>,
+</p>
+
+<p>
+今天看来段寄存器已经是"时代眼泪"了,或者说早期的设计缺陷了.
 </p>
 
 
@@ -3224,10 +3261,10 @@ mov eax, [ebx+ecx+11]
 </p>
 
 
-<div id="org4d33cba" class="figure">
+<div class="figure">
 <p><img src="../../../files/x86-EFlags-register.png" alt="x86-EFlags-register.png" />
 </p>
-<p><span class="figure-number">Figure 36: </span>x86 EFlags 寄存器</p>
+<p><span class="figure-number">Figure 37: </span>x86 EFlags 寄存器</p>
 </div>
 
 <p>
@@ -3445,8 +3482,8 @@ mov eax, [ebx+ecx+11]
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">mov eax, 0FFFFFFFFH
-inc eax
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">0FFFFFFFFH</span>
+<span style="color: #DCDCCC; font-weight: bold;">inc</span> <span style="color: #DFAF8F;">eax</span>
 </pre>
 </div>
 
@@ -3455,8 +3492,8 @@ inc eax
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">mov eax, 0
-dec eax
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">0</span>
+<span style="color: #DCDCCC; font-weight: bold;">dec</span> <span style="color: #DFAF8F;">eax</span>
 </pre>
 </div>
 
@@ -3490,10 +3527,10 @@ dec eax
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">       mov eax, 5
-DoMore:
-       dec eax
-       jnz DoMore
+<pre class="src src-nasm">       <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">5</span>
+<span style="color: #93E0E3;">DoMore</span>:
+       <span style="color: #DCDCCC; font-weight: bold;">dec</span> <span style="color: #DFAF8F;">eax</span>
+       <span style="color: #DCDCCC; font-weight: bold;">jnz</span> DoMore
 </pre>
 </div>
 
@@ -3514,23 +3551,23 @@ DoMore:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">section .data
-section .bss
-section .text
+<pre class="src src-nasm"><span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.data</span>
+<span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.bss</span>
+<span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.text</span>
 
-global _start
-_start:
-        nop
-        mov eax, 5
-        call DoMore
-        mov eax, 1,
-        mov ebx, 0
-        int 80H
+<span style="color: #F0DFAF; font-weight: bold;">global</span> _start
+<span style="color: #93E0E3;">_start</span>:
+        <span style="color: #DCDCCC; font-weight: bold;">nop</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">5</span>
+        <span style="color: #DCDCCC; font-weight: bold;">call</span> DoMore
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>,
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #BFEBBF;">0</span>
+        <span style="color: #DCDCCC; font-weight: bold;">int</span> <span style="color: #BFEBBF;">80H</span>
 
-DoMore:
-        dec eax
-        jnz DoMore
-        ret
+<span style="color: #93E0E3;">DoMore</span>:
+        <span style="color: #DCDCCC; font-weight: bold;">dec</span> <span style="color: #DFAF8F;">eax</span>
+        <span style="color: #DCDCCC; font-weight: bold;">jnz</span> DoMore
+        <span style="color: #DCDCCC; font-weight: bold;">ret</span>
 </pre>
 </div>
 
@@ -3609,27 +3646,27 @@ DoMore:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">section .data
-section .bss
-section .text
+<pre class="src src-nasm"><span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.data</span>
+<span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.bss</span>
+<span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.text</span>
 
-global _start
-_start:
-        nop
-        mov eax, 5
-        call DoMore
-        mov eax, 1,
-        mov ebx, 0
-        int 80H
+<span style="color: #F0DFAF; font-weight: bold;">global</span> _start
+<span style="color: #93E0E3;">_start</span>:
+        <span style="color: #DCDCCC; font-weight: bold;">nop</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">5</span>
+        <span style="color: #DCDCCC; font-weight: bold;">call</span> DoMore
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>,
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #BFEBBF;">0</span>
+        <span style="color: #DCDCCC; font-weight: bold;">int</span> <span style="color: #BFEBBF;">80H</span>
 
-DoMore:
-        cmp eax, 3
-        jz .exit1
-        sub eax, 1
-        jnz DoMore
-        ret 2
+<span style="color: #93E0E3;">DoMore</span>:
+        <span style="color: #DCDCCC; font-weight: bold;">cmp</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">3</span>
+        <span style="color: #DCDCCC; font-weight: bold;">jz</span> .exit1
+        <span style="color: #DCDCCC; font-weight: bold;">sub</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>
+        <span style="color: #DCDCCC; font-weight: bold;">jnz</span> DoMore
+        <span style="color: #DCDCCC; font-weight: bold;">ret</span> <span style="color: #BFEBBF;">2</span>
 
-.exit1: ret 1
+<span style="color: #93E0E3;">.exit1</span>: <span style="color: #DCDCCC; font-weight: bold;">ret</span> <span style="color: #BFEBBF;">1</span>
 </pre>
 </div>
 
@@ -3654,28 +3691,28 @@ DoMore:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm">section .data
-section .bss
-section .text
+<pre class="src src-nasm"><span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.data</span>
+<span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.bss</span>
+<span style="color: #F0DFAF; font-weight: bold;">section</span> <span style="color: #7CB8BB;">.text</span>
 
-global _start
-_start:
-        nop
-        mov eax, 5
-        call DoMore
-        mov eax, 1,
-        mov ebx, 0
-        int 80H
+<span style="color: #F0DFAF; font-weight: bold;">global</span> _start
+<span style="color: #93E0E3;">_start</span>:
+        <span style="color: #DCDCCC; font-weight: bold;">nop</span>
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">5</span>
+        <span style="color: #DCDCCC; font-weight: bold;">call</span> DoMore
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>,
+        <span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #BFEBBF;">0</span>
+        <span style="color: #DCDCCC; font-weight: bold;">int</span> <span style="color: #BFEBBF;">80H</span>
 
-DoMore:
-        cmp eax, 3
-        jz OutSide.exit1
-        sub eax, 1
-        jnz DoMore
-        ret 2
+<span style="color: #93E0E3;">DoMore</span>:
+        <span style="color: #DCDCCC; font-weight: bold;">cmp</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">3</span>
+        <span style="color: #DCDCCC; font-weight: bold;">jz</span> OutSide.exit1
+        <span style="color: #DCDCCC; font-weight: bold;">sub</span> <span style="color: #DFAF8F;">eax</span>, <span style="color: #BFEBBF;">1</span>
+        <span style="color: #DCDCCC; font-weight: bold;">jnz</span> DoMore
+        <span style="color: #DCDCCC; font-weight: bold;">ret</span> <span style="color: #BFEBBF;">2</span>
 
-OutSide:
-.exit1: ret 1
+<span style="color: #93E0E3;">OutSide</span>:
+<span style="color: #93E0E3;">.exit1</span>: <span style="color: #DCDCCC; font-weight: bold;">ret</span> <span style="color: #BFEBBF;">1</span>
 </pre>
 </div>
 
@@ -3714,14 +3751,159 @@ OutSide:
 <p>
 比如 <code>10101111</code> 可以表示一个有符号值 -81,也可以表示一个无符号值 175.
 </p>
+
+<p>
+<b>但这不是说直接更改最高位就能改变正负号了</b>, 就拿 42 的 8 位二进制表示 <code>00101010</code> 来说,就不可能直接改最高位就能得到 <code>-42</code> 的.
+</p>
+
+<p>
+汇编语言里面是用二的补码(two's complement)来处理负数的,具体算法是把一个二进制数字里的原来的 1 变成 0,原来的 0 变成 1,然后加 1.
+</p>
+
+<p>
+因此 <code>-42</code> 的二进制表示应该是 <code>11010110</code>.关于二的补码的详细内容就不展开了,可以看<a href="https://www.cs.cornell.edu/~tomf/notes/cps104/twoscomp.html">这里</a>.
+</p>
+
+<p>
+幸运的是有一条 <code>NEG</code> 指令可以帮助直接计算一个数的的负数.
+</p>
+
+<p>
+对于 8 位二进制表示来说,如果要表示有符号数,那么能够表示的数字范围就是 <code>-128(10000000)</code> 到 <code>127(01111111)</code>.
+</p>
+
+<p>
+下面是常见不同大小(指位数)的数值大小.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/common-ranges-of-signed-values.png" alt="common-ranges-of-signed-values.png" />
+</p>
+<p><span class="figure-number">Figure 38: </span>常见的范围</p>
+</div>
+
+<p>
+处理有符号值会有一个问题: 如何处理不同位数的有符号值.符号位是处于最高位的,这就是问题所在.
+</p>
+
+<p>
+当把一个有符号的值移动到一个更大寄存器或者内存地址,会发生什么情况呢?
+</p>
+
+<p>
+(具体做法在前面讲寄存器数据的时候就讲过了,不再说了)
+</p>
+
+<p>
+比如当我们要把 8 位大小的有符号值 <code>-42</code> 复制到 32 位的寄存器上, <b>原本的符号位就不再是符号位了</b>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">al</span>, -<span style="color: #BFEBBF;">42</span>
+<span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #DFAF8F;">eax</span>
+</pre>
+</div>
+
+<p>
+这个时候 <code>EAX</code> 和 <code>EBX</code> 的值就是 214 了,可以通过调试器来确认这一个事实.
+</p>
+
+<p>
+针对这个问题, <code>x86 CPU</code> 提供了 <code>MOVSX</code> (Move with Sign Extension)指令来解决这个问题,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-nasm"><span style="color: #DCDCCC; font-weight: bold;">mov</span> <span style="color: #DFAF8F;">al</span>, -<span style="color: #BFEBBF;">42</span>
+<span style="color: #DCDCCC; font-weight: bold;">movsx</span> <span style="color: #DFAF8F;">ebx</span>, <span style="color: #DFAF8F;">al</span>
+</pre>
+</div>
+
+<p>
+<code>EBX</code> 现在的值就是 <code>-42</code>, <code>EAX</code> 依然是 214.
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/movsx-instruction.png" alt="movsx-instruction.png" />
+</p>
+<p><span class="figure-number">Figure 39: </span>MOVSX 指令</p>
+</div>
+
+<p>
+这图是 <code>MOVSX</code> 指令的用法,可以看到上面是用了一些 <code>r16</code>, <code>r/m16</code> 这样的标记,这些标记在很多指令参考文档都有用,因此这里就稍微总结一下.
+</p>
+
+<p>
+<code>r</code> 是寄存器(register)的首个字母,表示寄存器数据, <b>但是不包括段寄存器的数据</b>,
+</p>
+
+<p>
+段寄存器有专门的表示: <code>sr</code> 表示,它是 <code>segment registers</code> 的缩写,
+</p>
+
+<p>
+后面的数字表示位数,所以 <code>r16</code> 就表示 16 位寄存器, <code>sr</code> 没有后缀数字;
+</p>
+
+<p>
+<code>m</code> 是内存(memory)的首个字母,表示内存数据的意思,后面也有数字后缀;=r/m= 就表示是寄存器数据或内存数据.
+</p>
+
+<p>
+除了上面的这些,还有 <code>i</code> 表示立即数,后面也有后缀数字表示大小,最后还有 <code>d</code> 是位移(displacement)的首个字母,后面也跟着后缀数字.
+</p>
+
+<p>
+<br />
+</p>
+
+<p>
+<b>隐式操作数</b>
+</p>
+
+<p>
+不是所有指令都是像 <code>MOV</code> 那样有一个目的操作数和源操作数的使用方式,它直接告诉你作用于哪些寄存器或内存地址.
+</p>
+
+<p>
+而有些指令则不是,比如对无符号数做乘法的 <code>MUL</code> 指令: 把两个乘数(factors)相乘后得到一个乘积(product),但它的用法就只接受一个操作数,
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/mul-instruction.png" alt="mul-instruction.png" />
+</p>
+<p><span class="figure-number">Figure 40: </span>MUL 指令用法</p>
+</div>
+
+<p>
+我们把这个需要开发人员提供的操作书叫做显式操作数(explicit operand),实际上 <code>MUL</code> 还需要多一个操作数,
+</p>
+
+<p>
+而这个操作数的选择是 <code>MUL</code> 定义好的,无需开发人员提供,这种操作数就叫做隐式操作数(implicit operand).
+</p>
+
+<p>
+为什么要这么设计呢?因为两个乘数的乘法结果可以是比任意一个乘数大得多,也就是不可能尊从"把指令产生的值储存到目的操作数"的规范,
+</p>
+
+<p>
+乘法运算的这个问题对于所有计算机架构都是存在的,解决思路也很简单:
+</p>
+
+<p>
+两个乘数的二进制位数分别是 \(m\) 和 \(n\),乘积的二进制位数是 \(p\), \(p \le 2 \times max(m,n)\)
+</p>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="date">Date: 2020-12-14</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2021-04-14 ���� 11:02</p>
-<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="date">Created: 2021-04-19 Mon 23:30</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>
