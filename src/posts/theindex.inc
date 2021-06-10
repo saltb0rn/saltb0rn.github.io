@@ -1,3 +1,5 @@
+* "
+  - [[file:2021/03/monster-hunter-rise-intr.org]["怪物猎人RISE"入门学习]]
 * A
   - [[file:2018/07/a-simple-websocket-echo-server.org][A Simple WebSocket Echo Server]]
   - [[file:2018/06/about-python.org][About Python]]
@@ -55,7 +57,8 @@
 * 汇
   - [[file:2020/12/assembly.org][汇编]]
 * 理
-  - [[file:2021/02/understand-perspective-in-css.org][理解CSS中的透视]]
+  - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
+  - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]
 * 用
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直

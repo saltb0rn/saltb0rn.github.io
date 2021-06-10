@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-10-19 周一 09:45 -->
+<!-- 2021-06-10 Thu 21:38 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Continuation Passing Style</title>
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -198,7 +198,7 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
 <!--/*--><![CDATA[/*><!--*/
      function CodeHighlightOn(elem, id)
      {
@@ -234,20 +234,20 @@
 </div>
 <div id="content">
 <h1 class="title">Continuation Passing Style</h1>
-<div class="abstract" id="org82a6ae0">
+<div class="abstract" id="orgf5413f0">
 <p>
 写一写自己对 <code>CPS</code> 的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
 </p>
 
 </div>
 
-<pre class="example" id="orga306d2c">
+<pre class="example" id="org0f741b6">
 更新于 2018-11-12
 </pre>
 
-<div id="outline-container-org7045d64" class="outline-2">
-<h2 id="org7045d64">偶遇 CPS</h2>
-<div class="outline-text-2" id="text-org7045d64">
+<div id="outline-container-org11dfbc0" class="outline-2">
+<h2 id="org11dfbc0">偶遇 CPS</h2>
+<div class="outline-text-2" id="text-org11dfbc0">
 <p>
 有很久一段时间没有写 <code>Python</code> 了,语法虽好,不过语法糖实在太多,断断续续的接触了一段时间的 <code>Lisp</code>, 从一开始的 <code>Common Lisp</code>,到现在的 <code>Emacs Lisp</code> 和 <code>Racket</code>,经过这段洗礼以后,有一种"不写 <code>Python</code> 了,干脆写 <code>Lisp</code> 为生算了"的想法(不过想生活的话,还是写 <code>Python</code> 靠谱点,都学就最好),我不是 <code>Lisp</code> 的佼佼者,不过应该也算是个 <code>Lisp fanboy</code> 了吧.
 </p>
@@ -259,9 +259,9 @@
 </div>
 
 
-<div id="outline-container-org134d8c6" class="outline-2">
-<h2 id="org134d8c6">Continuation</h2>
-<div class="outline-text-2" id="text-org134d8c6">
+<div id="outline-container-org7bbbc69" class="outline-2">
+<h2 id="org7bbbc69">Continuation</h2>
+<div class="outline-text-2" id="text-org7bbbc69">
 <p>
 在讲什么是 <code>CPS</code> 之前,得先说一下什么是 <code>continuation</code>.
 </p>
@@ -275,29 +275,29 @@
 </p>
 </div>
 
-<div id="outline-container-orga7e1b8d" class="outline-3">
-<h3 id="orga7e1b8d">简单的 Lisp</h3>
-<div class="outline-text-3" id="text-orga7e1b8d">
+<div id="outline-container-org37dcbe5" class="outline-3">
+<h3 id="org37dcbe5">简单的 Lisp</h3>
+<div class="outline-text-3" id="text-org37dcbe5">
 <p>
 <code>Racket</code> 里面一般是这样定义函数的,以定义一个形式参数为 <code>a</code> 和 <code>b</code> 的整型加法函数 <code>add</code> ,和一个减法函数 <code>sub</code> 为例子.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">add</span> a b<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>+ a b<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">sub</span> a b<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>- a b<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">add</span> a b) (+ a b))
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">sub</span> a b) (- a b))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#20063;&#21487;&#20197;&#21033;&#29992;lambda&#34920;&#36798;&#24335;&#23450;&#20041;&#20989;&#25968;</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">(define add (lambda (a b) (+ a b)))</span>
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">call it with 1 and 2, then returns 3 as the result</span>
-<span style="color: #DCDCCC;">(</span>add 1 2<span style="color: #DCDCCC;">)</span>
+(add 1 2)
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">call it with 3 and 2, then returns 1 as the result</span>
-<span style="color: #DCDCCC;">(</span>sub 3 2<span style="color: #DCDCCC;">)</span>
+(sub 3 2)
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">if condition then true-branch else false-branch</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #BFEBBF;">(</span>&gt; <span style="color: #D0BF8F;">(</span>sub 3 2<span style="color: #D0BF8F;">)</span> 0<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span>sub 3 2<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span>add 1 2<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">if</span> (&gt; (sub 3 2) 0)
+    (sub 3 2)
+    (add 1 2))
 </pre>
 </div>
 
@@ -310,17 +310,17 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">ans</span> x y z<span style="color: #BFEBBF;">)</span>
-   <span style="color: #BFEBBF;">(</span>add <span style="color: #D0BF8F;">(</span>sub x y<span style="color: #D0BF8F;">)</span> z<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">ans</span> x y z)
+   (add (sub x y) z))
 </pre>
 </div>
 </div>
 </div>
 
 
-<div id="outline-container-orgd541826" class="outline-3">
-<h3 id="orgd541826">控制上下文(Control context)</h3>
-<div class="outline-text-3" id="text-orgd541826">
+<div id="outline-container-orge719a09" class="outline-3">
+<h3 id="orge719a09">控制上下文(Control context)</h3>
+<div class="outline-text-3" id="text-orge719a09">
 <p>
 好了,介绍什么是 <code>continuation</code> 之前先介绍一下什么是控制上下文?首先要先了解什么是上下文,所谓上下文就是贯穿整个过程的一个意像,在整个过程中的每一个点上,上下文的状态都不一样.
 </p>
@@ -352,9 +352,9 @@
 </div>
 
 
-<div id="outline-container-org8b816ef" class="outline-3">
-<h3 id="org8b816ef">Continuation 的 representation</h3>
-<div class="outline-text-3" id="text-org8b816ef">
+<div id="outline-container-orgd7f2b3e" class="outline-3">
+<h3 id="orgd7f2b3e">Continuation 的 representation</h3>
+<div class="outline-text-3" id="text-orgd7f2b3e">
 <p>
 在给 <code>continuation</code> 选择 <code>representation</code> 之前先给每一个执行点选择一种 <code>representation</code>.每一执行点相当于一个过程,每执行一个点就是一次调用.
 </p>
@@ -365,10 +365,10 @@
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#31532;&#19968;&#27493;,&#25226;&#31532;&#19968;&#27493;&#20445;&#23384;&#22312;first-step</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">first-step</span> <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>pre-step-res<span style="color: #D0BF8F;">)</span> <span style="color: #D0BF8F;">(</span>sub 1 2<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">first-step</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (pre-step-res) (sub 1 2)))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#25191;&#34892;&#31532;&#19968;&#27493;&#30456;&#24403;&#20110;&#20197;&#19979;,void&#26159;Racket&#37324;&#38754;&#30340;&#19968;&#20010;&#20540;</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">res1</span> <span style="color: #BFEBBF;">(</span>first-step void<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">res1</span> (first-step void))
 </pre>
 </div>
 
@@ -378,10 +378,10 @@
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#31532;&#20108;&#27493;,&#25226;&#31532;&#20108;&#27493;&#20445;&#23384;&#22312;second-step</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">second-step</span> <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>pre-step-res<span style="color: #D0BF8F;">)</span> <span style="color: #D0BF8F;">(</span>add pre-step-res 3<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">second-step</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (pre-step-res) (add pre-step-res 3)))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#25191;&#34892;&#31532;&#20108;&#27493;</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">res2</span> <span style="color: #BFEBBF;">(</span>second-step res1<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">res2</span> (second-step res1))
 </pre>
 </div>
 
@@ -390,7 +390,7 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">last-step</span> <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #D0BF8F;">(</span>v<span style="color: #D0BF8F;">)</span> v<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">last-step</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v) v))
 </pre>
 </div>
 
@@ -410,13 +410,13 @@
 </div>
 
 
-<div id="outline-container-org9246dd6" class="outline-2">
-<h2 id="org9246dd6">Continuation Passing Style</h2>
-<div class="outline-text-2" id="text-org9246dd6">
+<div id="outline-container-orgd81fc1a" class="outline-2">
+<h2 id="orgd81fc1a">Continuation Passing Style</h2>
+<div class="outline-text-2" id="text-orgd81fc1a">
 </div>
-<div id="outline-container-org4bb284b" class="outline-3">
-<h3 id="org4bb284b">什么是 CPS</h3>
-<div class="outline-text-3" id="text-org4bb284b">
+<div id="outline-container-orga411320" class="outline-3">
+<h3 id="orga411320">什么是 CPS</h3>
+<div class="outline-text-3" id="text-orga411320">
 <p>
 顾名思意, <code>CPS</code> 就是一种风格,这种风格就是把 <code>continuation</code> 作为参数传递.类似的还有 <code>Environment Passing Style</code>.
 </p>
@@ -428,9 +428,9 @@
 </div>
 
 
-<div id="outline-container-orgb3dfa1d" class="outline-3">
-<h3 id="orgb3dfa1d">CPS 的意义</h3>
-<div class="outline-text-3" id="text-orgb3dfa1d">
+<div id="outline-container-org0d69ceb" class="outline-3">
+<h3 id="org0d69ceb">CPS 的意义</h3>
+<div class="outline-text-3" id="text-org0d69ceb">
 <p>
 其实就是对控制上下文(control context)进行抽象和实例化以及把递归转化成尾递归.
 </p>
@@ -446,16 +446,16 @@
 </div>
 
 
-<div id="outline-container-org19d16b6" class="outline-3">
-<h3 id="org19d16b6">把上面的 ans 改写成 CPS 程序 ans/k</h3>
-<div class="outline-text-3" id="text-org19d16b6">
+<div id="outline-container-org96be1e5" class="outline-3">
+<h3 id="org96be1e5">把上面的 ans 改写成 CPS 程序 ans/k</h3>
+<div class="outline-text-3" id="text-org96be1e5">
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">ans/k</span> x y z cont<span style="color: #BFEBBF;">)</span>
-   <span style="color: #BFEBBF;">(</span>sub/k x y
-      <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>res1<span style="color: #93E0E3;">)</span>
-         <span style="color: #93E0E3;">(</span>add/k res1 z
-            <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>res2<span style="color: #94BFF3;">)</span>
-               <span style="color: #94BFF3;">(</span>cont res2<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">ans/k</span> x y z cont)
+   (sub/k x y
+      (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+         (add/k res1 z
+            (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+               (cont res2))))))
 </pre>
 </div>
 
@@ -466,9 +466,9 @@
 </div>
 
 
-<div id="outline-container-org1e77d9f" class="outline-3">
-<h3 id="org1e77d9f">Simple Expression and Tail Form Expression</h3>
-<div class="outline-text-3" id="text-org1e77d9f">
+<div id="outline-container-org544abf8" class="outline-3">
+<h3 id="org544abf8">Simple Expression and Tail Form Expression</h3>
+<div class="outline-text-3" id="text-org544abf8">
 <p>
 要转变成 <code>CPS</code>,则要理解 <code>CPS</code> 对表达式做出的划分: <code>SimpleExp</code> 以及 <code>TfExp</code> (Tail Form Expression).
 </p>
@@ -500,9 +500,9 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </div>
 
 
-<div id="outline-container-orga5378a7" class="outline-3">
-<h3 id="orga5378a7">一套把程序转化为 CPS 程序的算法</h3>
-<div class="outline-text-3" id="text-orga5378a7">
+<div id="outline-container-orgcf0d1f5" class="outline-3">
+<h3 id="orgcf0d1f5">一套把程序转化为 CPS 程序的算法</h3>
+<div class="outline-text-3" id="text-orgcf0d1f5">
 <p>
 先示范如何把 <code>ans</code> 改写成 <code>CPS</code>,也就是把表达式改写成 <code>TfExp</code>.
 </p>
@@ -531,8 +531,8 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">add/k</span> x y cont<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>cont <span style="color: #D0BF8F;">(</span>+ x y<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">sub/k</span> x y cont<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>cont <span style="color: #D0BF8F;">(</span>- x y<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">add/k</span> x y cont) (cont (+ x y)))
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">sub/k</span> x y cont) (cont (- x y)))
 </pre>
 </div></li>
 </ol>
@@ -560,43 +560,43 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #F0DFAF; font-weight: bold;">#lang</span> racket
+<pre class="src src-scheme">#lang racket
 
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #BFEBBF;">(</span>x<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">cond</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>zero? x<span style="color: #93E0E3;">)</span> 17<span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>f x<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 2<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>+ 22 <span style="color: #9FC59F;">(</span>f x<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 3<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>g 22 <span style="color: #9FC59F;">(</span>f x<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 4<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>+ <span style="color: #9FC59F;">(</span>f x<span style="color: #9FC59F;">)</span> 33 <span style="color: #9FC59F;">(</span>g y<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #93E0E3;">(</span>h <span style="color: #9FC59F;">(</span>f x<span style="color: #9FC59F;">)</span> <span style="color: #9FC59F;">(</span>- 44 y<span style="color: #9FC59F;">)</span> <span style="color: #9FC59F;">(</span>g y<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x)
+  (<span style="color: #F0DFAF; font-weight: bold;">cond</span>
+    [(zero? x) 17]
+    [(= x 1) (f x)]
+    [(= x 2) (+ 22 (f x))]
+    [(= x 3) (g 22 (f x))]
+    [(= x 4) (+ (f x) 33 (g y))]
+    [else (h (f x) (- 44 y) (g y))]))
 
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">after transforming</span>
 
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #BFEBBF;">(</span>x cont<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">cond</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>zero? x<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>cont 17<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>f x cont<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 2<span style="color: #93E0E3;">)</span>
-     <span style="color: #93E0E3;">(</span>f x
-        <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>v<span style="color: #94BFF3;">)</span>
-           <span style="color: #94BFF3;">(</span>+ 22 v<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 3<span style="color: #93E0E3;">)</span>
-     <span style="color: #93E0E3;">(</span>f x
-        <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>v<span style="color: #94BFF3;">)</span>
-           <span style="color: #94BFF3;">(</span>g 22 v cont<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>= x 4<span style="color: #93E0E3;">)</span>
-     <span style="color: #93E0E3;">(</span>f x
-        <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>v1<span style="color: #94BFF3;">)</span>
-           <span style="color: #94BFF3;">(</span>g y
-              <span style="color: #E0CF9F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #8FB28F;">(</span>v2<span style="color: #8FB28F;">)</span>
-                 <span style="color: #8FB28F;">(</span>cont <span style="color: #6CA0A3;">(</span>+ v1 33 v2<span style="color: #6CA0A3;">)</span><span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #93E0E3;">(</span>f x
-             <span style="color: #9FC59F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #94BFF3;">(</span>v1<span style="color: #94BFF3;">)</span>
-                <span style="color: #94BFF3;">(</span>g y
-                   <span style="color: #E0CF9F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #8FB28F;">(</span>v2<span style="color: #8FB28F;">)</span>
-                      <span style="color: #8FB28F;">(</span>h v1 <span style="color: #6CA0A3;">(</span>- 44 y<span style="color: #6CA0A3;">)</span> v2 cont<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x cont)
+  (<span style="color: #F0DFAF; font-weight: bold;">cond</span>
+    [(zero? x) (cont 17)]
+    [(= x 1) (f x cont)]
+    [(= x 2)
+     (f x
+        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v)
+           (+ 22 v)))]
+    [(= x 3)
+     (f x
+        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v)
+           (g 22 v cont)))]
+    [(= x 4)
+     (f x
+        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v1)
+           (g y
+              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v2)
+                 (cont (+ v1 33 v2))))))]
+    [else (f x
+             (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v1)
+                (g y
+                   (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v2)
+                      (h v1 (- 44 y) v2 cont)))))]))
 </pre>
 </div>
 
@@ -607,80 +607,80 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </div>
 
 
-<div id="outline-container-org9197b92" class="outline-3">
-<h3 id="org9197b92">最后一个例子</h3>
-<div class="outline-text-3" id="text-org9197b92">
+<div id="outline-container-org720956b" class="outline-3">
+<h3 id="org720956b">最后一个例子</h3>
+<div class="outline-text-3" id="text-org720956b">
 <p>
 分别定义累加从1到n的函数 <code>bad-acc,acc-tail和acc</code>, 以及(Fibonacci) <code>bad-fib</code> 和 <code>fib</code>.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #F0DFAF; font-weight: bold;">#lang</span> racket
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> racket/trace<span style="color: #DCDCCC;">)</span>
+<pre class="src src-scheme">#lang racket
+(require racket/trace)
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bad acc</span>
-<span style="color: #DCDCCC;">(</span>trace-define <span style="color: #BFEBBF;">(</span>bad-acc n<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span>= n 0<span style="color: #D0BF8F;">)</span>
+(trace-define (bad-acc n)
+    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
         0
-        <span style="color: #D0BF8F;">(</span>+ n <span style="color: #93E0E3;">(</span>bad-acc <span style="color: #9FC59F;">(</span>- n 1<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+        (+ n (bad-acc (- n 1)))))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">tail form</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">acc-tail</span> n<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span>acc-tail-inner n 0<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc-tail</span> n)
+    (acc-tail-inner n 0))
 
-<span style="color: #DCDCCC;">(</span>trace-define <span style="color: #BFEBBF;">(</span>acc-tail-inner n res<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span>= n 0<span style="color: #D0BF8F;">)</span>
+(trace-define (acc-tail-inner n res)
+    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
         res
-        <span style="color: #D0BF8F;">(</span>acc-tail-inner <span style="color: #93E0E3;">(</span>- n 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>+ res n<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+        (acc-tail-inner (- n 1) (+ res n))))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">cps</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">acc</span> n<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span>acc/k n <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>val<span style="color: #93E0E3;">)</span> val<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc</span> n)
+    (acc/k n (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (val) val)))
 
-<span style="color: #DCDCCC;">(</span>trace-define <span style="color: #BFEBBF;">(</span>acc/k n cont<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span>= n 0<span style="color: #D0BF8F;">)</span>
-        <span style="color: #D0BF8F;">(</span>cont 0<span style="color: #D0BF8F;">)</span>
-        <span style="color: #D0BF8F;">(</span>acc/k <span style="color: #93E0E3;">(</span>- n 1<span style="color: #93E0E3;">)</span>
-               <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #9FC59F;">(</span>res<span style="color: #9FC59F;">)</span> <span style="color: #9FC59F;">(</span>cont <span style="color: #94BFF3;">(</span>+ n res<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(trace-define (acc/k n cont)
+    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+        (cont 0)
+        (acc/k (- n 1)
+               (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res) (cont (+ n res))))))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">BONUS: even tail form can be convert into cps</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">acc-tail-inner/k</span> n res cont<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span>= n 0<span style="color: #D0BF8F;">)</span>
-        <span style="color: #D0BF8F;">(</span>cont res<span style="color: #D0BF8F;">)</span>
-        <span style="color: #D0BF8F;">(</span>acc-tail-inner/k
-          <span style="color: #93E0E3;">(</span>- n 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>+ res n<span style="color: #93E0E3;">)</span> cont<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc-tail-inner/k</span> n res cont)
+    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+        (cont res)
+        (acc-tail-inner/k
+          (- n 1) (+ res n) cont)))
 
 <span style="color: #5F7F5F;">;;; </span><span style="color: #7F9F7F;">bad fib</span>
-<span style="color: #DCDCCC;">(</span>trace-define <span style="color: #BFEBBF;">(</span>bad-fib n<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">or</span> <span style="color: #93E0E3;">(</span>= n 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>= n 2<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
+(trace-define (bad-fib n)
+  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
       1
-      <span style="color: #D0BF8F;">(</span>+ <span style="color: #93E0E3;">(</span>bad-fib <span style="color: #9FC59F;">(</span>- n 2<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>bad-fib <span style="color: #9FC59F;">(</span>- n 1<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+      (+ (bad-fib (- n 2)) (bad-fib (- n 1)))))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">cps</span>
-<span style="color: #DCDCCC;">(</span>trace-define <span style="color: #BFEBBF;">(</span>fib/k n cont<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">or</span> <span style="color: #93E0E3;">(</span>= n 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>= n 2<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
-      <span style="color: #D0BF8F;">(</span>cont 1<span style="color: #D0BF8F;">)</span>
-      <span style="color: #D0BF8F;">(</span>fib/k
-       <span style="color: #93E0E3;">(</span>- n 2<span style="color: #93E0E3;">)</span>
-       <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #9FC59F;">(</span>res1<span style="color: #9FC59F;">)</span>
-         <span style="color: #9FC59F;">(</span>fib/k
-          <span style="color: #94BFF3;">(</span>- n 1<span style="color: #94BFF3;">)</span>
-          <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #E0CF9F;">(</span>res2<span style="color: #E0CF9F;">)</span>
-            <span style="color: #E0CF9F;">(</span>cont <span style="color: #8FB28F;">(</span>+ res1 res2<span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(trace-define (fib/k n cont)
+  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+      (cont 1)
+      (fib/k
+       (- n 2)
+       (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+         (fib/k
+          (- n 1)
+          (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+            (cont (+ res1 res2))))))))
 
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">fib</span> n<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span>fib/k n <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>val<span style="color: #93E0E3;">)</span> val<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">fib</span> n)
+    (fib/k n (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (val) val)))
 
 <span style="color: #5F7F5F;">;;; </span><span style="color: #7F9F7F;">tests</span>
-<span style="color: #DCDCCC;">(</span>bad-acc 10<span style="color: #DCDCCC;">)</span>
+(bad-acc 10)
 
-<span style="color: #DCDCCC;">(</span>acc-tail 10<span style="color: #DCDCCC;">)</span>
+(acc-tail 10)
 
-<span style="color: #DCDCCC;">(</span>acc 10<span style="color: #DCDCCC;">)</span>
+(acc 10)
 
-<span style="color: #DCDCCC;">(</span>bad-fib 7<span style="color: #DCDCCC;">)</span>
+(bad-fib 7)
 
-<span style="color: #DCDCCC;">(</span>fib 7<span style="color: #DCDCCC;">)</span>
+(fib 7)
 </pre>
 </div>
 
@@ -854,10 +854,10 @@ racket@test.rkt&gt;
 </div>
 
 
-<div id="outline-container-org84800f6" class="outline-2">
-<h2 id="org84800f6">Trampoline 和 Bounce</h2>
-<div class="outline-text-2" id="text-org84800f6">
-<pre class="example" id="orgb605158">
+<div id="outline-container-org5979d56" class="outline-2">
+<h2 id="org5979d56">Trampoline 和 Bounce</h2>
+<div class="outline-text-2" id="text-org5979d56">
+<pre class="example" id="orge9ce2b4">
 写于 2019/4/8
 </pre>
 
@@ -895,51 +895,51 @@ racket@test.rkt&gt;
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bounce &#30340;&#23450;&#20041;,</span>
-<span style="color: #DCDCCC;">(</span>struct bounce <span style="color: #BFEBBF;">(</span>res cont<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(struct bounce (res cont))
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#23545; acc/k &#36827;&#34892;&#20462;&#25913;,&#35201;&#28857;&#20043;&#19968;&#23601;&#26159;&#25226;&#25152;&#26377; acc/k &#30340;&#35843;&#29992;(&#20063;&#23601;&#26159;&#36820;&#22238;&#20540;)&#25442;&#25104;bounce&#20540;.</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#21487;&#20197;&#36825;&#20040;&#24819;,&#36825;&#20040;&#20570;&#26159;&#25226;&#21407;&#26412;&#30340;&#35843;&#29992;&#32473;&#25286;&#24320;&#20102;.</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">acc-bounce</span> n cont<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span>= n 0<span style="color: #D0BF8F;">)</span>
-      <span style="color: #D0BF8F;">(</span>bounce 0 cont<span style="color: #D0BF8F;">)</span> <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
-      <span style="color: #D0BF8F;">(</span>bounce n       <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (acc-bounce (- n 1) (lambda (res) (cont (+ n res)))), &#36825;&#37324;&#25286;&#30340;&#22320;&#26041;&#26159; (cont (+ n res)),</span>
-              <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #9FC59F;">(</span>t<span style="color: #9FC59F;">)</span>  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#21644; (cont 0) &#19981;&#19968;&#26679;,&#36825;&#20010;&#38656;&#35201;&#20808;&#25226; n &#30452;&#25509;&#25552;&#21040;&#22806;&#38754;&#28982;&#21518;&#24471;&#21040;&#19968;&#20010;&#26032;&#30340; continuation: (lambda (t) (acc-bounce (- t 1) (cont (+ t res)))), &#26368;&#21518;&#25286; (cont (+ t res)) &#21464;&#25104; (bounce (+ t res) cont)</span>
-                <span style="color: #9FC59F;">(</span>acc-bounce <span style="color: #94BFF3;">(</span>- t 1<span style="color: #94BFF3;">)</span>
-                            <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #E0CF9F;">(</span>res<span style="color: #E0CF9F;">)</span> <span style="color: #E0CF9F;">(</span>bounce <span style="color: #8FB28F;">(</span>+ t res<span style="color: #8FB28F;">)</span> cont<span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc-bounce</span> n cont)
+  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+      (bounce 0 cont) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
+      (bounce n       <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (acc-bounce (- n 1) (lambda (res) (cont (+ n res)))), &#36825;&#37324;&#25286;&#30340;&#22320;&#26041;&#26159; (cont (+ n res)),</span>
+              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t)  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#21644; (cont 0) &#19981;&#19968;&#26679;,&#36825;&#20010;&#38656;&#35201;&#20808;&#25226; n &#30452;&#25509;&#25552;&#21040;&#22806;&#38754;&#28982;&#21518;&#24471;&#21040;&#19968;&#20010;&#26032;&#30340; continuation: (lambda (t) (acc-bounce (- t 1) (cont (+ t res)))), &#26368;&#21518;&#25286; (cont (+ t res)) &#21464;&#25104; (bounce (+ t res) cont)</span>
+                (acc-bounce (- t 1)
+                            (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res) (bounce (+ t res) cont)))))))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#30001;&#20110; Racket &#27809;&#26377;&#20160;&#20040;&#31867;&#20284;&#19982; Python while statement &#37027;&#31181;&#19996;&#35199;,&#25152;&#20197;&#25105;&#36824;&#26159;&#29992;&#20102;&#36882;&#24402;,&#22312; Python &#20013;&#21487;&#20197;&#25913;&#20889;&#25104; while</span>
 
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">fib-bounce</span> n cont<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">or</span> <span style="color: #93E0E3;">(</span>= n 1<span style="color: #93E0E3;">)</span> <span style="color: #93E0E3;">(</span>= n 2<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
-      <span style="color: #D0BF8F;">(</span>bounce 1 cont<span style="color: #D0BF8F;">)</span> <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
-      <span style="color: #D0BF8F;">(</span>bounce n       <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#25286;&#24320;&#31532;&#19968;&#20010;&#35843;&#29992; (fib/k (- n 2) ...)</span>
-              <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #9FC59F;">(</span>t<span style="color: #9FC59F;">)</span>
-                <span style="color: #9FC59F;">(</span>fib-bounce
-                 <span style="color: #94BFF3;">(</span>- t 2<span style="color: #94BFF3;">)</span>
-                 <span style="color: #94BFF3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #E0CF9F;">(</span>res1<span style="color: #E0CF9F;">)</span>
-                   <span style="color: #E0CF9F;">(</span>bounce  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#25286;&#24320;&#31532;&#20108;&#20010;&#35843;&#29992; (fib/k (-n 1) ...),&#36825;&#37324;&#20854;&#23454;&#21487;&#20197;&#19981;&#25286;,</span>
-                    <span style="color: #8FB28F;">(</span>- t 1<span style="color: #8FB28F;">)</span> <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#19981;&#36807;&#20026;&#20102;&#21644;&#25226;&#23614;&#35843;&#29992;&#25442;&#25104;bounce&#30340;&#35828;&#27861;&#20445;&#25345;&#19968;&#33268;,&#24212;&#35813;&#25286;&#24320;</span>
-                    <span style="color: #8FB28F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #6CA0A3;">(</span>t1<span style="color: #6CA0A3;">)</span>
-                      <span style="color: #6CA0A3;">(</span>fib-bounce
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">fib-bounce</span> n cont)
+  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+      (bounce 1 cont) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
+      (bounce n       <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#25286;&#24320;&#31532;&#19968;&#20010;&#35843;&#29992; (fib/k (- n 2) ...)</span>
+              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t)
+                (fib-bounce
+                 (- t 2)
+                 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+                   (bounce  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#25286;&#24320;&#31532;&#20108;&#20010;&#35843;&#29992; (fib/k (-n 1) ...),&#36825;&#37324;&#20854;&#23454;&#21487;&#20197;&#19981;&#25286;,</span>
+                    (- t 1) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#19981;&#36807;&#20026;&#20102;&#21644;&#25226;&#23614;&#35843;&#29992;&#25442;&#25104;bounce&#30340;&#35828;&#27861;&#20445;&#25345;&#19968;&#33268;,&#24212;&#35813;&#25286;&#24320;</span>
+                    (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t1)
+                      (fib-bounce
                        t1
-                       <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #BFEBBF;">(</span>res2<span style="color: #BFEBBF;">)</span>
-                         <span style="color: #BFEBBF;">(</span>bounce <span style="color: #D0BF8F;">(</span>+ res1 res2<span style="color: #D0BF8F;">)</span> cont<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span><span style="color: #6CA0A3;">)</span><span style="color: #8FB28F;">)</span><span style="color: #E0CF9F;">)</span><span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span> <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#26368;&#21518;&#19968;&#27425;&#25286;&#24320;</span>
+                       (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+                         (bounce (+ res1 res2) cont))))))))))) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#26368;&#21518;&#19968;&#27425;&#25286;&#24320;</span>
 
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">trampoline</span>
-  <span style="color: #BFEBBF;">[</span>lambda <span style="color: #D0BF8F;">(</span>b<span style="color: #D0BF8F;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">trampoline</span>
+  [lambda (b)
     <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">let* &#25805;&#20316;&#31526;&#21487;&#20197;&#26242;&#26102;&#29702;&#35299;&#20026;&#20854;&#23427;&#35821;&#35328;&#20013;&#30340;&#23616;&#37096;&#23450;&#20041;</span>
     <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">kont = bounce-cont(b)</span>
     <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">n    = bounce-res(b)</span>
     <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">res  = kont(n)</span>
-    <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let*</span> <span style="color: #93E0E3;">(</span><span style="color: #9FC59F;">[</span>kont <span style="color: #94BFF3;">(</span>bounce-cont b<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span>
-           <span style="color: #9FC59F;">[</span>n <span style="color: #94BFF3;">(</span>bounce-res b<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span>
-           <span style="color: #9FC59F;">[</span>res <span style="color: #94BFF3;">(</span>kont n<span style="color: #94BFF3;">)</span><span style="color: #9FC59F;">]</span><span style="color: #93E0E3;">)</span>
-      <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #9FC59F;">(</span>bounce? res<span style="color: #9FC59F;">)</span>
-          <span style="color: #9FC59F;">(</span>trampoline res<span style="color: #9FC59F;">)</span>
-          res<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
+    (<span style="color: #F0DFAF; font-weight: bold;">let*</span> ([kont (bounce-cont b)]
+           [n (bounce-res b)]
+           [res (kont n)])
+      (<span style="color: #F0DFAF; font-weight: bold;">if</span> (bounce? res)
+          (trampoline res)
+          res))])
 
-<span style="color: #DCDCCC;">(</span>trampoline <span style="color: #BFEBBF;">(</span>acc-bounce 10000000 <span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #93E0E3;">(</span>x<span style="color: #93E0E3;">)</span> x<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+(trampoline (acc-bounce 10000000 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x) x))
 
-<span style="color: #BFEBBF;">(</span>trampoline <span style="color: #D0BF8F;">(</span>fib-bounce 7 <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">lambda</span> <span style="color: #9FC59F;">(</span>x<span style="color: #9FC59F;">)</span> x<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span>
+(trampoline (fib-bounce 7 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x) x))
 </pre>
 </div>
 
@@ -1038,9 +1038,9 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 </div>
 
-<div id="outline-container-org8c04a9c" class="outline-3">
-<h3 id="org8c04a9c">Emacs Lisp 突破 Fibonacci 的递归限制</h3>
-<div class="outline-text-3" id="text-org8c04a9c">
+<div id="outline-container-orgf684e47" class="outline-3">
+<h3 id="orgf684e47">Emacs Lisp 突破 Fibonacci 的递归限制</h3>
+<div class="outline-text-3" id="text-orgf684e47">
 <p>
 个人也还挺喜欢 <code>Emacs Lisp</code>,所以展示一个在 <code>Emacs Lisp</code> 下的 <code>fib</code> 逐渐改成 <code>fib-bounce</code> 的过程.
 </p>
@@ -1106,9 +1106,9 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 
 
-<div id="outline-container-org5f7a455" class="outline-2">
-<h2 id="org5f7a455">结语</h2>
-<div class="outline-text-2" id="text-org5f7a455">
+<div id="outline-container-orge83fed7" class="outline-2">
+<h2 id="orge83fed7">结语</h2>
+<div class="outline-text-2" id="text-orge83fed7">
 <p>
 还是觉得这篇东西有很多地方有欠缺,也说明了我对 <code>CPS</code> 的理解还不够深入.突然觉得 <code>EOPL</code> 写的很好,因为我能明白给我传达的知识,原来写一篇易懂的科普文是如此艰难,真的是佩服这些老前辈.
 </p>
@@ -1126,7 +1126,7 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-06-20</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.3 (<a href="https://orgmode.org">Org</a> mode 9.4)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.2 (<a href="https://orgmode.org">Org</a> mode 9.4.5)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

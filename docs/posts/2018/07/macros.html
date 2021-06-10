@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-01-30 四 20:45 -->
+<!-- 2021-06-10 Thu 21:38 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Macro in Racket</title>
@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
+    overflow: auto;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -198,50 +198,26 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2019 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -258,7 +234,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="content">
 <h1 class="title">Macro in Racket</h1>
-<div class="abstract">
+<div class="abstract" id="orgfb24747">
 <p>
 <a href="http://www.greghendershott.com/fear-of-macros/index.html">Fear of Macros</a> is a good tutorial to get yourself into the world of macro, however, I get confused about
 phase levels. To make it more clear, I read <a href="https://docs.racket-lang.org/guide/stx-phases.html?q=phase-level#%28tech._phase._level._1%29">Compile and Run-Time Phase</a>, <a href="https://docs.racket-lang.org/guide/phases.html?q=template%20phase%20level">General Phase Levels</a> and<a href="https://beautifulracket.com/explainer/hygiene.html"> Hygiene</a>,
@@ -287,21 +263,21 @@ Usage
 </p>
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">normal usage</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s1</span> <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">syntax</span> <span style="color: #D0BF8F;">(</span>+ x y<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s1</span> (<span style="color: #F0DFAF; font-weight: bold;">syntax</span> (+ x y)))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">shorthand for the above expression, like quote</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s2</span> #'<span style="color: #BFEBBF;">(</span>+ x y<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-values</span> <span style="color: #BFEBBF;">(</span>x y<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>values 1 2<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s2</span> #'(+ x y))
+(<span style="color: #F0DFAF; font-weight: bold;">define-values</span> (x y) (values 1 2))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">like quasiquote, there is the quasisyntax, the use of them are very similar</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s3</span> #`<span style="color: #BFEBBF;">(</span>+ #,x #,y<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">lst</span> <span style="color: #BFEBBF;">(</span>list 1 2 3<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s4</span> #`<span style="color: #BFEBBF;">(</span>list #,@lst<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s5</span> #`<span style="color: #BFEBBF;">(</span>+ #'x #'y<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s3</span> #`(+ #,x #,y))
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">lst</span> (list 1 2 3))
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s4</span> #`(list #,@lst))
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">s5</span> #`(+ #'x #'y))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">rs1, rs2 and rs3 have same value, 3</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">but s3 has different syntax-&gt;datum from s1 and s2</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-values</span> <span style="color: #BFEBBF;">(</span>rs1 rs2 rs3<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>values <span style="color: #D0BF8F;">(</span>eval s1<span style="color: #D0BF8F;">)</span> <span style="color: #D0BF8F;">(</span>eval s2<span style="color: #D0BF8F;">)</span> <span style="color: #D0BF8F;">(</span>eval s3<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>syntax-&gt;datum s1<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>syntax-&gt;datum s2<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>syntax-&gt;datum s3<span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define-values</span> (rs1 rs2 rs3) (values (eval s1) (eval s2) (eval s3)))
+(syntax-&gt;datum s1)
+(syntax-&gt;datum s2)
+(syntax-&gt;datum s3)
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">#`#,x =&gt; &lt;syntax 1&gt;</span>
 #`#,x
@@ -395,13 +371,13 @@ Here is the example that shows how to use <b>begin-for-syntax</b> to shift phase
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">define "var" at phase level 0</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 1<span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 1)
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">define "var" at pahse level 1</span>
-<span style="color: #DCDCCC;">(</span>begin-for-syntax <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 2<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(begin-for-syntax (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 2))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">eval at phase level 0, we will get 1 printed</span>
-<span style="color: #DCDCCC;">(</span>eval #'<span style="color: #BFEBBF;">(</span>displayln var<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(eval #'(displayln var))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">eval at pahse level 1, we will get 2 printed</span>
-<span style="color: #DCDCCC;">(</span>eval #'<span style="color: #BFEBBF;">(</span>begin-for-syntax <span style="color: #D0BF8F;">(</span>displayln var<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(eval #'(begin-for-syntax (displayln var)))
 </pre>
 </div></li>
 
@@ -411,16 +387,16 @@ Mismatch phase level
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">two modules, this is a bad example to illustrate the mismatch</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">this will raise: var: unbound identifier in module in: var</span>
-<span style="color: #DCDCCC;">(</span>module a racket
+(module a racket
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">define "var" at phase level 0</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> <span style="color: #CC9393;">"Variable"</span><span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">provide</span> var<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>module b racket
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> <span style="color: #D0BF8F;">(</span>for-syntax 'a<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> <span style="color: #CC9393;">"Variable"</span>)
+  (provide var))
+(module b racket
+  (require (for-syntax 'a))
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">imported "var" will be at phase level 1 due to for-syntax</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #D0BF8F;">(</span><span style="color: #DFAF8F;">m</span> stx<span style="color: #D0BF8F;">)</span>
-    #'<span style="color: #D0BF8F;">(</span>displayln var<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span>m<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+  (<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">m</span> stx)
+    #'(displayln var))
+  (m))
 </pre>
 </div>
 
@@ -445,9 +421,9 @@ phase level 1 and that <b>m</b> is being called at phase level 0, so, to fix it,
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;;</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #BFEBBF;">(</span><span style="color: #DFAF8F;">m</span> stx<span style="color: #BFEBBF;">)</span>
- #'<span style="color: #BFEBBF;">(</span>begin-for-syntax
-     <span style="color: #D0BF8F;">(</span>displayln var<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">m</span> stx)
+ #'(begin-for-syntax
+     (displayln var)))
 </pre>
 </div></li>
 
@@ -465,9 +441,9 @@ Function called in the body of macro
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">this will be very easy to be fixed</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #BFEBBF;">(</span><span style="color: #93E0E3;">greet</span><span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>displayln <span style="color: #CC9393;">"hello"</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #BFEBBF;">(</span><span style="color: #DFAF8F;">m</span> stx<span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">(</span>greet<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>m<span style="color: #DCDCCC;">)</span>
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">greet</span>) (displayln <span style="color: #CC9393;">"hello"</span>))
+(<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">m</span> stx) (greet))
+(m)
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">'greet' defined at level 0, evaluated at phase level 1 when evaluating (m) at phase level 0</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">there two ways (or more) to fix it,</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">1. define greet at phase level 1</span>
@@ -483,12 +459,12 @@ That same module has different instantiations causes different bindings
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">raise "eval:1:0: var: unbound identifier"</span>
-<span style="color: #DCDCCC;">(</span>module a racket
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 0<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var-syntax</span> #'var<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">provide</span> var-syntax<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>module b racket
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> 'a <span style="color: #D0BF8F;">(</span>for-syntax 'a<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+(module a racket
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 0)
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var-syntax</span> #'var)
+  (provide var-syntax))
+(module b racket
+  (require 'a (for-syntax 'a))
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">module b has four bindings:</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">for (require 'a):</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">'var' bound at phase level 0</span>
@@ -496,7 +472,7 @@ That same module has different instantiations causes different bindings
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">for (require (for-syntax 'a))</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">'var' bound at phase level 1</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">'var-syntax' bound at phase level 1 refers to 'var' bound at phase level 1</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #D0BF8F;">(</span><span style="color: #DFAF8F;">m</span> stx<span style="color: #D0BF8F;">)</span> var-syntax<span style="color: #BFEBBF;">)</span>
+  (<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">m</span> stx) var-syntax)
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">here is the problem, after "expanding", (m) will be #'var, which is imported</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">at phase level 1, but used at phase level 0.</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">why the 'var-syntax' in m is at phase level 1 instead of phase level 0? don't</span>
@@ -505,8 +481,8 @@ That same module has different instantiations causes different bindings
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">back to the problem, to fix it is to shift #'var bound to 'var-syntax' at</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">phase level 1 to phase level 0. rewrite body of 'var-syntax'.</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">(define var-syntax (syntax-shift-phase-level #'var -1))</span>
-  <span style="color: #BFEBBF;">(</span>m<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> 'b<span style="color: #DCDCCC;">)</span>
+  (m))
+(require 'b)
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">but, don't forget other modules which imports module a if they exsit. it's a</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bad idea to rewrite the body which are imported/used by the other, easy</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">to get errors.</span>
@@ -519,21 +495,21 @@ Function which returns a syntax object referring to a already defined object
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;;</span><span style="color: #7F9F7F;">raise "eval:1:0: var: unbound identifier"</span>
-<span style="color: #DCDCCC;">(</span>module a racket
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 0<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #D0BF8F;">(</span><span style="color: #93E0E3;">var-f</span><span style="color: #D0BF8F;">)</span> #'var<span style="color: #BFEBBF;">)</span>
+(module a racket
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">var</span> 0)
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">var-f</span>) #'var)
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">var-f bound at phase level 0 refers to 'var' bound at phase level 0</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">provide</span> var-f<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>module b racket
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> 'a <span style="color: #D0BF8F;">(</span>for-syntax 'a<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #D0BF8F;">(</span><span style="color: #DFAF8F;">m</span> stx<span style="color: #D0BF8F;">)</span> <span style="color: #D0BF8F;">(</span>var-f<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
+  (provide var-f))
+(module b racket
+  (require 'a (for-syntax 'a))
+  (<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">m</span> stx) (var-f))
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">when evaluating "(m)" at phase level 0, "(var-f)" is evaluated at phase level 1 and returns</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">a syntax object "#'var" which is bound at phase level 1, in short, evaluating "(m)" at phase</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">level 0 then getting "var" bound at phase level 1 there. mismatch appeared.</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">to fix this, the simplest way is to rewrite the body of 'var-f' like</span>
   <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">(define (var-f) (syntax-shift-phase-level #'var -1))</span>
-  <span style="color: #BFEBBF;">(</span>m<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> 'b<span style="color: #DCDCCC;">)</span>
+  (m))
+(require 'b)
 </pre>
 </div></li>
 
@@ -543,53 +519,53 @@ Template, helper function to be used in macro and identifiers used in helper fun
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">it will raise "let: unbound identifier"</span>
-<span style="color: #DCDCCC;">(</span>module helper racket/base
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">provide</span> helper-f<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #D0BF8F;">(</span><span style="color: #93E0E3;">helper-f</span> x y<span style="color: #D0BF8F;">)</span>                <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">helper-f is bound at phase level 0</span>
-    #`<span style="color: #D0BF8F;">(</span><span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #93E0E3;">(</span><span style="color: #9FC59F;">[</span>tmp #,x<span style="color: #9FC59F;">]</span><span style="color: #93E0E3;">)</span>
-        <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">set!</span> #,x #,y<span style="color: #93E0E3;">)</span>
-        <span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">set!</span> #,y tmp<span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(module helper racket/base
+  (provide helper-f)
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">helper-f</span> x y)                <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">helper-f is bound at phase level 0</span>
+    #`(<span style="color: #F0DFAF; font-weight: bold;">let</span> ([tmp #,x])
+        (set! #,x #,y)
+        (set! #,y tmp))))
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">the problem is same to one in example 3 in this section. we need to take care</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">of the bindings of "let" and "set!"</span>
 
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">to fix it, just add (require (for-template racket/base)) to 'module helper',</span>
 <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">we need to have the identifiers 'let' and 'set!' bound at phase level -1.</span>
 <span style="color: #5F7F5F;">;;</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> <span style="color: #BFEBBF;">(</span>for-syntax 'helper<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #BFEBBF;">(</span><span style="color: #DFAF8F;">swap</span> stx<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">syntax-case</span> stx <span style="color: #D0BF8F;">()</span>
-    <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>_ a b<span style="color: #93E0E3;">)</span>
-    #`<span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">begin</span>
-        #,<span style="color: #9FC59F;">(</span>helper-f #'a #'b<span style="color: #9FC59F;">)</span>
-        <span style="color: #9FC59F;">(</span>list a b<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">x</span> 3<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">y</span> 4<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC;">(</span>swap x y<span style="color: #DCDCCC;">)</span>                   <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">should return '(4 3) if no error raised</span>
+(require (for-syntax 'helper))
+(<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">swap</span> stx)
+  (syntax-case stx ()
+    [(_ a b)
+    #`(<span style="color: #F0DFAF; font-weight: bold;">begin</span>
+        #,(helper-f #'a #'b)
+        (list a b))]))
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">x</span> 3)
+(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">y</span> 4)
+(swap x y)                   <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">should return '(4 3) if no error raised</span>
 </pre>
 </div>
 
 <div class="org-src-container">
 <pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">This a working example by rewriting the above one.</span>
-<span style="color: #DCDCCC;">(</span>module madd-mod racket/base
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">provide</span> madd<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #D0BF8F;">(</span><span style="color: #93E0E3;">madd</span> x y<span style="color: #D0BF8F;">)</span> <span style="color: #D0BF8F;">(</span>+ x y<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(module madd-mod racket/base
+  (provide madd)
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">madd</span> x y) (+ x y)))
 
-<span style="color: #DCDCCC;">(</span>module helper racket/base
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> <span style="color: #D0BF8F;">(</span>for-template 'madd-mod<span style="color: #D0BF8F;">)</span>
-  <span style="color: #D0BF8F;">(</span>for-template racket/base<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">provide</span> helper-f<span style="color: #BFEBBF;">)</span>
-  <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #D0BF8F;">(</span><span style="color: #93E0E3;">helper-f</span> x y<span style="color: #D0BF8F;">)</span>
-    #`<span style="color: #D0BF8F;">(</span>madd #,x #,y<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+(module helper racket/base
+  (require (for-template 'madd-mod)
+  (for-template racket/base))
+  (provide helper-f)
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">helper-f</span> x y)
+    #`(madd #,x #,y)))
 
-  <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">require</span> <span style="color: #BFEBBF;">(</span>for-syntax 'helper<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-  <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> <span style="color: #BFEBBF;">(</span><span style="color: #DFAF8F;">msum</span> stx<span style="color: #BFEBBF;">)</span>
-    <span style="color: #BFEBBF;">(</span><span style="color: #F0DFAF; font-weight: bold;">syntax-case</span> stx <span style="color: #D0BF8F;">()</span>
-      <span style="color: #D0BF8F;">[</span><span style="color: #93E0E3;">(</span>_ a b<span style="color: #93E0E3;">)</span>
-        #`<span style="color: #93E0E3;">(</span><span style="color: #F0DFAF; font-weight: bold;">begin</span>
-          #,<span style="color: #9FC59F;">(</span>helper-f #'a #'b<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">)</span><span style="color: #D0BF8F;">]</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-  <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">x</span> 3<span style="color: #DCDCCC;">)</span>
-  <span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">y</span> 4<span style="color: #DCDCCC;">)</span>
-  <span style="color: #DCDCCC;">(</span>msum x y<span style="color: #DCDCCC;">)</span>
+  (require (for-syntax 'helper))
+  (<span style="color: #F0DFAF; font-weight: bold;">define-syntax</span> (<span style="color: #DFAF8F;">msum</span> stx)
+    (syntax-case stx ()
+      [(_ a b)
+        #`(<span style="color: #F0DFAF; font-weight: bold;">begin</span>
+          #,(helper-f #'a #'b))]))
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">x</span> 3)
+  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">y</span> 4)
+  (msum x y)
 </pre>
 </div></li>
 </ol></li>
@@ -598,8 +574,8 @@ Template, helper function to be used in macro and identifiers used in helper fun
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-07-17</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.0.50 (<a href="https://orgmode.org">Org</a> mode 9.3.1)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.2 (<a href="https://orgmode.org">Org</a> mode 9.4.5)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

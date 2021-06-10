@@ -94,7 +94,7 @@
         // log_error('');
     }
 
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/docs/sw.js');
-    }
+    // if ('serviceWorker' in navigator) {
+    //     navigator.serviceWorker.register('/docs/sw.js');
+    // }
 })();

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2020-05-19 周二 09:19 -->
+<!-- 2021-06-10 Thu 21:38 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>主动认识 WebAssembly</title>
@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
+    overflow: auto;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -198,50 +198,26 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2019 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -258,7 +234,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="content">
 <h1 class="title">主动认识 WebAssembly</h1>
-<div class="abstract">
+<div class="abstract" id="org38d7d0e">
 <p>
 WebAssembly 是我刚开始接触前端时最想学的技术之一,另外的还有 WebGL,刚好 WebGL 和 WebAssembly 有着不少联系,
 </p>
@@ -269,9 +245,9 @@ WebAssembly 是我刚开始接触前端时最想学的技术之一,另外的还�
 
 </div>
 
-<div id="outline-container-org64f1908" class="outline-2">
-<h2 id="org64f1908">什么是 WebAssembly</h2>
-<div class="outline-text-2" id="text-org64f1908">
+<div id="outline-container-orgfb39301" class="outline-2">
+<h2 id="orgfb39301">什么是 WebAssembly</h2>
+<div class="outline-text-2" id="text-orgfb39301">
 <p>
 <a href="https://webassembly.github.io/spec/core/intro/index.html">WebAssembly</a> 实际上是一套针对于字节码(bytecode)的规范,可能有人不知道字节码是做什么的,
 </p>
@@ -318,9 +294,9 @@ WebAssembly 并非是 Web 限定的,它完全可以在 Web 以外的环境运行
 </div>
 
 
-<div id="outline-container-org7df9cb7" class="outline-3">
-<h3 id="org7df9cb7">asm.js</h3>
-<div class="outline-text-3" id="text-org7df9cb7">
+<div id="outline-container-orgc00875b" class="outline-3">
+<h3 id="orgc00875b">asm.js</h3>
+<div class="outline-text-3" id="text-orgc00875b">
 <p>
 在 WebAssembly 的时间点之前有一个叫做 <a href="http://asmjs.org/">asm.js</a> 的语言,由 Mozilla 研发,通过把 C/C++ 代码编译成 asm.js,然后浏览器执行,
 </p>
@@ -341,9 +317,9 @@ asm.js 是 JavaScript 的一个子集,但多了 Type Checking 以及少了 GC, �
 </div>
 
 
-<div id="outline-container-org08b2513" class="outline-2">
-<h2 id="org08b2513">笔记的思路</h2>
-<div class="outline-text-2" id="text-org08b2513">
+<div id="outline-container-org60911e8" class="outline-2">
+<h2 id="org60911e8">笔记的思路</h2>
+<div class="outline-text-2" id="text-org60911e8">
 <p>
 这篇笔记剩下的内容可能会比较多,难度也不太一样,本人笔记的思路是从浅到深,从最基础的 Emscripten 使用到读懂 WebAssembly 规范.
 </p>
@@ -359,9 +335,9 @@ asm.js 是 JavaScript 的一个子集,但多了 Type Checking 以及少了 GC, �
 </div>
 
 
-<div id="outline-container-org59fca5a" class="outline-2">
-<h2 id="org59fca5a">个人学习心得</h2>
-<div class="outline-text-2" id="text-org59fca5a">
+<div id="outline-container-orgc6c9a8d" class="outline-2">
+<h2 id="orgc6c9a8d">个人学习心得</h2>
+<div class="outline-text-2" id="text-orgc6c9a8d">
 <p>
 WebAssembly 就是一个 <a href="http://llvm.org/pubs/2003-10-01-LLVA.pdf">Virtual ISA</a>.
 </p>
@@ -402,9 +378,9 @@ WebAssembly 是基于 Stack Machine 模型进行计算的,抽象机(abstract)的
 </div>
 
 
-<div id="outline-container-orgcf6da82" class="outline-3">
-<h3 id="orgcf6da82">概念</h3>
-<div class="outline-text-3" id="text-orgcf6da82">
+<div id="outline-container-org484733b" class="outline-3">
+<h3 id="org484733b">概念</h3>
+<div class="outline-text-3" id="text-org484733b">
 <ul class="org-ul">
 <li><p>
 值(values)
@@ -519,9 +495,9 @@ WebAssembly 的计算模型是基于 Stack Machine.代码是由指令序列组�
 
 
 
-<div id="outline-container-org3c15139" class="outline-3">
-<h3 id="org3c15139">语义阶段</h3>
-<div class="outline-text-3" id="text-org3c15139">
+<div id="outline-container-org0382224" class="outline-3">
+<h3 id="org0382224">语义阶段</h3>
+<div class="outline-text-3" id="text-org0382224">
 <ol class="org-ol">
 <li><p>
 解码
@@ -596,13 +572,13 @@ WebAssembly 模块会以二进制格式发布,解码处理就是把模块转化�
 
 
 
-<div id="outline-container-orgea0ea36" class="outline-3">
-<h3 id="orgea0ea36">掌握</h3>
+<div id="outline-container-orgd569a49" class="outline-3">
+<h3 id="orgd569a49">掌握</h3>
 </div>
 
-<div id="outline-container-org3f1b78a" class="outline-3">
-<h3 id="org3f1b78a">1.1</h3>
-<div class="outline-text-3" id="text-org3f1b78a">
+<div id="outline-container-orgd4b235d" class="outline-3">
+<h3 id="orgd4b235d">1.1</h3>
+<div class="outline-text-3" id="text-orgd4b235d">
 <ul class="org-ul">
 <li>模块(Module): 一个已经被浏览器编译为可执行机器码的 WebAssembly 二进制代码 (WebAssembly binary, 文件格式是 .wasm).模块没有状态,因此可以简单地在 windows 和 workers 之间共享.声明模块的 imports 和 exports 就像一个 ES2015 模块那样.</li>
 
@@ -635,9 +611,9 @@ JavaScript API 提供了创建上面对象的能力,在有了一个实例的情�
 
 
 
-<div id="outline-container-org5ed95bd" class="outline-2">
-<h2 id="org5ed95bd">Emscripten 的使用</h2>
-<div class="outline-text-2" id="text-org5ed95bd">
+<div id="outline-container-orge4f6fdd" class="outline-2">
+<h2 id="orge4f6fdd">Emscripten 的使用</h2>
+<div class="outline-text-2" id="text-orge4f6fdd">
 <p>
 整体的工作流就是, <code>C/C++</code> 代码通过 Emscripten 编译得到 <code>.wasm</code> 模块,也就是 WebAssembly 二进制文件,然后通过 JavaScript 调用模块.
 </p>
@@ -651,7 +627,7 @@ JavaScript API 提供了创建上面对象的能力,在有了一个实例的情�
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">. &lt;pathTo&gt;/emsdk/emsdk_env.sh
+<pre class="src src-sh"><span style="color: #DCDCCC; font-weight: bold;">.</span> &lt;pathTo&gt;/emsdk/emsdk_env.sh
 emsdk activate latest
 </pre>
 </div>
@@ -662,15 +638,15 @@ emsdk activate latest
 </div>
 
 
-<div id="outline-container-org8d59e81" class="outline-3">
-<h3 id="org8d59e81">从 C/C++ 到 WebAssembly</h3>
-<div class="outline-text-3" id="text-org8d59e81">
+<div id="outline-container-orgd6f9001" class="outline-3">
+<h3 id="orgd6f9001">从 C/C++ 到 WebAssembly</h3>
+<div class="outline-text-3" id="text-orgd6f9001">
 <p>
 源代码如下:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">hello.c </span><span style="color: #5F7F5F;">*/</span>
+<pre class="src src-c"><span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">hello.c</span><span style="color: #5F7F5F;"> */</span>
 <span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
 <span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;emscripten/emscripten.h&gt;</span>
 
@@ -737,9 +713,9 @@ C 和 C++ 的命名管理方式不一样, C++ 支持函数重载,也就是函数
 </div>
 
 
-<div id="outline-container-org05b30fa" class="outline-4">
-<h4 id="org05b30fa">直接让 emcc 把代码编译成 .html</h4>
-<div class="outline-text-4" id="text-org05b30fa">
+<div id="outline-container-orga8c385a" class="outline-4">
+<h4 id="orga8c385a">直接让 emcc 把代码编译成 .html</h4>
+<div class="outline-text-4" id="text-orga8c385a">
 <div class="org-src-container">
 <pre class="src src-sh">emcc hello.c -o hello.out.html -s <span style="color: #CC9393;">"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']"</span>
 </pre>
@@ -750,16 +726,16 @@ C 和 C++ 的命名管理方式不一样, C++ 支持函数重载,也就是函数
 
 
 
-<div id="outline-container-orgdffabe7" class="outline-3">
-<h3 id="orgdffabe7">调用 WebAssembly 模块文件</h3>
+<div id="outline-container-orgf7ccaf8" class="outline-3">
+<h3 id="orgf7ccaf8">调用 WebAssembly 模块文件</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-12-18</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.2 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.2 (<a href="https://orgmode.org">Org</a> mode 9.4.5)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>
