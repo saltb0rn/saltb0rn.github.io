@@ -94,7 +94,15 @@
         // log_error('');
     }
 
-    // if ('serviceWorker' in navigator) {
-    //     navigator.serviceWorker.register('/docs/sw.js');
-    // }
+    if ('serviceWorker' in navigator) {
+        // navigator.serviceWorker.register('/docs/sw.js');
+        navigator.serviceWorker.getRegistrations()
+            .then(regs => {
+                for (let reg of regs) {
+                    if (reg.scope.indexOf(location.origin) >= 0) {
+                        reg.unregister();
+                    }
+                }
+            });
+    }
 })();
