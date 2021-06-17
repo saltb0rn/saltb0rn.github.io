@@ -1,0 +1,131 @@
+#+title: 关于使用C语言开发的那些事
+#+date: 2021-06-13
+#+status: wd
+#+index: 关于使用C语言开发的那些事
+#+tags: C
+#+begin_abstract
+这篇笔记是针对C语言开发而写的,不包括C语言本身的学习,因为这方面的教材已经非常多了,这类书籍就有不少.
+
+很多人刚学了 =C= 语言就觉得只能看得懂别人的开源项目,然而一上手就发现事情没那么简单:
+
+构建项目都要费半天的神,到阅读代码时又发现很多"不成文的规范".
+
+于是我决定记录一下这些零散的内容.
+#+end_abstract
+
+** 不成文的规范
+
+*** 使用空宏解决头文件重复引入的问题
+
+    有时候会见到这样定义头文件(header files),
+
+    #+BEGIN_SRC c
+      // example.h
+      #ifndef EXAMPLE_H
+      #define EXAMPLE_H
+      int example_func(int, int);
+      ...
+      #endif
+    #+END_SRC
+
+    头文件的声明定义在 =#ifndef= 宏和 =#endif= 宏中间,并且还有一个空宏 =EXAMPLE_H=.
+
+    =#include= 宏引入文件实际上就是把文件的内容复制到过来,于是这样定义宏的优势就出来了:
+
+    在别的文件引入这个头文件时,就算多次引用这个头文件,也不会出现重复引入的情况:
+
+    在第一次引入 =example.h= 时就会定义 =EXAMPLE_H=, 并且把头文件的声明复制过去;
+
+    之后引入 =example.h= 时会检测到 =EXAMPLE_H= 已经被定义,就不会再进行复制.
+
+
+
+*** C 与 C++ 兼容
+
+    有时候会见到类似的代码,
+
+    #+BEGIN_SRC c
+      #include <stdio.h>
+      #include <emscripten/emscripten.h>
+
+      int main() {
+          printf("Hello World\n");
+      }
+
+      #ifdef __cplusplus              /* 这里是重点 */
+      extern "C" {                    /* 这里是重点 */
+      #endif                          /* 这里是重点 */
+
+      EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
+          printf("MyFunction Called\n");
+      }
+
+      #ifdef __cplusplus              /* 这里是重点 */
+      }                               /* 这里是重点 */
+      #endif                          /* 这里是重点 */
+    #+END_SRC
+
+    这是 =MDN= 上一个关于 =WebAssembly= 话题的例子,重点已经在上面用注释标示出来了.
+
+    =__cplusplus= 是 =C++= 编译器的预定义宏,也就是说在使用 =C++= 编译器时这个宏才会被定义,
+
+    这个时候 =C++= 编译器就相当于处理这段代码,
+
+    #+BEGIN_SRC c
+      #include <stdio.h>
+      #include <emscripten/emscripten.h>
+
+      int main() {
+          printf("Hello World\n");
+      }
+
+      extern "C" {                    /* 这里是重点 */
+      EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
+          printf("MyFunction Called\n");
+      }
+      }
+    #+END_SRC
+
+    而对于 =C= 编译器来说,就是这样,
+
+    #+BEGIN_SRC c
+      #include <stdio.h>
+      #include <emscripten/emscripten.h>
+
+      int main() {
+          printf("Hello World\n");
+      }
+
+      EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
+          printf("MyFunction Called\n");
+      }
+    #+END_SRC    
+    
+    =extern "C" { ... }= 的作用是为了解决 =C= 和 =C++= 两者命名管理规则不一样的问题.
+
+    =C= 是一门采用单一命名空间的语言,实际上这个特点是"遗传"汇编语言的: 一个汇编程序里面的全局标签的名字是唯一的.
+
+    =C= 里面的 =extern= 修饰(默认)的变量/函数就是汇编里面的全局标签.
+
+    而 =C++= 就比较复杂, =C++= 支持有多个同名但函数签名(function signature)不一样的函数,这就是传说中的函数重载(function overloading).
+
+    =C++= 的函数签名由这三个要素构成: 函数名字,函数的返回值,函数接受的参数数量以及类型.
+
+    =C++= 里面两个函数只有在函数签名一致才会认为被认为是同一个函数,这个时候编译器会告诉你重复定义了这个函数.
+
+    为了不让 =myFunction= 在 =C++= 被重载而无法正常工作,才会使用 =extern "C" { }=.
+
+    我本人对 =C++= 的兴趣和了解都不多,因此就不继续深入笔记了,只要记得 =extern "C" { }= 是为了兼容 =C= 和 =C++= 就好.
+
+    
+
+
+*** 项目里面的 shell script 文件: configure
+
+    很多开源项目都有这么一个 =shell script=,执行它会生成一个 =Makefile= 文件,有了 =Makefile= 文件就可以使用 =make= 命令对项目进行编译了.
+
+    =Makefile= 是用于自动编译和链接的,一旦工程里面有依赖的文件发生了变化,它就会对必要的文件进行重新编译和链接;
+
+    实际上 =Makefile= 和
+    
+

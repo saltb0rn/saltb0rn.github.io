@@ -18,7 +18,7 @@
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=0b5c7b7d4e45e137bc013bace8817421][汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=964e52af9c20615dbc2ae2a73618f361][汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕32位来讲的,我读的时候64位架构已经很普遍了,也就是说这本书已经有点过时了,况且关于浮点数这块基本上没讲过.

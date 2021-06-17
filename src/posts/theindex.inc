@@ -40,6 +40,7 @@
 * 主
   - [[file:2019/12/make-friend-with-webassembly.org][主动认识 WebAssembly]]
 * 关
+  - [[file:2021/06/things-about-c-development.org][关于使用C语言开发的那些事]]
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
   - [[file:2019/03/about-audio-file-metadata.org][关于音频文件的元信息]]
 * 前

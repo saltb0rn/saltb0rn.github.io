@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-06-17 Thu 09:00 -->
+<!-- 2021-06-17 Thu 08:39 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Index</title>
+<title>关于使用C语言开发的那些事</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="saltb0rn">
 <style type="text/css">
@@ -233,268 +233,204 @@
     </nav>
 </div>
 <div id="content">
-<h1 class="title">Index</h1>
+<h1 class="title">关于使用C语言开发的那些事</h1>
+<div class="abstract" id="orgfcd3de3">
+<p>
+这篇笔记是针对C语言开发而写的,不包括C语言本身的学习,因为这方面的教材已经非常多了,这类书籍就有不少.
+</p>
 
-<div id="outline-container-org04aab4b" class="outline-2">
-<h2 id="org04aab4b">"</h2>
-<div class="outline-text-2" id="text-org04aab4b">
-<ul class="org-ul">
-<li><a href="2021/03/monster-hunter-rise-intr.html">"怪物猎人RISE"入门学习</a></li>
-</ul>
+<p>
+很多人刚学了 <code>C</code> 语言就觉得只能看得懂别人的开源项目,然而一上手就发现事情没那么简单:
+</p>
+
+<p>
+构建项目都要费半天的神,到阅读代码时又发现很多"不成文的规范".
+</p>
+
+<p>
+于是我决定记录一下这些零散的内容.
+</p>
+
+</div>
+
+<div id="outline-container-orgccbb36f" class="outline-2">
+<h2 id="orgccbb36f">不成文的规范</h2>
+<div class="outline-text-2" id="text-orgccbb36f">
+</div>
+<div id="outline-container-orgf70cebd" class="outline-3">
+<h3 id="orgf70cebd">使用空宏解决头文件重复引入的问题</h3>
+<div class="outline-text-3" id="text-orgf70cebd">
+<p>
+有时候会见到这样定义头文件(header files),
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">example.h</span>
+<span style="color: #94BFF3;">#if</span><span style="color: #94BFF3; font-weight: bold;">n</span><span style="color: #94BFF3;">def</span> EXAMPLE_H
+<span style="color: #94BFF3;">#define</span> <span style="color: #DFAF8F;">EXAMPLE_H</span>
+<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">example_func</span>(<span style="color: #7CB8BB;">int</span>, <span style="color: #7CB8BB;">int</span>);
+...
+<span style="color: #94BFF3;">#endif</span>
+</pre>
+</div>
+
+<p>
+头文件的声明定义在 <code>#ifndef</code> 宏和 <code>#endif</code> 宏中间,并且还有一个空宏 <code>EXAMPLE_H</code>.
+</p>
+
+<p>
+<code>#include</code> 宏引入文件实际上就是把文件的内容复制到过来,于是这样定义宏的优势就出来了:
+</p>
+
+<p>
+在别的文件引入这个头文件时,就算多次引用这个头文件,也不会出现重复引入的情况:
+</p>
+
+<p>
+在第一次引入 <code>example.h</code> 时就会定义 <code>EXAMPLE_H</code>, 并且把头文件的声明复制过去;
+</p>
+
+<p>
+之后引入 <code>example.h</code> 时会检测到 <code>EXAMPLE_H</code> 已经被定义,就不会再进行复制.
+</p>
 </div>
 </div>
-<div id="outline-container-org097ed72" class="outline-2">
-<h2 id="org097ed72">A</h2>
-<div class="outline-text-2" id="text-org097ed72">
-<ul class="org-ul">
-<li><a href="2018/07/a-simple-websocket-echo-server.html">A Simple WebSocket Echo Server</a></li>
-<li><a href="2018/06/about-python.html">About Python</a></li>
-</ul>
+
+
+
+<div id="outline-container-org97261d8" class="outline-3">
+<h3 id="org97261d8">C 与 C++ 兼容</h3>
+<div class="outline-text-3" id="text-org97261d8">
+<p>
+有时候会见到类似的代码,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;emscripten/emscripten.h&gt;</span>
+
+<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">main</span>() {
+    printf(<span style="color: #CC9393;">"Hello World\n"</span>);
+}
+
+<span style="color: #94BFF3;">#ifdef</span> __cplusplus              <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+<span style="color: #F0DFAF; font-weight: bold;">extern</span> <span style="color: #CC9393;">"C"</span> {                    <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+<span style="color: #94BFF3;">#endif</span>                          <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+
+EMSCRIPTEN_KEEPALIVE <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">myFunction</span>(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
+    printf(<span style="color: #CC9393;">"MyFunction Called\n"</span>);
+}
+
+<span style="color: #94BFF3;">#ifdef</span> __cplusplus              <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+}                               <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+<span style="color: #94BFF3;">#endif</span>                          <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+</pre>
+</div>
+
+<p>
+这是 <code>MDN</code> 上一个关于 <code>WebAssembly</code> 话题的例子,重点已经在上面用注释标示出来了.
+</p>
+
+<p>
+<code>__cplusplus</code> 是 <code>C++</code> 编译器的预定义宏,也就是说在使用 <code>C++</code> 编译器时这个宏才会被定义,
+</p>
+
+<p>
+这个时候 <code>C++</code> 编译器就相当于处理这段代码,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;emscripten/emscripten.h&gt;</span>
+
+<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">main</span>() {
+    printf(<span style="color: #CC9393;">"Hello World\n"</span>);
+}
+
+<span style="color: #F0DFAF; font-weight: bold;">extern</span> <span style="color: #CC9393;">"C"</span> {                    <span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">&#36825;&#37324;&#26159;&#37325;&#28857;</span><span style="color: #5F7F5F;"> */</span>
+EMSCRIPTEN_KEEPALIVE <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">myFunction</span>(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
+    printf(<span style="color: #CC9393;">"MyFunction Called\n"</span>);
+}
+}
+</pre>
+</div>
+
+<p>
+而对于 <code>C</code> 编译器来说,就是这样,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;emscripten/emscripten.h&gt;</span>
+
+<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">main</span>() {
+    printf(<span style="color: #CC9393;">"Hello World\n"</span>);
+}
+
+EMSCRIPTEN_KEEPALIVE <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">myFunction</span>(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
+    printf(<span style="color: #CC9393;">"MyFunction Called\n"</span>);
+}
+</pre>
+</div>
+
+<p>
+<code>extern "C" { ... }</code> 的作用是为了解决 <code>C</code> 和 <code>C++</code> 两者命名管理规则不一样的问题.
+</p>
+
+<p>
+<code>C</code> 是一门采用单一命名空间的语言,实际上这个特点是"遗传"汇编语言的: 一个汇编程序里面的全局标签的名字是唯一的.
+</p>
+
+<p>
+<code>C</code> 里面的 <code>extern</code> 修饰(默认)的变量/函数就是汇编里面的全局标签.
+</p>
+
+<p>
+而 <code>C++</code> 就比较复杂, <code>C++</code> 支持有多个同名但函数签名(function signature)不一样的函数,这就是传说中的函数重载(function overloading).
+</p>
+
+<p>
+<code>C++</code> 的函数签名由这三个要素构成: 函数名字,函数的返回值,函数接受的参数数量以及类型.
+</p>
+
+<p>
+<code>C++</code> 里面两个函数只有在函数签名一致才会认为被认为是同一个函数,这个时候编译器会告诉你重复定义了这个函数.
+</p>
+
+<p>
+为了不让 <code>myFunction</code> 在 <code>C++</code> 被重载而无法正常工作,才会使用 <code>extern "C" { }</code>.
+</p>
+
+<p>
+我本人对 <code>C++</code> 的兴趣和了解都不多,因此就不继续深入笔记了,只要记得 <code>extern "C" { }</code> 是为了兼容 <code>C</code> 和 <code>C++</code> 就好.
+</p>
 </div>
 </div>
-<div id="outline-container-org68326a9" class="outline-2">
-<h2 id="org68326a9">B</h2>
-<div class="outline-text-2" id="text-org68326a9">
-<ul class="org-ul">
-<li><a href="2019/05/bash-eliminating-project.html">Bash消灭计划</a></li>
-<li><a href="2021/01/blender-notes.html">Blender学习笔记</a></li>
-<li><a href="2018/05/blog-with-emacs.html">Blog with Emacs and Org mode</a></li>
-</ul>
+
+
+
+
+<div id="outline-container-org372ef98" class="outline-3">
+<h3 id="org372ef98">项目里面的 shell script 文件: configure</h3>
+<div class="outline-text-3" id="text-org372ef98">
+<p>
+很多开源项目都有这么一个 <code>shell script</code>,执行它会生成一个 <code>Makefile</code> 文件,有了 <code>Makefile</code> 文件就可以使用 <code>make</code> 命令对项目进行编译了.
+</p>
+
+<p>
+<code>Makefile</code> 是用于自动编译和链接的,一旦工程里面有依赖的文件发生了变化,它就会对必要的文件进行重新编译和链接;
+</p>
+
+<p>
+实际上 <code>Makefile</code> 和
+</p>
 </div>
-</div>
-<div id="outline-container-org0d027a3" class="outline-2">
-<h2 id="org0d027a3">C</h2>
-<div class="outline-text-2" id="text-org0d027a3">
-<ul class="org-ul">
-<li><a href="2019/11/canvas-intro.html">Canvas入门而不入土</a></li>
-<li><a href="2018/06/continuation-passing-style.html">Continuation Passing Style</a></li>
-<li><a href="2018/06/coroutines.html">Coroutines in Python</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org2397662" class="outline-2">
-<h2 id="org2397662">D</h2>
-<div class="outline-text-2" id="text-org2397662">
-<ul class="org-ul">
-<li><a href="2018/08/distributed-computing-with-python.html">Distributed Computing with Python的阅读笔记</a></li>
-<li><a href="2019/02/docker-compose-file.html">Docker stack depoly 的使用</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orga203c21" class="outline-2">
-<h2 id="orga203c21">E</h2>
-<div class="outline-text-2" id="text-orga203c21">
-<ul class="org-ul">
-<li><a href="2018/08/emacs-tips.html">Emacs Tips(持续更新)</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org4338966" class="outline-2">
-<h2 id="org4338966">H</h2>
-<div class="outline-text-2" id="text-org4338966">
-<ul class="org-ul">
-<li><a href="2018/05/hello-world.html">Hello, world</a></li>
-<li><a href="2019/01/http-headers-tutorial-notes.html">HTTP Headers 学习笔记</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgf7034bf" class="outline-2">
-<h2 id="orgf7034bf">K</h2>
-<div class="outline-text-2" id="text-orgf7034bf">
-<ul class="org-ul">
-<li><a href="2020/02/kvm-experience-note.html">KVM体验笔记</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org30386b5" class="outline-2">
-<h2 id="org30386b5">M</h2>
-<div class="outline-text-2" id="text-org30386b5">
-<ul class="org-ul">
-<li><a href="2018/07/macros.html">Macro in Racket</a></li>
-<li><a href="2018/08/mysql-one-day-journay.html">MYSQL一日游</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgc7feaf6" class="outline-2">
-<h2 id="orgc7feaf6">P</h2>
-<div class="outline-text-2" id="text-orgc7feaf6">
-<ul class="org-ul">
-<li><a href="2019/12/pokemon-pvp-notes.html">Pokemon对战入坑笔记</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgeda3598" class="outline-2">
-<h2 id="orgeda3598">R</h2>
-<div class="outline-text-2" id="text-orgeda3598">
-<ul class="org-ul">
-<li><a href="2018/09/Racket-Guide-Notes.html">Racket Guide 笔记</a></li>
-<li><a href="2018/10/react-journay.html">React学习之旅</a></li>
-<li><a href="2018/08/redis.html">Redis学习笔记</a></li>
-<li><a href="2018/07/regex.html">Regex</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org1e28c95" class="outline-2">
-<h2 id="org1e28c95">T</h2>
-<div class="outline-text-2" id="text-org1e28c95">
-<ul class="org-ul">
-<li><a href="2018/11/eopl-interpreter.html">The Interpreter</a></li>
-<li><a href="2018/11/eopl-sllgen.html">The Sllgen Parser</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgf805a0c" class="outline-2">
-<h2 id="orgf805a0c">W</h2>
-<div class="outline-text-2" id="text-orgf805a0c">
-<ul class="org-ul">
-<li><a href="2018/11/warframe-damage-cal.html">Warframe伤害计算</a></li>
-<li><a href="2019/11/web-components.html">Web Components</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org7b27e09" class="outline-2">
-<h2 id="org7b27e09">主</h2>
-<div class="outline-text-2" id="text-org7b27e09">
-<ul class="org-ul">
-<li><a href="2019/12/make-friend-with-webassembly.html">主动认识 WebAssembly</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org599b0ed" class="outline-2">
-<h2 id="org599b0ed">关</h2>
-<div class="outline-text-2" id="text-org599b0ed">
-<ul class="org-ul">
-<li><a href="2021/06/things-about-c-development.html">关于使用C语言开发的那些事</a></li>
-<li><a href="2018/05/about-reading-code.html">关于阅读代码</a></li>
-<li><a href="2019/03/about-audio-file-metadata.html">关于音频文件的元信息</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgccce7d9" class="outline-2">
-<h2 id="orgccce7d9">前</h2>
-<div class="outline-text-2" id="text-orgccce7d9">
-<ul class="org-ul">
-<li><a href="2018/11/gimp-for-webfe-dev.html">前端人员的GIMP</a></li>
-<li><a href="2018/09/web-frontend.html">前端学习笔记整理(持续更新)</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org89035f6" class="outline-2">
-<h2 id="org89035f6">取</h2>
-<div class="outline-text-2" id="text-org89035f6">
-<ul class="org-ul">
-<li><a href="2021/03/remainder-vs-modulo.html">取余和取模的区别</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org35d7345" class="outline-2">
-<h2 id="org35d7345">同</h2>
-<div class="outline-text-2" id="text-org35d7345">
-<ul class="org-ul">
-<li><a href="2018/07/sync-async-blocking-non-blocking.html">同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orga664e3b" class="outline-2">
-<h2 id="orga664e3b">图</h2>
-<div class="outline-text-2" id="text-orga664e3b">
-<ul class="org-ul">
-<li><a href="2020/06/graphics-opengl-transformation.html">图形学-OpenGL坐标变换</a></li>
-<li><a href="2020/08/graphics-opengl-light-and-material.html">图形学-光和材质</a></li>
-<li><a href="2020/06/graphics-geometric-transformation.html">图形学-几何变换</a></li>
-<li><a href="2020/10/graphics-opengl-texture-mapping.html">图形学-纹理映射</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgcad5564" class="outline-2">
-<h2 id="orgcad5564">汇</h2>
-<div class="outline-text-2" id="text-orgcad5564">
-<ul class="org-ul">
-<li><a href="2020/12/assembly.html">汇编</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgc0da42f" class="outline-2">
-<h2 id="orgc0da42f">理</h2>
-<div class="outline-text-2" id="text-orgc0da42f">
-<ul class="org-ul">
-<li><a href="2021/02/understanding-perspective-in-css.html">理解CSS中的透视</a></li>
-<li><a href="2021/03/understanding-about-animation-in-css.html">理解CSS动画</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org0201e14" class="outline-2">
-<h2 id="org0201e14">用</h2>
-<div class="outline-text-2" id="text-org0201e14">
-<ul class="org-ul">
-<li><a href="2018/08/tornado-with-docker.html">用Docker打包Tornado羡慕</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgcab58a7" class="outline-2">
-<h2 id="orgcab58a7">直</h2>
-<div class="outline-text-2" id="text-orgcab58a7">
-<ul class="org-ul">
-<li><a href="2018/11/eopl-techniques-to-imp-interpreter.html">直译器的实现技术总结</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org73d00ec" class="outline-2">
-<h2 id="org73d00ec">线</h2>
-<div class="outline-text-2" id="text-org73d00ec">
-<ul class="org-ul">
-<li><a href="2019/12/linear-algebra-notes.html">线性代数读书随笔</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgafc060b" class="outline-2">
-<h2 id="orgafc060b">网</h2>
-<div class="outline-text-2" id="text-orgafc060b">
-<ul class="org-ul">
-<li><a href="2019/04/data-transfer-unit.html">网络数据传输单位</a></li>
-<li><a href="2018/06/about-rpc.html">网络编程笔记 RPC</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org5b24b8d" class="outline-2">
-<h2 id="org5b24b8d">自</h2>
-<div class="outline-text-2" id="text-org5b24b8d">
-<ul class="org-ul">
-<li><a href="2019/10/self-taught-and-compiler.html">自学编译原理</a></li>
-<li><a href="2019/03/laziness-is-a-habit.html">自身经历谈懒惰</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org8d0761b" class="outline-2">
-<h2 id="org8d0761b">英</h2>
-<div class="outline-text-2" id="text-org8d0761b">
-<ul class="org-ul">
-<li><a href="2019/05/et-project-day1.html">英语消灭计划-Day1</a></li>
-<li><a href="2020/02/et-project-day-.html">英语消灭计划-Day2</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgb23e7ce" class="outline-2">
-<h2 id="orgb23e7ce">视</h2>
-<div class="outline-text-2" id="text-orgb23e7ce">
-<ul class="org-ul">
-<li><a href="2019/08/digital-video-file.html">视频文件简单了解</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org3cebdf7" class="outline-2">
-<h2 id="org3cebdf7">设</h2>
-<div class="outline-text-2" id="text-org3cebdf7">
-<ul class="org-ul">
-<li><a href="2018/07/how-to-block-ip-addresses-from-countries.html">设置Nginx禁止某些地区IP的访问</a></li>
-<li><a href="2018/09/design-patterns.html">设计模式总结</a></li>
-</ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
-<p class="date">Date: </p>
+<p class="date">Date: 2021-06-13</p>
 <p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.2 (<a href="https://orgmode.org">Org</a> mode 9.4.5)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
