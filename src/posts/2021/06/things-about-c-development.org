@@ -99,8 +99,8 @@
       EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
           printf("MyFunction Called\n");
       }
-    #+END_SRC    
-    
+    #+END_SRC
+
     =extern "C" { ... }= 的作用是为了解决 =C= 和 =C++= 两者命名管理规则不一样的问题.
 
     =C= 是一门采用单一命名空间的语言,实际上这个特点是"遗传"汇编语言的: 一个汇编程序里面的全局标签的名字是唯一的.
@@ -117,15 +117,61 @@
 
     我本人对 =C++= 的兴趣和了解都不多,因此就不继续深入笔记了,只要记得 =extern "C" { }= 是为了兼容 =C= 和 =C++= 就好.
 
-    
-
 
 *** 项目里面的 shell script 文件: configure
 
-    很多开源项目都有这么一个 =shell script=,执行它会生成一个 =Makefile= 文件,有了 =Makefile= 文件就可以使用 =make= 命令对项目进行编译了.
+    很新手上手 =C= 项目构建都会使用到 =make= 命令,都要编写 =Makefile= 文件进行构建.
 
-    =Makefile= 是用于自动编译和链接的,一旦工程里面有依赖的文件发生了变化,它就会对必要的文件进行重新编译和链接;
+    =Makefile= 告诉 =make= 命令如何进行编译和链接,一旦工程里面有依赖的文件发生了变化,
 
-    实际上 =Makefile= 和
-    
+    再度执行 =make= 命令就会对必要的文件进行重新编译和链接.
 
+    \\
+
+    很多 =C= 程序的源代码是可以在不同平台上编译运行的,然而在不同平台上进行构建是不一样的.
+
+    比如说使用的编译器不一样;链接器不一样;就算使用同一种编译器,可能编译参数也是不一样等等.
+
+    总的来说,在不同平台上进行构建,那么要针对该平台来调整 =Makefile= 文件.
+
+    在1991年,一位叫做 =David J. MacKenzie= 的开发人员因为要经常为20个平台修改 =Makefile= 文件而写了一个叫做 =configure= 的脚本文件,
+
+    这个脚本文件会自动根据平台来生成 =Makefile= 文件,然后开发人员运行 =./configure && make= 就可以构建程序了.
+
+    这套流程后来被 =GNU= 标准化了: 每一个 =GNU= 的包都应该有一个 =configure= 脚本,该脚本至少要支持什么参数,它生成的 =Makefile= 遵守一定的规范,
+
+    在最简单的情况下执行 =./configure && make && make install= 就可以对包进行构建.
+
+    这套流程叫做 =GNU= 构建系统(GNU Build System),后来很多 =GNU= 以外的程序也采用这套构建系统.
+
+    只要懂了这套构建系统,大部分开源项目的结构就很好懂.
+
+    了解 =configure= 脚本的产生是学习这套构建系统一个好起点.
+
+    \\
+
+    手动编写 =configure= 脚本同样不是一件轻松的事情,
+
+    为此 =GNU= 开发了一套叫做 =Autotools= 的工具链,帮助开发人员快速为自己的项目搭建这套构建系统.
+
+    =Autoconf= 和 =Automake= 是这套工具链中比较重要的两个工具.
+
+    这两个工具都需要根据开发人员编写好的一些"配置"文件来生成文件:
+
+    =Autoconf= 需要根据一个叫做 =configure.ac= 的文件来生成 =configure= 文件,有时候 =configure.ac= 也叫做 =configure.in=;
+
+    =Automake= 通过 =configure.ac= 来找到 =Makefile.am= 文件,再根据 =Makefile.am= 文件生成对应的 =Makefile.in= 文件;
+
+    =configure= 脚本需要读取 =Makefile.in= 来生成 =Makefile=.
+
+    =configure.ac= 原本叫做 =configure.in=, =*.in= 文件是用来生成文本文件的是模板,
+
+    =Makefile.am= 文件 *基本* 上就是一系列 =Makefile= 的变量定义以及一些 =Makefile= 规则定义,
+
+    在 =Automake= 生成 =Makefile.in= 时,这些定义会被复制到 =Makefile.in= 里面.
+
+    在文本处理上, =Autotools= 使用了宏(macros)这个东西,想要知道如何理解,甚至编写模板,就得学习 [[https://www.gnu.org/software/autoconf/manual/autoconf.html#Autoconf-Macro-Index][Autoconf]] 和 [[https://www.gnu.org/software/automake/manual/automake.html#Macro-Index][Automake]] 所支持的宏.
+
+    实践部分就不在这里总结了,毕竟官方文档就写得很详细,而且文档上更新太快了,完全没总结的必要,
+
+    建议直接从 [[https://www.gnu.org/software/automake/manual/automake.html#Hello-World][Hello World]] 开始,并且阅读关于 =configure.ac= 以及 =Makefile.am= 文件的配置解释.

@@ -544,7 +544,7 @@
       \\
 
 
-      首先是经纬度坐标系,它用两个参数(lat-long)进行定位,
+      首先是经纬度坐标系,它用两个参数(lat-lng)进行定位,
 
       后面主要是讲坐标系之间如何转换,经纬度坐标的简单概念可以看[[https://gisgeography.com/latitude-longitude-coordinates/][这里]].
 
@@ -553,7 +553,7 @@
       #+CAPTION: 右手坐标系和经纬度坐标系
       [[../../../files/lat-long-coordinates.png]]
 
-      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned} x &= r \times \sin(\alpha) \times \cos(\beta) \\ y &= r \times \cos(\alpha) \\ z &= r  \times sin(\alpha) \times \sin(90^{\circ} - \beta) = r  \times \sin(\alpha) \times \sin(\beta) \end{aligned} \right. \end{equation}$,
+      根据三角函数,可以从这个图得出这些关系,$\begin{equation} \left\{ \begin{aligned}  x &= r  \times sin(\alpha) \times \cos(90^{\circ} - \beta) = r  \times \sin(\alpha) \times \sin(\beta) \\ y &= r \times \cos(\alpha) \\ z &= r \times \sin(\alpha) \times \cos(\beta) \end{aligned} \right. \end{equation}$,
 
       其中 $\alpha, \beta \in \left(-\pi, \pi\right]$.
 
@@ -563,17 +563,17 @@
 
       通过上面的图可以看到 $y = r \times \cos(\alpha)$,那么通过反余弦(arccosine)求出 $\alpha$: $\alpha = acos(\frac{y}{r})$;
 
-      最后就是在 $X$ 轴和 $Y$ 轴构成的平面上求出 $\beta$,根据图可以知道 $tan(\beta) = \frac{z}{x}$,
+      最后就是在 $X$ 轴和 $Y$ 轴构成的平面上求出 $\beta$,根据图可以知道 $tan(\beta) = \frac{x}{z}$,
 
-      那么再通过反正切(arctan)就可以得到 $\beta = atan(\frac{z}{x}) = atan2(z, x)$.
+      那么再通过反正切(arctan)就可以得到 $\beta = atan(\frac{x}{z}) = atan2(x, z)$.
 
-      再把方程组 $\begin{equation} \left\{ \begin{aligned} \alpha &= acos(\frac{y}{\sqrt{x^{2} + y^{2} + z^{2}}}) \\ \beta &= atan(\frac{z}{x}) = atan2(z, x) \end{aligned} \right. \end{equation}$ 改成函数形式 $f: \mathbb{R}^{3} \mapsto \mathbb{R}^{2}$.
+      再把方程组 $\begin{equation} \left\{ \begin{aligned} \alpha &= acos(\frac{y}{\sqrt{x^{2} + y^{2} + z^{2}}}) \\ \beta &= atan(\frac{x}{z}) = atan2(x, z) \end{aligned} \right. \end{equation}$ 改成函数形式 $f: \mathbb{R}^{3} \mapsto \mathbb{R}^{2}$.
 
       $atan2$ 和 $acos$ 的结果是弧度,值域分别是 $\left[-\frac{\pi}{2}, \frac{\pi}{2}\right]$ 和 $\left[0, \pi\right]$,
 
       而经度和纬度的范围分别是 $\left[-{\pi}, {\pi}\right]$ 和 $\left[\frac{\pi}{2}, -\frac{\pi}{2}\right]$,
 
-      根据上面关系可以得到 $\begin{equation} \left\{ \begin{aligned} lat &= \frac{\pi}{2} - \alpha \\ long &= \beta \end{aligned} \right. \end{equation}$,
+      根据上面关系可以得到 $\begin{equation} \left\{ \begin{aligned} lat &= \frac{\pi}{2} - \alpha \\ lng &= \beta \end{aligned} \right. \end{equation}$,
 
       所以 $p$ 的经纬度坐标为 $(\beta, \frac{\pi}{2} - \alpha)$.
 
@@ -581,13 +581,13 @@
 
       \\
 
-      球面坐标使用 $\rho$, =lat= 和 =long= 三个参数描述一个点的位置的,
+      球面坐标 $(\rho, lat, long)$ 使用三个参数描述一个点的位置的,
 
-      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $lat$ 和 $long$ 依然分别是经度和纬度.
+      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $lat$ 和 $long$ 依然分别是纬度和经度.
 
       和经纬度坐标系相比多了一个半径参数,球面坐标所表达的信息相比经纬度坐标更加完整,此外两者本质上没有任何区别.
 
-      所以 $p$ 的球面坐标就是 $(r, atan2(z, x), \frac{\pi}{2} - acos(\frac{y}{r}))$.
+      所以 $p$ 的球面坐标就是 $(r, atan2(x, z), \frac{\pi}{2} - acos(\frac{y}{r}))$.
 
       \\
 
@@ -604,13 +604,13 @@
       #+CAPTION: 314px * 157px 平铺后的球体表面和纹理坐标系的关系
       [[../../../files/spherical-coordinates-to-texture-coordinates.png]]
 
-      可以得知在以 $O_{sphere}$ 为原点的坐标系下, $p$ 的坐标就是 $(atan2(z, x) r, \frac{\pi}{2} r - acos(\frac{y}{r}) r)$,
+      可以得知在以 $O_{sphere}$ 为原点的坐标系下, $p$ 的坐标就是 $(atan2(x, z) r, \frac{\pi}{2} r - acos(\frac{y}{r}) r)$,
 
-      平移原点后 $p = (\pi r + atan2(z, x)r, \frac{\pi}{2} r - acos(\frac{y}{r}) r + \frac{\pi}{2} r) = (\pi r + atan2(z, x) r, \pi r - acos(\frac{y}{r}) r)$;
+      平移原点后 $p = (\pi r + atan2(x, z)r, \frac{\pi}{2} r - acos(\frac{y}{r}) r + \frac{\pi}{2} r) = (\pi r + atan2(x, z) r, \pi r - acos(\frac{y}{r}) r)$;
 
-      然后每个坐标都映射到 $\left[0, 1\right]$ 上得到 $(\frac{\pi r + atan2(z, x) r}{2 \pi r}, \frac{\pi r - acos(\frac{y}{r}) r}{\pi r})$,
+      然后每个坐标都映射到 $\left[0, 1\right]$ 上得到 $(\frac{\pi r + atan2(x, z) r}{2 \pi r}, \frac{\pi r - acos(\frac{y}{r}) r}{\pi r})$,
 
-      最后得到结果 $\phi(x, y, z) = (\frac{\pi + atan2(z, x)}{2 \pi}, \frac{\pi - acos(\frac{y}{r})}{\pi})$, 其中 $r = \sqrt{x^{2} + y^{2} + z^{2}}$.
+      最后得到结果 $\phi(x, y, z) = (\frac{\pi + atan2(x, z)}{2 \pi}, \frac{\pi - acos(\frac{y}{r})}{\pi})$, 其中 $r = \sqrt{x^{2} + y^{2} + z^{2}}$.
 
       但是这并非完美的双射,在球体的两极会发生一个极点映射到多个纹理坐标的情况,从而两极发生扭曲,
 
@@ -618,7 +618,7 @@
 
       # https://math.libretexts.org/Courses/Mount_Royal_University/MATH_2200:_Calculus_for_Scientists_II/5:_Vector_Spaces/5.7:_Cylindrical_and_Spherical_Coordinates#:~:text=Spherical%20Coordinates%201%20%CF%81%20%28the%20Greek%20letter%20rho%29,the%20origin%20and%200%20%E2%89%A4%20%CF%86%20%E2%89%A4%20%CF%80.
 
-      *(这里和书上的结果也是有差异,不确定是否推错了)*
+      *(这里和书上的结果有差异,书本上应该是写错了)*
 
 
 ***** 柱坐标系 (Cylindrical Coordinates)
@@ -630,7 +630,9 @@
       #+CAPTION: 柱坐标系
       [[../../../files/cylindrical-coordinates.png]]
 
-      $\rho$ (注意,这不是字母 $p$) 是柱体的半径,等于 $\sqrt{x^{2} + z^{2}}$, $\theta$ 是点 $p$ 的空间坐标 $(x, y, z)$ 在上图的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
+      来看一下点 $p = (x, y, z)$ 和柱坐标的关系,首先$p$ 只会在柱体顶部和底部以外的表面上,
+
+      $\rho$ (注意,这不是字母 $p$) 是柱体的半径,等于 $\sqrt{x^{2} + z^{2}}$, $\theta$ 是点 $p$ 在上图的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
 
       # 根据上图以及三角函数可以计算出 $x$, $y$, $z$ 的关系: $\begin{equation} \left\{ \begin{aligned} \sin\theta &= \frac{z}{\rho} \\ \cos\theta &= \frac{x}{\rho} \end{aligned} \right. \rightarrow \left\{ \begin{aligned} z &= \rho \sin\theta \\ x &= \rho \cos\theta \end{aligned} \right. \end{equation}$.
 
@@ -643,11 +645,11 @@
 
       同样还是平移原点和映射到 $[0, 1]$ 上,
 
-      在以 $O_{cylinder}$ 为原心的坐标下, $p$ 的坐标就是 $(atan2(z, x)r, y)$,
+      在以 $O_{cylinder}$ 为原心的坐标下, $p$ 的坐标就是 $(atan2(x, z)r, y)$,
 
-      平移原点 $(\pi\rho + atan2(z, x)\rho, \frac{h}{2} + y)$,
+      平移原点 $(\pi\rho + atan2(x, z)\rho, \frac{h}{2} + y)$,
 
-      映射到 $[0, 1]$ 上 $(\frac{\pi\rho + atan2(z, x)\rho}{2\pi\rho}, \frac{\frac{h}{2} + y}{h}) \rightarrow (\frac{\pi + atan2(z, x)}{2\pi}, \frac{1}{2} + \frac{y}{h})$.
+      映射到 $[0, 1]$ 上 $(\frac{\pi\rho + atan2(x, z)\rho}{2\pi\rho}, \frac{\frac{h}{2} + y}{h}) \rightarrow (\frac{\pi + atan2(x, z)}{2\pi}, \frac{1}{2} + \frac{y}{h})$.
 
       *(这里的推导可能有误/也有可能是书上的公式有问题 ,暂时推导不出和书上一样的结果).*
 
