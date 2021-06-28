@@ -428,7 +428,7 @@
 
     集合 $T$ 叫做纹理空间(texture space),它 *通常* 就是一个包含了图片的矩形(rectangle),就像上面的纹理坐标图一样.
 
-    总体上来说,纹理映射做的基本事情基本上就是定义 *纹理坐标函数* 和* 纹理查找*.
+    总体上来说,纹理映射做的基本事情基本上就是定义 *纹理坐标函数* 和 *纹理查找*.
 
     那么该如何定义呢?这要从问题上说起.
 
@@ -548,7 +548,9 @@
 
       后面主要是讲坐标系之间如何转换,经纬度坐标的简单概念可以看[[https://gisgeography.com/latitude-longitude-coordinates/][这里]].
 
-      假设现有一个球,把球体的中心放置在右手坐标系的原点上,球体的半径为 $r$, $p = (x, y, z)$ 是球体表面上的一个点,如图所示,
+      假设现有一个球,把球体的中心放置在右手坐标系的原点上,并且该右手坐标系是一个 $[-1, 1]^{3}$ 的笛卡尔坐标系.
+
+      球体的半径为 $r$, $p = (x, y, z)$ 是球体表面上的一个点,如图所示,
 
       #+CAPTION: 右手坐标系和经纬度坐标系
       [[../../../files/lat-long-coordinates.png]]
@@ -581,9 +583,9 @@
 
       \\
 
-      球面坐标 $(\rho, lat, long)$ 使用三个参数描述一个点的位置的,
+      球面坐标 $(\rho, lat, lng)$ 使用三个参数描述一个点的位置的,
 
-      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $lat$ 和 $long$ 依然分别是纬度和经度.
+      这三个参数的含义是: $\rho$ 表示原点到 $p$ 点的距离,也就是球体的半径 $r$, $lat$ 和 $lng$ 依然分别是纬度和经度.
 
       和经纬度坐标系相比多了一个半径参数,球面坐标所表达的信息相比经纬度坐标更加完整,此外两者本质上没有任何区别.
 
@@ -604,17 +606,19 @@
       #+CAPTION: 314px * 157px 平铺后的球体表面和纹理坐标系的关系
       [[../../../files/spherical-coordinates-to-texture-coordinates.png]]
 
-      可以得知在以 $O_{sphere}$ 为原点的坐标系下, $p$ 的坐标就是 $(atan2(x, z) r, \frac{\pi}{2} r - acos(\frac{y}{r}) r)$,
 
-      平移原点后 $p = (\pi r + atan2(x, z)r, \frac{\pi}{2} r - acos(\frac{y}{r}) r + \frac{\pi}{2} r) = (\pi r + atan2(x, z) r, \pi r - acos(\frac{y}{r}) r)$;
 
-      然后每个坐标都映射到 $\left[0, 1\right]$ 上得到 $(\frac{\pi r + atan2(x, z) r}{2 \pi r}, \frac{\pi r - acos(\frac{y}{r}) r}{\pi r})$,
+      可以得知在以 $O_{sphere}$ 为原点的坐标系下, $p$ 的坐标就是 $(\frac{atan2(x, z) r}{\pi r}, \frac{\frac{\pi}{2} r - acos(\frac{y}{r}) r}{\frac{\pi r}{2}}) \rightarrow (\frac{atan2(x, z)}{\pi}, \frac{\frac{\pi}{2} - acos(\frac{y}{r})}{\frac{\pi}{2}})$,其中 $r = \sqrt{x^{2} + y^{2} + z^{2}}$.
 
-      最后得到结果 $\phi(x, y, z) = (\frac{\pi + atan2(x, z)}{2 \pi}, \frac{\pi - acos(\frac{y}{r})}{\pi})$, 其中 $r = \sqrt{x^{2} + y^{2} + z^{2}}$.
+      平移到原点 $O_{texture}$ 后得到 $p = (1 + \frac{atan2(x, z)}{\pi}, 1 + \frac{\frac{\pi}{2} - acos(\frac{y}{r})}{\frac{\pi}{2}}) = (\frac{\pi + atan2(x, z)}{\pi}, \frac{\pi - acos(\frac{y}{r})}{\frac{\pi}{2}})$;
+
+      然后每个坐标都映射到 $\left[0, 1\right]$ 上,也就是除以2,得到 $(\frac{\pi + atan2(x, z)}{2 \pi}, \frac{\pi - acos(\frac{y}{r})}{\pi})$,
+
+      最后得到结果 $\phi(x, y, z) = (\frac{\pi + atan2(x, z)}{2 \pi}, \frac{\pi - acos(\frac{y}{r})}{\pi})$.
 
       但是这并非完美的双射,在球体的两极会发生一个极点映射到多个纹理坐标的情况,从而两极发生扭曲,
 
-      这也是为什么前面说了得到的是一张近似长方形的图.
+      这也是为什么前面说了得到的是一张 *近似* 长方形的图.
 
       # https://math.libretexts.org/Courses/Mount_Royal_University/MATH_2200:_Calculus_for_Scientists_II/5:_Vector_Spaces/5.7:_Cylindrical_and_Spherical_Coordinates#:~:text=Spherical%20Coordinates%201%20%CF%81%20%28the%20Greek%20letter%20rho%29,the%20origin%20and%200%20%E2%89%A4%20%CF%86%20%E2%89%A4%20%CF%80.
 
@@ -630,30 +634,22 @@
       #+CAPTION: 柱坐标系
       [[../../../files/cylindrical-coordinates.png]]
 
-      来看一下点 $p = (x, y, z)$ 和柱坐标的关系,首先$p$ 只会在柱体顶部和底部以外的表面上,
+      来看一下点 $p = (x, y, z)$ 和柱坐标的关系,同样我们依然把柱体中心建立一个 $[-1, 1]^{3}$ 的笛卡尔坐标系.
 
-      $\rho$ (注意,这不是字母 $p$) 是柱体的半径,等于 $\sqrt{x^{2} + z^{2}}$, $\theta$ 是点 $p$ 在上图的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
-
-      # 根据上图以及三角函数可以计算出 $x$, $y$, $z$ 的关系: $\begin{equation} \left\{ \begin{aligned} \sin\theta &= \frac{z}{\rho} \\ \cos\theta &= \frac{x}{\rho} \end{aligned} \right. \rightarrow \left\{ \begin{aligned} z &= \rho \sin\theta \\ x &= \rho \cos\theta \end{aligned} \right. \end{equation}$.
+      首先 $p$ 只会在柱体顶部和底部以外的表面上,$\rho$ (注意,这不是字母 $p$) 是柱体的半径,等于 $\sqrt{x^{2} + z^{2}}$, $\theta$ 是点 $p$ 在上图的夹角, $y$ 就是 $p$ 的 $y$ 坐标.
 
       像球体那样把柱切开,得到一张 *近似* 长方形的图,宽是 $2 \pi \rho$,也就是说 $x \in \left[-\pi \rho, \pi \rho\right]$,
 
-      # 柱体的高不定,假设为 $h$,那么$y \in \left[-\frac{h}{2}, \frac{h}{2}\right]$.
+      不像球体那样, $y$ 不受半径 $\rho$ 限制, 不过 $y$ 的绝对值是一定能超过1,因为坐标系被限定在 $[-1, 1]^{3}$ 里(前面有说过),并且 $p$ 点在图上的位置如下.
 
       #+CAPTION: 平铺后的柱面和纹理坐标系的关系
       [[../../../files/cylindrical-coordinates-to-texture-coordinates.png]]
 
-      同样还是平移原点和映射到 $[0, 1]$ 上,
+      在以 $O_{cylinder}$ 为原心的坐标下, $p$ 的坐标就是 $(\frac{atan2(x, z) r}{\pi r}, y) \rightarrow (\frac{atan2(x, z)}{\pi}, y)$,
 
-      在以 $O_{cylinder}$ 为原心的坐标下, $p$ 的坐标就是 $(atan2(x, z)\rho, y)$,
+      平移到原点 $O_{texture}$ 后得到 $(1 + \frac{atan2(x, z)}{\pi}, 1 + y)$,
 
-      # 平移原点 $(\pi\rho + atan2(x, z)\rho, \frac{h}{2} + y)$,
-
-      # 映射到 $[0, 1]$ 上 $(\frac{\pi\rho + atan2(x, z)\rho}{2\pi\rho}, \frac{\frac{h}{2} + y}{h}) \rightarrow (\frac{\pi + atan2(x, z)}{2\pi}, \frac{1}{2} + \frac{y}{h})$.
-
-      在经过原点平移和映射到 $[0, 1]$ 后得到 $(\frac{\pi + atan2(x, z)}{2\pi}, \frac{1+y}{2})$.
-
-      *(v的推导得在[[https://gamedev.stackexchange.com/questions/114412/how-to-get-uv-coordinates-for-sphere-cylindrical-projection][这里]]给出了解释,但本人还不算太明白)*
+      映射到 $[0, 1]$ 上,也就是除以2得到 $(\frac{\pi + atan2(x, z)}{2\pi}, \frac{1+y}{2})$.
 
 ***** 立方体映射 (Cubemaps)
 
