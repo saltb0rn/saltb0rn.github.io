@@ -654,3 +654,33 @@
 ***** 立方体映射 (Cubemaps)
 
       用球体映射的方法作用于球状或类球状物体会有一个问题,那就是两极(poles)附近的地方会有很严重的扭曲.
+
+      有一种通过牺牲连续性来减少扭曲(更加一致)的替代映射方法,叫做立方体映射.
+
+      #+CAPTION: 球体映射到立方体上
+      [[../../../files/cubemap.png]]
+
+      计算立方体纹理坐标很简单,本质上就是6个不同角度的透视投影(perspective projection),分别是 $+x$, $-x$, $+y$, $-y$, $+z$ 以及 $-z$ 6 个方向.
+
+      #+CAPTION: UV以及XYZ的关系
+      [[../../../files/cubemap-2.png]]
+
+      可以看到在图中有一个阴影面,也就是 $+z$ 的面,这个面上的点 $(x,y,z)$ 满足这些条件: $\begin{equation} \left\{ \begin{aligned} z &\gt |x| \\ z &\gt |y| \end{aligned} \right. \end{equation}$,
+
+      这些条件描述并没包括平面的4个顶点,因为4个点可以说是同时存在于3个面上的,如果包含了,那么条件就是 $\begin{equation} \left\{ \begin{aligned} z &\ge |x| \\ z &\ge |y| \end{aligned} \right. \end{equation}$.
+
+      这里也告诉了我们,对于物体上表面的某一个点 $(x,y,z)$ 来说,哪个分量的绝对值最大,就说明这个点是投影到哪个面.
+
+      比如点 $(-0.9, 0.3, 0.4)$ 就是投影到 $-x$ 面上, $(0.9, 0.3, 0.4)$ 投影到 $+x$ 上.
+
+      我们依然是先拆图,然后在图上建立一个 =UV= 坐标系,找出空间点对应的 $(u, v)$.
+
+      那么问题来了,如何拆立方体的图呢?立方体的图不像球体和柱体那样一刀切就能得到.
+
+      立方体的拆图方案并非只有一种,我们选 =OpenGL= 的拆图方案,以正面开始,顺时针方向把面剥开.
+
+      # http://ilkinulas.github.io/development/unity/2016/05/06/uv-mapping.html
+
+
+
+      
