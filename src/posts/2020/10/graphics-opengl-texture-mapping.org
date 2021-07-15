@@ -660,27 +660,56 @@
       #+CAPTION: 球体映射到立方体上
       [[../../../files/cubemap.png]]
 
-      计算立方体纹理坐标很简单,本质上就是6个不同角度的透视投影(perspective projection),分别是 $+x$, $-x$, $+y$, $-y$, $+z$ 以及 $-z$ 6 个方向.
+      计算立方体纹理坐标很简单,本质上就是6个不同角度的透视投影(perspective projection),分别是 $+x$, $-x$, $+y$, $-y$, $+z$ 以及 $-z$ 6 个方向.也就是需要用6张贴图完成映射.
 
       #+CAPTION: UV以及XYZ的关系
-      [[../../../files/cubemap-2.png]]
+      [[../../../files/cubemap-3.png]]
 
-      可以看到在图中有一个阴影面,也就是 $+z$ 的面,这个面上的点 $(x,y,z)$ 满足这些条件: $\begin{equation} \left\{ \begin{aligned} z &\gt |x| \\ z &\gt |y| \end{aligned} \right. \end{equation}$,
+      可以看到在图中有一个阴影面,也就是 $+x$ 的面,这个面上的点 $(x,y,z)$ 满足这些条件: $\begin{equation} \left\{ \begin{aligned} |x| &\gt |z| \\ |x| &\gt |y| \end{aligned} \right. \end{equation}$,
 
-      这些条件描述并没包括平面的4个顶点,因为4个点可以说是同时存在于3个面上的,如果包含了,那么条件就是 $\begin{equation} \left\{ \begin{aligned} z &\ge |x| \\ z &\ge |y| \end{aligned} \right. \end{equation}$.
+      这些条件描述并没包括平面的4个顶点,因为4个点可以说是同时存在于3个面上的,如果包含了,那么条件就是 $\begin{equation} \left\{ \begin{aligned} |x| &\ge |z| \\ |x| &\ge |y| \end{aligned} \right. \end{equation}$.
 
       这里也告诉了我们,对于物体上表面的某一个点 $(x,y,z)$ 来说,哪个分量的绝对值最大,就说明这个点是投影到哪个面.
 
       比如点 $(-0.9, 0.3, 0.4)$ 就是投影到 $-x$ 面上, $(0.9, 0.3, 0.4)$ 投影到 $+x$ 上.
 
-      我们依然是先拆图,然后在图上建立一个 =UV= 坐标系,找出空间点对应的 $(u, v)$.
+      立方体映射的最令人迷惑的地方在于如何给每个面定义 $u$ 和 $v$ 的方向，不同软件/图形工具都有不同的拆图方案,我们选择学习 =OpenGL= 的[[https://www.khronos.org/opengl/wiki/Cubemap_Texture][立方体UV定义规范]].
 
-      那么问题来了,如何拆立方体的图呢?立方体的图不像球体和柱体那样一刀切就能得到.
+      #+CAPTION: OpenGL的立方体UV定义闺房
+      [[../../../files/CubeMapAxes.png]]
 
-      立方体的拆图方案并非只有一种,我们选 =OpenGL= 的拆图方案,以正面开始,顺时针方向把面剥开.
+      =OpenGL= 使用左手坐标系作为立方体映射的坐标系,上图的6个面都有自己的UV定义.
 
-      # http://ilkinulas.github.io/development/unity/2016/05/06/uv-mapping.html
+      根据这个规范可以很轻松地得到每个面的纹理查找坐标的函数 $\phi$.
 
+      这实际非常简单,我们就以 $+z$ 的那一面来作为例子:
 
+      通过上面的规范可以直接确定点 $(x,y,z)$ 的每一个分量在计算过程中使用的是加法还是减法: $(+x, -y, +z)$,事实上 $z$ 分量没啥确定的必要.
 
-      
+      现在可以计算出投影坐标 $\left(x, y, z\right) \rightarrow \left(\frac{x}{z}, \frac{y}{z}\right)$,
+
+      实际上分量 $z$ 的值不应该影响计算结果的正负值,因为在纹理坐标里面,确定 $u$ 和 $v$ 的正负值应由 $x$ 和 $y$ 自己决定,
+
+      因此,这一步的正确计算结果是 $\left(\frac{x}{|z|}, \frac{y}{|z|}\right)$;
+
+      然后把平移坐标系到左下角,这步就需要注意了,因为规范里面是定义好了 $U$ 和 $V$ 的方向的,因此在进行平移时需要确认好对 $x$ 和 $y$ 分量分别需要加法还是减法运算,
+
+      实际上这是跟规范里面 $UV$ 的方向一致的,通过上面的 "positive z" 可以看到,对于 $x$ 分量应该采用加法,对 $y$ 分量应用减法,
+
+      因此这一步应得到 $\left(1 + \frac{+x}{|z|},1 + \frac{-y}{|z|}\right)$;
+
+      最后映射到 $[0, 1]$ 上,也就是 $\frac{1}{2}\left(1 + \frac{+x}{|z|},1 + \frac{-y}{|z|}\right)$;
+
+      这就是 $+z$ 面的纹理坐标查找函数 $\phi_{+z}(x,y,z) = \frac{1}{2}\left(1 + \frac{+x}{|z|},1 + \frac{-y}{|z|}\right)$ 的完整推导过程.
+
+      同理我们可以把其它5个面的 $\phi$ 也推导出来,结果如下:
+
+      $\phi_{-z}(x,y,z) = \frac{1}{2}\left(1 + \frac{-x}{|z|},1 + \frac{-y}{|z|}\right)$
+
+      $\phi_{+x}(x,y,z) = \frac{1}{2}\left(1 + \frac{-z}{|x|},1 + \frac{-y}{|x|}\right)$
+
+      $\phi_{-x}(x,y,z) = \frac{1}{2}\left(1 + \frac{+z}{|x|},1 + \frac{-y}{|x|}\right)$
+
+      $\phi_{+y}(x,y,z) = \frac{1}{2}\left(1 + \frac{+x}{|y|},1 + \frac{+z}{|y|}\right)$
+
+      $\phi_{-y}(x,y,z) = \frac{1}{2}\left(1 + \frac{+x}{|y|},1 + \frac{-z}{|y|}\right)$
