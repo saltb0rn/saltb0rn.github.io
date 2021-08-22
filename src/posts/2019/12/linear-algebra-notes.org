@@ -10,6 +10,8 @@
 
 *** 一些读后感
 
+    首先声明一下,本人读这本书的主要目的是为了理解线性代数里面的概念,并不是为了解题.
+
     除了数学知识以外,作者的思路也确实很棒,本人受益颇深,
 
     - 探讨什么是什么的时候就有一个不错的思路:与其直接归纳是什么,不如罗列它的性质,通过性质探究本质.
@@ -36,6 +38,31 @@
 
       思考任何事情都不能忽略定义.
 
+      阅读这本书最好边读边学习 [[https://maxima.sourceforge.io][Maxima]] 的使用, =Maxima= 是一款计算机代数系统(Computer Algebra System,简称CAS),
+
+      可以完成执行符号运算(symbolic computations),数值运算(numerical computations),数据分析(data analysis)以及数据可视化(data visualization)的任务.
+
+      使用 =CAS= 是为了更加方便和准确地对书上的结论以及自己的猜想进行验证,这可以避免因为自己初学/手误而产生的错误,从而影响验证结果.
+
+      而推荐 =Maxima= 是因为一免费,二功能平衡以及三这本书上的图例和公式都用它来完成.
+
+      学习 =Maxima= 的正确方式是准备好它的[[https://maxima.sourceforge.io/docs/manual/index.html][文档]](这里假设已经阅读过 [[https://maxima.sourceforge.io/docs/manual/maxima.html][Introduction to Maxima]] 了),正确理解数学里面的概念.
+
+      数学有很多个领域,使用 =Maxima= 的时候要先明白自己解决的问题属于哪个领域,然后在文档上找到对应领域的说明.
+
+      比如说想要验证一个矩阵 $M$ 的秩是否为 $n$,首相矩阵是属于线性代数的领域,那么就要从下图的 *Matrices and Linear Algebra* 部分找起,
+
+      #+CAPTION: Maxima 的部分文档
+      [[../../../files/maxima-doc-areas.png]]
+
+      一个优秀的程序总是会为功能取一个"名符其实"的名字, =Maxima= 明显就是一个优秀的程序,
+
+      矩阵的秩在英文对应是 =rank=,那么可以尝试查找有没有 =rank= 这个函数来完成计算,
+
+      #+CAPTION: Maxima 关于 rank 函数的描述
+      [[../../../files/maxima-doc-rank.png]]
+
+      猜想没错,确实有 =rank= 这个函数,也确实是用来计算矩阵的秩.
 
 *** {{{linear-algebra}}}的实际用途
 
@@ -1750,10 +1777,48 @@
 
      初见高维吓人,然而这这种情况十分简单,只要一计算就变成这样: $\left(\begin{array}{c}x_{1}(t) \\ x_{2}(t) \\ x_{3}(t)\end{array}\right) = \left(\begin{array}{c}5x_{1}(t-1) \\ -3x_{2}(t-1) \\ 0.8x_{3}(t-1)\end{array}\right)$.
 
-     这实际上只是三个 *一维的情况*,分别解出来就可以: $\begin{equation} \left\{\begin{array}{**lr**} x_{1}(t) = 5x_{1}(t-1) \\ x_{2}(t) = -3x_{2}(t-1) \\ x_{3}(t) = 0.8x_{3}(t-1)\end{array} \right. \rightarrow \left\{\begin{array}{**lr**} x_{1}(t) = 5^{t}x_{1}(0) \\ x_{2}(t) = (-3)^{t}x_{2}(0) \\ x_{3}(t) = 0.8^{t}x_{3}(0) \end{array} \right. \end{equation}$.
+     这实际上只是三个 *一维的情况* 的子系统,分别解出来就可以: $\begin{equation} \left\{\begin{array}{**lr**} x_{1}(t) = 5x_{1}(t-1) \\ x_{2}(t) = -3x_{2}(t-1) \\ x_{3}(t) = 0.8x_{3}(t-1)\end{array} \right. \rightarrow \left\{\begin{array}{**lr**} x_{1}(t) = 5^{t}x_{1}(0) \\ x_{2}(t) = (-3)^{t}x_{2}(0) \\ x_{3}(t) = 0.8^{t}x_{3}(0) \end{array} \right. \end{equation}$.
 
      可以把这结果改写成矩阵: $x(t) = \left(\begin{array}{c} 5^{t} & 0 & 0 \\ 0 & (-3)^{t} & 0 \\ 0 & 0 & 0.8^{t}\end{array}\right)x(0) = \left(\begin{array}{c} 5 & 0 & 0 \\ 0 & -3 & 0 \\ 0 & 0 & 0.8\end{array}\right)^{t}x(0)$. (最后一个可以参考[[mark2]])
 
      这里只要 $x(0)$ 不满足 $x_{1}(0) = x_{2}(0) = 0$ 的情况下, $t \rightarrow \infty$ 就会导致 $x_{1}(t)$ 和 $x_{2}(t)$ 越走越远,$x_{3}$ 则无论如何不会失控,
 
-     *只要有一个失控了,我们就把这个系统判定为为失控的.*
+     *只要有一个子系统失控了,我们就把整个个系统判定为失控的.*
+
+**** 一般的情况
+
+     大部分情况下下可以把 *一般的情况* 问题转换成 *对角矩阵的情况* 的,从而轻易解决.
+
+     有 *变量替换*, *坐标变换* 以及 *乘方计算* 3种方法可以对这个过程进行描述.
+
+***** 变量替换
+
+      变量替换的本质和 *选择更好基底* 的本质是一样的.
+
+      先考虑一个简单的系统: $\left(\begin{array}{c} x_{1}(t) \\ x_{2}(t) \end{array}\right) = \left(\begin{array}{c}5 & 1 \\ 1 & 5\end{array}\right)\left(\begin{array}{c}x_{1}(t-1) \\ x_{2}(t-1)\end{array}\right)$.
+
+      写成方程得到: $\begin{equation} \left\{ \begin{array}{**lr**} x_{1}(t) = 5x_{1}(t-1) + x_{2}(t-1) \\ x_{2}(t) = x_{1}(t-1) + 5x_{2}(t-1) \end{array} \right. \end{equation}$.
+
+      这很明显无法下手,因此把 $x_{1}(t)$ 和 $x_{2}(t)$ 看做两个变量,并且组合为一个方程组,把两个变量代入展开得到: $\begin{equation}\left\{ \begin{array}{**lr**} y_{1}(t) = x_{1}(t) + x_{2}(t) \\ y_{2}(t) = x_{1}(t) - x_{2}(t) \end{array} \right. \rightarrow \left\{ \begin{array}{**lr**} y_{1}(t) = 6y_{1}(t-1) \\ y_{2}(t) = 4y_{2}(t-1) \end{array} \right. \rightarrow \left\{ \begin{array}{**lr**} y_{1}(t) = 6^{t}y_{1}(0) \\ y_{2}(t) = 4^{t}y_{2}(0) \end{array} \right. \end{equation}$.
+
+      这是一个新的系统,根据接口可以知道 $y_{1}$ 和 $y_{2}$ 会失控.
+
+      只要把 $y_{1}$ 和 $y_{2}$ 还原成 $x_{1}$ 和 $x_{2}$ 就完工了,这很简单,从 $y_{1}$ 和 $y_{2}$ 之间的关系就能够找出 $x_{1}$ 和 $x_{2}$ 了:
+
+      $\begin{equation} \left\{ \begin{array}{**lr**} x_{1}(t) = \frac{y_{1}(t) + y_{2}(t)}{2} \\ x_{2}(t) = \frac{y_{1}(t) - y_{2}(t)}{2} \end{array} \right. \rightarrow \left\{ \begin{array}{**lr**} x_{1}(t) = (\frac{6^{t} + 4^{t}}{2})x_{1}(0) + (\frac{6^{t} - 4^{t}}{2})x_{2}(0) \\ x_{2}(t) = (\frac{6^{t} - 4^{t}}{2})x_{1}(0) + (\frac{6^{t} + 4^{t}}{2})x_{2}(0) \end{array} \right. \end{equation}$.
+
+      可以得出结论,当 $t \rightarrow \infty$ 时, $\frac{6^{t} \pm 4^{t}}{2} \rightarrow \infty$, 因此 $x_{1}$ 和 $x_{2}$ 都会失控.
+
+      我们用矩阵语言来把上面的过程描述一遍.
+
+      令 $y(t) = (y_{1}(t), y_{2}(t))^{T}$ 以及 $x(t) = (x_{1}(t), x_{2}(t))^{T}$,
+
+      它们满足这样的关系: $y(t) = Cx(t), C = \left(\begin{array}{c}1 & 1 \\ 1 & -1\end{array}\right)$.
+
+      和之前一样,需要把 $x_{1}(t)$ 和 $x_{2}(t)$ 分别替换为 $y_{1}(t)$ 以及 $y_{2}(t)$,把原问题 $x(t) = Ax(t-1)$ 变成: $y(t) = \varLambda y(t-1), \varLambda = \left(\begin{array}{c} 6 & 0 \\ 0 & 4 \end{array}\right)$,
+
+      因为 $\varLambda$ 是对角矩阵,所以很容易解出: $y(t) = \varLambda^{t}y(0) = \left(\begin{array}{c} 6^{t} & 0 \\ 0 & 4^{t} \end{array}\right) \left(\begin{array}{c}y_{1}(0) \\ y_{2}(0) \end{array}\right) = \left(\begin{array}{c} 6^{t}y_{1}(0) \\ 4^{t}y_{2}(0) \end{array}\right)$.
+
+      再把 $y$ 还原成 $x$: $\left(\begin{array}{c} x_{1}(t) \\ x_{2}(t) \end{array}\right) = \left(\begin{array}{c} \frac{y_{1}(t) + y_{2}(t)}{2} \\ \frac{y_{1}(t) - y_{2}(t)}{2} \end{array}\right)$.
+
+      本质上是 $x(t) = C^{-1}y(t) = \left(\begin{array}{c}\frac{1}{2} & \frac{1}{2} \\ \frac{1}{2} & \frac{-1}{2} \end{array}\right) \left(\begin{array}{c}y_{1}(t) \\ y_{2}(t)\end{array}\right) = \left(\begin{array}{c}\frac{1}{2} & \frac{1}{2} \\ \frac{1}{2} & \frac{-1}{2} \end{array}\right) \left(\begin{array}{c} 6^{t} & 0 \\ 0 & 4^{t} \end{array}\right) \left(\begin{array}{c}y_{1}(0) \\ y_{2}(0)\end{array}\right)$.
