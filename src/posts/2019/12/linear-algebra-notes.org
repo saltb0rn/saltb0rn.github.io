@@ -388,7 +388,7 @@
 
        对角矩阵会梦见逆矩阵吗?大部分会,只要对角元素中不存在 0 就有逆矩阵,否则这样的对角矩阵就是一个扁平化映射,这种矩阵不存在可逆情况.
 
-       如何找到对角矩阵 $A = (a_{1},\; ... \;, a_{n})$ 的逆矩阵呢?上面说过对角矩阵就是一个沿着坐标轴的伸缩操作,
+       如何找到对角矩阵 $A = diag(a_{1},\; ... \;, a_{n})$ 的逆矩阵呢?上面说过对角矩阵就是一个沿着坐标轴的伸缩操作,
 
        第 1 轴伸缩 $a_{1}$ 倍,第 n 轴伸缩 $a_{n}$ 倍,变换原来的样子就是把变化后的第 1 轴伸缩 $\frac{1}{a_{1}}$ 倍,变化后的第 n 轴伸缩 $\frac{1}{a_{n}}$ 倍.
 
@@ -1890,6 +1890,39 @@
       # 对于 $x(7) = Ax(6)$ 来说,对左边的 $x(7)$ 进行 $z(7) = Cx(7)$ 变换,对右边的 $x(6)$ 进行 $z(6) = P^{-1}x(6)$ 的变换, $x(6) = Pz(6)$,
 
       # 得到 $z(7) = Cx(7) = CAx(6) = CAPz(6)$
-      
 
-      
+      接下来我们要做的事情是研究如何构造出合适的 $P$  来满足 $P^{-1}AP$ 成为对角矩阵.
+
+***** 变量替换的求法
+
+      首先我们把 $n \times n$ 的 $P$ 进行分块,得到一个 $n \times 1$ 的行向量,每个分量是 $1 \times n$ 的列向量: $P = (p_{1}, \ldots, p_{n})$.
+
+      我们的任务是找对角化所需的 $P$,满足 $P^{-1}AP \equiv \varLambda = diag(\lambda_{1}, \ldots, \lambda_{n})$.
+
+      把这个等式做一下变形,两边分别左乘 $P$ 得到:
+
+      $AP = P \varLambda = A(p_{1}, \ldots, p_{n}) = (p_{1}, \ldots, p_{n})\left(\begin{array}{c} \lambda_{1} \\ & \ddots \\ && \lambda_{n} \end{array}\right) = (Ap_{1}, \ldots, Ap_{n}) = (\lambda_{1}p_{1}, \ldots, \lambda_{n}p_{n})$,
+
+      把每一项单独拿出来 $\begin{equation}\left\{ \begin{array}{**lr**} Ap_{1} = \lambda_{1}p_{1} \\ \vdots \\ Ap_{n} = \lambda_{n}p_{n} \end{array} \right.\end{equation}$
+
+      问题变成了如何求向量 $p_{1}, \ldots, p_{n}$ 以及标量 $\lambda_{1}, \ldots, \lambda_{n}$.
+
+      对于一般的方阵 $A$, 满足 $\begin{equation}\begin{array}{**lr**}\left\{ \begin{array}{c} Ap = \lambda p \\ p \neq o \end{array} \right.\end{array}\end{equation}$ 关系的标量 $\lambda$ 和向量 $p$ 分别叫做 *特征值* (characteristic value/eigenvalue)和 *特征向量* (characteristic vector/eigenvector).
+
+      这么一来,问题就变成了如何求特征值 $\lambda_{1}, \ldots, \lambda_{n}$ 和特征向量 $p_{1}, \ldots, p_{n}$ 了.这个问题保留到后面再说.
+
+      举一个具体例子,通过计算来验证上面的推到.
+
+      对于 $A = \left(\begin{array}{c} 5 & 3 & -4 \\ 6 & 8 & -8 \\ 6 & 9 & -9 \end{array}\right)$, $x(t) = Ax(t-1)$ 是否有失控危险?
+
+      $A$ 的特征值为 $-1, 2, 3$,对应的特征向量分别是 $\left(\begin{array}{c}1 \\ 2 \\ 3\end{array}\right), \left(\begin{array}{c}1 \\ 3 \\ 3\end{array}\right), \left(\begin{array}{c}1 \\ 2 \\ 2\end{array}\right)$.
+
+      可以通过计算进行确认: $\begin{equation} \left\{\begin{array}{**lr**} \left(\begin{array}{c}5 & 3 & -4 \\ 6 & 8 & -8 \\ 6 & 9 & -9 \end{array}\right) \left(\begin{array}{c} 1 \\ 2 \\ 3 \end{array}\right) = -\left(\begin{array}{c} 1 \\ 2 \\ 3\end{array}\right) \\ \left(\begin{array}{c}5 & 3 & -4 \\ 6 & 8 & -8 \\ 6 & 9 & -9 \end{array}\right) \left(\begin{array}{c} 1 \\ 3 \\ 3 \end{array}\right) = 2 \left(\begin{array}{c} 1 \\ 3 \\ 3\end{array}\right) \\ \left(\begin{array}{c}5 & 3 & -4 \\ 6 & 8 & -8 \\ 6 & 9 & -9 \end{array}\right) \left(\begin{array}{c} 1 \\ 2 \\ 2 \end{array}\right) = 3 \left(\begin{array}{c} 1 \\ 2 \\ 2\end{array}\right) \end{array} \right. \end{equation}$,
+
+      于是把三个特征向量排列起来得到 $P = \left(\begin{array}{c|c}1 & 1 & 1 \\ 2 & 3 & 2 \\ 3 & 3 & 2 \end{array}\right)$, 通过计算可以得到 $P^{-1} = \left(\begin{array}{c}0 & -1 & 1 \\ -2 & 1 & 0 \\ 3 & 0 & -1 \end{array}\right)$.
+
+      最后计算一下 $P^{-1}AP$ 可以得到最终结果为 $diag(-1,2,3)$ 无误.
+
+      对于 $y(t) = P^{-1}x(t)$ 就是 $y(t) = \left(\begin{array}{c}(-1)^{t}y_{1}(0) \\ 2^{t}y_{2}(0) \\ 3^{t}y_{3}(0) \end{array}\right) = \left(\begin{array}{c}(-1)^{t} & 0 & 0 \\ 0 & 2^{t} & 0 \\ 0 & 0 & 3^{t} \end{array}\right)y(0)$.
+
+      现在把 $y(t)$ 还原成 $x(t)$, 于是有, $x(t) = P \varLambda^{t} P^{-1} x(0) = \left(\begin{array}{c}1 & 1 & 1 \\ 2 & 3 & 2 \\ 3 & 3 & 2 \end{array}\right) \left(\begin{array}{c} (-1)^{t} & 0 & 0 \\ 0 & 2^{t} & 0 \\ 0 & 0 & 3^{t} \end{array}\right) \left(\being{array}{c} 0 & -1 & 1 \\ -2 & 1 & 0 \\ 3 & 0 & -1 \end{array}\right) x(0)$.
