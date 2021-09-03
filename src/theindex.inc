@@ -1,4 +1,4 @@
-*** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=13d35ba9c65650e60971001540544c76][理解CSS动画]]
+*** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=e00c47f4dba3351f4c23536d54c35af4][理解CSS动画]]
 这是一篇关于 =CSS animation= 属性的笔记.
 
 虽然说 =MDN= 上有 =animation= 的文档,不过本人比较容易"异想天开",
@@ -18,7 +18,7 @@
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=964e52af9c20615dbc2ae2a73618f361][汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=cf57bdb307b1e429904fa138b94a61be][汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕32位来讲的,我读的时候64位架构已经很普遍了,也就是说这本书已经有点过时了,况且关于浮点数这块基本上没讲过.
@@ -68,7 +68,7 @@
 这篇笔记主要是关于光和材质方面的概念,在学习以后你会知道如何编写 =Fragment Shader= 来控制光照效果,不过我们还是会从没有 =GLSL= 的 =OpenGL 1.X= 开始学习.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=518c14d1b65e1f83e9552da9566bb63e][图形学-OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=967249b2ec2ebc9e1a47396d5b20e09d][图形学-OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换, =OpenGL= 里面还有很多其它变换,本文主要讲述 =OpenGL= 的各种坐标系以及它们之间的转换,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
@@ -352,7 +352,7 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=7b3122cd3d19cfa50715577153f1614b][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips.html?hash=2a76c7d17c451f57b7c9d81ce856bca3][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔
