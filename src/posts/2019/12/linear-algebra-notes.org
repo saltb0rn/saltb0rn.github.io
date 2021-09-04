@@ -225,6 +225,36 @@
 
        可以这么理解,点 $p$ 在原本某个坐标系下的坐标为 $\left(x, y\right)$,在一个新坐标系 $A$ 下坐标变为 $\left(x^{'}, y_{'}\right)$,简单点就是换了个参考/坐标系,而点不动.
 
+       书本提供了[[https://www.ituring.com.cn/book/1239][程序]]可以让你直观的观看这个过程,运行 "ruby mat_anim.rb -f=2000 | gnuplot" 可以看到线段从矩阵 $\left(\begin{array}{c} 1 & 0 \\ 0 & 1 \end{array}\right)$ 渐近到 $\left(\begin{array}{c} 1 & -0.3 \\ -0.7 & 0.6 \end{array}\right)$ 的过程.
+
+       不过本人比较"笨",有些没太看懂动画所表达的计算过程,因此阅读了一下源代码.
+
+       这个程序是用 =Ruby= 写的,因为不是所有人都写 =Ruby= (包括我自己,虽然说我小时候用 =RPG Maker= 是学过一点 =Ruby=,不过现在已经是全忘了),所以我决定分享我所了解到的东西给和我同样不熟悉 =Ruby= 的人.
+
+       首先给出经我修改的[[../../../files/mat_anim.rb][代码]],修改的内容主要分两个方面,
+
+       一是由于原本的代码在绘图时刷新太快了,难以看清变化过程,所以我在重绘前加了 0.2 秒延迟;
+
+       二是添加了一些打印内容,以及一些为了方便讲解的注释:
+
+       #+BEGIN_EXAMPLE
+       阅读代码的时候要从入口开始(官方已经注释好了: "### main");
+
+       查找画图函数的调用,我们找到 "g.animation(#frame){|t|}" (注释: "### point 1") 这个,它就是画图的函数, "g" 是 "Gnuplot" 类的实例;
+
+       可以从 "Gnuplot" 类查看 "animation" 的定义 (注释: "### point 2"),它里面调用了 "tics" 函数 (注释: "### point 3"),
+
+       它是通过线性插值来计算出一个渐进数值的数组,遍历这个数组,根据里面的值来调用 "Gnuplot" 的 "draw" 方法 (注释: "### point 4");
+
+       根据 "g.animation" 的定义和调用追溯到了 "Plot" 的 "draw_at" 方法 (注释: "### point 5" & "### point 6"),它里面调用了 "Plot" 的 "m_at" 方法 (注释: "### point 7"),
+
+       这个方法接受渐进数值里面的元素作为参数,然后根据这个值来计算出渐进过程中的一个矩阵;
+
+       在画线段时根据这个矩阵计算出变换过后的线段两点的坐标,并且绘制成线段 (注释: "### point 8").
+
+       涉及计算的代码在 "### point 3", "### point 7" 以及 "### point 8" 这三个位置上,按照这个排列顺序计算就是完整的计算过程了.
+       #+END_EXAMPLE
+
        要注意的是, 基底 $A$ 还是相对原本坐标系(基底为 $\left(\begin{array}{c} 1 & 0 \\ 0 & 1 \end{array}\right)$)来描述的,比如说, $A$ 围绕自己的原点旋转了 $\theta$ 度,那么 $A$ 是 $\left(\begin{array}{c} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{array}\right)$,并非 $\left(\begin{array}{c}1 & 0 \\ 0 & 1\end{array}\right)$,
 
        即使后者相对 $A$ 自己本身而言是没错的,但是在已知 $p$ 的情况下,用后者是计算不出 $p^{'}$ 的值的.
@@ -1967,6 +1997,7 @@
       换句话就是说在经过 $\mathcal{A}$ 的变换后, $y_{1}, \ldots, y_{n}$ 分别变成了原来的 $\lambda_{1}, \ldots, \lambda_{n}$ 倍.
 
       因此可以得到 $\begin{equation}\left\{\begin{array}{**lr**} y_{1}(t) = \lambda_{1}^{t}y_{1}(0) \\ \vdots \\ y_{n}(t) = \lambda_{n}^{t}y_{n}(0) \end{array}\right.\end{equation}$.
+
 
       # 需要通过图片补充说明
 
