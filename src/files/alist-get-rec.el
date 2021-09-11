@@ -1,0 +1,21 @@
+(defmacro alist-get-rec (chain a-list)
+  (let ((keys-chain (make-symbol "keys-chain"))
+        (key (make-symbol "key"))
+        (count (make-symbol "count"))
+        (index (make-symbol "index"))
+        (obj (make-symbol "obj")))
+    `(let* ((,keys-chain (split-string (symbol-name ',chain) "\\."))
+            (,count (length ,keys-chain))
+            (,index 0)
+            (,obj ,a-list)
+            ,key)
+       (catch 'break
+         (while (< ,index ,count)
+           (setq ,key (intern (concat ":" (nth ,index ,keys-chain))))
+           (if ,obj
+               (setq ,obj (alist-get ,key ,obj))
+             throw 'break ,obj)
+           (setq ,index (1+ ,index))))
+       ,obj)))
+
+(alist-get-rec a.b '((:a (:b (:c 1))) (:b 3)))
