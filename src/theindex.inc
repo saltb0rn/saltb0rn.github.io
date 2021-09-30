@@ -80,7 +80,7 @@
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=2b29acb747f15f303fe44ac9860cfc5c][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=e14a2a90d74b7d185d012f0cabec2b6f][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -183,14 +183,6 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 对 =codec= , =format= 等基础概念的不理解会造成对 =ffmpeg= 的工作流程的不理解.
 
 	
-*** [[file:posts/2019/05/bash-eliminating-project.html?hash=c2371c6130e24e58dab33abb54ad7431][Bash消灭计划]]
-用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
-
-出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
-
-这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
-
-	
 *** [[file:posts/2019/05/et-project-day1.html?hash=8be760ab5c20cad8e0685ff3e747533a][英语消灭计划-Day1]]
 从今天开始要拓展自己英语的词汇量了,起始之前很久就想拓展了,只不过没想到用博客这种形式来学习.
 
@@ -211,6 +203,14 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 至于重读和弱读,就是前者的发音时间更长更清晰,后者则相反.
 
 今天的示例文本来源于"八方旅人" 中 Primrose 的序章剧情. Primrose's Journal 1-1
+
+	
+*** [[file:posts/2019/05/bash-eliminating-project.html?hash=c2371c6130e24e58dab33abb54ad7431][Bash消灭计划]]
+用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
+
+出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
+
+这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
 
 	
 *** [[file:posts/2019/04/data-transfer-unit.html?hash=434444e1f55bedb7c4bca46bf7cf528c][网络数据传输单位]]
@@ -352,7 +352,7 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=2a76c7d17c451f57b7c9d81ce856bca3][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips.html?hash=c2b245924b2c530b2be54b660ff5ce0a][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔
