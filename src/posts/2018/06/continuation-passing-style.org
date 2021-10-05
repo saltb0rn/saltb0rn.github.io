@@ -61,7 +61,9 @@
 
 好了,介绍什么是 =continuation= 之前先介绍一下什么是控制上下文?首先要先了解什么是上下文,所谓上下文就是贯穿整个过程的一个意像,在整个过程中的每一个点上,上下文的状态都不一样.
 
-而控制上下文就像 =stack=,假如调用 =(ans 1 2 3)=,那么会发生以下几件事情,
+举个现实例子,时间就是一个上下文,昨天我做了什么,今天我又做了什么,昨天做的事情对我今天做的事情造成什么影响,等等.
+
+回到程序上,假如调用 =(ans 1 2 3)=,那么会发生以下几件事情,
 
 1. 形式参数和实际参数发生绑定: =x=1, y=2, z=3=.
 
@@ -74,7 +76,6 @@
 除了数据上下文,还有另外一种上下文,上面的整个计算过程中的第二步和第三步,每次执行一步都需要记录下一步要从哪里开始,这个就是所谓的控制上下文.事实上还可以想象一下用调试器的逐步调试的过程,每一步都是一个执行点,逐步执行直到计算结束.
 
 而 =continuation= 就是控制上下文的一个抽象,它就像 =stack= 的帧(frame). =Environment= 是一个映射,它的 =representation= 有很多选择:哈希表,关联链表等等,那么 =continuation= 的 =representation= 又是什么呢?
-
 
 **** Continuation 的 representation
 
@@ -124,12 +125,20 @@
 
 **** CPS 的意义
 
-其实就是对控制上下文(control context)进行抽象和实例化以及把递归转化成尾递归.
+其实就是对控制上下文(control context)进行抽象和实例化,以及把函数转化成尾调用(Tail call).
+
+尾调用有一个好处,如果函数是一个递归函数,我们可以很容易地在已改为尾调用基础上进行优化,把普通递归优化成<<target>>尾递归(Tail recursion).
+#+BEGIN_QUOTE
+首先要明白什么是尾调用,尾调用就是指函数 $func$ 的最后一个语句为调用一个函数 $proc$,它同时也是函数 $func$ 的返回语句,返回值为 =proc(args, ...)= 结果.
+
+所谓的尾递归就是指函数 $func$ *只* 在尾调用中调用自身来进行递归,使得 $func$ 和迭代(循环)两者在不同的手段(一个用递归,一个用循环语句)下实现同样的计算行为.
+
+虽然计算行为一样,但不同编译器/解释器对待递归和迭代的处理可是不一样的,导致了两者效率方面的不同.
+
+为了提高效率,我们需要把效率较差的实现改写为效率高的实现. 这也是本文章的终极目标: 如何把递归转改写成迭代.
+#+END_QUOTE
 
 对控制上下文进行抽象就是说程序执行的下一步可以被抽象成数据表示,就像上面的说明例子那样,就是使用了函数来表示下一步要执行的动作.
-
-然后就是能够把递归变成尾递归,在支持尾递归优化的语言中是可以获得优化的.
-
 
 **** 把上面的 ans 改写成 CPS 程序 ans/k
 
@@ -162,7 +171,7 @@ TfExp        ::= (SimpleExp SimpleExp*)
 
 这样就可以保证 =TfExp= 处于函数的 =tail position=, =tail position= 就是函数的退出的位置,也就是结束的地方,
 
-这一步的 =continuation= 和整个函数的 =continuation= 是一样的,也就是说栈空间没有发生改变,在这种地方的调用就是尾调用(tail call),这样的函数称为 =tail form= 的.
+这一步的 =continuation= 和整个函数的 =continuation= 是一样的,也就是说栈空间没有发生改变, 在这种地方的调用就是尾调用(前面有提到过这个概念),而这样的函数称为 =tail form= 的.
 
 
 **** 一套把程序转化为 CPS 程序的算法
@@ -247,7 +256,7 @@ TfExp        ::= (SimpleExp SimpleExp*)
 
 **** 最后一个例子
 
-分别定义累加从1到n的函数 =bad-acc,acc-tail和acc=, 以及(Fibonacci) =bad-fib= 和 =fib=.
+分别定义累加从1到n的函数 =bad-acc, acc-tail= 和 =acc=, 以及(Fibonacci) =bad-fib= 和 =fib=.
 
 #+begin_src scheme
 #lang racket
@@ -456,17 +465,16 @@ racket@> ,enter "/home/saltb0rn/.config/emacs/site-lisp/test.rkt"
 >(fib/k 2 #<procedure:...te-lisp/test.rkt:108:10>)
 <13
 13
-racket@test.rkt> 
+racket@test.rkt>
 #+END_SRC
 
 和前面三个函数的迭代计算行为不一样, =Fibonacci= 的计算行为是树形递归,同样可以通过 =CPS= 得到优化.
 
-仔细看你会发现 =acc-tail-inner/k= 的 =cont= 是多余的,在实际开发中如果遇到尾递归的话可以绕路不写,因为那样意义不大,因为 =CPS= 的其中一个目的就是为了保证尾递归的发生,就没必要改成 =CPS= 了.
+仔细看你会发现 =acc-tail-inner/k= 的 =cont= 是多余的,在实际开发中如果遇到尾递归的话可以绕路不写,因为那样意义不大,因为 =CPS= 保证尾调用的发生只是为了方便程序员能够在必要时候把普通递归改写称尾递归,就没必要改成 =CPS= 了.
 
-=CPS= 只能保证尾调用,像在 =Python= 和 =Emacs Lisp= 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言中,尾递归也不能解决爆栈的问题,
+即便递归函数已经是尾递归了,可像在 =Python= 和 =Emacs Lisp= 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言中,尾递归也不能解决爆栈的问题,
 
-不过既然改成 =CPS= 了,那就很容易地把 =CPS= 转化成迭代/循环,并且 =Python= 和 =Emacs Lisp= 这些语言都有循环语句.
-
+不过既然都是尾递归了形式,那就很容易地把尾递归转化成迭代/循环,并且 =Python= 和 =Emacs Lisp= 这些语言都有循环语句.
 
 *** Trampoline 和 Bounce
 
@@ -482,9 +490,11 @@ racket@test.rkt>
 
 既然函数调用会压栈,那么在函数调用链增长的时候断开一下就好了,而且尾递归优化的语言中尾递归和迭代效率一样,那就 *把尾递归改成迭代*.
 
-为此我们需要一个叫做 =Trampoline= 的 =continuation= "调度器" (毕竟和事件循环挺像的) 以及一个叫做 =bounce= 对象, 该对象 *包含上一步的计算结果和下一步的 =continuation=*.
+此外我们还需要一个叫做 =Trampoline= 的 =continuation= "调度器" (毕竟和事件循环挺像的) 以及一个叫做 =bounce= 对象, =bounce= 对象 *包含上一步的计算结果和下一步的 =continuation=*,
 
-比如我们把上面的 =acc/k= 改写成可以供 =Trampoline= 使用的形式,也就是把 =acc/k= 改成 =bounce= 版本 =acc-bounce=.
+而 "调度器" 就是一个循环,每一次循环就是通过 =bounce= 对象里面的信息计算出下一个 =bounce=, 直到某一步的计算结果不再是 =bounce= 对象.
+
+接下来我们会演示如何把上面的 =acc/k= 改写成可以供 =Trampoline= 使用的形式,也就是把 =acc/k= 改成 =bounce= 版本 =acc-bounce=.
 
 为了断开函数调用链,我们需要 *把 =acc/k= 中所有的尾调用换成 =bounce= 值,也就是说把返回值需要变为 =bounce=* ,这是使用 =Trampoline= 技术的关键.
 
@@ -684,6 +694,227 @@ console.log(trampoline(accBounce(50000, x => x)));
 
 还是觉得这篇东西有很多地方有欠缺,也说明了我对 =CPS= 的理解还不够深入.突然觉得 =EOPL= 写的很好,因为我能明白给我传达的知识,原来写一篇易懂的科普文是如此艰难,真的是佩服这些老前辈.
 
-=EOPL= 这本书都写到了这些内容,个人十分推荐去阅读这本书,总的来说, =CPS= 可以保证尾递归发生,而 =Trampoline= 可以保证不支持尾递归的语言运行尾递归不会发生爆栈,也就是说这两项技术可以实现尾递归优化,用在直译器上面就不言而喻了.
+=EOPL= 这本书都写到了这些内容,个人十分推荐去阅读这本书,总的来说, =CPS= 可以保证把函数改写为尾调用,从而优化成尾递归; 而 =Trampoline= 可以保证不支持尾递归的语言运行尾递归不会发生爆栈,也就是说这两项技术可以实现尾递归优化,不受到编译器/解释器的限制.
 
 最后给出别的一些文章作为参考资料: [[http://matt.might.net/articles/cps-conversion/]],顺便推荐一下 =Matt Might= 的博客(也就是推荐文章的出处),内容都十分不错,基本都是和 =PLT= 相关的,有兴趣的可以看一下.
+
+
+*** Update
+
+**** 如何把遍历树的递归改写为Trampoline的形式
+
+    #+BEGIN_EXAMPLE
+    写于 2021/10/4 21:49
+    #+END_EXAMPLE
+
+    这个问题最早是我1年前在工作时(岗位: WEB前端)想到的,当然由于树的规模不大(我当时测试的火狐浏览器的最大可进栈层数是20000+),所以就算没有答案也不会对当时的工作造成影响.
+
+    同事也劝我不要花费精力在上面,可是我的想法是: 20000+ 次递归难道就很大了吗,难道工作中遇到树就不会达到这个规模吗?
+
+    现在的我已经在另一家公司了,我的想法很快就有了答案: 20000+ 次递归还真的能遇到.
+
+    其实我1年前就尝试过改写了,不过失败了.
+
+    今天无意间想起了这个问题,于是我又尝试改写,而这次尝试成功了.
+
+    1年前的代码我已经不记得了,所以我假设了一份非常简单的代码来作为问题:
+
+    #+BEGIN_SRC javascript
+      // 树结构的定义
+      let testData = [
+          {
+              title: '标题1',
+              value: 5,
+              children: [
+                  {
+                      title: '1-子标题',
+                      value: 0,
+                      children: []
+                  },
+                  {
+                      title: '1-子标题2',
+                      value: 3,
+                      children: []
+                  }
+              ]
+          },
+
+          {
+              title: '标题2',
+              value: 6,
+              children: [
+                  {
+                      title: '2-子标题',
+                      value: 7,
+                      children: []
+                  },
+                  {
+                      title: '2-子标题2',
+                      value: 8,
+                      children: []
+                  }
+              ]
+          },
+      ];
+
+      // 树遍历
+      function iterTree(tree) {
+          for (let node of tree) {
+              console.log(node.title);
+              if (node.children.length != 0) {
+                  iterTree(node.children);
+              }
+          }
+      }
+    #+END_SRC
+
+    这里定义了树结构和树遍历的函数 =iterTree=, 函数是我们的重点,终极目标是把它改写成符合 =Trampoline= 形式的 =iterTreeBounce=.
+
+    然而 =iterTree= 里面有一个 =for= 循环,这个 =for= 循环控制这遍历到哪一个树节点,也就是遍历到哪一步, 这导致了无法直接把 =iterTree= 改写成 =iterTreeBounce=.
+
+    符合 =Trampoline= 的函数需要返回一个 =bounce= 对象, =bounce= 是每一步的计算信息(遍历到哪一个节点), 而"返回"这个动作是会导致 =for= 循环中断, 也就是说 =iterTreeBounce= 和 =for= 存在天生的冲突.
+
+    因此第一步应当把 =iterTree= 的 =for= 循环去掉,这个很简单,把循环改写成递归:
+
+    #+BEGIN_SRC javascript
+      function iterTreeWithoutLoop(tree) {
+          if (tree.length != 0) {
+              let node = tree[0];
+              let treeRest = tree.slice(1);
+              console.log(node.title);
+              if (node.children.length != 0) {
+                  iterTreeWithoutLoop(node.children);
+              }
+              iterTreeWithoutLoop(treeRest);
+          }
+      }
+    #+END_SRC
+
+    要注意, =iterTreeWithoutLoop= 并不符合[[target][尾递归]]的定义: 首先它进行了两次自身的调用,其次尾调用时并没有返回自身计算结果.
+
+    那么问题来了: 如何把 =iterTreeWithoutLoop= 改写为尾递归呢?
+
+    在1年前,我的第一反映是用 =CPS=, *一直以为 =CPS= 是把普通递归函数改写为尾递归的"万能药", 然而它只是把函数改写为尾调用的"万能药"*,
+
+    这个问题暴露了我最初的错误理解,理所当然改写失败了.
+
+    最直接的证明就是,即便按照前面的规则改成了 =CPS= 也无法把 =iterTreeWithoutLoop= 改写为尾递归,
+
+    更何况,按照之前的方法是没办法 *直接* 把这个函数改成 =CPS= 的, 当年我就卡在这一步了.
+
+    今天的我再看这个问题的时候就有了一个想法:
+
+    *能不能把两个对于同一个函数的调用合并为一次调用呢? 并且该调用的行为等同于依次对 =node.children= 和 =treeRest= 调用?*
+
+    经过一番脑内"尝试"后发现可行,稍微想一下就明白了,在遍历树的时节点分"已遍历"和"未遍历"两种,只有在处理未遍历的节点时才会进行递归.
+
+    而 =node.children= 以及 =treeRest= 都是未遍历的节点.那么把它们整理为一个由未遍历节点构成的树不就好了吗?
+
+    所以我得到了 =iterTreeTail=:
+
+    #+BEGIN_SRC javascript
+      function iterTreeTail(tree) {
+          if (tree.length != 0) {
+              let node = tree[0];
+              let treeRest;
+              console.log(node.title);
+              if (node.children.length != 0) {
+                  treeRest = node.children.concat(tree.slice(1));
+              } else {
+                  treeRest = tree.slice(1);
+              }
+              iterTreeTail(treeRest);
+          }
+      }
+    #+END_SRC
+
+    严格上来说 =iterTreeTail= 还达不到尾递归定义,因为 =iterTreeTail(treeRest);= 并非尾调用(没有 =return= 语句).
+
+    最开始的 =iterTree= 工作就是打印每一个树节点的名字而已,并没有指定返回什么,返回的默认值 =undefined=.
+
+    不过仔细思考后会发现 =iterTreeTail= 已经符合 =iterTree= 的结果了; 同时在考虑 =JavaScript= 函数默认的返回值后,某种意义上 =iterTreeTail= 也符合了尾递归的定义了:
+
+    #+BEGIN_SRC javascript
+      function iterTreeTail(tree) {
+          if (tree.length != 0) {
+              let node = tree[0];
+              let treeRest;
+              console.log(node.title);
+              if (node.children.length != 0) {
+                  treeRest = node.children.concat(tree.slice(1));
+              } else {
+                  treeRest = tree.slice(1);
+              }
+              return iterTreeTail(treeRest);
+          } else {
+              return undefined;
+          }
+      }
+    #+END_SRC
+
+    现在要做的是把它改写成 =CPS=,把尾递归改写成 =CPS= 是非常简单的,可以参考前面的 =acc-tail-inner/k=:
+
+    #+BEGIN_SRC javascript
+      function iterTreeCPS(tree, cont) {
+          if (tree.length != 0) {
+              let node = tree[0];
+              let treeRest;
+              console.log(node.title);
+              if (node.children.length != 0) {
+                  treeRest = node.children.concat(tree.slice(1));
+              } else {
+                  treeRest = tree.slice(1);
+              }
+              return iterTreeCPS(treeRest, cont);
+          } else {
+              return cont(undefined);
+          }
+      }
+    #+END_SRC
+
+    基本上到这里了就宣告改写成功了,现在改成符合 =Trampoline= 的函数基本没什么难度了,下面是最终答案:
+
+    #+BEGIN_SRC javascript
+      function iterTreeBounce(tree, cont) {
+          if (tree.length != 0) {
+              let node = tree[0];
+              let treeRest;
+              console.log(node.title);
+              if (node.children.length != 0) {
+                  treeRest = node.children.concat(tree.slice(1));
+              } else {
+                  treeRest = tree.slice(1);
+              }
+              return {
+                  cont: (val) => iterTreeBounce(val, cont),
+                  res: treeRest
+              };
+              // return iterTreeBounce(treeRest, cont);
+          } else {
+              return {
+                  cont: cont,
+                  res: undefined
+              };
+              // return cont(undefined);
+          }
+      }
+
+      function trampoline(bounce) {
+          let res;
+          while (1) {
+              if (bounce) {
+                  res = bounce.cont(bounce.res);
+                  bounce = res;
+              } else {
+                  return res;
+              }
+          }
+      }
+
+      // 最后测试
+      trampoline(iterTreeBounce(testData, val => val));
+    #+END_SRC
+
+    找个改写的方法只花了我半个小时,这半个小时让我解开了1年前的心结,并且对 =CPS= 的认知发生了翻天覆地的变化.
+
+    整体上来说,这半个小时的代价绝对是值得的.
