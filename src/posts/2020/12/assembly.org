@@ -3351,7 +3351,27 @@
      gcc -S main.c -o main.asm
      #+END_SRC
 
-     这里把 =-o= 选项设定成输出的汇编码文件名位 =main.asm=,如果不指定,默认就是 =main.s=.
+     这里把 =-o= 选项设定成输出的汇编码文件名位 =main.asm=, 如果不指定,默认就是 =main.s=.
+
+     #+BEGIN_QUOTE
+     =GCC= 支持设置优化等级,对应的选项是 =-O=, 常见的等级有 =0=, =1=, =2=, =3= 以及 =s= 这四个.
+
+     如果在编译时没有设置该选项,那么优化等级 *默认* 为 =0=, 在实际开发中,一般设置为 =2=.
+
+     这个例子就相当于 =gcc -O0 -S -main.c -o main.asm=, 具体可以看[[https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html][GCC的优化选项]].
+
+     *在不同的优化等级下使用 =GCC= 编译同一份代码,所得到的汇编码也不一样.*
+
+     等级越高,编译时间就越长,生成的指令约少,运行效率更高,然而对开发人员来说,使用 =C= 做开发的要求更加严格.
+
+     很多初学者在使用 =GCC= 时不注意优化等级,当他们转向使用 =GNU Build System= 构建程序时极有可能会出项问题:
+
+     同一份代码,在优化等级为 =0= 下编译后得到的程序可以正常运行,但在 =GNU Build System= 下编译得到的程序却不能正常运行,
+
+     这是因为 =GNU Build System= 使用的默认等级为 =2=.
+
+     下面关于 =C= 程序汇编码的内容都是在以优化等级为 0 作为前提进行的.
+     #+END_QUOTE
 
      #+BEGIN_SRC asm
                .file	"main.c"
@@ -3385,7 +3405,6 @@
                .size	main, .-main
                .ident	"GCC: (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"
                .section	.note.GNU-stack,"",@progbits
-
      #+END_SRC
 
      正如你所见, =GAS= 的语法比起 =NASM= 的复杂得多,除了前面提到的差异比较传见以外,
