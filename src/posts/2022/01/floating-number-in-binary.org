@@ -1,0 +1,57 @@
+#+title: 计算机眼中的浮点数
+#+date: 2022-01-13
+#+index: 计算机眼中的浮点数
+#+tags: Number-System
+#+macro: color @@html:<font style="color:$1;">$2</font>@@
+#+begin_abstract
+pass
+#+end_abstract
+
+#+CAPTION: IEEE 754 的32位浮点数例子
+[[../../../files/IEEE-754-float_example.png]]
+
+16-bit: {{{color(#c6fcff,Sign)}}}{1 bit}-{{{color(#a0ffae, Exponent)}}}{6 bits}-{{{color(#ffb0ae, Fraction)}}}{9 bits}
+\\
+32-bit: {{{color(#c6fcff,Sign)}}}{1 bit}-{{{color(#a0ffae, Exponent)}}}{8 bits}-{{{color(#ffb0ae, Fraction)}}}{23 bits}
+\\
+64-bit: {{{color(#c6fcff,Sign)}}}{1 bit}-{{{color(#a0ffae, Exponent)}}}{11 bits}-{{{color(#ffb0ae, Fraction)}}}{52 bits}
+
+
+*** 浮点数转二进制
+34.890625
+
+把一个浮点数分为整数和小数 2 部分进行处理
+
+1. 把整数部分(integral part)转化为二进制
+
+   这里的例子34,它的二进制为 #b10 0010;
+
+2. 小数部分(fraction part)转化为二进制
+
+   小数部分的转换二进制和整数部分的转换是不一样的,
+
+   整数部分用的除法转换,小数部分则是用乘法转换,整个过程其实很简单
+
+   想必看过第 1 和第 2 步的运算就能知道整个过程了.
+
+   这里的例子 0.890625
+
+   第一步先计算 $0.890625 \times 2 = 1.78125$, 计算结果大于 1,所以小数部分最高位是 1, 否者是 0;
+
+   第二步把上一步计算结果的小数部分取出来,计算 $.78125$ \times 2 = 1.5625$, 同样计算结果大于
+
+   
+
+*** 二进制转浮点数
+
+0 10000100 00010111001000000000000
+
+sign-part: 0
+\\
+exponent-part: #b10000100 等于 132, 由于 exponent-part 是补码,所以需要减去127,得到 exponent 是 132 - 127 = 5
+\\
+fraction-part/mantissa-part: $0001.0111001000000000000 \rightarrow 1 \times 2^{0} + 0 \times 2^{-1} + ... + 1 \times 2^{-4} + ... + 1 \times 2^{-11}= 2^{0} + 2^{-4} + 2^{-6} + 2^{-7} + 2^{-8} + 2^{-11} = 1.09033203125$
+
+最后结果是 $fraction \times 2^{exponent} = 1.09033203125 \times 2^{5} = 34.890625$
+
+# $\begin{equation}\begin{aligned} 0001.0111001000000000000 \times 2^{5} & \rightarrow (1 \times 2^{0} + 0 \times 2^{-1} + ... + 1 \times 2^{-4} + ... + 1 \times 2^{-11}) \times 2^{5} \\ & = (2^{0} + 2^{-4} + 2^{-6} + 2^{-7} + 2^{-8} + 2^{-11}) \times 2^{5} \end{aligned}\end{equation} \\ &= 34.890625$
