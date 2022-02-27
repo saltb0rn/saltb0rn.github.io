@@ -11,8 +11,7 @@
 
 也因为这样,图形学学习计划搁置了一年,当我重新捡起来的时候发现了一些需要加强理解的地方:
 
-=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 CPU, 是如何接收,储存以及使用数据.
-
+=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
 #+end_abstract
 
 *** WebGL是如何工作的
@@ -24,11 +23,27 @@
 
 *** OpenGL/WebGL 上下文是如何储存数据
 
-    首先, =OpenGL/WebGL= 上下文会等 =CPU= 把数据传送过来,在接收到数据后,数据会被储存在缓存区(buffers)上:
+    首先, =OpenGL/WebGL= 上下文会等 =CPU= 把数据传送过来,在接收到数据后,数据会被储存在缓冲区(buffers)上.
 
-    createBuffer()
+    我们以 =WebGL= 为例子 (=OpenGL= 其实也差不了太多), 设现有一个名为 =gl= 的 =WebGL= 上下文实例, 要完成上述过程需要进行以下操作:
 
-    bindBuffer()
+    #+BEGIN_SRC javascript
+    // 告诉 GPU 创建好缓冲区,用于后续储存 CPU 发过来的数据
+    let buffer = gl.createBuffer();
 
-    bufferData()
+    // 绑定缓冲区,因为 GPU 可以有不止一个缓冲区,所以需要告诉 GPU 接下来要对哪个缓冲区进行填充数据.
+    gl.bindBuffer(target, buffer);
 
+    // 往前面绑定的缓冲区里填充数据,最近一次绑定的缓冲区是哪个,就往它里面填充,这一步换句话说就是储存 CPU 发过来的数据 data 了
+    gl.bufferData(data);
+    #+END_SRC
+
+    由于数据的用途的不同,缓冲区可以分为很多种类型,在绑定的时候就需要指定了,也就是上面代码里面的 =target= 变量.
+
+    想要知道 =target= 的值能够是什么,可以参考[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer][这里]].
+
+    一旦有了数据源,就可以让 =GPU= 根据利用这些数据来渲染了.
+
+*** OpenGL/WebGL 上下文是如何使用数据
+
+    TO BE CONTINUED ...
