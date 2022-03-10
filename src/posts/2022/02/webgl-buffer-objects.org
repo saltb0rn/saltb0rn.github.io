@@ -42,9 +42,10 @@
 
     想要知道 =target= 的值能够是什么, 可以参考[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer][这里]].
 
-    在 =OpenGL/WebGL= 里面, 这些用来作为物体顶点的缓冲区叫做 =Vertex Buffer Object (VBO)=.
+    在 =OpenGL/WebGL= 里面, 这些用来作为物体顶点信息的缓冲区叫做 =Vertex Buffer Object (VBO)=.
 
     一旦有了数据源, 就可以让 =GPU= 根据利用这些数据来渲染了.
+
 
 *** OpenGL/WebGL 上下文是如何使用数据
 
@@ -71,8 +72,12 @@
     #+CAPTION: vertexAttribPointer
     [[../../../files/glVertexAttribPointer-api-overview.png]]
 
-    这张图里面可以看到另外一种数据格式, 既有顶点坐标(xyz), 顶点颜色(rgb)以及其对应的纹理坐标(st), 这里就把这三种数据的集合体看作是一个顶点(每 3 种为一个顶点).
+    这张图里面可以看到另外一种数据格式, 既有顶点坐标(xyz), 还有顶点颜色(rgb)以及其对应的纹理坐标(st), 这里就把这三种数据的集合体看作是一个顶点(每 3 种为一个顶点).
 
     正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者它们的排序不同于上图.
 
-    这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 =gl.vertexAttribPointer()= 来新建一个指针来读取即可.
+    这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 =gl.vertexAttribPointer()= 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
+
+    =gl.vertexAttribPointer= 的 =index= 参数是 =shader= 程序(shader program)里面 =attribute= 变量的索引值, 可以手动指定, 也可以通过 =gl.getAttribLocation(shaderProgram, attribName)= 来获取.
+
+    在 =gl.bindBuffer(target, buffer)= 之后调用 =gl.vertexAttribPointer= 就可以把缓冲区里的数据填充到指定的 =attribute= 变量里面.
