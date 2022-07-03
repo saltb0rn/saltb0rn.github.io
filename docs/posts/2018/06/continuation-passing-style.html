@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-09-30 ���� 13:08 -->
+<!-- 2022-07-03 日 16:08 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Continuation Passing Style</title>
@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: auto;
+    overflow: visible;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline; margin-top: 14px;}
+  pre.src:hover:before { display: inline;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -198,27 +198,73 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
 <!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
 </script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -234,20 +280,20 @@
 </div>
 <div id="content">
 <h1 class="title">Continuation Passing Style</h1>
-<div class="abstract" id="orgc8020be">
+<div class="abstract">
 <p>
 写一写自己对 <code>CPS</code> 的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
 </p>
 
 </div>
 
-<pre class="example" id="orga3adfda">
+<pre class="example">
 更新于 2018-11-12
 </pre>
 
-<div id="outline-container-orga0c351b" class="outline-2">
-<h2 id="orga0c351b">偶遇 CPS</h2>
-<div class="outline-text-2" id="text-orga0c351b">
+<div id="outline-container-org18deeae" class="outline-2">
+<h2 id="org18deeae">偶遇 CPS</h2>
+<div class="outline-text-2" id="text-org18deeae">
 <p>
 有很久一段时间没有写 <code>Python</code> 了,语法虽好,不过语法糖实在太多,断断续续的接触了一段时间的 <code>Lisp</code>, 从一开始的 <code>Common Lisp</code>,到现在的 <code>Emacs Lisp</code> 和 <code>Racket</code>,经过这段洗礼以后,有一种"不写 <code>Python</code> 了,干脆写 <code>Lisp</code> 为生算了"的想法(不过想生活的话,还是写 <code>Python</code> 靠谱点,都学就最好),我不是 <code>Lisp</code> 的佼佼者,不过应该也算是个 <code>Lisp fanboy</code> 了吧.
 </p>
@@ -259,9 +305,9 @@
 </div>
 
 
-<div id="outline-container-org8dcf350" class="outline-2">
-<h2 id="org8dcf350">Continuation</h2>
-<div class="outline-text-2" id="text-org8dcf350">
+<div id="outline-container-orge0dbc68" class="outline-2">
+<h2 id="orge0dbc68">Continuation</h2>
+<div class="outline-text-2" id="text-orge0dbc68">
 <p>
 在讲什么是 <code>CPS</code> 之前,得先说一下什么是 <code>continuation</code>.
 </p>
@@ -275,9 +321,9 @@
 </p>
 </div>
 
-<div id="outline-container-orgd182783" class="outline-3">
-<h3 id="orgd182783">简单的 Lisp</h3>
-<div class="outline-text-3" id="text-orgd182783">
+<div id="outline-container-orgb4709bc" class="outline-3">
+<h3 id="orgb4709bc">简单的 Lisp</h3>
+<div class="outline-text-3" id="text-orgb4709bc">
 <p>
 <code>Racket</code> 里面一般是这样定义函数的,以定义一个形式参数为 <code>a</code> 和 <code>b</code> 的整型加法函数 <code>add</code> ,和一个减法函数 <code>sub</code> 为例子.
 </p>
@@ -318,15 +364,19 @@
 </div>
 
 
-<div id="outline-container-org69258b1" class="outline-3">
-<h3 id="org69258b1">控制上下文(Control context)</h3>
-<div class="outline-text-3" id="text-org69258b1">
+<div id="outline-container-org8f17420" class="outline-3">
+<h3 id="org8f17420">控制上下文(Control context)</h3>
+<div class="outline-text-3" id="text-org8f17420">
 <p>
 好了,介绍什么是 <code>continuation</code> 之前先介绍一下什么是控制上下文?首先要先了解什么是上下文,所谓上下文就是贯穿整个过程的一个意像,在整个过程中的每一个点上,上下文的状态都不一样.
 </p>
 
 <p>
-而控制上下文就像 <code>stack</code>,假如调用 <code>(ans 1 2 3)</code>,那么会发生以下几件事情,
+举个现实例子,时间就是一个上下文,昨天我做了什么,今天我又做了什么,昨天做的事情对我今天做的事情造成什么影响,等等.
+</p>
+
+<p>
+回到程序上,假如调用 <code>(ans 1 2 3)</code>,那么会发生以下几件事情,
 </p>
 
 <ol class="org-ol">
@@ -351,10 +401,9 @@
 </div>
 </div>
 
-
-<div id="outline-container-org0edf158" class="outline-3">
-<h3 id="org0edf158">Continuation 的 representation</h3>
-<div class="outline-text-3" id="text-org0edf158">
+<div id="outline-container-org96ae3c7" class="outline-3">
+<h3 id="org96ae3c7">Continuation 的 representation</h3>
+<div class="outline-text-3" id="text-org96ae3c7">
 <p>
 在给 <code>continuation</code> 选择 <code>representation</code> 之前先给每一个执行点选择一种 <code>representation</code>.每一执行点相当于一个过程,每执行一个点就是一次调用.
 </p>
@@ -410,13 +459,13 @@
 </div>
 
 
-<div id="outline-container-orgbe7a512" class="outline-2">
-<h2 id="orgbe7a512">Continuation Passing Style</h2>
-<div class="outline-text-2" id="text-orgbe7a512">
+<div id="outline-container-orgf89ad8f" class="outline-2">
+<h2 id="orgf89ad8f">Continuation Passing Style</h2>
+<div class="outline-text-2" id="text-orgf89ad8f">
 </div>
-<div id="outline-container-orgc2d1b95" class="outline-3">
-<h3 id="orgc2d1b95">什么是 CPS</h3>
-<div class="outline-text-3" id="text-orgc2d1b95">
+<div id="outline-container-org3657f1c" class="outline-3">
+<h3 id="org3657f1c">什么是 CPS</h3>
+<div class="outline-text-3" id="text-org3657f1c">
 <p>
 顾名思意, <code>CPS</code> 就是一种风格,这种风格就是把 <code>continuation</code> 作为参数传递.类似的还有 <code>Environment Passing Style</code>.
 </p>
@@ -428,27 +477,43 @@
 </div>
 
 
-<div id="outline-container-org6a3be26" class="outline-3">
-<h3 id="org6a3be26">CPS 的意义</h3>
-<div class="outline-text-3" id="text-org6a3be26">
+<div id="outline-container-org9438005" class="outline-3">
+<h3 id="org9438005">CPS 的意义</h3>
+<div class="outline-text-3" id="text-org9438005">
 <p>
-其实就是对控制上下文(control context)进行抽象和实例化以及把递归转化成尾递归.
+其实就是对控制上下文(control context)进行抽象和实例化,以及把函数转化成尾调用(Tail call).
 </p>
+
+<p>
+尾调用有一个好处,如果函数是一个递归函数,我们可以很容易地在已改为尾调用基础上进行优化,把普通递归优化成<a id="orgfedc523"></a>尾递归(Tail recursion).
+</p>
+<blockquote>
+<p>
+首先要明白什么是尾调用,尾调用就是指函数 \(func\) 的最后一个语句为调用一个函数 \(proc\),它同时也是函数 \(func\) 的返回语句,返回值为 <code>proc(args, ...)</code> 结果.
+</p>
+
+<p>
+所谓的尾递归就是指函数 \(func\) <b>只</b> 在尾调用中调用自身来进行递归,使得 \(func\) 和迭代(循环)两者在不同的手段(一个用递归,一个用循环语句)下实现同样的计算行为.
+</p>
+
+<p>
+虽然计算行为一样,但不同编译器/解释器对待递归和迭代的处理可是不一样的,导致了两者效率方面的不同.
+</p>
+
+<p>
+为了提高效率,我们需要把效率较差的实现改写为效率高的实现. 这也是本文章的终极目标: 如何把递归转改写成迭代.
+</p>
+</blockquote>
 
 <p>
 对控制上下文进行抽象就是说程序执行的下一步可以被抽象成数据表示,就像上面的说明例子那样,就是使用了函数来表示下一步要执行的动作.
 </p>
-
-<p>
-然后就是能够把递归变成尾递归,在支持尾递归优化的语言中是可以获得优化的.
-</p>
 </div>
 </div>
 
-
-<div id="outline-container-org8202e5b" class="outline-3">
-<h3 id="org8202e5b">把上面的 ans 改写成 CPS 程序 ans/k</h3>
-<div class="outline-text-3" id="text-org8202e5b">
+<div id="outline-container-orga9e3cba" class="outline-3">
+<h3 id="orga9e3cba">把上面的 ans 改写成 CPS 程序 ans/k</h3>
+<div class="outline-text-3" id="text-orga9e3cba">
 <div class="org-src-container">
 <pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">ans/k</span> x y z cont)
    (sub/k x y
@@ -466,9 +531,9 @@
 </div>
 
 
-<div id="outline-container-org0f413e5" class="outline-3">
-<h3 id="org0f413e5">Simple Expression and Tail Form Expression</h3>
-<div class="outline-text-3" id="text-org0f413e5">
+<div id="outline-container-org5062ec5" class="outline-3">
+<h3 id="org5062ec5">Simple Expression and Tail Form Expression</h3>
+<div class="outline-text-3" id="text-org5062ec5">
 <p>
 要转变成 <code>CPS</code>,则要理解 <code>CPS</code> 对表达式做出的划分: <code>SimpleExp</code> 以及 <code>TfExp</code> (Tail Form Expression).
 </p>
@@ -494,15 +559,15 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </p>
 
 <p>
-这一步的 <code>continuation</code> 和整个函数的 <code>continuation</code> 是一样的,也就是说栈空间没有发生改变,在这种地方的调用就是尾调用(tail call),这样的函数称为 <code>tail form</code> 的.
+这一步的 <code>continuation</code> 和整个函数的 <code>continuation</code> 是一样的,也就是说栈空间没有发生改变, 在这种地方的调用就是尾调用(前面有提到过这个概念),而这样的函数称为 <code>tail form</code> 的.
 </p>
 </div>
 </div>
 
 
-<div id="outline-container-orge958f41" class="outline-3">
-<h3 id="orge958f41">一套把程序转化为 CPS 程序的算法</h3>
-<div class="outline-text-3" id="text-orge958f41">
+<div id="outline-container-orge73fe2a" class="outline-3">
+<h3 id="orge73fe2a">一套把程序转化为 CPS 程序的算法</h3>
+<div class="outline-text-3" id="text-orge73fe2a">
 <p>
 先示范如何把 <code>ans</code> 改写成 <code>CPS</code>,也就是把表达式改写成 <code>TfExp</code>.
 </p>
@@ -607,11 +672,11 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </div>
 
 
-<div id="outline-container-org8676133" class="outline-3">
-<h3 id="org8676133">最后一个例子</h3>
-<div class="outline-text-3" id="text-org8676133">
+<div id="outline-container-org50b4536" class="outline-3">
+<h3 id="org50b4536">最后一个例子</h3>
+<div class="outline-text-3" id="text-org50b4536">
 <p>
-分别定义累加从1到n的函数 <code>bad-acc,acc-tail和acc</code>, 以及(Fibonacci) <code>bad-fib</code> 和 <code>fib</code>.
+分别定义累加从1到n的函数 <code>bad-acc, acc-tail</code> 和 <code>acc</code>, 以及(Fibonacci) <code>bad-fib</code> 和 <code>fib</code>.
 </p>
 
 <div class="org-src-container">
@@ -830,7 +895,7 @@ racket@&gt; ,enter <span style="color: #CC9393;">"/home/saltb0rn/.config/emacs/s
 &gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
 &lt;13
 13
-racket@test.rkt&gt; 
+racket@test.rkt&gt;
 </pre>
 </div>
 
@@ -839,25 +904,25 @@ racket@test.rkt&gt;
 </p>
 
 <p>
-仔细看你会发现 <code>acc-tail-inner/k</code> 的 <code>cont</code> 是多余的,在实际开发中如果遇到尾递归的话可以绕路不写,因为那样意义不大,因为 <code>CPS</code> 的其中一个目的就是为了保证尾递归的发生,就没必要改成 <code>CPS</code> 了.
+仔细看你会发现 <code>acc-tail-inner/k</code> 的 <code>cont</code> 是多余的,在实际开发中如果遇到尾递归的话可以绕路不写,因为那样意义不大,因为 <code>CPS</code> 保证尾调用的发生只是为了方便程序员能够在必要时候把普通递归改写称尾递归,就没必要改成 <code>CPS</code> 了.
 </p>
 
 <p>
-<code>CPS</code> 只能保证尾调用,像在 <code>Python</code> 和 <code>Emacs Lisp</code> 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言中,尾递归也不能解决爆栈的问题,
+即便递归函数已经是尾递归了,可像在 <code>Python</code> 和 <code>Emacs Lisp</code> 这种有”先天缺陷“ (不支持尾递归优化 Tail Call Optimization, abbr. TCO) 的语言中,尾递归也不能解决爆栈的问题,
 </p>
 
 <p>
-不过既然改成 <code>CPS</code> 了,那就很容易地把 <code>CPS</code> 转化成迭代/循环,并且 <code>Python</code> 和 <code>Emacs Lisp</code> 这些语言都有循环语句.
+不过既然都是尾递归了形式,那就很容易地把尾递归转化成迭代/循环,并且 <code>Python</code> 和 <code>Emacs Lisp</code> 这些语言都有循环语句.
 </p>
 </div>
 </div>
 </div>
 
 
-<div id="outline-container-org6f09d0a" class="outline-2">
-<h2 id="org6f09d0a">Trampoline 和 Bounce</h2>
-<div class="outline-text-2" id="text-org6f09d0a">
-<pre class="example" id="orgad19d3f">
+<div id="outline-container-org6ceeb54" class="outline-2">
+<h2 id="org6ceeb54">Trampoline 和 Bounce</h2>
+<div class="outline-text-2" id="text-org6ceeb54">
+<pre class="example">
 写于 2019/4/8
 </pre>
 
@@ -878,11 +943,15 @@ racket@test.rkt&gt;
 </p>
 
 <p>
-为此我们需要一个叫做 <code>Trampoline</code> 的 <code>continuation</code> "调度器" (毕竟和事件循环挺像的) 以及一个叫做 <code>bounce</code> 对象, 该对象 <b>包含上一步的计算结果和下一步的 <code>continuation</code></b>.
+此外我们还需要一个叫做 <code>Trampoline</code> 的 <code>continuation</code> "调度器" (毕竟和事件循环挺像的) 以及一个叫做 <code>bounce</code> 对象, <code>bounce</code> 对象 <b>包含上一步的计算结果和下一步的 <code>continuation</code></b>,
 </p>
 
 <p>
-比如我们把上面的 <code>acc/k</code> 改写成可以供 <code>Trampoline</code> 使用的形式,也就是把 <code>acc/k</code> 改成 <code>bounce</code> 版本 <code>acc-bounce</code>.
+而 "调度器" 就是一个循环,每一次循环就是通过 <code>bounce</code> 对象里面的信息计算出下一个 <code>bounce</code>, 直到某一步的计算结果不再是 <code>bounce</code> 对象.
+</p>
+
+<p>
+接下来我们会演示如何把上面的 <code>acc/k</code> 改写成可以供 <code>Trampoline</code> 使用的形式,也就是把 <code>acc/k</code> 改成 <code>bounce</code> 版本 <code>acc-bounce</code>.
 </p>
 
 <p>
@@ -1038,16 +1107,16 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 </div>
 
-<div id="outline-container-orga83b352" class="outline-3">
-<h3 id="orga83b352">Emacs Lisp 突破 Fibonacci 的递归限制</h3>
-<div class="outline-text-3" id="text-orga83b352">
+<div id="outline-container-orgb1c1697" class="outline-3">
+<h3 id="orgb1c1697">Emacs Lisp 突破 Fibonacci 的递归限制</h3>
+<div class="outline-text-3" id="text-orgb1c1697">
 <p>
 个人也还挺喜欢 <code>Emacs Lisp</code>,所以展示一个在 <code>Emacs Lisp</code> 下的 <code>fib</code> 逐渐改成 <code>fib-bounce</code> 的过程.
 </p>
 
 <div class="org-src-container">
 <pre class="src src-elisp"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bounce</span>
-(defstruct (bounce
+(<span style="color: #F0DFAF; font-weight: bold;">defstruct</span> (bounce
             (<span style="color: #DCDCCC; font-weight: bold;">:constructor</span> nil)
             (<span style="color: #DCDCCC; font-weight: bold;">:constructor</span> bounce (res cont)))
   res cont)
@@ -1106,15 +1175,15 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 
 
-<div id="outline-container-orgfc4c5c0" class="outline-2">
-<h2 id="orgfc4c5c0">结语</h2>
-<div class="outline-text-2" id="text-orgfc4c5c0">
+<div id="outline-container-orgaade641" class="outline-2">
+<h2 id="orgaade641">结语</h2>
+<div class="outline-text-2" id="text-orgaade641">
 <p>
 还是觉得这篇东西有很多地方有欠缺,也说明了我对 <code>CPS</code> 的理解还不够深入.突然觉得 <code>EOPL</code> 写的很好,因为我能明白给我传达的知识,原来写一篇易懂的科普文是如此艰难,真的是佩服这些老前辈.
 </p>
 
 <p>
-<code>EOPL</code> 这本书都写到了这些内容,个人十分推荐去阅读这本书,总的来说, <code>CPS</code> 可以保证尾递归发生,而 <code>Trampoline</code> 可以保证不支持尾递归的语言运行尾递归不会发生爆栈,也就是说这两项技术可以实现尾递归优化,用在直译器上面就不言而喻了.
+<code>EOPL</code> 这本书都写到了这些内容,个人十分推荐去阅读这本书,总的来说, <code>CPS</code> 可以保证把函数改写为尾调用,从而优化成尾递归; 而 <code>Trampoline</code> 可以保证不支持尾递归的语言运行尾递归不会发生爆栈,也就是说这两项技术可以实现尾递归优化,不受到编译器/解释器的限制.
 </p>
 
 <p>
@@ -1122,12 +1191,301 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 </div>
 </div>
+
+
+<div id="outline-container-orgb73d4a2" class="outline-2">
+<h2 id="orgb73d4a2">Update</h2>
+<div class="outline-text-2" id="text-orgb73d4a2">
+</div>
+<div id="outline-container-orgbdeaaac" class="outline-3">
+<h3 id="orgbdeaaac">如何把遍历树的递归改写为Trampoline的形式</h3>
+<div class="outline-text-3" id="text-orgbdeaaac">
+<pre class="example">
+写于 2021/10/4 21:49
+</pre>
+
+<p>
+这个问题最早是我1年前在工作时(岗位: WEB前端)想到的,当然由于树的规模不大(我当时测试的火狐浏览器的最大可进栈层数是20000+),所以就算没有答案也不会对当时的工作造成影响.
+</p>
+
+<p>
+同事也劝我不要花费精力在上面,可是我的想法是: 20000+ 次递归难道就很大了吗,难道工作中遇到树就不会达到这个规模吗?
+</p>
+
+<p>
+现在的我已经在另一家公司了,我的想法很快就有了答案: 20000+ 次递归还真的能遇到.
+</p>
+
+<p>
+其实我1年前就尝试过改写了,不过失败了.
+</p>
+
+<p>
+今天无意间想起了这个问题,于是我又尝试改写,而这次尝试成功了.
+</p>
+
+<p>
+1年前的代码我已经不记得了,所以我假设了一份非常简单的代码来作为问题:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#26641;&#32467;&#26500;&#30340;&#23450;&#20041;</span>
+<span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">testData</span> = [
+    {
+        title: <span style="color: #CC9393;">'&#26631;&#39064;1'</span>,
+        value: 5,
+        children: [
+            {
+                title: <span style="color: #CC9393;">'1-&#23376;&#26631;&#39064;'</span>,
+                value: 0,
+                children: []
+            },
+            {
+                title: <span style="color: #CC9393;">'1-&#23376;&#26631;&#39064;2'</span>,
+                value: 3,
+                children: []
+            }
+        ]
+    },
+
+    {
+        title: <span style="color: #CC9393;">'&#26631;&#39064;2'</span>,
+        value: 6,
+        children: [
+            {
+                title: <span style="color: #CC9393;">'2-&#23376;&#26631;&#39064;'</span>,
+                value: 7,
+                children: []
+            },
+            {
+                title: <span style="color: #CC9393;">'2-&#23376;&#26631;&#39064;2'</span>,
+                value: 8,
+                children: []
+            }
+        ]
+    },
+];
+
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#26641;&#36941;&#21382;</span>
+<span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTree</span>(<span style="color: #DFAF8F;">tree</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> of tree) {
+        console.log(node.title);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+            iterTree(node.children);
+        }
+    }
+}
+</pre>
+</div>
+
+<p>
+这里定义了树结构和树遍历的函数 <code>iterTree</code>, 函数是我们的重点,终极目标是把它改写成符合 <code>Trampoline</code> 形式的 <code>iterTreeBounce</code>.
+</p>
+
+<p>
+然而 <code>iterTree</code> 里面有一个 <code>for</code> 循环,这个 <code>for</code> 循环控制这遍历到哪一个树节点,也就是遍历到哪一步, 这导致了无法直接把 <code>iterTree</code> 改写成 <code>iterTreeBounce</code>.
+</p>
+
+<p>
+符合 <code>Trampoline</code> 的函数需要返回一个 <code>bounce</code> 对象, <code>bounce</code> 是每一步的计算信息(遍历到哪一个节点), 而"返回"这个动作是会导致 <code>for</code> 循环中断, 也就是说 <code>iterTreeBounce</code> 和 <code>for</code> 存在天生的冲突.
+</p>
+
+<p>
+因此第一步应当把 <code>iterTree</code> 的 <code>for</code> 循环去掉,这个很简单,把循环改写成递归:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeWithoutLoop</span>(<span style="color: #DFAF8F;">tree</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span> = tree.slice(1);
+        console.log(node.title);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+            iterTreeWithoutLoop(node.children);
+        }
+        iterTreeWithoutLoop(treeRest);
+    }
+}
+</pre>
+</div>
+
+<p>
+要注意, <code>iterTreeWithoutLoop</code> 并不符合<a href="#orgfedc523">尾递归</a>的定义: 首先它进行了两次自身的调用,其次尾调用时并没有返回自身计算结果.
+</p>
+
+<p>
+那么问题来了: 如何把 <code>iterTreeWithoutLoop</code> 改写为尾递归呢?
+</p>
+
+<p>
+在1年前,我的第一反映是用 <code>CPS</code>, <b>一直以为 <code>CPS</code> 是把普通递归函数改写为尾递归的"万能药", 然而它只是把函数改写为尾调用的"万能药"</b>,
+</p>
+
+<p>
+这个问题暴露了我最初的错误理解,理所当然改写失败了.
+</p>
+
+<p>
+最直接的证明就是,即便按照前面的规则改成了 <code>CPS</code> 也无法把 <code>iterTreeWithoutLoop</code> 改写为尾递归,
+</p>
+
+<p>
+更何况,按照之前的方法是没办法 <b>直接</b> 把这个函数改成 <code>CPS</code> 的, 当年我就卡在这一步了.
+</p>
+
+<p>
+今天的我再看这个问题的时候就有了一个想法:
+</p>
+
+<p>
+<b>能不能把两个对于同一个函数的调用合并为一次调用呢? 并且该调用的行为等同于依次对 <code>node.children</code> 和 <code>treeRest</code> 调用?</b>
+</p>
+
+<p>
+经过一番脑内"尝试"后发现可行,稍微想一下就明白了,在遍历树的时节点分"已遍历"和"未遍历"两种,只有在处理未遍历的节点时才会进行递归.
+</p>
+
+<p>
+而 <code>node.children</code> 以及 <code>treeRest</code> 都是未遍历的节点.那么把它们整理为一个由未遍历节点构成的树不就好了吗?
+</p>
+
+<p>
+所以我得到了 <code>iterTreeTail</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeTail</span>(<span style="color: #DFAF8F;">tree</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+        console.log(node.title);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+            treeRest = node.children.concat(tree.slice(1));
+        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            treeRest = tree.slice(1);
+        }
+        iterTreeTail(treeRest);
+    }
+}
+</pre>
+</div>
+
+<p>
+严格上来说 <code>iterTreeTail</code> 还达不到尾递归定义,因为 <code>iterTreeTail(treeRest);</code> 并非尾调用(没有 <code>return</code> 语句).
+</p>
+
+<p>
+最开始的 <code>iterTree</code> 工作就是打印每一个树节点的名字而已,并没有指定返回什么,返回的默认值 <code>undefined</code>.
+</p>
+
+<p>
+不过仔细思考后会发现 <code>iterTreeTail</code> 已经符合 <code>iterTree</code> 的结果了; 同时在考虑 <code>JavaScript</code> 函数默认的返回值后,某种意义上 <code>iterTreeTail</code> 也符合了尾递归的定义了:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeTail</span>(<span style="color: #DFAF8F;">tree</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+        console.log(node.title);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+            treeRest = node.children.concat(tree.slice(1));
+        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            treeRest = tree.slice(1);
+        }
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> iterTreeTail(treeRest);
+    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">undefined</span>;
+    }
+}
+</pre>
+</div>
+
+<p>
+现在要做的是把它改写成 <code>CPS</code>,把尾递归改写成 <code>CPS</code> 是非常简单的,可以参考前面的 <code>acc-tail-inner/k</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeCPS</span>(<span style="color: #DFAF8F;">tree</span>, <span style="color: #DFAF8F;">cont</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+        console.log(node.title);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+            treeRest = node.children.concat(tree.slice(1));
+        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            treeRest = tree.slice(1);
+        }
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> iterTreeCPS(treeRest, cont);
+    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cont(<span style="color: #BFEBBF;">undefined</span>);
+    }
+}
+</pre>
+</div>
+
+<p>
+基本上到这里了就宣告改写成功了,现在改成符合 <code>Trampoline</code> 的函数基本没什么难度了,下面是最终答案:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeBounce</span>(<span style="color: #DFAF8F;">tree</span>, <span style="color: #DFAF8F;">cont</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
+        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+        console.log(node.title);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+            treeRest = node.children.concat(tree.slice(1));
+        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            treeRest = tree.slice(1);
+        }
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+            cont: (val) =&gt; iterTreeBounce(val, cont),
+            res: treeRest
+        };
+        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">return iterTreeBounce(treeRest, cont);</span>
+    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+            cont: cont,
+            res: <span style="color: #BFEBBF;">undefined</span>
+        };
+        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">return cont(undefined);</span>
+    }
+}
+
+<span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">trampoline</span>(<span style="color: #DFAF8F;">bounce</span>) {
+    <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">res</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (1) {
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (bounce) {
+            res = bounce.cont(bounce.res);
+            bounce = res;
+        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            <span style="color: #F0DFAF; font-weight: bold;">return</span> res;
+        }
+    }
+}
+
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#26368;&#21518;&#27979;&#35797;</span>
+trampoline(iterTreeBounce(testData, val =&gt; val));
+</pre>
+</div>
+
+<p>
+找个改写的方法只花了我半个小时,这半个小时让我解开了1年前的心结,并且对 <code>CPS</code> 的认知发生了翻天覆地的变化.
+</p>
+
+<p>
+整体上来说,这半个小时的代价绝对是值得的.
+</p>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-06-20</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.4.6)</p>
-<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.0.50 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

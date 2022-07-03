@@ -39,12 +39,12 @@
     gl.bindBuffer(target, buffer);
 
     // 往前面绑定的缓冲区里填充数据,最近一次绑定的缓冲区是哪个,就往它里面填充,这一步换句话说就是储存 CPU 发过来的数据 data 了.
-    gl.bufferData(data);
+    gl.bufferData(target, data, usage);
     #+END_SRC
 
     由于数据的用途的不同, 缓冲区可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 =target= 变量.
 
-    想要知道 =target= 的值能够是什么, 可以参考[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer][这里]].
+    想要知道 =target= 的值能够是什么, 可以参考[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer][这里]], 这些方法的参考说明都可以在[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext][这里]]找到.
 
     在 =OpenGL/WebGL= 里面, 这些用来作为物体顶点信息的缓冲区叫做 =Vertex Buffer Object (VBO)=.
 
@@ -53,7 +53,7 @@
     实际上, 除了这些用作几何图形的数据以外, 还有其他的数据并非存到缓冲区里面的, 后面介绍这些数据.
 
 
-*** OpenGL/WebGL 上下文是如何使用数据
+*** <<section-3>>OpenGL/WebGL 上下文是如何使用数据
 
     首先需要提及的一点是, =GPU= 并非直接使用缓冲区来进行渲染, 在说明这点之前, 我们先来明白一个概念.
 
@@ -93,31 +93,32 @@
 
 *** GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)
 
-    和其他编程语言一样, =GLSL= 的变量也是一样有修饰符的, 这里的修饰符并非指 =int=, =float= 这些类型标识,而是指控制变量的储存以及行为的标识.
+    和其他编程语言一样, =GLSL= 的变量也是一样有修饰符的, 这里的修饰符并非指 =int=, =float= 这些 [[https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)][类型标识]];
 
-    最常见的修饰符莫过于 "禁止变量在声明后被修改" 的 =const= 了.
+    而是指控制变量的储存以及行为的标识, 这么说可能有点不太好理解, 举个例子 "禁止变量在声明后被修改" 的 =const= 就是其中一个修饰符.
 
-    我们都知道 =GLSL= 的工作内容并不完全像其他编程语言一样, 它的任务是控制图形渲染的, 这项任务的流程是分成好几个阶段的, 在不同的阶段可读写的变量类型是不一样的,
+    我们都知道 =GLSL= 的工作内容并不完全像其他编程语言一样, 它的任务是控制图形渲染的, 而这项任务的流程是分成好几个阶段的,
 
-    为了标识变量能够在哪些阶段使用, 就需要另外一种[[https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)][修饰符]]
+    有些数据可以在所有阶段中都能访问到, 而有些数据只能在特定阶段中访问, 还有一些数据能够从这个阶段输出到下一个阶段.
 
-    
+    为了标识变量能够在哪些阶段使用, 就需要另外一种 [[https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)][修饰符]] 进行声明, 这些修饰符就是这一小节的重点.
 
-    因此 =GLSL= 有不少修饰符是用来声明变量所处的阶段的.
-
-    个人认为学习新语言的第一件事情就是先了解它的数据类型, 那么第一件事情就是掌握 =GLSL= 的变量修饰符了.
-
-    这里稍微提一下 =OpenGL= 的版本并非和它所支持的 =GLSL= 版本对应的, 也就是 =OpenGL 2.0= 所支持的 =GLSL= 版本并非 =2.0=, 具体可以看 [[https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Version][OpenGL and GLSL Version]].
+    这里稍微提一下 =OpenGL= 的版本并非和它所支持的 =GLSL= 版本对应的, 也就是 =OpenGL 2.0= 所支持的 =GLSL= 版本并非 =2.0=, 具体可以看 [[https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Version][OpenGL and GLSL Version]],
 
     而不同版本的 =GLSL= 所支持的修饰符是不一定的.
 
-    这是官方的 [[https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)][OpenGl 类型修饰符参考文档]], 
+    需要注意的是, [[https://www.khronos.org/registry/webgl/specs/1.0/#4.3][WebGL 规范]] 是基于 =OpenGL ES 2.0= 的, 而 =WebGL= 必须支持 =OpenGL ES 1.00= 版本的着色器语言(Shading Language).
 
+    整体上来说, =WebGL= 的 =GLSL= 比起 =OpenGL= 的 =GLSL= 的版本要低, 而 =OpenGL= 的 =GLSL= 的一些修饰符已被废弃的, 这些已被废弃的修饰符还活跃在 =WebGL= 的 =GLSL= 上,
 
+    因此, 我们需要知道这些被废弃的修饰符和新版中的哪些修饰符对应, 以 =WebGL= 作为例子进行学习是一个不错的选择.
 
+    实际上, 开发人员在大部分的 =shading= 时间里面都是只和 =Vertex Shader= 和 =Fragment Shader= 两个阶段打交道, 因此我们主要其中介绍这两个阶段中能用到的修饰符.
 
-    需要注意的是 =WebGL= 所使用的 =GLSL= 版本是基于 =OpenGL ES 2.0= 的, 并且根据 [[https://www.khronos.org/registry/webgl/specs/1.0/#4.3][WebGL 规范]], =WebGL= 必须支持 =OpenGL ES 1.00= 版本的着色器语言(Shading Language).
+    这里准备了一个例子[[iframe:../../../examples/learn-webgl-how-to-read-data/index.html]]用于进行讲解和实验.
 
-    
+**** Vertex Shader
 
-    
+     在[[section-3][第 3 节]]里面我们已经知道怎么把顶点数据传给 =GPU= 的了, 既然要写 =shader program=, 那么就需要知道如何获取这些顶点数据.
+     
+     

@@ -15,10 +15,13 @@
   - [[file:2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
   - [[file:2019/02/docker-compose-file.org][Docker stack depoly 的使用]]
 * E
+  - [[file:2021/11/edm-theory.org][EDM必备乐理教程]]
   - [[file:2018/08/emacs-tips.org][Emacs Tips(持续更新)]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
+* J
+  - [[file:2022/03/dev-js-library-tutorial.org][JS库开发指南]]
 * K
   - [[file:2020/02/kvm-experience-note.org][KVM体验笔记]]
 * M
@@ -37,12 +40,15 @@
 * W
   - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
   - [[file:2019/11/web-components.org][Web Components]]
+  - [[file:2022/02/webgl-buffer-objects.org][WebGL的Buffer对象]]
 * 主
   - [[file:2019/12/make-friend-with-webassembly.org][主动认识 WebAssembly]]
 * 关
   - [[file:2021/06/things-about-c-development.org][关于使用C语言开发的那些事]]
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
   - [[file:2019/03/about-audio-file-metadata.org][关于音频文件的元信息]]
+* 切
+  - [[file:2021/11/cake-cut.org][切饼问题]]
 * 前
   - [[file:2018/11/gimp-for-webfe-dev.org][前端人员的GIMP]]
   - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
@@ -55,6 +61,8 @@
   - [[file:2020/08/graphics-opengl-light-and-material.org][图形学-光和材质]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
   - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
+* 数
+  - [[file:2021/10/math-proofs.org][数学证明]]
 * 汇
   - [[file:2020/12/assembly.org][汇编]]
 * 理
@@ -77,6 +85,8 @@
   - [[file:2020/02/et-project-day-.org][英语消灭计划-Day2]]
 * 视
   - [[file:2019/08/digital-video-file.org][视频文件简单了解]]
+* 计
+  - [[file:2022/01/floating-number-in-binary.org][计算机眼中的浮点数]]
 * 设
   - [[file:2018/07/how-to-block-ip-addresses-from-countries.org][设置Nginx禁止某些地区IP的访问]]
   - [[file:2018/09/design-patterns.org][设计模式总结]]

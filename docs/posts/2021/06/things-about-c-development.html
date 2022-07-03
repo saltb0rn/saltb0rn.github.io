@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-09-30 ���� 13:08 -->
+<!-- 2022-07-03 日 16:08 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>关于使用C语言开发的那些事</title>
@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: auto;
+    overflow: visible;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline; margin-top: 14px;}
+  pre.src:hover:before { display: inline;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -198,26 +198,50 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
 <!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
 </script>
 </head>
 <body>
@@ -234,7 +258,7 @@
 </div>
 <div id="content">
 <h1 class="title">关于使用C语言开发的那些事</h1>
-<div class="abstract" id="orgfc0338e">
+<div class="abstract">
 <p>
 这篇笔记是针对C语言开发而写的,不包括C语言本身的学习,因为这方面的教材已经非常多了,这类书籍就有不少.
 </p>
@@ -253,13 +277,13 @@
 
 </div>
 
-<div id="outline-container-org1cd7b29" class="outline-2">
-<h2 id="org1cd7b29">不成文的规范</h2>
-<div class="outline-text-2" id="text-org1cd7b29">
+<div id="outline-container-org0dff286" class="outline-2">
+<h2 id="org0dff286">不成文的规范</h2>
+<div class="outline-text-2" id="text-org0dff286">
 </div>
-<div id="outline-container-org1298530" class="outline-3">
-<h3 id="org1298530">使用空宏解决头文件重复引入的问题</h3>
-<div class="outline-text-3" id="text-org1298530">
+<div id="outline-container-org7031283" class="outline-3">
+<h3 id="org7031283">使用空宏解决头文件重复引入的问题</h3>
+<div class="outline-text-3" id="text-org7031283">
 <p>
 有时候会见到这样定义头文件(header files),
 </p>
@@ -293,14 +317,18 @@
 <p>
 之后引入 <code>example.h</code> 时会检测到 <code>EXAMPLE_H</code> 已经被定义,就不会再进行复制.
 </p>
+
+<p>
+这种宏叫做守卫宏(guard macro).
+</p>
 </div>
 </div>
 
 
 
-<div id="outline-container-org97f9b14" class="outline-3">
-<h3 id="org97f9b14">C 与 C++ 兼容</h3>
-<div class="outline-text-3" id="text-org97f9b14">
+<div id="outline-container-org65b446e" class="outline-3">
+<h3 id="org65b446e">C 与 C++ 兼容</h3>
+<div class="outline-text-3" id="text-org65b446e">
 <p>
 有时候会见到类似的代码,
 </p>
@@ -408,9 +436,9 @@ EMSCRIPTEN_KEEPALIVE <span style="color: #7CB8BB;">void</span> <span style="colo
 </div>
 
 
-<div id="outline-container-org66eb5c0" class="outline-3">
-<h3 id="org66eb5c0">项目里面的 shell script 文件: configure</h3>
-<div class="outline-text-3" id="text-org66eb5c0">
+<div id="outline-container-orga1f2c5c" class="outline-3">
+<h3 id="orga1f2c5c">项目里面的 shell script 文件: configure</h3>
+<div class="outline-text-3" id="text-orga1f2c5c">
 <p>
 很新手上手 <code>C</code> 项目构建都会使用到 <code>make</code> 命令,都要编写 <code>Makefile</code> 文件进行构建.
 </p>
@@ -524,13 +552,24 @@ EMSCRIPTEN_KEEPALIVE <span style="color: #7CB8BB;">void</span> <span style="colo
 </p>
 </div>
 </div>
+
+
+<div id="outline-container-org38c328a" class="outline-3">
+<h3 id="org38c328a">静态链接库 (static library)</h3>
+</div>
+
+
+
+<div id="outline-container-orgb125b24" class="outline-3">
+<h3 id="orgb125b24">动态链接库 (dynamic library/shared library)</h3>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2021-06-13</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.4.6)</p>
-<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.0.50 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

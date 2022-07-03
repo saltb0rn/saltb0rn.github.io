@@ -1,3 +1,58 @@
+*** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=bd45f635d82ee8921e8ac8c9a3b11f3f][JS库开发指南]]
+最近公司给我分配了一个任务: 需要开发一个 3D 拓扑图的库.
+
+以前一直都是写应用的, 没有写 JS 库的经验, 现在正好来了一个学习的机会.
+# 记录开发一个Javascript库的过程
+
+	
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=8ffd9c17b6f25bc67f1abc0c2e98a585][WebGL的Buffer对象]]
+由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
+
+为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
+
+身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
+
+也因为这样, 图形学学习计划搁置了一年, 当我重新捡起来的时候发现了一些需要加强理解的地方:
+
+=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
+
+了解这个过程才能真正理解 =shader code= 之前是如何工作的.
+
+	
+*** [[file:posts/2022/01/floating-number-in-binary.html?hash=95fbe4cd53aa6b0739afff714bd64a44][计算机眼中的浮点数]]
+pass
+
+	
+*** [[file:posts/2021/11/edm-theory.html?hash=b27b8201eeb3b10d2c3ffd14e5d402bf][EDM必备乐理教程]]
+不懂音乐理论(music theory)也能创作出 =EDM=,但是这样很快就会遇到瓶颈,区别好比在掌握语法和不掌握语法的两种情况下学英语一样,
+
+虽然都可以进行表达,但很明显掌握了语法可以表达的更加精确.
+
+同理掌握了音乐理论可以让自己更加容易创作出更加好的 =EDM=.
+
+而且音乐理论也不仅限于 =EDM=,在其它类型的音乐创作上也可以用得上.
+
+我个人是从 [[https://www.bilibili.com/video/BV1Rt411L7bC][BV1Rt411L7bC]] 学习的,不过说实话,有些地方实在是"一笔带过"了.
+
+不过现在已经是互联网时代了,这些"一笔带过"的地方可以在网上找到补充,正是这个原因才让我写起了这篇笔记.
+
+	
+*** [[file:posts/2021/11/cake-cut.html?hash=270e28bde626a868165ad0ba6f9bc449][切饼问题]]
+有一块圆形大饼,切 3 刀 *最多* 可以得到多少块?按照这个规律,切刀第 $n$ 刀时可以得到多少块?
+
+(只考虑平面的情况)
+
+	
+*** [[file:posts/2021/10/math-proofs.html?hash=b6c611212c18e526f9e16f9e55b7ad44][数学证明]]
+这是我在阅读 "How to READ and DO PROOFS" 时的感悟和总结.
+
+最初是为具备阅读(别人写的)证明过程的能力,本来也没打算单独为了这个话题写一篇笔记.
+
+但我在读完第2章后,脑海突然抛出了一个问题: 数学这门学问是怎么发展来的呢?
+
+我一边思考一边到网上寻求答案,然后开始意识到"这篇笔记不能不写".
+
+	
 *** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=e00c47f4dba3351f4c23536d54c35af4][理解CSS动画]]
 这是一篇关于 =CSS animation= 属性的笔记.
 
@@ -6,19 +61,19 @@
 不确定文档上的说明和我个人的理解是否一致,或者说有没有一些文档上没有说明的内容.
 
 	
-*** [[file:posts/2021/03/remainder-vs-modulo.html?hash=4134900f196ecf78819cc3fd081efd2e][取余和取模的区别]]
+*** [[file:posts/2021/03/remainder-vs-modulo.html?hash=d0a7dabcf6f5b3f2516cea205e3a6cdf][取余和取模的区别]]
 说来惭愧,一直以来都没有真正明白取余(remainder operation)和取模(modulo operation)的区别,不是说他们计算的区别,而是用途上区别,
 
 当然了,计算上的区别我也是不知道的,但是总有一两次会遇得到这其中所暴露的问题,所以今天就想办法理解它们的区别.
 
 	
-*** [[file:posts/2021/02/understanding-perspective-in-css.html?hash=37304a01d11384fa8b76bb02ff4954c9][理解CSS中的透视]]
+*** [[file:posts/2021/02/understanding-perspective-in-css.html?hash=3b47f43826cf443f14ea97d6d54f03eb][理解CSS中的透视]]
 我以为在学习了透视投影以后就知道怎么使用CSS中的 =perspective= 属性了,然而我错了.
 
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=cf57bdb307b1e429904fa138b94a61be][汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=17bc2965a62ab46beffcd18780864ee9][汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕32位来讲的,我读的时候64位架构已经很普遍了,也就是说这本书已经有点过时了,况且关于浮点数这块基本上没讲过.
@@ -60,7 +115,7 @@
 这三个章节给提供读者能够学好汇编的前提,剩下的章节内容都是汇编的实操.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=47bd569d71f7fd0cea4c8a45b8e6f8e3][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=3ec8fb9a9c08484dce9eb51920787ceb][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
@@ -80,7 +135,7 @@
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=e14a2a90d74b7d185d012f0cabec2b6f][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=4598a50c62d2acb070504554066e4bed][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -183,6 +238,14 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 对 =codec= , =format= 等基础概念的不理解会造成对 =ffmpeg= 的工作流程的不理解.
 
 	
+*** [[file:posts/2019/05/bash-eliminating-project.html?hash=c2371c6130e24e58dab33abb54ad7431][Bash消灭计划]]
+用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
+
+出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
+
+这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
+
+	
 *** [[file:posts/2019/05/et-project-day1.html?hash=8be760ab5c20cad8e0685ff3e747533a][英语消灭计划-Day1]]
 从今天开始要拓展自己英语的词汇量了,起始之前很久就想拓展了,只不过没想到用博客这种形式来学习.
 
@@ -203,14 +266,6 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 至于重读和弱读,就是前者的发音时间更长更清晰,后者则相反.
 
 今天的示例文本来源于"八方旅人" 中 Primrose 的序章剧情. Primrose's Journal 1-1
-
-	
-*** [[file:posts/2019/05/bash-eliminating-project.html?hash=c2371c6130e24e58dab33abb54ad7431][Bash消灭计划]]
-用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
-
-出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
-
-这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
 
 	
 *** [[file:posts/2019/04/data-transfer-unit.html?hash=434444e1f55bedb7c4bca46bf7cf528c][网络数据传输单位]]
@@ -352,7 +407,7 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=c2b245924b2c530b2be54b660ff5ce0a][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips.html?hash=3383d9afa45cd9d74af895163a105213][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔
@@ -435,7 +490,7 @@ of Python. This article is about the concept of "coroutines", not a practical ar
 you a resource to learn to how to use them.
 
 	
-*** [[file:posts/2018/06/continuation-passing-style.html?hash=c7f467eeeb269fd4bef889e078545a05][Continuation Passing Style]]
+*** [[file:posts/2018/06/continuation-passing-style.html?hash=9ff371edf5b2ea6bdc67ed5f00ad2f48][Continuation Passing Style]]
 写一写自己对 =CPS= 的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
 
 	

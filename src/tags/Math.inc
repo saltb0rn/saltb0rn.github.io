@@ -1,1 +1,3 @@
 - [[file:../posts/2021/03/remainder-vs-modulo.org][取余和取模的区别]]
+- [[file:../posts/2021/10/math-proofs.org][数学证明]]
+- [[file:../posts/2021/11/cake-cut.org][切饼问题]]
