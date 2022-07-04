@@ -9,14 +9,20 @@
 
 身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
 
-也因为这样, 图形学学习计划搁置了一年, 当我重新捡起来的时候发现了一些需要加强理解的地方:
+也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 =WebGL= 的掌握阶段.
+
+我决定先从 =WebGL= 开始进行康复锻炼,  因为我当时还是有些地方缺乏理解:
 
 =OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
 
-了解这个过程才能真正理解 =shader code= 之前是如何工作的.
+要真正掌握 =OpenGL= 的 =Shading Language= (GLSL), 就需要理解这一块.
+
+没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
 #+end_abstract
 
 *** WebGL是如何工作的
+
+    事实上, =WebGL= 如何工作什么的, 已经有很多教程已经讲得很清楚了, 比如下面这两个图文并茂的链接.
 
     https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html
 
@@ -24,6 +30,15 @@
 
     # https://iquilezles.org/articles/
 
+    因此, 这里就不再赘述了, 而这篇文章主要是针对上面两个链接的内容进行总结和补充.
+
+    这里准备了一个简单的[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][例子]]用于讲解, 效果如下:
+
+    [[iframe:../../../examples/learn-webgl-how-to-read-data/index.html]]
+
+    在阅读下面的内容前把例子的代码复制到本地, 然后边阅读边对照, 有疑惑可以修改代码查看效果.
+
+    需要注意的是, 这个例子是基于 =WebGL 1.0= 的.
 
 *** OpenGL/WebGL 上下文是如何储存数据
 
@@ -35,12 +50,14 @@
     // 告诉 GPU 创建好缓冲区,用于后续储存 CPU 发过来的数据
     let buffer = gl.createBuffer();
 
-    // 绑定缓冲区,因为 GPU 可以有不止一个缓冲区,所以需要告诉 GPU 接下来要对哪个缓冲区进行填充数据.
+    // 设定当前可操作缓冲区,因为 GPU 可以有不止一个缓冲区,所以需要告诉 GPU 接下来要对哪个缓冲区进行操作
     gl.bindBuffer(target, buffer);
 
-    // 往前面绑定的缓冲区里填充数据,最近一次绑定的缓冲区是哪个,就往它里面填充,这一步换句话说就是储存 CPU 发过来的数据 data 了.
+    // 往当前可操作缓冲区里面填充数据,这一步换句话说就是储存 CPU 发过来的数据 data 了.
     gl.bufferData(target, data, usage);
     #+END_SRC
+
+    这里对应例子的[[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L92][这一部分(80-92行)]].
 
     由于数据的用途的不同, 缓冲区可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 =target= 变量.
 
@@ -73,22 +90,36 @@
 
     那么问题来了, 既然数据格式不一样, =GPU= 是如何读取这些数据才能渲染出一个三角形的呢?
 
-    这需要开发人员告诉 =GPU= 如何读取数据, 这里要看一下 =gl.vertexAttribPointer(index, size, type, normalized, stride, offset)= 这个 API,
+    这需要开发人员告诉 =GPU= 如何读取数据, 开发人员需要调用 =gl.vertexAttribPointer(index, size, type, normalized, stride, offset)= 这个 API 来生成一个 =Vertex Array Object (VAO)=,
+
+    *VAO 可以控制如何从 VBO 里面读取数据, 并把数据绑定给变量* (讲道理, =VAO= 的全称很难能让人理解它的作用).
+
+    它控制读取数据的方式其实很简单, 假设下面这里有另外一种数据格式:
 
     #+CAPTION: vertexAttribPointer
     [[../../../files/glVertexAttribPointer-api-overview.png]]
 
-    这张图里面可以看到另外一种数据格式, 既有顶点坐标(xyz), 还有顶点颜色(rgb)以及其对应的纹理坐标(st), 这里就把这三种数据的集合体看作是一个顶点(每 3 种为一个顶点).
+    这里面的数据既有顶点坐标(xyz), 还有顶点颜色(rgb)以及其对应的纹理坐标(st), 这里就把这三种数据的集合体看作是一个顶点(每 3 种为一个顶点).
 
-    正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者它们的排序不同于上图.
+    正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者属性之间的排序不同于上图.
 
     这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 =gl.vertexAttribPointer()= 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
 
     =gl.vertexAttribPointer= 的 =index= 参数是 =shader= 程序(shader program)里面 =attribute= 变量的索引值, 可以手动指定, 也可以通过 =gl.getAttribLocation(shaderProgram, attribName)= 来获取.
 
-    在 =gl.bindBuffer(target, buffer)= 之后调用 =gl.vertexAttribPointer= 就可以把缓冲区里的数据填充到指定的 =attribute= 变量里面,
+    =attribute= 变量是 =shader= 程序里面定义的变量, 后面会讲到.
 
-    这些变量可以在 =GLSL= 里面被引用.
+    在 =gl.bindBuffer(target, buffer)= 之后调用 =gl.vertexAttribPointer= 就可以把缓冲区里的数据填充到指定的 =attribute= 变量里面.
+
+    在填充到 =attribute= 变量后不要忘记通过 =gl.enableVertexAttribArray( RET-VAL-OF-vertexAttribPointer )= 启用指针.
+
+    这一段对应例子的[[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116][这一部分(94-114行)]]: 往 "aVertexPosition" 变量填充了顶点位置坐标数据, 往 "aVertexColor" 变量填充了顶点颜色数据,
+
+    其中 "aVertexPosition" 和 "aVertexColor" 是 =shader= 程序的 [[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L16-L29][Vertex Shader]] 里面 *声明* 的 =attribute= 变量名, 强调这是声明是因为 =gl.vertexAttribPointer= 的调用实际上就是给这些变量补充定义.
+
+    此外, 当你对 "a_vertexPosition" 和 "a_vertexColor" 两个值进行打印, 你会发现它们的值分别是 0 和 1, 正好对应 =attribute= 变量声明的顺序.
+
+    =Shader= 程序并非只有 =attribute= 变量, 接下来会对 =GLSL= 变量修饰符进行介绍, 掌握了这一块才能算是真正的掌握 =GLSL=.
 
 
 *** GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)
@@ -107,20 +138,47 @@
 
     而不同版本的 =GLSL= 所支持的修饰符是不一定的.
 
-    需要注意的是, [[https://www.khronos.org/registry/webgl/specs/1.0/#4.3][WebGL 规范]] 是基于 =OpenGL ES 2.0= 的, 而 =WebGL= 必须支持 =OpenGL ES 1.00= 版本的着色器语言(Shading Language).
+    需要注意的是, [[https://www.khronos.org/registry/webgl/specs/1.0/#4.3][WebGL 1.0 规范]] 是基于 =OpenGL ES 2.0= 的, 而 =WebGL 1.0= 必须支持 [[https://www.khronos.org/files/opengles_shading_language.pdf][1.00 版本]] 的着色器语言(Shading Language);
 
-    整体上来说, =WebGL= 的 =GLSL= 比起 =OpenGL= 的 =GLSL= 的版本要低, 而 =OpenGL= 的 =GLSL= 的一些修饰符已被废弃的, 这些已被废弃的修饰符还活跃在 =WebGL= 的 =GLSL= 上,
+    [[https://www.khronos.org/registry/webgl/specs/2.0/#4.3][WebGL 2.0 规范]] 是基于 =OpenGL ES 3.0= 的, 它除了像 =WebGL 1.0= 支持 1.00 版本的 =GLSL= 以外, 还新增对了 [[https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf][3.00 版本]] 的着色器语言的支持.
 
-    因此, 我们需要知道这些被废弃的修饰符和新版中的哪些修饰符对应, 以 =WebGL= 作为例子进行学习是一个不错的选择.
+    整体上来说, =WebGL= 的 =GLSL= 比起 =OpenGL= 的 =GLSL= 的版本要低, 而 =OpenGL= 的 =GLSL= 的一些修饰符已被废弃的, 这些已被废弃的修饰符还活跃在 =WebGL 1.0= 的 =GLSL= 上,
 
-    实际上, 开发人员在大部分的 =shading= 时间里面都是只和 =Vertex Shader= 和 =Fragment Shader= 两个阶段打交道, 因此我们主要其中介绍这两个阶段中能用到的修饰符.
+    因此, 我们需要知道这些被废弃的修饰符和新版中的哪些修饰符对应, 其实这一点在切换 =WebGL= 版本的时候就能够发现, 以 =WebGL= 作为例子进行学习实际上是一个不错的选择.
 
-    这里准备了一个例子[[iframe:../../../examples/learn-webgl-how-to-read-data/index.html]]用于进行讲解和实验, 源码可以在[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][这里]]找到.
+    在大部分的时间里面, 开发人员都是在和 =Vertex Shader= 和 =Fragment Shader= 两个阶段打交道, 因此我们主要其中介绍这两个阶段中能用到的修饰符, 大部分是存储修饰符(Storage Qualitifiers),
+
+    在学习的过程中请时不时翻阅上面提供的两个 =GLSL= 版本规范的文档进行参考.
 
 **** Vertex Shader
 
-     在[[section-3][第 3 节]]里面我们已经知道怎么把顶点数据传给 =GPU= 的了, 既然要写 =shader program=, 那么就需要知道如何获取这些顶点数据.
+     在[[section-3][第 3 节]]里面我们已经知道怎么把顶点数据传给 =GPU= 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
 
-     https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L16-L37
+     既然要写 =shader program=, 那么就需要知道如何获取这些顶点数据, 后续可能要根据这些信息进行计算.
 
-     [[iframe:https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116]]
+***** attribute
+
+      它在这篇文章里面第一个被介绍的修饰符, 它属于存储修饰符, 被它修饰后的变量可以简单理解为 =Vertex Shader= 的输入,
+
+      这种变量不能在 =Vertex Shader= 以外的阶段被使用, 同样也不能用在接口块([[https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)][interface block]])里面, 并且这种变量是只读的(read-only).
+
+      作为 =Vertex Shader= 的输入, 也就是说 =attribute= 变量接收的数据一般都是顶点数据了,
+
+      https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttrib
+
+
+
+***** uniform
+
+      例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到
+
+      可以在 =Vertex Shader= 以及 =Fragment Shader= 里面被访问, 同样也不能在接口块里面使用,
+
+      这种变量同样也是只读(read-only).
+
+
+
+
+
+
+     https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116
