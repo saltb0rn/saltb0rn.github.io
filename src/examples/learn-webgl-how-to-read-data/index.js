@@ -87,31 +87,31 @@ function main() {
 
     const buffer = gl.createBuffer();
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW );
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
 
-    const aVertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+    const a_vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
     gl.vertexAttribPointer(
-        0,
+        a_vertexPosition,
         4,
         gl.FLOAT,
         false,
         32,
         0
     );
-    gl.enableVertexAttribArray(aVertexPosition);
+    gl.enableVertexAttribArray(a_vertexPosition);
 
-    const aVertexColor = gl.getAttribLocation(shaderProgram, 'aVertexColor');
+    const a_vertexColor = gl.getAttribLocation(shaderProgram, 'aVertexColor');
     gl.vertexAttribPointer(
-        aVertexColor,
+        a_vertexColor,
         4,
         gl.FLOAT,
         false,
         32,
         16
     );
-    gl.enableVertexAttribArray(aVertexColor);
+    gl.enableVertexAttribArray(a_vertexColor);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
 
