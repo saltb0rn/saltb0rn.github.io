@@ -1,4 +1,4 @@
-#+title: WebGL的Buffer对象
+#+title: OpenGL/WebGL自救指南
 #+date: 2022-02-11
 #+index: WebGL的Buffer对象
 #+tags: WebGL
@@ -15,18 +15,18 @@
 
 =OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
 
-要真正掌握 =OpenGL= 的 =Shading Language= (GLSL), 就需要理解这一块.
+要真正掌握 =OpenGL= 的 =Shading Language= (GLSL) 就需要理解这一块.
 
 没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
 #+end_abstract
 
 *** WebGL是如何工作的
 
-    事实上, =WebGL= 如何工作什么的, 已经有很多教程已经讲得很清楚了, 比如下面这两个图文并茂的链接.
+    事实上, =WebGL= 如何工作什么的, 已经有很多教程已经讲得很清楚了, 比如下面这两个图文并茂的链接:
 
-    https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html
+    - [[https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html][WebGL Fundamentals 的 WebGL是如何工作的]]
 
-    https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html
+    - [[https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html][WebGL2 Fundamentals 的 WebGL是如何工作的]]
 
     # https://iquilezles.org/articles/
 
@@ -39,6 +39,7 @@
     在阅读下面的内容前把例子的代码复制到本地, 然后边阅读边对照, 有疑惑可以修改代码查看效果.
 
     需要注意的是, 这个例子是基于 =WebGL 1.0= 的.
+
 
 *** OpenGL/WebGL 上下文是如何储存数据
 
@@ -67,7 +68,9 @@
 
     一旦有了数据源, 就可以让 =GPU= 根据利用这些数据来渲染了.
 
-    实际上, 除了这些用作几何图形的数据以外, 还有其他的数据并非存到缓冲区里面的, 后面介绍这些数据.
+    人们一般喜欢把这些顶点数据称为几何数据(Geometry Data).
+
+    实际上, 除了几何数据以外, 还有其他的数据并非存到缓冲区里面的, 后面介绍这些数据.
 
 
 *** <<section-3>>OpenGL/WebGL 上下文是如何使用数据
@@ -115,9 +118,9 @@
 
     这一段对应例子的[[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116][这一部分(94-114行)]]: 往 "aVertexPosition" 变量填充了顶点位置坐标数据, 往 "aVertexColor" 变量填充了顶点颜色数据,
 
-    其中 "aVertexPosition" 和 "aVertexColor" 是 =shader= 程序的 [[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L16-L29][Vertex Shader]] 里面 *声明* 的 =attribute= 变量名, 强调这是声明是因为 =gl.vertexAttribPointer= 的调用实际上就是给这些变量补充定义.
+    其中 =aVertexPosition= 和 =aVertexColor= 是 =shader= 程序的 [[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L16-L29][Vertex Shader]] 里面 *声明* 的 =attribute= 变量名, 强调这是声明是因为 =gl.vertexAttribPointer= 的调用实际上就是给这些变量补充定义.
 
-    此外, 当你对 "a_vertexPosition" 和 "a_vertexColor" 两个值进行打印, 你会发现它们的值分别是 0 和 1, 正好对应 =attribute= 变量声明的顺序.
+    此外, 当你对 =a_vertexPosition= 和 =a_vertexColor= 两个值进行打印, 你会发现它们的值分别是 0 和 1, 正好对应 =attribute= 变量声明的顺序.
 
     =Shader= 程序并非只有 =attribute= 变量, 接下来会对 =GLSL= 变量修饰符进行介绍, 掌握了这一块才能算是真正的掌握 =GLSL=.
 
@@ -164,21 +167,68 @@
 
       作为 =Vertex Shader= 的输入, 也就是说 =attribute= 变量接收的数据一般都是顶点数据了,
 
-      https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttrib
-
-
+      # https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttrib
 
 ***** uniform
 
-      例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到
+      例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到,
 
-      可以在 =Vertex Shader= 以及 =Fragment Shader= 里面被访问, 同样也不能在接口块里面使用,
+      也就是可以在 =Vertex Shader= 以及 =Fragment Shader= 访问这些变量, 同样也不能在接口块里面使用,
 
       这种变量同样也是只读(read-only).
 
+      # https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116
 
+*** 搭建自己的 Shadertoy
 
+    如果想在编写 =shader= 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 =shader= 并从中学习, 自己还要动手实践.
 
+    有一个叫做 [[https://www.shadertoy.com/][Shadertoy]] 网站, 上面有好多高人分享自己的 =shaders=, 是一个庞大的学习资源库.
 
+    关于阅读代码, 我是始终坚持一个观点, 那就是读源码的第一点是要读得懂, 否者不可能有所收获;
 
-     https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116
+    这里的"读得懂"并非说掌握代码所使用得语言, 而是知道源代码里面这么写是为什么, 这个为什么的答案终点就是用了什么算法或者技巧.
+
+    这一点在 =shader code= 里面是非常好理解的, 在这个 =shader= 里面,为了实现这个效果使用了哪些数学公式或者概念.
+
+    当做到了这一点我们就能够达到入门水平了, 反过来知道用哪些数学公式或者概念去实现这个效果了;
+
+    如果后面能够深入理解掌握的数学公式或者概念, 就能知道它们能够解决什么问题以及用于实现那些自己以前没有实现过的效果了.
+
+    说了这么多好像, 跟这篇文章的内容无关啊?
+
+    其实不然, 我这里一直都在强调"学习别人要先保证自己学得懂"这个观点, 学不懂是因为你有一些前置条件没达到,
+
+    读得懂 =Shadertoy= 上的源代码要先知道要理解 =Shadertoy= 是如何工作, 它上面的 =shader= 都有 =Shadertoy= 内置的一些变量,
+
+    清楚这些内置变量的定义是不可缺的, 而要理解清楚它们的定义就得知道在 =OpenGL/WebGL= 中如何 =GPU= 传入数据, 如何在 =GPU= 里面操作数据,
+
+    这不正好是文章的内容吗?
+
+    理解一件事物的最好方式就是把它构造出来, 正好 =WebGL Fundamentals= 以及 =WebGL2 Fundamentals= 都提供了教程告诉读者如何从 =Shadertoy= 扒代码,
+
+    或者如何在 =Shadertoy= 上面分享代码, 说简单点就是如何搭建自己的 =Shadertoy=:
+
+    - =WebGL Fundamentals= 的 [[https://webglfundamentals.org/webgl/lessons/webgl-drawing-without-data.html][Shadertoy 搭建教程]]
+
+    - =WebGL2 Fundamentals= 的 [[https://webgl2fundamentals.org/webgl/lessons/webgl-shadertoy.html][Shadertoy 搭建教程]]
+
+    \\
+
+    其实这两个教程就是使用的 =WebGL= 的版本不太一样而已, 选用你喜欢的就好,
+
+    =Shadertoy= 上的代码基本上都是只用 =Fragment Shader= 实现效果的, 但是还存在这么一个网站, 它包含了各种只使用 =Vertex Shader= 但不使用任何几何输入来实现各种效果的 =Shader= 程序, 它就是 [[https://www.vertexshaderart.com/][VertexShaderArt]].
+
+    =WebGL Fundamentals= 以及 =WebGL2 Fundamentals= 在提供 "Shadertoy 搭建教程" 前提供了对应的教程:
+
+    - =WebGL Fundamentals= 的 [[https://webglfundamentals.org/webgl/lessons/webgl-drawing-without-data.html][不使用几何数据作图教程]]
+
+    - =WebGL2 Fundamentals= 的 [[https://webgl2fundamentals.org/webgl/lessons/webgl-drawing-without-data.html][不适用几何数据作图教程]]
+
+    \\
+
+    在其他人眼里, 它们可能是两个规则不同的游戏, 但因为 =Fragment Shader= 是针对像素进行处理的, 可玩性比 =Vertex Shader= 更高, 因此人们可能更偏向 =Shadertoy=;
+
+    但在我眼里, 它们都是学习资源, 因此我不偏爱于任何一个网站.
+
+    =WebGL Fundamentals= 和 =WebGL2 Fundamentals= 这两个网站都声明了: 这些教程的意义就是让你对 =WebGL= 的工作方式有个更好的理解.
