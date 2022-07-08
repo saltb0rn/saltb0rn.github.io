@@ -37,11 +37,20 @@
     #+CAPTION: Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)
     [[../../../files/vertex-shader-anim.gif]]
 
-    =Vertex Shader= 能做的事情很有限, 就只有设定顶点坐标(设定 =gl_Position= )以及向后面的渲染流水线后面的阶段传递数据.
+    =Vertex Shader= 能做的事情很有限, 就只有设定顶点坐标(设定 =gl_Position= )以及向后面的[[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流水线]]后面的阶段传递数据.
 
-    经过几个阶段后到达光栅化阶段, 该阶段会产生一种叫做片元(=fragments=)的数据, 片元就是一种类像素数据(=pixel-like data=),
+    拿到经过 =Vertex Shader= 处理的顶点数据后, =OpenGL= 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
 
-    =Fragment Shader= 会处理这些片元数据,生产像素,而像素就是一个色值(RGB/RGBA).
+    当然 =OpenGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=)
+
+    当到达光栅化(=Rasterization=)阶段时, 该阶段会产生一种叫做片元(=fragments=)的数据, 片元就是一种类像素数据(=pixel-like data=),
+
+    像素单纯就是一个 =RGBA= 格式的色值, 片元比像素多了一些深度(depth), 纹理数据.
+
+    光栅化实际上就是把一个图元(primitive)转换成一种特殊的图片, 这种图片
+
+
+    =Fragment Shader= 会处理这些片元数据,生产像素,而像素就是
 
     这里对片元的概念可能不太好理解, 我的个人看法是, 可以按照 =DirectX= 那样把它们看做是一个东西,
 
@@ -55,7 +64,7 @@
 
     # https://stackoverflow.com/questions/11375965/what-is-fragment-in-opengl-and-other-basic-graphics-questions
 
-    每当光栅化得到一个片元, =Fragment Shader= 就开始对这个像素点进行处理.
+    每当光栅化得到一个片元时, =Fragment Shader= 就开始对这个片元进行处理,并且得到一个像素.
 
     # #+CAPTION: Fragment Shader 对像素进行处理 (图片来源于上述链接)
     # ../../../files/
@@ -203,13 +212,14 @@
 
 ***** uniform
 
-      例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到,
+      例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元(=primitive=)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
 
       也就是可以在 =Vertex Shader= 以及 =Fragment Shader= 访问这些变量, 同样也不能在接口块里面使用,
 
       这种变量同样也是只读(read-only).
 
       # https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116
+
 
 *** 搭建自己的 Shadertoy
 
