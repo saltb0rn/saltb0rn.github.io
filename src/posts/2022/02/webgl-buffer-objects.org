@@ -11,7 +11,7 @@
 
 也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 =WebGL= 的掌握阶段.
 
-我决定先从 =WebGL= 开始进行康复锻炼,  因为我当时还是有些地方缺乏理解:
+我决定先从 =WebGL= 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
 
 =OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
 
@@ -32,47 +32,55 @@
 
     在开发的时候基本上只要关注 =Vertex Shader= 和 =Fragment Shader= 两个阶段就可以了:
 
-    =Vertex Shader= 根据几何数据计算出另外一种坐标, 每当接收一个顶点数据, =Vertex Shader= 就运行一遍, 如下图所示:
+    - =Vertex Shader=
 
-    #+CAPTION: Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)
-    [[../../../files/vertex-shader-anim.gif]]
+      =Vertex Shader= 根据几何数据计算出另外一种坐标, 每当接收一个顶点数据, =Vertex Shader= 就运行一遍, 如下图所示:
 
-    =Vertex Shader= 能做的事情很有限, 就只有 *设置* (不是返回) 顶点坐标(设置 =gl_Position= )以及向后面的[[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流水线]]后面的阶段传递数据.
+      #+CAPTION: Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)
+      [[../../../files/vertex-shader-anim.gif]]
 
-    拿到经过 =Vertex Shader= 处理的顶点数据后, =OpenGL= 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+      =Vertex Shader= 能做的事情很有限, 就只有 *设置* (不是返回) 顶点坐标(设置 =gl_Position= )以及向后面的[[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流水线]]后面的阶段传递数据.
 
-    当然 =OpenGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
+    - =Fragment Shader=
 
-    然后就到光栅化(=Rasterization=)阶段, 该阶段会把一个图元拆分成若干个片元(=fragments=), 片元就是一种类像素数据(=pixel-like data=),
+      在理解 =Fragment shader= 做的事情之前, 我们需要理解一些额外的概念.
 
-    =Fragment Shader= 就是一次接收一个片元作为输入, 以处理后的片元作为输出, [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 在没有特别声明的情况下片元就是指输出的片元.
+      在拿到经过 =Vertex Shader= 处理的顶点数据后, =OpenGL= 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
 
-    输出的片元
+      当然 =OpenGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
 
-    像素单纯就是一个 =RGBA= 格式的色值, 而片元比像素多了一些深度(depth), 纹理数据的信息.
+      之后就到光栅化(=Rasterization=)阶段, 该阶段会把一个图元拆分成若干个片元(=fragments=), 片元就是一种类像素数据(=pixel-like data=), 我们可以先把像素(pixel)定义为显示在屏幕上的一个颜色点.
 
-    =Fragment Shader= 会处理这些片元数据,生产像素,而像素就是
+      =Fragment Shader= 就是一次接收一个片元作为输入, 以处理后的片元作为输出, [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 在没有特别声明的情况下片元就是指输出的片元.
 
-    这里对片元的概念可能不太好理解, 我的个人看法是, 可以按照 =DirectX= 那样把它们看做是一个东西,
+      相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息,
 
-    只是片元是在三维空间中的色值, 像素是二维空间中的色值, 举个例子, 我们用数码相机拍一根材料颜色不均匀的绳子的横截面,
+      需要知道这些数据的含义, 或者说理解片元, 那么得先了解可能发生在 =Fragment Shader= 前后的 =Per-Sample Processing= 阶段做了什么,
 
-    我们把这个绳子看做一条直线, 那么在得到的照片里面只能看到这个直线横截面的颜色, 横截面后面的被挡住了,
+      该阶段会使用上片元的这些额外值来进行[[https://www.khronos.org/opengl/wiki/Per-Sample_Processing][一系列的测试]], 来决定是否把该片元的色值输出到屏幕上成为像素,
 
-    这个最终成为胜者的出现在照片中的色值就叫像素.
+      这里就讨论剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test) 这三个测试(这里是它们的先后顺序).
 
-    换到图形学里面, 你可以这么粗暴地把一个出现在屏幕上的色值叫做像素, 而那些有机会出现在屏幕上面的色值就是片元, 因此可以把片元理解为 *潜在像素*.
+      其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元;
 
-    # https://stackoverflow.com/questions/11375965/what-is-fragment-in-opengl-and-other-basic-graphics-questions
+      而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲区(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
 
-    每当光栅化得到一个片元时, =Fragment Shader= 就开始对这个片元进行处理,并且得到一个像素.
+      为了刚直观的理解, 我直接从 [[https://learnopengl.com/Advanced-OpenGL/Stencil-testing][LearnOpenGL]] 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
 
-    # #+CAPTION: Fragment Shader 对像素进行处理 (图片来源于上述链接)
-    # ../../../files/
+      #+CAPTION: 模板测试
+      [[../../../files/stencil_test.png]]
 
-    因此, 这里就不再赘述了, 而这篇文章主要是针对上面两个链接的内容进行总结和补充.
+      可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个元素的值的范围是 0 到 255,
 
-    为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][例子]]用于讲解, 效果如下:
+      模板测试就是比较对应位置上的元素值和片元模板值, 比如像上面图那样, 只有模板值等于1的片元才能被保留下来.
+
+      当然判断方法也有可能是大于等于1, 判断方法不是唯一的.
+
+      现在对片元的存在有一个充分的了解了, 那么开发人员需要在 =Fragment Shader= 里面做些什么呢? 其实就是设定片元的颜色(设置 =gl_FragColor=).
+
+    \\
+
+    本文会针对这两个阶段里面的一些细节进行深入学习, 为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][例子]]用于讲解, 效果如下:
 
     [[iframe:../../../examples/learn-webgl-how-to-read-data/index.html]]
 
