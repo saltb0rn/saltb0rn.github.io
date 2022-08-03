@@ -2713,12 +2713,29 @@
                nasm -f elf64 -g -F stabs mathlib.asm
      #+END_SRC
 
+     或者
+
+     #+BEGIN_SRC makefile
+     main: main.o mathlib.a
+	     ld -o main main.o -l:mathlib.a -L.
+     main.o: main.asm
+             nasm -f elf64 -g -F stabs main.asm
+     mathlib.a: mathlib.o
+             ar rcs mathlib.a mathlib.o
+     mathlib.o: mathlib.asm
+             nasm -f elf64 -g -F stabs mathlib.asm
+     #+END_SRC
+
      #+BEGIN_SRC sh
        ./main
        echo $?
      #+END_SRC
 
      =echo $?= 是输出上一个命令的返回码,程序没有错的话可以看到输出10.(之所以这么做是因为 =gdb= 貌似不能调试动态库提供的函数.)
+
+     第二个则是使用了 =ar= 创建了一个 =mathlib.a= 静态库, 一个静态库实际上就是一个由若干个 =object= 文件组成的集合,
+
+     如果你的目的是发布库, 那么推荐使用第二种方法.
 
      再来动态连接,
 
@@ -2732,8 +2749,8 @@
        mathlib.o: mathlib.asm
                nasm -f elf64 -g -F stabs mathlib.asm
      #+END_SRC
-
-     同样,如果程序没有任何问题,那么同样返回值是10;如果把 =mathlib.so= 改了个名字或者移除掉的话, =main= 就会运行不了,并且报错:
+     
+     同样, 如果程序没有任何问题, 那么同样返回值是10; 如果把 =mathlib.so= 改了个名字或者移除掉的话, =main= 就会运行不了,并且报错:
 
      "./main: error while loading shared libraries: mathlib.so: cannot open shared object file: No such file or directory".
 
@@ -2743,11 +2760,13 @@
 
      而且在最后生成可执行文件 =main= 时要告诉 =ld= 命令: =math.o= 文件要如何和动态库 =mathlib.so= 连接.
 
-     =ld= 命令的 =-I= 选项是指定用使用哪一个动态连接器,由于我们生成的是64位程序,所以要使用64位的动态连接器, =Ubuntu= 的64位动态连接器位于 =/lib64/ld-linux-x86-64.so.2=;
+     =ld= 命令的 =-I= 选项是指定用使用哪一个动态连接器, 当链接生成目标的一个引用动态库的 =ELF= 程序时, 可能需要手动设定一下动态连接器, =Ubuntu= 的64位动态连接器位于 =/lib64/ld-linux-x86-64.so.2=;
 
-     =ld= 的 =-l= 选项用来指定要连接哪个动态库,这里指定了 =mathlib.so=;
+     =ld= 的 =-L= 选项是指定在哪个目录下搜索即将链接的库文件, 由于是生成的 =mathlib.so= 在当前目录下, 所以这里指定了 =.=;
 
-     =ld= 的 =-L= 选项是指定在哪个目录下搜索动态连接库文件,由于是生成的 =mathlib.so= 在当前目录下,所以这里指定了 =.=;
+     =ld= 的 =-l= 选项用来指定要连接哪个库, 它有两种语法 =-l:filename= 以及 =-l name=,
+
+     第一种是从指定路径下找到名字叫做 =filename= 的库文件, 第二种是从指定的搜索路径中查找名字叫 =libname.a= 或者 =libname.so= 的库文件, 我们这个例子里面用的是第一种写法;
 
      =ld= 的 =-rpath= 选项是指定可执行程序在运行时搜索动态连接库文件的目录,也就是 =main= 在运行时在什么地方找 =mathlib.so= 文件.
 
@@ -2796,6 +2815,16 @@
                ld -shared -o mathlib.so mathlib.o
        mathlib.o: mathlib.asm
                nasm -f elf64 -g -F stabs mathlib.asm
+     #+END_SRC
+
+     当我们得到一个动态链接程序以后, 可以使用 =ldd= 命令来查看它链接了哪些动态库文件,
+
+     #+BEGIN_SRC sh
+     ldd main
+     #  结果大概如下:
+     # 
+     #	linux-vdso.so.1 (0x00007fff02522000)
+     #	mathlib.so => ./mathlib.so (0x00007fd278704000)
      #+END_SRC
 
 **** 宏(Macros)
@@ -2944,7 +2973,7 @@
 
      #+BEGIN_SRC makefile
        callc: callc.o
-          gcc -no-pie .callc.o -o callc
+          gcc -no-pie callc.o -o callc
        callc.o: callc.asm
           nasm -f elf64 -g -F stabs callc.asm
      #+END_SRC
@@ -3865,7 +3894,6 @@
      常见的编程语言实现中, =V8(JavaScript)= 的虚拟机就是寄存器机, 官方 =Python= 的虚拟机就是堆栈机.
 
      一旦你知道虚拟机是采用哪种实现,你就可以知道如何阅读它们的字节码了,当然你还要有它们的字节码说明.
-
 
 *** 之后的路
 
