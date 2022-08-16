@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2021-09-30 ���� 13:08 -->
+<!-- 2022-07-21 四 15:21 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Sllgen Parser</title>
@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: auto;
+    overflow: visible;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline; margin-top: 14px;}
+  pre.src:hover:before { display: inline;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -198,26 +198,50 @@
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
 <script type="text/javascript">
-// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
 <!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
 </script>
 </head>
 <body>
@@ -234,7 +258,7 @@
 </div>
 <div id="content">
 <h1 class="title">The Sllgen Parser</h1>
-<div class="abstract" id="org90c1c06">
+<div class="abstract">
 <p>
 <code>EOPL</code> 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写直译器, <code>parser</code> 部分只有在附录里面详细说明(可以理解,因为 <code>parser</code> 不是 <code>interpreter</code> 的一部分).
 </p>
@@ -245,9 +269,9 @@
 
 </div>
 
-<div id="outline-container-org23859b6" class="outline-2">
-<h2 id="org23859b6">实现一门语言的流程/模式</h2>
-<div class="outline-text-2" id="text-org23859b6">
+<div id="outline-container-org0154ef8" class="outline-2">
+<h2 id="org0154ef8">实现一门语言的流程/模式</h2>
+<div class="outline-text-2" id="text-org0154ef8">
 <p>
 <code>EOPL</code> 上面说过以实现一门直译语言的整个流程分两步,第一步就是 <code>scanning</code> 和 <code>parsing</code>,第二步就是 <code>interpreting</code> 或者 <code>compiling</code>.
 </p>
@@ -309,9 +333,9 @@
 </div>
 
 
-<div id="outline-container-orgf3d48f1" class="outline-2">
-<h2 id="orgf3d48f1">什么是 lexer generator, parser generator, lexer 和 parser.</h2>
-<div class="outline-text-2" id="text-orgf3d48f1">
+<div id="outline-container-org03d5f1c" class="outline-2">
+<h2 id="org03d5f1c">什么是 lexer generator, parser generator, lexer 和 parser.</h2>
+<div class="outline-text-2" id="text-org03d5f1c">
 <p>
 <code>Parser generator</code> <b>接受 grammar 作为输入然后输出可以根据 grammar 解析字符串流的源代码</b>.
 </p>
@@ -355,9 +379,9 @@
 </div>
 
 
-<div id="outline-container-org4a184c2" class="outline-2">
-<h2 id="org4a184c2">Scanning</h2>
-<div class="outline-text-2" id="text-org4a184c2">
+<div id="outline-container-org3e13a71" class="outline-2">
+<h2 id="org3e13a71">Scanning</h2>
+<div class="outline-text-2" id="text-org3e13a71">
 <p>
 <code>tokens</code> 一定要是原子,也就是不可再划分,这需要根据部分的语言规范(<code>the part of language specification</code>)来划分,这部分的语言规范叫做词法规范(<code>lexical specification</code>).
 </p>
@@ -379,7 +403,7 @@
 </ol>
 
 
-<div id="org254b30c" class="figure">
+<div class="figure">
 <p><img src="../../../files/the-task-of-the-scanner.png" alt="the-task-of-the-scanner.png">
 </p>
 </div>
@@ -424,7 +448,7 @@
 我直接采用 <code>EOPL</code> 第三章的 <code>LET</code> 语言做为例子, <code>LET</code> 的词法规范如下,
 </p>
 
-<pre class="example" id="org3932eba">
+<pre class="example">
 whitespace = (space|newline)(space|newline)*
 comment = %(¬ newline)*
 identifier = letter (letter|digit)*
@@ -451,7 +475,7 @@ number = (-|"")digit digit*
 <code>Sllgen</code> 的 <code>scanner</code> 规范要满足这个 <code>BNF</code> 语法,也是和正则表达式差不多,
 </p>
 
-<pre class="example" id="org81dee02">
+<pre class="example">
 Scanner-spec      :: = ({Regexp-and-action}∗)
 Regexp-and-action :: = (Name ({Regexp}∗) Action)
 Name              :: = Symbol
@@ -472,9 +496,9 @@ Action            :: = skip | symbol | number | string
 </div>
 
 
-<div id="outline-container-org7037e6a" class="outline-2">
-<h2 id="org7037e6a">Parsing</h2>
-<div class="outline-text-2" id="text-org7037e6a">
+<div id="outline-container-org0ed2c9f" class="outline-2">
+<h2 id="org0ed2c9f">Parsing</h2>
+<div class="outline-text-2" id="text-org0ed2c9f">
 <p>
 得到 <code>tokens</code> 后就可以把它们转成 <code>AST</code>,这么一步要求知道语言的句法结构,也被叫做上下文无关语法(<code>context-free grammar</code>),可以通过 <code>BNF</code> 进行定义.
 </p>
@@ -483,7 +507,7 @@ Action            :: = skip | symbol | number | string
 <code>LET</code> 的 <code>grammar</code> 定义如下,
 </p>
 
-<pre class="example" id="org3274e7a">
+<pre class="example">
 A-program  :: = Expression
 Expression :: = Identifier
            :: = Number
@@ -528,7 +552,7 @@ Expression :: = Identifier
 <code>Sllgen</code> 的 <code>grammar</code> 的定义要满足如下语法,
 </p>
 
-<pre class="example" id="orga9928db">
+<pre class="example">
 Grammar    :: = ({Production}∗)
 Production :: = (Lhs ({Rhs-item}∗) Prod-name)
 Lhs        :: = Symbol
@@ -593,17 +617,17 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org4eb013c" class="outline-2">
-<h2 id="org4eb013c">准备完毕</h2>
-<div class="outline-text-2" id="text-org4eb013c">
+<div id="outline-container-org0e02c67" class="outline-2">
+<h2 id="org0e02c67">准备完毕</h2>
+<div class="outline-text-2" id="text-org0e02c67">
 <p>
 上面的两个部分已经准备好了 <code>Sllgen</code> 需要的参数了,可以开始正式使用 <code>Sllgen</code> 完成语言实现中第一步的所有工作.
 </p>
 </div>
 
-<div id="outline-container-orgb1f1c4e" class="outline-3">
-<h3 id="orgb1f1c4e">生成定义B</h3>
-<div class="outline-text-3" id="text-orgb1f1c4e">
+<div id="outline-container-org3efa0d5" class="outline-3">
+<h3 id="org3efa0d5">生成定义B</h3>
+<div class="outline-text-3" id="text-org3efa0d5">
 <div class="org-src-container">
 <pre class="src src-scheme">(sllgen:make-define-datatypes the-lexical-spec the-grammar)
 </pre>
@@ -612,9 +636,9 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org8a2e898" class="outline-3">
-<h3 id="org8a2e898">生成 Scanner</h3>
-<div class="outline-text-3" id="text-org8a2e898">
+<div id="outline-container-orgb2e5d84" class="outline-3">
+<h3 id="orgb2e5d84">生成 Scanner</h3>
+<div class="outline-text-3" id="text-orgb2e5d84">
 <div class="org-src-container">
 <pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">just-scan</span>
   (sllgen:make-string-scanner the-lexical-spec the-grammar))
@@ -624,9 +648,9 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org961457a" class="outline-3">
-<h3 id="org961457a">生成 Parser</h3>
-<div class="outline-text-3" id="text-org961457a">
+<div id="outline-container-orgabf4965" class="outline-3">
+<h3 id="orgabf4965">生成 Parser</h3>
+<div class="outline-text-3" id="text-orgabf4965">
 <div class="org-src-container">
 <pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">scan&amp;parse</span>
   (sllgen:make-string-parser the-lexical-spec the-grammar))
@@ -636,9 +660,9 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org61df89f" class="outline-3">
-<h3 id="org61df89f">定义 REPL</h3>
-<div class="outline-text-3" id="text-org61df89f">
+<div id="outline-container-org803ae7b" class="outline-3">
+<h3 id="org803ae7b">定义 REPL</h3>
+<div class="outline-text-3" id="text-org803ae7b">
 <div class="org-src-container">
 <pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">read-eval-print</span>
   (sllgen:make-rep-loop
@@ -655,9 +679,9 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-orgd9051df" class="outline-3">
-<h3 id="orgd9051df">完整的例子</h3>
-<div class="outline-text-3" id="text-orgd9051df">
+<div id="outline-container-org1f9706d" class="outline-3">
+<h3 id="org1f9706d">完整的例子</h3>
+<div class="outline-text-3" id="text-org1f9706d">
 <p>
 <b>注意</b>: 由于没有实现 <code>interpreter</code>,所以 <code>parsing</code> 后就直接返回 <code>AST</code>.
 </p>
@@ -764,8 +788,8 @@ Prod-name  :: = Symbol
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-11-03</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.4.6)</p>
-<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

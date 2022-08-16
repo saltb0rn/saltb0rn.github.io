@@ -1,0 +1,1 @@
+- [[file:../posts/2022/02/webgl-buffer-objects.org][OpenGL/WebGL自救指南]]

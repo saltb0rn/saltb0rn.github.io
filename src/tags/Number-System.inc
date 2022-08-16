@@ -1,0 +1,1 @@
+- [[file:../posts/2022/01/floating-number-in-binary.org][计算机眼中的浮点数]]

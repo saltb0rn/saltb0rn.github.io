@@ -7,7 +7,7 @@
 
 这本书的内容是围绕32位来讲的,我读的时候64位架构已经很普遍了,也就是说这本书已经有点过时了,况且关于浮点数这块基本上没讲过.
 
-总体而言,在32位和64位上写汇编的差别不是很大,加上互联网的存在,这点差别都是可以很容易解决的.
+总体而言,在32位和64位上写汇编的差别不是很大,加上互联网的存在,这点差异一般都造不成什么大问题.
 
 现在有两个问题: 为什么要学汇编(assembly)? 如何学汇编?
 
@@ -505,19 +505,6 @@
 
     程序需要不停地从段寄存器切入和切出值,来实现在段之间进行切换,这无疑是增加了程序开发的难度.
 
-    =Intel 8086= 有一类寄存器叫做段寄存器(segment registers), 就是用来记录内存指针的,
-
-    这些内存指针指向"事情"开始的位置,可以是数据储存,代码执行或者其它东西,
-
-    其中一个是具体是某一段内存的开始位置,也就是某一个 =Intel 8080= 内存地系统的开始,
-
-    =CP/M-80= 的程序可以愉快的在 =64K= 区域内运行.
-
-    #+CAPTION: 英特尔-8086 内存模型
-    [[../../../files/intel-8086-memory-model.png]]
-
-    =8086= 和 =8088= 有 4 个段寄存器,那个指向 =64K= 区块的起始位置的寄存器叫做 =code segement=,简称 =CS=.
-
     这个能访问到内存上的 =1M= 内存叫做实模式内存(read mode memory),
 
     虽然说最大访问内存是 =1M=, 但 =CPU= 每一次只能访问 =64K= 字节,就像有一个挡板一样限制 =CPU= 只能"看到" =64K= 字节.
@@ -618,7 +605,7 @@
 
     而它们的名字就能够反映它们的作用.
 
-    我们从 *段寄存器开始* (segment registers),段寄存器有 4 类.
+    我们从 *段寄存器* (segment registers) 开始,段寄存器有 4 类.
 
     在 =8088=, =8086= 和 =80286= 这三个 =CPU= 上,每个 =CPU= 都只有 4 个段寄存器;
 
@@ -848,23 +835,29 @@
 
     在保护模式平面模型中,段寄存器依然存在,但是已经完全被操作系统接管了,已经是操作系统的一部分了,
 
-    基本上不能对它们进行读写了,并且它们的工作也发生了改变: 定义你的 =4GB= 内存空间出现在物理内存和虚拟内存的何处.
+    基本上不能对它们进行读写了,并且它们的工作也发生了改变: 定义你的 =4GB= 内存空间位于物理内存或虚拟内存(virtual memory space)的何处.
 
     所谓虚拟内存就是把内存空间临时映射到硬盘上,把硬盘当作内存来使用,这是操作系统管理内存的技术,比如 =Linux= 的 =Swap=.
 
     =80386= 是首个 =32-bit CPU=, =32-bit= 寄存器意味着它能够储存 0 到 $2^{32}-1$ 内存地址中的任意一个.
 
-    如果计算机超过 =4G= 内存,操作系统给出一块 =4GB= 大小的连续内存区域,所有程序都会被限制在这块区域上;
+    如果计算机的物理内存超过 =4G= 内存,操作系统必须在物理内存里面规划一块 =4GB= 大小的连续区域来给你的程序运行,区域的指定就是段寄存器的工作了,从哪里开始,到哪里结束.
 
-    如果计算机只有 =4G= 内存,操作系统就会使用虚拟内存获得一块完整的 =4GB= 内存空间.
+    (如果不够 =4G= 那就只能有多少用多少, 无需规划.)
 
-    定义这块内存所处位置的工作就分摊到每个寄存器上了.
+    有了虚拟内存这项技术,操作系统可以给每个程序单独分配一个一定大小的虚拟内存空间,这个空间大小一般是和物理内存大小一样的,我们这里就暂选 =4G= 吧.
 
-    这 =4G= 内存有一部分是给操作系统准备的,剩下的都是是应用程序的,操作系统的内存是被保护起来的,不能使用也不能看,
+    要注意的是,这 =4G= 的虚拟内存也不是全给程序使用的,有一部分是给操作系统准备,并且操作系统的这块内存是被保护起来的,上图就是这块内存地址的布局;
 
-    一但应用程序试图访问这些内存,就会触发运行时错误(runtime error).
+    一旦应用程序试图访问操作系统那块的内存,就会触发运行时错误(runtime error).
 
-    在实模式平面模型下,程序拥有操作系统"转手"的 =64K= 内存的使用权;此外就是段寄存器可以被程序员操作,以及通用寄存器能够储存的地址范围比较小.
+    当程序真正需要使用物理内存时,操作系统会把虚拟内存上的内容写入到物理内存上,其实这个过程包含了很多细节,关于是如何把虚拟内存地址翻译成物理内存地址的,
+
+    这块是属于操作系统方面的知识了,超出本文的范围,有兴趣可以自行到网上搜索, 个人推荐 [[https://www.bilibili.com/video/BV1oi4y1T7RP][内存管理-内存地址]] 和 [[https://www.bilibili.com/video/BV18v411a7Vk][内存管理-虚拟内存]] 这两个视频.
+
+    其实从大体上来看,保护模式平面模型和实模式平面模型还是挺像的.
+
+    在实模式平面模型下,每个程序拥有操作系统分配的 =64K= 内存的使用权;段寄存器可以被程序员操作(,就这一点不太像);通用寄存器能够储存的地址范围比较小.
 
     \\
 
@@ -991,7 +984,7 @@
     - 程序代码,包括已命名的过程(named procedures);
     - 对模块外的已命名过程的引用(references);
     - 预先赋了值(比如数字和字符串)的已命名数据(named data)对象;
-    - 没有赋值的已命名数据,相当于空白空间,等程序员后学使用;
+    - 没有赋值的已命名数据,相当于空白空间,等程序员后续使用;
     - 对模块外数据对象的引用;
     - 调试信息(debugging information);
     - 一些用来帮助连接器创建可执行程序的杂项(odds and ends);
@@ -1255,9 +1248,15 @@
 
     由于我们使用的是 =64-bit CPU=,因此编译时候需告诉 =nasm= 要生成 =64-bit= 的目标模块,
 
-    把 =-f= 参数设定为 =elf64= 就是编译成 =64-bit= 的 =elf= 文件, =elf= 是一种可执行文件格式,不同的可执行文件格式会导致变汇编方式不一样,也导致了编码方式不一样,具体可以看 =NASM= 的官方文档.
+    把 =-f= 参数设定为 =elf64= 就是编译成 =64-bit= 的 =elf= 文件, =elf= 是一种在 =Linux= 系统上使用的 [[https://en.wikipedia.org/wiki/Comparison_of_executable_file_formats][可执行和连接的二进制文件格式]](, 其实还有一些别的系统有使用过).
 
-    =-g= 是说要生成调试信息,但调试信息的格式有很多种,所以还需要通过 =-F= 参数选择格式,这里选择 =STABS=,也就是设置为 "stabs".
+    不同类型的操作系统上所使用的可执行文件格式都不同, 操作系统在运行程序时会按照所支持的文件格式对程序进行解析,然后加载到内存里面,
+
+    这就是为什么 =Windows= 的 =PE= 格式的可执行文件不能在 =Linux= 上执行, 反过来也一样, 后面我会介绍一下 =ELF= 这种文件格式.
+
+    (然而哪怕能够解析对方的格式也不一定能够成功运行对方的程序, 这里还有好多其它因素, 比如 =ABI= 调用规范, 程序使用了系统特定的接口等等, 这些下文会有提到.)
+
+    =-g= 是说要生成调试信息, 但[[https://en.wikipedia.org/wiki/Debugging_data_format][调试信息的格式]]有很多种, 所以还需要通过 =-F= 参数选择格式, 这里选择 =STABS=, 也就是设置为 "stabs".
 
     如果对上面的源代码文件的指令有不理解和对 =NASM= 的使用有疑问,可以看 =NASM= 的[[https://nasm.us/docs.php][官方文档(把它收藏起来,以后会需要经常翻阅)]].
 
@@ -2031,6 +2030,8 @@
      #+CAPTION: DIV 指令用法
      [[../../../files/div-instruction.png]]
 
+     最后这里给出 [[https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html][Intel]] 以及 [[https://www.amd.com/system/files/TechDocs/24594.pdf][AMD]] 的指令集文档, 实际上开发的时候尽量根据自己电脑的 =CPU= 来选择.
+
 **** 栈的使用
 
      前面有提到过栈(stack)的相关概念,重复的就不赘述了,这里稍微补充一下它在 =x86= 里面是什么样的.
@@ -2152,7 +2153,7 @@
 
      作用就是把 =INT= 压进栈的地址弹出来,并且根据这个地址进行跳转.
 
-     //
+     \\
 
      软中断的名字来源于硬中断,电脑内置的电气系统让电路板给 =CPU= 发送电信号, =CPU= 上有种特殊的金属针(pin)会被电路板上的设备改变电压,这就是发送电信号的本质.
 
@@ -2717,7 +2718,7 @@
 
      #+BEGIN_SRC makefile
      main: main.o mathlib.a
-	     ld -o main main.o -l:mathlib.a -L.
+             ld -o main main.o -l:mathlib.a -L.
      main.o: main.asm
              nasm -f elf64 -g -F stabs main.asm
      mathlib.a: mathlib.o
@@ -2749,7 +2750,7 @@
        mathlib.o: mathlib.asm
                nasm -f elf64 -g -F stabs mathlib.asm
      #+END_SRC
-     
+
      同样, 如果程序没有任何问题, 那么同样返回值是10; 如果把 =mathlib.so= 改了个名字或者移除掉的话, =main= 就会运行不了,并且报错:
 
      "./main: error while loading shared libraries: mathlib.so: cannot open shared object file: No such file or directory".
@@ -2822,7 +2823,7 @@
      #+BEGIN_SRC sh
      ldd main
      #  结果大概如下:
-     # 
+     #
      #	linux-vdso.so.1 (0x00007fff02522000)
      #	mathlib.so => ./mathlib.so (0x00007fd278704000)
      #+END_SRC
@@ -2933,6 +2934,9 @@
      宏的使用远远不止这样,具体可以看 [[https://www.nasm.us/doc/nasmdoc4.html][NASM Macro]].
 
 **** 调用C库的函数
+     :PROPERTIES:
+     :CUSTOM_ID: how-to-call-c-functions
+     :END:
 
      把汇编语言创建的程序和 =C= 语言的函数连接起来时,得到的其实是一个混合程序了(hybrid).
 
@@ -3894,6 +3898,376 @@
      常见的编程语言实现中, =V8(JavaScript)= 的虚拟机就是寄存器机, 官方 =Python= 的虚拟机就是堆栈机.
 
      一旦你知道虚拟机是采用哪种实现,你就可以知道如何阅读它们的字节码了,当然你还要有它们的字节码说明.
+
+*** 可执行二进制文件格式 - ELF
+
+    你可以很轻松地在[[https://www.gnu.org/software/libc/][网络]]上获取到 =glibc= 的源代码, =glibc= 是由 =GNU= 实现的一个 =C= 标准库, 里面就有一个叫做 =elf.h= 的文件.
+
+    要看接下来的内容的话, 强烈推荐准备一份源代码.
+
+    如果你在使用 =Linux= 操作系统, 基本上只要一条命令就能获取到 =glibc= 的源码, 以我 =Ubuntu= 为例:
+
+    #+BEGIN_SRC sh
+    sudo apt-get install glibc-source
+    #+END_SRC
+
+    安装之后在 =/usr/src= 或者 =/usr/local/src= 里面就能找到 =elf.h= 这文件了(, 注意有两个 =elf.h= 文件的, 是 =elf/elf.h= 的那个).
+
+    =Linux= 里面的有 =man page= 对 =elf= 进行介绍(=man elf=).
+
+    我们接下来会先编译一份简单的代码 =C= 代码得到一个 =elf= 文件, 用二进制编辑器打开它, 参考 =elf.h= 里的定义和 =elf= 的 =man page= 说明(, 你也可以使用维基百科上的 [[https://en.wikipedia.org/wiki/Executable_and_Linkable_Format][ELF]] 作为参考), 逐个字节阅读它.
+
+    \\
+
+    首先我们的样例 =C= 代码:
+
+    #+BEGIN_SRC c
+    // example.c
+    int func ( int, int );
+
+    int main(int argc, char **argv) {
+      func(1, 2);
+      return 0;
+    }
+
+    int func ( int a, int b ) {
+      return a + b;
+    }
+    #+END_SRC
+
+    编译得到 =elf= 二进制文件 =example= (我这里是 64 位的 =ELF= 格式):
+
+    #+BEGIN_SRC sh
+    gcc -o example example.c
+    #+END_SRC
+
+    找一个你喜欢的二进制编辑器打开它, 我个人用的是 =Emacs= 的 =hexl-mode=, 打开后界面如下:
+
+    #+CAPTION: example 的字节
+    [[../../../files/elf-example-emacs-hexl-mode.png]]
+
+    我这里用不同的颜色把几个关键的区域给框出来了:
+
+    =Area byte-data= 就是 =elf= 文件的数据, 这里是以 16 进制呈现, 每 16 个字节为一行;
+
+    =Area row-offset= 上的每个值都是每一行的首个字节的偏移地址, =Area col-offset= 则是行内的地址偏移, 都以 16 进制表示,
+
+    (这里 =Area col-offset= 上面的值都是 =22= 这种格式, 这是由于一个字节用 16 进制表示有两位, =hexl-mode= 这是为了标识哪两个连续位为一个字节, 所以 =22= 实际上就是 =0x02=, 这在其它二进制编辑器上显示可能会稍有不同.)
+
+    只有把这两者结合起来才能算出字节的偏移地址, 比如第二那个 =3e= 的字节的偏移地址就为 =0x00000010 + 0x02 => 0x00000012=;
+
+    =Area ascii-encode= 就是对应 =Area byte-data= 的 =Ascii= 编码, 一个字节对应一个字符.
+
+    工具和材料已经准备得差不多了, 可以开始探索 =ELF= 文件格式了.
+
+    从整体来看, 一个 =ELF= 文件的格式就是一个 =ELF= 头 (ELF header)后面跟着一个程序头部表(a program header table)或者一个节头部表(a section header table), 又或者是两者都有.
+
+    =ELF= 头后面的数据就是 =ELF= 的文件数据.
+
+    \\
+
+    *ELF头*
+
+    =ELF= 头存在的意义是: 保证文件数据能够在连接和执行期间被正确解析.
+
+    可见 =ELF= 头是如此的重要, 在 =man page= 里面可以看到 32 位以及 64 位 =ELF= 头的通用定义:
+
+    #+BEGIN_SRC c
+    #define EI_NIDENT 16
+
+    typedef struct {
+      unsigned char e_ident[EI_NIDENT];
+      uint16_t      e_type;
+      uint16_t      e_machine;
+      uint32_t      e_version;
+      ElfN_Addr     e_entry;
+      ElfN_Off      e_phoff;
+      ElfN_Off      e_shoff;
+      uint32_t      e_flags;
+      uint16_t      e_ehsize;
+      uint16_t      e_phentsize;
+      uint16_t      e_phnum;
+      uint16_t      e_shentsize;
+      uint16_t      e_shnum;
+      uint16_t      e_shstrndx;
+    } ElfN_Ehdr;
+    #+END_SRC
+
+    其中 =N= 表示 32 或者 64.
+
+    那么怎么用这份定义呢?
+
+    =C= 里面的结构体(=struct=)的字段在内存里面是按照定义顺序储存的, 也就是说在内存里面, =e_ident= 一定会在 =e_type= 之前, =e_type= 一定会在 =e_machine= 之前, 如此类推.
+
+    也就是说我们只要根据这份定义和在上面的字节一个一个的读就好.
+
+    - *字段名: =e_ident=; 偏移范围: 0x00 - 0x0f*
+
+      用于标识 =ELF= 文件标志, 好让操作系统能够识别到它是 =ELF= 文件.
+
+      该字段类型是长度为 16 的 =unsigned char= 数组, 在 32/64 位上, 一个 =unsigned char= 的大小是 1 字节, 因此按照定义该字段在内存里占用 16 个字节.
+
+      - *偏移范围: 0x00 - 0x03; 字节名: =EI_MAG0, EI_MAG1, EI_MAG2, EI_MAG3=; 字节值: 0x7f, 0x45, 0x4c, 0x46*
+
+        是一个 [[https://en.wikipedia.org/wiki/Magic_number_(programming)][magic number]], 表示字符串 =.ELF=.
+
+      - *偏移: 0x04; 字节名: =EI_CLASS=; 字节值: 0x02*
+
+        标识当前二进制文件的架构, 1 表示 32 位架构， 2 表示 64 位架构.
+
+        =example= 是 64 位二进制文件.
+
+      - *偏移: 0x05; 字节名: =EI_DATA=; 字节值: 0x01*
+
+        标识文件数据的字节次序(=endianess=), 1 是 =LSB=, 2 是 =MSB=.
+
+        =example= 是 =LSB= 字节序.
+
+      - *偏移： 0x06; 字节名: =EI_VERSION=; 字节值: 0x01*
+
+        标识着文件使用的 =ELF= 规范版本号. 1 标识当前版本, 这个值基本上可以说是固定的.
+
+      - *偏移: 0x07; 字节名: =EI_OSABI=; 字节值: 0x00*
+
+        标识操作系统以及目标文件使用的 =ABI=.
+
+      - *偏移: 0x08; 字节名: =EI_ABIVERSION=; 字节值: 0x00*
+
+        标识目标文件使用的 =ABI= 版本. 该字节目前未被使用, 默认为 0.
+
+      - *偏移范围: 0x09 - 0x0f; 字节名: =EI_PAD=; 字节值: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+        统一使用 0 填充的区域, 目前没有任何实际意义, 未来可能有用.
+
+    - *字段名: =e_type=; 偏移范围: 0x10 - 0x11; 字节值: 0x03, 0x00*
+
+      该字段的类型是 =Elf64_Half=, 该类型是 16 位大小, 也就是 2 个字节大小.
+
+      用于标识目标文件类型, 1 表示可重定位文件, 2 表示可执行文件, 3 表示动态链接文件, 4 表示 =core dumped= 文件.
+
+      由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_type= 就是 3.
+
+      你没看错, 真的是 3, 而不是 2.
+
+      # https://stackoverflow.com/questions/50303305/elf-file-type-et-exec-and-et-dyn
+
+    - *字段名: =e_machine=; 偏移范围: 0x12 - 0x13; 字节值: 0x3e, 0x00*
+
+      该字段的类型是 =Elf64_Half=, 该类型是 2 个字节大小.
+
+      用于标识文件是跑在什么架构上的.
+
+      由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_machine= 的值就是 =0x3e=, 也就是 62,
+
+      对应宏定义 =EM_X86_64=, 也就是 =AMD x86-64=.
+
+    - *字段名: =e_version=; 偏移范围: 0x14 - 0x17; 字节值: 0x10, 0x00, 0x00, 0x00*
+
+      该字段的类型是 =Elf64_Word=, 32位大小, 也就是 4 个字节大小.
+
+      用于标识文件版本, 目前常见的统一为 1.
+
+      由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_version= 的值就是 1.
+
+    - *字段名: =e_entry=; 偏移范围: 0x18 - 0x1f; 字节值: 0x40, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+      该字段的类型是 =Elf64_Addr=, 大小为 64 位, 也就是 8 字节大小.
+
+      该字段的值是一个虚拟地址(virtual address), 指向程序的入口, 也就是说在开始运行该程序时, 操作系统需要把操控权转交到的该地址上.
+
+      这个值实际上就是 =_start= 标签的内存地址, 你可以通过以下命令来验证:
+
+      #+BEGIN_SRC sh
+        objdump -d example | grep "_start"
+
+        # =>
+
+        # example:     file format elf64-x86-64
+
+        # Disassembly of section .init:
+
+        # 0000000000001000 <_init>:
+        #     1000:	f3 0f 1e fa             endbr64
+        #     1004:	48 83 ec 08             sub    $0x8,%rsp
+        #     1008:	48 8b 05 d9 2f 00 00    mov    0x2fd9(%rip),%rax        # 3fe8 <__gmon_start__@Base>
+        #     100f:	48 85 c0                test   %rax,%rax
+        #     1012:	74 02                   je     1016 <_init+0x16>
+        #     1014:	ff d0                   call   *%rax
+        #     1016:	48 83 c4 08             add    $0x8,%rsp
+        #     101a:	c3                      ret
+
+        # Disassembly of section .plt:
+
+        # 0000000000001020 <.plt>:
+        #     1020:	ff 35 a2 2f 00 00       push   0x2fa2(%rip)        # 3fc8 <_GLOBAL_OFFSET_TABLE_+0x8>
+        #     1026:	f2 ff 25 a3 2f 00 00    bnd jmp *0x2fa3(%rip)        # 3fd0 <_GLOBAL_OFFSET_TABLE_+0x10>
+        #     102d:	0f 1f 00                nopl   (%rax)
+
+        # Disassembly of section .plt.got:
+
+        # 0000000000001030 <__cxa_finalize@plt>:
+        #     1030:	f3 0f 1e fa             endbr64
+        #     1034:	f2 ff 25 bd 2f 00 00    bnd jmp *0x2fbd(%rip)        # 3ff8 <__cxa_finalize@GLIBC_2.2.5>
+        #     103b:	0f 1f 44 00 00          nopl   0x0(%rax,%rax,1)
+
+        # Disassembly of section .text:
+
+        # 0000000000001040 <_start>:
+        #     1040:	f3 0f 1e fa             endbr64
+        #     1044:	31 ed                   xor    %ebp,%ebp
+        #     1046:	49 89 d1                mov    %rdx,%r9
+        #     1049:	5e                      pop    %rsi
+        #     104a:	48 89 e2                mov    %rsp,%rdx
+        #     104d:	48 83 e4 f0             and    $0xfffffffffffffff0,%rsp
+        #     1051:	50                      push   %rax
+        #     1052:	54                      push   %rsp
+        #     1053:	45 31 c0                xor    %r8d,%r8d
+        #     1056:	31 c9                   xor    %ecx,%ecx
+        #     1058:	48 8d 3d ca 00 00 00    lea    0xca(%rip),%rdi        # 1129 <main>
+        #     105f:	ff 15 73 2f 00 00       call   *0x2f73(%rip)        # 3fd8 <__libc_start_main@GLIBC_2.34>
+        #     1065:	f4                      hlt
+        #     1066:	66 2e 0f 1f 84 00 00    cs nopw 0x0(%rax,%rax,1)
+        #     106d:	00 00 00
+
+        # 0000000000001070 <deregister_tm_clones>:
+        #     1070:	48 8d 3d 99 2f 00 00    lea    0x2f99(%rip),%rdi        # 4010 <__TMC_END__>
+        #     1077:	48 8d 05 92 2f 00 00    lea    0x2f92(%rip),%rax        # 4010 <__TMC_END__>
+        #     107e:	48 39 f8                cmp    %rdi,%rax
+        #     1081:	74 15                   je     1098 <deregister_tm_clones+0x28>
+        #     1083:	48 8b 05 56 2f 00 00    mov    0x2f56(%rip),%rax        # 3fe0 <_ITM_deregisterTMCloneTable@Base>
+        #     108a:	48 85 c0                test   %rax,%rax
+        #     108d:	74 09                   je     1098 <deregister_tm_clones+0x28>
+        #     108f:	ff e0                   jmp    *%rax
+        #     1091:	0f 1f 80 00 00 00 00    nopl   0x0(%rax)
+        #     1098:	c3                      ret
+        #     1099:	0f 1f 80 00 00 00 00    nopl   0x0(%rax)
+
+        # 00000000000010a0 <register_tm_clones>:
+        #     10a0:	48 8d 3d 69 2f 00 00    lea    0x2f69(%rip),%rdi        # 4010 <__TMC_END__>
+        #     10a7:	48 8d 35 62 2f 00 00    lea    0x2f62(%rip),%rsi        # 4010 <__TMC_END__>
+        #     10ae:	48 29 fe                sub    %rdi,%rsi
+        #     10b1:	48 89 f0                mov    %rsi,%rax
+        #     10b4:	48 c1 ee 3f             shr    $0x3f,%rsi
+        #     10b8:	48 c1 f8 03             sar    $0x3,%rax
+        #     10bc:	48 01 c6                add    %rax,%rsi
+        #     10bf:	48 d1 fe                sar    %rsi
+        #     10c2:	74 14                   je     10d8 <register_tm_clones+0x38>
+        #     10c4:	48 8b 05 25 2f 00 00    mov    0x2f25(%rip),%rax        # 3ff0 <_ITM_registerTMCloneTable@Base>
+        #     10cb:	48 85 c0                test   %rax,%rax
+        #     10ce:	74 08                   je     10d8 <register_tm_clones+0x38>
+        #     10d0:	ff e0                   jmp    *%rax
+        #     10d2:	66 0f 1f 44 00 00       nopw   0x0(%rax,%rax,1)
+        #     10d8:	c3                      ret
+        #     10d9:	0f 1f 80 00 00 00 00    nopl   0x0(%rax)
+
+        # 00000000000010e0 <__do_global_dtors_aux>:
+        #     10e0:	f3 0f 1e fa             endbr64
+        #     10e4:	80 3d 25 2f 00 00 00    cmpb   $0x0,0x2f25(%rip)        # 4010 <__TMC_END__>
+        #     10eb:	75 2b                   jne    1118 <__do_global_dtors_aux+0x38>
+        #     10ed:	55                      push   %rbp
+        #     10ee:	48 83 3d 02 2f 00 00    cmpq   $0x0,0x2f02(%rip)        # 3ff8 <__cxa_finalize@GLIBC_2.2.5>
+        #     10f5:	00
+        #     10f6:	48 89 e5                mov    %rsp,%rbp
+        #     10f9:	74 0c                   je     1107 <__do_global_dtors_aux+0x27>
+        #     10fb:	48 8b 3d 06 2f 00 00    mov    0x2f06(%rip),%rdi        # 4008 <__dso_handle>
+        #     1102:	e8 29 ff ff ff          call   1030 <__cxa_finalize@plt>
+        #     1107:	e8 64 ff ff ff          call   1070 <deregister_tm_clones>
+        #     110c:	c6 05 fd 2e 00 00 01    movb   $0x1,0x2efd(%rip)        # 4010 <__TMC_END__>
+        #     1113:	5d                      pop    %rbp
+        #     1114:	c3                      ret
+        #     1115:	0f 1f 00                nopl   (%rax)
+        #     1118:	c3                      ret
+        #     1119:	0f 1f 80 00 00 00 00    nopl   0x0(%rax)
+
+        # 0000000000001120 <frame_dummy>:
+        #     1120:	f3 0f 1e fa             endbr64
+        #     1124:	e9 77 ff ff ff          jmp    10a0 <register_tm_clones>
+
+        # 0000000000001129 <main>:
+        #     1129:	f3 0f 1e fa             endbr64
+        #     112d:	55                      push   %rbp
+        #     112e:	48 89 e5                mov    %rsp,%rbp
+        #     1131:	48 83 ec 10             sub    $0x10,%rsp
+        #     1135:	89 7d fc                mov    %edi,-0x4(%rbp)
+        #     1138:	48 89 75 f0             mov    %rsi,-0x10(%rbp)
+        #     113c:	be 02 00 00 00          mov    $0x2,%esi
+        #     1141:	bf 01 00 00 00          mov    $0x1,%edi
+        #     1146:	e8 07 00 00 00          call   1152 <func>
+        #     114b:	b8 00 00 00 00          mov    $0x0,%eax
+        #     1150:	c9                      leave
+        #     1151:	c3                      ret
+
+        # 0000000000001152 <func>:
+        #     1152:	f3 0f 1e fa             endbr64
+        #     1156:	55                      push   %rbp
+        #     1157:	48 89 e5                mov    %rsp,%rbp
+        #     115a:	89 7d fc                mov    %edi,-0x4(%rbp)
+        #     115d:	89 75 f8                mov    %esi,-0x8(%rbp)
+        #     1160:	8b 55 fc                mov    -0x4(%rbp),%edx
+        #     1163:	8b 45 f8                mov    -0x8(%rbp),%eax
+        #     1166:	01 d0                   add    %edx,%eax
+        #     1168:	5d                      pop    %rbp
+        #     1169:	c3                      ret
+
+        # Disassembly of section .fini:
+
+        # 000000000000116c <_fini>:
+        #     116c:	f3 0f 1e fa             endbr64
+        #     1170:	48 83 ec 08             sub    $0x8,%rsp
+        #     1174:	48 83 c4 08             add    $0x8,%rsp
+        #     1178:	c3                      ret
+      #+END_SRC
+
+      =_start= 标签前面的地址就是 =0000000000001040=, 刚好对应该字段的值.
+
+    - *字段名: =e_phoff=; 偏移范围: 0x20 - 0x27; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+      该字段为 =Elf64_Off= 类型, 64 位大小, 也就是 8 字节大小.
+
+      该字段指示程序头部表的偏移为多少个字节, 这里是 =0x40=, 也就是 64 个字节,
+
+      也就是以 =example= 的 =0x00= 为起点, 偏移 64 个字节后的地址, 也就是 =0x40=, 该地址开始就是程序头部表的信息.
+
+      如果不存在程序头部表, 那么该值为 0.
+
+    - *字段名: =e_shoff=; 偏移范围: 0x28 - 0x2f; 字节值: 0x78, 0x36, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+      该字段为 =Elf64_Off= 类型, 占 8 字节大小.
+
+      该字段指示节头部标的偏移为多少个字节, 这里是 =0x3678= 个, 也就是 13944 个字节.
+
+      类似于 =e_phoff=, 从 =0x00= 开始偏移 =13944= 个字节后到达的地址 =0x3678= 就是节头部表的信息.
+
+      如果不存在节头部表, 那么该值为 0.
+
+    - *字段名: =e_flags=; 偏移范围: 0x30 - 0x33; 字节值: 0x00, 0x00, 0x00, 0x00*
+
+      字段类型为 =Elf64_Word=, 占 4 个字节大小.
+
+      该字段指示处理器特定的 =flags=, 该字段目前未定义, 统一为 0.
+
+    - *字段名: =e_ehsize=; 偏移范围: 0x34 - 0x35; 字节值: 0x40, 0x00*
+
+      字段类型为 =Elf64_Half=, 占 2 个字节大小.
+
+      指示 =elf= 文件的头部大小, =example= 的 =elf= 头一共占用 =0x40=, 也就是 64 个字节.
+
+    - *字段名: =e_phentsize=; 偏移范围: 0x36 - 0x37; 字节值: 0x38, 0x00*
+
+      字段类型为 =Elf64_Half=, 占用 2 个字节大小.
+
+      =elf= 文件的程序头部表里每一项(entry)大小都是一样的, 该字段指定了程序头部表每一个项的大小.
+
+      =example= 程序头部项大小是 =0x38=, 也就是 52 个字节.
+
+    - *字段名: =e_phnum=; 偏移范围: 0x38 - 0x39; 字节值: 0x40, 0x00*
+
+      字段类型为 =Elf64_Half=, 占用 2 个字节.
+
+      指示程序头部表有多少个项. 因此 =e_phnum * e_phentsize= 的值就是程序头部表的大小.
+
+      =example= 一共有 =0x40=, 也就是 64 个程序头部表项.
+
 
 *** 之后的路
 

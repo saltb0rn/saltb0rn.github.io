@@ -1,22 +1,19 @@
-*** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=bd45f635d82ee8921e8ac8c9a3b11f3f][JS库开发指南]]
-最近公司给我分配了一个任务: 需要开发一个 3D 拓扑图的库.
-
-以前一直都是写应用的, 没有写 JS 库的经验, 现在正好来了一个学习的机会.
-# 记录开发一个Javascript库的过程
-
-	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=8ffd9c17b6f25bc67f1abc0c2e98a585][WebGL的Buffer对象]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=b9468c6461e925c902f2db9ff2f3af1a][OpenGL/WebGL自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
 
 身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
 
-也因为这样, 图形学学习计划搁置了一年, 当我重新捡起来的时候发现了一些需要加强理解的地方:
+也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 =WebGL= 的掌握阶段.
+
+我决定先从 =WebGL= 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
 
 =OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
 
-了解这个过程才能真正理解 =shader code= 之前是如何工作的.
+要真正掌握 =OpenGL= 的 =Shading Language= (GLSL) 就需要理解这一块.
+
+没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
 
 	
 *** [[file:posts/2022/01/floating-number-in-binary.html?hash=95fbe4cd53aa6b0739afff714bd64a44][计算机眼中的浮点数]]
@@ -53,7 +50,7 @@ pass
 我一边思考一边到网上寻求答案,然后开始意识到"这篇笔记不能不写".
 
 	
-*** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=e00c47f4dba3351f4c23536d54c35af4][理解CSS动画]]
+*** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=4e4f1d18c3253d17c1d5565c780b3e09][理解CSS动画]]
 这是一篇关于 =CSS animation= 属性的笔记.
 
 虽然说 =MDN= 上有 =animation= 的文档,不过本人比较容易"异想天开",
@@ -135,7 +132,7 @@ pass
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=4598a50c62d2acb070504554066e4bed][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=6c297123aaacb2fca3a254564369bc40][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -407,7 +404,19 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=3383d9afa45cd9d74af895163a105213][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips-2.html?hash=ac63115dfbf6291fbcf448842f9f964d][Emacs Tips(持续更新)]]
+如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
+
+认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔
+
+记而已.每当遇到问题去Google实际是一件很浪费时间的事情,为何不把内存里面的数据持久化下并且给它这个索引呢?记录的东西大部份都是很琐碎的,毕竟
+
+是因为琐碎才要以这种形似记录下来.
+
+P.S: 这文章做为我个人的知识管理方案之一会一直会更新.为什么不把每个话题分开写,那时因为记录的东西太琐碎了,不记录又不好,所以才写成一篇,不过分量大的话题会分开写,比如一些packages的用法.
+
+	
+*** [[file:posts/2018/08/emacs-tips.html?hash=514cb5796d7714cda66aa7133ef8cdb4][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔

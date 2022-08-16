@@ -17,6 +17,7 @@
 * E
   - [[file:2021/11/edm-theory.org][EDM必备乐理教程]]
   - [[file:2018/08/emacs-tips.org][Emacs Tips(持续更新)]]
+  - [[file:2018/08/emacs-tips-2.org][Emacs Tips(持续更新)]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]

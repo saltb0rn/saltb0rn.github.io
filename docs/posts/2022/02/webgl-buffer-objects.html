@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2022-07-30 六 19:02 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenGL/WebGL自救指南</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">OpenGL/WebGL自救指南</h1>
+<div class="abstract">
+<p>
+由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
+</p>
+
+<p>
+为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 <code>Blender</code> 建模以及 <code>Godot</code> 的使用等等;
+</p>
+
+<p>
+身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
+</p>
+
+<p>
+也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 <code>WebGL</code> 的掌握阶段.
+</p>
+
+<p>
+我决定先从 <code>WebGL</code> 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
+</p>
+
+<p>
+<code>OpenGL/WebGL</code> 上下文(OpenGL/WebGL Context), 也就是 <code>GPU</code>, 是如何接收,储存以及使用数据.
+</p>
+
+<p>
+要真正掌握 <code>OpenGL</code> 的 <code>Shading Language</code> (GLSL) 就需要理解这一块.
+</p>
+
+<p>
+没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
+</p>
+
+</div>
+
+<div id="outline-container-org26cbb24" class="outline-2">
+<h2 id="org26cbb24">WebGL是如何工作的</h2>
+<div class="outline-text-2" id="text-org26cbb24">
+<p>
+事实上, <code>WebGL</code> 如何工作什么的, 已经有很多教程已经讲得很清楚了, 比如下面这两个图文并茂的链接:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL Fundamentals 的 WebGL是如何工作的</a></li>
+
+<li><a href="https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL2 Fundamentals 的 WebGL是如何工作的</a></li>
+</ul>
+
+<p>
+在开发的时候基本上只要关注 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 两个阶段就可以了:
+</p>
+
+<p>
+<code>Vertex Shader</code> 根据几何数据计算出另外一种坐标, 每当接收一个顶点数据, <code>Vertex Shader</code> 就运行一遍, 如下图所示:
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif">
+</p>
+<p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
+</div>
+
+<p>
+<code>Vertex Shader</code> 能做的事情很有限, 就只有 <b>设置</b> (不是返回) 顶点坐标(设置 <code>gl_Position</code> )以及向后面的<a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流水线</a>后面的阶段传递数据.
+</p>
+
+<p>
+拿到经过 <code>Vertex Shader</code> 处理的顶点数据后, <code>OpenGL</code> 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+</p>
+
+<p>
+当然 <code>OpenGL</code> 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(<code>basic primitive</code>), 包括点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
+</p>
+
+<p>
+然后就到光栅化(<code>Rasterization</code>)阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>),
+</p>
+
+<p>
+我们可以把像素(pixel)定义为显示在屏幕上的一个颜色点.
+</p>
+
+<p>
+<code>Fragment Shader</code> 就是一次接收一个片元作为输入, 以处理后的片元作为输出, <a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs">输入</a>和<a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs">输出</a>的片元数据结构是不一样的, 在没有特别声明的情况下片元就是指输出的片元.
+</p>
+
+<p>
+相比于像素而言, 片元除了有 <code>RGBA</code> 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息,
+</p>
+
+<p>
+在之后的 <code>Per-Sample Processing</code> 阶段中会使用上这些值来进行一系列的测试, 来决定是否把该片元的色值输出到屏幕上成为像素,
+</p>
+
+<p>
+分别有剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test).
+</p>
+
+<p>
+其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元;
+</p>
+
+<p>
+而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲区(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
+</p>
+
+<p>
+而判断的方法不是唯一的.
+</p>
+
+<p>
+这里我就直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/stencil_test.png" alt="stencil_test.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>模板测试</p>
+</div>
+
+
+
+
+<p>
+开发人员编写 <code>Fragment Shader</code> 的任务就是设定片元的颜色(设置 <code>gl_FragColor</code>).
+</p>
+
+<p>
+每当光栅化得到一个片元时, <code>Fragment Shader</code> 就开始对这个片元进行处理,并且得到一个像素.
+</p>
+
+<p>
+因此, 这里就不再赘述了, 而这篇文章主要是针对上面两个链接的内容进行总结和补充.
+</p>
+
+<p>
+为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的<a href="https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data">例子</a>用于讲解, 效果如下:
+</p>
+
+<p>
+<iframe width="300" height="300" src="../../../examples/learn-webgl-how-to-read-data/index.html"></iframe>
+</p>
+
+<p>
+在阅读下面的内容前请 <b>务必</b> 把例子的代码复制到本地, 然后边阅读边对照, 有疑惑可以修改代码查看效果.
+</p>
+
+<p>
+需要注意的是, 这个例子是基于 <code>WebGL 1.0</code> 的.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org5faf13c" class="outline-2">
+<h2 id="org5faf13c">OpenGL/WebGL 上下文是如何储存数据</h2>
+<div class="outline-text-2" id="text-org5faf13c">
+<p>
+首先, <code>OpenGL/WebGL</code> 上下文会等 <code>CPU</code> 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
+</p>
+
+<p>
+我们以 <code>WebGL</code> 为例子 (<code>OpenGL</code> 其实也差不了太多), 设现有一个名为 <code>gl</code> 的 <code>WebGL</code> 上下文实例, 要完成上述过程需要进行以下操作:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;&#21306;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
+<span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">buffer</span> = gl.createBuffer();
+
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;&#21306;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#21306;&#36827;&#34892;&#25805;&#20316;</span>
+gl.bindBuffer(target, buffer);
+
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
+gl.bufferData(target, data, usage);
+</pre>
+</div>
+
+<p>
+这里对应例子的<a href="https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L92">这一部分(80-92行)</a>.
+</p>
+
+<p>
+由于数据的用途的不同, 缓冲区可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 <code>target</code> 变量.
+</p>
+
+<p>
+想要知道 <code>target</code> 的值能够是什么, 可以参考<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer">这里</a>, 这些方法的参考说明都可以在<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext">这里</a>找到.
+</p>
+
+<p>
+在 <code>OpenGL/WebGL</code> 里面, 这些用来作为物体顶点信息的缓冲区叫做 <code>Vertex Buffer Object (VBO)</code>.
+</p>
+
+<p>
+一旦有了数据源, 就可以让 <code>GPU</code> 根据利用这些数据来渲染了.
+</p>
+
+<p>
+人们一般喜欢把这些顶点数据称为几何数据(Geometry Data).
+</p>
+
+<p>
+实际上, 除了几何数据以外, 还有其他的数据并非存到缓冲区里面的, 后面介绍这些数据.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgce12673" class="outline-2">
+<h2 id="orgce12673"><a id="org565962c"></a>OpenGL/WebGL 上下文是如何使用数据</h2>
+<div class="outline-text-2" id="text-orgce12673">
+<p>
+首先需要提及的一点是, <code>GPU</code> 并非直接使用缓冲区来进行渲染, 在说明这点之前, 我们先来明白一个概念.
+</p>
+
+<p>
+<code>VBO</code> 里面的数据格式不是固定的, 比如渲染一个三角形, 它的顶点数据格式可能是这样的:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">{ x1, y1, z1, x2, y2, z2, x3, y3, z3 }
+</pre>
+</div>
+
+<p>
+也可能是这样的:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">{ x1, y1, z1, w1, x2, y2, z2, w2, x3, y3, z3, w3 }
+</pre>
+</div>
+
+<p>
+当然还有其它的可能.
+</p>
+
+<p>
+那么问题来了, 既然数据格式不一样, <code>GPU</code> 是如何读取这些数据才能渲染出一个三角形的呢?
+</p>
+
+<p>
+这需要开发人员告诉 <code>GPU</code> 如何读取数据, 开发人员需要调用 <code>gl.vertexAttribPointer(index, size, type, normalized, stride, offset)</code> 这个 API 来生成一个 <code>Vertex Array Object (VAO)</code>,
+</p>
+
+<p>
+<b>VAO 可以控制如何从 VBO 里面读取数据, 并把数据绑定给变量</b> (讲道理, <code>VAO</code> 的全称很难能让人理解它的作用).
+</p>
+
+<p>
+它控制读取数据的方式其实很简单, 假设下面这里有另外一种数据格式:
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png">
+</p>
+<p><span class="figure-number">Figure 3: </span>vertexAttribPointer</p>
+</div>
+
+<p>
+这里面的数据既有顶点坐标(xyz), 还有顶点颜色(rgb)以及其对应的纹理坐标(st), 这里就把这三种数据的集合体看作是一个顶点(每 3 种为一个顶点).
+</p>
+
+<p>
+正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者属性之间的排序不同于上图.
+</p>
+
+<p>
+这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 <code>gl.vertexAttribPointer()</code> 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
+</p>
+
+<p>
+<code>gl.vertexAttribPointer</code> 的 <code>index</code> 参数是 <code>shader</code> 程序(shader program)里面 <code>attribute</code> 变量的索引值, 可以手动指定, 也可以通过 <code>gl.getAttribLocation(shaderProgram, attribName)</code> 来获取.
+</p>
+
+<p>
+<code>attribute</code> 变量是 <code>shader</code> 程序里面定义的变量, 后面会讲到.
+</p>
+
+<p>
+在 <code>gl.bindBuffer(target, buffer)</code> 之后调用 <code>gl.vertexAttribPointer</code> 就可以把缓冲区里的数据填充到指定的 <code>attribute</code> 变量里面.
+</p>
+
+<p>
+在填充到 <code>attribute</code> 变量后不要忘记通过 <code>gl.enableVertexAttribArray( RET-VAL-OF-vertexAttribPointer )</code> 启用指针.
+</p>
+
+<p>
+这一段对应例子的<a href="https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116">这一部分(94-114行)</a>: 往 "aVertexPosition" 变量填充了顶点位置坐标数据, 往 "aVertexColor" 变量填充了顶点颜色数据,
+</p>
+
+<p>
+其中 <code>aVertexPosition</code> 和 <code>aVertexColor</code> 是 <code>shader</code> 程序的 <a href="https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L16-L29">Vertex Shader</a> 里面 <b>声明</b> 的 <code>attribute</code> 变量名, 强调这是声明是因为 <code>gl.vertexAttribPointer</code> 的调用实际上就是给这些变量补充定义.
+</p>
+
+<p>
+此外, 当你对 <code>a_vertexPosition</code> 和 <code>a_vertexColor</code> 两个值进行打印, 你会发现它们的值分别是 0 和 1, 正好对应 <code>attribute</code> 变量声明的顺序.
+</p>
+
+<p>
+<code>Shader</code> 程序并非只有 <code>attribute</code> 变量, 接下来会对 <code>GLSL</code> 变量修饰符进行介绍, 掌握了这一块才能算是真正的掌握 <code>GLSL</code>.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org46cd42b" class="outline-2">
+<h2 id="org46cd42b">GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</h2>
+<div class="outline-text-2" id="text-org46cd42b">
+<p>
+和其他编程语言一样, <code>GLSL</code> 的变量也是一样有修饰符的, 这里的修饰符并非指 <code>int</code>, <code>float</code> 这些 <a href="https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)">类型标识</a>;
+</p>
+
+<p>
+而是指控制变量的储存以及行为的标识, 这么说可能有点不太好理解, 举个例子 "禁止变量在声明后被修改" 的 <code>const</code> 就是其中一个修饰符.
+</p>
+
+<p>
+我们都知道 <code>GLSL</code> 的工作内容并不完全像其他编程语言一样, 它的任务是控制图形渲染的, 而这项任务的流程是分成好几个阶段的,
+</p>
+
+<p>
+有些数据可以在所有阶段中都能访问到, 而有些数据只能在特定阶段中访问, 还有一些数据能够从这个阶段输出到下一个阶段.
+</p>
+
+<p>
+为了标识变量能够在哪些阶段使用, 就需要另外一种 <a href="https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)">修饰符</a> 进行声明, 这些修饰符就是这一小节的重点.
+</p>
+
+<p>
+这里稍微提一下 <code>OpenGL</code> 的版本并非和它所支持的 <code>GLSL</code> 版本对应的, 也就是 <code>OpenGL 2.0</code> 所支持的 <code>GLSL</code> 版本并非 <code>2.0</code>, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Version">OpenGL and GLSL Version</a>,
+</p>
+
+<p>
+而不同版本的 <code>GLSL</code> 所支持的修饰符是不一定的.
+</p>
+
+<p>
+需要注意的是, <a href="https://www.khronos.org/registry/webgl/specs/1.0/#4.3">WebGL 1.0 规范</a> 是基于 <code>OpenGL ES 2.0</code> 的, 而 <code>WebGL 1.0</code> 必须支持 <a href="https://www.khronos.org/files/opengles_shading_language.pdf">1.00 版本</a> 的着色器语言(Shading Language);
+</p>
+
+<p>
+<a href="https://www.khronos.org/registry/webgl/specs/2.0/#4.3">WebGL 2.0 规范</a> 是基于 <code>OpenGL ES 3.0</code> 的, 它除了像 <code>WebGL 1.0</code> 支持 1.00 版本的 <code>GLSL</code> 以外, 还新增对了 <a href="https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf">3.00 版本</a> 的着色器语言的支持.
+</p>
+
+<p>
+整体上来说, <code>WebGL</code> 的 <code>GLSL</code> 比起 <code>OpenGL</code> 的 <code>GLSL</code> 的版本要低, 而 <code>OpenGL</code> 的 <code>GLSL</code> 的一些修饰符已被废弃的, 这些已被废弃的修饰符还活跃在 <code>WebGL 1.0</code> 的 <code>GLSL</code> 上,
+</p>
+
+<p>
+因此, 我们需要知道这些被废弃的修饰符和新版中的哪些修饰符对应, 其实这一点在切换 <code>WebGL</code> 版本的时候就能够发现, 以 <code>WebGL</code> 作为例子进行学习实际上是一个不错的选择.
+</p>
+
+<p>
+在大部分的时间里面, 开发人员都是在和 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 两个阶段打交道, 因此我们主要其中介绍这两个阶段中能用到的修饰符, 大部分是存储修饰符(Storage Qualitifiers),
+</p>
+
+<p>
+在学习的过程中请时不时翻阅上面提供的两个 <code>GLSL</code> 版本规范的文档进行参考.
+</p>
+</div>
+
+<div id="outline-container-org15cfb3c" class="outline-3">
+<h3 id="org15cfb3c">Vertex Shader</h3>
+<div class="outline-text-3" id="text-org15cfb3c">
+<p>
+在<a href="#org565962c">第 3 节</a>里面我们已经知道怎么把顶点数据传给 <code>GPU</code> 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
+</p>
+
+<p>
+既然要写 <code>shader program</code>, 那么就需要知道如何获取这些顶点数据, 后续可能要根据这些信息进行计算.
+</p>
+</div>
+
+<div id="outline-container-orge549e95" class="outline-4">
+<h4 id="orge549e95">attribute</h4>
+<div class="outline-text-4" id="text-orge549e95">
+<p>
+它在这篇文章里面第一个被介绍的修饰符, 它属于存储修饰符, 被它修饰后的变量可以简单理解为 <code>Vertex Shader</code> 的输入,
+</p>
+
+<p>
+这种变量不能在 <code>Vertex Shader</code> 以外的阶段被使用, 同样也不能用在接口块(<a href="https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)">interface block</a>)里面, 并且这种变量是只读的(read-only).
+</p>
+
+<p>
+本例子里面的顶点数据, 实际上是逐个
+</p>
+
+<p>
+作为 <code>Vertex Shader</code> 的输入, 也就是说 <code>attribute</code> 变量接收的数据一般都是顶点数据了,
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgabfa001" class="outline-4">
+<h4 id="orgabfa001">uniform</h4>
+<div class="outline-text-4" id="text-orgabfa001">
+<p>
+例子里面传入了两个 <code>uniform</code> 变量, 这种变量是全局的, 它可以在整个图元(<code>primitive</code>)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
+</p>
+
+<p>
+也就是可以在 <code>Vertex Shader</code> 以及 <code>Fragment Shader</code> 访问这些变量, 同样也不能在接口块里面使用,
+</p>
+
+<p>
+这种变量同样也是只读(read-only).
+</p>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgde44508" class="outline-2">
+<h2 id="orgde44508">搭建自己的 Shadertoy</h2>
+<div class="outline-text-2" id="text-orgde44508">
+<p>
+如果想在编写 <code>shader</code> 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 <code>shader</code> 并从中学习, 自己还要动手实践.
+</p>
+
+<p>
+有一个叫做 <a href="https://www.shadertoy.com/">Shadertoy</a> 网站, 上面有好多高人分享自己的 <code>shaders</code>, 是一个庞大的学习资源库.
+</p>
+
+<p>
+关于阅读代码, 我是始终坚持一个观点, 那就是读源码的第一点是要读得懂, 否者不可能有所收获;
+</p>
+
+<p>
+这里的"读得懂"并非说掌握代码所使用得语言, 而是知道源代码里面这么写是为什么, 这个为什么的答案终点就是用了什么算法或者技巧.
+</p>
+
+<p>
+这一点在 <code>shader code</code> 里面是非常好理解的, 在这个 <code>shader</code> 里面,为了实现这个效果使用了哪些数学公式或者概念.
+</p>
+
+<p>
+当做到了这一点我们就能够达到入门水平了, 反过来知道用哪些数学公式或者概念去实现这个效果了;
+</p>
+
+<p>
+如果后面能够深入理解掌握的数学公式或者概念, 就能知道它们能够解决什么问题以及用于实现那些自己以前没有实现过的效果了.
+</p>
+
+<p>
+说了这么多好像, 跟这篇文章的内容无关啊?
+</p>
+
+<p>
+其实不然, 我这里一直都在强调"学习别人要先保证自己学得懂"这个观点, 学不懂是因为你有一些前置条件没达到,
+</p>
+
+<p>
+读得懂 <code>Shadertoy</code> 上的源代码要先知道要理解 <code>Shadertoy</code> 是如何工作, 它上面的 <code>shader</code> 都有 <code>Shadertoy</code> 内置的一些变量,
+</p>
+
+<p>
+清楚这些内置变量的定义是不可缺的, 而要理解清楚它们的定义就得知道在 <code>OpenGL/WebGL</code> 中如何 <code>GPU</code> 传入数据, 如何在 <code>GPU</code> 里面操作数据,
+</p>
+
+<p>
+这不正好是文章的内容吗?
+</p>
+
+<p>
+理解一件事物的最好方式就是把它构造出来, 正好 <code>WebGL Fundamentals</code> 以及 <code>WebGL2 Fundamentals</code> 都提供了教程告诉读者如何从 <code>Shadertoy</code> 扒代码,
+</p>
+
+<p>
+或者如何在 <code>Shadertoy</code> 上面分享代码, 说简单点就是如何搭建自己的 <code>Shadertoy</code>:
+</p>
+
+<ul class="org-ul">
+<li><code>WebGL Fundamentals</code> 的 <a href="https://webglfundamentals.org/webgl/lessons/webgl-shadertoy.html">Shadertoy 搭建教程</a></li>
+
+<li><code>WebGL2 Fundamentals</code> 的 <a href="https://webgl2fundamentals.org/webgl/lessons/webgl-shadertoy.html">Shadertoy 搭建教程</a></li>
+</ul>
+
+<p>
+<br>
+</p>
+
+<p>
+其实这两个教程就是使用的 <code>WebGL</code> 的版本不太一样而已, 选用你喜欢的就好,
+</p>
+
+<p>
+<code>Shadertoy</code> 上的代码基本上都是只用 <code>Fragment Shader</code> 实现效果的, 但是还存在这么一个网站, 它包含了各种只使用 <code>Vertex Shader</code> 但不使用任何几何输入来实现各种效果的 <code>Shader</code> 程序, 它就是 <a href="https://www.vertexshaderart.com/">VertexShaderArt</a>.
+</p>
+
+<p>
+<code>WebGL Fundamentals</code> 以及 <code>WebGL2 Fundamentals</code> 在提供 "Shadertoy 搭建教程" 前提供了对应的教程:
+</p>
+
+<ul class="org-ul">
+<li><code>WebGL Fundamentals</code> 的 <a href="https://webglfundamentals.org/webgl/lessons/webgl-drawing-without-data.html">不使用几何数据作图教程</a></li>
+
+<li><code>WebGL2 Fundamentals</code> 的 <a href="https://webgl2fundamentals.org/webgl/lessons/webgl-drawing-without-data.html">不适用几何数据作图教程</a></li>
+</ul>
+
+<p>
+<br>
+</p>
+
+<p>
+在其他人眼里, 它们可能是两个规则不同的游戏, 但因为 <code>Fragment Shader</code> 是针对像素进行处理的, 可玩性比 <code>Vertex Shader</code> 更高, 因此人们可能更偏向 <code>Shadertoy</code>;
+</p>
+
+<p>
+但在我眼里, 它们都是学习资源, 因此我不偏爱于任何一个网站.
+</p>
+
+<p>
+<code>WebGL Fundamentals</code> 和 <code>WebGL2 Fundamentals</code> 这两个网站都声明了: 这些教程的意义就是让你对 <code>WebGL</code> 的工作方式有个更好的理解.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2022-02-11</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

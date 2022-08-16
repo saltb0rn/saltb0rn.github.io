@@ -4,195 +4,612 @@
 #+index: 关于使用C语言开发的那些事
 #+tags: C
 #+begin_abstract
-这篇笔记是针对C语言开发而写的,不包括C语言本身的学习,因为这方面的教材已经非常多了,这类书籍就有不少.
 
-很多人觉得刚学了 =C= 语言就能看得懂别人的开源项目,然而一上手就发现事情没那么简单:
+这篇文章是我在上手使用 =C= 语言开发时遇到了一些疑问而突发奇想写出来的,
 
-构建项目都要费半天的神,到阅读代码时又发现很多"不成文的规范",这些东西一般不在书上出现(不排除一些我没看到过的书上有).
+这些疑问包括为什么要写头文件, 如何自己发布库文件, 如何发布项目代码, 如何构建项目等等.
 
-还有一些工具的使用上的技巧, 我知道这些工具都有说明文档, 但是通常文档的篇幅都十分长, 短时间不可能全部看得完并且理解得了每一项参数的作用.
+相信很多初学者和我有同样的疑问, 很多 =C= 语言的书记都不会收录这些内容, 这也是情有可原的,
 
-于是我决定记录一下这些零散的内容
+毕竟 =C= 语言的工具链比较复杂, 可选择范围太广, 不太可能单独介绍的.
+
+我这篇笔记都是主要是围绕 =GNU= 提供的工具链进行的: =GNU C Compiler=, =GNU Binutils= 和 =GNU Autotools=,
+
+以及 =Kitware= 提供的 =CMAKE=.
+
+本文不是关于 =C= 语言教学的, 只是单纯的工具上手教学, 看之后保证你掌握大概用法, 以及如何查工具文档.
+
+最后提一句, 这篇文章里面所有操作都是在 =Linux= 上完成的.
+
 #+end_abstract
 
-** 不成文的规范
+*** GNU Binutils
 
-*** 使用空宏解决头文件重复引入的问题
+    学 =C= 语言时除了掌握 =GCC= 以及相关的构建工具意外, 还需要掌握一些工具用于使用/调试/分析二进制文件.
 
-    有时候会见到这样定义头文件(header files),
+    在 =Linux= 上只要安装 [[https://www.gnu.org/software/binutils/][binutils]] 就可以得到这个工具集了, 比如 =Ubuntu= 上只要运行 =sudo apt-get install binutils= 就可以了.
 
-    #+BEGIN_SRC c
-      // example.h
-      #ifndef EXAMPLE_H
-      #define EXAMPLE_H
-      int example_func(int, int);
-      ...
-      #endif
+    这篇笔记通篇都使用了这些工具, 很多工具的用法只会简单介绍一下, 更多的内容请自行阅读 =man page=.
+
+
+*** 关于使用 GCC 的须知事项
+
+**** 预处理阶段的一些细节
+
+     我们从一个简单的例子出发:
+
+     #+BEGIN_SRC c
+     // eatc.c
+     #include <stdio.h>
+
+     int main(int argc, char **argv) {
+         printf("Eat something!\n");
+         return 0;
+     }
+     #+END_SRC
+
+     在得到源代码后, 就是编译生成程序了: =gcc eatc.c -o eatc=, 这命令会发生以下过程,
+
+     #+CAPTION: GCC编译C语言并生成程序
+     [[../../../files/how-gcc-builds-linux-executables.png]]
+
+     我们这里的目标是研究预处理(=CPP=)这个阶段发生了什么.
+
+     当我们在编译时加多一个 =--save-temps= 选项:
+
+     #+BEGIN_SRC sh
+     gcc --save-temps eatc.c -o eatc
+     #+END_SRC
+
+     可以得到 =eatc.i= 和 =eatc.s= 两个额外的文件, 这个选项是编译过程中生成的中间文件给保留下来,
+
+     其中 =eatc.s= 是源代码对应汇编码, 这块已经能够单独出一门课程了, 这里不深入研究.
+
+     我们的目标是 =eatc.i= 文件, 这个文件其实就是对应 =CPP= 阶段生成的 =.c= 文件,
+
+     对比 =eatc.c= 而言, =eatc.i= 在 =GCC= 眼中 =eatc.i= 才是纯 C 文件 (pure c file).
+
+     我们可以简单地把预处理理解为源代码的文本处理:
+
+     - 移除 =.c= 文件里面的注释;
+     - 使用预处理器的指令生成文本, 或者定义宏(Macro);
+     - 把宏替换成对应的文本;
+
+     \\
+
+     预处理指令都是 =#= 开头的, 这个例子只使用了 =#include= (也可以写成 =# include= 这样子) 一个预处理指令, 它的作用只是把指定的文件内容复制插入到它的位置上而已, 这点可以从 =eatc.i= 和 =stdio.h= 进行内容对比一探究竟.
+
+     =#include <stdio.h>= 就是先从系统预设的路径查找 =stdio.h=, 这个路径在 Linux 上通常都是 =/usr/include= 这个目录下,
+
+     我本人电脑上 =stdio.h= 的完整路径就是 =/usr/include/stdio.h=.
+
+     接下来我们对比一下 =eatc.i= 和 =stdio.h= 两者头部的内容差别,
+
+     =eatc.i= 的头部:
+
+     #+BEGIN_SRC c
+     # 0 "eatc.c"
+     # 0 "<built-in>"
+     # 0 "<command-line>"
+     # 1 "/usr/include/stdc-predef.h" 1 3 4
+     # 0 "<command-line>" 2
+     # 1 "eatc.c"
+
+     # 1 "/usr/include/stdio.h" 1 3 4
+     # 27 "/usr/include/stdio.h" 3 4
+     # 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+     # 33 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 3 4
+     ...
+     #+END_SRC
+
+     =/usr/include/stdio.h= 的头部:
+
+     #+BEGIN_SRC c
+     /* Define ISO C stdio on top of C++ iostreams.
+        Copyright (C) 1991-2022 Free Software Foundation, Inc.
+        This file is part of the GNU C Library.
+
+        The GNU C Library is free software; you can redistribute it and/or
+        modify it under the terms of the GNU Lesser General Public
+        License as published by the Free Software Foundation; either
+        version 2.1 of the License, or (at your option) any later version.
+
+        The GNU C Library is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+        Lesser General Public License for more details.
+
+        You should have received a copy of the GNU Lesser General Public
+        License along with the GNU C Library; if not, see
+        <https://www.gnu.org/licenses/>.  */
+
+     /*
+      *      ISO C99 Standard: 7.19 Input/output     <stdio.h>
+      */
+
+     #ifndef _STDIO_H
+     #define _STDIO_H        1
+
+     #define __GLIBC_INTERNAL_STARTING_HEADER_IMPLEMENTATION
+     #include <bits/libc-header-start.h>
+     ...
+     #+END_SRC
+
+     可以看到除了被移除的注释和一些陌生的指令以外, 感觉上是差不多的,
+
+     这点可以从 =eati.i= 的 =# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4= 这种注释看出来.
+
+     如果觉得这不太好看出来的话, 你可以把例子改成如下:
+
+     #+BEGIN_SRC c
+     // eatc.c
+     #include <stdio.h>
+
+     int main(int argc, char **argv) {
+       printf("Eat something!\n");
+       return 0;
+     #include "right-bracket"
+     #+END_SRC
+
+     #+BEGIN_EXAMPLE c
+     // right-bracket
+     }
+     #+END_EXAMPLE
+
+     再次检查 =eatc.i= 文件的尾部:
+
+     #+BEGIN_SRC c
+     # 4 "hello-world.c"
+     int main(int argc, char **argv) {
+       printf("Eat something!\n");
+       return 0;
+       # 1 "right-bracket" 1
+     }
+     # 8 "hello-world.c" 2
+     #+END_SRC
+
+     多了一行处理日志的注释 =# 1 "right-bracket" 1=, 并且我们的程序也能通过编译以及运行.
+
+     \\
+
+     接下来解释一下什么是宏, 我们简单地把宏看作一个可以用来生成文本的 *文本模板*,
+
+     我认为, 要理解这个概念就需要以带参数的宏来作为起点例子.
+
+     我们把上面的 =eatc.c= 改写成用参数宏来生成函数 =main= 的定义:
+
+     #+BEGIN_SRC c
+     // eatc.c
+     #include <stdio.h>
+
+     #define MAIN_CLOSURE(...) int main (int argc, char **argv ) { __VA_ARGS__ }
+
+     MAIN_CLOSURE (
+       printf("Eat something!\n");
+       return 0;
+     )
+     #+END_SRC
+
+     我们可以对比一下前后两次编译得 =eatc.i= 里的函数 =main= 长什么样子的,
+
+     第一次生成的:
+
+     #+BEGIN_SRC c
+     # 4 "hello-world.c"
+     int main(int argc, char **argv) {
+       printf("Eat something!\n");
+       return 0;
+     }
+     #+END_SRC
+
+     第二次生成的:
+
+     #+BEGIN_SRC c
+     # 6 "hello-world.c"
+     int main (int argc, char **argv ) { printf("Eat something!\n"); return 0; }
+     #+END_SRC
+
+     可以看到两者的格式上虽然有些不太一样, 但定义可以说是一模一样的.
+
+     第二个版本中 =eatc.c= 的宏 =MAIN_CLOSURE= 就是把 =int main (int argc, char **argv ) { __VA_ARGS__ }= 这一部分文本作为一个模板,
+
+     在预编译阶段里面就往模板里面的 =__VA_ARGS__= 这个位置插入文本, 而这些被插入的文本就是作为 =MAIN_CLOUSRE= 参数传入的,
+
+     这里例子里被插入的文本就是 =printf("Eat something!\n"); return 0;=.
+
+     =MAIN_CLOSURE= 还不是一个普通的参数宏, 它是一个[[https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html][可变参数宏]], =__VA_ARGS__= 就表示那个可变参数 =...=.
+
+     宏也是可以不带参数的, 初学者很容易看见 =#define NUM 1= 这种简单的宏, 我之所以不以简单的例子来开始, 是因为很多初学者都以为这种简单宏看作常量的定义,
+
+     然而把宏改成 =#define NUM 3 - 2=, 再带着这种想法去使用 =NUM= 时就导致程序发生意想不到的 =bug=.
+
+     #+BEGIN_SRC c
+     int res = NUM * 4;
+     #+END_SRC
+
+     在两个不同的宏定义下, 预处理得到的结果是不一样的:
+
+     #+BEGIN_SRC c
+     int res = 1 * 4;
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     int res = 3 - 2 * 4;
+     #+END_SRC
+
+     导致结果不一样的原因正是是初学者都以为宏是普通的变量定义, 而不是文本生成.
+
+     不过哪怕一开始强调是文本生成, 初学者也不一定能理解, 因此先解释清楚文本生成是什么一个概念才是最重要的,
+
+     而本人认为解释这一概念最应该先找一个能够区分得了变量定义和文本生成两者差别的例子, 那么带参数的宏不就最能体现吗?
+
+     至于那些说函数和带参数的宏也很像的人, 我想说的是, 难道函数能够做到像 =MAIN_CLOSURE= 玩弄源代码那种事情吗?
+
+     还需要声明一点的是, 预处理器本身体不属于 C 语言的定义里头的, 它是属于编译器, 因此你用别的编译器是, 所支持的预处指令/宏定义都是不同的,
+
+     详情参考 [[https://gcc.gnu.org/onlinedocs/cpp/index.html#Top][GCC的 CPP 文档]].
+
+     最后再注意的一点是, 定义宏时需要严格遵守格式: =#define SIMPLE_MACRO_NAME text= 或 =#define ARG_MACRO_NAME(arg1, arg2, ...) text= 这种格式,
+
+     因为宏本身就是一个文本模板, =SIMPLE_MACRO_NAME= 和 =text= 之间要用一个空格隔开, 多余的空格算到 =text= 里面,
+
+     而带参数的宏 =ARG_MACRO_NAME= 和它后面的参数列表之间是不能有空格的, 否者就是 =SIMPLE_MACRO_NAME= 那种情况了;
+
+     此外, =text= 是只能占一行的, 如果你觉得一行不好写实在要换行, 可以告诉编译器: "我现在手动换行, 你后面要把它拼成一行",
+
+     我以改写前面的 =MAIN_CLOSURE= 作为例子:
+
+     #+BEGIN_SRC c
+     #define MAIN_CLOSURE(...) int main (int argc, char **argv ) { \
+         __VA_ARGS__                                               \
+     }
+     #+END_SRC
+
+
+**** 头文件以及库文件的一些细节
+
+     通常情况下, 头文件(=.h=)的内容都是一些宏/变量的定义以及变量/函数的声明(declarations),
+
+     =.c= 文件用来存放对应头文件里变量/函数对应的实现(implementation), 或者说定义(definitions).
+
+     事实上你完全把整个项目的源代码可以在一个文本文件里面, 声明和定义可以不分开, 都能够编译出一个能运行的程序.
+
+     在 =GCC= 眼中, 源码文件的 =.h= 和 =.c= 后缀都是没有意义上不同的, 它不会知道 =.h= 就是主要用于提供声明, =.c= 提供定义.
+
+     那么为什么开发人员需要这种区分呢? 这就要从一个最简单且完整的 =C= 程序说起, 它是:
+
+     #+BEGIN_SRC c
+     // simple-c.c
+     // 定义函数
+     int func ( int a, int b ) {
+         return a + b;
+     }
+
+     // 程序入口
+     int main( int argc, char **argv ) {
+         func( 1, 2 ); // 使用定义的函数
+         return 0;
+     }
+     #+END_SRC
+
+     或者是:
+
+     #+BEGIN_SRC c
+     // simple-c.c
+     // 程序入口
+     int main( int argc, char **argv ) {
+         func( 1, 2 ); // 使用定义的函数
+         return 0;
+     }
+
+     // 定义函数
+     int func ( int a, int b ) {
+         return a + b;
+     }
+     #+END_SRC
+
+     这两者实际上都能编译通过并运行程序, 学过其它语言的人可能觉得这没什么问题, 但是对于编译器则不一定了,
+
+     本人用的是 =GCC 11.2.0= 默认的 C 标准 =ISO C17=, 在编译时, 后者比起前者会多出一个警告:
+
+     #+BEGIN_SRC sh
+     simple-c.c: In function ‘main’:
+     simple-c.c:4:3: warning: implicit declaration of function ‘func’ [-Wimplicit-function-declaration]
+     4 |   func(1, 2);
+       |   ^~~~
+     #+END_SRC
+
+     这是因为 =GCC= 是逐行编译导致的, 它每处理一条句时都会对遇到里面的变量/函数名字查找到其对应的信息,
+
+     比如这个变量是什么类型, 这个函数接收什么样的参数, 返回什么样的值啊等等, 编译器需要根据这些信息估算要使用的内存空间.
+
+     但是在第二种的情况下编译时, =GCC= 是先编译 =main=, 在 =main= 里面找 =func= 的定义, 这个时候编译器还不清楚 =func= 长什么样,
+
+     于是它只能根据上下文"猜"出 =func= 的样子.
+
+     解决这个警告很简单:
+
+     #+BEGIN_SRC c
+     // simple-c.c
+     // 在调用func前为其进行声明
+     int func( int, int );
+
+     // 程序入口
+     int main( int argc, char **argv ) {
+         func( 1, 2 ); // 使用定义的函数
+         return 0;
+     }
+
+     // 定义函数
+     int func ( int a, int b ) {
+         return a + b;
+     }
+     #+END_SRC
+
+     我们姑且先把这一次的版本叫做最终版吧, 第一个版本叫做初版.
+
+     可以看到最终版里面的声明只提供函数的名字, 其参数类型以及返回值, 这些信息是必须的, 后续的定义里面这些关键信息要保持一致;
+
+     而参数名则是可选信息, 即便是写了, 也不需要和定义里头的参数名一样, 但为了代码可读性还是建议写上.
+
+     我们可以反过来只提供声明不提供定义, 看看编译会发生什么?
+
+     这里以最终版为例, 把 =func= 注释掉再注释掉, 会得到一个连接器报的错误:
+
+     #+BEGIN_SRC sh
+     /usr/bin/ld: /tmp/ccxdFKZ5.o: in function `main':
+     simple-c.c:(.text+0x1e): undefined reference to `func'
+     collect2: error: ld returned 1 exit status
+     #+END_SRC
+
+     当不在源代码里面提供 =func= 的定义时, 编译器会认为 =func= 的定义会在别的地方, 等编译完了就交给连接器在连接时去找 =func= 的定义, 由于没有找到对应的定义, 于似乎它报错了.
+
+     解决这个问题除了把注释解除掉外, 还可以在使用 =GCC= 编译时让它连接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
+
+     库分动态链接库(dynamic link library/shared link library)和静态链接库(static link library),
+
+     在 =Linux= 上静态链接库的后缀是 =.a(rchive)=, 动态链接库的后缀是 =.s(hared)o(bject)=.
+
+     连接动态链接库的叫做动态连接, 而把多个二进制文件连接为一体的连接方式就叫静态连接, 静态连接不一定非得使用静态库的,
+
+     动态连接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
+
+     静态连接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态连接生成的程序本体比动态连接的要大.
+
+     我们基于前面最终版的代码拆分一下用于后续演示两种连接:
+
+     #+BEGIN_SRC c
+     // simple-c.c
+     int func( int, int );
+
+     int main(int argc, char **argv) {
+       func(1, 2);
+       return 0;
+     }
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // simple-c-func.c
+     int func ( int a, int b ) {
+       return a + b;
+     }
+     #+END_SRC
+
+     *静态连接* 有两种方法:
+
+     - *静态连接-1*
+
+       #+BEGIN_SRC sh
+       gcc -o simple-c simple-c.c simple-c-func.c
+       #+END_SRC
+
+       这种方法会把中间生成若干个 =.o= 的目标文件, 然后连接器再它们连接起来得到一个程序, 这个过程其实并未使用到静态库.
+
+       这条命令等价于以下:
+
+       #+BEGIN_SRC sh
+       gcc -c simple-c-func.c
+       gcc -c simple-c.c
+       gcc -o simple-c simple-c.o simple-c-func.o
+       #+END_SRC
+
+     - *静态连接-2*
+
+       #+BEGIN_SRC sh
+       gcc -c -o simple-c-func.o simple-c-fun.c
+       ar rcs libsimple-c-func.a simple-c-func.o
+       gcc -o simple-c simple-c.c -lsimple-c-func -L.
+       #+END_SRC
+
+     \\
+
+     *动态连接* 如下:
+
+     #+BEGIN_SRC sh
+     gcc -shared simple-c-func.c -o libsimple-c-func.so
+     gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+     #+END_SRC
+
+     需要注意这里用上了 =GCC= 的 =-Xlinker= 选项来给 =ld= 传入 =-rpath .=,
+
+     由于编译得到的程序的文件格式是 =ELF=, 并且我们这个库并非在系统搜索的路径里面,
+
+     因此我们需要告诉 =ld= 该连接生成的程序需要从自身当前位置查找 =libsimple-c-func.so=.
+
+     如果 =libsimple-c-func.so= 是位于 =ld= 默认的库查找路径上, 那么最后的编译命令可以写成:
+
+     #+BEGIN_SRC sh
+     gcc -shared simple-c-func.c -o libsimple-c-func.so
+     gcc -o simple-c simple-c.c -lsimple-c-func
+     #+END_SRC
+
+     \\
+
+     这里有一个地方值得思考一下, 动态和静态两种链接除了生成库的方式不同以外, 在生成编译程序的命令上都是一样的,
+
+     如果 =ld= 默认的库查找路径上同时存在一个库的动静态两个版本的库, =ld= 又是如何选择的呢?
+
+     在 =GCC man page= 里面可以看到 =-l= 选项说明里面有这么一段描述:
+
+     #+BEGIN_QUOTE
+     Static libraries are archives of object files, and have file names like liblibrary.a.
+     Some targets also support shared libraries, which typically have names like liblibrary.so.
+     If both static and shared libraries are found, the linker gives preference to linking with the shared library unless the -static option is used.
+     #+END_QUOTE
+
+     可以看到默认情况下是默认连接动态库, 而这个 =-l= 选项是直接传给连接器的, 所以连接器也是这么处理的.
+
+     =GCC= 启动时会调用一个名叫 [[https://gcc.gnu.org/onlinedocs/gccint/Collect2.html][collect2]] 功能, 这个功能调用 =ld= 来生成一张符号表用于查找定义以及进行连接, 它就是一个连接器的封装.
+
+     可以在编译时给 =GCC= 添加一个 =-v= 选项来看看 =GCC= 给 =ld= 传了什么参数, =collect2= 接受的参数就是 =ld= 的参数.
+
+     \\
+
+     还有另外一个地方值得思考, 现在我们的 =simple-c-func= 已经是一个库了, 也就是说可以用在其它程序的源代码上了.
+
+     但这有一个问题, 每次用到别的程序上时, 我们都要在调用了函数 =func= 的源代码里写上 =int func(int, int);= 这么一句,
+
+     万一 =simple-c-func= 提供了不止 =func= 一个函数呢, 岂不是要写很多个声明吗?
+
+     这就是头文件存在的意义了: 把所有对应定义的声明写到一个头文件里, 在调用这些定义之前先 =#include= 该头文件.
+
+     我们都知道 =#include= 本质上就是复制文本, 所以 =#include= 头文件这操作很好理解.
+
+     因此, 上面的最终版代码可以拆开成三份来发布:
+
+     #+BEGIN_SRC c
+     // simple-c.c
+     #include "simple-c-func.h"
+
+     int main(int argc, char **argv) {
+       func(1, 2);
+       return 0;
+     }
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // simple-c-func.h
+     int func( int, int )
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // simple-c-func.c
+     int func ( int a, int b ) {
+       return a + b;
+     }
+     #+END_SRC
+
+     然而只发布源代码的话, 拿到代码的人就不太方便使用了, 一般要提供构建工具的配置文件,构建脚本以及构建说明,
+
+     其中构建说明会描述项目依赖哪些第三方库以及构建步骤, 置文件和脚本通常都是和构建工具配合使用.
+
+     接下来会介绍构建方式, 但在讨论这个话题之前, 我们先回顾一下上个例子 =eatc=, 它调用了 =printf= 函数,
+
+     从代码上看, 它貌似是来源于 =stdio= 库的, 并且连接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
+
+     你没办法在系统路径上找到 =libstdio.a= 或者 =libstdio.so= 的文件, 你可以 =ldd= 命令看一个可执行程序或者动态链接库连接了哪些动态链接库,
+
+     我们对 =ldd eatc= 之后可以看到以下内容:
+
+     #+BEGIN_SRC sh
+     linux-vdso.so.1 (0x00007fff5cba3000)
+     libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f2fcd67b000)
+     /lib64/ld-linux-x86-64.so.2 (0x00007f2fcd8c3000)
+     #+END_SRC
+
+     这里引用了一个叫做 =libc.so.6= 的动态链接库, 而 =printf= 的实现就是它提供的, =libc= 就是 =C= 库, 而这个 =C= 库是由 [[https://www.gnu.org/software/libc/manual/html_mono/libc.html][GNU实现的]],
+
+     我们可以使用 =nm= 来查看它的符号表:
+
+     #+BEGIN_SRC sh
+     nm -Dg /lib/x86_64-linux-gnu/libc.so.6
+     #+END_SRC
+
+     你可以在里面找到 =printf= 的符号信息:
+
+     #+BEGIN_SRC sh
+     ...
+     0000000000060770 T printf@@GLIBC_2.2.5
+     ...
+     #+END_SRC
+
+     当然它也有静态链接库版本, 和 =libc.so.6= 位于同一个目录下, 名字叫做 =libc.a=,
+
+     同样也可以用 =nm= 来列出静态链接库的符号表:
+
+     #+BEGIN_SRC sh
+     nm -s /lib/x86_64-linux-gnu/libc.a
+     #+END_SRC
+
+     我们都知道 =.a= 文件就是一个由多个 =.o= 文件组合而成的集合包, 可以使用一下命令看看里面有哪些 =.o= 文件:
+
+     #+BEGIN_SRC sh
+     ar t /lib/x86_64-linux-gnu/libc.a
+     #+END_SRC
+
+     按照前面的说法个, 在静态连接中 =#include "simple-c-func"= 对应一个 =simple-c-func.o= 或者 =simple-c-func.a= 的话,
+
+     那么 =libc.a= 是否包含一个 =stdio.o= 的文件, 并且由它提供 =printf= 函数呢?
+
+     通过以下命令来查找每个 =.o= 文件提供的了哪些符号:
+
+     #+BEGIN_SRC sh
+     nm -s /lib/x86_64-linux-gnu/libc.a
+     #+END_SRC
+
+     我们配合 =grep= 命令可以查找出关于 =printf= 符号的描述:
+
+     #+BEGIN_SRC sh
+     nm -s /lib/x86_64-linux-gnu/libc.a | grep '^printf\s'
+     #+END_SRC
+
+     然而我们猜错了, 在结果里面可以看到这一部分:
+
+     #+BEGIN_SRC sh
+     printf in printf.o
+     nm: sysdep.o: no symbols
+     nm: sigvec.o: no symbols
+     #+END_SRC
+
+     是不是有点意外, 虽然 =#include <stdio.h>= 但 =printf= 是 =printf.o= 提供的.
+
+     (看了一眼 =glibc= 的源代码好像 =stdio= 是有使用到 =printf= 的, 我也不太确定).
+
+     如果有兴趣的话, 可以使用以下命令把 =printf.o= 提取出来:
+
+     #+BEGIN_SRC sh
+     ar x /lib/x86_64-linux-gnu/libc.a printf.o --output .
+     #+END_SRC
+
+
+*** 构建工具之 CMake
+    :PROPERTIES:
+    :status: wd
+    :END:
+
+    在构建工具这一块, =C/C++= 相对于其它语言来说有很多选择, 什么 =make=, =CMake=, =automake= 等等, 都能用来构建项目.
+
+    最早的构建工具应该是 =make=, 使用 =make= 需要先掌握 =Makefile= 的编写, =make= 会根据 =Makefile= 里面的规则对项目进行构建,
+
+    比如说前面的 =simple-c= 的动态连接构成的步骤用一个 =Makefile= 解决:
+
+    #+BEGIN_SRC makefile
+    simple-c:  simple-c.c simple-c-func.so
+      gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+    simple-c-func.so: simple-c-func.c
+      gcc -shared simple-c-func.c -o libsimple-c-func.so
     #+END_SRC
 
-    头文件的声明定义在 =#ifndef= 宏和 =#endif= 宏中间,并且还有一个空宏 =EXAMPLE_H=.
+    接着执行 =make= 命令就会执行构建.
 
-    =#include= 宏引入文件实际上就是把文件的内容复制到过来,于是这样定义宏的优势就出来了:
+    像这种简单的项目手写 =Makefile= 还是很方便的, 但等到项目复杂度上来了, 编写复杂度也会随之上去, 如果还要考虑平台移植问题, 还有可能需要为别的平台写多一份 =Makefile=.
 
-    在别的文件引入这个头文件时,就算多次引用这个头文件,也不会出现重复引入的情况:
+    在 1991 年的时候, 有个名为 =David J. MacKenzie= 的程序员厌倦了为 20 个系统(=*nix= 平台)单独写 =Makefile= 的任务, 于是他写了一个叫做 =configure= 的脚本来根据系统生成 =Makefile=, 只要执行 =./configure && make= 就能开始构建.
 
-    在第一次引入 =example.h= 时就会定义 =EXAMPLE_H=, 并且把头文件的声明复制过去;
+    后来 =GNU= 把这套流程标准化了, 推出了自己的构建系统(=GNU build system=): 使用一套工具去生成 =configure= 脚本, 再执行 =./configure && make=.
 
-    之后引入 =example.h= 时会检测到 =EXAMPLE_H= 已经被定义,就不会再进行复制.
+    其实有还有很多类似的构建系统, 相比专注于 =*nix= 系统的 =GNU= 构建系统, 能够做跨平台构建的 =CMake= 是一个很不错的选择:
 
-    这种宏叫做守卫宏(guard macro).
+    在 =*nix= 上能够和 =GNU= 构建系统那样最终生成 =Makefile=;
 
-
-
-*** C 与 C++ 兼容
-
-    有时候会见到类似的代码,
-
-    #+BEGIN_SRC c
-      #include <stdio.h>
-      #include <emscripten/emscripten.h>
-
-      int main() {
-          printf("Hello World\n");
-      }
-
-      #ifdef __cplusplus              /* 这里是重点 */
-      extern "C" {                    /* 这里是重点 */
-      #endif                          /* 这里是重点 */
-
-      EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
-          printf("MyFunction Called\n");
-      }
-
-      #ifdef __cplusplus              /* 这里是重点 */
-      }                               /* 这里是重点 */
-      #endif                          /* 这里是重点 */
-    #+END_SRC
-
-    这是 =MDN= 上一个关于 =WebAssembly= 话题的例子,重点已经在上面用注释标示出来了.
-
-    =__cplusplus= 是 =C++= 编译器的预定义宏,也就是说在使用 =C++= 编译器时这个宏才会被定义,
-
-    这个时候 =C++= 编译器就相当于处理这段代码,
-
-    #+BEGIN_SRC c
-      #include <stdio.h>
-      #include <emscripten/emscripten.h>
-
-      int main() {
-          printf("Hello World\n");
-      }
-
-      extern "C" {                    /* 这里是重点 */
-      EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
-          printf("MyFunction Called\n");
-      }
-      }
-    #+END_SRC
-
-    而对于 =C= 编译器来说,就是这样,
-
-    #+BEGIN_SRC c
-      #include <stdio.h>
-      #include <emscripten/emscripten.h>
-
-      int main() {
-          printf("Hello World\n");
-      }
-
-      EMSCRIPTEN_KEEPALIVE void myFunction(int argc, char ** argv) {
-          printf("MyFunction Called\n");
-      }
-    #+END_SRC
-
-    =extern "C" { ... }= 的作用是为了解决 =C= 和 =C++= 两者命名管理规则不一样的问题.
-
-    =C= 是一门采用单一命名空间的语言,实际上这个特点是"遗传"汇编语言的: 一个汇编程序里面的全局标签的名字是唯一的.
-
-    =C= 里面的 =extern= 修饰(默认)的变量/函数就是汇编里面的全局标签.
-
-    而 =C++= 就比较复杂, =C++= 支持有多个同名但函数签名(function signature)不一样的函数,这就是传说中的函数重载(function overloading).
-
-    =C++= 的函数签名由这三个要素构成: 函数名字,函数的返回值,函数接受的参数数量以及类型.
-
-    =C++= 里面两个函数只有在函数签名一致才会认为被认为是同一个函数,这个时候编译器会告诉你重复定义了这个函数.
-
-    为了不让 =myFunction= 在 =C++= 被重载而无法正常工作,才会使用 =extern "C" { }=.
-
-    我本人对 =C++= 的兴趣和了解都不多,因此就不继续深入笔记了,只要记得 =extern "C" { }= 是为了兼容 =C= 和 =C++= 就好.
-
-
-*** 项目里面的 shell script 文件: configure
-
-    很新手上手 =C= 项目构建都会使用到 =make= 命令,都要编写 =Makefile= 文件进行构建.
-
-    =Makefile= 告诉 =make= 命令如何进行编译和链接,一旦工程里面有依赖的文件发生了变化,
-
-    再度执行 =make= 命令就会对必要的文件进行重新编译和链接.
-
-    \\
-
-    很多 =C= 程序的源代码是可以在不同平台上编译运行的,然而在不同平台上进行构建是不一样的.
-
-    比如说使用的编译器不一样;链接器不一样;就算使用同一种编译器,可能编译参数也是不一样等等.
-
-    总的来说,在不同平台上进行构建,那么要针对该平台来调整 =Makefile= 文件.
-
-    在1991年,一位叫做 =David J. MacKenzie= 的开发人员因为要经常为20个平台修改 =Makefile= 文件而写了一个叫做 =configure= 的脚本文件,
-
-    这个脚本文件会自动根据平台来生成 =Makefile= 文件,然后开发人员运行 =./configure && make= 就可以构建程序了.
-
-    这套流程后来被 =GNU= 标准化了: 每一个 =GNU= 的包都应该有一个 =configure= 脚本,该脚本至少要支持什么参数,它生成的 =Makefile= 遵守一定的规范,
-
-    在最简单的情况下执行 =./configure && make && make install= 就可以对包进行构建.
-
-    这套流程叫做 =GNU= 构建系统(GNU Build System),后来很多 =GNU= 以外的程序也采用这套构建系统.
-
-    只要懂了这套构建系统,大部分开源项目的结构就很好懂.
-
-    了解 =configure= 脚本的产生是学习这套构建系统一个好起点.
-
-    \\
-
-    手动编写 =configure= 脚本同样不是一件轻松的事情,
-
-    为此 =GNU= 开发了一套叫做 =Autotools= 的工具链,帮助开发人员快速为自己的项目搭建这套构建系统.
-
-    =Autoconf= 和 =Automake= 是这套工具链中比较重要的两个工具.
-
-    这两个工具都需要根据开发人员编写好的一些"配置"文件来生成文件:
-
-    =Autoconf= 需要根据一个叫做 =configure.ac= 的文件来生成 =configure= 文件,有时候 =configure.ac= 也叫做 =configure.in=;
-
-    =Automake= 通过 =configure.ac= 来找到 =Makefile.am= 文件,再根据 =Makefile.am= 文件生成对应的 =Makefile.in= 文件;
-
-    =configure= 脚本需要读取 =Makefile.in= 来生成 =Makefile=.
-
-    =configure.ac= 原本叫做 =configure.in=, =*.in= 文件是用来生成文本文件的是模板,
-
-    =Makefile.am= 文件 *基本* 上就是一系列 =Makefile= 的变量定义以及一些 =Makefile= 规则定义,
-
-    在 =Automake= 生成 =Makefile.in= 时,这些定义会被复制到 =Makefile.in= 里面.
-
-    在文本处理上, =Autotools= 使用了宏(macros)这个东西,想要知道如何理解,甚至编写模板,就得学习 [[https://www.gnu.org/software/autoconf/manual/autoconf.html#Autoconf-Macro-Index][Autoconf]] 和 [[https://www.gnu.org/software/automake/manual/automake.html#Macro-Index][Automake]] 所支持的宏.
-
-    实践部分就不在这里总结了,毕竟官方文档就写得很详细,而且文档上更新太快了,完全没总结的必要,
-
-    建议直接从 [[https://www.gnu.org/software/automake/manual/automake.html#Hello-World][Hello World]] 开始,并且阅读关于 =configure.ac= 以及 =Makefile.am= 文件的配置解释.
-
-
-*** 静态链接库 (static library)
-
-    
-
-*** 动态链接库 (dynamic library/shared library)
-
-** 工具的使用
-
-*** 使用GCC时,把中间过程的临时文件保存下来
-
-     =--save-temps= 选项
-
-*** 查看可执行程序依赖哪些动态文件
-
-    使用 =ldd= 命令, =ldd executable | grep "not found"= 可以看到那些缺失的依赖.
+    在 =Windows= 上能够像 =Visual Studio= 构建系统那样最终生成 =sln= 文件.

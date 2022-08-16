@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2022-07-21 四 15:21 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机眼中的浮点数</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="saltb0rn">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content">
+<h1 class="title">计算机眼中的浮点数</h1>
+<div class="abstract">
+<p>
+pass
+</p>
+
+</div>
+
+<div id="outline-container-orga24f186" class="outline-2">
+<h2 id="orga24f186">二进制下的浮点数</h2>
+<div class="outline-text-2" id="text-orga24f186">
+<p>
+在数学里面,\(r\) 进制下的任何 \(n\) 位正整数都可以写成这种形式: \(bit_{n-1} \times r^{n-1} + bit_{n-2} \times r^{n-2} + ... + bit_{1} \times r^{1} + bit_{0} \times r^{0}\), \(bit\) 的下标表示该位对应的序号(从0开始).
+</p>
+
+<p>
+正如一开始就提到的,这种只能用于计算正数的,然而现实中的数可不止正整数,一台计算机如果不能处理生活中所有类型的数字,那么它的意义何在.
+</p>
+
+<p>
+我们人类的科学家可是很聪明的,数学规定到底就是人类定义的一套"法律",同样针对计算机制定一套能够兼容现实中计算规律的"法律"不就好了吗?
+</p>
+
+<p>
+这也就是我们说的数字编码方案了.
+</p>
+
+<p>
+针对负数需要用到一种叫做补码(two's component)的编码方案,这一项方案很重要,但不是今天的重点;
+</p>
+
+<p>
+浮点数的表示是我们今天的中心,下面会介绍如何用二进制表示表示浮点数.
+</p>
+
+<p>
+今天计算机中用得最多的浮点数标准是 <code>IEEE-754</code>,来看一个例子,
+</p>
+
+
+<div class="figure">
+<p><img src="../../../files/IEEE-754-float_example.png" alt="IEEE-754-float_example.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>一个IEEE-754标准浮点数的二进制例子</p>
+</div>
+
+<p>
+这套编码标准实际上对应的是科学记数法的: <a id="orgf01a223"></a>\((-1)^{sign} \times fraction \times base^{exponent}\), 其中 \(base\) 是表示多少进制.
+</p>
+
+<p>
+注意,这条公式只是告诉我们从哪几位到哪几位影响科学记数法的哪个部位,并非指哪几位到哪几位的值等于某个部位,
+</p>
+
+<p>
+要时刻记得这是一套编码方案,编码是通过用某种规律去表示一个东西,简单点说就是你所看到的不一定是你想的那样.
+</p>
+
+<p>
+在不同位数下,每一个部分长度都会发生改变,如下:
+</p>
+
+<p>
+16-bit: <font style="background-color: #c6fcff; style: ;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; style: ;"> Exponent</font>{6 bits}-<font style="background-color: #ffb0ae; style: ;"> Fraction</font>{9 bits}
+<br>
+32-bit: <font style="background-color: #c6fcff; style: ;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; style: ;"> Exponent</font>{8 bits}-<font style="background-color: #ffb0ae; style: ;"> Fraction</font>{23 bits}
+<br>
+64-bit: <font style="background-color: #c6fcff; style: ;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; style: ;"> Exponent</font>{11 bits}-<font style="background-color: #ffb0ae; style: ;"> Fraction</font>{52 bits}
+</p>
+
+<p>
+接下来就要开始了解它们每一个部分分别是如何对一个浮点数进行编码的.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgfdf578b" class="outline-2">
+<h2 id="orgfdf578b">浮点数转二进制</h2>
+<div class="outline-text-2" id="text-orgfdf578b">
+<p>
+34.890625
+</p>
+
+<p>
+把一个浮点数分为整数和小数 2 部分进行处理
+</p>
+
+<ol class="org-ol">
+<li><p>
+把整数部分(integral part)转化为二进制
+</p>
+
+<p>
+这里的例子34,它的二进制为 #b10 0010;
+</p></li>
+
+<li><p>
+小数部分(fraction part)转化为二进制
+</p>
+
+<p>
+小数部分的转换二进制和整数部分的转换是不一样的,
+</p>
+
+<p>
+整数部分用的除法转换,小数部分则是用乘法转换,整个过程其实很简单
+</p>
+
+<p>
+这里的例子 0.890625
+</p>
+
+<p>
+<b><font style="background-color: blue; style:  #fff;"> 第一步</font></b> 先计算 \(0.890625 \times 2 = 1.78125\),当计算结果 \(\ge 1\) 时,就把对应的位设为 1,否者就是 0,
+</p>
+
+<p>
+因此小数部分的最高位是<font style="background-color: red; style:  #fff;"> 1</font>,是的,你没看错没错,是最高位,这与从最低位开始计算的整数部分不一样;
+</p>
+
+<p>
+<b><font style="background-color: blue; style:  #fff;"> 第二步</font></b> 把上一步计算结果的小数部分取出来,计算 \(0.78125 \times 2 = 1.5625\),同样计算结果大于1,因此小数部分的次高位是<font style="background-color: red; style:  #fff;"> 1</font>；
+</p>
+
+<p>
+<b><font style="background-color: blue; style:  #fff;"> 第三步</font></b> \(0.5625\) &times; 2 = 1.125$,结果大于1,所以对应位为<font style="background-color: red; style:  #fff;"> 1</font>;
+</p>
+
+<p>
+<b><font style="background-color: blue; style:  #fff;"> 第四步</font></b> \(0.125 \times 2 = 0.25\),结果小于0,所以对应位为<font style="background-color: red; style:  #fff;"> 0</font>;
+</p>
+
+<p>
+<b><font style="background-color: blue; style:  #fff;"> 第五步</font></b> \(0.25 \times 2 = 0.5\),结果小于0,所以对应位为<font style="background-color: red; style:  #fff;"> 0</font>;
+</p>
+
+<p>
+<b><font style="background-color: blue; style:  #fff;"> 第六步</font></b> \(0.5 \times 2 = 1\),结果等于1,所以对应位为<font style="background-color: red; style:  #fff;"> 1</font>,
+</p>
+
+<p>
+同时等于1的时候也以为着计算结束,值得注意的是,并非所有计算最终都会等于1的,比如圆周率(目前还不清楚是否除得尽),
+</p>
+
+<p>
+当计算的位数达到 23 位时同样会停止计算过程.
+</p>
+
+<p>
+最后小数部分的二进制为 #b11 1001.
+</p>
+
+<p>
+目前可以得到由二进制版科学记数法(scientific binary number)来表示的 34.890625 了: \(100010.111001 \times 2^{0}\).
+</p></li>
+
+<li><p>
+对科学表示法进行一般化
+</p>
+
+<p>
+对科学表示数进行一般化是指把 \(fraction\) 部分的小数点移动到最高位的后面,比如说对 \(123 \times 10^{3}\) 一般化得到 \(1.23 \times 10^{5}\).
+</p>
+
+<p>
+在二进制里也是一样的, 对 \(100010.111001 \times 2^{0}\) 一般化得到 \(1.00010111001 \times 2^{5}\).
+</p>
+
+<p>
+可以得到前面提到过的<a href="#orgf01a223">科学记数法公式</a>里的 <font style="background-color: #a0ffae; style: ;"> exponent</font> 为 5,所以 <font style="background-color: #a0ffae; style: ;"> exponent</font> 的二进制就是 5 的二进制吗?
+</p>
+
+<p>
+<font style="background-color: red; style:  #fff;"> NOPE!!!</font>
+</p>
+
+<p>
+不要忘记科学记数法的指数(exponent)是可以为负数的,比如 \(1.23 \times 10^{-1} = 0.123\).
+</p>
+
+<p>
+懂了,所以 <font style="background-color: red; style:  #fff;"> exponent</font> 的二进制要用到补码表示对吗?
+</p>
+
+<p>
+<font style="background-color: red; style:  #fff;"> NOPE!!!</font>
+</p>
+
+<p>
+我们需要了解一个叫做移码的概念,补码实际上更多是模运算,更偏向于方便数字之间的计算;
+</p>
+
+<p>
+移码更像是坐标轴的偏移(bias),统一往负无穷的方向偏移一定的单位,把被编码的值加上偏移量得到结果的二进制就是移码了,它更多是方便于数字之间的排序.
+</p>
+
+<p>
+在了解移码是如何影响数字的排序前,我们先来实践一下,把得到的指数 5 编码成移码,从而求得 <font style="background-color: red; style: ;"> exponent</font>.
+</p>
+
+<p>
+在 <code>IEEE 754</code> 的 32 位编码中,移码的偏移量(bias)是 127,那么可以推算出 <font style="background-color: red; style: ;"> exponent</font> 为 \(127 + 5 = 132\),
+</p>
+
+<p>
+再把 132 转化为二进制就能得到 <font style="background-color: red; style: ;"> exponent</font> 为 #b1000 0100.
+</p>
+
+<p>
+移码的偏移量 \(bias\) 是由编码方案定的, 它和 <font style="background-color: red; style: ;"> exponent</font> 的位数 \(k\) 存在一个关系: \(2^{k-1} - 1\),
+</p>
+
+<p>
+在 32 位的编码方案下 \(k = 8\), 所以 \(bias = 2^{8-1} - 1 = 127\).
+</p>
+
+<p>
+现在可以来看一下移码是如何方便数字之间的比较吧.
+</p>
+
+<p>
+先来看看补码的,举个例子 -1 的补码是 #b1111 1111, 而 127 的补码是 #b0111 1111,
+</p>
+
+<p>
+用来运算 \(127 - 1\) 的话非常方便: \(0111 1111 + 1111 1111 = 0111 1110\) (实际上最终答案是9位的,由于这里是表示的是 -128 到 127 这 256 个数字,因此这个进位会因溢出被丢弃),
+</p>
+
+<p>
+然而这是无法在二进制层面上直接对它们两个进行比较大小的, \(1111 1111 \gt 0111 1111\), 然而 \(-1 \lt 127\).
+</p>
+
+<p>
+再来看看移码是如何方便于数字之间的排序的吧:
+</p>
+
+<p>
+-1 的移码是 #b0111 1110, 127 的移码是 #b1111 1110, 比较大小非常方便 \(0111 1110 \lt 1111 1110\),并且 \(-1 \lt 127\),
+</p>
+
+<p>
+就是无法通过它们来计算 \(127 - 1 = 1111 1110 + 0111 1110 \neq 0111 1110\).
+</p></li>
+
+<li><p>
+整合结果
+</p>
+
+<p>
+根据前面的步骤可以得知 <font style="background-color: #ffb0ae; style: ;"> fraction</font> 是对 \(1.00010111001\) 的编码,在科学记数法的二进制版本表示中,
+</p>
+
+<p>
+小数点是一定会位于最高1后面的,既然1是大家都知道的了,那就没必要存起来了,所以就变成对 <font style="background-color: red; style: ;"> 00010111001</font> 的编码了,
+</p>
+
+<p>
+并且由于32位下的 <font style="background-color: #ffb0ae; style: ;"> fraction</font> 是 23 位,因此整个 <font style="background-color: #ffb0ae; style: ;"> fraction</font> 为 <font style="background-color: #ffb0ae; style: ;"> 000 1011 1001</font><font style="background-color: blue; style: ;"> 0000 0000 0000</font>.
+</p>
+
+<p>
+因此 34.890625 在 <code>IEEE 754</code> 的 32 位编码标准下的二进制为 <font style="background-color: #c6fcff; style: ;"> 0</font> <font style="background-color: #a0ffae; style: ;"> 100 0010 0</font> <font style="background-color: #ffb0ae; style: ;"> 000 1011 1001 0000 0000 0000</font>.
+</p></li>
+</ol>
+</div>
+</div>
+
+
+<div id="outline-container-org3a40a35" class="outline-2">
+<h2 id="org3a40a35">二进制转浮点数</h2>
+<div class="outline-text-2" id="text-org3a40a35">
+<p>
+0 10000100 00010111001000000000000
+</p>
+
+<p>
+sign-part: 0
+<br>
+exponent-part: #b10000100 等于 132, 由于 exponent-part 是补码,所以需要减去127,得到 exponent 是 132 - 127 = 5
+<br>
+fraction-part/mantissa-part: \(0001.0111001000000000000 \rightarrow 1 \times 2^{0} + 0 \times 2^{-1} + ... + 1 \times 2^{-4} + ... + 1 \times 2^{-11}= 2^{0} + 2^{-4} + 2^{-6} + 2^{-7} + 2^{-8} + 2^{-11} = 1.09033203125\)
+</p>
+
+<p>
+最后结果是 \(fraction \times 2^{exponent} = 1.09033203125 \times 2^{5} = 34.890625\)
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2022-01-13</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
