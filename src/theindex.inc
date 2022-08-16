@@ -1,4 +1,4 @@
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=b9468c6461e925c902f2db9ff2f3af1a][OpenGL/WebGL自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=098d3087f6c98ef9d449226e2ebfda64][OpenGL/WebGL自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -70,12 +70,12 @@ pass
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=17bc2965a62ab46beffcd18780864ee9][汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=d6c11454e3e2eeaf54aed6dab10aafdd][汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕32位来讲的,我读的时候64位架构已经很普遍了,也就是说这本书已经有点过时了,况且关于浮点数这块基本上没讲过.
 
-总体而言,在32位和64位上写汇编的差别不是很大,加上互联网的存在,这点差别都是可以很容易解决的.
+总体而言,在32位和64位上写汇编的差别不是很大,加上互联网的存在,这点差异一般都造不成什么大问题.
 
 现在有两个问题: 为什么要学汇编(assembly)? 如何学汇编?
 

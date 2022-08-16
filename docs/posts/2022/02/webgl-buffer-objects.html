@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-30 六 19:02 -->
+<!-- 2022-08-16 二 20:24 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenGL/WebGL自救指南</title>
@@ -294,8 +294,8 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org26cbb24" class="outline-2">
-<h2 id="org26cbb24">WebGL是如何工作的</h2>
-<div class="outline-text-2" id="text-org26cbb24">
+<h2 id="how-gl-works">WebGL是如何工作的</h2>
+<div class="outline-text-2" id="text-how-gl-works">
 <p>
 事实上, <code>WebGL</code> 如何工作什么的, 已经有很多教程已经讲得很清楚了, 比如下面这两个图文并茂的链接:
 </p>
@@ -308,6 +308,11 @@ for the JavaScript code in this tag.
 
 <p>
 在开发的时候基本上只要关注 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 两个阶段就可以了:
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>Vertex Shader</code>
 </p>
 
 <p>
@@ -323,10 +328,18 @@ for the JavaScript code in this tag.
 
 <p>
 <code>Vertex Shader</code> 能做的事情很有限, 就只有 <b>设置</b> (不是返回) 顶点坐标(设置 <code>gl_Position</code> )以及向后面的<a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流水线</a>后面的阶段传递数据.
+</p></li>
+
+<li><p>
+<code>Fragment Shader</code>
 </p>
 
 <p>
-拿到经过 <code>Vertex Shader</code> 处理的顶点数据后, <code>OpenGL</code> 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+在真正理解 <code>Fragment shader</code> 做的事情之前, 我们需要理解一些额外的概念.
+</p>
+
+<p>
+在拿到经过 <code>Vertex Shader</code> 处理的顶点数据后, <code>OpenGL</code> 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
 </p>
 
 <p>
@@ -334,11 +347,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-然后就到光栅化(<code>Rasterization</code>)阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>),
-</p>
-
-<p>
-我们可以把像素(pixel)定义为显示在屏幕上的一个颜色点.
+之后就到光栅化(<code>Rasterization</code>)阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>), 我们可以先把像素(pixel)定义为显示在屏幕上的一个颜色点.
 </p>
 
 <p>
@@ -350,11 +359,15 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-在之后的 <code>Per-Sample Processing</code> 阶段中会使用上这些值来进行一系列的测试, 来决定是否把该片元的色值输出到屏幕上成为像素,
+需要知道这些数据的含义, 或者说理解片元, 那么得先了解可能发生在 <code>Fragment Shader</code> 前后的 <code>Per-Sample Processing</code> 阶段做了什么,
 </p>
 
 <p>
-分别有剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test).
+该阶段会使用上片元的这些额外值来进行<a href="https://www.khronos.org/opengl/wiki/Per-Sample_Processing">一系列的测试</a>, 来决定是否把该片元的色值输出到屏幕上成为像素,
+</p>
+
+<p>
+这里就讨论剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test) 这三个测试(这里是它们的先后顺序).
 </p>
 
 <p>
@@ -366,11 +379,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-而判断的方法不是唯一的.
-</p>
-
-<p>
-这里我就直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
+为了刚直观的理解, 我直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
 </p>
 
 
@@ -380,23 +389,29 @@ for the JavaScript code in this tag.
 <p><span class="figure-number">Figure 2: </span>模板测试</p>
 </div>
 
-
-
-
 <p>
-开发人员编写 <code>Fragment Shader</code> 的任务就是设定片元的颜色(设置 <code>gl_FragColor</code>).
+可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个元素的值的范围是 0 到 255,
 </p>
 
 <p>
-每当光栅化得到一个片元时, <code>Fragment Shader</code> 就开始对这个片元进行处理,并且得到一个像素.
+模板测试就是比较对应位置上的元素值和片元模板值, 比如像上面图那样, 只有模板值等于1的片元才能被保留下来.
 </p>
 
 <p>
-因此, 这里就不再赘述了, 而这篇文章主要是针对上面两个链接的内容进行总结和补充.
+当然判断方法也有可能是大于等于1, 判断方法不是唯一的, 其他方法可以看<a href="https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test">官方文档</a>.
 </p>
 
 <p>
-为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的<a href="https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data">例子</a>用于讲解, 效果如下:
+现在对片元的存在有一个充分的了解了, 那么开发人员需要在 <code>Fragment Shader</code> 里面做些什么呢? 其实就是设定片元的颜色(设置 <code>gl_FragColor</code>).
+</p></li>
+</ul>
+
+<p>
+<br>
+</p>
+
+<p>
+本文会针对这两个阶段里面的一些细节进行深入学习, 为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的<a href="https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data">例子</a>用于讲解, 效果如下:
 </p>
 
 <p>
@@ -415,8 +430,8 @@ for the JavaScript code in this tag.
 
 
 <div id="outline-container-org5faf13c" class="outline-2">
-<h2 id="org5faf13c">OpenGL/WebGL 上下文是如何储存数据</h2>
-<div class="outline-text-2" id="text-org5faf13c">
+<h2 id="how-gl-store-data">OpenGL/WebGL 上下文是如何储存数据</h2>
+<div class="outline-text-2" id="text-how-gl-store-data">
 <p>
 首先, <code>OpenGL/WebGL</code> 上下文会等 <code>CPU</code> 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
 </p>
@@ -468,9 +483,9 @@ gl.bufferData(target, data, usage);
 </div>
 
 
-<div id="outline-container-orgce12673" class="outline-2">
-<h2 id="orgce12673"><a id="org565962c"></a>OpenGL/WebGL 上下文是如何使用数据</h2>
-<div class="outline-text-2" id="text-orgce12673">
+<div id="outline-container-orga8deff1" class="outline-2">
+<h2 id="how-gl-use-data">OpenGL/WebGL 上下文是如何使用数据</h2>
+<div class="outline-text-2" id="text-how-gl-use-data">
 <p>
 首先需要提及的一点是, <code>GPU</code> 并非直接使用缓冲区来进行渲染, 在说明这点之前, 我们先来明白一个概念.
 </p>
@@ -568,8 +583,8 @@ gl.bufferData(target, data, usage);
 
 
 <div id="outline-container-org46cd42b" class="outline-2">
-<h2 id="org46cd42b">GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</h2>
-<div class="outline-text-2" id="text-org46cd42b">
+<h2 id="glsl-type-qualifier-overview">GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</h2>
+<div class="outline-text-2" id="text-glsl-type-qualifier-overview">
 <p>
 和其他编程语言一样, <code>GLSL</code> 的变量也是一样有修饰符的, 这里的修饰符并非指 <code>int</code>, <code>float</code> 这些 <a href="https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)">类型标识</a>;
 </p>
@@ -623,11 +638,12 @@ gl.bufferData(target, data, usage);
 </p>
 </div>
 
+
 <div id="outline-container-org15cfb3c" class="outline-3">
 <h3 id="org15cfb3c">Vertex Shader</h3>
 <div class="outline-text-3" id="text-org15cfb3c">
 <p>
-在<a href="#org565962c">第 3 节</a>里面我们已经知道怎么把顶点数据传给 <code>GPU</code> 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
+在<a href="#how-gl-use-data">第 3 章</a>里面我们已经知道怎么把顶点数据传给 <code>GPU</code> 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
 </p>
 
 <p>
