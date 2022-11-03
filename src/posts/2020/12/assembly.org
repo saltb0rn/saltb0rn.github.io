@@ -151,7 +151,7 @@
 
     这种方式实现了一个地址上储存多位数据,比如这图就是一个地址能存 8 位,也就是今天的 1 个字节(byte).
 
-    当然今天的内存芯片早就不再是一个地址储存一位了,而是一个存多位数据, *不过主流设计仍然是一个内存地址只储存 1 个字节*.
+    当然今天的内存芯片早就不再是一个地址储存一位了, 而是一个存多位数据, *不过主流设计仍然是一个内存地址只储存 1 个字节*.
 
     可以说这张内存能够储存 $2^{20}$ 个字节或者 $2^{20} \times 8$ 位.
 
@@ -163,11 +163,17 @@
 
     不过记住, *无论一次能够读取多少个字节,计算机也不是把它们看作一个整体来处理的,依然是逐个字节处理的,每个字节有它自己的地址.*
 
+    这种给每个字节赋予唯一地址的内存设计叫做按字节编址(byte addressing).
+
     比如 32 位计算机,一次读取 4 个字节,每个字节都有自己的编号,比如读取 =0ffffe= 上的 4 个字节,
 
     那么第 1 个字节的地址可以说是 =0ffffe= 上的第 0 位(这里假设字节编号是从 0 开始),然后第 2 个字节是 =0ffffe= 上的第 1 位,
 
     如此类推.
+
+    现在的个人电脑基本上都是这种设计的, 也有一些机器的内存是一个地址上可以储存多个字节的,
+
+    比如使用了 [[../../../files/lc3-isa.pdf][LC-3]] 指令集的机器, 它是 16 位机器, 一个地址能够存 2 个字节, 这种设计就本非每个字节都有地址了.
 
     \\
 
@@ -271,11 +277,11 @@
 
     因此8位 =CPU= 必须返回到内存上读取下一个字节,直到指令完整到能够执行为止.
 
-    =CPU= 会在执行完一个指令后去执行下一个指令,而 =CPU= 有一个叫做指令指针(instruction pointer)的寄存器,它就是用来储存下一个指令的地址.
+    =CPU= 会在执行完一个指令后去执行下一个指令, 而 =CPU= 有一个叫做<<instruction-pointer>>指令指针(instruction pointer)的寄存器, 它就是用来储存下一个指令的地址.
 
-    每次当前指令执行完,这个寄存器更新指向下一条指令在内存上的地址.
+    每次当前指令执行完, 这个寄存器更新指向下一条指令在内存上的地址.
 
-    有一些指令可以控制对指令指针的寄存器储存的地址进行修改,这样就可以改变 =CPU= 执行过程,这就是一些编程语言的跳转语句宏的循环语句原理,
+    有一些指令可以控制对指令指针的寄存器储存的地址进行修改, 这样就可以改变 =CPU= 执行过程, 这就是一些编程语言的跳转语句宏的循环语句原理,
 
     那么逻辑语句呢? 这则是专门有一种 =1-bit CPU= 寄存器叫做 =flags=, =CPU= 根据它们来判断是否执行某一组指令.
 
@@ -649,14 +655,17 @@
 
       推入和弹出就是弹匣支持的的两个操作,在栈里面叫做进栈(PUSH)和出栈(POP).
 
-      我们把入口叫做栈顶(top of the stack,简称 TOS),也就是弹匣口,弹夹的底部叫做栈底(bottom of the stack).
+      我们把入口叫做栈顶(top of the stack,简称 TOS), 也就是弹匣口, 弹匣的底部叫做栈底(bottom of the stack).
 
       #+CAPTION: 栈
       [[../../../files/stack.png]]
 
-      *不过 =x86= 栈是栈顶位的内存地址比栈顶(bottom of the stack)内存地址低,也就是把上面的图倒过来.*
+      *然而上面这图和 =x86= 栈是相反的, =x86= 的栈顶所处的内存地址比栈底的低, =SP= 寄存器储存指向的永远是栈顶*,
 
-      =SP= 寄存器储存指向的永远是栈顶位置,也就是最新进栈"物品"在堆栈段上的地址.
+      也就是最新进栈"物品"在堆栈段上的地址, 也就是栈是往下增长的.
+
+      #+CAPTION: x86 栈
+      [[../../../files/x86-stack.png]]
 
       那么它和同样储存数据的数据段有什么区别呢?可以这么理解,
 
@@ -724,7 +733,7 @@
 
     \\
 
-    下一个是 *指令指针寄存器* (instruction pointer),通常叫做 =IP=,
+    下一个是 [[instruction-pointer][指令指针寄存器]], 通常叫做 =IP=, 也叫做程序计数器(program counter), 简称 =PC=.
 
     在 =16-bit CPU= 里面它的大小为16位,在 =32-bit= 保护模式下叫做 =EIP=,大小为32位.
 
@@ -1121,9 +1130,62 @@
               int 80H                 ; Make syscall to termninate the program
     #+END_SRC
 
-    可以看到这个文件的几个 =SECTION= 的作用分别有点对应前面提到过的一些概念:
+    #+BEGIN_QUOTE
+    一个可执行文件实际上是由多个节(section)组成的, 汇编器的工作就是根据汇编码翻译字节, 并把它们填充到不同的节里面, 最后组成文件;
 
-    =.data= 和 =.bss= 对应数据段,
+    汇编器并非是一次性把每个节填充完毕, 它可以在这个节里面填充一点, 然后往另外一个节里面填充一点, 如此来回切换.
+
+    =NASM= 的 =SECTION= 指令就是用来切换或定义节的, 比如这个例子的节处理顺序就是 =.data -> .bss -> .text=.
+
+    如果把上面的汇编码改成如下:
+
+    #+BEGIN_SRC nasm
+      ; Executable name : EATSYSCALL
+      ; Version         : 1.0
+      ; Created date    : 1/7/2009
+      ; Last update     : 1/7/2009
+      ; Author          : Jeff Duntemann
+      ; Description     :  A simple assembly app for Linux, using NASM 2.05,
+      ;                    demonstrating the use of Linux INT 80H syscalls
+      ;                    to display text.
+      ; Build using these commands:
+      ;   nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)
+      ;   or
+      ;   nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)
+      ;   ld -o eatsyscall eatsyscall.o
+
+      SECTION .bss                    ; Section containing unintialized data
+      SECTION .text                   ; Section containing code
+
+      global _start                   ; Linker (ld) needs this to find the entry point!
+                                      ; The name of entry point MUST be _start!
+                                      ; otherwise error will be raised during linking
+      _start:                         ; A function definition, named _start
+              nop                     ; This no-op keeps gdb happy (see text)
+              mov eax, 4              ; Specify sys_write syscall
+              mov ebx, 1              ; Specify File Descriptor 1: Standard Output
+              mov ecx, EatMsg         ; Pass offset of the message
+              mov edx, EatLen         ; Pass the length of the message
+              int 80H                 ; Make syscall to output the text to stdout
+
+      SECTION .data                   ; Section containing initialized data
+      EatMsg: db "Eat at Joe’s!", 10
+      EatLen: equ $-EatMsg
+
+      SECTION .text                   ; Section containing code
+              mov eax, 1              ; Specify Exit syscall
+              mov ebx, 0              ; Return a code of zero
+              int 80H                 ; Make syscall to termninate the program
+    #+END_SRC
+
+    汇编器处理节的顺序就变成了 =.bss -> .text -> .data -> .text=.
+
+    文章后面的汇编例子统一采用"写在一起"的风格.
+    #+END_QUOTE
+
+    \\
+
+    一个可执行文件最少要有 =.text, .data= 和 =.bss= 三个段, 下面分别来介绍一下.
 
     其中, =.data= 包含了已经初始化的数据(initialized data),初始化数据是指在程序运行前就有值的数据,
 
@@ -1466,7 +1528,7 @@
      比如,
 
      #+BEGIN_SRC asm
-               mov eax, 1
+     mov eax, 1
      #+END_SRC
 
      这条指令有两个操作数,第一个是寄存器地址 =EAX=,第二个是数字1.
@@ -1532,11 +1594,11 @@
      我们可以通过 =MOV= 来交换两个地址上的值,比如交还 =EAX= 和 =EBX= 两个寄存器的值,
 
      #+BEGIN_SRC nasm
-               mov eax, 1
-               mov ebx, 2
-               mov ecx, eax
-               mov eax, ebx
-               mov ebx, ecx
+     mov eax, 1
+     mov ebx, 2
+     mov ecx, eax
+     mov eax, ebx
+     mov ebx, ecx
      #+END_SRC
 
      实际上有一条更方便的指令来完成这件工作: =xchg eax, ebx=.
@@ -1590,13 +1652,13 @@
      下面有几个例子可以看一下,
 
      #+BEGIN_SRC nasm
-               mov eax, [ebx]
-               mov eax, [EatMsg]
-               mov [eax], ebx
-               mov eax, [0x6000e8]
-               mov [EatMsg], byte 'R'
-               mov eax, [ebx+16]
-               mov eax, [ebx+ecx+11]
+     mov eax, [ebx]
+     mov eax, [EatMsg]
+     mov [eax], ebx
+     mov eax, [0x6000e8]
+     mov [EatMsg], byte 'R'
+     mov eax, [ebx+16]
+     mov eax, [ebx+ecx+11]
      #+END_SRC
 
      你可能注意到 =mov [EatMsg], byte 'R'= 可能不太好理解,它是把字符'R'复制到 =[EatMsg]= 高位的第一个字节上,
@@ -1611,15 +1673,15 @@
 
      此外还有别的大小说明符: =word, dword= 等等.
 
-     有时候可能需要把计算出来的地址保存下来,那么可以用 =LEA= 指令来完成,
+     有时候可能只是单纯只想把计算出来的地址保存下来, 而不是想要地址上的数据, 那么可以使用 =LEA= 指令.
 
      比如把 =ebx+ecx+11= 的结果保存在 =eax= 上,那么就要这么做,
 
      #+BEGIN_SRC nasm
-               lea eax, [ebx+ecx+11]
+     lea eax, [ebx+ecx+11]
      #+END_SRC
 
-     这样,计算得到的有效地址就被储存在 =eax= 上了,这个过程中没有访问到内存上.
+     这样, 计算得到的有效地址就被储存在 =eax= 上了.
 
      \\
 
@@ -1752,15 +1814,15 @@
      再比如,
 
      #+BEGIN_SRC nasm
-        mov eax, 0FFFFFFFFH
-        inc eax
+     mov eax, 0FFFFFFFFH
+     inc eax
      #+END_SRC
 
      =INC= 的作用是对操作数加 1 并且把结果保存在操作数上,然而这并不像 =add eax, 1= 把 =CF= 设为 1.
 
      #+BEGIN_SRC nasm
-       mov eax, 0
-       dec eax
+     mov eax, 0
+     dec eax
      #+END_SRC
 
      =DEC= 的作用是对操作数减 1 并且把结果保存在操作数上,同样也不像 =sub eax, 1= 那样把 =CF= 设为 1.
@@ -1785,17 +1847,21 @@
                jnz DoMore
      #+END_SRC
 
-     这里 =DoMore:= 是一个标签(label),在汇编语言里面,一个标签就是一个内存地址的别名.
+     这里 =DoMore:= 是一个标签(label), 在汇编语言里面, 一个标签就是一个内存地址的别名.
 
-     在 =NASM= 里面,一个标签就是一个字符串后面跟着一个冒号(:), *通常* 标签放在包含指令的代码行上,不过这个冒号是可选的,
+     在 =NASM= 里面, 一个标签就是一个字符串后面跟着一个冒号(:), *通常* 标签放在包含指令的代码行上,不过这个冒号是可选的,
 
-     如果标签后面没有冒号,并且是单独作为一行,那么这种标签被叫做孤儿标签(orphan labels),汇编时会出现警告,还有可能会出 =bugs=,
+     如果标签后面没有冒号, 并且是单独作为一行, 那么这种标签被叫做孤儿标签(orphan labels), 汇编时会出现警告, 还有可能会出 =bugs=,
 
-     也就是说,标签后面没有冒号时不能顺便换行.
+     也就是说, 标签后面没有冒号时不能顺便换行.
 
      这其中有些标签会以下划线(=_=),句号(=.=)或问号(=?=)开头,这些标签对于汇编器有特殊含意的,请在理解它们的作用后再使用.
 
-     此外要注意一点, =NASM= 里面的标签是区分大小写的,
+     此外要注意一点, =NASM= 里面的标签是区分大小写的.
+
+     #+BEGIN_SRC sh
+     readelf -s nasm-bin
+     #+END_SRC
 
      (如果不想做任何测试直接跳转,可以使用 =JMP= 指令.)
 
@@ -1921,6 +1987,84 @@
      此外开发时多要遵守一个原则: 一个全局标签尽量不要有太多局部标签,一个局部标签的区域应该尽量简短.
 
      关于函数的细节还有很多没有提到,这里先有个印象,后面会继续补充细节.
+
+     #+BEGIN_QUOTE
+     *通常情况下*, 目标文件会记录下标签的信息, 可以使用 =readelf= 命令读取出来,
+
+     假设编译出来的可执行文件名字叫 =nasm-bin=, 那么:
+
+     #+BEGIN_SRC sh
+       readelf -s nasm-bin
+       # output:
+       # Symbol table '.symtab' contains 9 entries:
+       # Num:    Value          Size Type    Bind   Vis      Ndx Name
+       # 0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+       # 1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS main.asm
+       # 2: 0000000000401017     0 NOTYPE  LOCAL  DEFAULT    1 DoMore
+       # 3: 0000000000401022     0 NOTYPE  LOCAL  DEFAULT    1 OutSide
+       # 4: 0000000000401022     0 NOTYPE  LOCAL  DEFAULT    1 OutSide.exit1
+       # 5: 0000000000401000     0 NOTYPE  GLOBAL DEFAULT    1 _start
+       # 6: 0000000000402000     0 NOTYPE  GLOBAL DEFAULT    1 __bss_start
+       # 7: 0000000000402000     0 NOTYPE  GLOBAL DEFAULT    1 _edata
+       # 8: 0000000000402000     0 NOTYPE  GLOBAL DEFAULT    1 _end
+     #+END_SRC
+
+     除了汇编码定义的那些标签外, 还有一些额外的标签.
+
+     如你所见, 局部标签会以 =[GLOBAL-LABEL].[LOCAL-LABEL]= 这种方式记录,
+
+     有趣的一点是, =NASM= 其实并不要求局部标签之前一定要有全局标签, 不过这不意味着这种局部标签不属于某个全局标签,
+
+     实际上它们是属于汇编码里面最后的那个全局标签.
+
+     我们把前面的那段汇编码改成如下:
+
+     #+BEGIN_SRC nasm
+     section .data
+     section .bss
+     section .text
+
+     .hello:
+
+     global _start
+     _start:
+             nop
+             mov eax, 5
+             call DoMore
+             mov eax, 1,
+             mov ebx, 0
+             int 80H
+
+     DoMore:
+             cmp eax, 3
+             jz OutSide.exit1
+             sub eax, 1
+             jnz DoMore
+             ret
+
+     OutSide:
+     .exit1: ret
+     #+END_SRC
+
+     它的标签信息如下:
+
+     #+BEGIN_SRC sh
+       # Symbol table '.symtab' contains 10 entries:
+       # Num:    Value          Size Type    Bind   Vis      Ndx Name
+       # 0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+       # 1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS main.asm
+       # 2: 0000000000401000     0 NOTYPE  LOCAL  DEFAULT    1 OutSide.hello
+       # 3: 0000000000401017     0 NOTYPE  LOCAL  DEFAULT    1 DoMore
+       # 4: 0000000000401022     0 NOTYPE  LOCAL  DEFAULT    1 OutSide
+       # 5: 0000000000401022     0 NOTYPE  LOCAL  DEFAULT    1 OutSide.exit1
+       # 6: 0000000000401000     0 NOTYPE  GLOBAL DEFAULT    1 _start
+       # 7: 0000000000402000     0 NOTYPE  GLOBAL DEFAULT    1 __bss_start
+       # 8: 0000000000402000     0 NOTYPE  GLOBAL DEFAULT    1 _edata
+       # 9: 0000000000402000     0 NOTYPE  GLOBAL DEFAULT    1 _end
+     #+END_SRC
+
+     可以看到 =.hello= 这个局部标签属于汇编码里面最后的一个全局标签 =OutSide=.
+     #+END_QUOTE
 
      \\
 
@@ -2389,9 +2533,7 @@
 
      所谓全局数据就是在程序的任何地方都可以访问得到的数据.
 
-     像前面的简单例子 =eatsyscall= 中,在 =.data= 和 =.bss= 区域定义的数据就是全局数据,如果一个程序分成了好个文件,那么全局数据的区分就更加复杂了,
-
-     之后会区了解库(library)这个概念.
+     像前面的简单例子 =eatsyscall= 中,在 =.data= 和 =.bss= 区域定义的数据就是全局数据, 如果一个程序分成了好个文件,那么全局数据的区分就更加复杂了, 之后会了解库(library)这个概念.
 
      而局部数据就是数据只能在函数内或库内进行访问,然而,局部数据并没法像 =.data= 和 =.bss= 里面数据那样定义.
 
@@ -2568,25 +2710,25 @@
 
      这两个都能正确进行计算,然而两者差别很大,这也就是 =CALL= 指令和跳转指令之间地区别.
 
-     =CALL= 指令会先把下一条指令地址压进栈里面,然后再跳转到对应标签的地址.
+     =CALL= 指令会先把当前位置的下一条指令地址压(PUSH)进栈里面, 然后再跳转(JMP)到对应标签的地址.
 
-     比如在 =_start= 标签里面的 =call Acc= 在执行时候,会把 =pop rbx= 指令的地址压进到栈里面,然后跳转到 =Acc= 标签地址上.
+     比如在 =_start= 标签里面的 =call Acc= 在执行时候, 会把 =pop rbx= 指令的地址压进到栈里面, 然后跳转到 =Acc= 标签地址上.
 
      而 =jmp Acc= 是直接跳转到 =Acc= 标签上.这就是 =Call= 指令和跳转指令的差别.
 
-     也正因为如此, =CALL= 指令要配合 =RET= 指令使用, =RET= 的作用就是把 =CALL= 压进去的"下一条指令的地址"弹出来,并且返回到这个地址上,
+     也正因为如此, =CALL= 指令要配合 =RET= 指令使用, =RET= 的作用就是把 =CALL= 压进去的"下一条指令的地址"弹出来,并且返回(跳转回)到这个地址上,
 
      这样就完成了一趟函数调用的"旅程".
 
      \\
 
-     =RET= 指令和跳转指令也有一些共同点,那就是跳转的距离,它是指跳转指令(jump instruction)到跳转目标(jump target)两个内存地址之间的距离.
+     =RET= 指令和跳转指令也有一些共同点, 那就是跳转的距离, 它是指跳转指令(jump instruction)到跳转目标(jump target)两个内存地址之间的距离.
 
      在条件跳转指令(也就是 =JMP= 以外的跳转指令)要跳转到一个很远的距离时,汇编器会出现这样的错误:
 
      "error: short jump is out of range".
 
-     =NASM= 可以根据不同情况下的同一个条件跳转指令产生不同的操作码(opcode),这个不同情况就是指定的跳转距离.
+     =NASM= 可以根据不同情况下的同一个条件跳转指令产生不同的操作码(opcode), 这个不同情况就是指定的跳转距离.
 
      也就是根据跳转距离可以划分得到不同的跳转类型,距离一共有3种: =short, near 和 far=,这个是从小到大排序的.
 
@@ -2605,17 +2747,17 @@
        jne near SomeLbl ; Near jump
      #+END_SRC
 
-     通常出现 "short jump out of range" 错误是因为把用来某个标签放到程序的最后,然后在不同地方跳转到这个标签,而程序又十分大而导致的.
+     通常出现 "short jump out of range" 错误是因为把用来某个标签放到程序的最后, 然后在不同地方跳转到这个标签, 而程序又十分大而导致的.
 
-     解决这个问题很简单,就是在目标标签前面加一个 =NEAR= 关键字.
+     解决这个问题很简单, 就是在目标标签前面加一个 =NEAR= 关键字.
 
      =RET= 指令也分不同距离进行返回,不过它只有两种: =near return= 和 =far return=,分别对应指令 =RETN= 和 =RETF=.
 
-     除开必要情况,通常使用用 =RET= 指令就可以了,在汇编时, =NASM= 会自动根据情况对 =RET= 指令生成 =RETN= 和 =REFF= 对应的操作码.
+     除开必要情况,通常使用 =RET= 指令就可以了,在汇编时, =NASM= 会自动根据情况对 =RET= 指令生成 =RETN= 和 =REFF= 对应的操作码.
 
-     =RET= 有一个可选操作数,类型为 =i8=,用来指定在函数返回时指定释放栈上 =N= 个字节的数据,具体就是把栈指针 =ESP= 的值增加 =N=,
+     =RET= 有一个可选操作数, 类型为 =i8=, 用来指定在函数返回时指定释放栈上 =N= 个字节的数据, 具体就是把栈指针 =ESP= 的值增加 =N=,
 
-     支持这个操作数是因为有些 =CPU= 支持把立即数压进栈,清空这种数据的唯一办法只能让栈指针寄存器(ESP)增加对应数据的大小.
+     支持这个操作数是因为有些 =CPU= 支持把立即数压进栈, 清空这种数据的唯一办法只能让栈指针寄存器(ESP)增加对应数据的大小.
 
 **** 库(Library)
 
@@ -2738,42 +2880,7 @@
 
      如果你的目的是发布库, 那么推荐使用第二种方法.
 
-     再来动态连接,
-
-     #+BEGIN_SRC makefile
-       main: main.o mathlib.so
-               ld -o main main.o -I/lib64/ld-linux-x86-64.so.2 -L . -rpath . -l:mathlib.so
-       main.o: main.asm
-               nasm -f elf64 -g -F stabs main.asm
-       mathlib.so: mathlib.o
-               ld -shared -o mathlib.so mathlib.o
-       mathlib.o: mathlib.asm
-               nasm -f elf64 -g -F stabs mathlib.asm
-     #+END_SRC
-
-     同样, 如果程序没有任何问题, 那么同样返回值是10; 如果把 =mathlib.so= 改了个名字或者移除掉的话, =main= 就会运行不了,并且报错:
-
-     "./main: error while loading shared libraries: mathlib.so: cannot open shared object file: No such file or directory".
-
-     比起静态连接,这里多了一步 =mathlib.so= 的编译, =*.so= 就是 =Linux= 的动态连接库的后缀, =so= 的全称是 =shared object= 的意思.
-
-     =ld= 命令使用 =-shared= 选项意味者最后连接得到的是一个动态连接库.
-
-     而且在最后生成可执行文件 =main= 时要告诉 =ld= 命令: =math.o= 文件要如何和动态库 =mathlib.so= 连接.
-
-     =ld= 命令的 =-I= 选项是指定用使用哪一个动态连接器, 当链接生成目标的一个引用动态库的 =ELF= 程序时, 可能需要手动设定一下动态连接器, =Ubuntu= 的64位动态连接器位于 =/lib64/ld-linux-x86-64.so.2=;
-
-     =ld= 的 =-L= 选项是指定在哪个目录下搜索即将链接的库文件, 由于是生成的 =mathlib.so= 在当前目录下, 所以这里指定了 =.=;
-
-     =ld= 的 =-l= 选项用来指定要连接哪个库, 它有两种语法 =-l:filename= 以及 =-l name=,
-
-     第一种是从指定路径下找到名字叫做 =filename= 的库文件, 第二种是从指定的搜索路径中查找名字叫 =libname.a= 或者 =libname.so= 的库文件, 我们这个例子里面用的是第一种写法;
-
-     =ld= 的 =-rpath= 选项是指定可执行程序在运行时搜索动态连接库文件的目录,也就是 =main= 在运行时在什么地方找 =mathlib.so= 文件.
-
-     在连接成 =ELF= 可执行文件时,可以让 =ld= 生成位置独立可执行文件(position independent executable/position independent code executable),简称 =PIC=,这种可执行文件就具备可重定位性,
-
-     这需要把程序里面的引用的地址全部变为相对地址,以及更改连接方式.
+     再来 *动态连接*, 不过在这之前, 我们需要把 =main.asm= 调整一下,
 
      #+BEGIN_SRC nasm
        ; main.asm
@@ -2797,15 +2904,11 @@
                int 80h
      #+END_SRC
 
-     要把外部引用 =Acc= 后面加上 =wrt ..plt= 的声明,这时表明 =Acc= 是外部模块的一个函数.
+     调用外部引用 =Acc= 时在其后面加上了 =wrt ..plt= 的声明, 这是表明 =Acc= 是外部模块的一个函数(. 这个 =plt= 是很有来头的, 后面会在探究 =ELF= 文件时会对它进行学习),
 
-     还有其它类型的声明,具体可以看这些文档:
+     有了这个声明, =NASM= 让连接器在连接时生成一个表来查找 =Acc= 的定义(. 参考 [[https://www.nasm.us/doc/nasmdoc8.html#section-8.9.3][Position-Independent Code: ELF Special Symbols and WRT]]).
 
-     [[https://www.nasm.us/doc/nasmdo10.html#section-10.2][Writing NetBSD/FreeBSD/OpenBSD and Linux/ELF Shared Libraries]]
-
-     [[https://www.nasm.us/doc/nasmdoc8.html#section-8.9.3][Position-Independent Code: ELF Special Symbols and WRT]]
-
-     连接时需要在生成可执行文件的一步给 =ld= 命令加上 =-pie= 选项,所以最终的 =Makefile= 是这样的:
+     连接时需要在生成可执行文件的一步给 =ld= 命令加上 =-pie= 选项, 所以最终的 =Makefile= 是这样的(参考 https://www.nasm.us/doc/nasmdo10.html#section-10.2.5):
 
      #+BEGIN_SRC makefile
        main: main.o mathlib.so
@@ -2818,6 +2921,26 @@
                nasm -f elf64 -g -F stabs mathlib.asm
      #+END_SRC
 
+     如果程序没有任何问题, 那么同样返回值是10;
+
+     如果把 =mathlib.so= 改了个名字或者移除掉的话, =main= 就会运行不了,并且报错:
+
+     "./main: error while loading shared libraries: mathlib.so: cannot open shared object file: No such file or directory".
+
+     比起静态连接, 这里多了一步 =mathlib.so= 的编译, =*.so= 就是 =Linux= 的动态连接库的后缀, =so= 的全称是 =shared object= 的意思.
+
+     而且在最后生成可执行文件 =main= 时要告诉 =ld= 命令: =math.o= 文件要如何和动态库 =mathlib.so= 连接.
+
+     =ld= 命令的 =-I= 选项是指定用使用哪一个动态连接器, 当链接生成目标的一个引用动态库的 =ELF= 程序时, 可能需要手动设定一下动态连接器, =Ubuntu= 的64位动态连接器位于 =/lib64/ld-linux-x86-64.so.2=;
+
+     =ld= 的 =-L= 选项是指定在哪个目录下搜索即将链接的库文件, 由于是生成的 =mathlib.so= 在当前目录下, 所以这里指定了 =.=;
+
+     =ld= 的 =-l= 选项用来指定要连接哪个库, 它有两种语法 =-l:filename= 以及 =-l name=,
+
+     第一种是从指定路径下找到名字叫做 =filename= 的库文件, 第二种是从指定的搜索路径中查找名字叫 =libname.a= 或者 =libname.so= 的库文件, 我们这个例子里面用的是第一种写法;
+
+     =ld= 的 =-rpath= 选项是指定可执行程序在运行时搜索动态连接库文件的目录,也就是 =main= 在运行时在什么地方找 =mathlib.so= 文件.
+
      当我们得到一个动态链接程序以后, 可以使用 =ldd= 命令来查看它链接了哪些动态库文件,
 
      #+BEGIN_SRC sh
@@ -2827,6 +2950,16 @@
      #	linux-vdso.so.1 (0x00007fff02522000)
      #	mathlib.so => ./mathlib.so (0x00007fd278704000)
      #+END_SRC
+
+     =ld= 命令使用 =-shared= 选项意味着最后连接得到的是一个动态连接库.
+
+     # 动态库文件叫做位置无关代码(position independent code), 简称 =PIC=, 并非所有架构都支持 =PIC=,
+
+     # 在连接成 =ELF= 可执行文件时, 可以让 =ld= 生成位置无关可执行文件(position independent executable/position independent code executable),简称 =PIE=,
+
+     # 在运行 =PIE= 的时候, 它会加载 =PIC=,  =PIE= 里面的引用的地址全部变为相对地址, 根据相对地址来找到引用对应的实现.
+
+     实际上关于动态还有很多细节没说, 我把这些内容放到后面探究 =ELF= 文件里面去了.
 
 **** 宏(Macros)
 
@@ -2935,7 +3068,7 @@
 
 **** 调用C库的函数
      :PROPERTIES:
-     :CUSTOM_ID: how-to-call-c-functions
+     :CUSTOM_ID: how-to-call-c-functions-in-nasm
      :END:
 
      把汇编语言创建的程序和 =C= 语言的函数连接起来时,得到的其实是一个混合程序了(hybrid).
@@ -3032,25 +3165,28 @@
 
        =rax= 还有一个作用, =C= 语言支持一种可变参数函数(variable arguments function, varargs function),这种函数的参数数量是不固定的,需要让 =rax= 记录传递的参数里面有多少个矢量参数.
 
-
      总得来说, =x86-64= 相对 =i386= 的 =ABI= 规范的主要变化就这些,有一个点倒是没有这么改变的,那就是对栈的依赖.
 
-     编译器本质是一个生产汇编代码的机器(robots),这意味着编译器必须依靠暴力(brute-force)的手段来生成代码,而这些手段大部分都依靠栈的使用.
+     编译器本质是一个生产汇编代码的机器(robots), 这意味着编译器必须依靠暴力(brute-force)的手段来生成代码, 而这些手段大部分都依靠栈的使用.
 
-     *对于 =C= 程序来说,每次调用函数,函数都要被分配一块内存区域来作为它本次调用使用的栈,这块区域在在函数返回后被销毁*,栈上的一个指向数据首字节的地址叫做一个栈帧(stack frame).
+     *对于 =C= 程序来说, 在每次调用函数时, 编译器会为该分配一块内存区域用于存储数据, 在函数返回后这块区域就会被销毁*, 人们会把这块内存区域做栈帧(stack frame),
 
-     栈帧的作用是用来储存函数里面的局部变量,这在单纯使用汇编语言开发中是很少见的,如果是要从汇编程序中调用高级语言的函数,那么这一点必须要了解.
+     叫做栈帧是因为它是栈上一个数据, 一个基本单位, 一个栈帧就是一个函数调用, 里面包含了函数各自的数据(函数的局部变量), 函数与函数之间的数据不会发生混乱.
 
-     这里有一个问题就是: 如何给函数划分一块区域作为它的栈?
+     在单纯使用汇编语言开发中是很少见栈帧这个东西, 如果是要从汇编程序中调用高级语言的函数, 那么这一点必须要了解.
 
-     要确定一块内存区域只需要知道起始位置和结尾位置,所以需要两个通用寄存器来储存这两个信息,从而确定栈.
+     这里有一个问题就是: 如何给函数划分一块区域作为它的栈帧, 或者说怎么 *建立栈帧* ?
 
-     =i386= 的 =ABI= 规范规定用 =EBP= 来储存栈的起始位置, =ESP= 储存栈的结尾位置,每次往栈里面压进了数据, =ESP= 就会相应减少,指向下一个栈帧.
+     要确定一块内存区域只需要知道起始位置和结尾位置, 所以需要两个通用寄存器来储存这两个信息, 从而确定栈帧.
+
+     =i386= 的 =ABI= 规范规定用 =EBP= 来储存栈帧的起始位置, =ESP= 储存栈帧的结尾位置, 每次往栈里面压进了数据, =ESP= 就会相应减少, 指向下一个栈帧.
 
      #+CAPTION: Stack in i386 ABI
      [[../../../files/how-to-define-a-stack-in-c.png]]
 
-     在调用 =C= 函数时,需要手动为它建立栈,在函数结束后把栈销毁掉,具体汇编代码如下:
+     我们接下来会讲解在汇编里面调用 =C= 函数时, 如何为它建立栈帧以及如何给它传参数,
+
+     在调用 =C= 函数时, 需要手动为它建立栈帧, 在函数结束后把栈帧销毁掉, 具体汇编代码如下:
 
      #+BEGIN_SRC nasm
        push ebp
@@ -3060,13 +3196,19 @@
        pop ebp
      #+END_SRC
 
-     可以看到栈指针 =esp= 是通过 =ebp= 来进行备份和还原的,之所以这么做是因为 =esp= 之后要被手动修改,这导致只靠 =PUSH= 和 =POP= 指令是无法在函数结束时正确还原 =esp= 的.
+     可以看到栈指针 =esp= 是通过 =ebp= 来进行备份和还原的, 之所以这么做是因为 =esp= 之后要被手动修改, 这导致只靠 =PUSH= 和 =POP= 指令是无法在函数结束时正确还原 =esp= 的.
+
+     需要注意的是实际上 =C= 函数本来在编译时, =GNU= 就为它们建立好栈帧了, 接下来的例子中分配栈帧只是为了遵守规范,
+
+     后面我们在 [[#how-c-code-looks-like-in-gas][C 语言是如何与汇编对应的]] 解释 GNU 是如何为 =C= 函数建立栈帧的.
 
      在 =x86-64= 的 =ABI= 规范中只需要把寄存器换成它们的拓展寄存器就好了: =rbp= 以及 =rsp=.
 
-     不过这里隐藏了一个细节: 在调用函数前,要确保栈指针在 =CALL= 指令执行后能够对齐 =n= 字节边界(n-byte boundary, nB boundary),
+     <<data-align>>不过这里隐藏了一个细节: 在调用函数前, 要确保栈指针在 =CALL= 指令执行后能够对齐 =n= 字节边界(n-byte boundary, nB boundary),
 
-     也就是栈指针的值满足 $*sp\ \ rem\ \ n = 0$,这个 =n= 的规定取决于 =ABI= 方案的定义, =x86-64= 的规定是16.
+     也就是栈指针的值满足 $*sp\ \ rem\ \ n = 0$, 并且 =n= 要满足 $n = 2^{x}, x \in \mathbb{Z}$.
+
+     这个 =n= 的规定取决于 =ABI= 方案的定义, =x86-64= 的规定是16. 有兴趣的话可以了解一下[[https://en.wikipedia.org/wiki/Data_structure_alignment][数据对齐]]的概念.
 
      来一个实际例子进行比对: 调用 =Glibc= 的 =puts= 函数.
 
@@ -3098,7 +3240,7 @@
                ret
      #+END_SRC
 
-     可以看到32位下调用 =C= 函数要用栈来传递所有参数,把 =EatMsg= 作为参数压进栈再调用 =puts=,最后通过手动增加栈指针的值来移动栈指针,使其指向栈里面的上一个栈帧,以次清空参数占用的内存.
+     可以看到32位下调用 =C= 函数要用栈来传递所有参数, 把 =EatMsg= 作为参数压进栈再调用 =puts=, 最后通过手动增加栈指针的值来移动栈指针, 使其指向栈里面的上一个数据, 以此清空参数占用的内存.
 
      在64位下,
 
@@ -3174,9 +3316,9 @@
                ret
      #+END_SRC
 
-     其实有些系统是不强制要求对齐的,有时候 =Linux= 就不强制要求, =MacOS= 就要求.
+     其实有些系统是不强制要求对齐的, 有时候 =Linux= 就不强制要求, =MacOS= 就要求.
 
-     这个例子其实有点过于规范了,因为调用 =puts= 并没有改变 =r12= 到 =r15= 4 个寄存器,所以它们的备份还原的指令是可以去掉的.
+     这个例子其实有点过于规范了, 因为调用 =puts= 并没有改变 =r12= 到 =r15= 4 个寄存器, 所以它们的备份还原的指令是可以去掉的.
 
      再来一个比较典型的调用 =printf= 的例子.
 
@@ -3272,11 +3414,11 @@
                mov rcx, 3
                mov r8, 4
                mov r9, 5
-               sub rsp, 8              ; 10 PUSH before CALL, so align to 16-byte boundary
+               sub rsp, 8              ; 10 PUSH instructions before CALL, "sub rsp, 8" so that align to 16-byte boundary after CALL
                push 7
                push 6
                call printf
-               add rsp, 16             ; Stack cleanup for 2 parms
+               add rsp, 16             ; Stack cleanup for 2 params
                add rsp, 8
 
                pop r9
@@ -3304,19 +3446,19 @@
 
      =printf= 一共接受了8个参数,有两个参数需要用栈来传递的: 6 和 7,而且用栈传递是要注意顺序,
 
-     在 =C= 语言里面可以看到数字6是第7个参数,数字7是第8个参数,然而在汇编里面则是先传7再传6.
+     在 =C= 语言里面可以看到数字6是第7个参数, 数字7是第8个参数, 然而在汇编里面则是先传7再传6.
 
-     其实这不难理解,因为栈是先进后出,对于函数来说,从栈里面拿的第一个参数必然是最后进去的那个.
+     其实这不难理解, 因为栈是先进后出, 对于函数来说, 从栈里面拿的第一个参数必然是最后进去的那个.
 
-     还有这里还进行了参数对齐,这里需要注意绝对不能在 =push 7= 和 =push 6= 之后进行对齐的,这会影响参数的读取.
+     还有这里还进行了参数对齐, 这里需要注意绝对不能在 =push 7= 和 =push 6= 之后进行对齐的, 这会影响参数的读取.
 
      \\
 
      这些基本上就是 =C= 函数的调用规范了,那么可以反过来让 =C= 调用汇编的函数吗?
 
-     这个章节开篇就给出了答案:可以.
+     这个章节开篇就给出了答案: 可以.
 
-     实践起来也不难,只需要按照调用规范定义就可以,这里把 *函数* 章节里的 =Acc= 改成可这样的一个函数来作为例子.
+     实践起来也不难, 只需要按照调用规范定义就可以, 这里把 *函数* 章节里的 =Acc= 改成可这样的一个函数来作为例子.
 
      首先我们的 =Makefile= 是这样的,
 
@@ -3351,7 +3493,7 @@
 
        int acc(int);
 
-       int main() {
+       int main(int argc, char* argsv[]) {
          printf("The result is %d\n", acc(4));
          return 0;
        }
@@ -3359,13 +3501,15 @@
 
      最终运行程序 =main= 会打印出这样的结果: "The result is 10".
 
-     \\
+**** 阅读GCC产生的汇编码
 
-     前面关于 =C= 函数调用规范都只是抛砖引玉,很有很多细节没有提及,也不可能全部讲到,关键还是得靠自己去学习.
+     前面关于汇编程序调用 =C= 函数以及 =C= 程序调用汇编程序都只是抛砖引玉, 编译器的处理会更加复杂一点,
 
-     最有效的学习方法就是阅读 =GCC= 生成的汇编码,不过 =GAS= 使用的汇编语法是 =AT&T= 语法,所以这里稍微终结一下 =AT&T= 语法于 =INTEL= 语法的差异,
+     从栈帧建立以及销毁到内存管理都都不太一样, 如果你是想学好 =C= 语言, 那么这一节的学习是不可缺的.
 
-     一旦知道两者的差异, =AT&T= 语法就算上手了.
+     本节的目的就是介绍如何读懂 =GCC= 产生的汇编码.
+
+     =GCC= 的汇编器 =GAS= 的汇编语法是 =AT&T= 语法, 所以这里稍微终结一下 =AT&T= 语法于 =INTEL= 语法的差异:
 
      - =AT&T= 的助记符和寄存器名字全部要求小写, 而 =INTEL= 的是 *建议* 大写.
 
@@ -3382,7 +3526,9 @@
      - 注释符号是 =#=.
 
 
-     假设现在要看 =main.c= 的汇编码,那么可以这样:
+     一旦知道两者的差异, =AT&T= 语法就算上手了, 真的吗? 在灵魂相关点来说是, 不同的汇编器还是有不少自己的私货.
+
+     让我们来看看 =main.c= 的 =GAS= 汇编码吧:
 
      #+BEGIN_SRC sh
      gcc -S main.c -o main.asm
@@ -3410,360 +3556,529 @@
      下面关于 =C= 程序汇编码的内容都是在以优化等级为 0 作为前提进行的.
      #+END_QUOTE
 
+     # https://stackoverflow.com/questions/5325326/what-is-the-meaning-of-each-line-of-the-assembly-output-of-a-c-hello-world
+
      #+BEGIN_SRC asm
-               .file	"main.c"
-               .text
-               .section	.rodata
-       .LC0:
-               .string	"The result is %d\n"
-               .text
-               .globl	main
-               .type	main, @function
-       main:
-       .LFB0:
-               .cfi_startproc
-               pushq	%rbp
-               .cfi_def_cfa_offset 16
-               .cfi_offset 6, -16
-               movq	%rsp, %rbp
-               .cfi_def_cfa_register 6
-               movl	$4, %edi
-               call	acc@PLT
-               movl	%eax, %esi
-               leaq	.LC0(%rip), %rdi
-               movl	$0, %eax
-               call	printf@PLT
-               movl	$0, %eax
-               popq	%rbp
-               .cfi_def_cfa 7, 8
-               ret
-               .cfi_endproc
-       .LFE0:
-               .size	main, .-main
-               .ident	"GCC: (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"
-               .section	.note.GNU-stack,"",@progbits
+        .file	"main.c"
+        .text
+        .section	.rodata
+.LC0:
+        .string	"The result is %d\n"
+        .text
+        .globl	main
+        .type	main, @function
+main:
+.LFB0:
+        .cfi_startproc
+        endbr64
+        pushq	%rbp
+        .cfi_def_cfa_offset 16
+        .cfi_offset 6, -16
+        movq	%rsp, %rbp
+        .cfi_def_cfa_register 6
+        subq	$16, %rsp
+        movl	%edi, -4(%rbp)
+        movq	%rsi, -16(%rbp)
+        movl	$4, %edi
+        call	acc@PLT
+        movl	%eax, %esi
+        leaq	.LC0(%rip), %rax
+        movq	%rax, %rdi
+        movl	$0, %eax
+        call	printf@PLT
+        movl	$0, %eax
+        leave
+        .cfi_def_cfa 7, 8
+        ret
+        .cfi_endproc
+.LFE0:
+        .size	main, .-main
+        .ident	"GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"
+        .section	.note.GNU-stack,"",@progbits
+        .section	.note.gnu.property,"a"
+        .align 8
+        .long	1f - 0f
+        .long	4f - 1f
+        .long	5
+0:
+        .string	"GNU"
+1:
+        .align 8
+        .long	0xc0000002
+        .long	3f - 2f
+2:
+        .long	0x3
+3:
+        .align 8
+4:
      #+END_SRC
 
-     正如你所见, =GAS= 的语法比起 =NASM= 的复杂得多,除了前面提到的差异比较传见以外,
+     看上去就 *不* 比 =NASM= 的语法清爽, 不过一旦你熟悉了 =GAS= 的东西后, 你会觉得它的可读性也不差.
 
-     =GAS= 的标签也值得提一下,首先 =GAS= 的标签也是一个字符串后面紧跟冒号(:),只是一些特定的目标文件格式要求冒号是必须有的, =ELF= 就属于这种;
+     我们先从以下几个方面去熟悉它.
 
-     =.L= 开头的标签就是局部标签,但这并不是唯一一种定义局部标签的方式,不同的目标文件格式要求的不一样, =ELF= 的就是以 =.L= 开头.
+***** GAS 标签 (Labels)
 
-     此外还能看见和 =ELF= 局部标签长的很像的东西,比如 =.file=, =.cfi_def_cfa= 等等,它们后面没有跟着冒号,所以并不是局部标签,而是指令(directives).
+      =GAS= 有符号(symbol)这一中心概念: 符号是程序员给事物的命名, 连接器则使用符号来连接, 调试器用符号调试.
 
-     这里的 =.cfi_*= 指令叫做 =CFI= 指令,全称 =call frame information=,用于提供调试信息,它们不会产生机器码,跳过它们也没有问题.
+      而 =GAS= 的标签就是一种符号.
 
-     可以发现,有些标签定义了但没有用上: =.LC0, .LFB0= 以及 =.LFE0=, 这是正常的,毕竟 =GCC= 只是一个生成汇编码的工具,不像人那么智能.
+      =GAS= 的标签基本上是和 =NASM= 的差不多的, *标签* 也是一个字符串后面紧跟着冒号, 冒号是半可选的, 某些特别的文件格式要求带上, 比如 =ELF=.，
 
-     甚至有时候还能发现一些多余的指令,这些都是可以进行优化的.
+      可以看到有一个叫做 =main= 的标签, 它就是对应入口函数 =main=.
 
-     日后可能会遇到一些更加复杂的程序,很可能会又更多关于 =GAS= 的东西是上面没讲过的,所以常备一份[[https://sourceware.org/binutils/docs/as/index.html][GAS的文档]]是非常有必要的.
+      在局部标签方面, =GAS= 和 =NASM= 就不太一样了, =GAS= 是分两个概念: 局部符号(local symbols)和局部标签(local labels).
 
-**** 阅读GCC产生的汇编码
+      =GAS= *局部符号* 则是和 =NASM= 的局部标签看着相似, 但实际有有点区别的两样东西, 相同的是两者在本质上都是用来标识地址的.
 
-     即便你知道了 =GAS= 的一些用法,也知道了 =C= 的调用规范,在第一次见到 =GCC= 实际产生的汇编码你可能会不适应.
+      在命名上, =GAS= 的局部符号会以局部标签前缀(local label prefix)开头, 这个前缀是是取决与目标文件格式的, 比如 =ELF= 的局部标签前缀是 =.L=,
 
-     =C= 语言有很多概念是汇编里面没有的,那么这些没有的东西在汇编里面是如何的呢?这是研究 =GCC= 产生汇编码的一个思路方向.
+      在语法上, =GAS= 的局部符号则不像 =NASM= 的局部标签那样强制属于某个全局标签下, 只是单纯的一个地址标识.
 
-     这个章节会给出一个不算太复杂的例子,来分享一下我个人阅读 =GCC= 汇编码的一些心得.
+      在上面可以看到有 =.LC0=, =.LFB0= 和 =.LFE0= 这三个局部符号符合这种格式, 而这三个局部符号在含义上是标签 =main= 有关联的.
 
-     首先给出 =C= 程序的源代码,
+      =.LC0= 中的 =LC= 表示本地常量(local constant), 可以看到它的值是: "The result is %d\n", 这个标签在标签 =main= 里面有用到,
 
-     #+BEGIN_SRC c
-       #include <stdio.h>
-       #include <sqlite3.h>
+      =0= 就是序号, 如果有其它本地常量就会有 =.LC1=, =.LC2= 等等这样的;
 
-       static int callback(void* data, int count, char** row, char** col) {
-         fprintf(stderr, "%s", (const char*)data);
-         for (int i = 0; i < count; i++) {
-           printf("Field.%d: %s = %s\n", i+1, col[i], row[i] ? row[i]: "NULL");
-         }
-         printf("\n");
-         return 0;
-       }
+      =LFB0= 的 =LFB= 和 =LFE0= =LFE= 分别代表函数局部起点(local function beginning)以及函数局部结尾(local function ending), 分别标志的函数 =main= 起始以及结束位置, 它们是成对的,
 
-       int main(int argc, char* argsv[]) {
-         sqlite3 *db;
-         char *errmsg = 0;
-         int rc;
-         rc = sqlite3_open("Example.db", &db);
-         if (rc) {
-           fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-           return 1;
-         }
-         fprintf(stderr, "Opened database successfully\n");
+      由于 =main.c= 只有一个函数, 只能看到一对 =LFB0 & LFE0=, =0= 就是函数的序号, 如果有其它函数, 那么就还会有 =LFB1 & LFE1=, =LFB2 & LFE2= 等等.
 
-         char *select_sql = "select * from ANIMATION;";
-         const char* data = "Callback function called:\n";
-         rc = sqlite3_exec(db, select_sql, callback, (void*)data, &errmsg);
-         if (rc != SQLITE_OK) {
-           fprintf(stderr, "SQL error: %s\n", errmsg);
-           sqlite3_free(errmsg);
-         } else {
-           fprintf(stdout, "Operation done successfully\n");
-         }
+      由此我们可以看到 =GCC= 生成函数对应的 =GAS= 汇编码都是这个模式的:
 
-         sqlite3_close(db);
-         return 0;
-       }
-     #+END_SRC
+      - 先为函数所使用的本地常量生成 =.LC= 标签;
 
-     我们所获得到的汇编码是这样的,
+      - 再以函数名生成标签;
 
-     #+BEGIN_SRC nasm
-               .file	"exampledb.c"
-               .text
-               .section	.rodata
-       .LC0:
-               .string	"NULL"
-       .LC1:
-               .string	"Field.%d: %s = %s\n"
-               .text
-               .type	callback, @function
-       callback:
-       .LFB0:
-               .cfi_startproc
-               pushq	%rbp
-               .cfi_def_cfa_offset 16
-               .cfi_offset 6, -16
-               movq	%rsp, %rbp
-               .cfi_def_cfa_register 6
-               subq	$48, %rsp
-               movq	%rdi, -24(%rbp)
-               movl	%esi, -28(%rbp)
-               movq	%rdx, -40(%rbp)
-               movq	%rcx, -48(%rbp)
-               movq	stderr(%rip), %rdx
-               movq	-24(%rbp), %rax
-               movq	%rdx, %rsi
-               movq	%rax, %rdi
-               call	fputs@PLT
-               movl	$0, -4(%rbp)
-               jmp	.L2
-       .L5:
-               movl	-4(%rbp), %eax
-               cltq
-               leaq	0(,%rax,8), %rdx
-               movq	-40(%rbp), %rax
-               addq	%rdx, %rax
-               movq	(%rax), %rax
-               testq	%rax, %rax
-               je	.L3
-               movl	-4(%rbp), %eax
-               cltq
-               leaq	0(,%rax,8), %rdx
-               movq	-40(%rbp), %rax
-               addq	%rdx, %rax
-               movq	(%rax), %rax
-               jmp	.L4
-       .L3:
-               leaq	.LC0(%rip), %rax
-       .L4:
-               movl	-4(%rbp), %edx
-               movslq	%edx, %rdx
-               leaq	0(,%rdx,8), %rcx
-               movq	-48(%rbp), %rdx
-               addq	%rcx, %rdx
-               movq	(%rdx), %rdx
-               movl	-4(%rbp), %ecx
-               leal	1(%rcx), %esi
-               movq	%rax, %rcx
-               leaq	.LC1(%rip), %rdi
-               movl	$0, %eax
-               call	printf@PLT
-               addl	$1, -4(%rbp)
-       .L2:
-               movl	-4(%rbp), %eax
-               cmpl	-28(%rbp), %eax
-               jl	.L5
-               movl	$10, %edi
-               call	putchar@PLT
-               movl	$0, %eax
-               leave
-               .cfi_def_cfa 7, 8
-               ret
-               .cfi_endproc
-       .LFE0:
-               .size	callback, .-callback
-               .section	.rodata
-       .LC2:
-               .string	"Example.db"
-       .LC3:
-               .string	"Can't open database: %s\n"
-       .LC4:
-               .string	"Opened database successfully\n"
-       .LC5:
-               .string	"select * from ANIMATION;"
-       .LC6:
-               .string	"Callback function called:\n"
-       .LC7:
-               .string	"SQL error: %s\n"
-       .LC8:
-               .string	"Operation done successfully\n"
-               .text
-               .globl	main
-               .type	main, @function
-       main:
-       .LFB1:
-               .cfi_startproc
-               pushq	%rbp
-               .cfi_def_cfa_offset 16
-               .cfi_offset 6, -16
-               movq	%rsp, %rbp
-               .cfi_def_cfa_register 6
-               subq	$64, %rsp
-               movl	%edi, -52(%rbp)
-               movq	%rsi, -64(%rbp)
-               movq	%fs:40, %rax
-               movq	%rax, -8(%rbp)
-               xorl	%eax, %eax
-               movq	$0, -32(%rbp)
-               leaq	-40(%rbp), %rax
-               movq	%rax, %rsi
-               leaq	.LC2(%rip), %rdi
-               call	sqlite3_open@PLT
-               movl	%eax, -44(%rbp)
-               cmpl	$0, -44(%rbp)
-               je	.L8
-               movq	-40(%rbp), %rax
-               movq	%rax, %rdi
-               call	sqlite3_errmsg@PLT
-               movq	%rax, %rdx
-               movq	stderr(%rip), %rax
-               leaq	.LC3(%rip), %rsi
-               movq	%rax, %rdi
-               movl	$0, %eax
-               call	fprintf@PLT
-               movl	$1, %eax
-               jmp	.L12
-       .L8:
-               movq	stderr(%rip), %rax
-               movq	%rax, %rcx
-               movl	$29, %edx
-               movl	$1, %esi
-               leaq	.LC4(%rip), %rdi
-               call	fwrite@PLT
-               leaq	.LC5(%rip), %rax
-               movq	%rax, -24(%rbp)
-               leaq	.LC6(%rip), %rax
-               movq	%rax, -16(%rbp)
-               movq	-40(%rbp), %rax
-               leaq	-32(%rbp), %rcx
-               movq	-16(%rbp), %rdx
-               movq	-24(%rbp), %rsi
-               movq	%rcx, %r8
-               movq	%rdx, %rcx
-               leaq	callback(%rip), %rdx
-               movq	%rax, %rdi
-               call	sqlite3_exec@PLT
-               movl	%eax, -44(%rbp)
-               cmpl	$0, -44(%rbp)
-               je	.L10
-               movq	-32(%rbp), %rdx
-               movq	stderr(%rip), %rax
-               leaq	.LC7(%rip), %rsi
-               movq	%rax, %rdi
-               movl	$0, %eax
-               call	fprintf@PLT
-               movq	-32(%rbp), %rax
-               movq	%rax, %rdi
-               call	sqlite3_free@PLT
-               jmp	.L11
-       .L10:
-               movq	stdout(%rip), %rax
-               movq	%rax, %rcx
-               movl	$28, %edx
-               movl	$1, %esi
-               leaq	.LC8(%rip), %rdi
-               call	fwrite@PLT
-       .L11:
-               movq	-40(%rbp), %rax
-               movq	%rax, %rdi
-               call	sqlite3_close@PLT
-               movl	$0, %eax
-       .L12:
-               movq	-8(%rbp), %rcx
-               xorq	%fs:40, %rcx
-               je	.L13
-               call	__stack_chk_fail@PLT
-       .L13:
-               leave
-               .cfi_def_cfa 7, 8
-               ret
-               .cfi_endproc
-       .LFE1:
-               .size	main, .-main
-               .ident	"GCC: (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"
-               .section	.note.GNU-stack,"",@progbits
-     #+END_SRC
+      - 最后生成一对 =.LFB= 以及 =.LFE= 标签, 它们之间包含着函数对应的指令.
 
-     看上去汇编码很长,但不要害怕,只要知道"GCC怎么把C语言的某个东西生成什么的指令",那么再长的汇编码你也能读得懂.
+      而 *局部标签* 则是 =0:=, =1:=, =2:=, =3:= 以及 =4:= 这种以 =0 - 9= 作为符号名的标签.
 
-     =C= 语言比起很多其它的高级语言要简单很多,"简单"是指它的东西不多,并非指它容易学习掌握.
+      这就是 =main.asm= 里面所有的标签了. 其实不管是局部标签还是局部符号, 两者的作用都是一样的, 只是汇编器处理起来有些细节上的区别:
 
-     即便这样也不可能用有限的篇幅把所有东西讲完,因此我会讲最常用的两样东西: 变量(variables)和函数.
+      =GAS= 默认不会把局部标签符号到目标文件里面, 除非使用汇编器的 =-L= 选项;
 
-     阅读程序的源代码通常都是从入口出发,入口通常是初始化数据,为要调用的函数准备参数,再调用别处定义好的函数.
+      对于局部标签, =GAS= 把它们转换成一种更加常规的局部符号.
 
-     事实上,这是大部分函数都在干的事情,不是在准备参数的路上,就是在调用函数.
+      在后面讲连接器的时候会还会跟符号打交道, 所以目前你只要知道符号使用来标记东西就行.
 
-     =C= 程序的入口 =main= 就是一个函数,我们会通过这个个体来学习 =C= 函数在汇编里面是如何的.
+      更多关于 =GAS= 局部标签和局部符号的细节请参考[[https://sourceware.org/binutils/docs/as/Symbol-Names.html][这里]].
 
-     \\
+***** GAS 汇编器指令 (Directives)
 
-     =main= 接受两个参数: =argc= 以及 =argsv=,类型分别是 =int= 以及 =char* []=.
+      我们还能看到一些 =.text=, =.globl= 这种和局部标签很像的东西, 它们并非标签, 而是汇编器的指令, 告诉汇编器如何生成机器码.
 
-     它第一步就是先建立栈,再把参数保存在栈里面, =GCC= 会计算出函数在运行时需要 =n= 个字节的栈空间,然后把栈指针 =rsp= 指向到 $rbp - n$ 上.
+      它们和 =NASM= 的 =SECTION=, =GLOBAL= 这些东西是一个概念.
 
-     栈的大小 *主要* 取决于函数 *使用了* 多少个局部变量(,数的参数也属于变量).
+      # https://stackoverflow.com/questions/52284829/difference-between-section-text-and-text-with-gas
 
-     例子中的 =main= 就需要 =64= 个字节的栈空间,因此 =main= 在建立栈后就有一条指令: =subq $64, %rsp=.
+      来一个一个解释吧, 首先是 =.file= 指令, 它告诉汇编器要把当前处理的文件名字写入到调试信息里面,
 
-     之后在栈上进行数据读写都不会通过修改 =rsp= 来完成, =GCC= 会给变量在栈上计算并分配好地址,读写数据就是通过这个地址来完成.
+      比如这里处理的就是 =main.c=, 下面的内容就这个文件的汇编代码, 直到遇到下一个 =.file= 执行;
 
-     *然而并非所有函数都有 =subq $N, %rsp= 这样的指令来分配栈空间*,就比如上一个小节的 =main.asm= 就没有,那么什么时候有这个指令呢?
+      然后是 =.text= 指令, 这个其实就是相当于 =NASM= 的 =SECTION .text=, 也就是切换到 =.text= 节填充字节;
 
-     =x86-64 ABI= 规范有一个 =red zone= 的概念,它是指 =%rsp= 以下的128字节大小空间, 并且 *约定* 信号(signal)或者软中断是不能修改这块区域的,而局部变量实际上就是储存在这片区域内,
+      =.section= 就是相当于 =NASM= 的 =SECTION= 指令, =.section .rodata= 就是定义 =.rodata= 节并且切换到该节进行处理;
 
-     一个函数可以使用完这128个字节,也可以只用一部分,具体由编译器决定.这个这个小节的 =main.asm= 则只是用了64个字节,
+      #+BEGIN_QUOTE
 
-     上个小节的 =main.asm= 没有任何 =subq $N, %rsp= 的指令,这意味着用完128个字节,也就是最多只能访问到 =-128(%rsp)= 这个位置上.
+      你可能会觉得奇怪, 为什么 =GAS= 在有了 =.section= 的情况下还搞多一个 =.text= 来切换节,
 
-     还有一种可能: 在使用 =GCC= 编译时关闭了生成 =red zone= 的选项,通常只有在进行内核级开发才这么做,这意味这没有限制.
+      其实 =GAS= 里面像 =.text= 这样的节切换指令还有 =.data= 以及 =.bss=, 它们的存在是因为需要兼容比 =ELF= 更加久远的 =a.out= 文件,
 
-     在了解完 =GCC= 如何建立栈后,可以看以下参数是如何被储存到栈上的了.
+      这种文件不支持 =.text=, =.data= 以及 =.bss= 以外的节, 而 =.section= 指令能够定义或切换任意命名的节, 这两者显然是有冲突的.
 
-     根据 =x86-64 ABI= 的规定可以知道,第一和第二个参数的值分别在 =rdi= 和 =rsi= 上,而在上面看到的第一个参数则是保存了在 =edi= 上,这是因为 =int= 数据的大小只占4个字节.
+      #+END_QUOTE
 
-     因为 =rsp= 是固定指向 $rbp - n$, 所以保存数据时没使用 =PUSH= 指令,而是直接使用 =mov*= 指令把数据复制到算好的内存地址上,读取数据时反过来从计算好的内存地址上获取数据.
+      =.string, .long= 这种就是告诉编译器要怎么储存数据了, 比如 =.string "The result is %d\n"= 就是要吧 "The result is %d\n" 这个字符串存储到目标文件里;
 
-     不通过修改 =rsp= 在栈上读写数据的好处就是读写效率极高,前提是要保证有效地址计算正确, =GCC= 作一个有历史的编译器完全没有这个问题的.
+      =.globl= 就等价于 =NASM= 的 =GLOBAL= 指令了, =.globl main= 就是 =main= 定义成全局符号;
 
-     可以看到例子中 =main= 的第一个参数和第二个参数的值分别被保存到 =-52(%rbp)= 和 =-64(%rbp)= 上了.
+      =.type= 指令把符号标记为某种类型, =.type main, @function= 就是告诉汇编器符号 =main= 是函数;
 
-     不过这里有一个奇怪的地方: 第一个参数的数据只有4个字节,第二个参数的数据大小可以从 =rsi= 看出只要8个字节,那么为什么两个数据之前的距离有12个字节?
+      =.size= 指令标记符号的内容大小, 比如 =.size main, .-main= 就是告诉汇编器符号 =main= 的内容大小为 =.-main= 字节,
 
-     其实就是之前讲过的对齐16字节边界,这里面有4字节空间是空出来的.
+      这里的 =.-main= 是一个表达式, =.= 表示当前字节的偏移, 标签本质上也是字节的偏移, 也就是说当前的字节偏移减 =main= 的偏移就是 =main= 的内容大小;
 
-     \\
+      =.align= 就是内存对齐指令了, 该命令在不同架构上的计算方式是不一样的, 比如在 =i386= 上 =.align 8= 就是告诉要对齐 8 字节边界, 也就是把位置计数器(location counter)移动到 8 的倍数的偏移地址上;
 
-     在处理好参数后有这样的指令,
+      然而在 =ARM= 架构下, =.align 3= 是把位置计数器移动到 $2^{3} = 8$ 的倍数的偏移地址上;
 
-     #+BEGIN_SRC nasm
-       movq    %fs:40, %rax
-       movq    %rax, -8(%rbp)
-     #+END_SRC
+      =.ident= 指令就是告诉汇编器把某些信息添加都目标文件去, 不同平台下作用不太相同, 比如 =ELF= 文件,
 
-     要理解它们要先理解一个概念: =stack canary=, 这个例子里面的 =%fs:40= 的值就是作为 =stack canary=, 每个程序的 =stack canary= 是不一样的.
+      =.ident  "GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"= 就是把 "GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0" 这字符串记录到目标文件的 =.comment= 节去,
 
-     在前面就提过,从保护模式开始段寄存器就被操作系统接管了,也就是这个值也是由操作系统生成的.实际上 =stack cannary= 的生成方式各不相同的, =GCC= 这样采用操作系统生成的值只是其中一种方式而已.
+      #+BEGIN_QUOTE
+      我们有好几种手段来检查目标文件的某个节的内容, 假设我们要检查目标文件 =target-file= 的 =.comment=,
 
-     =stack canary= 它被用来进行栈保护检查(stack-guard check),避免程序因 =buffer overflow= 受到攻击.
+      #+BEGIN_SRC sh
+      # 1. 把节的内容转储(dump)成字符串
+      readelf -p .comment target-file
 
-     这一段的作用是把 =stack canary= 储存到栈的底部: =-8(%rbp)= 上,在 =main= 函数的后面有这么一段,
+      # 2. 把节的内容转储成十六进制码
+      readelf -x .comment target-file
+      # or
+      objdump -s -j .comment target-file
+      #+END_SRC
+      #+END_QUOTE
 
-     #+BEGIN_SRC nasm
+      最后能看到有一些 =.cfi_*= 指令, 它们叫做 =CFI= 指令, 全称 =call frame information=, 用于提供调试信息, 让调试器能够进行栈回溯(stack-unwinding),
+
+      比如现在有 =A, B, C= 三个函数, 现在 =A= 调用 =B=, =B= 调用 =C=, 而 =C= 发生错误了, 那么调试器会告诉我们是 =C= 是被 =B= 调用, 而 =B= 是被 =A= 调用.
+
+      =.cfi_startproc= 用在每个函数的开头, 这个指令会初始化一些数据, 这些数据都是和该函数相关的, 这些数会被记录到 =.eh_frame= 节里面的;
+
+      它和 =.cfi_endproc= 是成对的, =.cfi_endproc= 是放在函数的结尾, 表示该函数的信息记录完毕.
+
+      这些信息可以通过 =readelf -wF elf-file= 来读取到, 大概如下:
+
+      #+CAPTION: readelf -wF example (该截图和这里的代码无关)
+      [[../../../files/readelf-wF-example.png]]
+
+      在聊 =.cfi_def_cfa_offset= 之前, 需要先了解一下什么是 =CFA=, 它的全称是 "Canonical Frame Address";
+
+      按照 [[https://dwarfstd.org/doc/DWARF4.pdf][DWARF spec]] 定义, =CFA= 的值应该是在调用函数时(也就是 =call func= 时)栈指针(=*sp=)的值, 这个时候栈指针指向的是函数的栈顶位置, 也就是栈最低位地址.
+
+      (如果不太理解的话, 你也可以参考一下 =SO= 上的这个[[https://stackoverflow.com/questions/7534420/gas-explanation-of-cfi-def-cfa-offset#answers][答案]]).
+
+      我们可以看到上面的截图有 =CFA= 的值, 这里的 =.cfi_*= 指令就是改变 CFA 的计算规则的, 所谓的计算规则就是 =CFA= 的计算式子, 马上就有例子.
+
+      =.cfi_def_cfa_offset 16= 指令是生成一份调试信息, 告诉我们当前位置相对于 =CFA= 偏移 16 字节, 这点先稍后回来讲.
+
+      =.cfi_offset 6, -16= 就是把 6 号寄存器的之前的一个值保存在偏移 =CFA= 负 16 个字节的位置上, 这里的寄存器 =6=,
+
+      你可以在 =ABI= 规范 =DWARF Register Number Mapping= 部分看到寄存器以及其编号, 6 号寄存器是 =RBP=.
+
+      #+CAPTION: DWARF Register Number Mapping
+      [[../../../files/x86-register-number-mapping.png]]
+
+      =.cfi_def_cfa_register 6= 是使用 6 号寄存器来计算 =CFA=, =CFA= 的计算规则现在是 $CFA = \%rbp + 16$, 这里的 16 是前面的 =.cfi_def_cfa_offset 16= 设定的.
+
+      =.cfi_def_cfa 7, 8= 是重新定义了 =CFA= 的计算规则, 使用 7 号寄存器(RSP), 偏移设置为 8 个字节, 也就是 $CFA = \%rsp + 8$.
+
+      实际上 =.cfi_startproc= 和 =.cfi_end_proc= 也会改变 =CFA= 的计算规则: $CFA = \%rsp + 8$, 这点可以通过 =readelf -wF= 来确认.
+
+***** C 语言是如何与汇编对应的
+      :PROPERTIES:
+      :CUSTOM_ID: how-c-code-looks-like-in-gas
+      :END:
+
+      前面两个小节算是用来正式介绍 =GAS= 这门汇编语言一些和 =NASM= 特别不同的地方, 现在的你基本上是可以看懂 =GAS= 的了.
+
+      # 我们学习 =GAS= 是因为其学习价值, 首先他是 =GNU= 的御用汇编器, =GNU= 是一个主流的 =C/C++= 编译器, 而 =C/C++= 又是很多项目的开发语言.
+
+      这一节主要是看一下 =C= 里面最重要常见的东西在被 =GNU= 编译成了汇编是怎么样的, 这些重要的东西是变量(variables), 函数(functions)以及指针(pointers).
+
+      为此我准备了一个稍微复杂一点的程序: 对 =sqlite= 数据库执行 =SELECT= 语句.
+
+      #+BEGIN_SRC c
+        // exampledb.c
+        #include <stdio.h>
+        #include <sqlite3.h>
+
+        static int callback(void* data, int count, char** row, char** col) {
+          fprintf(stderr, "%s", (const char*)data);
+          for (int i = 0; i < count; i++) {
+            printf("Field.%d: %s = %s\n", i+1, col[i], row[i] ? row[i]: "NULL");
+          }
+          printf("\n");
+          return 0;
+        }
+
+        int main(int argc, char* argsv[]) {
+          sqlite3 *db;
+          char *errmsg = 0;
+          int rc;
+          rc = sqlite3_open("Example.db", &db);
+          if (rc) {
+            fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+            return 1;
+          }
+          fprintf(stderr, "Opened database successfully\n");
+
+          char *select_sql = "select * from ANIMATION;";
+          const char* data = "Callback function called:\n";
+          rc = sqlite3_exec(db, select_sql, callback, (void*)data, &errmsg);
+          if (rc != SQLITE_OK) {
+            fprintf(stderr, "SQL error: %s\n", errmsg);
+            sqlite3_free(errmsg);
+          } else {
+            fprintf(stdout, "Operation done successfully\n");
+          }
+
+          sqlite3_close(db);
+          return 0;
+        }
+      #+END_SRC
+
+      我们所获得到的汇编码是这样的,
+
+      #+BEGIN_SRC asm
+                .file    "exampledb.c"
+                .text
+                .section .rodata
+        .LC0:
+                .string  "NULL"
+        .LC1:
+                .string  "Field.%d: %s = %s\n"
+                .text
+                .type    callback, @function
+        callback:
+        .LFB0:
+                .cfi_startproc
+                pushq    %rbp
+                .cfi_def_cfa_offset 16
+                .cfi_offset 6, -16
+                movq     %rsp, %rbp
+                .cfi_def_cfa_register 6
+                subq     $48, %rsp
+                movq     %rdi, -24(%rbp)
+                movl     %esi, -28(%rbp)
+                movq     %rdx, -40(%rbp)
+                movq     %rcx, -48(%rbp)
+                movq     stderr(%rip), %rdx
+                movq     -24(%rbp), %rax
+                movq     %rdx, %rsi
+                movq     %rax, %rdi
+                call     fputs@PLT
+                movl     $0, -4(%rbp)
+                jmp      .L2
+        .L5:
+                movl     -4(%rbp), %eax
+                cltq
+                leaq     0(,%rax,8), %rdx
+                movq     -40(%rbp), %rax
+                addq     %rdx, %rax
+                movq     (%rax), %rax
+                testq    %rax, %rax
+                je       .L3
+                movl     -4(%rbp), %eax
+                cltq
+                leaq     0(,%rax,8), %rdx
+                movq     -40(%rbp), %rax
+                addq     %rdx, %rax
+                movq     (%rax), %rax
+                jmp      .L4
+        .L3:
+                leaq     .LC0(%rip), %rax
+        .L4:
+                movl     -4(%rbp), %edx
+                movslq   %edx, %rdx
+                leaq     0(,%rdx,8), %rcx
+                movq     -48(%rbp), %rdx
+                addq     %rcx, %rdx
+                movq     (%rdx), %rdx
+                movl     -4(%rbp), %ecx
+                leal     1(%rcx), %esi
+                movq     %rax, %rcx
+                leaq     .LC1(%rip), %rdi
+                movl     $0, %eax
+                call     printf@PLT
+                addl     $1, -4(%rbp)
+        .L2:
+                movl     -4(%rbp), %eax
+                cmpl     -28(%rbp), %eax
+                jl       .L5
+                movl     $10, %edi
+                call     putchar@PLT
+                movl     $0, %eax
+                leave
+                .cfi_def_cfa 7, 8
+                ret
+                .cfi_endproc
+        .LFE0:
+                .size    callback, .-callback
+                .section .rodata
+        .LC2:
+                .string  "Example.db"
+        .LC3:
+                .string  "Can't open database: %s\n"
+        .LC4:
+                .string  "Opened database successfully\n"
+        .LC5:
+                .string  "select * from ANIMATION;"
+        .LC6:
+                .string  "Callback function called:\n"
+        .LC7:
+                .string  "SQL error: %s\n"
+        .LC8:
+                .string  "Operation done successfully\n"
+                .text
+                .globl   main
+                .type    main, @function
+        main:
+        .LFB1:
+                .cfi_startproc
+                pushq    %rbp
+                .cfi_def_cfa_offset 16
+                .cfi_offset 6, -16
+                movq     %rsp, %rbp
+                .cfi_def_cfa_register 6
+                subq     $64, %rsp
+                movl     %edi, -52(%rbp)
+                movq     %rsi, -64(%rbp)
+                movq     %fs:40, %rax
+                movq     %rax, -8(%rbp)
+                xorl     %eax, %eax
+                movq     $0, -32(%rbp)
+                leaq     -40(%rbp), %rax
+                movq     %rax, %rsi
+                leaq     .LC2(%rip), %rdi
+                call     sqlite3_open@PLT
+                movl     %eax, -44(%rbp)
+                cmpl     $0, -44(%rbp)
+                je       .L8
+                movq     -40(%rbp), %rax
+                movq     %rax, %rdi
+                call     sqlite3_errmsg@PLT
+                movq     %rax, %rdx
+                movq     stderr(%rip), %rax
+                leaq     .LC3(%rip), %rsi
+                movq     %rax, %rdi
+                movl     $0, %eax
+                call     fprintf@PLT
+                movl     $1, %eax
+                jmp      .L12
+        .L8:
+                movq     stderr(%rip), %rax
+                movq     %rax, %rcx
+                movl     $29, %edx
+                movl     $1, %esi
+                leaq     .LC4(%rip), %rdi
+                call     fwrite@PLT
+                leaq     .LC5(%rip), %rax
+                movq     %rax, -24(%rbp)
+                leaq     .LC6(%rip), %rax
+                movq     %rax, -16(%rbp)
+                movq     -40(%rbp), %rax
+                leaq     -32(%rbp), %rcx
+                movq     -16(%rbp), %rdx
+                movq     -24(%rbp), %rsi
+                movq     %rcx, %r8
+                movq     %rdx, %rcx
+                leaq     callback(%rip), %rdx
+                movq     %rax, %rdi
+                call     sqlite3_exec@PLT
+                movl     %eax, -44(%rbp)
+                cmpl     $0, -44(%rbp)
+                je       .L10
+                movq     -32(%rbp), %rdx
+                movq     stderr(%rip), %rax
+                leaq     .LC7(%rip), %rsi
+                movq     %rax, %rdi
+                movl     $0, %eax
+                call     fprintf@PLT
+                movq     -32(%rbp), %rax
+                movq     %rax, %rdi
+                call     sqlite3_free@PLT
+                jmp      .L11
+        .L10:
+                movq     stdout(%rip), %rax
+                movq     %rax, %rcx
+                movl     $28, %edx
+                movl     $1, %esi
+                leaq     .LC8(%rip), %rdi
+                call     fwrite@PLT
+        .L11:
+                movq     -40(%rbp), %rax
+                movq     %rax, %rdi
+                call     sqlite3_close@PLT
+                movl     $0, %eax
+        .L12:
+                movq     -8(%rbp), %rcx
+                xorq     %fs:40, %rcx
+                je       .L13
+                call     __stack_chk_fail@PLT
+        .L13:
+                leave
+                .cfi_def_cfa 7, 8
+                ret
+                .cfi_endproc
+        .LFE1:
+                .size    main, .-main
+                .ident   "GCC: (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"
+                .section .note.GNU-stack,"",@progbits
+      #+END_SRC
+
+      其实源代码和汇编码还是挺一对一的, 首先是第一个函数 =callback=, 然后再到入口函数 =main=, 这和 =C= 源码一致.
+
+      需要注意的是 =main= 并非程序真正的入口, 真正入口还是 =_start= 标签, =main= 只是在 =_start= 里被调用而已.
+
+      我们就从这个伪入口开始讲起, 从源代码里可以看到 =main= 接受两个参数: =argc= 以及 =argsv=, 类型分别是 =int= 以及 =char* []=.
+
+      在汇编码里可以看到 =main= 的第一步就是先建立栈帧, 再把函数使用到的局部变量(参数也属于局部变量)全部保存在栈帧里面,
+
+      =GCC= 会计算出函数在运行时需要 =n= 个字节的栈空间, 然后把栈指针 =rsp= 指向到 $rbp - n$ 上.
+
+      栈帧的大小取决于函数使用了多少个局部变量, 变量的大小由它的类型标记, =GCC= 也因此能够计算的出栈帧的大小.
+
+      #+BEGIN_SRC asm
+      pushq  %rbp
+      movq   %rsp, %rbp
+      subq   $64, %rsp
+      #+END_SRC
+
+      可以看到这个栈帧的大小是 64 个字节.
+
+      之后在栈帧上进行数据读写都不会通过修改 =%rsp= 来完成, =GCC= 根据 =%rbp= 的值给每个变量计算并分配好各自地址, 读写数据就是通过这些地址来完成.
+
+      就像 =main= 的第一个参数 =argc= 是 =int= 类型, 占 4 个字节, 根据 =x86-64 ABI= 的调用规范, 第一个标量参数是存放在 =rdi= 寄存器上的,
+
+      由于 =argc= 只占用了 4 个字节, 所以就有了 =movl %edi, -52(%rbp)=;
+
+      然后第二个参数 =argsv= 是一个字符串指针的数组, 我们要知道的是数组本身就是一个内存地址, 所以它占用 8 个字节,
+
+      第二个参数是通过 =%rsi= 传进来的, 所以就有了 =movl %rsi, -64(%rbp)=.
+
+      这就是 =main= 的第一个参数和第二个参数被存在栈里面的过程.
+
+      仔细看的话你会发现一个奇怪的地方: 第一个参数的数据只有4个字节, 第二个参数的数据大小可以从 =%rsi= 看出只要8个字节, 那么为什么两个数据之间的首地址相差了12个字节?
+
+      其实就是之前讲过的对齐16字节边界, 这里面有4字节空间是空出来的.
+
+      *然而并非所有函数都有 =subq $N, %rsp= 这样的指令来创建栈帧*, 那么什么时候有这个指令呢? 现在给你解答.
+
+      =x86-64 ABI= 规范有一个 =red zone= 的概念, 它是指 =%rsp= 以下的128字节大小空间, 范围是 $\%rsp - 128$ 到 $\%rsp - 1$, 并且 *约定* 信号(signal)或者软中断是不能修改这块区域的.
+
+      如果 =%rsp= 发生了改变(PUSH/POP/MOV etc), =red zone= 位置也会发生改变.
+
+      #+BEGIN_SRC asm
+      movq %rsp, %rbp
+      subq $64, %rsp
+      #+END_SRC
+
+      从这两句汇编码来看, =red zone= 位于栈帧的下方.
+
+      =Red zone= 使用来储存一些不用于跨函数请求的临时数据, 而对于一些叶子函数(leaf function, 即函数体内没有任何函数调用)会使用这个区域做为它的整个栈帧,
+
+      这个时候叶子函数是不需要调整 =%rsp= 来分配栈帧的, 也就是没有 =subq $N, %rsp= 这种语句了;
+
+      另外一种情况就是开发人员手动把 =red zone= 的生成选项关闭, 比如 =Linux= 的内核开发就是这么要求的.
+
+      \\
+
+      在处理好参数后有这样的指令,
+
+      #+BEGIN_SRC nasm
+        movq    %fs:40, %rax
+        movq    %rax, -8(%rbp)
+        xorl    %eax, %eax
+      #+END_SRC
+
+      要理解它们要先理解一个概念: =stack canary=, 这个例子里面的 =%fs:40= 的值就是作为 =stack canary=, 这个值就是通过分段寻址(segmented addressing)获得的.
+
+      在前面就提过, 从保护模式开始段寄存器就被操作系统接管了, 也就是这个值也是由操作系统生成的.
+
+      实际上 =stack cannary= 的生成方式各不相同的, =GCC= 这样采用操作系统生成的值只是其中一种方式而已.
+
+      =stack canary= 它被用来进行栈保护检查(stack-guard check), 避免程序因 =buffer overflow= 受到攻击.
+
+      这一段的作用是把 =stack canary= 储存到栈的底部: =-8(%rbp)= 上.
+
+      在 =main= 函数的后面有这么一段,
+
+      #+BEGIN_SRC nasm
        .L12:
                movq    -8(%rbp), %rcx
                xorq    %fs:40, %rcx
@@ -3776,70 +4091,202 @@
                .cfi_endproc
      #+end_src
 
-     这段就是进行栈保护检查,这里是使用 =xorq %fs:40, %rcx= 来判断 =%fs:40= 是否和 =%rcx= 一样,一样就证明没有问题,否则表明受到恶意程序的攻击.
+      这段就是进行栈保护检查, 这里是使用 =xorq %fs:40, %rcx= 来判断 =%fs:40= 是否和 =%rcx= 一样,
 
-     =GCC= 也支持在编译时选择不进行栈保护检测,就算启用了也不一定是所有函数都要进行检测,比如这个例子里的 =callback= 函数,这方面可以看看这个链接里面关于安全的小节:  [[https://cs.pomona.edu/~ebirrell/classes/cs105/2021sp/schedule.html][CS 105: Computer Systems]].
+      一样就证明没有问题, 跳转到 =.L13= 退出函数; 否则表明受到恶意程序的攻击, 调用 =__stack_chk_fail@PLT=.
 
-     \\
+      =GCC= 也支持在编译时选择不进行栈保护检测, 就算启用了也不一定是所有函数都要进行检测, 比如这个例子里的 =callback= 函数, 这方面可以看看这个链接里面关于安全的小节:  [[https://cs.pomona.edu/~ebirrell/classes/cs105/2021sp/schedule.html][CS 105: Computer Systems]].
 
-     在高级语言里面,变量的名字是非常重要的,读写数据都要依靠它们来完成,然而在汇编层面上完全看不到一个变量的名字,取而带之的是一个有效地址,因此我们不能在汇编码上找得到 =argc= 和 =argsv= 这两个参数名.
+      \\
 
-     在阅读高级语言的源代码时,如果代码里面的一些命名不规范,这都是十分影响开发人员阅读的,难以理解这个变量或者函数的目的是什么.
+      在高级语言里面, 变量的名字是非常重要的, 读写数据都要依靠它们来完成, 然而在汇编层面上完全看不到一个变量的名字, 取而带之的是一个有效地址, 因此我们不能在汇编码上找得到 =argc= 和 =argsv= 这两个参数名.
 
-     汇编语言则是有过之而无不及,函数名字还是保留着, *局部变量名* 直接没了.因此阅读汇编码是 *很难* 一眼看出哪个有效地址对应 =C= 源码里的哪个变量,要找出对应关系就只能通过上下文推导.
+      想要读懂汇编里面的有效地址对应哪个变量, 只能通过上下文推导.
 
-     就拿 =main= 里面的 =db= 这个局部变量来说,想找到它对应哪个有效地址,可以通过找到接受它作为参数的函数,可以看到有 =sqlite3_open= 和 =sqlite3_exec= 这两个函数调用了它,
+      而推导的第一线索就是函数的传参, 这能够成为线索主要有两个原因:
 
-     选择其中一个,比如 =C= 源码里 =sqlite3_open= 的第二个参数就是 =&db=,也就是 =db= 的地址,也就是说只要在 =call sqlite3_open@PLL= 前找到最近的一条设置 =rsi= 寄存器值的指令,就能够找到变量 =db= 的有效地址.
+      1) 函数名字没有被有效地址取代;
 
-     因此可以定位到这个地方
+      2) 程序基本很上的内容就是在给函数准备参数, 而变量就是这些参数, 而函数传参又是有规范的, 根据规范和函数用法可以反推出这些参数对应哪些变量.
 
-     #+BEGIN_SRC nasm
+      就拿 =main= 里面的 =db= 这个局部变量来说, 想找到它对应哪个有效地址, 可以通过找到接受它作为参数的函数, 可以看到有 =sqlite3_open= 和 =sqlite3_exec= 这两个函数调用了它.
+
+      比如 =C= 源码里 =sqlite3_open= 的第二个参数就是 =&db=, 也就是 =db= 的地址, 只要在 =call sqlite3_open@PLL= 前找到最近的一条设置 =rsi= 寄存器值的指令, 就能够找到变量 =db= 的有效地址.
+
+      按照这个思路可以定位到以下汇编码,
+
+      #+BEGIN_SRC asm
        leaq	-40(%rbp), %rax
        movq	%rax, %rsi
        leaq	.LC2(%rip), %rdi
        call	sqlite3_open@PLT
-     #+END_SRC
+      #+END_SRC
 
-     ,可以知道 =db= 对应的地址就是 =-40(%rbp)=.
+      =&db= 对应的值就是有效地址 =-40(%rbp)=, 这个地址上储存的值就是 =db= 的值;
 
-     当然了,函数里面并非一定要调用其它函数,这个时候就不能通过这种方法来找出关系了,不过主体思路都是差不多的,
+      而 =db= 的类型是 =sqlite3 *=, 它是一个指针, 从 =leaq= 的 =q= 断定出它的占用 8 个字节, 这正好对应一个 64 位内存地址的大小,
 
-     根据上下文来推导出变量,通过变量推导出正在做的事情.
+      没错, 指针正是用来储存内存地址的, 这个内存地址是某块内存区域的首地址, 也就是说 =db= 指向了一个 =sqlite3= 数据所在的内存区块的首个地址.
 
-     只要这个变量在某个地方被使用了,那么就一定有办法可以找到它的有效地址;而对于没有被使用过的变量, =GCC= 是不会为它们分配栈空间的.
+      其中 =.LC2(%rip)= 这种用法并非指标签 =.LC2= 加上 =%rip= 的值, 根据 [[https://sourceware.org/binutils/docs/as/i386_002dMemory.html][GAS 的内存地址文档]] 的说明, 它是指 =.LC2= 的相对地址, 这种叫做 *RIP 相对寻址 (RIP Addressing)*, 这是属于 CPU 的寻址方式, 在程序运行时解析出标签的地址.
 
-     \\
+      下面你还看到 =stderr(%rip)= 这个也是用了 RIP 相对寻址.
 
-     以上就是阅读 =GCC= 汇编码的基本思路,还有很多东西没有提到,比如 =GCC= 会把 =C= 的结构体, =switch= 语句, =if= 语句等等编译成什么样,这只能靠自己去学习了.
+      <<c-structures>>
+      #+BEGIN_QUOTE
+      =sqlite3= 是一个结构体, =C= 语言的结构体(structures)本质上就是一个连续的内存.
 
-     最后说一下个人观点, 学习汇编就应该作为学习 =C= 语言的基础,而在学习 =C= 时需要时刻想着"写的东西会编译成什么样".
+      (本来想用 =sqlite3= 的定义作为例子的, 结果它的[[https://github.com/sqlite/sqlite/blob/f333370e1ff64b27b8e578127414cce6fb37f7d6/src/sqliteInt.h#L1536][定义]]真的是太复杂了, 所以我自己写了个例子).
 
-     之所以这么认为,是因为很多教学都只着重教语法,栈,内存分配等等这些概念虽然有讲,但这些概念是十分难表述清楚的,不见过"实物"很难理解.
+      比如下面的这段代码, 有一个 =Person= 的结构体变量 =example=,
 
-     就内存分配来说,很多人都不知道什么时候需要使用 =malloc= 分配内存,分配多少,什么时候使用 =free= 进行销毁.
+      它的第一个成员(member) =name= 就是这块内存的首地址, 是 =-32(%rbp)=, =char *= 类型, 占用 8 个字节;
 
-     如果学过汇编你就会知道函数的局部变量是储存在栈上的,而栈是在调用函数时才被进行分配的,在函数调用结束后栈就会被销毁,当然栈上的数据跟着被销毁.
+      第二个成员 =age= 的地址是 =-24(%rbp)=, 是 =int= 类型, 占用 4 个字节;
 
-     # 这里的"数据被销毁"是指没记录下数据所在的内存地址,导致无法访问到该数据,不知道内存地址当然也就不能对它进行销毁,这种情况就是常说的 *内存泄露*.
+      第三个成员 =codepoint= 的地址是 =-20(%rbp)=, 是 =char= 类型, 占用 1 个字节;
 
-     一旦知道知道这个事实,就能明白什么才是内存分配/销毁的时机了.
+      第四个成员 =height= 的地址是 =-16(%rbp)=, 是 =float= 类型, 占用 4 个字节;
 
-     简单来说,分配内存目的就是让函数里局部变量的数据能够在函数结束后也能被访问到,如果有这样的意图,那么就需要分配内存;
+      =codepoint= 和 =height= 之间空出了 3 个字节, 这 3 个字节使用来做对齐的.
 
-     当然这不是唯一的原因(不过也算是主要原因了),比如还有需要储存不定量数量的数据,可能就需要有多少分配多少了,像链表这种就是.
+      最后 =ptr= 的值就是 =name= 的地址, 代码如下:
 
-     使用 =malloc= 分配内存需要指定内存区块大小,分配成功后就会返回这块内存区域的首位地址(也就是 =C/C++= 的指针),之后的访问以及销毁操作都需要通过这个地址来完成,
+      #+BEGIN_SRC c
+      // struct-in-c.c
+      int main(int argc, char* argvs) {
 
-     开发人员需要做好保存该地址的工作,在不需要的该内存区域时使用 =free= 进行释放,而这个操作需要该内存区域的首位地址作为 =free= 的参数.
+          typedef struct {
+              char *name;
+              int age;
+              char codepoint;
+              float height;
+          } Person;
 
-     如果没有保存好内存地址,那么在程序运行的过程中无法通过 =free= 进行内存释放,如果程序后面还会进行内存分配,这块内存区域就无法被重新利用来储存新数据,导致程序的可用内存越来越少.
+          Person example;
+          example.name = "Jack";
+          example.codepoint = 'c';
+          example.age = 18;
+          example.height = 176.0;
 
-     这种情况叫做 *内存泄露* (memory leak),这些无法通过手动释放的内存只能在程序结束运行后被释放;
+          Person *ptr = &example;
 
-     一两次小泄露可以忽略不计,但发生的次数变多了的话, *程序运行时占用的内存大小* 可能会超过 *系统分配给程序的内存大小*,导致程序被系统结束运行,这种情况叫做 *内存溢出* (out of memory).
+          (*ptr).name = "Nick";
+          // ptr->name = "Nick";
 
-     所以汇编作为 =C= 的基础完全没有问题.
+          return 0;
+      }
+      #+END_SRC
+
+      #+BEGIN_SRC asm
+        .file	"struct-in-c.c"
+        .text
+        .section	.rodata
+.LC0:
+        .string	"Jack"
+.LC2:
+        .string	"Nick"
+        .text
+        .globl	main
+        .type	main, @function
+main:
+.LFB0:
+        .cfi_startproc
+        endbr64
+        pushq	%rbp
+        .cfi_def_cfa_offset 16
+        .cfi_offset 6, -16
+        movq	%rsp, %rbp
+        .cfi_def_cfa_register 6
+        subq	$64, %rsp
+        movl	%edi, -52(%rbp)
+        movq	%rsi, -64(%rbp)
+        movq	%fs:40, %rax
+        movq	%rax, -8(%rbp)
+        xorl	%eax, %eax
+        leaq	.LC0(%rip), %rax
+        movq	%rax, -32(%rbp)   ; name
+        movb	$99, -20(%rbp)    ; codepoint
+        movl	$18, -24(%rbp)    ; age
+        movss	.LC1(%rip), %xmm0
+        movss	%xmm0, -16(%rbp)  ; height
+        leaq	-32(%rbp), %rax
+        movq	%rax, -40(%rbp)   ; *ptr
+        movq	-40(%rbp), %rax
+        leaq	.LC2(%rip), %rdx
+        movq	%rdx, (%rax)
+        movl	$0, %eax
+        movq	-8(%rbp), %rdx
+        subq	%fs:40, %rdx
+        je	.L3
+        call	__stack_chk_fail@PLT
+.L3:
+        leave
+        .cfi_def_cfa 7, 8
+        ret
+        .cfi_endproc
+.LFE0:
+        .size	main, .-main
+        .section	.rodata
+        .align 4
+.LC1:
+        .long	1127219200
+        .ident	"GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"
+        .section	.note.GNU-stack,"",@progbits
+        .section	.note.gnu.property,"a"
+        .align 8
+        .long	1f - 0f
+        .long	4f - 1f
+        .long	5
+0:
+        .string	"GNU"
+1:
+        .align 8
+        .long	0xc0000002
+        .long	3f - 2f
+2:
+        .long	0x3
+3:
+        .align 8
+4:
+      #+END_SRC
+      #+END_QUOTE
+
+      再来看另外一个例子 =sqlite3_exec=, 它的第三个参数是函数的地址,
+
+      反正只要这个变量在某个地方被使用了, 那么就一定有办法可以找到它的有效地址; 而对于没有被使用过的变量, =GCC= 是不会为它们分配空间的.
+
+      还有很多东西没有提到, 比如 =GCC= 会把 =C= 的结构体, =switch= 语句, =if= 语句等等编译成什么样, 这些内容就需要靠自己学习了.
+
+      个人推荐去阅读书本 =Computer System A Programmer's Perspective 3rd= (简称 =CSAPP=) 的第三章, 边阅读边实践.
+
+      \\
+
+      最后说一下个人观点, 汇编就应该作为学习 =C= 语言的基础, 而在学习 =C= 时需要时刻想着"写的东西会编译成什么样".
+
+      之所以这么认为, 是因为很多教学都只着重教语法, 栈, 内存分配等等这些概念虽然有讲, 但这些概念是十分难表述清楚的, 不见过"实物"很难理解.
+
+      就内存分配来说, 很多人都不知道什么时候需要使用 =malloc= 分配内存, 分配多少, 什么时候使用 =free= 进行销毁.
+
+      如果学过汇编你就会知道函数的局部变量是储存在栈帧上的, 而栈帧是在调用函数时才被进行分配的, 在函数调用结束后栈帧就会被销毁, 当然栈帧上的数据跟着被销毁.
+
+      一旦知道知道了这些, 就能明白什么才是内存分配/销毁的时机了.
+
+      简单来说, 分配内存目的就是让函数里局部变量的数据能够在函数结束后也能被访问到, 如果有这样的意图, 那么就需要分配内存;
+
+      当然这不是唯一的原因(不过也算是主要原因了), 比如还有需要储存不定量数量的数据, 可能就需要有多少分配多少了, 像链表这种就是.
+
+      使用 =malloc= 分配内存需要指定内存区块大小, 分配成功后就会返回这块内存区域的首位地址(也就是 =C/C++= 的指针), 之后的访问以及销毁操作都需要通过这个地址来完成,
+
+      开发人员需要做好保存该地址的工作, 在不需要的该内存区域时使用 =free= 进行释放, 而这个操作需要该内存区域的首位地址作为 =free= 的参数.
+
+      如果没有保存好内存地址,那么在程序运行的过程中无法通过 =free= 进行内存释放,如果程序后面还会进行内存分配,这块内存区域就无法被重新利用来储存新数据,导致程序的可用内存越来越少.
+
+      这种情况叫做 *内存泄露* (memory leak),这些无法通过手动释放的内存只能在程序结束运行后被释放;
+
+      一两次小泄露可以忽略不计, 但发生的次数变多了的话, *程序运行时占用的内存大小* 可能会超过 *系统分配给程序的内存大小*, 导致程序被系统结束运行,这种情况叫做 *内存溢出* (out of memory).
+
+      所以汇编作为 =C= 的基础完全没有问题.
 
 **** 机器码和字节码
 
@@ -3897,187 +4344,232 @@
 
      常见的编程语言实现中, =V8(JavaScript)= 的虚拟机就是寄存器机, 官方 =Python= 的虚拟机就是堆栈机.
 
-     一旦你知道虚拟机是采用哪种实现,你就可以知道如何阅读它们的字节码了,当然你还要有它们的字节码说明.
+     一旦你知道虚拟机是采用哪种实现, 你就可以知道如何阅读它们的字节码了, 当然你还要有它们的字节码说明.
 
 *** 可执行二进制文件格式 - ELF
 
-    你可以很轻松地在[[https://www.gnu.org/software/libc/][网络]]上获取到 =glibc= 的源代码, =glibc= 是由 =GNU= 实现的一个 =C= 标准库, 里面就有一个叫做 =elf.h= 的文件.
+    #+BEGIN_QUOTE
+    荀子曰: 不闻不若闻之, 闻之不若见之, 见之不若知之, 知之不若行之. 学至于行而止矣. 行之, 明也.
+    #+END_QUOTE
 
-    要看接下来的内容的话, 强烈推荐准备一份源代码.
+    # https://www.caichinger.com/elf.html
 
-    如果你在使用 =Linux= 操作系统, 基本上只要一条命令就能获取到 =glibc= 的源码, 以我 =Ubuntu= 为例:
+    在 =Linux= 上, =ELF= 是 =汇编/C= 语言最终产物, 了解这个最终产物的构成就是从一个别样的角度去理解程序本身, 你会知道你写的代码最终会生成什么样的程序, 最后知道想要什么样的程序就改写什么代码.
 
-    #+BEGIN_SRC sh
-    sudo apt-get install glibc-source
-    #+END_SRC
+    所以理解 =ELF= 文件是那些生活在 =Linux= 操作系统中优秀 =汇编/C= 开发人员的必备技能之一.
 
-    安装之后在 =/usr/src= 或者 =/usr/local/src= 里面就能找到 =elf.h= 这文件了(, 注意有两个 =elf.h= 文件的, 是 =elf/elf.h= 的那个).
+    这个章节的目的是给读者提供一个解剖 =ELF= 文件的实践过程, 读完之后能够反向加深读者对汇编的理解, 以及掌握从字节的层面去分析文件的技能(并不限于 =ELF= 文件), 以及了解到连接器是如何连接各个模块.
 
-    =Linux= 里面的有 =man page= 对 =elf= 进行介绍(=man elf=).
+**** 准备
 
-    我们接下来会先编译一份简单的代码 =C= 代码得到一个 =elf= 文件, 用二进制编辑器打开它, 参考 =elf.h= 里的定义和 =elf= 的 =man page= 说明(, 你也可以使用维基百科上的 [[https://en.wikipedia.org/wiki/Executable_and_Linkable_Format][ELF]] 作为参考), 逐个字节阅读它.
+     我们将会使用最原始的材料作为根据去解析 =ELF= 文件, 本章节采用的是 =glibc= 的 =elf= 实现, =glibc= 是由 =GNU= 实现的一个 =C= 标准库, 你可以很轻松地在[[https://www.gnu.org/software/libc/][网络]]上获取到 =glibc= 的源代码.
 
-    \\
+     如果你在使用 =Linux= 操作系统, 基本上只要一条命令就能获取到 =glibc= 的源码, 以我 =Ubuntu= 为例:
 
-    首先我们的样例 =C= 代码:
+     #+BEGIN_SRC sh
+     sudo apt-get install glibc-source
+     #+END_SRC
 
-    #+BEGIN_SRC c
-    // example.c
-    int func ( int, int );
+     安装之后在 =/usr/src= 或者 =/usr/local/src= 里面就能找到 =elf.h= 这文件了(, 注意有两个 =elf.h= 文件的, 是 =elf/elf.h= 的那个).
 
-    int main(int argc, char **argv) {
-      func(1, 2);
-      return 0;
-    }
+     \\
 
-    int func ( int a, int b ) {
-      return a + b;
-    }
-    #+END_SRC
+     光有源代码还不够, 我们需要一份对应的说明, 而 =Linux= 里面的有 =man page= 对 =elf= 进行介绍(=man elf=),
 
-    编译得到 =elf= 二进制文件 =example= (我这里是 64 位的 =ELF= 格式):
+     如果你的电脑不使用 =Linux= 系统, 那么请自备虚拟机, 后面的实践都是在 =Linux= 上完成的;
 
-    #+BEGIN_SRC sh
-    gcc -o example example.c
-    #+END_SRC
+     \\
 
-    找一个你喜欢的二进制编辑器打开它, 我个人用的是 =Emacs= 的 =hexl-mode=, 打开后界面如下:
+     接下来会先编译一份简单的代码 =C= 代码得到一个 =elf= 文件来作为我们的[[https://baike.baidu.com/item/%E5%A4%A7%E4%BD%93%E8%80%81%E5%B8%88/1308255?fr=aladdin][大体老师]], 用二进制编辑器打开它, 参考 =elf.h= 里的定义和 =elf= 的 =man page= 说明, 逐个字节阅读它.
 
-    #+CAPTION: example 的字节
-    [[../../../files/elf-example-emacs-hexl-mode.png]]
+     首先我们的样例 =C= 代码:
 
-    我这里用不同的颜色把几个关键的区域给框出来了:
+     #+BEGIN_SRC c
+     // example.c
+     int func ( int, int );
 
-    =Area byte-data= 就是 =elf= 文件的数据, 这里是以 16 进制呈现, 每 16 个字节为一行;
+     int main(int argc, char **argv) {
+       func(1, 2);
+       return 0;
+     }
 
-    =Area row-offset= 上的每个值都是每一行的首个字节的偏移地址, =Area col-offset= 则是行内的地址偏移, 都以 16 进制表示,
+     int func ( int a, int b ) {
+       return a + b;
+     }
+     #+END_SRC
 
-    (这里 =Area col-offset= 上面的值都是 =22= 这种格式, 这是由于一个字节用 16 进制表示有两位, =hexl-mode= 这是为了标识哪两个连续位为一个字节, 所以 =22= 实际上就是 =0x02=, 这在其它二进制编辑器上显示可能会稍有不同.)
+     <<link-to-example>>
+     编译得到 =elf= 二进制文件 =example= (我这里是 64 位的 =ELF= 格式):
 
-    只有把这两者结合起来才能算出字节的偏移地址, 比如第二那个 =3e= 的字节的偏移地址就为 =0x00000010 + 0x02 => 0x00000012=;
+     #+BEGIN_SRC sh
+     gcc -o example example.c
+     #+END_SRC
 
-    =Area ascii-encode= 就是对应 =Area byte-data= 的 =Ascii= 编码, 一个字节对应一个字符.
+     找一个你喜欢的二进制编辑器打开它, 我个人用的是 =Emacs= 的 =hexl-mode=, 打开后界面如下:
 
-    工具和材料已经准备得差不多了, 可以开始探索 =ELF= 文件格式了.
+     #+CAPTION: example 的字节
+     [[../../../files/elf-example-emacs-hexl-mode.png]]
 
-    从整体来看, 一个 =ELF= 文件的格式就是一个 =ELF= 头 (ELF header)后面跟着一个程序头部表(a program header table)或者一个节头部表(a section header table), 又或者是两者都有.
+     我这里用不同的颜色把几个关键的区域给框出来了:
 
-    =ELF= 头后面的数据就是 =ELF= 的文件数据.
+     =Area byte-data= 就是 =elf= 文件的数据, 这里是以 16 进制呈现, 每 16 个字节为一行;
 
-    \\
+     =Area row-offset= 上的每个值都是每一行的首个字节的偏移地址, =Area col-offset= 则是行内的地址偏移, 都以 16 进制表示,
 
-    *ELF头*
+     (这里 =Area col-offset= 上面的值都是 =22= 这种格式, 这是由于一个字节用 16 进制表示有两位, =hexl-mode= 这是为了标识哪两个连续位为一个字节, 所以 =22= 实际上就是 =0x02=, 这在其它二进制编辑器上显示可能会稍有不同.)
 
-    =ELF= 头存在的意义是: 保证文件数据能够在连接和执行期间被正确解析.
+     只有把这两者结合起来才能算出字节的偏移地址, 比如第二那个 =3e= 的字节的偏移地址就为 =0x00000010 + 0x02 => 0x00000012=;
 
-    可见 =ELF= 头是如此的重要, 在 =man page= 里面可以看到 32 位以及 64 位 =ELF= 头的通用定义:
+     =Area ascii-encode= 就是对应 =Area byte-data= 的 =Ascii= 编码, 一个字节对应一个字符.
 
-    #+BEGIN_SRC c
-    #define EI_NIDENT 16
+     工具和材料已经准备得差不多了, 可以开始探索 =ELF= 文件格式了.
 
-    typedef struct {
-      unsigned char e_ident[EI_NIDENT];
-      uint16_t      e_type;
-      uint16_t      e_machine;
-      uint32_t      e_version;
-      ElfN_Addr     e_entry;
-      ElfN_Off      e_phoff;
-      ElfN_Off      e_shoff;
-      uint32_t      e_flags;
-      uint16_t      e_ehsize;
-      uint16_t      e_phentsize;
-      uint16_t      e_phnum;
-      uint16_t      e_shentsize;
-      uint16_t      e_shnum;
-      uint16_t      e_shstrndx;
-    } ElfN_Ehdr;
-    #+END_SRC
+     <<diff-view>> =ELF= 文件的内容在不同状态下的布局是不一样的, 所谓的不同状态就是只有两个而已: *在硬盘上储存时* 以及 *被加载到了内存上时* 两个状态,
 
-    其中 =N= 表示 32 或者 64.
+     这两种状态下的 =ELF= 文件内容布局分别叫做 *链接视图* (Linking view) 以及 *执行视图* (Execution view).
 
-    那么怎么用这份定义呢?
+     #+CAPTION: ELF 的链接视图以及执行视图 - 单个文件
+     [[../../../files/elf-views.jpg]]
 
-    =C= 里面的结构体(=struct=)的字段在内存里面是按照定义顺序储存的, 也就是说在内存里面, =e_ident= 一定会在 =e_type= 之前, =e_type= 一定会在 =e_machine= 之前, 如此类推.
+     二进制编辑器所展示的就是 =ELF= 的链接视图, 把 =ELF= 文件载入到内存时, 在链接视图里面连接器把若干个 =sections= 合并成一个 =segment=. (当你读下面的内容时, 请务必把这一点记在心上.)
 
-    也就是说我们只要根据这份定义和在上面的字节一个一个的读就好.
+     我们主要是从这视图角度去进行解剖 =ELF= 文件.
 
-    - *字段名: =e_ident=; 偏移范围: 0x00 - 0x0f*
+     整体上看去, 一个 =ELF= 文件的格式就是一个 =ELF= 头 (ELF header)后面跟着一个程序头部表(a program header table)或者一个节头部表(a section header table), 又或者是两者都有, =ELF= 头后面的数据就是 =ELF= 的文件数据.
 
-      用于标识 =ELF= 文件标志, 好让操作系统能够识别到它是 =ELF= 文件.
+     # https://zhuanlan.zhihu.com/p/286088470
 
-      该字段类型是长度为 16 的 =unsigned char= 数组, 在 32/64 位上, 一个 =unsigned char= 的大小是 1 字节, 因此按照定义该字段在内存里占用 16 个字节.
+     # https://www.intezer.com/blog/research/executable-linkable-format-101-part1-sections-segments/
 
-      - *偏移范围: 0x00 - 0x03; 字节名: =EI_MAG0, EI_MAG1, EI_MAG2, EI_MAG3=; 字节值: 0x7f, 0x45, 0x4c, 0x46*
+     # https://www.codeproject.com/Articles/70302/Redirecting-functions-in-shared-ELF-libraries
 
-        是一个 [[https://en.wikipedia.org/wiki/Magic_number_(programming)][magic number]], 表示字符串 =.ELF=.
+     # https://slidetodoc.com/unix-elf-file-format-elf-file-format-the/
 
-      - *偏移: 0x04; 字节名: =EI_CLASS=; 字节值: 0x02*
+**** ELF 头
 
-        标识当前二进制文件的架构, 1 表示 32 位架构， 2 表示 64 位架构.
+     =ELF= 头存在的意义是: 保证文件数据能够在连接和执行期间被正确解析. 可见 =ELF= 头是如此的重要.
 
-        =example= 是 64 位二进制文件.
+     有好多种方法可以查看到 ELF 文件的头, 最简单的就是通过 =readelf= 读取 =ELF= 的文件头:
 
-      - *偏移: 0x05; 字节名: =EI_DATA=; 字节值: 0x01*
+     #+BEGIN_SRC sh
+     readelf -h example
+     #+END_SRC
 
-        标识文件数据的字节次序(=endianess=), 1 是 =LSB=, 2 是 =MSB=.
+     #+CAPTION: readelf -h example
+     [[../../../files/readelf-h-example.png]]
 
-        =example= 是 =LSB= 字节序.
+     但不要忘了这一小章节的主题是逐个字节去阅读 =ELF= 文件, *根据文件格式标准从二进制层面上分析文件也是一项重要能力*.
 
-      - *偏移： 0x06; 字节名: =EI_VERSION=; 字节值: 0x01*
+     况且也要了解上面显示的数据有什么意义.
 
-        标识着文件使用的 =ELF= 规范版本号. 1 标识当前版本, 这个值基本上可以说是固定的.
+     在 =man page= 里面可以看到 32 位以及 64 位 =ELF= 头的通用定义:
 
-      - *偏移: 0x07; 字节名: =EI_OSABI=; 字节值: 0x00*
+     #+BEGIN_SRC c
+     #define EI_NIDENT 16
 
-        标识操作系统以及目标文件使用的 =ABI=.
+     typedef struct {
+       unsigned char e_ident[EI_NIDENT];
+       uint16_t      e_type;
+       uint16_t      e_machine;
+       uint32_t      e_version;
+       ElfN_Addr     e_entry;
+       ElfN_Off      e_phoff;
+       ElfN_Off      e_shoff;
+       uint32_t      e_flags;
+       uint16_t      e_ehsize;
+       uint16_t      e_phentsize;
+       uint16_t      e_phnum;
+       uint16_t      e_shentsize;
+       uint16_t      e_shnum;
+       uint16_t      e_shstrndx;
+     } ElfN_Ehdr;
+     #+END_SRC
 
-      - *偏移: 0x08; 字节名: =EI_ABIVERSION=; 字节值: 0x00*
+     其中 =N= 表示 32 或者 64.
 
-        标识目标文件使用的 =ABI= 版本. 该字节目前未被使用, 默认为 0.
+     那么怎么用这份定义呢?
 
-      - *偏移范围: 0x09 - 0x0f; 字节名: =EI_PAD=; 字节值: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+     =C= 里面的[[c-structures][结构体]]的成员在内存里面是按照定义顺序储存的, 也就是说在内存里面, =e_ident= 一定会在 =e_type= 之前, =e_type= 一定会在 =e_machine= 之前, 如此类推.
 
-        统一使用 0 填充的区域, 目前没有任何实际意义, 未来可能有用.
+     也就是说我们只要根据这份定义和在上面的字节一个一个的读就好.
 
-    - *字段名: =e_type=; 偏移范围: 0x10 - 0x11; 字节值: 0x03, 0x00*
+     - *成员名: =e_ident=; 偏移范围: 0x00 - 0x0f*
 
-      该字段的类型是 =Elf64_Half=, 该类型是 16 位大小, 也就是 2 个字节大小.
+       用于标识 =ELF= 文件标志, 好让操作系统能够识别到它是 =ELF= 文件.
 
-      用于标识目标文件类型, 1 表示可重定位文件, 2 表示可执行文件, 3 表示动态链接文件, 4 表示 =core dumped= 文件.
+       该成员类型是长度为 16 的 =unsigned char= 数组, 在 32/64 位上, 一个 =unsigned char= 的大小是 1 字节, 因此按照定义该成员在内存里占用 16 个字节.
 
-      由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_type= 就是 3.
+       - *偏移范围: 0x00 - 0x03; 字节名: =EI_MAG0, EI_MAG1, EI_MAG2, EI_MAG3=; 字节值: 0x7f, 0x45, 0x4c, 0x46*
 
-      你没看错, 真的是 3, 而不是 2.
+         是一个 [[https://en.wikipedia.org/wiki/Magic_number_(programming)][magic number]], 表示字符串 =.ELF=.
 
-      # https://stackoverflow.com/questions/50303305/elf-file-type-et-exec-and-et-dyn
+       - *偏移: 0x04; 字节名: =EI_CLASS=; 字节值: 0x02*
 
-    - *字段名: =e_machine=; 偏移范围: 0x12 - 0x13; 字节值: 0x3e, 0x00*
+         标识当前二进制文件的架构, 1 表示 32 位架构， 2 表示 64 位架构.
 
-      该字段的类型是 =Elf64_Half=, 该类型是 2 个字节大小.
+         =example= 是 64 位二进制文件.
 
-      用于标识文件是跑在什么架构上的.
+       - *偏移: 0x05; 字节名: =EI_DATA=; 字节值: 0x01*
 
-      由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_machine= 的值就是 =0x3e=, 也就是 62,
+         标识文件数据的字节次序(=endianess=), 1 是 =LSB=, 2 是 =MSB=.
 
-      对应宏定义 =EM_X86_64=, 也就是 =AMD x86-64=.
+         =example= 是 =LSB= 字节序.
 
-    - *字段名: =e_version=; 偏移范围: 0x14 - 0x17; 字节值: 0x10, 0x00, 0x00, 0x00*
+       - *偏移： 0x06; 字节名: =EI_VERSION=; 字节值: 0x01*
 
-      该字段的类型是 =Elf64_Word=, 32位大小, 也就是 4 个字节大小.
+         标识着文件使用的 =ELF= 规范版本号. 1 标识当前版本, 这个值基本上可以说是固定的.
 
-      用于标识文件版本, 目前常见的统一为 1.
+       - *偏移: 0x07; 字节名: =EI_OSABI=; 字节值: 0x00*
 
-      由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_version= 的值就是 1.
+         标识操作系统以及目标文件使用的 =ABI=.
 
-    - *字段名: =e_entry=; 偏移范围: 0x18 - 0x1f; 字节值: 0x40, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+       - *偏移: 0x08; 字节名: =EI_ABIVERSION=; 字节值: 0x00*
 
-      该字段的类型是 =Elf64_Addr=, 大小为 64 位, 也就是 8 字节大小.
+         标识目标文件使用的 =ABI= 版本. 该字节目前未被使用, 默认为 0.
 
-      该字段的值是一个虚拟地址(virtual address), 指向程序的入口, 也就是说在开始运行该程序时, 操作系统需要把操控权转交到的该地址上.
+       - *偏移范围: 0x09 - 0x0f; 字节名: =EI_PAD=; 字节值: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
 
-      这个值实际上就是 =_start= 标签的内存地址, 你可以通过以下命令来验证:
+         统一使用 0 填充的区域, 目前没有任何实际意义, 未来可能有用.
 
-      #+BEGIN_SRC sh
+     - *成员名: =e_type=; 偏移范围: 0x10 - 0x11; 字节值: 0x03, 0x00*
+
+       该成员的类型是 =Elf64_Half=, 该类型是 16 位大小, 也就是 2 个字节大小.
+
+       用于标识目标文件类型, 1 表示可重定位文件, 2 表示可执行文件, 3 表示动态链接文件, 4 表示 =core dumped= 文件.
+
+       由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_type= 就是 3.
+
+       你没看错, 真的是 3, 而不是 2.
+
+       # https://stackoverflow.com/questions/50303305/elf-file-type-et-exec-and-et-dyn
+
+     - *成员名: =e_machine=; 偏移范围: 0x12 - 0x13; 字节值: 0x3e, 0x00*
+
+       该成员的类型是 =Elf64_Half=, 该类型是 2 个字节大小.
+
+       用于标识文件是跑在什么架构上的.
+
+       由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_machine= 的值就是 =0x3e=, 也就是 62,
+
+       对应宏定义 =EM_X86_64=, 也就是 =AMD x86-64=.
+
+     - *成员名: =e_version=; 偏移范围: 0x14 - 0x17; 字节值: 0x10, 0x00, 0x00, 0x00*
+
+       该成员的类型是 =Elf64_Word=, 32位大小, 也就是 4 个字节大小.
+
+       用于标识文件版本, 目前常见的统一为 1.
+
+       由于 =EI_DATA= 是 =LSB=, 因此 =example= 的 =e_version= 的值就是 1.
+
+     - *成员名: =e_entry=; 偏移范围: 0x18 - 0x1f; 字节值: 0x40, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       该成员的类型是 =Elf64_Addr=, 大小为 64 位, 也就是 8 字节大小.
+
+       该成员的值是一个虚拟地址(virtual address), 指向程序的入口, 也就是说在开始运行该程序时, 操作系统需要把操控权转交到的该地址上.
+
+       这个值实际上就是 =_start= 标签的内存地址, 你可以通过以下命令来验证:
+
+       #+BEGIN_SRC sh
         objdump -d example | grep "_start"
 
         # =>
@@ -4216,58 +4708,1182 @@
         #     1170:	48 83 ec 08             sub    $0x8,%rsp
         #     1174:	48 83 c4 08             add    $0x8,%rsp
         #     1178:	c3                      ret
+       #+END_SRC
+
+       =_start= 标签前面的地址就是 =0000000000001040=, 刚好对应该成员的值.
+
+     - *成员名: =e_phoff=; 偏移范围: 0x20 - 0x27; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       该成员为 =Elf64_Off= 类型, 64 位大小, 也就是 8 字节大小.
+
+       该成员指示程序头部表的偏移为多少个字节, 这里是 =0x40=, 也就是 64 个字节,
+
+       也就是以 =example= 的 =0x00= 为起点, 偏移 64 个字节后的地址, 也就是 =0x40=, 该地址开始就是程序头部表的信息.
+
+       如果不存在程序头部表, 那么该值为 0.
+
+     - *成员名: =e_shoff=; 偏移范围: 0x28 - 0x2f; 字节值: 0x78, 0x36, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       该成员为 =Elf64_Off= 类型, 占 8 字节大小.
+
+       该成员指示节头部标的偏移为多少个字节, 这里是 =0x3678= 个, 也就是 13944 个字节.
+
+       类似于 =e_phoff=, 从 =0x00= 开始偏移 =13944= 个字节后到达的地址 =0x3678= 就是节头部表的信息.
+
+       如果不存在节头部表, 那么该值为 0.
+
+     - *成员名: =e_flags=; 偏移范围: 0x30 - 0x33; 字节值: 0x00, 0x00, 0x00, 0x00*
+
+       成员类型为 =Elf64_Word=, 占 4 个字节大小.
+
+       该成员指示处理器特定的 =flags=, 该成员目前未定义, 统一为 0.
+
+     - *成员名: =e_ehsize=; 偏移范围: 0x34 - 0x35; 字节值: 0x40, 0x00*
+
+       成员类型为 =Elf64_Half=, 占 2 个字节大小.
+
+       指示 =ELF= 文件的头部大小, =example= 的 =ELF= 头一共占用 =0x40=, 也就是 64 个字节.
+
+     - *成员名: =e_phentsize=; 偏移范围: 0x36 - 0x37; 字节值: 0x38, 0x00*
+
+       成员类型为 =Elf64_Half=, 占用 2 个字节大小.
+
+       =ELF= 文件的程序头部表里每一项(entry, 或者说程序头)大小都是一样的, 该成员指定了程序头部表每一个项的大小.
+
+       =example= 程序头部项大小是 =0x38=, 也就是 56 个字节.
+
+     - *成员名: =e_phnum=; 偏移范围: 0x38 - 0x39; 字节值: 0x0d, 0x00*
+
+       成员类型为 =Elf64_Half=, 占用 2 个字节.
+
+       指示程序头部表有多少个项. 因此 =e_phnum * e_phentsize= 的值就是程序头部表的大小.
+
+       =example= 一共有 =0x0d=, 也就是 13 个程序头部表项.
+
+     - *成员名: =e_shentsize=; 偏移范围: 0x3a - 0x3b; 字节值: 0x40, 0x00*
+
+       成员类型为 =Elf64_Half=, 占用 2 个字节.
+
+       =ELF= 文件的节头部表里每一项(或者说节头)大小都是一样的, 该成员指定了节头部表每一个项的大小.
+
+       =example= 节头部项大小是 =0x40=, 也就是 64 个字节.
+
+     - *成员名: =e_shnum=; 偏移范围: 0x3c - 0x3d; 字节值: 0x1d, 0x00*
+
+       成员类型为 =Elf64_Half=, 占用 2 个字节.
+
+       =ELF= 文件节头部表有多少个项. 因此 =e_shnum * e_shentsize= 的值就是节头部表的大小.
+
+       =example= 一共有 =0x1d=, 也就是 29 个节头部表项.
+
+     - *成员名: =e_shstrndx=; 偏移范围: 0x3e - 0x3f; 字节值: 0x1c, 0x00*
+
+       成员类型为 =Elf64_Half=, 占用 2 个字节.
+
+       如果 =ELF= 文件里面存在节头部表, 那它就有可能存在一个项是与节名字符串表(section name string table)关联,
+
+       这个就留到后面去讲了.
+
+       =example= 的这个成员的值是 =0x1c=, 也就是节头部表的第 28 项(从索引 0 开始算),
+
+       =example= 一共有 29 个节头部项, 也就是最后一项了.
+
+**** ELF 程序头 (Program header)
+
+     程序头部表是一个数组, 每个元素就是程序头, 每个程序头记录了段(segment)相关信息或者是程序运行所需的信息.
+
+     也就是说, 程序头部表只对动态链接库或者可执行程序有意义.
+
+     你可以通过以下命令去查看程序头的信息:
+
+     #+BEGIN_SRC sh
+     readelf -l example
+     #+END_SRC
+
+     #+CAPTION: readelf -l example
+     [[../../../files/readelf-l-example.png]]
+
+     (这里的表头有进行换行, 比如 =Offset= 和 =FileSiz= 分别是两个信息.)
+
+     可以看到除了程序头信息以外, 还有一段 =Section to Segment mapping= 的信息,
+
+     这段信息就是告诉我们 =ELF= 被加载入内存时, 节是如何对应段的, 正如前面所说的, 连接器把多个节合并成一个段;
+
+     目标文件本身不包含 =Section to Segment mapping= 的信息, 根据 =readelf= 的[[https://github.com/bminor/binutils-gdb/blob/02a8b5c25806339f801c80a5a364a963b2ece080/binutils/readelf.c#L6283][源代码]]可以知道 =readelf= 是通过节(section)和段(segment)的文件偏移(file offset)和大小(size)来得出哪个节在哪个段里面.
+
+     # 这是由连接器决定的, 而连接器的连接行为是由 [[https://sourceware.org/binutils/docs/ld/Scripts.html][连接器脚本]] 决定的, 也就是说把哪些节合并到一个段里面就是由这个连接器脚本决定的.
+
+     # 我们的示例程序 =exampe= 使用的连接器是 =GNU ld=, 可以通过 =ld --verbose= 查看到脚本内容, 里面就包含了节和段是如何对应的.
+
+     不过我们还是要从字节读起, 从前面的 =e_phoff= 成员可以知道, 从文件的第 =0x40= 个字节开始就是程序头了, 刚好在 =ELF= 头的后面, 我们读一两个就可以了.
+
+     先给出程序头的结构定义:
+
+     #+BEGIN_SRC c
+     typedef struct
+     {
+       Elf64_Word    p_type;             /* Segment type */
+       Elf64_Word    p_flags;            /* Segment flags */
+       Elf64_Off     p_offset;           /* Segment file offset */
+       Elf64_Addr    p_vaddr;            /* Segment virtual address */
+       Elf64_Addr    p_paddr;            /* Segment physical address */
+       Elf64_Xword   p_filesz;           /* Segment size in file */
+       Elf64_Xword   p_memsz;            /* Segment size in memory */
+       Elf64_Xword   p_align;            /* Segment alignment */
+     } Elf64_Phdr;
+     #+END_SRC
+
+     - *成员名: =p_type=; 偏移范围: 0x40 - 0x43; 字节值: 0x60, 0x00, 0x00, 0x00*
+
+       声明段的类型, 各种类型的定义如下:
+
+       #+BEGIN_SRC c
+       #define  PT_NULL		0		/* Program header table entry unused */
+       #define  PT_LOAD		1		/* Loadable program segment */
+       #define  PT_DYNAMIC	2		/* Dynamic linking information */
+       #define  PT_INTERP	3		/* Program interpreter */
+       #define  PT_NOTE		4		/* Auxiliary information */
+       #define  PT_SHLIB        5		/* Reserved */
+       #define  PT_PHDR		6		/* Entry for header table itself */
+       #define  PT_TLS		7		/* Thread-local storage segment */
+       #define  PT_NUM		8		/* Number of defined types */
+       #define  PT_LOOS		0x60000000	/* Start of OS-specific */
+       #define  PT_GNU_EH_FRAME	0x6474e550	/* GCC .eh_frame_hdr segment */
+       #define  PT_GNU_STACK	0x6474e551	/* Indicates stack executability */
+       #define  PT_GNU_RELRO	0x6474e552	/* Read-only after relocation */
+       #define  PT_GNU_PROPERTY	0x6474e553	/* GNU property */
+       #define  PT_LOSUNW	0x6ffffffa
+       #define  PT_SUNWBSS	0x6ffffffa	/* Sun Specific segment */
+       #define  PT_SUNWSTACK	0x6ffffffb	/* Stack segment */
+       #define  PT_HISUNW	0x6fffffff
+       #define  PT_HIOS		0x6fffffff	/* End of OS-specific */
+       #define  PT_LOPROC	0x70000000	/* Start of processor-specific */
+       #define  PT_HIPROC	0x7fffffff	/* End of processor-specific */
+       #+END_SRC
+
+       我们例子的这个段类型是 =PT_LOOS=, 这种段和 =PT_HIOS= 段是一对的, 分别表示开头和结尾, 这两种段中间的数据就是和系统信息相关的.
+
+       我们再来翻译一下在文档上就有的几个类型吧:
+
+       | segment type            | description                                                                                                                                                                                 |
+       |-------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+       | =PT_NULL=               | 该类段将不会被使用, 这种段的成员全都是未定义, 这种段会被忽略.                                                                                                                               |
+       | =PT_LOAD=               | 该类段会被加载到 =p_vaddr= 成员指向的地址上.                                                                                                                                                |
+       | =PT_DYNAMIC=            | 该类段储存了动态连接的信息.                                                                                                                                                                 |
+       | =PT_INTERP=             | 该类段存放了解释器的信息, 包括路径和大小, 这里的解析器就是连接器(linker). @@html:<br/>@@ 比如我们的例子程序 =example= 的程序头有 =INTERP= 段, 它的连接器就是 "/lib64/ld-linux-x86-64.so.2". |
+       | =PT_NOTE=               | 该类段存放了辅助信息的位置, 具体参考 =NOTE= 的数据结构定义, 是 =Elf64_Nhdr(64位)= 和 =Elf32_Nhdr(32位)=.                                                                                    |
+       | =PT_SHLIB=              | 该类段目前处于保留状态, 未被定义.                                                                                                                                                           |
+       | =PT_PHDR=               | 该类段储存了程序头表自身在文件以及内存中的位置和大小信息.                                                                                                                                   |
+       | =PT_LOPROC / PT_HIPROC= | 在 =[ PT_LOPROC, PT_HIPROC ]= 两个段之间储存了和处理器相关的数据.                                                                                                                           |
+       | =PT_GNU_STACK=          | 该类段是 =GNU= 的拓展段, =Linux= 内核使用这种段的 =p_flags= 成员来控制栈的状态.                                                                                                             |
+
+     - *成员名: =p_flags=; 偏移范围: 0x44 - 0x47; 字节值: 0x04, 0x00, 0x00, 0x00*
+
+       段的掩码(bit mask), 标识段是否可写, 可读以及可执行等等.
+
+       #+BEGIN_SRC c
+       #define PF_X		(1 << 0)	/* Segment is executable */
+       #define PF_W		(1 << 1)	/* Segment is writable */
+       #define PF_R		(1 << 2)	/* Segment is readable */
+       #define PF_MASKOS	0x0ff00000	/* OS-specific */
+       #define PF_MASKPROC	0xf0000000	/* Processor-specific */
+       #+END_SRC
+
+       =PF_X= 表示该段可以执行, =PF_W= 则是可写, =PF-R= 为可读.
+
+       通常 =text= 段(text segment)是具备 =PF_X= 以及 =PF_R=; =data= 段则为 =PF_W= 以及 =PF_R=.
+
+       该例子是可写段.
+
+     - *成员名: =p_offset=; 偏移范围: 0x48 - 0x4f; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       段第一个字节距离文件开始的偏移, 简称文件地址偏移.
+
+       该段的文件地址偏移是 =0x40=, 也就是 64 个字节.
+
+     - *成员名: =p_vaddr=; 偏移范围: 0x50 - 0x57; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       段第一个字节的虚拟地址偏移.
+
+       该段的虚拟地址偏移为 =0x40=, 也就是 64 个字节.
+
+     - *成员名: =p_paddr=; 偏移范围: 0x58 - 0x5f; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       段第一字节的物理地址偏移.
+
+       该段的物理地址偏移为 =0x40=, 也就是 64 个字节.
+
+     - *成员名: =p_filesz=; 偏移范围: 0x60 - 0x67; 字节值: 0xd8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       段在文件映像(file image)[[diff-view]]中的所占的大小, 所谓的文件映像也就是链接视图, 也就是在硬盘上的大小.
+
+       该段的文件映像大小是 =0x2d8=, 也就是 728 个字节.
+
+     - *成员名: =p_memsz=; 偏移范围: 0x68 - 0x6f; 字节值: 0xd8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       段在内存映像(memory image)[[diff-view]]中所占的大小, 内存映像就是执行视图, 也就是被加载进内存用于运行时的大小.
+
+       =p_memsz= 是大于等于 =p_filesz= 的, 这是因为可加载段可能会包含一些 =.bss= 节(section), 也就是包含一些未初始化的数据.
+
+       该段的内存映像大小是 =0x02d8=, 同样也是 728 个字节.
+
+     - *成员名: =p_align=; 偏移范围: 0x70 - 0x77; 字节值: 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       段的数据对齐[[data-align]].
+
+       该段的在文件映像以及内存映像中的数据对齐大小为 8 个字节, 也就是 $p\_filesz\ \ rem\ \ 8 = p\_memsz\ \ rem\ \ 8 = 0$.
+
+**** ELF 节头 (Section header)
+
+     与程序头类似, 每个节头都是对对应节的描述, 包括节的名字, 类型, 大小等等.
+
+     #+CAPTION: readelf -S example
+     [[../../../files/readelf-S-example.png]]
+
+     从截图里面可以看到第一个节的所有位都是 0, 因此等会会用第 2 节作为讲解例子.
+
+     在 =ELF= 头里面 =e_shoff= 成员看到第一个节头的偏移是 =0x3678=, 也就是说第二个节头的偏移是 $e\_shoff + e\_shentsize = 0x3678 + 0x40 = 0x36b8$.
+
+     先给出节头的结构体定义:
+
+     #+BEGIN_SRC c
+     typedef struct
+     {
+       Elf64_Word    sh_name;            /* Section name (string tbl index) */
+       Elf64_Word    sh_type;            /* Section type */
+       Elf64_Xword   sh_flags;           /* Section flags */
+       Elf64_Addr    sh_addr;            /* Section virtual addr at execution */
+       Elf64_Off     sh_offset;          /* Section file offset */
+       Elf64_Xword   sh_size;            /* Section size in bytes */
+       Elf64_Word    sh_link;            /* Link to another section */
+       Elf64_Word    sh_info;            /* Additional section information */
+       Elf64_Xword   sh_addralign;       /* Section alignment */
+       Elf64_Xword   sh_entsize;         /* Entry size if section holds table */
+     } Elf64_Shdr;
+     #+END_SRC
+
+     - *成员名: =sh_name=; 偏移范围: 0x36b8 - 0x36bb; 字节值: 0x1b, 0x00, 0x00, 0x00*
+
+       该成员的值是"节头字符串节"(section header string table section)某个数据的索引, 这个节的名字叫做 =.shstrtab=.
+
+       =.shstrtab= 储存了各个节的名字字符串, 每个名字有着各自的索引.
+
+       使用 =readelf -p .shstrtab example= 可以看到索引 =0x1b= 上的字符串为 =.interp=.
+
+     - *成员名: =sh_type=; 偏移范围: 0x36bc - 0x36bf; 字节值: 0x01, 0x00, 0x00, 0x00*
+
+       该成员表示节的类型, 这个成员的值可能是以下中的任意一个:
+
+       #+BEGIN_SRC c
+       /* Legal values for sh_type (section type).  */
+
+       #define SHT_NULL           0             /* Section header table entry unused */
+       #define SHT_PROGBITS       1             /* Program data */
+       #define SHT_SYMTAB         2             /* Symbol table */
+       #define SHT_STRTAB         3             /* String table */
+       #define SHT_RELA           4             /* Relocation entries with addends */
+       #define SHT_HASH           5             /* Symbol hash table */
+       #define SHT_DYNAMIC        6             /* Dynamic linking information */
+       #define SHT_NOTE           7             /* Notes */
+       #define SHT_NOBITS         8             /* Program space with no data (bss) */
+       #define SHT_REL            9             /* Relocation entries, no addends */
+       #define SHT_SHLIB          10            /* Reserved */
+       #define SHT_DYNSYM         11            /* Dynamic linker symbol table */
+       #define SHT_INIT_ARRAY     14            /* Array of constructors */
+       #define SHT_FINI_ARRAY     15            /* Array of destructors */
+       #define SHT_PREINIT_ARRAY  16            /* Array of pre-constructors */
+       #define SHT_GROUP          17            /* Section group */
+       #define SHT_SYMTAB_SHNDX   18            /* Extended section indices */
+       #define SHT_NUM            19            /* Number of defined types.  */
+       #define SHT_LOOS           0x60000000    /* Start OS-specific.  */
+       #define SHT_GNU_ATTRIBUTES 0x6ffffff5    /* Object attributes.  */
+       #define SHT_GNU_HASH       0x6ffffff6    /* GNU-style hash table.  */
+       #define SHT_GNU_LIBLIST    0x6ffffff7    /* Prelink library list */
+       #define SHT_CHECKSUM       0x6ffffff8    /* Checksum for DSO content.  */
+       #define SHT_LOSUNW         0x6ffffffa    /* Sun-specific low bound.  */
+       #define SHT_SUNW_move      0x6ffffffa
+       #define SHT_SUNW_COMDAT    0x6ffffffb
+       #define SHT_SUNW_syminfo   0x6ffffffc
+       #define SHT_GNU_verdef     0x6ffffffd    /* Version definition section.  */
+       #define SHT_GNU_verneed    0x6ffffffe    /* Version needs section.  */
+       #define SHT_GNU_versym     0x6fffffff    /* Version symbol table.  */
+       #define SHT_HISUNW         0x6fffffff    /* Sun-specific high bound.  */
+       #define SHT_HIOS           0x6fffffff    /* End OS-specific type */
+       #define SHT_LOPROC         0x70000000    /* Start of processor-specific */
+       #define SHT_HIPROC         0x7fffffff    /* End of processor-specific */
+       #define SHT_LOUSER         0x80000000    /* Start of application-specific */
+       #define SHT_HIUSER         0x8fffffff    /* End of application-specific */
+       #+END_SRC
+
+       这里是它们的详细说明, 建议过一遍, 不理解不要紧, 后面会慢慢懂的.
+
+       #+ATTR_HTML: :class table table-bordered table-hover
+       | section type            | description                                                                                                                                                                                                                                                                                      |
+       |-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+       | =SHT_NULL=              | 该类节将不会被使用.                                                                                                                                                                                                                                                                              |
+       | =SHT_PROGBITS=          | 该类节拥有程序相关信息, 信息的格式和含义完全取决于程序.                                                                                                                                                                                                                                          |
+       | =SHT_SYMTAB=            | 该类节拥有一张符号表(symbol table), 一般来说这些符号用于连接编辑(link editing), 也有 *可能* 用于动态连接(dynamic linking). @@html:<br/>@@ 作为一张完整的符号表, 还有可能包含各种与动态连接无关的符号. @@html:<br/>@@ 除了 =SHT_SYMTAB= 类的节外, 还有 =SHT_DYNSYM= 类的节含有用于动态连接的符号. |
+       | =SHT_STRTAB=            | 该类节是一个字符串表(string table), 每一项就是节的名字.                                                                                                                                                                                                                                          |
+       | =SHT_REL=               | 该类节拥有若干个可重定位项(relocation entries). @@html:<br/>@@ 可重定位条目有 =ElfN_Rel= 以及 =ElfN_Rela= 两种大类型(数据结构), 这里的 =N= 代指 =32= 和 =64=. @@html:<br/>@@ 该类节上的条目类型是 =ElfN_Rel=. 一个目标文件能有多个可重定位节.                                                    |
+       | =SHT_RELA=              | 该类节是 =SHT_REL= 拓展, 每一项都是 =ElfN_Rel= 的拓展版本 =ElfN_Rela=.                                                                                                                                                                                                                           |
+       | =SHT_HASH=              | 该类节是一个符号哈希表(symbol hash table). @@html:<br/>@@ 一个参与动态连接的目标文件必须有一个符号哈希表, 并且只能有一个.                                                                                                                                                                        |
+       | =SHT_DYNAMIC=           | 该类节拥有动态连接的信息, 这种节叫做动态节(dynamic section), 一个目标文件只能最多有一个动态节.                                                                                                                                                                                                   |
+       | =SHT_NOTE=              | 该类节拥有某些辅助信息, 参考 =Elf32_Nhdr= 以及 =Elf64_Nhdr= 数据结构.                                                                                                                                                                                                                            |
+       | =SHT_NOBITS=            | 该类节在文件映像中不占任何空间, 这种节在被加载到内存时会被组合成 =.bss= 段.                                                                                                                                                                                                                      |
+       | =SHT_SHLIB=             | 该类节只是被规范保留下来而已, 还未没有被定义.                                                                                                                                                                                                                                                    |
+       | =SHT_DYNSYM=            | 该类节是一个极其简单的动态连接符号集合(a minimal set of dynamic linking symbols).                                                                                                                                                                                                                |
+       | =SHT_LOPROC/SHT_HIPROC= | 在 =[SHT_LOPROC, SHT_HIPROC]= 中间包含了和处理器相关的数据.                                                                                                                                                                                                                                      |
+       | =SHT_HIUSER/SHT_LOUSER= | 在 =[SHT_LOUSER, SHT_HIUSER]= 中的节类型能够被程序使用, 只要和当前以及未来定义的节类型不冲突就可以.                                                                                                                                                                                              |
+
+       想要真正理解它们的含义还是得结合实际的节描述:
+
+       #+ATTR_HTML: :class table table-bordered table-hover
+       | section name             | description                                                                                                                                                                                                                                                                                            |
+       |--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+       | =.bss=                   | 本节包含了那些未初始化的静态(static)和全局变量(static), 以及那些被初始化为 0 的静态和全局变量. @@html:<br/>@@ 节类型为 =SHT_NOBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 和 =SHF_WRITE=.                                                                                                     |
+       | =.data=                  | 本节包含已初始化的全局变量(global)和静态(static) =C= 变量(C variables). 局部 =C= 变量不会出现在这个节上. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 和 =SHF_WRITE=.                                                                                         |
+       | =.data1=                 | 同 =.data= 节.                                                                                                                                                                                                                                                                                         |
+       | =.rodata=                | 本节包含只读数据(read-only data), 比如 =printf= 的格式字符串(format strings)以及 =swtich= 语句的跳转表(jump table). @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                             |
+       | =.rodata1=               | 同 =.rodata1= 节.                                                                                                                                                                                                                                                                                      |
+       | =.debug=                 | 本节包行一个调试符号表, 有的表项包含局部变量(local variables)的调试信息, @@html:<br/>@@ 有的包含 =typedefs= 的调试信息, 有的包含全局变量(global variables), 有的包含 =C= 源码. 节的内容不固定. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                            |
+       | =.line=                  | 本节包含 =C= 源码的行号(line number)和 =.text= 中机器指令行号之间的对应关系.节的内容不固定. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                               |
+       | =.comment=               | 本节包含一些版本控制信息, 比如用的什么编译器, 是什么版本. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                 |
+       | =.ctors=                 | 本节包含已初始化的 C++ 构造函数的指针(pointers to the C++ constructor functions). @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 它的 =sh_flags= 是 =SHF_ALLOC= 以及 =SHF_WRITE=.                                                                                                              |
+       | =.dtors=                 | 本节包含已初始化的 C++ 析构函数(销毁函数)的指针(pointers to the C++ destructor functions). @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 它的 =sh_flags= 是 =SHF_ALLOC= 以及 =SHF_WRITE=.                                                                                                     |
+       | =.dynamic=               | 本节包含动态链接信息. @@html:<br/>@@ 节类型为 =SHT_DYNAMIC=. @@html:<br/>@@ 节的 =sh_flags= 会包含一个 =SHF_WRITE= 位. =SHF_WRITE= 是否设置取决于处理器.                                                                                                                                               |
+       | =.dynstr=                | 本节包含动用于态链接所需的字符串, 一般都是符号表项相关的名字. @@html:<br/>@@ 节类型为 =SHT_STRTAB=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                                                     |
+       | =.dynsym=                | 本节包含动态链接所需的符号表. @@html:<br/>@@ 节类型为 =SHT_DYNSYM=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                                                                                     |
+       | =.init=                  | 本节包含程序初始化是的指令. 在程序开始调用函数主入口前执行这些指令. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 以及 =SHF_EXECINSTR=.                                                                                                                        |
+       | =.fini=                  | 本节包含程序结束时执行的指令. 在程序正常结束时执行这些指令. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 以及 =SHF_EXECINSTR=.                                                                                                                                |
+       | <<sec-interp>> =.interp= | 本节包含程序解释器(也就是连接器)的路径名字. @@html:<br/>@@ 节的类型是 =SHT_PROGBITS=. @@html:<br/>@@ 如果本节被位于一个可载入段中, 那么节的 =sh_flags= 的 =SHF_ALLOC= 会被设置为 1, 否则有 0.                                                                                                          |
+       | =.gnu.version=           | 本节包含版本符号表(version symbol table), 表的每一项都是 =ElfN_Half= 结构. @@html:<br/>@@ 节类型是 =SHT_GNU_versym=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                                    |
+       | =.gnu.version_d=         | 本节包含一个版本符号定义表(version symbol definition table), 表的每一项都是 =ElfN_Verdef= 结构. @@html:<br/>@@ 节类型是 =SHT_GNU_verdef=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                               |
+       | =.gnu.version_r=         | 本节包含一个表, 表的每一個元素是版本符号所需的元素, 每个元素都是 =ElfN_Verneed= 结构. @@html:<br/>@@ 节类型为 =SHT_GNU_versym=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                         |
+       | =.got=                   | 本节包含一个全局偏移表(global offset table), 每个表项是全局数据(函数或者全局变量, =procedures or global variables=)的偏移地址. @@html:<br/>@@ 节类型是 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 由处理器决定.                                                                                    |
+       | =.hash=                  | 本节包含一个符号哈希表(symbol hash table). @@html:<br/>@@ 节类型是 =SHT_HASH=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                                                                          |
+       | =.note=                  | 本节包含各种说明(notes). @@html:<br/>@@ 节类型为 =SHT_NOTE=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                                                      |
+       | =.note.ABI-tag=          | 本节包含 =ELF= 镜像的运行时 =ABI=, 包括操作系统的名字以及它的运行时版本. @@html:<br/>@@ 节类型为 =SHT_NOTE=. @@html:<br/>@@ 节的 =sh_flags= 只有 =SHF_ALLOC=.                                                                                                                                          |
+       | =.note.gnu.build-id=     | 本节包含用于区分 =ELF= 镜像内容的 =ID=. 有着相同 =ID= 的不同文件应该包含同样的可执行内容. @@html:<br/>@@ 节类型为 =SHT_NOTE=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                           |
+       | =.note.GNU-stack=        | 本节是 =Linux= 目标文件用来储存栈的属性. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_EXEINSTR=, 这告诉 =GNU= 连接器连接的目标文件需要一个可执行栈(executable stack).                                                                                                |
+       | =.note.openbsd.ident=    | 本节为 =OpenBSD= 的原生可执行文件通常会包含这的节, 用于标识自己是 =OpenBSD= 的原生可执行文件, 这样内核会在加载文件的时候绕过任何兼容性 =ELF= 二进制仿正测试.                                                                                                                                           |
+       | =.plt=                   | 本节包含一个过程链接表(procedure linkage table). @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                          |
+       | =.relName=               | 本节包含可重定位信息. 按照惯例, "NAME" 表明了该节是包含了哪个节的可重定位信息. @@html:<br/>@@ 比如 =.rel.text= 就表示它含有和 =.text= 有关的可重定位信息. @@html:<br/>@@ 节类型为 =SHT_REL=. @@html:<br/>@@ 如果目标文件存在包含了本节的可加载段, 那么本节的 =sh_flags= 成员就包含 =SHF_ALLOC=.        |
+       | =.relaName=              | 本节包含可重定位信息. 按照惯例, "NAME" 表明了该节是包含了哪个节的可重定位信息. @@html:<br/>@@ 比如 =.rela.text= 就表示它含有和 =.text= 有关的可重定位信息. @@html:<br/>@@ 节类型为 =SHT_RELA=. @@html:<br/>@@ 如果目标文件存在包含了本节的可加载段, 那么本节的 =sh_flags= 成员就包含 =SHF_ALLOC=.      |
+       | =.shstrtab=              | 本节包含各个节的名字. @@html:<br/>@@ 节类型为 =SHT_STRTAB=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                                                       |
+       | =.strtab=                | 本节包含一个字符串表(string table), 这里的字符串有的是符号表(=.symtab=)节和 =.debug= 节上的项名, 有的是节头的名字. @@html:<br/>@@ 节类型为 =SHT_STRTAB=. @@html:<br/>@@ 如果目标文件有包含了符号字符串表(也就是有符号表项名的字符串表)的可加载段, 那么该字符串表对应的节的 =sh_flags= 为  =SHF_ALLOC=. |
+       | =.symtab=                | 本节包含一个符号表(symbol table), 包含了程序里函数以及全局变量的信息 @@html:<br/>@@ @@html:<br/>@@ 节类型为 =SHT_SYMTAB=. @@html:<br/>@@ 如果目标文件有包含了符号表的可加载段, 那么该符号表对应的节的 =sh_flags= 就包含 =SHF_ALLOC=.                                                                   |
+       | =.text=                  | 本节包含了程序的可执行指令. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 和 =SHF_EXECINSTR=.                                                                                                                                                                  |
+
+       我们的这个例子的节类型是 =SHT_PROGBITS=
+
+     - *成员名: =sh_flags=; 偏移范围: 0x36c0 - 0x36c7; 字节值: 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       #+BEGIN_SRC c
+       /* Legal values for sh_flags (section flags).  */
+
+       #define SHF_WRITE             (1 << 0)   /* Writable */
+       #define SHF_ALLOC             (1 << 1)   /* Occupies memory during execution */
+       #define SHF_EXECINSTR         (1 << 2)   /* Executable */
+       #define SHF_MERGE             (1 << 4)   /* Might be merged */
+       #define SHF_STRINGS           (1 << 5)   /* Contains nul-terminated strings */
+       #define SHF_INFO_LINK         (1 << 6)   /* `sh_info' contains SHT index */
+       #define SHF_LINK_ORDER        (1 << 7)   /* Preserve order after combining */
+       #define SHF_OS_NONCONFORMING  (1 << 8)   /* Non-standard OS specific handling
+                                                   required */
+       #define SHF_GROUP             (1 << 9)   /* Section is member of a group.  */
+       #define SHF_TLS               (1 << 10)  /* Section hold thread-local data.  */
+       #define SHF_COMPRESSED        (1 << 11)  /* Section with compressed data. */
+       #define SHF_MASKOS            0x0ff00000 /* OS-specific.  */
+       #define SHF_MASKPROC          0xf0000000 /* Processor-specific */
+       #define SHF_GNU_RETAIN        (1 << 21)  /* Not to be GCed by linker.  */
+       #define SHF_ORDERED           (1 << 30)  /* Special ordering requirement
+                                                   (Solaris).  */
+       #define SHF_EXCLUDE           (1U << 31) /* Section is excluded unless
+                                                   referenced or allocated (Solaris).*/
+       #+END_SRC
+
+     - *成员名: =sh_addr=; 偏移范围: 0x36c8 - 0x36cf; 字节值: 0x18, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       当节被加载到一个程序的内存映中时, 该成员的值就是节第一个字节的地址, 否者该成员的值为 0.
+
+     - *成员名: =sh_offset=; 偏移范围: 0x36d0 - 0x36d7; 字节值: 0x18, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       该成员的值是文件开头到节的第一个字节的偏移.
+
+       由于 =SHT_NOBITS= 节不占文件大小, 所以该成员只是定位到文件的某个概念位置上.
+
+     - *成员名: =sh_size=; 偏移范围: 0x36d8 - 0x36df; 字节值: 0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       该成员的值是节的字节大小.
+
+       除非节的类型是 =SHT_NOBITS=, 否则节在文件中占据 =sh_size= 个字节.
+
+       =SHT_NOBITS= 节的该成员的值可以为非0, 但节并不会在文件中占有空间.
+
+     - *成员名: =sh_link=; 偏移范围: 0x36e0 - 0x36e3; 字节值: 0x02, 0x00, 0x00, 0x00*
+
+       该成员的值是一个节头表索引的链接(a section header table index link), 解释方式取决于节的类型.
+
+     - *成员名: =sh_info=; 偏移范围: 0x36e4 - 0x36e7; 字节值: 0x00, 0x00, 0x00, 0x00*
+
+       该成员持有额外信息, 解释方式取决于节的类型.
+
+     - *成员名: =sh_addralign=; 偏移范围: 0x36e8 - 0x36ef; 字节值: 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       有些节有地址对齐约束. 如果节包含一个双字(=doubleword=), 那么系统必须保证整个节双字对齐.
+
+     - *成员名: =sh_entsize=; 偏移范围: 0x36f0 - 0x36f7; 字节值: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+
+       有些节是一个有着条目大小固定的表(a table of fixed-sized entries), 比如是一个符号表. 对于这样的节, 该成员给出了条目的字节大小.
+
+       如果一个节不是这样的表, 那么该成员的值就是 0.
+
+*** 连接 (Linking)
+
+    #+BEGIN_EXAMPLE
+    这部分内容摘录自 CSAPP 的连接
+    #+END_EXAMPLE
+
+    这里先声明一下, 我们这里讨论的是情况都是基于使用 =GCC= 这个编译器驱动器(compiler drivers),
+
+    所谓的编译器驱动器就是调用语言预处理器, 编译器, 汇编器以及连接器的软件, 实际上我们也偶尔会把这种工具直接叫做编译器, 比如 =GCC=.
+
+    目前我们对连接的了解只处于把若干个目标文件合在一起而已,
+
+    目标文件的符号(symbol)处理过程, 以及如何处理 =PIC(Position-Independent Code)=.
+
+    在构建一个可执行文件的过程中, 连接器(linker)需要完成两项重要任务:
+
+    - *第一步* 符号解析 (Symbol Resolution)
+
+      目标文件定义和引用符号, 解析就是把符号引用(references)和它对应的符号定义关联起来.
+
+    - *第二步* 重定位 (Relocation)
+
+      编译器和汇编器在地址 0 上开始生成代码节和数据节(code and data sections).
+
+      在连接时, 连接器会为每个符号定义(symbol definition)分配一个内存地址, 然后修改所有的符号引用(reference to symbol)指向到符号定义的内存地址上, 这就是连接器对节进行重定位(relocates the sections)的过程.
+
+      连接器只是一个执行者, 它只是根据汇编器生成指令来完成重定位的, 这些指令叫做重定位条目(relocation entries).
+
+**** 目标文件
+
+     目标文件分 3 类:
+
+     | 分类                                      | 描述                                                                                                                        |
+     |-------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------|
+     | 可重定位目标文件(relocatable object file) | 可以在编译时(compile time)与其它可重定位目标文件组合成一个可执行文件的目标文件                                              |
+     | 可执行目标文件(executable object file)    | 可以把其数据复制到内存并执行的目标文件                                                                                      |
+     | 共享目标文件(shared object file)          | 是可重定位目标文件的一种, 其数据可以在加载时(load time)或运行时(run time)被复制进内存里面并进行动态连接(linked dynamically) |
+
+**** 符号 (Symbol)
+
+     正如 =GAS= 的符号那样, 目标文件的符号也是用作标识的.
+
+     目标文件的符号分全局符号(global symbols)和局部符号(local symbols)两种, 这是按照作用域来划分的.
+
+     一个目标文件的全局符号可以被其它目标文件引用, 而局部符号就只能在它的目标文件里面被引用.
+
+     在 =NASM= 里面只有用 =GLOBAL= 指令声明的标签才会被生成为目标文件的全局符号, =GAS= 的符号则是得用 =.globl= 指令声明才能被生成为全局符号.
+
+     =C= 语言则稍微不同, 只有非 =static= 全局变量以及非 =static= 函数才是对应的目标文件的全局符号,
+
+     我们都知道函数的局部变量是由栈维护的, 所以函数的局部变量是没有符号的, *但* 函数内部的 =static= 局部变量是例外, 它们是目标文件的局部符号.
+
+     符号的 64 位结构体定义如下:
+
+     #+BEGIN_SRC c
+     typedef struct
+     {
+       Elf64_Word       st_name;                /* Symbol name (string tbl index) */
+       unsigned char    st_info;                /* Symbol type and binding */
+       unsigned char    st_other;               /* Symbol visibility */
+       Elf64_Section    st_shndx;               /* Section index */
+       Elf64_Addr       st_value;               /* Symbol value */
+       Elf64_Xword      st_size;                /* Symbol size */
+     } Elf64_Sym;
+     #+END_SRC
+
+     | 成员       | 描述                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+     |------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+     | =st_name=  | 符号名, 不过成员的值是字符串表项的索引                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+     | =st_info=  | 从 =7-4= 位表示符号绑定(bind), =3-0= 位表示符号类型(type).(具体查看 =ELF64_ST_BIND= 和 =ELF64_ST_TYPE= 的宏定义.) @@html:<br/>@@ @@html:<br/>@@ 符号类型的有以下几种, @@html:<br/>@@ =STT_NOTYPE=: 未定义; @@html:<br/>@@ =STT_OBJECT=: 数据对象; @@html:<br/>@@ =STT_FUNC=: 函数; @@html:<br/>@@ =STT_SECTION=: 节; @@html:<br/>@@ =STT_FILE=: 目标文件的源文件; @@html:<br/>@@ =STT_LOPROC / STT_HIPROC=: 在 =[ STT_LOPROC, STT_HIPROC ]= 范围内的值是跟处理器相关的; @@html:<br/>@@ @@html:<br/>@@ 符号绑定有以下几种, @@html:<br/>@@ =STB_WEAK=: 弱绑定; @@html:<br/>@@ =STB_LOCAL=: 局部绑定; @@html:<br/>@@ =STB_GLOBAL=: 全局绑定; @@html:<br/>@@ =STB_LOPROC / STB_HIPROC=: 在 =[ STB_LOPROC, STB_HIPROC ]= 范围内的值是和处理器相关的;                                                                                                                                                                                                                                                                                                               |
+     | =st_other= | 控制符号的可见性. @@html:<br/>@@ 原本的 =C= 里面只要使用 =static= 关键字就能把符号限定为当前目标文件可见, 否则符号可以被所有其他目标文件可访问. @@html:<br/>@@ 在一个含有多个文件的共享库里面, 如果想让符号只能让共享库里某几个文件可见, 库外不可见, 那么就得使用特定的编译器/连接器设置符号的可见性. =GCC= 就支持这特性. @@html:<br/>@@ @@html:<br/>@@ 该成员的值可能如下, @@html:<br/>@@ =STV_DEFAULT=: 按照默认规则暴露符号; @@html:<br/>@@ =STV_HIDDEN=: 目标文件里面的符号不会被暴露出来; @@html:<br/>@@ =STV_PROTECTED=: 受保护的符号, 这种符号在当前可执行文件或共享文件外可见, 但是这个符号的引用不能被覆盖(overridden). 举个例子, 如果一个共享库里面的目标文件引用同一个库里的其它目标文件的受保护符号, 哪怕可执行文件定义了一个同名的符号, 目标文件引用的还是这个受保护符号, 不会受到可执行文件的同名符号干扰. @@html:<br/>@@ =STV_INTERNAL=: 符号不能在可执行文件或者共享文件外可见; @@html:<br/>@@ @@html:<br/>@@ 内容参考: @@html:<br/>@@ [[https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html][APPLE 的 Controlling Symbol Visibility]] @@html:<br/>@@ [[https://developer.ibm.com/articles/au-aix-symbol-visibility/][IBM 的 Part1 - Introduction to symbol visibility]] |
+     | =st_shndx= | 表示符号和哪个节有关系. 该成员的值是节的索引.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+     | =st_value= | 符号的内存地址.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+     | =st_size=  | 符号的大小, 如果符号没有大小或者大小未知, 那么该成员就为 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+     这里需要对 =st_info= 成员进行一番说明, 符号类型还是很好理解的, 关键是符号绑定.
+
+     符号绑定实际上就是围绕符号的作用域以及初始化情况来划分的.
+
+     从作用域角度来看, 局部符号属于 =STB_LOCAL=, 全局符号就属于 =STB_GLOBAL=;
+
+     而初始化角度则是对于全局符号来说的, 如果全局符号没有被初始化, 那么它就属于 =STB_WEAK=, 中文叫弱符号(weak symbol),
+
+     而 =STB_GLOBAL= 的符号就是强符号(strong symbol).
+
+     对于前面 [[link-to-example][example]] 使用 =readelf -s example= 命令可以查看到它的符号表如下,
+
+     #+CAPTION: readelf -s example
+     [[../../../files/readelf-s-example.png]]
+
+**** 符号解析
+
+     符号解析的一个重点问题是: 连接器是如何解决名字重复的符号呢?
+
+     其实挺简单的, 我们知道符号分全局和局部, 局部符号的定义永远都是在自身所处的目标文件内可见, 哪怕各个模块都有一个叫做 =age= 的局部符号, 目标文件之间也是不可能发生局部符号冲突的.
+
+     而全局符号则是复杂一点, 这是因为各个目标文件的全局符号都是彼此可见的, 这意味目标文件 =A= 和目标文件 =B= 可能都会有一个相同名字的全局符号.
+
+     当然这种情况是允许的, 连接器会遵守以下规则来进行解析:
+
+     - =Rule 1=: 存在多个同名强符号, 连接器会报错.
+     - =Rule 2=: 存在一个强符号和多个弱符号, 并且它们都有这相同名字, 连接器会选择强符号.
+     - =Rule 3=: 存在多个同名弱符号, 连接器任意选择一个.
+
+**** 重定位
+
+     1. 对节和符号定义进行重定位 (Relocating sections and symbol definitions)
+
+        连接器先把所有输入目标文件的同类节分别聚合在一起成为一个同类型的新节.
+
+        #+CAPTION: 多个目标文件的同类节聚合
+        [[../../../files/elf-views-2.png]]
+
+        然后连接器给新节/输入文件的节以及符号赋予运行时内存地址(run-time memory address),
+
+        这样一来, 程序中每条指令和符号都有唯一的内存地址了.
+
+     2. 对节里面的符号进行重定位 (Relocating symbol references within sections)
+
+        连接器修改代码节和数据节(code and data sections)里面的符号引用指向到正确的运行时内存地址上.
+
+        连接器需要依赖可重定位目标文件里一种叫做可重定位条目(relocation entries)的数据结构来完成.
+
+
+     重定位条目的定义如下:
+
+     #+BEGIN_SRC c
+     typedef struct
+     {
+       Elf64_Addr       r_offset;               /* Address */
+       Elf64_Xword      r_info;                 /* Relocation type and symbol index */
+       Elf64_Sxword     r_addend;               /* Addend */
+     } Elf64_Rela;
+     #+END_SRC
+
+     | 成员       | 描述                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+     |------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+     | =r_offset= | 执行重定位的位置(location at which to apply the relocation action). @@html:<br/>@@ 对于可重定位文件来说, 该成员的值就是 *应执行可重定位对象* 到 *其所在节的起始位置(the beginning of section of the section)* 的偏移. @@html:<br/>@@ 对于可执行文件来说, 该成员的值是 *应执行可重定位对象* 的虚拟地址(virtual address).                                                                                                                                                                                                                                                                                                                                          |
+     | =r_info=   | 从 =63-32= 位表示可重定向的符号, 这个值是符号在符号表上的索引. @@html:<br/>@@ (具体查看 =ELF64_R_SYM= 和 =ELF64_R_TYPE= 的宏定义). @@html:<br/>@@ 从 =31-0= 位表示可重定向的类型, 类型有很多种, 下面只讨论最常见的两种: =R_X86_64_32= 和 =R_X86_64_PC32=. @@html:<br/>@@ =R_X86_64_32= 表示把引用重定位到一个 32 位的绝对地址上, 该地址是一个有效地址. @@html:<br/>@@ =R_X86_64_PC32= 表示把引用重定位到一个 32 位的 =PC= 相对地址(=PC-relative address=)上. @@html:<br/>@@ 所谓的 =PC= 相对地址就是相对于程序计数器的当前运行时值的偏移, 由当前 =PC= 的值加上该偏移就能得出一个有效地址. @@html:<br/>@@ 也可以简单地把 =PC= 相对地址理解为两个内存地址之间的差. |
+     | =r_addend= | 用于计算出可重定位条目上储存的值.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+
+     下面这是连接器的重定位算法的伪代码, 跟 =C= 语言比较类似.
+
+     总体上是一个双重循环, 第一行表示在遍历每个节 =s=, 第二行表示在遍历当前遍历节的每个可重定项 =r=.
+
+     节 =s= 就是一个可重定项数组, 每个元素 =r= 就是一个 =Elf64_Rela= 结构体变量.
+
+     =s= 就和 =C= 语言的数组一样表示数组首元素的位置.
+
+     这个算法假设连接器已经计算好了每个节和符号的运行时地址,
+
+     其中 =ADDR(s)= 表示节 =s= 的运行时地址, =ADDR(r)= 表示可重定位项 =r= 的运行时地址.
+
+     =r.type= 表示可重定位项的类型, =r.symbol= 表示可重定位的符号.
+
+     指针 =refptr= 指向可重定位项 =r= 的地址, 在计算出可重定位项应该指向的地址后, 连接器就把这个结果储存在 =refptr= 指向的地址上.
+
+     #+BEGIN_SRC c
+       foreach section s {
+           foreach relocation entry r {
+               /* s is the array of the 4-byte reference that needs to be relocated */
+               /* s also stands for the location to the first 4-byte reference */
+               refptr = s + r.r_offset; /* ptr to reference to be relocated */
+
+               /* Relocate a PC-relative reference */
+               if (r.type == R_X86_64_PC32) {
+                   refaddr = ADDR(s) + r.r_offset; /* ref’s run-time address */
+                   *refptr = (unsigned) (ADDR(r.symbol) + r.r_addend - refaddr);
+               }
+
+               /* Relocate an absolute reference */
+               if (r.type == R_X86_64_32) {
+                   *refptr = (unsigned) (ADDR(r.symbol) + r.r_addend);
+               }
+
+           }
+       }
+     #+END_SRC
+
+**** 生成可执行文件
+
+     有两种方式生成可执行文件: 静态连接(static linking)和动态连接(dynamic linking).
+
+     =Linux= 下的连接器实际上是分为静态连接器和动态连接器的, 在进行静态连接时就调用静态连接器, 在进行动态连接时调用动态连接器.
+
+     但在下文遇到"连接器"这个词时, 请自行根据上下文来判断它是哪种连接器.
+
+     后面的内容都会以下面这个例子进行讲解.
+
+     #+BEGIN_SRC c
+     // addvec.c
+     int addcnt = 0;
+
+     void addvec(int *x, int *y,
+                 int *z, int n)
+     {
+         int i;
+         addcnt++;
+         for (i = 0; i < n; i++)
+             z[i] = x[i] + y[i];
+     }
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // multvec.c
+     int multcnt = 0;
+
+     void multvec(int *x, int *y,
+                  int *z, int n)
+     {
+         int i;
+         multcnt++;
+         for (i = 0; i < n; i++)
+             z[i] = x[i] * y[i];
+     }
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // vector.h
+     #ifndef VECTOR_H
+     #define VECTOR_H
+     void addvec(int*, int*, int*, int);
+     void multvec(int*, int*, int*, int);
+     #endif
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // main2.c
+     #include <stdio.h>
+     #include "vector.h"
+
+     int x[2] = {1, 2};
+     int y[2] = {3, 4};
+     int z[2];
+
+     int main()
+     {
+         addvec(x, y, z, 2);
+         printf("z = [%d %d]\n", z[0], z[1]);
+         return 0;
+     }
+     #+END_SRC
+
+***** 静态连接
+
+      所有编译系统都提供把相关目标模块文件打包成一个文件的机制, 得到这个文件叫做静态库(static library), 可以作为连接器的输入文件.
+
+      在 =Linux= 下, 静态库是以一种叫做 =archive= 的文件格式进行储存的, 可以简单地认为它是一个目标文件的压缩包.
+
+      相比于把相关目标模块文件再合并成一个目标文件, =archive= 文件能够让连接器在连接时只复制被程序引用到的目标模块文件,
+
+      从而减去程序用不上的功能, 减少程序发布体积, 以及避免运行时造成的内存浪费.
+
+      #+CAPTION: 静态连接
+      [[../../../files/gcc-linking-with-static-library.png]]
+
+      比如这个例子中的静态库 =libvector.a= 就是这么创建的:
+
+      #+BEGIN_SRC sh
+      gcc -c addvec.c multvec.c
+      ar rcs libvector.a addvec.o multvec.o
       #+END_SRC
 
-      =_start= 标签前面的地址就是 =0000000000001040=, 刚好对应该字段的值.
+      可由于 =main2.c= 只引用到了 =addvec.o= 的函数, 因此连接器只把 =libvector.a= 中的 =addvec.o= 复制到可执行文件中了.
 
-    - *字段名: =e_phoff=; 偏移范围: 0x20 - 0x27; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+      此外, =main2.c= 也使用了 =libc.a= 中 =printf.o= 的 =printf= 函数, 所以也把 =printf.o= 复制到可执行文件中.
 
-      该字段为 =Elf64_Off= 类型, 64 位大小, 也就是 8 字节大小.
+      连接器会根据静态库来解析外部引用.
 
-      该字段指示程序头部表的偏移为多少个字节, 这里是 =0x40=, 也就是 64 个字节,
+      在符号解析阶段中, 连接器会从左往右对编译器命令中出现的可重定位目标文件, =.c= 文件(会被自动编译成对应的目标文件 =.o=)以及 =archive= 进行扫描,
 
-      也就是以 =example= 的 =0x00= 为起点, 偏移 64 个字节后的地址, 也就是 =0x40=, 该地址开始就是程序头部表的信息.
+      连接器在扫描过程中会维护三个集合:
 
-      如果不存在程序头部表, 那么该值为 0.
+      集合 =E= 包含了可执行文件所需的所有可重定位目标文件;
 
-    - *字段名: =e_shoff=; 偏移范围: 0x28 - 0x2f; 字节值: 0x78, 0x36, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00*
+      集合 =U= 包含了未解析的符号(被引用但未被定义);
 
-      该字段为 =Elf64_Off= 类型, 占 8 字节大小.
+      集合 =D= 包含了之前的输入文件的所有已定义的符号;
 
-      该字段指示节头部标的偏移为多少个字节, 这里是 =0x3678= 个, 也就是 13944 个字节.
+      这三个集合在最开始的时候都是空的.
 
-      类似于 =e_phoff=, 从 =0x00= 开始偏移 =13944= 个字节后到达的地址 =0x3678= 就是节头部表的信息.
+      扫描的算法如下:
 
-      如果不存在节头部表, 那么该值为 0.
+      - 如果输入文件 =f= 是一个目标文件, 那么连接器会把 =f= 添加到集合 =E= 中, 并且更新 =D= 和 =U= 来分别反映 =f= 的符号定义和引用.
 
-    - *字段名: =e_flags=; 偏移范围: 0x30 - 0x33; 字节值: 0x00, 0x00, 0x00, 0x00*
+      - 如果输入文件 =f= 是一个 =archive=, 连接器会尝试让未定义符号集合 =U= 和 =f= 中成员所定义的符号进行匹配,
 
-      字段类型为 =Elf64_Word=, 占 4 个字节大小.
+        如果 =f= 的成员 =m= 定义了符号可以解析得了 =U= 里面的符号, 那么就把 =m= 添加到 =E= 中, 并且更新 =D= 和 =U= 来反映 =m= 的符号定义和引用.
 
-      该字段指示处理器特定的 =flags=, 该字段目前未定义, 统一为 0.
+        这个过程会遍历 =f= 中的模块文件直到 =U= 和 =D= 不再发生改变为止. 没有被包含在 =E= 中的模块 =m= 将会被忽略.
 
-    - *字段名: =e_ehsize=; 偏移范围: 0x34 - 0x35; 字节值: 0x40, 0x00*
+      - 在结束对所有输入文件的扫描时, 如果 =U= 是还是非空集合, 那么连接器会输出错误并且中止连接.
 
-      字段类型为 =Elf64_Half=, 占 2 个字节大小.
+        否则把 =E= 中的所有文件合并成一个可执行文件.
 
-      指示 =elf= 文件的头部大小, =example= 的 =elf= 头一共占用 =0x40=, 也就是 64 个字节.
 
-    - *字段名: =e_phentsize=; 偏移范围: 0x36 - 0x37; 字节值: 0x38, 0x00*
+      但是这套扫描算法是有缺陷的, 因为命令行中出现的库和目标文件的顺序会影响符号的解析.
 
-      字段类型为 =Elf64_Half=, 占用 2 个字节大小.
+      如果一个符号的定义出现在对它的引用之前, 那么该符号无法被解析了.
 
-      =elf= 文件的程序头部表里每一项(entry)大小都是一样的, 该字段指定了程序头部表每一个项的大小.
+      因此, 在命令行中的文件顺序需要保证一点: 引用了符号 =s= 的文件 =A= 位于定义了 =s= 的文件 =B= 之前.
 
-      =example= 程序头部项大小是 =0x38=, 也就是 52 个字节.
+***** 动态连接
 
-    - *字段名: =e_phnum=; 偏移范围: 0x38 - 0x39; 字节值: 0x40, 0x00*
+      静态连接有一些缺点:
 
-      字段类型为 =Elf64_Half=, 占用 2 个字节.
+      - <<static-link-disadv-1>>如果要更新程序的某一部分的功能, 那么就需要重新编译和连接生成整个程序;
+      - <<static-link-disadv-2>>基本上所有程序都会引用标准 =I/O= 函数 =printf= 以及 =scanf=, 多个程序程序的运行会导致内存里面出现多份重复的 =printf= 以及 =scanf=, 导致严重的资源浪费.
 
-      指示程序头部表有多少个项. 因此 =e_phnum * e_phentsize= 的值就是程序头部表的大小.
 
-      =example= 一共有 =0x40=, 也就是 64 个程序头部表项.
+      而动态连接可以把静态连接的缺点解决掉, 动态库(dynamic libraries)是一种对标静态库的东西,
 
+      它可以在运行时(run time)/加载时(load time)被加载到任意的内存地址上并跟程序进行连接.
+
+      这个过程叫做动态连接(dynamic linking), 由程序调用的动态连接器(dynamic linker)执行完成.
+
+      动态库也叫做共享库(shared libraries), 共享库也叫共享目标(shared objects), 这些库在 =Linux= 上是以 =.so= 作为后缀.
+
+      共享库的"共享"是体现在两个方面:
+
+      首先, 在任意文件系统上只能有唯一一个 =.so= 文件来对应特别的库, =.so= 文件的代码以及数据(code and data)在所有引用了该库的可执行目标文件之间是共享的.
+
+      其次, 在内存中, 一个 =.so= 文件的 =.text= 节的副本在不同进程之间是共享的, 这解决了静态连接的[[static-link-disadv-2][第二个缺点]].
+
+      #+CAPTION: 动态连接
+      [[../../../files/gcc-linking-with-dynamic-linking.png]]
+
+      这个例子中的可执行文件 =prog21= 能够在运行时跟 =libvector.so= 进行连接.
+
+      基本思路就是在生成可执行文件时静态地执行部分连接(do some of the linking statically), 在加载可执行文件时动态地完成连接过程.
+
+      在这个过程中 =libvector.so= 的代码节和数据节并没有被复制到 =prog21= 中, 连接器只是复制了一些重定位信息和符号表信息,
+
+      在加载程序时, 连接器再根据这些信息去解析出对 =libvector.so= 中的代码以及数据的引用.
+
+      在 =loader= 加载并且运行 =prog21= 时会加载其中已连接的部分, 然后 =loader= 注意到 =prog21= 有 [[sec-interp][.interp]] 节, =loader= 加载并且运行动态连接器(dynamic loader);
+
+      动态连接器再执行重定位来完成连接任务:
+
+      - 重定位 =libc.so= 中的代码以及数据到某内存段上;
+      - 重定位 =libvector.so= 中的代码以及数据到另外一个内存段上;
+      - 重定位 =prog21= 中所有对 =libc.so= 和 =libvector.so= 符号定义的引用;
+
+
+      最后动态连接器把控制权交给程序. 从这个时候开始共享库的位置就固定下来了, 并且不会在程序运行的时候发生改变.
+
+**** 地址无关代码 (Position-Independent Code, PIC)
+
+     共享库的关键目的是允许多个运行进程共享内存上同一个库的代码来节省珍贵的内存资源.
+
+     所以, 进程之间是如何共享同一份程序的副本呢?
+
+     其中一个方法就是给每个共享库分配一块 *事先分配好* 的内存空间, 然后 =loader= 就能从固定地址加载对应的共享库了.
+
+     但是这样会出现一些严重的问题:
+
+     - 低效的内存使用, 在进程不使用库的时候, 库内存空间还是被分配.
+     - 难以管理, 在分配内存时需要保证内存空间之间不会发生重叠;
+       每次修改共享库时都要保证能被已分配的内容空间容纳, 否则就需要重新找一块新的内存空间,
+       随着系统上的动态库版本和数量的增加, 内存上就容易出现很多不可用的内存碎片.
+     - 每个的操作系统给动态库分配内存的方式是不同的, 这造成了更多的管理难题.
+
+
+     <<pic>> 操作系统需要一种方法来编译共享库的代码段, 在无需连接器修改调用模块(calling module, 也就是引用外部符号的模块)的代码段的情况下, 把它们加载到内存的任何地方.
+
+     在这种方法下, 无数个进程可以共享一份代码段的副本, <<shared-data-segment>>当然每个进程有属于自己的读写数据段副本(own copy of the read/write data segment).
+
+     这种无需重定位的可加载代码叫做位置无关代码(Position-Independent Code, PIC),
+
+     在 =GNU= 编译系统中, 用户需要给 =GCC= 提供 =-fpic= 选项来编译生成共享库.
+
+     在 =x86-64= 系统中, 一个可执行目标模块(same executable object module, 共享库也是其中一种)内部之间的符号引用是不需要处理成 =PIC= 的,
+
+     这些只需使用 =PC= 相对地址来编译这些引用, 在生成目标文件时对它们进行重定位;
+
+     而模块内对外部模块的引用就需要特别处理.
+
+***** PIC 数据引用 (PIC Data References)
+
+      编译器基于以下原理为数据生成 =PIC= 引用:
+
+      不管在内存何处加载目标模块(包括共享目标模块, [[shared-data-segment][原因在这]]), 数据段和代码段之间的距离是固定的;
+
+      因此, 在一个运行时里面, 代码段的指令和数据段的数据两者之间的距离是也固定的, 跟两者的绝对内存地址无关(independent of the absolute memory locations of the code and data segments).
+
+      为此, 在数据段的起始位置生成一个全局偏移表(global offset table, GOT), 每个目标模块文件都有自己 =GOT=.
+
+      =GOT= 每项的大小是 8 字节, 每项都是被目标模块文件所引用的全局数据对象(程序以及全局变量)的地址.
+
+      编译器还同时会为 =GOT= 的每项生成一份重定向记录(relocation record), 在加载时根据这份记录对 =GOT= 的每一项进行重定位, 把计算得到的地址写入到对应的 =GOT= 表项中, 最终 =GOT= 每项都包含了对象的绝对地址.
+
+      #+CAPTION: 使用 GOT 引用一个全局变量
+      [[../../../files/libvector-data-pic.png]]
+
+      (图中的 =&addcnt= 使用了 =C= 语言的语法, 获取 =addcnt= 的地址. 同样 =*GOT[3]= 为访问 =GOT[3]= 位置上的内容.)
+
+      比如说 =libvector.so= 中的 =GOT= 中的 =GOT[3]= 到 =addcnt= 引用的距离是在运行时内固定不变的, 这里是 =0x008b9= 个字节, 这个距离可以作为 =GOT[3]= 的 =PC= 相对地址.
+
+      由于 =addcnt= 是定义在 =libvector.so= 里面的, 在编译器生成共享库模块时, 根据数据 =PIC= 引用的生成原理来给 =addcnt= 生成一个 =PC= 相对地址并且添加一个可重定位项, 让连接器解析它, 整个过程不需要 =GOT=;
+
+      然而, 如果 =addcnt= 是定义在其它模块上, 那么通过 =GOT= 进行间接访问就是有必要的.
+
+      这个例子则是选择了最通用的解决方案, 为所有引用使用 =GOT=.
+
+***** PIC 函数调用 (PIC Function Calls)
+
+      在引用共享库的数据时, 每个程序都有属于自己的共享库的数据段的副本, 并且数据段到代码段的距离是运行时固定,
+
+      因此使用 =GOT= 解析出数据引用不是一件麻烦事, 但对于函数调用的解析就不是一件容易的事情.
+
+      在程序调用共享库的函数时, 编译器是无法预测到函数的运行时地址的, 因为在运行时内, 共享模块可以加载到任何地址上.
+
+      正常情况下编译器可以为引用产生重定位记录, 在加载程序时, 动态连接器根据这份记录解析引用.
+
+      然而, 这种方法需要连接器修改调用模块的代码段, 这并不符合 =PIC= 的[[pic][定义]].
+
+      =GNU= 编译系统使用了一项名为 *延迟绑定* (lazy binding) 来解决这个问题, 将函数地址的绑定推迟到第一次调用该函数时.
+
+      使用延迟绑定的动机是对于像 =libc.so= 这种的共享库导出成千上百个函数中, 通常一个程序只使用其中一小部分,
+
+      在调用的时候再进行绑定可以避免大量不必要的重定位, 从而节省资源.
+
+      这样函数在第一次调用时虽然有不少开销, 但是之后的每次调用只需要花费一个指令和一个内存地址来进行一次间接定位.
+
+      *延迟绑定是基于两个数据结构之间的交互实现的*, 其中一个数据结构是 =GOT=, 另外一个是过程链接表(procedure linkage table, PLT).
+
+      如果一个模块调用了共享库定义的函数, 那么这个模块就有他自己的 =GOT= 以及 =PLT=.
+
+      =GOT= 位于数据段的起始位置, 类似地, =PLT= 位于代码段的起始位置, 两者合作解析出函数的运行时地址.
+
+      #+CAPTION: 使用 PLT 和 GOT 调用外部函数, 图(a) 第一次调用 addvec, 图(b) 后续调用 addvec
+      [[../../../files/use-got-and-plt-to-call-extern-func.png]]
+
+      在简介这个例子前, 先了解一下 =PLT= 和 =GOT= 上面的内容:
+
+      *PLT* 是一个数组, 每个条目都是 16 个字节大小的字节码, 每一个都是用于跳转的过程(procedure).
+
+      =PLT[0]= 是一个过程, 它是用来跳转到动态连接器的入口的, 换句话就是调用动态连接器.
+
+      =PLT[1]= 调用系统启动函数(=__libc_start_main=)用来初始化执行环境, 调用 =main= 函数并且处理返回值.
+
+      =PLT[2]= 开始就是调用用户代码了, 比如 =PLT[2]= 和 =PLT[3]= 分别调用 =addvec= 和 =printf=.
+
+      *GOT* 和 =PLT= 合作时, =GOT[0]= 和 =GOT[1]= 包含了动态连接器解析函数地址时所需要的信息, =GOT[2]= 就是动态连接器的入口;
+
+      之后的一个 =GOT= 项就对应一个被调用的函数, 用于在运行时解析其地址, 每个条目都有一个对应的 =PLT= 项, 因此每个 =PLT= 项目也对应一个共享库函数调用.
+
+      比如 =GOT[4]= 和 =PLT[2]= 对应函数 =addvec= 的调用.
+
+      <<got-plt-init-point-to>> 在开始的时候, 这些对应外部函数调用的 =GOT= 项是指向其对应 =PLT= 项中第 2 条指令的地址.
+
+      比如 =GOT[4]= 储存的 =0x4005c6= 就是 =PLT[2]= 的第 2 条指令 =pushq $0x1= 的地址.
+
+
+
+      接下来是两者如何合作解析出外部函数的地址, 以 =addvec= 的解析为例:
+
+      *首次调用(a)*
+
+      1) 跳转到 =addvec= 调用对应的 =PLT= 项(=PLT[2]=)的地址 =0x4005c0= 上.
+      2) 跳转到 =addvec= 调用对应的 =GOT= 项(=GOT[4]=)所储存的地址 =0x4005c6= 上,
+         该地址上的指令是 =pushq $0x1=, 其中 =$0x1= 表示的是函数 =addvec= 的 =ID=.
+      3) 在把 =addvec= 的 =ID= 压进栈后, =PLT[2]= 跳转到 =PLT[0]= 所在的地址上, 该地址上是指令 =pushq *GOT[1]=.
+      4) 在把 =GOT[1]= 压进栈后, 跳转到 =GOT[2]= 项所储存的地址(也就是连接器的地址)上, 也就是调用连接器.
+         连接器以刚压入栈中的两项数据作为参数, 找出 =addvec= 的运行时地址 =X=, 并且把该地址储存到 =GOT[4]= 上.
+
+
+      *后续调用(b)*
+
+      1) 跳转到 =addvec= 调用对应的 =PLT= 项(=PLT[2]=)的地址 =0x4005c0= 上.
+      2) 跳转到 =addvec= 调用对应的 =GOT= 项(=GOT[4]=)所储存的地址 =X= 上, 这回就直接调用函数 =addvec= 了.
+
+**** 库干预 (Library Interpositioning)
+
+     #+BEGIN_EXAMPLE
+     也有人称之为"库打桩", 个人比较喜欢库干预, 既符合原本词意, 也符合直觉.
+
+     但是互联网上用"库打桩"的叫法也不少, 所以还是要知道有这个叫法的.
+     #+END_EXAMPLE
+
+     所谓的库干预就是自定义与库函数同名同类型的函数, 让连接器连接这些自定义函数, 而不是原本的库函数, 达到拦截效果;
+
+     库干预可以发生在编译时, 连接时或者运行时.
+
+     库干预最常见的一个用法就是给目标函数创建一个包裹函数, 在不影响目标函数原有功能的情况下拦截其输入以及输出.
+
+     这里以拦截 =libc.so= 的 =malloc= 以及 =free= 的输入和输出来作为例子, 分别在 3 个不同情况下实现拦截, 并且探讨不同情况下有何优劣.
+
+     例子源代码:
+
+     #+BEGIN_SRC c
+     // main.c
+     #include <stdio.h>
+     #include <malloc.h>
+
+     int main()
+     {
+       int *p = malloc(32);
+       free(p);
+       return 0;
+     }
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // malloc.h
+     #ifndef MALLOC_H
+     #define MALLOC_H
+     #define malloc(size) mymalloc(size)
+     #define free(ptr) myfree(ptr)
+
+     void *mymalloc(size_t size);
+     void myfree(void *ptr);
+     #endif
+     #+END_SRC
+
+     #+BEGIN_SRC c
+     // mymalloc.h
+     #ifdef COMPILETIME
+     #include <stdio.h>
+     #include <malloc.h>
+
+     void *mymalloc(size_t size)
+     {
+       void *ptr = malloc(size);
+       printf("malloc(%d)=%p\n", (int)size, ptr);
+       return ptr;
+     }
+
+     void myfree(void *ptr)
+     {
+       free(ptr);
+       printf("free(%p)\n", ptr);
+     }
+     #endif
+
+     #ifdef LINKTIME
+     #include <stdio.h>
+
+     void *__real_malloc(size_t size);
+     void __real_free(void *ptr);
+
+     void *__wrap_malloc(size_t size)
+     {
+       void *ptr = __real_malloc(size);
+       printf("malloc(%d)=%p\n", (int)size, ptr);
+       return ptr;
+     }
+
+     void __wrap_free(void *ptr)
+     {
+       __real_free(ptr);
+       printf("free(%p)\n", ptr);
+     }
+     #endif
+
+     #ifdef RUNTIME
+     #define _GNU_SOURCE
+     #include <stdio.h>
+     #include <stdlib.h>
+     #include <dlfcn.h>
+     #include <unistd.h>
+
+     /* malloc wrapper function */
+     void *malloc(size_t size)
+     {
+       void *(*mallocp)(size_t size);
+       char *error;
+
+       mallocp = dlsym(RTLD_NEXT, "malloc");
+       /* Get address of libc malloc */
+       if ((error = dlerror()) != NULL) {
+         fputs(error, stderr);
+         exit(1);
+       }
+       void *ptr = mallocp(size);
+       /* Call libc malloc */
+       fprintf(stderr, "malloc(%d) = %p\n", (int)size, ptr);
+       return ptr;
+     }
+
+     /* free wrapper function */
+     void free(void *ptr)
+     {
+       void (*freep)(void *) = NULL;
+       char *error;
+
+       if (!ptr)
+         return;
+
+       freep = dlsym(RTLD_NEXT, "free");
+       /* Get address of libc free */
+       if ((error = dlerror()) != NULL) {
+         fputs(error, stderr);
+         exit(1);
+       }
+       fprintf(stderr, "free(%p)\n", ptr);
+       freep(ptr);
+       /* Call libc free */
+     }
+     #endif
+     #+END_SRC
+
+     =gcc= 的 =-D= 选项可以让开发人员在编译时定义宏, 比如 =gcc -DBUFSIZE=10 -c src.c= 就是在编译 =src.c= 时定义一个会展开为 10 的宏 =BUFSIZE=.
+
+     利用这一点在 =mymalloc.c= 提供了三种不同情况下的拦截实现, 三种方式的实现更多体现在构建上, 因此用于不同情况下 =Makefile= 才是重点.
+
+     可以用 =make= 命令的 =-f= 选项指定文件作为 =Makefile=:
+
+     #+BEGIN_SRC makefile
+# Makefile-compile-time
+mainc: main.c mymalloc.o
+        gcc -I. -o mainc main.c mymalloc.o
+
+mymalloc.o: mymalloc.c
+        gcc -DCOMPILETIME -c mymalloc.c
+
+.PHONY: run
+
+run: mainc
+        [ -e mymalloc.o ] && rm mymalloc.o
+        (./mainc)
+     #+END_SRC
+
+     #+BEGIN_SRC makefile
+# Makefile-link-time
+mainl: mainl.o mymalloc.o
+        gcc -Wl,--wrap,malloc -Wl,--wrap,free -o mainl mainl.o mymalloc.o
+
+mainl.o: main.c
+        gcc -c -o mainl.o main.c
+
+mymalloc.o: mymalloc.c
+        gcc -DLINKTIME -c mymalloc.c
+
+.PHONY: run
+
+run: mainl
+        [ -e mymalloc.o ] && rm mymalloc.o
+        [ -e mainl.o ] && rm mainl.o
+        (./mainl)
+     #+END_SRC
+
+     #+BEGIN_SRC makefile
+# Makefile-run-time
+mymalloc.so: mymalloc.c
+        gcc -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
+
+mainr: main.c
+        gcc -o mainr main.c
+
+.PHONY: run
+
+run: mainr mymalloc.so
+        (LD_PRELOAD="./mymalloc.so" ./mainr)
+     #+END_SRC
+
+***** 编译时干预
+
+      这个情况下使用的 =Makefile= 是 =Makefile-compile-time=.
+
+      这种方式需要使用 =C= 的预编译器(preprocessor)在编译时进行宏展开来实现干预.
+
+      该例子具体操作就是先创建自己的 =malloc.h= 头文件(对应 =libc= 库的 =malloc.h= 头文件),
+
+      在里面把 =malloc= 和 =free= 定义成宏, 分别展开为 =mymalloc= 和 =myfree=;
+
+      然后在编译 =main.c= 时指定 =gcc= 的 =-I= 选项为 =.=, 让 =gcc= *先* 在当前目录下查找头文件,
+
+      找到自定义后的 =malloc.h= 后把 =main.c= 里面的 =malloc= 以及 =free= 全部替换成 =mymalloc= 和 =myfree=;
+
+      最后得出可执行程序 =mainc=.
+
+      毫无疑问 =mainc= 不是像源代码那样调用 =libc= 库的 =malloc= 以及 =free=, 而是我们定义的 =mymalloc= 和 =myfree=.
+
+***** 连接时干预
+
+      这个情况下使用的 =Makefile= 是 =Makefile-link-time=.
+
+      这种方式是利用 =Linux= 动态连接器的 =--wrap= 选项来控制对符号引用的解析.
+
+      具体用法是 =--wrap=symbol=, 对 =symbol= 的引用会变为对 =__wrap_symbol= 的引用,
+
+      而对 =__real_symbol= 的引用就会变成对 =symbol= 的引用.
+
+      =gcc= 的 =-Wl= 选项就是对连接器传递参数而已, =gcc -Wl,--wrap,malloc= 就是对连接器设置 =--wrap=malloc=.
+
+      结合 =main.c= 和 =mymalloc.c= 的 =LINKTIME= 部分来看, =main.c= 里面引用 =malloc= 和 =free= 就分别变成引用 =__wrap_malloc= 和 =__wrap_free=;
+
+      而 =__wrap_malloc= 和 =__wrap_free= 又分别调用了 =__real_malloc= 和 =__real_free=;
+
+      最后 =__real_malloc= 和 =__real_free= 的引用又被分别解析成 =malloc= 和 =free=, 这两个的定义来源于 =libc.so=.
+
+***** 运行时干预
+
+      这个情况下使用的是 =Makefile= 是 =Makefile-run-time=.
+
+      我们知道, 共享库的加载和连接是在载入程序时候完成的; 然而事实是程序在运行的过程中也可加载和连接共享库.
+
+      =Linux= 提供了一套动态连接器的接口, 开发人员可以使用它来在运行时实现共享库的加载和连接.
+
+      这些接口由 =libc= 的 =dlfcn= 提供, 这里就不对这个库进行详细说明了,
+
+      可以去看看 =CSAPP= 里面关于它的使用例子, 又或者到网上检索, 推荐这篇: [[https://blog.csdn.net/u014630623/article/details/89020145][Linux中dlfcn库相关学习]].
+
+      先来看 =mymalloc.c= 中的 =RUNTIME= 部分, 里面也定义了同名同类型的 =malloc= 和 =free= 函数, 而它们的内部调用了他们各自的目标函数.
+
+      在讲解它们调用目标函数的手段之前, 先要了解 =LD_PRELOAD= 的作用.
+
+      为了让下面的演示结果清晰一点, 先让我们注释掉 =mymalloc.c RUNTIME= 部分的 =fprintf= 语句, 并且重新编译.
+
+      再在命令行里面执行以下命令:
+
+      #+BEGIN_SRC shell
+      export LD_PRELOAD=$(pwd)/mymalloc.so && ldd mainr && unset LD_PRELOAD
+      #+END_SRC
+
+      得到 =mainr= 加载共享库的顺序:
+
+      #+BEGIN_SRC shell
+      linux-vdso.so.1 (0x00007ffefb4f8000)
+      /your/path/to/mymalloc.so (0x00007ff08488b000)
+      libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
+      /lib64/ld-linux-x86-64.so.2 (0x00007ff084897000)
+      #+END_SRC
+
+      可以看到在 =LD_PRELOAD= 中所设置的路径 =mymalloc.so= 出现在加载记录上, 并且顺序还是比较靠前的, 位于 =libc= 的前面.
+
+      这就是 =LD_PRELOAD= 的作用了, 指定共享库加载在前面.
+
+      我们再回过头来看 =mymalloc.c= 的 =malloc= 的实现,
+
+      它里面调用了 =dlfcn= 的 =dlsym= 读取 =libc= 的 =malloc= (=dlsym= 的第二个参数),
+
+      而 =dlsym= 的第一个参数 =RTLD_NEXT= 就是说从当前目标文件 =/your/path/to/mymalloc.so= 之后的共享目标文件中查找 =malloc= 的定义.
+
+      后面的 =libc.so.6= 就定义了 =malloc=, 最后 =dlsym= 返回 =libc.so.6= 中 =malloc= 的运行时地址;
+
+      =mymalloc.c= 的 =free= 的实现同理.
+
+      这种方式容易出现一个问题, 而这个问题恰巧出现在 =CSAPP= 书中的代码里面.
+
+      那就是 =CSAPP= 原版中的 =mymalloc.c= 的 =malloc= 使用了 =printf= 函数,
+
+      而 =glibc= 的 =printf= 实现里头调用了 =malloc=, 所以运行 =mainr= 时会有这么一个调用链: =malloc -> printf -> malloc -> printf -> ...=,
+
+      最终导致 =mainr= 发生段错误.
 
 *** 之后的路
 
@@ -4286,3 +5902,5 @@
     当然前提就是开发人员需要懂得汇编,以及所使用的编译器是如何生成汇编码的.
 
     因此, =C= 语言被称为"可移植汇编语言",比起汇编语言来说更加实用.
+
+    # 实现一个 LC-3 指令集
