@@ -1,1 +1,1 @@
-- [[file:../posts/2020/12/assembly.org][汇编]]
+- [[file:../posts/2020/12/assembly.org][x86 汇编]]

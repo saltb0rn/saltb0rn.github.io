@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:42 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Coroutines in Python</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,52 +197,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -256,9 +210,9 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">Coroutines in Python</h1>
-<div class="abstract">
+<div class="abstract" id="org7928f7f">
 <p>
 The first time I learned the word "Coroutines" in Python docs is about one year ago, I escaped from it
 because it is not the easy thing to understand in a quick time and didn't have enough time to understand
@@ -296,23 +250,23 @@ one is generator expression.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator expression</span>
-<span style="color: #DFAF8F;">gen_iter_by_expr</span> = <span style="color: #DCDCCC;">(</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>10<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">gen_iter.py</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">generator expression</span>
+<span style="color: #eedd82;">gen_iter_by_expr</span> = (i <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(10))
 
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> 8
-<span style="color: #DFAF8F;">gen_iter_by_fun</span> = gen_iter<span style="color: #DCDCCC;">()</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">generator function</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">gen_iter</span>():
+    <span style="color: #00ffff;">yield</span> 8
+<span style="color: #eedd82;">gen_iter_by_fun</span> = gen_iter()
 
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Iterate over 'gen_iter_by_expr'"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> gen_iter_by_expr:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
+<span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"Iterate over 'gen_iter_by_expr'"</span>)
+<span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> gen_iter_by_expr:
+    <span style="color: #b0c4de;">print</span>(i)
 
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Iterate over 'gen_iter_by_fun'"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> gen_iter_by_fun:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
+<span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"Iterate over 'gen_iter_by_fun'"</span>)
+<span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> gen_iter_by_fun:
+    <span style="color: #b0c4de;">print</span>(i)
 </pre>
 </div>
 
@@ -320,7 +274,7 @@ one is generator expression.
 Here is the output you will see if running this code.
 </p>
 <div class="org-src-container">
-<pre class="src src-sh">Iterate over <span style="color: #CC9393;">'gen_iter_by_expr'</span>
+<pre class="src src-sh">Iterate over <span style="color: #ffa07a;">'gen_iter_by_expr'</span>
 0
 1
 2
@@ -331,7 +285,7 @@ Here is the output you will see if running this code.
 7
 8
 9
-Iterate over <span style="color: #CC9393;">'gen_iter_by_fun'</span>
+Iterate over <span style="color: #ffa07a;">'gen_iter_by_fun'</span>
 8
 </pre>
 </div>
@@ -349,7 +303,7 @@ A generator iterator can be iterated over only one time. What happens if we do i
 to "iter.py" above, then run it. And we get nothing be printed out.
 </p>
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> gen_iter_by_expr: <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
+<pre class="src src-python"><span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> gen_iter_by_expr: <span style="color: #b0c4de;">print</span>(i)
 </pre>
 </div>
 
@@ -357,15 +311,15 @@ to "iter.py" above, then run it. And we get nothing be printed out.
 Do you still remember what happens when a list used in a for-loop?
 </p>
 <div class="org-src-container">
-<pre class="src src-sh">&gt;&gt;&gt; <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-&gt;&gt;&gt; items = [1, 2, 3]
-&gt;&gt;&gt; for i<span style="color: #F0DFAF; font-weight: bold;"> in</span> items:
+<pre class="src src-sh">&gt;&gt;&gt; <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+&gt;&gt;&gt; <span style="color: #eedd82;">items</span> = [1, 2, 3]
+&gt;&gt;&gt; for i<span style="color: #00ffff;"> in</span> items:
 &gt;&gt;&gt;     i
-&gt;&gt;&gt; <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">equals to</span>
-&gt;&gt;&gt; <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">get the iterator</span>
-&gt;&gt;&gt; it = iter(items)
-&gt;&gt;&gt; <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">start to iterator over</span>
-&gt;&gt;&gt; <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">same as it.__next__()</span>
+&gt;&gt;&gt; <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">equals to</span>
+&gt;&gt;&gt; <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">get the iterator</span>
+&gt;&gt;&gt; <span style="color: #eedd82;">it</span> = iter(items)
+&gt;&gt;&gt; <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">start to iterator over</span>
+&gt;&gt;&gt; <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">same as it.__next__()</span>
 &gt;&gt;&gt; next(it)
 1
 &gt;&gt;&gt; next(it)
@@ -373,8 +327,8 @@ Do you still remember what happens when a list used in a for-loop?
 &gt;&gt;&gt; next(it)
 3
 &gt;&gt;&gt; next(it)
-<span style="color: #93E0E3;">Traceback</span> (most recent call last):
-    File <span style="color: #CC9393;">"&lt;stdin&gt;"</span>, line 1,<span style="color: #F0DFAF; font-weight: bold;"> in</span> &lt;module&gt;
+<span style="color: #87cefa;">Traceback</span> (most recent call last):
+    File <span style="color: #ffa07a;">"&lt;stdin&gt;"</span>, line 1,<span style="color: #00ffff;"> in</span> &lt;module&gt;
 StopIteration
 &gt;&gt;&gt;
 </pre>
@@ -384,17 +338,17 @@ StopIteration
 This happens to a generator iterator as well. The generator iterator will do that easier.
 </p>
 <div class="org-src-container">
-<pre class="src src-sh">gen_iter_by_expr = (i for i<span style="color: #F0DFAF; font-weight: bold;"> in</span> range(3))
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">same as next(gen_iter_by_expr) or __next__(gen_iter_by_expr)</span>
-<span style="color: #93E0E3;">gen_iter_by_expr.send</span>(None)
+<pre class="src src-sh"><span style="color: #eedd82;">gen_iter_by_expr</span> = (i for i<span style="color: #00ffff;"> in</span> range(3))
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">same as next(gen_iter_by_expr) or __next__(gen_iter_by_expr)</span>
+<span style="color: #87cefa;">gen_iter_by_expr.send</span>(None)
 0
-<span style="color: #93E0E3;">gen_iter_by_expr.send</span>(None)
+<span style="color: #87cefa;">gen_iter_by_expr.send</span>(None)
 1
-<span style="color: #93E0E3;">gen_iter_by_expr.send</span>(None)
+<span style="color: #87cefa;">gen_iter_by_expr.send</span>(None)
 2
-<span style="color: #93E0E3;">gen_iter_by_expr.send</span>(None)
-<span style="color: #93E0E3;">Traceback</span> (most recent call last):
-    File <span style="color: #CC9393;">"&lt;stdin&gt;"</span>, line 1,<span style="color: #F0DFAF; font-weight: bold;"> in</span> &lt;module&gt;
+<span style="color: #87cefa;">gen_iter_by_expr.send</span>(None)
+<span style="color: #87cefa;">Traceback</span> (most recent call last):
+    File <span style="color: #ffa07a;">"&lt;stdin&gt;"</span>, line 1,<span style="color: #00ffff;"> in</span> &lt;module&gt;
 StopIteration
 </pre>
 </div>
@@ -426,18 +380,18 @@ works like in the way gen_iter_by_expr does.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> 8
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> 9
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> 10
-<span style="color: #DFAF8F;">gen_iter_by_fun</span> = gen_iter<span style="color: #DCDCCC;">()</span>
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">gen_iter.py</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">generator function</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">gen_iter</span>():
+    <span style="color: #00ffff;">yield</span> 8
+    <span style="color: #00ffff;">yield</span> 9
+    <span style="color: #00ffff;">yield</span> 10
+<span style="color: #eedd82;">gen_iter_by_fun</span> = gen_iter()
 
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Iterate over 'gen_iter_by_fun'"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> gen_iter_by_fun:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
+<span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"Iterate over 'gen_iter_by_fun'"</span>)
+<span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> gen_iter_by_fun:
+    <span style="color: #b0c4de;">print</span>(i)
 </pre>
 </div>
 
@@ -446,9 +400,9 @@ How to figure out that a yield statement is a delimiter? In this example, there 
 The first yield statement split the execution into 2 part, the first part is
 </p>
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> 8
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">gen_iter</span>():
+    <span style="color: #00ffff;">return</span> 8
 </pre>
 </div>
 <p>
@@ -472,17 +426,17 @@ gen_iter again.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">passed</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> 8
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">passed</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> passed
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">passed</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> passed
-<span style="color: #DFAF8F;">gen_iter_by_fun</span> = gen_iter<span style="color: #DCDCCC;">()</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>gen_iter_by_fun.send<span style="color: #BFEBBF;">(</span><span style="color: #BFEBBF;">None</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>gen_iter_by_fun.send<span style="color: #BFEBBF;">(</span>9<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>gen_iter_by_fun.send<span style="color: #BFEBBF;">(</span>10<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">gen_iter.py</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">generator function</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">gen_iter</span>():
+    <span style="color: #eedd82;">passed</span> = <span style="color: #00ffff;">yield</span> 8
+    <span style="color: #eedd82;">passed</span> = <span style="color: #00ffff;">yield</span> passed
+    <span style="color: #eedd82;">passed</span> = <span style="color: #00ffff;">yield</span> passed
+<span style="color: #eedd82;">gen_iter_by_fun</span> = gen_iter()
+<span style="color: #b0c4de;">print</span>(gen_iter_by_fun.send(<span style="color: #7fffd4;">None</span>))
+<span style="color: #b0c4de;">print</span>(gen_iter_by_fun.send(9))
+<span style="color: #b0c4de;">print</span>(gen_iter_by_fun.send(10))
 </pre>
 </div>
 
@@ -515,8 +469,8 @@ to be passed to send() method.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">fundef</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">entry_point</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> exit_point
+<pre class="src src-python"><span style="color: #00ffff;">def</span> <span style="color: #87cefa;">fundef</span>():
+    <span style="color: #eedd82;">entry_point</span> = <span style="color: #00ffff;">yield</span> exit_point
 </pre>
 </div>
 <p>
@@ -528,20 +482,20 @@ procedure has entry and exit.
 One more housekeeping, you can rewrite gen_iter with a loop, depending on your purpose.
 </p>
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">gen_iter.py</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">generator function</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">passed</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> 8
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">times_left</span> = 2
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> times_left:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">passed</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> passed
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">times_left</span> -= 1
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">gen_iter.py</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">generator function</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">gen_iter</span>():
+    <span style="color: #eedd82;">passed</span> = <span style="color: #00ffff;">yield</span> 8
+    <span style="color: #eedd82;">times_left</span> = 2
+    <span style="color: #00ffff;">while</span> times_left:
+        <span style="color: #eedd82;">passed</span> = <span style="color: #00ffff;">yield</span> passed
+        <span style="color: #eedd82;">times_left</span> -= 1
 
-<span style="color: #DFAF8F;">gen_iter_by_fun</span> = gen_iter<span style="color: #DCDCCC;">()</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>gen_iter_by_fun.send<span style="color: #BFEBBF;">(</span><span style="color: #BFEBBF;">None</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>gen_iter_by_fun.send<span style="color: #BFEBBF;">(</span>9<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>gen_iter_by_fun.send<span style="color: #BFEBBF;">(</span>10<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">gen_iter_by_fun</span> = gen_iter()
+<span style="color: #b0c4de;">print</span>(gen_iter_by_fun.send(<span style="color: #7fffd4;">None</span>))
+<span style="color: #b0c4de;">print</span>(gen_iter_by_fun.send(9))
+<span style="color: #b0c4de;">print</span>(gen_iter_by_fun.send(10))
 </pre>
 </div>
 
@@ -550,9 +504,9 @@ Oh, I almost forget one thing before heading to corounties. The yield statement 
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">yield</span> &lt;expr&gt;
-<span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> &lt;expr&gt;
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #00ffff;">yield</span> &lt;expr&gt;
+<span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> &lt;expr&gt;
 </pre>
 </div>
 
@@ -562,15 +516,15 @@ from the caller to the sub-generator. Now I define a new generator function usin
 named `gen_iter_outer'.
 </p>
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">gen_iter_outer</span><span style="color: #DCDCCC;">(</span>g<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> g
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">gen_iter_outer</span>(g):
+    <span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> g
 
-<span style="color: #DFAF8F;">g</span> = gen_iter_outer<span style="color: #DCDCCC;">(</span>gen_iter<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>g.send<span style="color: #BFEBBF;">(</span><span style="color: #BFEBBF;">None</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>g.send<span style="color: #BFEBBF;">(</span>6<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>g.send<span style="color: #BFEBBF;">(</span>4<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">If call one more time, then it will raise a StopIteration</span>
+<span style="color: #eedd82;">g</span> = gen_iter_outer(gen_iter())
+<span style="color: #b0c4de;">print</span>(g.send(<span style="color: #7fffd4;">None</span>))
+<span style="color: #b0c4de;">print</span>(g.send(6))
+<span style="color: #b0c4de;">print</span>(g.send(4))
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">If call one more time, then it will raise a StopIteration</span>
 </pre>
 </div>
 
@@ -594,16 +548,16 @@ one sub-generator.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">count_to_ten</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Start from 1"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> <span style="color: #DCDCCC;">(</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>1, 6<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Five numbers left"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> <span style="color: #DCDCCC;">(</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>6, 11<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">count_to_ten</span>():
+    <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"Start from 1"</span>)
+    <span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> (i <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(1, 6))
+    <span style="color: #b0c4de;">print</span>()
+    <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"Five numbers left"</span>)
+    <span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> (i <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(6, 11))
 
-<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> count_to_ten<span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>i<span style="color: #DCDCCC;">)</span>
+<span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> count_to_ten():
+    <span style="color: #b0c4de;">print</span>(i)
 </pre>
 </div>
 
@@ -633,10 +587,10 @@ I almost forget that, you might see code like this
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">example_func</span><span style="color: #DCDCCC;">(</span>*args, **kwargs<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> generator_from_outside<span style="color: #DCDCCC;">(</span>*args, **kwargs<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">more actions</span>
+<pre class="src src-python"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">!/usr/bin/env python3</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">example_func</span>(*args, **kwargs):
+    <span style="color: #eedd82;">data</span> = <span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> generator_from_outside(*args, **kwargs)
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">more actions</span>
 </pre>
 </div>
 
@@ -647,22 +601,22 @@ from? Let me show you a working example below.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">accumarray</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = 0
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #DCDCCC;">(</span>1, num+1<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> += i
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">yield</span> res
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> res
+<pre class="src src-python"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">!/usr/bin/env python3</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">accumarray</span>(num):
+    <span style="color: #eedd82;">res</span> = 0
+    <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(1, num+1):
+        <span style="color: #eedd82;">res</span> += i
+        <span style="color: #00ffff;">yield</span> res
+    <span style="color: #00ffff;">return</span> res
 
 
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">yield_from_accumarray</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> accumarray<span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'result is'</span>, res<span style="color: #DCDCCC;">)</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">yield_from_accumarray</span>(num):
+    <span style="color: #eedd82;">res</span> = <span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> accumarray(num)
+    <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">'result is'</span>, res)
 
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">1+2+...+10</span>
-<span style="color: #F0DFAF; font-weight: bold;">for</span> res <span style="color: #F0DFAF; font-weight: bold;">in</span> yield_from_accumarray<span style="color: #DCDCCC;">(</span>10<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>res<span style="color: #DCDCCC;">)</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">1+2+...+10</span>
+<span style="color: #00ffff;">for</span> res <span style="color: #00ffff;">in</span> yield_from_accumarray(10):
+    <span style="color: #b0c4de;">print</span>(res)
 </pre>
 </div>
 
@@ -694,30 +648,30 @@ systems does.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #F0DFAF; font-weight: bold;">import</span> time
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #00ffff;">import</span> time
 
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">task_generator</span><span style="color: #DCDCCC;">(</span>name, num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> num &gt; 0:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"{name} {num}s left"</span>.<span style="color: #DCDCCC; font-weight: bold;">format</span><span style="color: #BFEBBF;">(</span>name=name, num=num<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">num</span> -= 1
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">passed</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> num
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">task_generator</span>(name, num):
+    <span style="color: #00ffff;">while</span> num &gt; 0:
+        <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"{name} {num}s left"</span>.<span style="color: #b0c4de;">format</span>(name=name, num=num))
+        <span style="color: #eedd82;">num</span> -= 1
+        <span style="color: #eedd82;">passed</span> = <span style="color: #00ffff;">yield</span> num
 
-<span style="color: #DFAF8F;">task1</span> = task_generator<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"task1"</span>, 5<span style="color: #DCDCCC;">)</span>
-<span style="color: #DFAF8F;">task2</span> = task_generator<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"task2"</span>, 5<span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">task1</span> = task_generator(<span style="color: #ffa07a;">"task1"</span>, 5)
+<span style="color: #eedd82;">task2</span> = task_generator(<span style="color: #ffa07a;">"task2"</span>, 5)
 
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">task_scheduler</span><span style="color: #DCDCCC;">(</span>interval=1, *tasks<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">queue</span> = <span style="color: #DCDCCC; font-weight: bold;">list</span><span style="color: #DCDCCC;">(</span>tasks<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> queue:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">task</span> = queue.pop<span style="color: #DCDCCC;">(</span>0<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">try</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   task.send<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">None</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   queue.append<span style="color: #DCDCCC;">(</span>task<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   time.sleep<span style="color: #DCDCCC;">(</span>interval<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">except</span> <span style="color: #7CB8BB;">StopIteration</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">pass</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">task_scheduler</span>(interval=1, *tasks):
+    <span style="color: #eedd82;">queue</span> = <span style="color: #b0c4de;">list</span>(tasks)
+    <span style="color: #00ffff;">while</span> queue:
+        <span style="color: #eedd82;">task</span> = queue.pop(0)
+        <span style="color: #00ffff;">try</span>:
+            task.send(<span style="color: #7fffd4;">None</span>)
+            queue.append(task)
+            time.sleep(interval)
+        <span style="color: #00ffff;">except</span> <span style="color: #98fb98;">StopIteration</span>:
+            <span style="color: #00ffff;">pass</span>
 
-task_scheduler<span style="color: #DCDCCC;">(</span>1, task1, task2<span style="color: #DCDCCC;">)</span>
+task_scheduler(1, task1, task2)
 </pre>
 </div>
 
@@ -761,7 +715,7 @@ coroutines. I am not going to copy docs here, so go and read the sources I provi
 <b>Continuation from Coroutines - About asyncio protocol in Python 3.5+</b>
 </p>
 
-<pre class="example">
+<pre class="example" id="orgcbc605e">
 Written on 2018.8.22
 </pre>
 
@@ -883,34 +837,34 @@ they are "asyncio_genbase_coroutine_func" and "types_genbase_coroutine_func".
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">genbase-coroutine.py</span>
-<span style="color: #F0DFAF; font-weight: bold;">import</span> asyncio
-<span style="color: #F0DFAF; font-weight: bold;">import</span> types
+<pre class="src src-python"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">-*- coding: utf-8 -*-</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">!/usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">genbase-coroutine.py</span>
+<span style="color: #00ffff;">import</span> asyncio
+<span style="color: #00ffff;">import</span> types
 
 
-<span style="color: #7CB8BB;">@asyncio.coroutine</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">asyncio_genbase_coroutine_func</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">according to official documentation, any "yield" statement</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">is not allowed here.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">as for "yield from" statements, not all of them are allowed,</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">only "yield from &lt;awaitable&gt; are allowed.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #DCDCCC;">[</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>num<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">]</span>
+<span style="color: #98fb98;">@asyncio.coroutine</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">asyncio_genbase_coroutine_func</span>(num):
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">according to official documentation, any "yield" statement</span>
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">is not allowed here.</span>
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">as for "yield from" statements, not all of them are allowed,</span>
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">only "yield from &lt;awaitable&gt; are allowed.</span>
+    <span style="color: #00ffff;">return</span> [i <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(num)]
 
 
-<span style="color: #7CB8BB;">@types.coroutine</span>
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">types_genbase_coroutine_func</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = <span style="color: #F0DFAF; font-weight: bold;">yield</span> <span style="color: #F0DFAF; font-weight: bold;">from</span> asyncio_genbase_coroutine_func<span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">or just simple as this</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return asyncio_genbase_coroutine_func(num)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> data
+<span style="color: #98fb98;">@types.coroutine</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">types_genbase_coroutine_func</span>(num):
+    <span style="color: #eedd82;">data</span> = <span style="color: #00ffff;">yield</span> <span style="color: #00ffff;">from</span> asyncio_genbase_coroutine_func(num)
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">or just simple as this</span>
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">return asyncio_genbase_coroutine_func(num)</span>
+    <span style="color: #00ffff;">return</span> data
 
 
-<span style="color: #DFAF8F;">task1</span> = types_genbase_coroutine_func<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
-<span style="color: #DFAF8F;">loop</span> = asyncio.get_event_loop<span style="color: #DCDCCC;">()</span>
-loop.run_until_complete<span style="color: #DCDCCC;">(</span>task1<span style="color: #DCDCCC;">)</span>
-loop.close<span style="color: #DCDCCC;">()</span>
+<span style="color: #eedd82;">task1</span> = types_genbase_coroutine_func(5)
+<span style="color: #eedd82;">loop</span> = asyncio.get_event_loop()
+loop.run_until_complete(task1)
+loop.close()
 </pre>
 </div>
 
@@ -923,27 +877,27 @@ For native coroutines, only "async def" statement can define them.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">!/usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">native-coroutine.py</span>
-<span style="color: #F0DFAF; font-weight: bold;">import</span> asyncio
+<pre class="src src-python"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">-*- coding: utf-8 -*-</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">!/usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">native-coroutine.py</span>
+<span style="color: #00ffff;">import</span> asyncio
 
 
-<span style="color: #F0DFAF; font-weight: bold;">async def</span> <span style="color: #93E0E3;">native_coroutine</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #DCDCCC;">[</span>i <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #BFEBBF;">(</span>num<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">]</span>
+<span style="color: #00ffff;">async def</span> <span style="color: #87cefa;">native_coroutine</span>(num):
+    <span style="color: #00ffff;">return</span> [i <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(num)]
 
 
-<span style="color: #F0DFAF; font-weight: bold;">async def</span> <span style="color: #93E0E3;">native_coroutine_outer</span><span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">data</span> = <span style="color: #F0DFAF; font-weight: bold;">await</span> native_coroutine<span style="color: #DCDCCC;">(</span>num<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> data
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">or just</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return await native_coroutine(num)</span>
+<span style="color: #00ffff;">async def</span> <span style="color: #87cefa;">native_coroutine_outer</span>(num):
+    <span style="color: #eedd82;">data</span> = <span style="color: #00ffff;">await</span> native_coroutine(num)
+    <span style="color: #00ffff;">return</span> data
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">or just</span>
+    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">return await native_coroutine(num)</span>
 
 
-<span style="color: #DFAF8F;">task1</span> = native_coroutine_outer<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
-<span style="color: #DFAF8F;">loop</span> = asyncio.get_event_loop<span style="color: #DCDCCC;">()</span>
-loop.run_until_complete<span style="color: #DCDCCC;">(</span>task1<span style="color: #DCDCCC;">)</span>
-loop.close<span style="color: #DCDCCC;">()</span>
+<span style="color: #eedd82;">task1</span> = native_coroutine_outer(5)
+<span style="color: #eedd82;">loop</span> = asyncio.get_event_loop()
+loop.run_until_complete(task1)
+loop.close()
 </pre>
 </div>
 
@@ -952,11 +906,11 @@ If you want to execute the tasks asynchronously, then like this
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #DFAF8F;">task1</span> = native_coroutine_outer<span style="color: #DCDCCC;">(</span>5<span style="color: #DCDCCC;">)</span>
-<span style="color: #DFAF8F;">task2</span> = native_coroutine_outer<span style="color: #DCDCCC;">(</span>10<span style="color: #DCDCCC;">)</span>
-loop.ensure_future<span style="color: #DCDCCC;">(</span>task1<span style="color: #DCDCCC;">)</span>
-loop.ensure_future<span style="color: #DCDCCC;">(</span>task2<span style="color: #DCDCCC;">)</span>
-loop.run_forever<span style="color: #DCDCCC;">()</span>
+<pre class="src src-python"><span style="color: #eedd82;">task1</span> = native_coroutine_outer(5)
+<span style="color: #eedd82;">task2</span> = native_coroutine_outer(10)
+loop.ensure_future(task1)
+loop.ensure_future(task2)
+loop.run_forever()
 </pre>
 </div>
 
@@ -974,7 +928,7 @@ the decorator and replacing the "def" with "async def" and "yield from" with "aw
 <del>About "async for" and "async with", someday I maybe introduce them to you just like these new sections today.</del>
 </p>
 
-<pre class="example">
+<pre class="example" id="org8e8a8ec">
 2019/3/30
 </pre>
 
@@ -989,8 +943,8 @@ like <code>async with coroutine as res:</code>, you could read more example from
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-06-29</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

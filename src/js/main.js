@@ -1,7 +1,7 @@
 (function(){
     let ptype;
-    var re_index = /^(?:\/|\/index\.html(?:\/|\/.*)?)$/;
-    var re_post = /^\/(?:.*)\.html(?:\/|\.*)?$/;
+    let re_index = /^(?:\/|\/index\.html(?:\/|\/.*)?)$/;
+    let re_post = /^\/(?:.*)\.html(?:\/|\.*)?$/;
     // the behaviors of different type of pages are different.
     if (re_index.test(this.location.pathname)) {
         ptype = 'index';
@@ -13,7 +13,7 @@
 
     function setup_style_for_index() {
         console.log("The type of page is", ptype);
-        var validation = document.querySelector(".validation");
+        let validation = document.querySelector(".validation");
         if (validation) {
             validation.style.display = "none";
         }
@@ -21,14 +21,23 @@
 
     function setup_style_for_post() {
         console.log("The type of page is", ptype);
-        var post_abstract = document.querySelector(".abstract");
-        var toc = document.querySelector("#table-of-contents");
-        var comment = document.querySelector("#disqus_thread");
-        var comment_clone = comment.cloneNode(true);
+        let post_abstract = document.querySelector(".abstract");
+        let toc = document.querySelector("#table-of-contents");
         if (toc) {
             post_abstract.parentNode.insertBefore(post_abstract, toc);
+            let isClosed = true;
+            toc.addEventListener('click', function() {
+                if (isClosed) {
+                    toc.classList.add('closed');
+                } else {
+                    toc.classList.remove('closed');
+                }
+                isClosed = !isClosed;
+            });
         }
         // TODO: 加载页面时移除评论块,之后设计一个按钮,点击的时候再把comment_clone添加回去.
+        // let comment = document.querySelector("#disqus_thread");
+        // let comment_clone = comment.cloneNode(true);
         // if (comment) {
         //     comment.style.display = "none";
         //     comment.remove();
@@ -40,14 +49,14 @@
         console.log("The type of page is", ptype);
     }
 
-    var page_style_map = {
+    let page_style_map = {
         index: setup_style_for_index,
         post: setup_style_for_post,
         other: setup_style_for_other
     };
 
     function setup_style() {
-        var func = page_style_map[ptype];
+        let func = page_style_map[ptype];
         if (func) {
             func();
         } else {
@@ -57,14 +66,14 @@
 
     // function log_error(err, url='') {
     //     if (!url) {
-    //         var div = (window.document.querySelector("div.errlogs") ||
+    //         let div = (window.document.querySelector("div.errlogs") ||
     //                    window.document.createElement('div'));
     //         if (!("errlogs" in div.classList))
     //         {
     //             window.document.appendChild(div);
     //             div.className = "errlogs";
     //         }
-    //         var p = window.document.createElement('p');
+    //         let p = window.document.createElement('p');
     //         p.className = 'err';
     //         p.textContent = "message: "+ err.message + "\n" + "stack: " + er.stack + "\n";
     //         div.appendChild(p);

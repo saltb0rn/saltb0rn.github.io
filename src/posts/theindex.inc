@@ -8,6 +8,7 @@
   - [[file:2021/01/blender-notes.org][Blender学习笔记]]
   - [[file:2018/05/blog-with-emacs.org][Blog with Emacs and Org mode]]
 * C
+  - [[file:2022/12/reading-note-of-calculus-early-transcendentals-th.org][Calculus: Early Transcendentals 8th Edition 阅读笔记]]
   - [[file:2019/11/canvas-intro.org][Canvas入门而不入土]]
   - [[file:2018/06/continuation-passing-style.org][Continuation Passing Style]]
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
@@ -17,7 +18,6 @@
 * E
   - [[file:2021/11/edm-theory.org][EDM必备乐理教程]]
   - [[file:2018/08/emacs-tips.org][Emacs Tips(持续更新)]]
-  - [[file:2018/08/emacs-tips-2.org][Emacs Tips(持续更新)]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
@@ -42,10 +42,15 @@
   - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
   - [[file:2019/11/web-components.org][Web Components]]
   - [[file:2022/02/webgl-buffer-objects.org][WebGL的Buffer对象]]
+* X
+  - [[file:2020/12/assembly.org][x86 汇编]]
+* 三
+  - [[file:2023/02/trig-deg-sin-cos-tan.org][三角形-关于90度的Sine,Cosine以及Tangent]]
 * 主
   - [[file:2019/12/make-friend-with-webassembly.org][主动认识 WebAssembly]]
 * 关
   - [[file:2021/06/things-about-c-development.org][关于使用C语言开发的那些事]]
+  - [[file:2022/12/math-all-about-base-number-exponent-and-logarithm.org][关于底数-指数和对数的一切]]
   - [[file:2018/05/about-reading-code.org][关于阅读代码]]
   - [[file:2019/03/about-audio-file-metadata.org][关于音频文件的元信息]]
 * 切
@@ -62,10 +67,10 @@
   - [[file:2020/08/graphics-opengl-light-and-material.org][图形学-光和材质]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
   - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
+* 宝
+  - [[file:2022/09/pokemon-double-battle-combos.org][宝可梦双打对战组合]]
 * 数
   - [[file:2021/10/math-proofs.org][数学证明]]
-* 汇
-  - [[file:2020/12/assembly.org][汇编]]
 * 理
   - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
   - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]

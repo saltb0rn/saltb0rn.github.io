@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:43 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>主动认识 WebAssembly</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,52 +197,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -256,9 +210,40 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">主动认识 WebAssembly</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org69abf9e">什么是 WebAssembly</a>
+<ul>
+<li><a href="#org8591f0a">asm.js</a></li>
+</ul>
+</li>
+<li><a href="#org1ce8a3c">笔记的思路</a></li>
+<li><a href="#org2426348">个人学习心得</a>
+<ul>
+<li><a href="#org079597d">概念</a></li>
+<li><a href="#orgc78b396">语义阶段</a></li>
+<li><a href="#org9bb6842">掌握</a></li>
+<li><a href="#orgf984774">1.1</a></li>
+</ul>
+</li>
+<li><a href="#org717bb75">Emscripten 的使用</a>
+<ul>
+<li><a href="#orga69803a">从 C/C++ 到 WebAssembly</a>
+<ul>
+<li><a href="#org43a53b6">直接让 emcc 把代码编译成 .html</a></li>
+</ul>
+</li>
+<li><a href="#org1844c2c">调用 WebAssembly 模块文件</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org3de10d3">
 <p>
 WebAssembly 是我刚开始接触前端时最想学的技术之一,另外的还有 WebGL,刚好 WebGL 和 WebAssembly 有着不少联系,
 </p>
@@ -269,9 +254,9 @@ WebAssembly 是我刚开始接触前端时最想学的技术之一,另外的还�
 
 </div>
 
-<div id="outline-container-org9c8c075" class="outline-2">
-<h2 id="org9c8c075">什么是 WebAssembly</h2>
-<div class="outline-text-2" id="text-org9c8c075">
+<div id="outline-container-org69abf9e" class="outline-2">
+<h2 id="org69abf9e">什么是 WebAssembly</h2>
+<div class="outline-text-2" id="text-org69abf9e">
 <p>
 <a href="https://webassembly.github.io/spec/core/intro/index.html">WebAssembly</a> 实际上是一套针对于字节码(bytecode)的规范,可能有人不知道字节码是做什么的,
 </p>
@@ -318,9 +303,9 @@ WebAssembly 并非是 Web 限定的,它完全可以在 Web 以外的环境运行
 </div>
 
 
-<div id="outline-container-org58092a4" class="outline-3">
-<h3 id="org58092a4">asm.js</h3>
-<div class="outline-text-3" id="text-org58092a4">
+<div id="outline-container-org8591f0a" class="outline-3">
+<h3 id="org8591f0a">asm.js</h3>
+<div class="outline-text-3" id="text-org8591f0a">
 <p>
 在 WebAssembly 的时间点之前有一个叫做 <a href="http://asmjs.org/">asm.js</a> 的语言,由 Mozilla 研发,通过把 C/C++ 代码编译成 asm.js,然后浏览器执行,
 </p>
@@ -341,9 +326,9 @@ asm.js 是 JavaScript 的一个子集,但多了 Type Checking 以及少了 GC, �
 </div>
 
 
-<div id="outline-container-org77010f7" class="outline-2">
-<h2 id="org77010f7">笔记的思路</h2>
-<div class="outline-text-2" id="text-org77010f7">
+<div id="outline-container-org1ce8a3c" class="outline-2">
+<h2 id="org1ce8a3c">笔记的思路</h2>
+<div class="outline-text-2" id="text-org1ce8a3c">
 <p>
 这篇笔记剩下的内容可能会比较多,难度也不太一样,本人笔记的思路是从浅到深,从最基础的 Emscripten 使用到读懂 WebAssembly 规范.
 </p>
@@ -359,9 +344,9 @@ asm.js 是 JavaScript 的一个子集,但多了 Type Checking 以及少了 GC, �
 </div>
 
 
-<div id="outline-container-orge78c0b3" class="outline-2">
-<h2 id="orge78c0b3">个人学习心得</h2>
-<div class="outline-text-2" id="text-orge78c0b3">
+<div id="outline-container-org2426348" class="outline-2">
+<h2 id="org2426348">个人学习心得</h2>
+<div class="outline-text-2" id="text-org2426348">
 <p>
 WebAssembly 就是一个 <a href="http://llvm.org/pubs/2003-10-01-LLVA.pdf">Virtual ISA</a>.
 </p>
@@ -402,9 +387,9 @@ WebAssembly 是基于 Stack Machine 模型进行计算的,抽象机(abstract)的
 </div>
 
 
-<div id="outline-container-org32928f9" class="outline-3">
-<h3 id="org32928f9">概念</h3>
-<div class="outline-text-3" id="text-org32928f9">
+<div id="outline-container-org079597d" class="outline-3">
+<h3 id="org079597d">概念</h3>
+<div class="outline-text-3" id="text-org079597d">
 <ul class="org-ul">
 <li><p>
 值(values)
@@ -519,9 +504,9 @@ WebAssembly 的计算模型是基于 Stack Machine.代码是由指令序列组�
 
 
 
-<div id="outline-container-org6e719f2" class="outline-3">
-<h3 id="org6e719f2">语义阶段</h3>
-<div class="outline-text-3" id="text-org6e719f2">
+<div id="outline-container-orgc78b396" class="outline-3">
+<h3 id="orgc78b396">语义阶段</h3>
+<div class="outline-text-3" id="text-orgc78b396">
 <ol class="org-ol">
 <li><p>
 解码
@@ -596,13 +581,13 @@ WebAssembly 模块会以二进制格式发布,解码处理就是把模块转化�
 
 
 
-<div id="outline-container-orgb3e357c" class="outline-3">
-<h3 id="orgb3e357c">掌握</h3>
+<div id="outline-container-org9bb6842" class="outline-3">
+<h3 id="org9bb6842">掌握</h3>
 </div>
 
-<div id="outline-container-org1544fd7" class="outline-3">
-<h3 id="org1544fd7">1.1</h3>
-<div class="outline-text-3" id="text-org1544fd7">
+<div id="outline-container-orgf984774" class="outline-3">
+<h3 id="orgf984774">1.1</h3>
+<div class="outline-text-3" id="text-orgf984774">
 <ul class="org-ul">
 <li>模块(Module): 一个已经被浏览器编译为可执行机器码的 WebAssembly 二进制代码 (WebAssembly binary, 文件格式是 .wasm).模块没有状态,因此可以简单地在 windows 和 workers 之间共享.声明模块的 imports 和 exports 就像一个 ES2015 模块那样.</li>
 
@@ -635,9 +620,9 @@ JavaScript API 提供了创建上面对象的能力,在有了一个实例的情�
 
 
 
-<div id="outline-container-org3ee1efa" class="outline-2">
-<h2 id="org3ee1efa">Emscripten 的使用</h2>
-<div class="outline-text-2" id="text-org3ee1efa">
+<div id="outline-container-org717bb75" class="outline-2">
+<h2 id="org717bb75">Emscripten 的使用</h2>
+<div class="outline-text-2" id="text-org717bb75">
 <p>
 整体的工作流就是, <code>C/C++</code> 代码通过 Emscripten 编译得到 <code>.wasm</code> 模块,也就是 WebAssembly 二进制文件,然后通过 JavaScript 调用模块.
 </p>
@@ -651,7 +636,7 @@ JavaScript API 提供了创建上面对象的能力,在有了一个实例的情�
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh"><span style="color: #DCDCCC; font-weight: bold;">.</span> &lt;pathTo&gt;/emsdk/emsdk_env.sh
+<pre class="src src-sh">. &lt;pathTo&gt;/emsdk/emsdk_env.sh
 emsdk activate latest
 </pre>
 </div>
@@ -662,34 +647,34 @@ emsdk activate latest
 </div>
 
 
-<div id="outline-container-orgb5f5be1" class="outline-3">
-<h3 id="orgb5f5be1">从 C/C++ 到 WebAssembly</h3>
-<div class="outline-text-3" id="text-orgb5f5be1">
+<div id="outline-container-orga69803a" class="outline-3">
+<h3 id="orga69803a">从 C/C++ 到 WebAssembly</h3>
+<div class="outline-text-3" id="text-orga69803a">
 <p>
 源代码如下:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #5F7F5F;">/* </span><span style="color: #7F9F7F;">hello.c</span><span style="color: #5F7F5F;"> */</span>
-<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stdio.h&gt;</span>
-<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;emscripten/emscripten.h&gt;</span>
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">hello.c</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;emscripten/emscripten.h&gt;</span>
 
-<span style="color: #7CB8BB;">int</span> <span style="color: #93E0E3;">main</span>(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
-    printf(<span style="color: #CC9393;">"Hello, world!\n"</span>);
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> ** <span style="color: #eedd82;">argv</span>) {
+    printf(<span style="color: #ffa07a;">"Hello, world!\n"</span>);
 }
 
 
-<span style="color: #94BFF3;">#ifdef</span> __cplusplus
-<span style="color: #F0DFAF; font-weight: bold;">extern</span> <span style="color: #CC9393;">"C"</span> {
-<span style="color: #94BFF3;">#endif</span>
+<span style="color: #b0c4de;">#ifdef</span> __cplusplus
+<span style="color: #00ffff;">extern</span> <span style="color: #ffa07a;">"C"</span> {
+<span style="color: #b0c4de;">#endif</span>
 
-    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">EMSCRIPTEN_KEEPALIVE</span> myFunction(<span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">argc</span>, <span style="color: #7CB8BB;">char</span> ** <span style="color: #DFAF8F;">argv</span>) {
-        printf(<span style="color: #CC9393;">"MyFunction Called!\n"</span>);
+    <span style="color: #98fb98;">void</span> <span style="color: #eedd82;">EMSCRIPTEN_KEEPALIVE</span> myFunction(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> ** <span style="color: #eedd82;">argv</span>) {
+        printf(<span style="color: #ffa07a;">"MyFunction Called!\n"</span>);
     }
 
-<span style="color: #94BFF3;">#ifdef</span> __cplusplus
+<span style="color: #b0c4de;">#ifdef</span> __cplusplus
 }
-<span style="color: #94BFF3;">#endif</span>
+<span style="color: #b0c4de;">#endif</span>
 </pre>
 </div>
 
@@ -737,11 +722,11 @@ C 和 C++ 的命名管理方式不一样, C++ 支持函数重载,也就是函数
 </div>
 
 
-<div id="outline-container-orgf2fb8af" class="outline-4">
-<h4 id="orgf2fb8af">直接让 emcc 把代码编译成 .html</h4>
-<div class="outline-text-4" id="text-orgf2fb8af">
+<div id="outline-container-org43a53b6" class="outline-4">
+<h4 id="org43a53b6">直接让 emcc 把代码编译成 .html</h4>
+<div class="outline-text-4" id="text-org43a53b6">
 <div class="org-src-container">
-<pre class="src src-sh">emcc hello.c -o hello.out.html -s <span style="color: #CC9393;">"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']"</span>
+<pre class="src src-sh">emcc hello.c -o hello.out.html -s <span style="color: #ffa07a;">"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']"</span>
 </pre>
 </div>
 </div>
@@ -750,16 +735,16 @@ C 和 C++ 的命名管理方式不一样, C++ 支持函数重载,也就是函数
 
 
 
-<div id="outline-container-org1509f71" class="outline-3">
-<h3 id="org1509f71">调用 WebAssembly 模块文件</h3>
+<div id="outline-container-org1844c2c" class="outline-3">
+<h3 id="org1844c2c">调用 WebAssembly 模块文件</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-12-18</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

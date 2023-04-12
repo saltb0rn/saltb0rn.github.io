@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:42 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Continuation Passing Style</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,74 +197,38 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
 
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
-             }
-});
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
 </script>
-<script type="text/javascript"
-        src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -278,22 +242,58 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">Continuation Passing Style</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orga2cc3d7">偶遇 CPS</a></li>
+<li><a href="#orga18969f">Continuation</a>
+<ul>
+<li><a href="#orgab50d63">简单的 Lisp</a></li>
+<li><a href="#org8be8bc7">控制上下文(Control context)</a></li>
+<li><a href="#org18906ef">Continuation 的 representation</a></li>
+</ul>
+</li>
+<li><a href="#org2df51d7">Continuation Passing Style</a>
+<ul>
+<li><a href="#org4a32c71">什么是 CPS</a></li>
+<li><a href="#org4778a14">CPS 的意义</a></li>
+<li><a href="#org69c0d8c">把上面的 ans 改写成 CPS 程序 ans/k</a></li>
+<li><a href="#org92bdb9d">Simple Expression and Tail Form Expression</a></li>
+<li><a href="#orgb100e86">一套把程序转化为 CPS 程序的算法</a></li>
+<li><a href="#org56bac3b">最后一个例子</a></li>
+</ul>
+</li>
+<li><a href="#org11ff2cb">Trampoline 和 Bounce</a>
+<ul>
+<li><a href="#orgf5263c2">Emacs Lisp 突破 Fibonacci 的递归限制</a></li>
+</ul>
+</li>
+<li><a href="#orga9df8d8">结语</a></li>
+<li><a href="#org3e55880">Update</a>
+<ul>
+<li><a href="#orgf3b84e5">如何把遍历树的递归改写为Trampoline的形式</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org53f6ee4">
 <p>
 写一写自己对 <code>CPS</code> 的理解,个人经历有限,难免会有错误或者认识不全,所以请见谅.
 </p>
 
 </div>
 
-<pre class="example">
+<pre class="example" id="org6b7e2d0">
 更新于 2018-11-12
 </pre>
 
-<div id="outline-container-orge8573e6" class="outline-2">
-<h2 id="orge8573e6">偶遇 CPS</h2>
-<div class="outline-text-2" id="text-orge8573e6">
+<div id="outline-container-orga2cc3d7" class="outline-2">
+<h2 id="orga2cc3d7">偶遇 CPS</h2>
+<div class="outline-text-2" id="text-orga2cc3d7">
 <p>
 有很久一段时间没有写 <code>Python</code> 了,语法虽好,不过语法糖实在太多,断断续续的接触了一段时间的 <code>Lisp</code>, 从一开始的 <code>Common Lisp</code>,到现在的 <code>Emacs Lisp</code> 和 <code>Racket</code>,经过这段洗礼以后,有一种"不写 <code>Python</code> 了,干脆写 <code>Lisp</code> 为生算了"的想法(不过想生活的话,还是写 <code>Python</code> 靠谱点,都学就最好),我不是 <code>Lisp</code> 的佼佼者,不过应该也算是个 <code>Lisp fanboy</code> 了吧.
 </p>
@@ -305,9 +305,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org08945e2" class="outline-2">
-<h2 id="org08945e2">Continuation</h2>
-<div class="outline-text-2" id="text-org08945e2">
+<div id="outline-container-orga18969f" class="outline-2">
+<h2 id="orga18969f">Continuation</h2>
+<div class="outline-text-2" id="text-orga18969f">
 <p>
 在讲什么是 <code>CPS</code> 之前,得先说一下什么是 <code>continuation</code>.
 </p>
@@ -321,27 +321,27 @@ for the JavaScript code in this tag.
 </p>
 </div>
 
-<div id="outline-container-orgacbd80a" class="outline-3">
-<h3 id="orgacbd80a">简单的 Lisp</h3>
-<div class="outline-text-3" id="text-orgacbd80a">
+<div id="outline-container-orgab50d63" class="outline-3">
+<h3 id="orgab50d63">简单的 Lisp</h3>
+<div class="outline-text-3" id="text-orgab50d63">
 <p>
 <code>Racket</code> 里面一般是这样定义函数的,以定义一个形式参数为 <code>a</code> 和 <code>b</code> 的整型加法函数 <code>add</code> ,和一个减法函数 <code>sub</code> 为例子.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">add</span> a b) (+ a b))
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">sub</span> a b) (- a b))
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">add</span> a b) (+ a b))
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">sub</span> a b) (- a b))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#20063;&#21487;&#20197;&#21033;&#29992;lambda&#34920;&#36798;&#24335;&#23450;&#20041;&#20989;&#25968;</span>
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">(define add (lambda (a b) (+ a b)))</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#20063;&#21487;&#20197;&#21033;&#29992;lambda&#34920;&#36798;&#24335;&#23450;&#20041;&#20989;&#25968;</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">(define add (lambda (a b) (+ a b)))</span>
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">call it with 1 and 2, then returns 3 as the result</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">call it with 1 and 2, then returns 3 as the result</span>
 (add 1 2)
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">call it with 3 and 2, then returns 1 as the result</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">call it with 3 and 2, then returns 1 as the result</span>
 (sub 3 2)
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">if condition then true-branch else false-branch</span>
-(<span style="color: #F0DFAF; font-weight: bold;">if</span> (&gt; (sub 3 2) 0)
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">if condition then true-branch else false-branch</span>
+(<span style="color: #00ffff;">if</span> (&gt; (sub 3 2) 0)
     (sub 3 2)
     (add 1 2))
 </pre>
@@ -356,7 +356,7 @@ for the JavaScript code in this tag.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">ans</span> x y z)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">ans</span> x y z)
    (add (sub x y) z))
 </pre>
 </div>
@@ -364,9 +364,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-orgd1510f3" class="outline-3">
-<h3 id="orgd1510f3">控制上下文(Control context)</h3>
-<div class="outline-text-3" id="text-orgd1510f3">
+<div id="outline-container-org8be8bc7" class="outline-3">
+<h3 id="org8be8bc7">控制上下文(Control context)</h3>
+<div class="outline-text-3" id="text-org8be8bc7">
 <p>
 好了,介绍什么是 <code>continuation</code> 之前先介绍一下什么是控制上下文?首先要先了解什么是上下文,所谓上下文就是贯穿整个过程的一个意像,在整个过程中的每一个点上,上下文的状态都不一样.
 </p>
@@ -401,9 +401,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc76f0ab" class="outline-3">
-<h3 id="orgc76f0ab">Continuation 的 representation</h3>
-<div class="outline-text-3" id="text-orgc76f0ab">
+<div id="outline-container-org18906ef" class="outline-3">
+<h3 id="org18906ef">Continuation 的 representation</h3>
+<div class="outline-text-3" id="text-org18906ef">
 <p>
 在给 <code>continuation</code> 选择 <code>representation</code> 之前先给每一个执行点选择一种 <code>representation</code>.每一执行点相当于一个过程,每执行一个点就是一次调用.
 </p>
@@ -413,11 +413,11 @@ for the JavaScript code in this tag.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#31532;&#19968;&#27493;,&#25226;&#31532;&#19968;&#27493;&#20445;&#23384;&#22312;first-step</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">first-step</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (pre-step-res) (sub 1 2)))
+<pre class="src src-scheme"><span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#31532;&#19968;&#27493;,&#25226;&#31532;&#19968;&#27493;&#20445;&#23384;&#22312;first-step</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">first-step</span> (<span style="color: #00ffff;">lambda</span> (pre-step-res) (sub 1 2)))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#25191;&#34892;&#31532;&#19968;&#27493;&#30456;&#24403;&#20110;&#20197;&#19979;,void&#26159;Racket&#37324;&#38754;&#30340;&#19968;&#20010;&#20540;</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">res1</span> (first-step void))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#25191;&#34892;&#31532;&#19968;&#27493;&#30456;&#24403;&#20110;&#20197;&#19979;,void&#26159;Racket&#37324;&#38754;&#30340;&#19968;&#20010;&#20540;</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">res1</span> (first-step void))
 </pre>
 </div>
 
@@ -426,11 +426,11 @@ for the JavaScript code in this tag.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#31532;&#20108;&#27493;,&#25226;&#31532;&#20108;&#27493;&#20445;&#23384;&#22312;second-step</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">second-step</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (pre-step-res) (add pre-step-res 3)))
+<pre class="src src-scheme"><span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#31532;&#20108;&#27493;,&#25226;&#31532;&#20108;&#27493;&#20445;&#23384;&#22312;second-step</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">second-step</span> (<span style="color: #00ffff;">lambda</span> (pre-step-res) (add pre-step-res 3)))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#25191;&#34892;&#31532;&#20108;&#27493;</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">res2</span> (second-step res1))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#25191;&#34892;&#31532;&#20108;&#27493;</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">res2</span> (second-step res1))
 </pre>
 </div>
 
@@ -439,7 +439,7 @@ for the JavaScript code in this tag.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">last-step</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v) v))
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">last-step</span> (<span style="color: #00ffff;">lambda</span> (v) v))
 </pre>
 </div>
 
@@ -459,13 +459,13 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-orgf368cc9" class="outline-2">
-<h2 id="orgf368cc9">Continuation Passing Style</h2>
-<div class="outline-text-2" id="text-orgf368cc9">
+<div id="outline-container-org2df51d7" class="outline-2">
+<h2 id="org2df51d7">Continuation Passing Style</h2>
+<div class="outline-text-2" id="text-org2df51d7">
 </div>
-<div id="outline-container-org985bfd5" class="outline-3">
-<h3 id="org985bfd5">什么是 CPS</h3>
-<div class="outline-text-3" id="text-org985bfd5">
+<div id="outline-container-org4a32c71" class="outline-3">
+<h3 id="org4a32c71">什么是 CPS</h3>
+<div class="outline-text-3" id="text-org4a32c71">
 <p>
 顾名思意, <code>CPS</code> 就是一种风格,这种风格就是把 <code>continuation</code> 作为参数传递.类似的还有 <code>Environment Passing Style</code>.
 </p>
@@ -477,15 +477,15 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-orgd2a1f68" class="outline-3">
-<h3 id="orgd2a1f68">CPS 的意义</h3>
-<div class="outline-text-3" id="text-orgd2a1f68">
+<div id="outline-container-org4778a14" class="outline-3">
+<h3 id="org4778a14">CPS 的意义</h3>
+<div class="outline-text-3" id="text-org4778a14">
 <p>
 其实就是对控制上下文(control context)进行抽象和实例化,以及把函数转化成尾调用(Tail call).
 </p>
 
 <p>
-尾调用有一个好处,如果函数是一个递归函数,我们可以很容易地在已改为尾调用基础上进行优化,把普通递归优化成<a id="org1643f6a"></a>尾递归(Tail recursion).
+尾调用有一个好处,如果函数是一个递归函数,我们可以很容易地在已改为尾调用基础上进行优化,把普通递归优化成<a id="org0271e41"></a>尾递归(Tail recursion).
 </p>
 <blockquote>
 <p>
@@ -511,15 +511,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgac49e7b" class="outline-3">
-<h3 id="orgac49e7b">把上面的 ans 改写成 CPS 程序 ans/k</h3>
-<div class="outline-text-3" id="text-orgac49e7b">
+<div id="outline-container-org69c0d8c" class="outline-3">
+<h3 id="org69c0d8c">把上面的 ans 改写成 CPS 程序 ans/k</h3>
+<div class="outline-text-3" id="text-org69c0d8c">
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">ans/k</span> x y z cont)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">ans/k</span> x y z cont)
    (sub/k x y
-      (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+      (<span style="color: #00ffff;">lambda</span> (res1)
          (add/k res1 z
-            (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+            (<span style="color: #00ffff;">lambda</span> (res2)
                (cont res2))))))
 </pre>
 </div>
@@ -531,9 +531,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org57c6b4c" class="outline-3">
-<h3 id="org57c6b4c">Simple Expression and Tail Form Expression</h3>
-<div class="outline-text-3" id="text-org57c6b4c">
+<div id="outline-container-org92bdb9d" class="outline-3">
+<h3 id="org92bdb9d">Simple Expression and Tail Form Expression</h3>
+<div class="outline-text-3" id="text-org92bdb9d">
 <p>
 要转变成 <code>CPS</code>,则要理解 <code>CPS</code> 对表达式做出的划分: <code>SimpleExp</code> 以及 <code>TfExp</code> (Tail Form Expression).
 </p>
@@ -565,9 +565,9 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </div>
 
 
-<div id="outline-container-orgdd8a5c7" class="outline-3">
-<h3 id="orgdd8a5c7">一套把程序转化为 CPS 程序的算法</h3>
-<div class="outline-text-3" id="text-orgdd8a5c7">
+<div id="outline-container-orgb100e86" class="outline-3">
+<h3 id="orgb100e86">一套把程序转化为 CPS 程序的算法</h3>
+<div class="outline-text-3" id="text-orgb100e86">
 <p>
 先示范如何把 <code>ans</code> 改写成 <code>CPS</code>,也就是把表达式改写成 <code>TfExp</code>.
 </p>
@@ -596,8 +596,8 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">add/k</span> x y cont) (cont (+ x y)))
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">sub/k</span> x y cont) (cont (- x y)))
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">add/k</span> x y cont) (cont (+ x y)))
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">sub/k</span> x y cont) (cont (- x y)))
 </pre>
 </div></li>
 </ol>
@@ -627,8 +627,8 @@ TfExp        ::= (SimpleExp SimpleExp*)
 <div class="org-src-container">
 <pre class="src src-scheme">#lang racket
 
-(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x)
-  (<span style="color: #F0DFAF; font-weight: bold;">cond</span>
+(<span style="color: #00ffff;">lambda</span> (x)
+  (<span style="color: #00ffff;">cond</span>
     [(zero? x) 17]
     [(= x 1) (f x)]
     [(= x 2) (+ 22 (f x))]
@@ -637,30 +637,30 @@ TfExp        ::= (SimpleExp SimpleExp*)
     [else (h (f x) (- 44 y) (g y))]))
 
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">after transforming</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">after transforming</span>
 
-(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">cond</span>
+(<span style="color: #00ffff;">lambda</span> (x cont)
+  (<span style="color: #00ffff;">cond</span>
     [(zero? x) (cont 17)]
     [(= x 1) (f x cont)]
     [(= x 2)
      (f x
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v)
+        (<span style="color: #00ffff;">lambda</span> (v)
            (+ 22 v)))]
     [(= x 3)
      (f x
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v)
+        (<span style="color: #00ffff;">lambda</span> (v)
            (g 22 v cont)))]
     [(= x 4)
      (f x
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v1)
+        (<span style="color: #00ffff;">lambda</span> (v1)
            (g y
-              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v2)
+              (<span style="color: #00ffff;">lambda</span> (v2)
                  (cont (+ v1 33 v2))))))]
     [else (f x
-             (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v1)
+             (<span style="color: #00ffff;">lambda</span> (v1)
                 (g y
-                   (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v2)
+                   (<span style="color: #00ffff;">lambda</span> (v2)
                       (h v1 (- 44 y) v2 cont)))))]))
 </pre>
 </div>
@@ -672,9 +672,9 @@ TfExp        ::= (SimpleExp SimpleExp*)
 </div>
 
 
-<div id="outline-container-org673683f" class="outline-3">
-<h3 id="org673683f">最后一个例子</h3>
-<div class="outline-text-3" id="text-org673683f">
+<div id="outline-container-org56bac3b" class="outline-3">
+<h3 id="org56bac3b">最后一个例子</h3>
+<div class="outline-text-3" id="text-org56bac3b">
 <p>
 分别定义累加从1到n的函数 <code>bad-acc, acc-tail</code> 和 <code>acc</code>, 以及(Fibonacci) <code>bad-fib</code> 和 <code>fib</code>.
 </p>
@@ -683,60 +683,60 @@ TfExp        ::= (SimpleExp SimpleExp*)
 <pre class="src src-scheme">#lang racket
 (require racket/trace)
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bad acc</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">bad acc</span>
 (trace-define (bad-acc n)
-    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+    (<span style="color: #00ffff;">if</span> (= n 0)
         0
         (+ n (bad-acc (- n 1)))))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">tail form</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc-tail</span> n)
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">tail form</span>
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">acc-tail</span> n)
     (acc-tail-inner n 0))
 
 (trace-define (acc-tail-inner n res)
-    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+    (<span style="color: #00ffff;">if</span> (= n 0)
         res
         (acc-tail-inner (- n 1) (+ res n))))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">cps</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc</span> n)
-    (acc/k n (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (val) val)))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">cps</span>
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">acc</span> n)
+    (acc/k n (<span style="color: #00ffff;">lambda</span> (val) val)))
 
 (trace-define (acc/k n cont)
-    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+    (<span style="color: #00ffff;">if</span> (= n 0)
         (cont 0)
         (acc/k (- n 1)
-               (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res) (cont (+ n res))))))
+               (<span style="color: #00ffff;">lambda</span> (res) (cont (+ n res))))))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">BONUS: even tail form can be convert into cps</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc-tail-inner/k</span> n res cont)
-    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">BONUS: even tail form can be convert into cps</span>
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">acc-tail-inner/k</span> n res cont)
+    (<span style="color: #00ffff;">if</span> (= n 0)
         (cont res)
         (acc-tail-inner/k
           (- n 1) (+ res n) cont)))
 
-<span style="color: #5F7F5F;">;;; </span><span style="color: #7F9F7F;">bad fib</span>
+<span style="color: #ff7f24;">;;; </span><span style="color: #ff7f24;">bad fib</span>
 (trace-define (bad-fib n)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+  (<span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">or</span> (= n 1) (= n 2))
       1
       (+ (bad-fib (- n 2)) (bad-fib (- n 1)))))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">cps</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">cps</span>
 (trace-define (fib/k n cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+  (<span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">or</span> (= n 1) (= n 2))
       (cont 1)
       (fib/k
        (- n 2)
-       (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+       (<span style="color: #00ffff;">lambda</span> (res1)
          (fib/k
           (- n 1)
-          (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+          (<span style="color: #00ffff;">lambda</span> (res2)
             (cont (+ res1 res2))))))))
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">fib</span> n)
-    (fib/k n (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (val) val)))
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">fib</span> n)
+    (fib/k n (<span style="color: #00ffff;">lambda</span> (val) val)))
 
-<span style="color: #5F7F5F;">;;; </span><span style="color: #7F9F7F;">tests</span>
+<span style="color: #ff7f24;">;;; </span><span style="color: #ff7f24;">tests</span>
 (bad-acc 10)
 
 (acc-tail 10)
@@ -767,7 +767,7 @@ TfExp        ::= (SimpleExp SimpleExp*)
 
 <div class="org-src-container">
 <pre class="src src-sh">Welcome to Racket v7.5.
-racket@&gt; ,enter <span style="color: #CC9393;">"/home/saltb0rn/.config/emacs/site-lisp/test.rkt"</span>
+racket@&gt; ,enter <span style="color: #ffa07a;">"/home/saltb0rn/.config/emacs/site-lisp/test.rkt"</span>
 &gt;(bad-acc 10)
 &gt; (bad-acc 9)
 &gt; &gt;(bad-acc 8)
@@ -804,17 +804,17 @@ racket@&gt; ,enter <span style="color: #CC9393;">"/home/saltb0rn/.config/emacs/s
 &gt;(acc-tail-inner 0 55)
 &lt;55
 55
-&gt;(acc/k 10 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:78:13&gt;)</span>
-&gt;(acc/k 9 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 8 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 7 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 6 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 5 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 4 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 3 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 1 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
-&gt;(acc/k 0 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 10 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:78:13&gt;)</span>
+&gt;(acc/k 9 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 8 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 7 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 6 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 5 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 4 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 3 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 1 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
+&gt;(acc/k 0 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:84:15&gt;)</span>
 &lt;55
 55
 &gt;(bad-fib 7)
@@ -868,31 +868,31 @@ racket@&gt; ,enter <span style="color: #CC9393;">"/home/saltb0rn/.config/emacs/s
 &lt; 8
 &lt;13
 13
-&gt;(fib/k 7 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:112:13&gt;)</span>
-&gt;(fib/k 5 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 3 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 1 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 4 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 3 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 1 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 6 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 4 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 3 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 1 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 5 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 3 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 1 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 4 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 3 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
-&gt;(fib/k 1 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
-&gt;(fib/k 2 <span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 7 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:112:13&gt;)</span>
+&gt;(fib/k 5 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 3 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 1 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 4 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 3 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 1 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 6 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 4 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 3 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 1 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 5 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 3 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 1 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 4 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 3 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
+&gt;(fib/k 1 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:105:7&gt;)</span>
+&gt;(fib/k 2 <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">&lt;procedure:...te-lisp/test.rkt:108:10&gt;)</span>
 &lt;13
 13
 racket@test.rkt&gt;
@@ -919,10 +919,10 @@ racket@test.rkt&gt;
 </div>
 
 
-<div id="outline-container-org3d7afcc" class="outline-2">
-<h2 id="org3d7afcc">Trampoline 和 Bounce</h2>
-<div class="outline-text-2" id="text-org3d7afcc">
-<pre class="example">
+<div id="outline-container-org11ff2cb" class="outline-2">
+<h2 id="org11ff2cb">Trampoline 和 Bounce</h2>
+<div class="outline-text-2" id="text-org11ff2cb">
+<pre class="example" id="org281f167">
 写于 2019/4/8
 </pre>
 
@@ -963,52 +963,52 @@ racket@test.rkt&gt;
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bounce &#30340;&#23450;&#20041;,</span>
+<pre class="src src-scheme"><span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">bounce &#30340;&#23450;&#20041;,</span>
 (struct bounce (res cont))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#23545; acc/k &#36827;&#34892;&#20462;&#25913;,&#35201;&#28857;&#20043;&#19968;&#23601;&#26159;&#25226;&#25152;&#26377; acc/k &#30340;&#35843;&#29992;(&#20063;&#23601;&#26159;&#36820;&#22238;&#20540;)&#25442;&#25104;bounce&#20540;.</span>
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#21487;&#20197;&#36825;&#20040;&#24819;,&#36825;&#20040;&#20570;&#26159;&#25226;&#21407;&#26412;&#30340;&#35843;&#29992;&#32473;&#25286;&#24320;&#20102;.</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">acc-bounce</span> n cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (= n 0)
-      (bounce 0 cont) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
-      (bounce n       <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (acc-bounce (- n 1) (lambda (res) (cont (+ n res)))), &#36825;&#37324;&#25286;&#30340;&#22320;&#26041;&#26159; (cont (+ n res)),</span>
-              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t)  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#21644; (cont 0) &#19981;&#19968;&#26679;,&#36825;&#20010;&#38656;&#35201;&#20808;&#25226; n &#30452;&#25509;&#25552;&#21040;&#22806;&#38754;&#28982;&#21518;&#24471;&#21040;&#19968;&#20010;&#26032;&#30340; continuation: (lambda (t) (acc-bounce (- t 1) (cont (+ t res)))), &#26368;&#21518;&#25286; (cont (+ t res)) &#21464;&#25104; (bounce (+ t res) cont)</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#23545; acc/k &#36827;&#34892;&#20462;&#25913;,&#35201;&#28857;&#20043;&#19968;&#23601;&#26159;&#25226;&#25152;&#26377; acc/k &#30340;&#35843;&#29992;(&#20063;&#23601;&#26159;&#36820;&#22238;&#20540;)&#25442;&#25104;bounce&#20540;.</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#21487;&#20197;&#36825;&#20040;&#24819;,&#36825;&#20040;&#20570;&#26159;&#25226;&#21407;&#26412;&#30340;&#35843;&#29992;&#32473;&#25286;&#24320;&#20102;.</span>
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">acc-bounce</span> n cont)
+  (<span style="color: #00ffff;">if</span> (= n 0)
+      (bounce 0 cont) <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
+      (bounce n       <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&lt;= (acc-bounce (- n 1) (lambda (res) (cont (+ n res)))), &#36825;&#37324;&#25286;&#30340;&#22320;&#26041;&#26159; (cont (+ n res)),</span>
+              (<span style="color: #00ffff;">lambda</span> (t)  <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#21644; (cont 0) &#19981;&#19968;&#26679;,&#36825;&#20010;&#38656;&#35201;&#20808;&#25226; n &#30452;&#25509;&#25552;&#21040;&#22806;&#38754;&#28982;&#21518;&#24471;&#21040;&#19968;&#20010;&#26032;&#30340; continuation: (lambda (t) (acc-bounce (- t 1) (cont (+ t res)))), &#26368;&#21518;&#25286; (cont (+ t res)) &#21464;&#25104; (bounce (+ t res) cont)</span>
                 (acc-bounce (- t 1)
-                            (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res) (bounce (+ t res) cont)))))))
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#30001;&#20110; Racket &#27809;&#26377;&#20160;&#20040;&#31867;&#20284;&#19982; Python while statement &#37027;&#31181;&#19996;&#35199;,&#25152;&#20197;&#25105;&#36824;&#26159;&#29992;&#20102;&#36882;&#24402;,&#22312; Python &#20013;&#21487;&#20197;&#25913;&#20889;&#25104; while</span>
+                            (<span style="color: #00ffff;">lambda</span> (res) (bounce (+ t res) cont)))))))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#30001;&#20110; Racket &#27809;&#26377;&#20160;&#20040;&#31867;&#20284;&#19982; Python while statement &#37027;&#31181;&#19996;&#35199;,&#25152;&#20197;&#25105;&#36824;&#26159;&#29992;&#20102;&#36882;&#24402;,&#22312; Python &#20013;&#21487;&#20197;&#25913;&#20889;&#25104; while</span>
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">fib-bounce</span> n cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
-      (bounce 1 cont) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
-      (bounce n       <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#25286;&#24320;&#31532;&#19968;&#20010;&#35843;&#29992; (fib/k (- n 2) ...)</span>
-              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t)
+(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">fib-bounce</span> n cont)
+  (<span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">or</span> (= n 1) (= n 2))
+      (bounce 1 cont) <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&lt;= (cont 0), &#30452;&#25509;&#25286;</span>
+      (bounce n       <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&lt;= &#25286;&#24320;&#31532;&#19968;&#20010;&#35843;&#29992; (fib/k (- n 2) ...)</span>
+              (<span style="color: #00ffff;">lambda</span> (t)
                 (fib-bounce
                  (- t 2)
-                 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
-                   (bounce  <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#25286;&#24320;&#31532;&#20108;&#20010;&#35843;&#29992; (fib/k (-n 1) ...),&#36825;&#37324;&#20854;&#23454;&#21487;&#20197;&#19981;&#25286;,</span>
-                    (- t 1) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#19981;&#36807;&#20026;&#20102;&#21644;&#25226;&#23614;&#35843;&#29992;&#25442;&#25104;bounce&#30340;&#35828;&#27861;&#20445;&#25345;&#19968;&#33268;,&#24212;&#35813;&#25286;&#24320;</span>
-                    (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t1)
+                 (<span style="color: #00ffff;">lambda</span> (res1)
+                   (bounce  <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&lt;= &#25286;&#24320;&#31532;&#20108;&#20010;&#35843;&#29992; (fib/k (-n 1) ...),&#36825;&#37324;&#20854;&#23454;&#21487;&#20197;&#19981;&#25286;,</span>
+                    (- t 1) <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#19981;&#36807;&#20026;&#20102;&#21644;&#25226;&#23614;&#35843;&#29992;&#25442;&#25104;bounce&#30340;&#35828;&#27861;&#20445;&#25345;&#19968;&#33268;,&#24212;&#35813;&#25286;&#24320;</span>
+                    (<span style="color: #00ffff;">lambda</span> (t1)
                       (fib-bounce
                        t1
-                       (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
-                         (bounce (+ res1 res2) cont))))))))))) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&lt;= &#26368;&#21518;&#19968;&#27425;&#25286;&#24320;</span>
+                       (<span style="color: #00ffff;">lambda</span> (res2)
+                         (bounce (+ res1 res2) cont))))))))))) <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&lt;= &#26368;&#21518;&#19968;&#27425;&#25286;&#24320;</span>
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">trampoline</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">trampoline</span>
   [lambda (b)
-    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">let* &#25805;&#20316;&#31526;&#21487;&#20197;&#26242;&#26102;&#29702;&#35299;&#20026;&#20854;&#23427;&#35821;&#35328;&#20013;&#30340;&#23616;&#37096;&#23450;&#20041;</span>
-    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">kont = bounce-cont(b)</span>
-    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">n    = bounce-res(b)</span>
-    <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">res  = kont(n)</span>
-    (<span style="color: #F0DFAF; font-weight: bold;">let*</span> ([kont (bounce-cont b)]
+    <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">let* &#25805;&#20316;&#31526;&#21487;&#20197;&#26242;&#26102;&#29702;&#35299;&#20026;&#20854;&#23427;&#35821;&#35328;&#20013;&#30340;&#23616;&#37096;&#23450;&#20041;</span>
+    <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">kont = bounce-cont(b)</span>
+    <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">n    = bounce-res(b)</span>
+    <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">res  = kont(n)</span>
+    (<span style="color: #00ffff;">let*</span> ([kont (bounce-cont b)]
            [n (bounce-res b)]
            [res (kont n)])
-      (<span style="color: #F0DFAF; font-weight: bold;">if</span> (bounce? res)
+      (<span style="color: #00ffff;">if</span> (bounce? res)
           (trampoline res)
           res))])
 
-(trampoline (acc-bounce 10000000 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x) x))
+(trampoline (acc-bounce 10000000 (<span style="color: #00ffff;">lambda</span> (x) x))
 
-(trampoline (fib-bounce 7 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x) x))
+(trampoline (fib-bounce 7 (<span style="color: #00ffff;">lambda</span> (x) x))
 </pre>
 </div>
 
@@ -1029,33 +1029,33 @@ racket@test.rkt&gt;
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">Bounce</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">__init__</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, res, cont<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.res = res
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.cont = cont
+<pre class="src src-python"><span style="color: #00ffff;">class</span> <span style="color: #98fb98;">Bounce</span>:
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">__init__</span>(<span style="color: #00ffff;">self</span>, res, cont):
+        <span style="color: #00ffff;">self</span>.<span style="color: #eedd82;">res</span> = res
+        <span style="color: #00ffff;">self</span>.<span style="color: #eedd82;">cont</span> = cont
 
 
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">trampoline</span><span style="color: #DCDCCC;">(</span>bounce<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> 1:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">res</span> = bounce.cont<span style="color: #DCDCCC;">(</span>bounce.res<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">isinstance</span><span style="color: #DCDCCC;">(</span>res, Bounce<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">bounce</span> = res
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> res
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">trampoline</span>(bounce):
+    <span style="color: #00ffff;">while</span> 1:
+        <span style="color: #eedd82;">res</span> = bounce.cont(bounce.res)
+        <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">isinstance</span>(res, Bounce):
+            <span style="color: #eedd82;">bounce</span> = res
+        <span style="color: #00ffff;">else</span>:
+            <span style="color: #00ffff;">return</span> res
 
 
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">acc_bounce</span><span style="color: #DCDCCC;">(</span>n, cont<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> n == 0:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> Bounce<span style="color: #DCDCCC;">(</span>n, cont<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">kont</span><span style="color: #DCDCCC;">(</span>t<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> acc_bounce<span style="color: #DCDCCC;">(</span>t-1, <span style="color: #F0DFAF; font-weight: bold;">lambda</span> res: Bounce<span style="color: #BFEBBF;">(</span>t+res, cont<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return acc_bounce(t-1, lambda res: cont(t+res)) # &#36825;&#26679;&#20381;&#28982;&#20250;&#29190;&#26632;,&#20063;&#23601;&#26159;&#25105;&#19978;&#38754;&#35828;&#30340;&#19968;&#23450;&#35201;&#25226;&#25152;&#26377;&#35843;&#29992;&#25442;&#25104; bounce</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> Bounce<span style="color: #DCDCCC;">(</span>n, kont<span style="color: #DCDCCC;">)</span>
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">acc_bounce</span>(n, cont):
+    <span style="color: #00ffff;">if</span> n == 0:
+        <span style="color: #00ffff;">return</span> Bounce(n, cont)
+    <span style="color: #00ffff;">else</span>:
+        <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">kont</span>(t):
+            <span style="color: #00ffff;">return</span> acc_bounce(t-1, <span style="color: #00ffff;">lambda</span> res: Bounce(t+res, cont))
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">return acc_bounce(t-1, lambda res: cont(t+res)) # &#36825;&#26679;&#20381;&#28982;&#20250;&#29190;&#26632;,&#20063;&#23601;&#26159;&#25105;&#19978;&#38754;&#35828;&#30340;&#19968;&#23450;&#35201;&#25226;&#25152;&#26377;&#35843;&#29992;&#25442;&#25104; bounce</span>
+        <span style="color: #00ffff;">return</span> Bounce(n, kont)
 
 
-<span style="color: #DFAF8F;">bounce</span> = acc_bounce<span style="color: #DCDCCC;">(</span>50000, <span style="color: #F0DFAF; font-weight: bold;">lambda</span> x: x<span style="color: #DCDCCC;">)</span>  <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">&#25105;&#20915;&#23450;&#32473;&#20010;50000&#36816;&#31639;&#35268;&#27169;</span>
-<span style="color: #F0DFAF; font-weight: bold;">print</span><span style="color: #DCDCCC;">(</span>trampoline<span style="color: #BFEBBF;">(</span>bounce<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">bounce</span> = acc_bounce(50000, <span style="color: #00ffff;">lambda</span> x: x)  <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#25105;&#20915;&#23450;&#32473;&#20010;50000&#36816;&#31639;&#35268;&#27169;</span>
+<span style="color: #b0c4de;">print</span>(trampoline(bounce))
 </pre>
 </div>
 
@@ -1068,31 +1068,31 @@ racket@test.rkt&gt;
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">trampoline</span>(<span style="color: #DFAF8F;">bounce</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">res</span>;
-    <span style="color: #F0DFAF; font-weight: bold;">while</span> (1) {
+<pre class="src src-javascript"><span style="color: #00ffff;">function</span> <span style="color: #87cefa;">trampoline</span>(<span style="color: #eedd82;">bounce</span>) {
+    <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">res</span>;
+    <span style="color: #00ffff;">while</span> (1) {
         res = bounce.cont(bounce.res);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">typeof</span>(res) == <span style="color: #CC9393;">'object'</span>)
+        <span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">typeof</span>(res) == <span style="color: #ffa07a;">'object'</span>)
             bounce = res;
-        <span style="color: #F0DFAF; font-weight: bold;">else</span>
-            <span style="color: #F0DFAF; font-weight: bold;">return</span> res;
+        <span style="color: #00ffff;">else</span>
+            <span style="color: #00ffff;">return</span> res;
     }
 }
 
-<span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">accBounce</span>(<span style="color: #DFAF8F;">n</span>, <span style="color: #DFAF8F;">cont</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (n == 0) {
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">accBounce</span>(<span style="color: #eedd82;">n</span>, <span style="color: #eedd82;">cont</span>) {
+    <span style="color: #00ffff;">if</span> (n == 0) {
+        <span style="color: #00ffff;">return</span> {
             res: n,
             cont: cont
         };
-    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+    } <span style="color: #00ffff;">else</span> {
+        <span style="color: #00ffff;">return</span> {
             res: n,
-            <span style="color: #93E0E3;">cont</span>: <span style="color: #F0DFAF; font-weight: bold;">function</span>(<span style="color: #DFAF8F;">t</span>) {
-                <span style="color: #F0DFAF; font-weight: bold;">return</span> accBounce(
+            <span style="color: #87cefa;">cont</span>: <span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">t</span>) {
+                <span style="color: #00ffff;">return</span> accBounce(
                     t-1,
                     res =&gt; {
-                        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+                        <span style="color: #00ffff;">return</span> {
                             cont: cont,
                             res: t+res
                         };
@@ -1107,67 +1107,67 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 </div>
 
-<div id="outline-container-org5f19993" class="outline-3">
-<h3 id="org5f19993">Emacs Lisp 突破 Fibonacci 的递归限制</h3>
-<div class="outline-text-3" id="text-org5f19993">
+<div id="outline-container-orgf5263c2" class="outline-3">
+<h3 id="orgf5263c2">Emacs Lisp 突破 Fibonacci 的递归限制</h3>
+<div class="outline-text-3" id="text-orgf5263c2">
 <p>
 个人也还挺喜欢 <code>Emacs Lisp</code>,所以展示一个在 <code>Emacs Lisp</code> 下的 <code>fib</code> 逐渐改成 <code>fib-bounce</code> 的过程.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">bounce</span>
-(<span style="color: #F0DFAF; font-weight: bold;">defstruct</span> (bounce
-            (<span style="color: #DCDCCC; font-weight: bold;">:constructor</span> nil)
-            (<span style="color: #DCDCCC; font-weight: bold;">:constructor</span> bounce (res cont)))
+<pre class="src src-elisp"><span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">bounce</span>
+(<span style="color: #00ffff;">defstruct</span> (bounce
+            (<span style="color: #b0c4de;">:constructor</span> nil)
+            (<span style="color: #b0c4de;">:constructor</span> bounce (res cont)))
   res cont)
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">tampoline</span>
-(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">tampoline</span> (b)
-  (<span style="color: #F0DFAF; font-weight: bold;">let*</span> ((kont (bounce-cont b))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">tampoline</span>
+(<span style="color: #00ffff;">defun</span> <span style="color: #87cefa;">tampoline</span> (b)
+  (<span style="color: #00ffff;">let*</span> ((kont (bounce-cont b))
          (val (bounce-res b))
          (res (funcall kont val)))
-    (<span style="color: #F0DFAF; font-weight: bold;">while</span> (bounce-p res)
-      (<span style="color: #F0DFAF; font-weight: bold;">setq</span>
+    (<span style="color: #00ffff;">while</span> (bounce-p res)
+      (<span style="color: #00ffff;">setq</span>
        kont (bounce-cont res)
        val (bounce-res res)
        res (funcall kont val)))
     res))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#24120;&#35268;&#29256;&#26412;</span>
-(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">fib</span> (n)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#24120;&#35268;&#29256;&#26412;</span>
+(<span style="color: #00ffff;">defun</span> <span style="color: #87cefa;">fib</span> (n)
+  (<span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">or</span> (= n 1) (= n 2))
       1
     (+ (fib (- n 2)) (fib (- n 1)))))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">cps&#29256;&#26412;</span>
-(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">fib/k</span> (n cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">cps&#29256;&#26412;</span>
+(<span style="color: #00ffff;">defun</span> <span style="color: #87cefa;">fib/k</span> (n cont)
+  (<span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">or</span> (= n 1) (= n 2))
       (funcall cont 1)
     (fib/k (- n 2)
-           (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+           (<span style="color: #00ffff;">lambda</span> (res1)
              (fib/k (- n 1)
-                    (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+                    (<span style="color: #00ffff;">lambda</span> (res2)
                       (funcall cont (+ res1 res2))))))))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#22522;&#20110;cps&#25913;&#20889;&#30340;bounce&#29256;&#26412;</span>
-(<span style="color: #F0DFAF; font-weight: bold;">defun</span> <span style="color: #93E0E3;">fib-bounce</span> (n cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">or</span> (= n 1) (= n 2))
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#22522;&#20110;cps&#25913;&#20889;&#30340;bounce&#29256;&#26412;</span>
+(<span style="color: #00ffff;">defun</span> <span style="color: #87cefa;">fib-bounce</span> (n cont)
+  (<span style="color: #00ffff;">if</span> (<span style="color: #00ffff;">or</span> (= n 1) (= n 2))
       (bounce 1 cont)
     (bounce n
-            (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t1)
+            (<span style="color: #00ffff;">lambda</span> (t1)
               (fib-bounce
                (- t1 2)
-               (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res1)
+               (<span style="color: #00ffff;">lambda</span> (res1)
                  (bounce
                   (- t1 1)
-                  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (t2)
+                  (<span style="color: #00ffff;">lambda</span> (t2)
                     (fib-bounce
                      t2
-                     (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (res2)
+                     (<span style="color: #00ffff;">lambda</span> (res2)
                        (bounce (+ res1 res2) cont)))))))))))
 
-(fib 1000) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#30452;&#25509;&#25253;&#38169;: Lisp nesting exceeds &#8216;</span><span style="color: #BFEBBF;">max-lisp-eval-depth</span><span style="color: #7F9F7F;">&#8217;</span>
-(tampoline (fib-bounce 1000 (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v) v))) <span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">&#38656;&#35201;&#24456;&#38271;&#26102;&#38388;&#26469;&#24471;&#20986;&#35745;&#31639;&#32467;&#26524;,&#20294;&#26159;&#19981;&#20250;&#35302;&#21457;&#36882;&#24402;&#38480;&#21046;&#32780;&#25253;&#38169;</span>
+(fib 1000) <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#30452;&#25509;&#25253;&#38169;: Lisp nesting exceeds &#8216;</span><span style="color: #7fffd4;">max-lisp-eval-depth</span><span style="color: #ff7f24;">&#8217;</span>
+(tampoline (fib-bounce 1000 (<span style="color: #00ffff;">lambda</span> (v) v))) <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">&#38656;&#35201;&#24456;&#38271;&#26102;&#38388;&#26469;&#24471;&#20986;&#35745;&#31639;&#32467;&#26524;,&#20294;&#26159;&#19981;&#20250;&#35302;&#21457;&#36882;&#24402;&#38480;&#21046;&#32780;&#25253;&#38169;</span>
 </pre>
 </div>
 </div>
@@ -1175,9 +1175,9 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 
 
-<div id="outline-container-org0388d40" class="outline-2">
-<h2 id="org0388d40">结语</h2>
-<div class="outline-text-2" id="text-org0388d40">
+<div id="outline-container-orga9df8d8" class="outline-2">
+<h2 id="orga9df8d8">结语</h2>
+<div class="outline-text-2" id="text-orga9df8d8">
 <p>
 还是觉得这篇东西有很多地方有欠缺,也说明了我对 <code>CPS</code> 的理解还不够深入.突然觉得 <code>EOPL</code> 写的很好,因为我能明白给我传达的知识,原来写一篇易懂的科普文是如此艰难,真的是佩服这些老前辈.
 </p>
@@ -1193,14 +1193,14 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 
 
-<div id="outline-container-orgfe51a99" class="outline-2">
-<h2 id="orgfe51a99">Update</h2>
-<div class="outline-text-2" id="text-orgfe51a99">
+<div id="outline-container-org3e55880" class="outline-2">
+<h2 id="org3e55880">Update</h2>
+<div class="outline-text-2" id="text-org3e55880">
 </div>
-<div id="outline-container-orgf30b18a" class="outline-3">
-<h3 id="orgf30b18a">如何把遍历树的递归改写为Trampoline的形式</h3>
-<div class="outline-text-3" id="text-orgf30b18a">
-<pre class="example">
+<div id="outline-container-orgf3b84e5" class="outline-3">
+<h3 id="orgf3b84e5">如何把遍历树的递归改写为Trampoline的形式</h3>
+<div class="outline-text-3" id="text-orgf3b84e5">
+<pre class="example" id="orgbc5241b">
 写于 2021/10/4 21:49
 </pre>
 
@@ -1229,19 +1229,19 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#26641;&#32467;&#26500;&#30340;&#23450;&#20041;</span>
-<span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">testData</span> = [
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26641;&#32467;&#26500;&#30340;&#23450;&#20041;</span>
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">testData</span> = [
     {
-        title: <span style="color: #CC9393;">'&#26631;&#39064;1'</span>,
+        title: <span style="color: #ffa07a;">'&#26631;&#39064;1'</span>,
         value: 5,
         children: [
             {
-                title: <span style="color: #CC9393;">'1-&#23376;&#26631;&#39064;'</span>,
+                title: <span style="color: #ffa07a;">'1-&#23376;&#26631;&#39064;'</span>,
                 value: 0,
                 children: []
             },
             {
-                title: <span style="color: #CC9393;">'1-&#23376;&#26631;&#39064;2'</span>,
+                title: <span style="color: #ffa07a;">'1-&#23376;&#26631;&#39064;2'</span>,
                 value: 3,
                 children: []
             }
@@ -1249,16 +1249,16 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
     },
 
     {
-        title: <span style="color: #CC9393;">'&#26631;&#39064;2'</span>,
+        title: <span style="color: #ffa07a;">'&#26631;&#39064;2'</span>,
         value: 6,
         children: [
             {
-                title: <span style="color: #CC9393;">'2-&#23376;&#26631;&#39064;'</span>,
+                title: <span style="color: #ffa07a;">'2-&#23376;&#26631;&#39064;'</span>,
                 value: 7,
                 children: []
             },
             {
-                title: <span style="color: #CC9393;">'2-&#23376;&#26631;&#39064;2'</span>,
+                title: <span style="color: #ffa07a;">'2-&#23376;&#26631;&#39064;2'</span>,
                 value: 8,
                 children: []
             }
@@ -1266,11 +1266,11 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
     },
 ];
 
-<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#26641;&#36941;&#21382;</span>
-<span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTree</span>(<span style="color: #DFAF8F;">tree</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> of tree) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26641;&#36941;&#21382;</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">iterTree</span>(<span style="color: #eedd82;">tree</span>) {
+    <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">node</span> <span style="color: #00ffff;">of</span> tree) {
         console.log(node.title);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+        <span style="color: #00ffff;">if</span> (node.children.length != 0) {
             iterTree(node.children);
         }
     }
@@ -1295,12 +1295,12 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeWithoutLoop</span>(<span style="color: #DFAF8F;">tree</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span> = tree.slice(1);
+<pre class="src src-javascript"><span style="color: #00ffff;">function</span> <span style="color: #87cefa;">iterTreeWithoutLoop</span>(<span style="color: #eedd82;">tree</span>) {
+    <span style="color: #00ffff;">if</span> (tree.length != 0) {
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">node</span> = tree[0];
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">treeRest</span> = tree.slice(1);
         console.log(node.title);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+        <span style="color: #00ffff;">if</span> (node.children.length != 0) {
             iterTreeWithoutLoop(node.children);
         }
         iterTreeWithoutLoop(treeRest);
@@ -1310,7 +1310,7 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </div>
 
 <p>
-要注意, <code>iterTreeWithoutLoop</code> 并不符合<a href="#org1643f6a">尾递归</a>的定义: 首先它进行了两次自身的调用,其次尾调用时并没有返回自身计算结果.
+要注意, <code>iterTreeWithoutLoop</code> 并不符合<a href="#org0271e41">尾递归</a>的定义: 首先它进行了两次自身的调用,其次尾调用时并没有返回自身计算结果.
 </p>
 
 <p>
@@ -1354,14 +1354,14 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeTail</span>(<span style="color: #DFAF8F;">tree</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+<pre class="src src-javascript"><span style="color: #00ffff;">function</span> <span style="color: #87cefa;">iterTreeTail</span>(<span style="color: #eedd82;">tree</span>) {
+    <span style="color: #00ffff;">if</span> (tree.length != 0) {
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">node</span> = tree[0];
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">treeRest</span>;
         console.log(node.title);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+        <span style="color: #00ffff;">if</span> (node.children.length != 0) {
             treeRest = node.children.concat(tree.slice(1));
-        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        } <span style="color: #00ffff;">else</span> {
             treeRest = tree.slice(1);
         }
         iterTreeTail(treeRest);
@@ -1383,19 +1383,19 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeTail</span>(<span style="color: #DFAF8F;">tree</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+<pre class="src src-javascript"><span style="color: #00ffff;">function</span> <span style="color: #87cefa;">iterTreeTail</span>(<span style="color: #eedd82;">tree</span>) {
+    <span style="color: #00ffff;">if</span> (tree.length != 0) {
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">node</span> = tree[0];
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">treeRest</span>;
         console.log(node.title);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+        <span style="color: #00ffff;">if</span> (node.children.length != 0) {
             treeRest = node.children.concat(tree.slice(1));
-        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        } <span style="color: #00ffff;">else</span> {
             treeRest = tree.slice(1);
         }
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> iterTreeTail(treeRest);
-    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">undefined</span>;
+        <span style="color: #00ffff;">return</span> iterTreeTail(treeRest);
+    } <span style="color: #00ffff;">else</span> {
+        <span style="color: #00ffff;">return</span> <span style="color: #7fffd4;">undefined</span>;
     }
 }
 </pre>
@@ -1406,19 +1406,19 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeCPS</span>(<span style="color: #DFAF8F;">tree</span>, <span style="color: #DFAF8F;">cont</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+<pre class="src src-javascript"><span style="color: #00ffff;">function</span> <span style="color: #87cefa;">iterTreeCPS</span>(<span style="color: #eedd82;">tree</span>, <span style="color: #eedd82;">cont</span>) {
+    <span style="color: #00ffff;">if</span> (tree.length != 0) {
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">node</span> = tree[0];
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">treeRest</span>;
         console.log(node.title);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+        <span style="color: #00ffff;">if</span> (node.children.length != 0) {
             treeRest = node.children.concat(tree.slice(1));
-        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        } <span style="color: #00ffff;">else</span> {
             treeRest = tree.slice(1);
         }
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> iterTreeCPS(treeRest, cont);
-    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> cont(<span style="color: #BFEBBF;">undefined</span>);
+        <span style="color: #00ffff;">return</span> iterTreeCPS(treeRest, cont);
+    } <span style="color: #00ffff;">else</span> {
+        <span style="color: #00ffff;">return</span> cont(<span style="color: #7fffd4;">undefined</span>);
     }
 }
 </pre>
@@ -1429,43 +1429,43 @@ console.log(trampoline(accBounce(50000, x =&gt; x)));
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">iterTreeBounce</span>(<span style="color: #DFAF8F;">tree</span>, <span style="color: #DFAF8F;">cont</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (tree.length != 0) {
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">node</span> = tree[0];
-        <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">treeRest</span>;
+<pre class="src src-javascript"><span style="color: #00ffff;">function</span> <span style="color: #87cefa;">iterTreeBounce</span>(<span style="color: #eedd82;">tree</span>, <span style="color: #eedd82;">cont</span>) {
+    <span style="color: #00ffff;">if</span> (tree.length != 0) {
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">node</span> = tree[0];
+        <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">treeRest</span>;
         console.log(node.title);
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (node.children.length != 0) {
+        <span style="color: #00ffff;">if</span> (node.children.length != 0) {
             treeRest = node.children.concat(tree.slice(1));
-        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        } <span style="color: #00ffff;">else</span> {
             treeRest = tree.slice(1);
         }
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+        <span style="color: #00ffff;">return</span> {
             cont: (val) =&gt; iterTreeBounce(val, cont),
             res: treeRest
         };
-        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">return iterTreeBounce(treeRest, cont);</span>
-    } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
-        <span style="color: #F0DFAF; font-weight: bold;">return</span> {
+        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">return iterTreeBounce(treeRest, cont);</span>
+    } <span style="color: #00ffff;">else</span> {
+        <span style="color: #00ffff;">return</span> {
             cont: cont,
-            res: <span style="color: #BFEBBF;">undefined</span>
+            res: <span style="color: #7fffd4;">undefined</span>
         };
-        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">return cont(undefined);</span>
+        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">return cont(undefined);</span>
     }
 }
 
-<span style="color: #F0DFAF; font-weight: bold;">function</span> <span style="color: #93E0E3;">trampoline</span>(<span style="color: #DFAF8F;">bounce</span>) {
-    <span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">res</span>;
-    <span style="color: #F0DFAF; font-weight: bold;">while</span> (1) {
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (bounce) {
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">trampoline</span>(<span style="color: #eedd82;">bounce</span>) {
+    <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">res</span>;
+    <span style="color: #00ffff;">while</span> (1) {
+        <span style="color: #00ffff;">if</span> (bounce) {
             res = bounce.cont(bounce.res);
             bounce = res;
-        } <span style="color: #F0DFAF; font-weight: bold;">else</span> {
-            <span style="color: #F0DFAF; font-weight: bold;">return</span> res;
+        } <span style="color: #00ffff;">else</span> {
+            <span style="color: #00ffff;">return</span> res;
         }
     }
 }
 
-<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#26368;&#21518;&#27979;&#35797;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26368;&#21518;&#27979;&#35797;</span>
 trampoline(iterTreeBounce(testData, val =&gt; val));
 </pre>
 </div>
@@ -1484,8 +1484,8 @@ trampoline(iterTreeBounce(testData, val =&gt; val));
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-06-20</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

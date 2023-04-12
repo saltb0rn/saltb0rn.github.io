@@ -1,3 +1,5 @@
 - [[file:../posts/2021/03/remainder-vs-modulo.org][取余和取模的区别]]
 - [[file:../posts/2021/10/math-proofs.org][数学证明]]
 - [[file:../posts/2021/11/cake-cut.org][切饼问题]]
+- [[file:../posts/2022/12/reading-note-of-calculus-early-transcendentals-th.org][Calculus: Early Transcendentals 8th Edition 阅读笔记]]
+- [[file:../posts/2023/02/trig-deg-sin-cos-tan.org][三角形-关于90度的Sine,Cosine以及Tangent]]

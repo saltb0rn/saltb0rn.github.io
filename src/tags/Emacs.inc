@@ -1,3 +1,2 @@
 - [[file:../posts/2018/05/blog-with-emacs.org][Blog with Emacs and Org mode]]
-- [[file:../posts/2018/08/emacs-tips-2.org][Emacs Tips(持续更新)]]
 - [[file:../posts/2018/08/emacs-tips.org][Emacs Tips(持续更新)]]

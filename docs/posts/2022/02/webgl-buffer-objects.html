@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-08-16 二 20:24 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:43 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>OpenGL/WebGL自救指南</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,52 +197,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -256,9 +210,30 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">OpenGL/WebGL自救指南</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#how-gl-works">WebGL是如何工作的</a></li>
+<li><a href="#how-gl-store-data">OpenGL/WebGL 上下文是如何储存数据</a></li>
+<li><a href="#how-gl-use-data">OpenGL/WebGL 上下文是如何使用数据</a></li>
+<li><a href="#glsl-type-qualifier-overview">GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</a>
+<ul>
+<li><a href="#org03243e1">Vertex Shader</a>
+<ul>
+<li><a href="#orgfb4bdc7">attribute</a></li>
+<li><a href="#orgd92c98d">uniform</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org9f394be">搭建自己的 Shadertoy</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org25f8a7b">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -293,7 +268,7 @@ for the JavaScript code in this tag.
 
 </div>
 
-<div id="outline-container-org26cbb24" class="outline-2">
+<div id="outline-container-how-gl-works" class="outline-2">
 <h2 id="how-gl-works">WebGL是如何工作的</h2>
 <div class="outline-text-2" id="text-how-gl-works">
 <p>
@@ -320,7 +295,7 @@ for the JavaScript code in this tag.
 </p>
 
 
-<div class="figure">
+<div id="org988c7fc" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif">
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
@@ -371,7 +346,7 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元;
+其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元;
 </p>
 
 <p>
@@ -379,30 +354,30 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-为了刚直观的理解, 我直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
+为了更直观地理解, 我直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
 </p>
 
 
-<div class="figure">
+<div id="org70db97f" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>模板测试</p>
 </div>
 
 <p>
-可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个元素的值的范围是 0 到 255,
+可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
 </p>
 
 <p>
-模板测试就是比较对应位置上的元素值和片元模板值, 比如像上面图那样, 只有模板值等于1的片元才能被保留下来.
+模板测试就是比较对应位置上的像素素值和片元模板值, 比如像上面图那样, 只有模板值等于 1 的片元才能被保留下来.
 </p>
 
 <p>
-当然判断方法也有可能是大于等于1, 判断方法不是唯一的, 其他方法可以看<a href="https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test">官方文档</a>.
+当然判断方法也有可能是大于等于 1, 判断方法不是唯一的, 其他方法可以看<a href="https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test">官方文档</a>.
 </p>
 
 <p>
-现在对片元的存在有一个充分的了解了, 那么开发人员需要在 <code>Fragment Shader</code> 里面做些什么呢? 其实就是设定片元的颜色(设置 <code>gl_FragColor</code>).
+现在对片元的存在有一个充分的了解了, 那么开发人员需要在 <code>Fragment Shader</code> 里面做些什么呢? 其实就是给通过层层测试后的片元设置颜色(设置 <code>gl_FragColor</code>).
 </p></li>
 </ul>
 
@@ -429,7 +404,7 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org5faf13c" class="outline-2">
+<div id="outline-container-how-gl-store-data" class="outline-2">
 <h2 id="how-gl-store-data">OpenGL/WebGL 上下文是如何储存数据</h2>
 <div class="outline-text-2" id="text-how-gl-store-data">
 <p>
@@ -441,13 +416,13 @@ for the JavaScript code in this tag.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;&#21306;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
-<span style="color: #F0DFAF; font-weight: bold;">let</span> <span style="color: #DFAF8F;">buffer</span> = gl.createBuffer();
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;&#21306;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">buffer</span> = gl.createBuffer();
 
-<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;&#21306;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#21306;&#36827;&#34892;&#25805;&#20316;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;&#21306;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#21306;&#36827;&#34892;&#25805;&#20316;</span>
 gl.bindBuffer(target, buffer);
 
-<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
 gl.bufferData(target, data, usage);
 </pre>
 </div>
@@ -483,7 +458,7 @@ gl.bufferData(target, data, usage);
 </div>
 
 
-<div id="outline-container-orga8deff1" class="outline-2">
+<div id="outline-container-how-gl-use-data" class="outline-2">
 <h2 id="how-gl-use-data">OpenGL/WebGL 上下文是如何使用数据</h2>
 <div class="outline-text-2" id="text-how-gl-use-data">
 <p>
@@ -529,7 +504,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 
-<div class="figure">
+<div id="orgae20fdb" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>vertexAttribPointer</p>
@@ -582,7 +557,7 @@ gl.bufferData(target, data, usage);
 </div>
 
 
-<div id="outline-container-org46cd42b" class="outline-2">
+<div id="outline-container-glsl-type-qualifier-overview" class="outline-2">
 <h2 id="glsl-type-qualifier-overview">GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</h2>
 <div class="outline-text-2" id="text-glsl-type-qualifier-overview">
 <p>
@@ -639,9 +614,9 @@ gl.bufferData(target, data, usage);
 </div>
 
 
-<div id="outline-container-org15cfb3c" class="outline-3">
-<h3 id="org15cfb3c">Vertex Shader</h3>
-<div class="outline-text-3" id="text-org15cfb3c">
+<div id="outline-container-org03243e1" class="outline-3">
+<h3 id="org03243e1">Vertex Shader</h3>
+<div class="outline-text-3" id="text-org03243e1">
 <p>
 在<a href="#how-gl-use-data">第 3 章</a>里面我们已经知道怎么把顶点数据传给 <code>GPU</code> 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
 </p>
@@ -651,9 +626,9 @@ gl.bufferData(target, data, usage);
 </p>
 </div>
 
-<div id="outline-container-orge549e95" class="outline-4">
-<h4 id="orge549e95">attribute</h4>
-<div class="outline-text-4" id="text-orge549e95">
+<div id="outline-container-orgfb4bdc7" class="outline-4">
+<h4 id="orgfb4bdc7">attribute</h4>
+<div class="outline-text-4" id="text-orgfb4bdc7">
 <p>
 它在这篇文章里面第一个被介绍的修饰符, 它属于存储修饰符, 被它修饰后的变量可以简单理解为 <code>Vertex Shader</code> 的输入,
 </p>
@@ -672,9 +647,9 @@ gl.bufferData(target, data, usage);
 </div>
 </div>
 
-<div id="outline-container-orgabfa001" class="outline-4">
-<h4 id="orgabfa001">uniform</h4>
-<div class="outline-text-4" id="text-orgabfa001">
+<div id="outline-container-orgd92c98d" class="outline-4">
+<h4 id="orgd92c98d">uniform</h4>
+<div class="outline-text-4" id="text-orgd92c98d">
 <p>
 例子里面传入了两个 <code>uniform</code> 变量, 这种变量是全局的, 它可以在整个图元(<code>primitive</code>)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
 </p>
@@ -692,9 +667,9 @@ gl.bufferData(target, data, usage);
 </div>
 
 
-<div id="outline-container-orgde44508" class="outline-2">
-<h2 id="orgde44508">搭建自己的 Shadertoy</h2>
-<div class="outline-text-2" id="text-orgde44508">
+<div id="outline-container-org9f394be" class="outline-2">
+<h2 id="org9f394be">搭建自己的 Shadertoy</h2>
+<div class="outline-text-2" id="text-org9f394be">
 <p>
 如果想在编写 <code>shader</code> 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 <code>shader</code> 并从中学习, 自己还要动手实践.
 </p>
@@ -800,8 +775,8 @@ gl.bufferData(target, data, usage);
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2022-02-11</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

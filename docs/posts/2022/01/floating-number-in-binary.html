@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:43 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>计算机眼中的浮点数</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,74 +197,38 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
 
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
-             }
-});
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
 </script>
-<script type="text/javascript"
-        src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -278,18 +242,28 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">计算机眼中的浮点数</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org377ac3d">二进制下的浮点数</a></li>
+<li><a href="#orge4afcbd">浮点数转二进制</a></li>
+<li><a href="#orgbfe7740">二进制转浮点数</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org294cfab">
 <p>
 pass
 </p>
 
 </div>
 
-<div id="outline-container-orga24f186" class="outline-2">
-<h2 id="orga24f186">二进制下的浮点数</h2>
-<div class="outline-text-2" id="text-orga24f186">
+<div id="outline-container-org377ac3d" class="outline-2">
+<h2 id="org377ac3d">二进制下的浮点数</h2>
+<div class="outline-text-2" id="text-org377ac3d">
 <p>
 在数学里面,\(r\) 进制下的任何 \(n\) 位正整数都可以写成这种形式: \(bit_{n-1} \times r^{n-1} + bit_{n-2} \times r^{n-2} + ... + bit_{1} \times r^{1} + bit_{0} \times r^{0}\), \(bit\) 的下标表示该位对应的序号(从0开始).
 </p>
@@ -319,14 +293,14 @@ pass
 </p>
 
 
-<div class="figure">
+<div id="orgb8723fd" class="figure">
 <p><img src="../../../files/IEEE-754-float_example.png" alt="IEEE-754-float_example.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>一个IEEE-754标准浮点数的二进制例子</p>
 </div>
 
 <p>
-这套编码标准实际上对应的是科学记数法的: <a id="orgf01a223"></a>\((-1)^{sign} \times fraction \times base^{exponent}\), 其中 \(base\) 是表示多少进制.
+这套编码标准实际上对应的是科学记数法的: <a id="org4fe26dc"></a>\((-1)^{sign} \times fraction \times base^{exponent}\), 其中 \(base\) 是表示多少进制.
 </p>
 
 <p>
@@ -342,11 +316,11 @@ pass
 </p>
 
 <p>
-16-bit: <font style="background-color: #c6fcff; style: ;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; style: ;"> Exponent</font>{6 bits}-<font style="background-color: #ffb0ae; style: ;"> Fraction</font>{9 bits}
+16-bit: <font style="background-color: #c6fcff; color: #333;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; color: #333;"> Exponent</font>{6 bits}-<font style="background-color: #ffb0ae; color: #333;"> Fraction</font>{9 bits}
 <br>
-32-bit: <font style="background-color: #c6fcff; style: ;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; style: ;"> Exponent</font>{8 bits}-<font style="background-color: #ffb0ae; style: ;"> Fraction</font>{23 bits}
+32-bit: <font style="background-color: #c6fcff; color: #333;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; color: #333;"> Exponent</font>{8 bits}-<font style="background-color: #ffb0ae; color: #333;"> Fraction</font>{23 bits}
 <br>
-64-bit: <font style="background-color: #c6fcff; style: ;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; style: ;"> Exponent</font>{11 bits}-<font style="background-color: #ffb0ae; style: ;"> Fraction</font>{52 bits}
+64-bit: <font style="background-color: #c6fcff; color: #333;">Sign</font>{1 bit}-<font style="background-color: #a0ffae; color: #333;"> Exponent</font>{11 bits}-<font style="background-color: #ffb0ae; color: #333;"> Fraction</font>{52 bits}
 </p>
 
 <p>
@@ -356,9 +330,9 @@ pass
 </div>
 
 
-<div id="outline-container-orgfdf578b" class="outline-2">
-<h2 id="orgfdf578b">浮点数转二进制</h2>
-<div class="outline-text-2" id="text-orgfdf578b">
+<div id="outline-container-orge4afcbd" class="outline-2">
+<h2 id="orge4afcbd">浮点数转二进制</h2>
+<div class="outline-text-2" id="text-orge4afcbd">
 <p>
 34.890625
 </p>
@@ -449,7 +423,7 @@ pass
 </p>
 
 <p>
-可以得到前面提到过的<a href="#orgf01a223">科学记数法公式</a>里的 <font style="background-color: #a0ffae; style: ;"> exponent</font> 为 5,所以 <font style="background-color: #a0ffae; style: ;"> exponent</font> 的二进制就是 5 的二进制吗?
+可以得到前面提到过的<a href="#org4fe26dc">科学记数法公式</a>里的 <font style="background-color: #a0ffae; color: #333;"> exponent</font> 为 5,所以 <font style="background-color: #a0ffae; color: #333;"> exponent</font> 的二进制就是 5 的二进制吗?
 </p>
 
 <p>
@@ -477,19 +451,19 @@ pass
 </p>
 
 <p>
-在了解移码是如何影响数字的排序前,我们先来实践一下,把得到的指数 5 编码成移码,从而求得 <font style="background-color: red; style: ;"> exponent</font>.
+在了解移码是如何影响数字的排序前,我们先来实践一下,把得到的指数 5 编码成移码,从而求得 <font style="background-color: red; color: #333;"> exponent</font>.
 </p>
 
 <p>
-在 <code>IEEE 754</code> 的 32 位编码中,移码的偏移量(bias)是 127,那么可以推算出 <font style="background-color: red; style: ;"> exponent</font> 为 \(127 + 5 = 132\),
+在 <code>IEEE 754</code> 的 32 位编码中,移码的偏移量(bias)是 127,那么可以推算出 <font style="background-color: red; color: #333;"> exponent</font> 为 \(127 + 5 = 132\),
 </p>
 
 <p>
-再把 132 转化为二进制就能得到 <font style="background-color: red; style: ;"> exponent</font> 为 #b1000 0100.
+再把 132 转化为二进制就能得到 <font style="background-color: red; color: #333;"> exponent</font> 为 #b1000 0100.
 </p>
 
 <p>
-移码的偏移量 \(bias\) 是由编码方案定的, 它和 <font style="background-color: red; style: ;"> exponent</font> 的位数 \(k\) 存在一个关系: \(2^{k-1} - 1\),
+移码的偏移量 \(bias\) 是由编码方案定的, 它和 <font style="background-color: red; color: #333;"> exponent</font> 的位数 \(k\) 存在一个关系: \(2^{k-1} - 1\),
 </p>
 
 <p>
@@ -529,28 +503,28 @@ pass
 </p>
 
 <p>
-根据前面的步骤可以得知 <font style="background-color: #ffb0ae; style: ;"> fraction</font> 是对 \(1.00010111001\) 的编码,在科学记数法的二进制版本表示中,
+根据前面的步骤可以得知 <font style="background-color: #ffb0ae; color: #333;"> fraction</font> 是对 \(1.00010111001\) 的编码,在科学记数法的二进制版本表示中,
 </p>
 
 <p>
-小数点是一定会位于最高1后面的,既然1是大家都知道的了,那就没必要存起来了,所以就变成对 <font style="background-color: red; style: ;"> 00010111001</font> 的编码了,
+小数点是一定会位于最高1后面的,既然1是大家都知道的了,那就没必要存起来了,所以就变成对 <font style="background-color: red; color: #333;"> 00010111001</font> 的编码了,
 </p>
 
 <p>
-并且由于32位下的 <font style="background-color: #ffb0ae; style: ;"> fraction</font> 是 23 位,因此整个 <font style="background-color: #ffb0ae; style: ;"> fraction</font> 为 <font style="background-color: #ffb0ae; style: ;"> 000 1011 1001</font><font style="background-color: blue; style: ;"> 0000 0000 0000</font>.
+并且由于32位下的 <font style="background-color: #ffb0ae; color: #333;"> fraction</font> 是 23 位,因此整个 <font style="background-color: #ffb0ae; color: #333;"> fraction</font> 为 <font style="background-color: #ffb0ae; color: #333;"> 000 1011 1001</font><font style="background-color: blue; color: #333;"> 0000 0000 0000</font>.
 </p>
 
 <p>
-因此 34.890625 在 <code>IEEE 754</code> 的 32 位编码标准下的二进制为 <font style="background-color: #c6fcff; style: ;"> 0</font> <font style="background-color: #a0ffae; style: ;"> 100 0010 0</font> <font style="background-color: #ffb0ae; style: ;"> 000 1011 1001 0000 0000 0000</font>.
+因此 34.890625 在 <code>IEEE 754</code> 的 32 位编码标准下的二进制为 <font style="background-color: #c6fcff; color: #333;"> 0</font> <font style="background-color: #a0ffae; color: #333;"> 100 0010 0</font> <font style="background-color: #ffb0ae; color: #333;"> 000 1011 1001 0000 0000 0000</font>.
 </p></li>
 </ol>
 </div>
 </div>
 
 
-<div id="outline-container-org3a40a35" class="outline-2">
-<h2 id="org3a40a35">二进制转浮点数</h2>
-<div class="outline-text-2" id="text-org3a40a35">
+<div id="outline-container-orgbfe7740" class="outline-2">
+<h2 id="orgbfe7740">二进制转浮点数</h2>
+<div class="outline-text-2" id="text-orgbfe7740">
 <p>
 0 10000100 00010111001000000000000
 </p>
@@ -572,8 +546,8 @@ fraction-part/mantissa-part: \(0001.0111001000000000000 \rightarrow 1 \times 2^{
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2022-01-13</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

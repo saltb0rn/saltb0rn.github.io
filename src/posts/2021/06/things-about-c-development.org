@@ -31,7 +31,6 @@
 
     这篇笔记通篇都使用了这些工具, 很多工具的用法只会简单介绍一下, 更多的内容请自行阅读 =man page=.
 
-
 *** 关于使用 GCC 的须知事项
 
 **** 预处理阶段的一些细节
@@ -276,7 +275,7 @@
 
      在 =GCC= 眼中, 源码文件的 =.h= 和 =.c= 后缀都是没有意义上不同的, 它不会知道 =.h= 就是主要用于提供声明, =.c= 提供定义.
 
-     那么为什么开发人员需要这种区分呢? 这就要从一个最简单且完整的 =C= 程序说起, 它是:
+     那么为什么开发人员需要这种区分呢? 这就要从一个最简单且完整的 =C= 程序说起:
 
      #+BEGIN_SRC c
      // simple-c.c
@@ -321,7 +320,7 @@
 
      这是因为 =GCC= 是逐行编译导致的, 它每处理一条句时都会对遇到里面的变量/函数名字查找到其对应的信息,
 
-     比如这个变量是什么类型, 这个函数接收什么样的参数, 返回什么样的值啊等等, 编译器需要根据这些信息估算要使用的内存空间.
+     检测这个变量是什么类型, 这个函数接收什么样的参数以及返回什么样的值, 编译器需要根据这些信息估算要使用的内存空间以及评估你的程序是否存在什么问题.
 
      但是在第二种的情况下编译时, =GCC= 是先编译 =main=, 在 =main= 里面找 =func= 的定义, 这个时候编译器还不清楚 =func= 长什么样,
 
@@ -348,7 +347,7 @@
 
      我们姑且先把这一次的版本叫做最终版吧, 第一个版本叫做初版.
 
-     可以看到最终版里面的声明只提供函数的名字, 其参数类型以及返回值, 这些信息是必须的, 后续的定义里面这些关键信息要保持一致;
+     可以看到最终版里面的声明只提供函数的名字, 其参数类型以及返回值, 这些信息是必须的, 后续的定义需要和这些关键信息要保持一致;
 
      而参数名则是可选信息, 即便是写了, 也不需要和定义里头的参数名一样, 但为了代码可读性还是建议写上.
 
@@ -362,7 +361,17 @@
      collect2: error: ld returned 1 exit status
      #+END_SRC
 
-     当不在源代码里面提供 =func= 的定义时, 编译器会认为 =func= 的定义会在别的地方, 等编译完了就交给连接器在连接时去找 =func= 的定义, 由于没有找到对应的定义, 于似乎它报错了.
+     在 =C= 语言里面, 如果声明前面没有加任何 =extern= 和 =static= 关键字, 就默认 =extern= 关键字,
+
+     =extern= 就是告诉编译器模块引用的定义可能由别的模块提供;
+
+     =static= 关键字则告诉编译器模块内的定义不能被其它模块引用.
+
+     由于声明默认是 =extern= 关键字, 因此, =extern= 的一般是用来暗示引用其它模块中的定义, 没有实质作用.
+
+     回到例子中, 当不在源代码里面提供 =func= 的定义时, 编译器就会认为 =func= 的定义会在别的地方,
+
+     等编译完了就交给连接器在连接时去找 =func= 的定义, 由于没有找到对应的定义, 于似乎它报错了.
 
      解决这个问题除了把注释解除掉外, 还可以在使用 =GCC= 编译时让它连接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
 
@@ -380,7 +389,7 @@
 
      #+BEGIN_SRC c
      // simple-c.c
-     int func( int, int );
+     extern int func( int, int );
 
      int main(int argc, char **argv) {
        func(1, 2);
@@ -421,6 +430,10 @@
        gcc -o simple-c simple-c.c -lsimple-c-func -L.
        #+END_SRC
 
+       这里的 =-lsimple-c-func= 就是让 =simple-c= 和 =simple-c-func.a= 进行链接,
+
+       =GCC= 的 =-l= 选项就是用来指定要连接的链接库名; =-L= 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
+
      \\
 
      *动态连接* 如下:
@@ -434,7 +447,7 @@
 
      由于编译得到的程序的文件格式是 =ELF=, 并且我们这个库并非在系统搜索的路径里面,
 
-     因此我们需要告诉 =ld= 该连接生成的程序需要从自身当前位置查找 =libsimple-c-func.so=.
+     因此我们需要告诉 =ld= 该连接生成的程序在 *运行时* 需要从自身当前位置查找 =libsimple-c-func.so=,
 
      如果 =libsimple-c-func.so= 是位于 =ld= 默认的库查找路径上, 那么最后的编译命令可以写成:
 
@@ -489,7 +502,10 @@
 
      #+BEGIN_SRC c
      // simple-c-func.h
+     #ifndef SIMPLE_C_FUNC_H
+     #define SIMPLE_C_FUNC_H
      int func( int, int )
+     #endif
      #+END_SRC
 
      #+BEGIN_SRC c
@@ -594,22 +610,299 @@
     比如说前面的 =simple-c= 的动态连接构成的步骤用一个 =Makefile= 解决:
 
     #+BEGIN_SRC makefile
-    simple-c:  simple-c.c simple-c-func.so
-      gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
-    simple-c-func.so: simple-c-func.c
-      gcc -shared simple-c-func.c -o libsimple-c-func.so
+      simple-c:  simple-c.c simple-c-func.so
+              gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+      simple-c-func.so: simple-c-func.c
+              gcc -shared simple-c-func.c -o libsimple-c-func.so
     #+END_SRC
+
+    (*注意*, 这里的缩进是一定要用制作表符 =tab= 而不是空格 =space=, 否者语法不对).
 
     接着执行 =make= 命令就会执行构建.
 
     像这种简单的项目手写 =Makefile= 还是很方便的, 但等到项目复杂度上来了, 编写复杂度也会随之上去, 如果还要考虑平台移植问题, 还有可能需要为别的平台写多一份 =Makefile=.
 
-    在 1991 年的时候, 有个名为 =David J. MacKenzie= 的程序员厌倦了为 20 个系统(=*nix= 平台)单独写 =Makefile= 的任务, 于是他写了一个叫做 =configure= 的脚本来根据系统生成 =Makefile=, 只要执行 =./configure && make= 就能开始构建.
+    在 1991 年的时候, 有个名为 =David J. MacKenzie= 的程序员厌倦了为 20 个系统(=*nix= 平台)单独写 =Makefile= 的任务, 因为每个操作系统上的编译器/连接器/头文件/库文件的路径不一定相同,
 
-    后来 =GNU= 把这套流程标准化了, 推出了自己的构建系统(=GNU build system=): 使用一套工具去生成 =configure= 脚本, 再执行 =./configure && make=.
+    于是他写了一个叫做 =configure= 的脚本来根据系统生成 =Makefile=, 只要执行 =./configure && make= 就能开始构建.
 
-    其实有还有很多类似的构建系统, 相比专注于 =*nix= 系统的 =GNU= 构建系统, 能够做跨平台构建的 =CMake= 是一个很不错的选择:
+    后来 =GNU= 把这套流程标准化了, 推出了自己的构建系统(=GNU build system=): 使用一套工具去生成 [[https://www.gnu.org/prep/standards/html_node/Configuration.html][configure]] 脚本, 再执行 =./configure && make=.
+
+    (有些开源项目不一定有 =configure= 脚本的, 这种项目一般会给你准备好 =Makefile= 文件.)
+
+    这里有一篇关于 [[https://thoughtbot.com/blog/the-magic-behind-configure-make-make-install][GNU 构建系统的入门介绍]]([[https://zhuanlan.zhihu.com/p/77813702][中文翻译]]) 这里就不介绍了.
+
+    其实有还有很多类似的构建系统, 相比专注于 =*nix= 系统的 =GNU= 构建系统, 能够做跨平台构建的 =CMake= 是一个很不错的选择,
 
     在 =*nix= 上能够和 =GNU= 构建系统那样最终生成 =Makefile=;
 
     在 =Windows= 上能够像 =Visual Studio= 构建系统那样最终生成 =sln= 文件.
+
+    在 =*nix= 上虽然有各种各样的构建工具帮助你生成 =Makefile=, 但作为开发人员还是要对它有一定的了解的, 这里有两篇不错的教程, 可以任选一篇来学习:
+
+    - [[https://makefiletutorial.com/#getting-started][Makefile 指南]]
+
+    - [[https://seisman.github.io/how-to-write-makefile/index.html][跟我一起写Makefile]]
+
+# *** 内存检测工具
+
+    # =Valgrind= 以及 =ASAN=
+
+# *** 交叉编译
+
+    # http://retroshare.sourceforge.net/wiki/index.php/Ubuntu_cross_compilation_for_Windows
+
+    # https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html
+
+    # https://www.darlinghq.org/
+
+
+*** 关于 C 语言
+    :PROPERTIES:
+    :CUSTOM_ID: about-c
+    :END:
+
+    =C= 语言的语法主要分两种 =K&R C= (=Kernighan and Ritchie=) 和 =ANSI C=.
+
+    =K&R C= 语法出现在 1978 年发行 "The C Programming Language" 的第一版中.
+
+    由于早期的 =C= 语言和 =Lisp= 一样存在语法存在差别的方言, 于是人们就对 =C= 语言的语法进行规范化,
+
+    而 =Kernighan= 和 =Ritchie= 也参与其中.
+
+    这场运动的结果就是在 1989 年诞生出 =ANSI C= 语法, 终结了其它 =C= 方言的发展并且自身还在不断发展.
+
+    同时 =ISO= 组织把 =ANSI C= 加入 =ISO= 的大家庭里面成为 =ISO C=, =ANSI C= 和 =ISO C= 的差别只在于格式和排版,
+
+    因此对于开发者来说是一样的.
+
+    有一些老书籍以及其配套代码和老项目在使用 =K&R C= 的语法, 如果有阅读需求的话则需要了解一下 =K&R C= 的一些独特语法.
+
+    =K&R C= 的版本号叫 =C78=, 而第一版的 =ANSI C= 版本号叫做 =C89=, 后面的数字代表它们的发布时间, 后面的版本号也是这个规律.
+
+
+**** 读懂 C 的声明语法
+     :PROPERTIES:
+     :CUSTOM_ID: how-to-read-c-declarations
+     :END:
+
+     =C/C++= 语言的声明语法基本上都是一样, 并且都很难阅读, 个人觉得直接看它们的声明语法也不太直观, 你可以在[[https://www.open-std.org/jtc1/sc22/wg14/www/projects#9899][这里]]找到 C 语言的标准, 看看里面的 =Language-Declarations= 那一节.
+
+     于是搜索了一番 =how to read c declarations= 看看有没有更加好用的技巧, 结果还真的有: [[https://c-faq.com/decl/spiral.anderson.html][顺时针螺旋法]](. 如果该链接挂了,请阅读[[../../../files/spiral-anderson.html][这里]].)
+
+**** 指针
+     :PROPERTIES:
+     :CUSTOM_ID: how-to-master-c-pointer
+     :END:
+
+     很多人都说 C 语言的指针很难, 个人认为他们每个人说的难可能实际上都不是指同一个东西.
+
+     首先我认为难是因为这两个原因中的任意一个或者全部: 指针的声明难以阅读; 不了解程序的内存管理, 不知道指针就是内存地址.
+
+     第一个问题在前面的[[#how-to-read-c-declarations][读懂 C 的声明语法]]就有答案了,
+
+     第二个问题这就需要你去了解汇编语言了, 只有了解 C 源码编译成汇编时指针是什么样的, 才能掌握指针的用法.
+
+     指针是 =C= 这类语言的内存管理之道, 哪怕是深谙用法的老练开发人员也很难确保不会因疏忽导致出现[[https://en.wikipedia.org/wiki/Memory_safety#Types_of_memory_errors][内存安全问题]].
+
+     新手最常见的疏忽就是使用 =malloc= 在堆上申请了内存区域却忘记使用 =free= 进行释放, =C++= 里面有 =RAII= 来解决这个问题,
+
+     然而这也没有完全杜绝内存安全问题, 这是因为出现安全问题的原因很多.
+
+     通常开发人员会使用一写工具提示哪里出了内存安全问题, 在 =Linux/Unix= 环境上(=Windows= 有 =WSL=)可以使用 =Valgrind= 来进行检测.
+
+     使用的方法很简单, 在编译的时候开启调试信息生成, 比如要对前面的 =simple-c= 进行检测, 那么就需要这么编译:
+
+     #+BEGIN_SRC makefile
+       simple-c:  simple-c.c simple-c-func.so
+               gcc -g -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+       simple-c-func.so: simple-c-func.c
+               gcc -g -shared simple-c-func.c -o libsimple-c-func.so
+     #+END_SRC
+
+     每个编译命令都加载 =-g= 选项, 否者 =Valgrind= 就会提示你的源代码的问题在第几行,
+
+     最好在加上 =-O0= (Letter "O" and Digit Zero) 选项取消优化来保证调试信息达到最精确, 但其实默认优化 =-O1= 在大部分情况下也够用.
+
+     之后就是根据 =Valgrind= 的信息来修正程序错误了, 因此掌握 =Valgrind= 的关键是理解其[[https://valgrind.org/docs/manual/mc-manual.html#mc-manual.errormsgs][错误信息]]的含义.
+
+     最后, 个人建议任何人都应该仔细看一遍 =Valgrind= 的[[https://valgrind.org/docs/manual/quick-start.html][上手教程]], 特别是 =Caveats= 部分.
+
+**** 未定义行为 (undefined behavior, UB)
+     :PROPERTIES:
+     :CUSTOM_ID: what-is-undefined-behavior
+     :END:
+
+     未定义是指语言规范并未说明该情况该如何处理, 这种情况就是未定义行为.
+
+     不同的编译器对未定义行为的处理是不一样的, 因此代码里面不要有这种行为,
+
+     比如下面这种,
+
+     #+BEGIN_SRC c
+     #include <stdio.h>
+     int main(int argc, char* args[]) {
+         int i = 1;
+         printf("Unpredictable result: %d\n", (++i) + (++i));
+         return 0;
+     }
+     #+END_SRC
+
+     =GCC= 编译得到的程序, 其计算结果是 6; 而 =Clang= 编译后得到的程序的计算结果是 5.
+
+     这是只是其中一种未定义行为, [[https://en.wikipedia.org/wiki/Undefined_behavior][维基百科]]上总结其它情况, 有兴趣可以看一下.
+
+**** 函数的参数声明
+     :PROPERTIES:
+     :CUSTOM_ID: arguments-in-function-declaration
+     :END:
+
+     按照参数个数来分类的话, =C= 语言的函数声明共有 4 种.
+
+     以声明加法函数 add 为例,
+
+     - 带参数类型
+
+       #+BEGIN_SRC c
+       int add (int a, int b);
+       #+END_SRC
+
+       或者
+
+       #+BEGIN_SRC c
+       int add (int, int);
+       #+END_SRC
+
+     - 禁止调用时被传入参数
+
+       #+BEGIN_SRC c
+       int add (void);
+       #+END_SRC
+
+       这种声明方法实际上是第一种声明的特例, 调用这种函数的时候不能传入任何参数.
+
+     - 不声明任何参数, 但调用时可以传入任意参数
+
+       #+BEGIN_SRC c
+       int add ();
+       #+END_SRC
+
+       这种声明法一般是搭配 =extern= 来用, 链接时引用外部的 =add= 函数,
+
+       而外部的 =add= 函数参数声明可能会有几种情况, 比如 =int add (int, int)= 和 =int add (int, int, int)=.
+
+       那么 =int add ()= 这种声明方法就能够很好地兼容这两种情况.
+
+       #+BEGIN_QUOTE
+       =C= 语言的前身是 =B= 语言, =B= 语言的函数是没有类型的. =C= 继承了这点, 只是后来的标准添加了类型支持.
+
+       为了向后兼容已有的旧代码, 编译器就允许这种空参数列表的函数声明. (从这点看, =C= 语言不折不扣的是一门弱类型语言.)
+
+       拿 =GCC= 来说, 如果你想编译器严格执行类型检查, 那么在编译时使用 [[https://gcc.gnu.org/onlinedocs/gcc-4.4.0/gcc/Warning-Options.html][-Wstrict-prototypes]] 选项提示警告.
+
+       严格上来说这是 =K&R C= 的语法, 只是对于从 =ANSI C= 上手的人(本人就是)而言初看不起眼, 细看吓一跳.
+
+       同样的惊喜还出现在函数的定义上, 假设 =add= 是一个把两个整数相加再返回整数的函数,
+
+       在 =K&R C= 里面是这么定义的:
+
+       #+BEGIN_SRC c
+         int add (a, b)
+              int a;
+              int b;
+         {
+           return a + b;
+         }
+       #+END_SRC
+
+       自己写新项目的话尽量不要这么写, 毕竟这语法不属于 =ANSI C= 里面, 以后可能要被淘汰.
+       #+END_QUOTE
+
+     - 可变参数
+
+       =C= 语言本身支持定义参数的数量/类型不固定的函数, 这些函数叫做可变参数函数(=varargs functions or variadic functions=).
+
+       但是 =C= 语言本身不给函数提供访问可变参数的机制, 因此这方面工作就要交给库来完成了.
+
+       =GNU libc= 的 =stdarg.h= 就提供这些功能.
+
+       #+BEGIN_SRC c
+         #include <stdarg.h>
+
+         int
+         add (int count, ...)
+         {
+           va_list argp;
+           int i = 0;
+           int sum = 0;
+
+           va_start ( argp, count );      /* Initialize the argument list. */
+
+           for (; i < count; i++ )
+             sum += va_arg ( argp, int ); /* Get the next argument value. */
+
+           va_end ( argp );               /* Clean up. */
+           return sum;
+         }
+
+         int
+         main (void)
+         {
+           return add ( 4, 1, 0, 3, 4 );
+         }
+       #+END_SRC
+
+**** 对比 C++, C 的优点
+     :PROPERTIES:
+     :CUSTOM_ID: difference-between-c-and-cpp
+     :END:
+
+     - 良好的 =ABI= 兼容性
+
+       =C++= 有着复杂的名字改编(name-mangling), 而名字改编又没有规范,
+
+       这导致了不同编译器生成的二进制文件的符号是不确定的, 也就是说不同编译器之间生成的二进制文件无法彼此调用, 这就是所谓 =C++= 的 =ABI= 不兼容.
+
+       我们都知道 =C++= 有命名空间以及函数重载, 也就是说可以有很多个同名变量, 函数, 而学过汇编的都知道,
+
+       一个程序里面是不可能有两个的同名符号的, 因此根据 =C++= 生成的二进制文件里面, 这些重名的函数都是加了一些前后缀来进行避同的.
+
+       而 =C= 是没有命名空间和函数重载的, 这个缺点换来了 =ABI= 兼容良好的优点.
+
+     - 稳定的标准
+
+       两者的语言标准都是有国际组织维护的. =C++= 比 =C= 更新更加频繁, 语言特性逐年增加.
+
+       这导致了 =C++= 十分臃肿, 真要掌握起来学习成本极高.
+
+       而 =C= 就没那么多特性, 概括起来就只有: 基本数据类型, 变量, 控制流语句, 函数, 指针, 宏.
+
+       前面 4 个东西基本上只要是门编程语言都有的了, 而指针和宏则是大部分语言所没有的.
+
+       早期在 =IT= 行业打下了基础, 现在也不需要大改标准, 因此它可以说是语法简单, 功能强大, 学了就终身受用.
+
+       至于深受人们追捧的面向对象编程(=OOP=), =C= 语言确实不支持, 但实际上也是可以在 =C= 里面使用上的.
+
+       实际上 =OOP= 原本不是什么高深的东西, 下面的内容是 =OOP= 提出者 =Alan Kay= 对 =OOP= 的定义:
+
+       #+BEGIN_QUOTE
+       [[https://userpage.fu-berlin.de/~ram/pub/pub_jf47ht81Ht/doc_kay_oop_en][Source]]
+
+       (I'm not against types, but I don't know of any type systems that
+
+       aren't a complete pain, so I still like dynamic typing.)
+
+
+
+       OOP to me means only messaging, local retention and protection and
+
+       hiding of state-process, and extreme late-binding of all things. It
+
+       can be done in Smalltalk and in LISP. There are possibly other
+
+       systems in which this is possible, but I'm not aware of them.
+       #+END_QUOTE
+
+       当然了, 现在很多语言的 =OOP= 比起最初的定义复杂太多了.
+
+       而我们也不需要手动实现 =OOP=, 已经有人现成方案了(参考 =Glib= 的 =GObject= 子模块, 有兴趣的可以看一下[[https://segmentfault.com/a/1190000003861212][这篇文章]]).

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:42 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The Sllgen Parser</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,52 +197,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -256,9 +210,29 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">The Sllgen Parser</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org3a4d17a">实现一门语言的流程/模式</a></li>
+<li><a href="#org1e27481">什么是 lexer generator, parser generator, lexer 和 parser.</a></li>
+<li><a href="#org5b9e0f7">Scanning</a></li>
+<li><a href="#org5076f03">Parsing</a></li>
+<li><a href="#org461dadb">准备完毕</a>
+<ul>
+<li><a href="#orgc8d7ef5">生成定义B</a></li>
+<li><a href="#org7c15836">生成 Scanner</a></li>
+<li><a href="#org8aa3c60">生成 Parser</a></li>
+<li><a href="#org8f64fbe">定义 REPL</a></li>
+<li><a href="#orgb3b53fa">完整的例子</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="orgb51bca4">
 <p>
 <code>EOPL</code> 是一个本好书,所以我想完成上面的习题.不过主要内容只讲了如何写直译器, <code>parser</code> 部分只有在附录里面详细说明(可以理解,因为 <code>parser</code> 不是 <code>interpreter</code> 的一部分).
 </p>
@@ -269,9 +243,9 @@ for the JavaScript code in this tag.
 
 </div>
 
-<div id="outline-container-org0154ef8" class="outline-2">
-<h2 id="org0154ef8">实现一门语言的流程/模式</h2>
-<div class="outline-text-2" id="text-org0154ef8">
+<div id="outline-container-org3a4d17a" class="outline-2">
+<h2 id="org3a4d17a">实现一门语言的流程/模式</h2>
+<div class="outline-text-2" id="text-org3a4d17a">
 <p>
 <code>EOPL</code> 上面说过以实现一门直译语言的整个流程分两步,第一步就是 <code>scanning</code> 和 <code>parsing</code>,第二步就是 <code>interpreting</code> 或者 <code>compiling</code>.
 </p>
@@ -333,9 +307,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org03d5f1c" class="outline-2">
-<h2 id="org03d5f1c">什么是 lexer generator, parser generator, lexer 和 parser.</h2>
-<div class="outline-text-2" id="text-org03d5f1c">
+<div id="outline-container-org1e27481" class="outline-2">
+<h2 id="org1e27481">什么是 lexer generator, parser generator, lexer 和 parser.</h2>
+<div class="outline-text-2" id="text-org1e27481">
 <p>
 <code>Parser generator</code> <b>接受 grammar 作为输入然后输出可以根据 grammar 解析字符串流的源代码</b>.
 </p>
@@ -379,9 +353,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org3e13a71" class="outline-2">
-<h2 id="org3e13a71">Scanning</h2>
-<div class="outline-text-2" id="text-org3e13a71">
+<div id="outline-container-org5b9e0f7" class="outline-2">
+<h2 id="org5b9e0f7">Scanning</h2>
+<div class="outline-text-2" id="text-org5b9e0f7">
 <p>
 <code>tokens</code> 一定要是原子,也就是不可再划分,这需要根据部分的语言规范(<code>the part of language specification</code>)来划分,这部分的语言规范叫做词法规范(<code>lexical specification</code>).
 </p>
@@ -403,7 +377,7 @@ for the JavaScript code in this tag.
 </ol>
 
 
-<div class="figure">
+<div id="orga2dbdad" class="figure">
 <p><img src="../../../files/the-task-of-the-scanner.png" alt="the-task-of-the-scanner.png">
 </p>
 </div>
@@ -448,7 +422,7 @@ for the JavaScript code in this tag.
 我直接采用 <code>EOPL</code> 第三章的 <code>LET</code> 语言做为例子, <code>LET</code> 的词法规范如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="org3d80b00">
 whitespace = (space|newline)(space|newline)*
 comment = %(¬ newline)*
 identifier = letter (letter|digit)*
@@ -460,14 +434,14 @@ number = (-|"")digit digit*
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">the-lexical-spec</span>
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">the-lexical-spec</span>
   '([whitespace (whitespace) skip]
-    [comment (<span style="color: #CC9393;">"%"</span> (arbno (not #\newline))) skip]
+    [comment (<span style="color: #ffa07a;">"%"</span> (arbno (not #\newline))) skip]
     [identifier
-     (letter (arbno (<span style="color: #F0DFAF; font-weight: bold;">or</span> letter digit <span style="color: #CC9393;">"_"</span> <span style="color: #CC9393;">"-"</span> <span style="color: #CC9393;">"?"</span>)))
+     (letter (arbno (<span style="color: #00ffff;">or</span> letter digit <span style="color: #ffa07a;">"_"</span> <span style="color: #ffa07a;">"-"</span> <span style="color: #ffa07a;">"?"</span>)))
      symbol]
     [number (digit (arbno digit)) number]
-    [number (<span style="color: #CC9393;">"-"</span> digit (arbno digit)) number]))
+    [number (<span style="color: #ffa07a;">"-"</span> digit (arbno digit)) number]))
 </pre>
 </div>
 
@@ -475,7 +449,7 @@ number = (-|"")digit digit*
 <code>Sllgen</code> 的 <code>scanner</code> 规范要满足这个 <code>BNF</code> 语法,也是和正则表达式差不多,
 </p>
 
-<pre class="example">
+<pre class="example" id="org7187a8d">
 Scanner-spec      :: = ({Regexp-and-action}∗)
 Regexp-and-action :: = (Name ({Regexp}∗) Action)
 Name              :: = Symbol
@@ -496,9 +470,9 @@ Action            :: = skip | symbol | number | string
 </div>
 
 
-<div id="outline-container-org0ed2c9f" class="outline-2">
-<h2 id="org0ed2c9f">Parsing</h2>
-<div class="outline-text-2" id="text-org0ed2c9f">
+<div id="outline-container-org5076f03" class="outline-2">
+<h2 id="org5076f03">Parsing</h2>
+<div class="outline-text-2" id="text-org5076f03">
 <p>
 得到 <code>tokens</code> 后就可以把它们转成 <code>AST</code>,这么一步要求知道语言的句法结构,也被叫做上下文无关语法(<code>context-free grammar</code>),可以通过 <code>BNF</code> 进行定义.
 </p>
@@ -507,7 +481,7 @@ Action            :: = skip | symbol | number | string
 <code>LET</code> 的 <code>grammar</code> 定义如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgcb1b1cf">
 A-program  :: = Expression
 Expression :: = Identifier
            :: = Number
@@ -523,27 +497,27 @@ Expression :: = Identifier
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">the-grammar</span>
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">the-grammar</span>
   '([program (expression) a-program]
 
     [expression (number) const-exp]
 
     [expression
-     (<span style="color: #CC9393;">"-"</span> <span style="color: #CC9393;">"("</span> expression <span style="color: #CC9393;">","</span> expression <span style="color: #CC9393;">")"</span>)
+     (<span style="color: #ffa07a;">"-"</span> <span style="color: #ffa07a;">"("</span> expression <span style="color: #ffa07a;">","</span> expression <span style="color: #ffa07a;">")"</span>)
      diff-exp]
 
     [expression
-     (<span style="color: #CC9393;">"zero?"</span> <span style="color: #CC9393;">"("</span> expression <span style="color: #CC9393;">")"</span>)
+     (<span style="color: #ffa07a;">"zero?"</span> <span style="color: #ffa07a;">"("</span> expression <span style="color: #ffa07a;">")"</span>)
      zero?-exp]
 
     [expression
-     (<span style="color: #CC9393;">"if"</span> expression <span style="color: #CC9393;">"then"</span> expression <span style="color: #CC9393;">"else"</span> expression)
+     (<span style="color: #ffa07a;">"if"</span> expression <span style="color: #ffa07a;">"then"</span> expression <span style="color: #ffa07a;">"else"</span> expression)
      if-exp]
 
     [expression (identifier) var-exp]
 
     [expression
-     (<span style="color: #CC9393;">"let"</span> identifier <span style="color: #CC9393;">"="</span> expression <span style="color: #CC9393;">"in"</span> expression)
+     (<span style="color: #ffa07a;">"let"</span> identifier <span style="color: #ffa07a;">"="</span> expression <span style="color: #ffa07a;">"in"</span> expression)
      let-exp]))
 </pre>
 </div>
@@ -552,7 +526,7 @@ Expression :: = Identifier
 <code>Sllgen</code> 的 <code>grammar</code> 的定义要满足如下语法,
 </p>
 
-<pre class="example">
+<pre class="example" id="org266e8cc">
 Grammar    :: = ({Production}∗)
 Production :: = (Lhs ({Rhs-item}∗) Prod-name)
 Lhs        :: = Symbol
@@ -617,17 +591,17 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org0e02c67" class="outline-2">
-<h2 id="org0e02c67">准备完毕</h2>
-<div class="outline-text-2" id="text-org0e02c67">
+<div id="outline-container-org461dadb" class="outline-2">
+<h2 id="org461dadb">准备完毕</h2>
+<div class="outline-text-2" id="text-org461dadb">
 <p>
 上面的两个部分已经准备好了 <code>Sllgen</code> 需要的参数了,可以开始正式使用 <code>Sllgen</code> 完成语言实现中第一步的所有工作.
 </p>
 </div>
 
-<div id="outline-container-org3efa0d5" class="outline-3">
-<h3 id="org3efa0d5">生成定义B</h3>
-<div class="outline-text-3" id="text-org3efa0d5">
+<div id="outline-container-orgc8d7ef5" class="outline-3">
+<h3 id="orgc8d7ef5">生成定义B</h3>
+<div class="outline-text-3" id="text-orgc8d7ef5">
 <div class="org-src-container">
 <pre class="src src-scheme">(sllgen:make-define-datatypes the-lexical-spec the-grammar)
 </pre>
@@ -636,11 +610,11 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-orgb2e5d84" class="outline-3">
-<h3 id="orgb2e5d84">生成 Scanner</h3>
-<div class="outline-text-3" id="text-orgb2e5d84">
+<div id="outline-container-org7c15836" class="outline-3">
+<h3 id="org7c15836">生成 Scanner</h3>
+<div class="outline-text-3" id="text-org7c15836">
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">just-scan</span>
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">just-scan</span>
   (sllgen:make-string-scanner the-lexical-spec the-grammar))
 </pre>
 </div>
@@ -648,11 +622,11 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-orgabf4965" class="outline-3">
-<h3 id="orgabf4965">生成 Parser</h3>
-<div class="outline-text-3" id="text-orgabf4965">
+<div id="outline-container-org8aa3c60" class="outline-3">
+<h3 id="org8aa3c60">生成 Parser</h3>
+<div class="outline-text-3" id="text-org8aa3c60">
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">scan&amp;parse</span>
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">scan&amp;parse</span>
   (sllgen:make-string-parser the-lexical-spec the-grammar))
 </pre>
 </div>
@@ -660,14 +634,14 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org803ae7b" class="outline-3">
-<h3 id="org803ae7b">定义 REPL</h3>
-<div class="outline-text-3" id="text-org803ae7b">
+<div id="outline-container-org8f64fbe" class="outline-3">
+<h3 id="org8f64fbe">定义 REPL</h3>
+<div class="outline-text-3" id="text-org8f64fbe">
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">read-eval-print</span>
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">read-eval-print</span>
   (sllgen:make-rep-loop
-   <span style="color: #CC9393;">"--&gt; "</span>
-   (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (ast) (value-of-program ast))
+   <span style="color: #ffa07a;">"--&gt; "</span>
+   (<span style="color: #00ffff;">lambda</span> (ast) (value-of-program ast))
    (sllgen:make-stream-parser the-lexical-spec the-grammar)))
 </pre>
 </div>
@@ -679,76 +653,76 @@ Prod-name  :: = Symbol
 </div>
 
 
-<div id="outline-container-org1f9706d" class="outline-3">
-<h3 id="org1f9706d">完整的例子</h3>
-<div class="outline-text-3" id="text-org1f9706d">
+<div id="outline-container-orgb3b53fa" class="outline-3">
+<h3 id="orgb3b53fa">完整的例子</h3>
+<div class="outline-text-3" id="text-orgb3b53fa">
 <p>
 <b>注意</b>: 由于没有实现 <code>interpreter</code>,所以 <code>parsing</code> 后就直接返回 <code>AST</code>.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">lang.rkt</span>
+<pre class="src src-scheme"><span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">lang.rkt</span>
 #lang racket
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">grammar for the LET language</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">grammar for the LET language</span>
 
 (require eopl)
 
 (provide (all-defined-out))
 
-<span style="color: #5F7F5F;">;;;;;;;;;;;;;;;;;; </span><span style="color: #7F9F7F;">grammatical specification ;;;;;;;;;;;;;;;;;;</span>
+<span style="color: #ff7f24;">;;;;;;;;;;;;;;;;;; </span><span style="color: #ff7f24;">grammatical specification ;;;;;;;;;;;;;;;;;;</span>
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">the-lexical-spec</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">the-lexical-spec</span>
   '([whitespace (whitespace) skip]
-    [comment (<span style="color: #CC9393;">"%"</span> (arbno (not #\newline))) skip]
+    [comment (<span style="color: #ffa07a;">"%"</span> (arbno (not #\newline))) skip]
     [identifier
-     (letter (arbno (<span style="color: #F0DFAF; font-weight: bold;">or</span> letter digit <span style="color: #CC9393;">"_"</span> <span style="color: #CC9393;">"-"</span> <span style="color: #CC9393;">"?"</span>)))
+     (letter (arbno (<span style="color: #00ffff;">or</span> letter digit <span style="color: #ffa07a;">"_"</span> <span style="color: #ffa07a;">"-"</span> <span style="color: #ffa07a;">"?"</span>)))
      symbol]
     [number (digit (arbno digit)) number]
-    [number (<span style="color: #CC9393;">"-"</span> digit (arbno digit)) number]))
+    [number (<span style="color: #ffa07a;">"-"</span> digit (arbno digit)) number]))
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">the-grammar</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">the-grammar</span>
   '([program (expression) a-program]
 
     [expression (number) const-exp]
 
     [expression
-     (<span style="color: #CC9393;">"-"</span> <span style="color: #CC9393;">"("</span> expression <span style="color: #CC9393;">","</span> expression <span style="color: #CC9393;">")"</span>)
+     (<span style="color: #ffa07a;">"-"</span> <span style="color: #ffa07a;">"("</span> expression <span style="color: #ffa07a;">","</span> expression <span style="color: #ffa07a;">")"</span>)
      diff-exp]
 
     [expression
-     (<span style="color: #CC9393;">"zero?"</span> <span style="color: #CC9393;">"("</span> expression <span style="color: #CC9393;">")"</span>)
+     (<span style="color: #ffa07a;">"zero?"</span> <span style="color: #ffa07a;">"("</span> expression <span style="color: #ffa07a;">")"</span>)
      zero?-exp]
 
     [expression
-     (<span style="color: #CC9393;">"if"</span> expression <span style="color: #CC9393;">"then"</span> expression <span style="color: #CC9393;">"else"</span> expression)
+     (<span style="color: #ffa07a;">"if"</span> expression <span style="color: #ffa07a;">"then"</span> expression <span style="color: #ffa07a;">"else"</span> expression)
      if-exp]
 
     [expression (identifier) var-exp]
 
     [expression
-     (<span style="color: #CC9393;">"let"</span> identifier <span style="color: #CC9393;">"="</span> expression <span style="color: #CC9393;">"in"</span> expression)
+     (<span style="color: #ffa07a;">"let"</span> identifier <span style="color: #ffa07a;">"="</span> expression <span style="color: #ffa07a;">"in"</span> expression)
      let-exp]))
 
 
-<span style="color: #5F7F5F;">;;;;;;;;;;;;;;;;;; </span><span style="color: #7F9F7F;">sllgen boilerplate ;;;;;;;;;;;;;;;;;;</span>
+<span style="color: #ff7f24;">;;;;;;;;;;;;;;;;;; </span><span style="color: #ff7f24;">sllgen boilerplate ;;;;;;;;;;;;;;;;;;</span>
 
 (sllgen:make-define-datatypes the-lexical-spec the-grammar)
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">show-the-datatypes</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> () (sllgen:list-define-datatypes the-lexical-spec the-grammar)))
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">show-the-datatypes</span>
+  (<span style="color: #00ffff;">lambda</span> () (sllgen:list-define-datatypes the-lexical-spec the-grammar)))
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">scan&amp;parse</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">scan&amp;parse</span>
   (sllgen:make-string-parser the-lexical-spec the-grammar))
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">just-scan</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">just-scan</span>
   (sllgen:make-string-scanner the-lexical-spec the-grammar))
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">BUG bug here, do not use this function</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">read-eval-print</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> ([interpreter (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (ast) ast)])
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">BUG bug here, do not use this function</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">read-eval-print</span>
+  (<span style="color: #00ffff;">lambda</span> ([interpreter (<span style="color: #00ffff;">lambda</span> (ast) ast)])
     ((sllgen:make-rep-loop
-      <span style="color: #CC9393;">"--&gt; "</span>
+      <span style="color: #ffa07a;">"--&gt; "</span>
       interpreter
       (sllgen:make-stream-parser the-lexical-spec the-grammar)))))
 </pre>
@@ -761,7 +735,7 @@ Prod-name  :: = Symbol
 <div class="org-src-container">
 <pre class="src src-sh">racket@lang.rkt&gt; (read-eval-print)
 --&gt; -(1,2)
-<span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">(struct:a-program #(struct:diff-exp #(struct:const-exp 1) #(struct:const-exp 2)))</span>
+<span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">(struct:a-program #(struct:diff-exp #(struct:const-exp 1) #(struct:const-exp 2)))</span>
 --&gt;
 </pre>
 </div>
@@ -788,8 +762,8 @@ Prod-name  :: = Symbol
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-11-03</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:42 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A Simple WebSocket Echo Server</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,74 +197,38 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
 
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
-             }
-});
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
 </script>
-<script type="text/javascript"
-        src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -278,9 +242,9 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">A Simple WebSocket Echo Server</h1>
-<div class="abstract">
+<div class="abstract" id="orge536c15">
 <p>
 It's time to learn WebSocket protocol by scratching a simple echo server after reading <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers">Writing WebSocket Servers</a>.
 </p>
@@ -300,7 +264,7 @@ Handshake
 </p>
 
 
-<div class="figure">
+<div id="orgb750af5" class="figure">
 <p><img src="../../../files/handshake.png" alt="handshake.png">
 </p>
 </div>
@@ -337,7 +301,7 @@ Communication
 </p>
 
 
-<div class="figure">
+<div id="orge691c72" class="figure">
 <p><img src="../../../files/data-frame-format.png" alt="data-frame-format.png">
 </p>
 </div>
@@ -391,10 +355,10 @@ should be). We will need it to decode (or unmasking) the encoded data that is pa
 field. The way to decode should look like
 </p>
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #DFAF8F;">decoded_data</span> = <span style="color: #DCDCCC;">[]</span>
-<span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #DCDCCC;">(</span><span style="color: #DCDCCC; font-weight: bold;">len</span><span style="color: #BFEBBF;">(</span>encoded_data<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   decoded_data.append<span style="color: #DCDCCC;">(</span>encoded_data<span style="color: #BFEBBF;">[</span>i<span style="color: #BFEBBF;">]</span> ^ masking_key<span style="color: #BFEBBF;">[</span>i % 4<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #eedd82;">decoded_data</span> = []
+<span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(<span style="color: #b0c4de;">len</span>(encoded_data)):
+    decoded_data.append(encoded_data[i] ^ masking_key[i % 4])
 </pre>
 </div></li>
 
@@ -425,176 +389,176 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/env python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">echo_server.py</span>
-<span style="color: #F0DFAF; font-weight: bold;">import</span> argparse
-<span style="color: #F0DFAF; font-weight: bold;">import</span> base64
-<span style="color: #F0DFAF; font-weight: bold;">import</span> hashlib
-<span style="color: #F0DFAF; font-weight: bold;">import</span> socketserver
-<span style="color: #F0DFAF; font-weight: bold;">import</span> struct
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">echo_server.py</span>
+<span style="color: #00ffff;">import</span> argparse
+<span style="color: #00ffff;">import</span> base64
+<span style="color: #00ffff;">import</span> hashlib
+<span style="color: #00ffff;">import</span> socketserver
+<span style="color: #00ffff;">import</span> struct
 
-<span style="color: #DFAF8F;">MAGIC_STRING</span> = b<span style="color: #CC9393;">"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"</span>
+<span style="color: #eedd82;">MAGIC_STRING</span> = b<span style="color: #ffa07a;">"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"</span>
 
-<span style="color: #DFAF8F;">RSP_TO_BAD_REQ</span> = <span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"HTTP/1.1 400 Bad Request\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Content-Type: text/plain\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Connection: close\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Incorrect request"</span>
-<span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">RSP_TO_BAD_REQ</span> = (
+    b<span style="color: #ffa07a;">"HTTP/1.1 400 Bad Request</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"Content-Type: text/plain</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"Connection: close</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"Incorrect request"</span>
+)
 
-<span style="color: #DFAF8F;">RSP_TO_COMPLETE_HANDSHAKE</span> = <span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"HTTP/1.1 101 Switching Protocols\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Upgrade: websocket\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Connection: Upgrade\r\n"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   b<span style="color: #CC9393;">"Sec-WebSocket-Accept: %s\r\n\r\n"</span><span style="color: #DCDCCC;">)</span>
-
-
-<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">EchoRequestHandler</span><span style="color: #DCDCCC;">(</span>socketserver.BaseRequestHandler<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">handle</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #9FC59F;">"""</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   The plan:</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   1. handshake</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   2. if handshake successfully, then start to swap message,</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">  to swap message, do it in two parts: extract payload</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">  and send message back.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   3. if handshake failed, tell client that "Bad Request"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   """</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">is_handshake_completed</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.handshake<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> is_handshake_completed:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">while</span> <span style="color: #BFEBBF;">True</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   fin_and_opcode,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   payload_len_indicator,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   payload_len,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   decoded_payload
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC;">)</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.extract_payload<span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>.request.recv<span style="color: #BFEBBF;">(</span>1024<span style="color: #BFEBBF;">)</span>.strip<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.send_back<span style="color: #DCDCCC;">(</span>fin_and_opcode, payload_len_indicator,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>  payload_len, decoded_payload<span style="color: #DCDCCC;">)</span>
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">handshake</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #9FC59F;">"""</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   The plan:</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   1. handshake with HTTP GET request</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   2. only consider "Connection", "Upgrade" and "Sec-WebSocket-Key"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">  headers in this example.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   3. calculate Sec-WebSocket-Accept to send to the client</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   4. return True for successful or False for failed to determine</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">  whether to swap data</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   """</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">_headers</span> = <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.recv<span style="color: #DCDCCC;">(</span>1024<span style="color: #DCDCCC;">)</span>.strip<span style="color: #DCDCCC;">()</span>.split<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"\r\n"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">headers</span> = <span style="color: #DCDCCC;">{}</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">for</span> h <span style="color: #F0DFAF; font-weight: bold;">in</span> _headers:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">try</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">key</span>, <span style="color: #DFAF8F;">value</span> = h.split<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">":"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">except</span> <span style="color: #7CB8BB;">ValueError</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">ignore lines like "GET / HTTP/1.1"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">continue</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">headers</span><span style="color: #DCDCCC;">[</span>key.strip<span style="color: #BFEBBF;">(</span>b<span style="color: #CC9393;">" "</span><span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">]</span> = value.strip<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">" "</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> headers.get<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"Connection"</span><span style="color: #DCDCCC;">)</span> == b<span style="color: #CC9393;">"Upgrade"</span> <span style="color: #F0DFAF; font-weight: bold;">and</span> \
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>  headers.get<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"Upgrade"</span><span style="color: #DCDCCC;">)</span> == b<span style="color: #CC9393;">"websocket"</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">sec_websocket_key</span> = headers.get<span style="color: #DCDCCC;">(</span>b<span style="color: #CC9393;">"Sec-WebSocket-Key"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #F0DFAF; font-weight: bold;">not</span> sec_websocket_key:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">False</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">to calcuate Sec-WebSocket-Accept</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">sec_websocket_key</span> += MAGIC_STRING
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">sec_websocket_key</span> = base64.standard_b64encode<span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   hashlib.sha1<span style="color: #BFEBBF;">(</span>sec_websocket_key<span style="color: #BFEBBF;">)</span>.digest<span style="color: #BFEBBF;">()</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">no problem now, then complete the handshake</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.sendall<span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   RSP_TO_COMPLETE_HANDSHAKE % sec_websocket_key<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">staring to swap data and to decode the frame</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">True</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.sendall<span style="color: #DCDCCC;">(</span>RSP_TO_BAD_REQ<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">False</span>
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">extract_payload</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, frame<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #9FC59F;">"""</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   One thing important is: the frame from the client is</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   a bytes or bytearray and every byte equals to 8 bits.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   When we begin to extract fields from frame, this thing</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   and data frame format will be the key to let us understand</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   how to decode frame.</span>
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   When decoding, we need to think about what we will need to</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   construct a frame to send back.</span>
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   The fields we will need to construct a frame are FIN and opcode,</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   payload len, decoded payload and payload len indicator which tells</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   us how to get payload len.</span>
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   Once we knew that, it is time to decode frame.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   """</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the first byte stores FIN field and opcode field.</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the second byte stores MASK field and payload_len indicator</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">fin_and_opcode</span> = frame<span style="color: #DCDCCC;">[</span>0<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">payload_len_indicator</span> = frame<span style="color: #DCDCCC;">[</span>1<span style="color: #DCDCCC;">]</span> - 128
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">extract payload_len according to payload_len_indicator</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> payload_len_indicator &lt;= 125:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the frame use 7 bits to store payload_len</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">payload_len</span> = payload_len_indicator
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">mask_key</span> = frame<span style="color: #DCDCCC;">[</span>2:6<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">mask_key_end</span> = 6
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">elif</span> payload_len_indicator == 126:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the frames use 2 bytes to store payload_len</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">payload_len</span> = struct.unpack_from<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!H"</span>, frame<span style="color: #BFEBBF;">[</span>2:4<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)[</span>0<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">mask_key</span> = frame<span style="color: #DCDCCC;">[</span>4:8<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">mask_key_end</span> = 8
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the frame uses 8 bytes to store payload_len</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">payload_len</span> = struct.unpack_from<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!Q"</span>, frame<span style="color: #BFEBBF;">[</span>2:10<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)[</span>0<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">mask_key</span> = frame<span style="color: #DCDCCC;">[</span>10:14<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">mask_key_end</span> = 14
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">encrypted_payload</span> = frame<span style="color: #DCDCCC;">[</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   mask_key_end: mask_key_end+payload_len<span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">decoded_payload</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">[</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   encrypted_payload<span style="color: #D0BF8F;">[</span>i<span style="color: #D0BF8F;">]</span> ^ mask_key<span style="color: #D0BF8F;">[</span>i % 4<span style="color: #D0BF8F;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">for</span> i <span style="color: #F0DFAF; font-weight: bold;">in</span> <span style="color: #DCDCCC; font-weight: bold;">range</span><span style="color: #D0BF8F;">(</span>payload_len<span style="color: #D0BF8F;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #DCDCCC;">(</span>fin_and_opcode, payload_len_indicator,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   payload_len, decoded_payload<span style="color: #DCDCCC;">)</span>
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">send_back</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, fin_and_opcode, payload_len_indicator,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span> payload_len, decoded_payload<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #9FC59F;">"""</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   To send back, we need to learn 3 things:</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   1. the frame to send back whose mask field MUST not be set to 1;</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   2. not consider the situation that message fragmentation here</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   3. how to construct a frame manually</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   </span><span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #9FC59F;">   """</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">decoded_payload</span> = decoded_payload
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">if</span> payload_len_indicator &lt;= 125:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">when payload_len_indicator &lt;= 125,</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the length of payload is payload_len_indicator</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">frame</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">[</span>fin_and_opcode, payload_len<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span> + decoded_payload
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">elif</span> payload_len_indicator == 126:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">unlike that the payload_len_indicator &lt;= 125,</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">in this case, it is necessary to store payload_len</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">in other bytes, as well as payload_len_indicator is 127</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">frame</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">[</span>fin_and_opcode, payload_len_indicator<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span> + \
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   struct.pack<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!H"</span>, payload_len<span style="color: #DCDCCC;">)</span> + decoded_payload
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">else</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">frame</span> = <span style="color: #DCDCCC; font-weight: bold;">bytearray</span><span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">[</span>fin_and_opcode, payload_len_indicator<span style="color: #BFEBBF;">]</span><span style="color: #DCDCCC;">)</span> + \
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   struct.pack<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"!Q"</span>, payload_len<span style="color: #DCDCCC;">)</span> + decoded_payload
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.request.sendall<span style="color: #DCDCCC;">(</span>frame<span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">RSP_TO_COMPLETE_HANDSHAKE</span> = (
+    b<span style="color: #ffa07a;">"HTTP/1.1 101 Switching Protocols</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"Upgrade: websocket</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"Connection: Upgrade</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"Sec-WebSocket-Accept: %s</span><span style="color: #7fffd4;">\r\n\r\n</span><span style="color: #ffa07a;">"</span>)
 
 
-<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">"__main__"</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">parser</span> = argparse.ArgumentParser<span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   description=<span style="color: #CC9393;">"Kick off a echo websocket server"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'host'</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">'IP or hostname'</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   parser.add_argument<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'-p'</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">'Port (default=8001)'</span>,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   metavar=<span style="color: #CC9393;">'port'</span>, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, default=8001<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">args</span> = parser.parse_args<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">HOST</span>, <span style="color: #DFAF8F;">PORT</span> = args.host, args.p
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">socketserver.TCPServer.allow_reuse_address</span> = <span style="color: #BFEBBF;">True</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">server</span> = socketserver.TCPServer<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">(</span>HOST, PORT<span style="color: #BFEBBF;">)</span>, EchoRequestHandler<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   server.serve_forever<span style="color: #DCDCCC;">()</span>
+<span style="color: #00ffff;">class</span> <span style="color: #98fb98;">EchoRequestHandler</span>(socketserver.BaseRequestHandler):
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">handle</span>(<span style="color: #00ffff;">self</span>):
+        <span style="color: #ffa07a;">"""</span>
+<span style="color: #ffa07a;">        The plan:</span>
+<span style="color: #ffa07a;">            1. handshake</span>
+<span style="color: #ffa07a;">            2. if handshake successfully, then start to swap message,</span>
+<span style="color: #ffa07a;">               to swap message, do it in two parts: extract payload</span>
+<span style="color: #ffa07a;">               and send message back.</span>
+<span style="color: #ffa07a;">            3. if handshake failed, tell client that "Bad Request"</span>
+<span style="color: #ffa07a;">        """</span>
+        <span style="color: #eedd82;">is_handshake_completed</span> = <span style="color: #00ffff;">self</span>.handshake()
+        <span style="color: #00ffff;">if</span> is_handshake_completed:
+            <span style="color: #00ffff;">while</span> <span style="color: #7fffd4;">True</span>:
+                (
+                    <span style="color: #eedd82;">fin_and_opcode</span>,
+                    <span style="color: #eedd82;">payload_len_indicator</span>,
+                    <span style="color: #eedd82;">payload_len</span>,
+                    <span style="color: #eedd82;">decoded_payload</span>
+                ) = <span style="color: #00ffff;">self</span>.extract_payload(<span style="color: #00ffff;">self</span>.request.recv(1024).strip())
+                <span style="color: #00ffff;">self</span>.send_back(fin_and_opcode, payload_len_indicator,
+                               payload_len, decoded_payload)
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">handshake</span>(<span style="color: #00ffff;">self</span>):
+        <span style="color: #ffa07a;">"""</span>
+<span style="color: #ffa07a;">        The plan:</span>
+<span style="color: #ffa07a;">            1. handshake with HTTP GET request</span>
+<span style="color: #ffa07a;">            2. only consider "Connection", "Upgrade" and "Sec-WebSocket-Key"</span>
+<span style="color: #ffa07a;">               headers in this example.</span>
+<span style="color: #ffa07a;">            3. calculate Sec-WebSocket-Accept to send to the client</span>
+<span style="color: #ffa07a;">            4. return True for successful or False for failed to determine</span>
+<span style="color: #ffa07a;">               whether to swap data</span>
+<span style="color: #ffa07a;">        """</span>
+        <span style="color: #eedd82;">_headers</span> = <span style="color: #00ffff;">self</span>.request.recv(1024).strip().split(b<span style="color: #ffa07a;">"</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>)
+        <span style="color: #eedd82;">headers</span> = {}
+        <span style="color: #00ffff;">for</span> h <span style="color: #00ffff;">in</span> _headers:
+            <span style="color: #00ffff;">try</span>:
+                <span style="color: #eedd82;">key</span>, <span style="color: #eedd82;">value</span> = h.split(b<span style="color: #ffa07a;">":"</span>)
+            <span style="color: #00ffff;">except</span> <span style="color: #98fb98;">ValueError</span>:
+                <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">ignore lines like "GET / HTTP/1.1"</span>
+                <span style="color: #00ffff;">continue</span>
+            <span style="color: #eedd82;">headers</span>[key.strip(b<span style="color: #ffa07a;">" "</span>)] = value.strip(b<span style="color: #ffa07a;">" "</span>)
+        <span style="color: #00ffff;">if</span> headers.get(b<span style="color: #ffa07a;">"Connection"</span>) == b<span style="color: #ffa07a;">"Upgrade"</span> <span style="color: #00ffff;">and</span> \
+           headers.get(b<span style="color: #ffa07a;">"Upgrade"</span>) == b<span style="color: #ffa07a;">"websocket"</span>:
+            <span style="color: #eedd82;">sec_websocket_key</span> = headers.get(b<span style="color: #ffa07a;">"Sec-WebSocket-Key"</span>)
+            <span style="color: #00ffff;">if</span> <span style="color: #00ffff;">not</span> sec_websocket_key:
+                <span style="color: #00ffff;">return</span> <span style="color: #7fffd4;">False</span>
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">to calcuate Sec-WebSocket-Accept</span>
+            <span style="color: #eedd82;">sec_websocket_key</span> += MAGIC_STRING
+            <span style="color: #eedd82;">sec_websocket_key</span> = base64.standard_b64encode(
+                hashlib.sha1(sec_websocket_key).digest())
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">no problem now, then complete the handshake</span>
+            <span style="color: #00ffff;">self</span>.request.sendall(
+                RSP_TO_COMPLETE_HANDSHAKE % sec_websocket_key)
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">staring to swap data and to decode the frame</span>
+            <span style="color: #00ffff;">return</span> <span style="color: #7fffd4;">True</span>
+        <span style="color: #00ffff;">else</span>:
+            <span style="color: #00ffff;">self</span>.request.sendall(RSP_TO_BAD_REQ)
+            <span style="color: #00ffff;">return</span> <span style="color: #7fffd4;">False</span>
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">extract_payload</span>(<span style="color: #00ffff;">self</span>, frame):
+        <span style="color: #ffa07a;">"""</span>
+<span style="color: #ffa07a;">        One thing important is: the frame from the client is</span>
+<span style="color: #ffa07a;">        a bytes or bytearray and every byte equals to 8 bits.</span>
+<span style="color: #ffa07a;">        When we begin to extract fields from frame, this thing</span>
+<span style="color: #ffa07a;">        and data frame format will be the key to let us understand</span>
+<span style="color: #ffa07a;">        how to decode frame.</span>
+
+<span style="color: #ffa07a;">        When decoding, we need to think about what we will need to</span>
+<span style="color: #ffa07a;">        construct a frame to send back.</span>
+
+<span style="color: #ffa07a;">        The fields we will need to construct a frame are FIN and opcode,</span>
+<span style="color: #ffa07a;">        payload len, decoded payload and payload len indicator which tells</span>
+<span style="color: #ffa07a;">        us how to get payload len.</span>
+
+<span style="color: #ffa07a;">        Once we knew that, it is time to decode frame.</span>
+<span style="color: #ffa07a;">        """</span>
+        <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the first byte stores FIN field and opcode field.</span>
+        <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the second byte stores MASK field and payload_len indicator</span>
+        <span style="color: #eedd82;">fin_and_opcode</span> = frame[0]
+        <span style="color: #eedd82;">payload_len_indicator</span> = frame[1] - 128
+        <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">extract payload_len according to payload_len_indicator</span>
+        <span style="color: #00ffff;">if</span> payload_len_indicator &lt;= 125:
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the frame use 7 bits to store payload_len</span>
+            <span style="color: #eedd82;">payload_len</span> = payload_len_indicator
+            <span style="color: #eedd82;">mask_key</span> = frame[2:6]
+            <span style="color: #eedd82;">mask_key_end</span> = 6
+        <span style="color: #00ffff;">elif</span> payload_len_indicator == 126:
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the frames use 2 bytes to store payload_len</span>
+            <span style="color: #eedd82;">payload_len</span> = struct.unpack_from(<span style="color: #ffa07a;">"!H"</span>, frame[2:4])[0]
+            <span style="color: #eedd82;">mask_key</span> = frame[4:8]
+            <span style="color: #eedd82;">mask_key_end</span> = 8
+        <span style="color: #00ffff;">else</span>:
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the frame uses 8 bytes to store payload_len</span>
+            <span style="color: #eedd82;">payload_len</span> = struct.unpack_from(<span style="color: #ffa07a;">"!Q"</span>, frame[2:10])[0]
+            <span style="color: #eedd82;">mask_key</span> = frame[10:14]
+            <span style="color: #eedd82;">mask_key_end</span> = 14
+        <span style="color: #eedd82;">encrypted_payload</span> = frame[
+            mask_key_end: mask_key_end+payload_len]
+        <span style="color: #eedd82;">decoded_payload</span> = <span style="color: #b0c4de;">bytearray</span>(
+            [
+                encrypted_payload[i] ^ mask_key[i % 4]
+                <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(payload_len)
+            ])
+        <span style="color: #00ffff;">return</span> (fin_and_opcode, payload_len_indicator,
+                payload_len, decoded_payload)
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">send_back</span>(<span style="color: #00ffff;">self</span>, fin_and_opcode, payload_len_indicator,
+                  payload_len, decoded_payload):
+        <span style="color: #ffa07a;">"""</span>
+<span style="color: #ffa07a;">        To send back, we need to learn 3 things:</span>
+<span style="color: #ffa07a;">        1. the frame to send back whose mask field MUST not be set to 1;</span>
+<span style="color: #ffa07a;">        2. not consider the situation that message fragmentation here</span>
+<span style="color: #ffa07a;">        3. how to construct a frame manually</span>
+<span style="color: #ffa07a;">        """</span>
+        <span style="color: #eedd82;">decoded_payload</span> = decoded_payload
+        <span style="color: #00ffff;">if</span> payload_len_indicator &lt;= 125:
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">when payload_len_indicator &lt;= 125,</span>
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the length of payload is payload_len_indicator</span>
+            <span style="color: #eedd82;">frame</span> = <span style="color: #b0c4de;">bytearray</span>(
+                [fin_and_opcode, payload_len]) + decoded_payload
+        <span style="color: #00ffff;">elif</span> payload_len_indicator == 126:
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">unlike that the payload_len_indicator &lt;= 125,</span>
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">in this case, it is necessary to store payload_len</span>
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">in other bytes, as well as payload_len_indicator is 127</span>
+            <span style="color: #eedd82;">frame</span> = <span style="color: #b0c4de;">bytearray</span>(
+                [fin_and_opcode, payload_len_indicator]) + \
+                struct.pack(<span style="color: #ffa07a;">"!H"</span>, payload_len) + decoded_payload
+        <span style="color: #00ffff;">else</span>:
+            <span style="color: #eedd82;">frame</span> = <span style="color: #b0c4de;">bytearray</span>(
+                [fin_and_opcode, payload_len_indicator]) + \
+                struct.pack(<span style="color: #ffa07a;">"!Q"</span>, payload_len) + decoded_payload
+        <span style="color: #00ffff;">self</span>.request.sendall(frame)
+
+
+<span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">__name__</span> == <span style="color: #ffa07a;">"__main__"</span>:
+    <span style="color: #eedd82;">parser</span> = argparse.ArgumentParser(
+        description=<span style="color: #ffa07a;">"Kick off a echo websocket server"</span>)
+    parser.add_argument(<span style="color: #ffa07a;">'host'</span>, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">'IP or hostname'</span>)
+    parser.add_argument(<span style="color: #ffa07a;">'-p'</span>, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">'Port (default=8001)'</span>,
+                        metavar=<span style="color: #ffa07a;">'port'</span>, <span style="color: #b0c4de;">type</span>=<span style="color: #b0c4de;">int</span>, default=8001)
+    <span style="color: #eedd82;">args</span> = parser.parse_args()
+    <span style="color: #eedd82;">HOST</span>, <span style="color: #eedd82;">PORT</span> = args.host, args.p
+    socketserver.TCPServer.<span style="color: #eedd82;">allow_reuse_address</span> = <span style="color: #7fffd4;">True</span>
+    <span style="color: #eedd82;">server</span> = socketserver.TCPServer((HOST, PORT), EchoRequestHandler)
+    server.serve_forever()
 
 </pre>
 </div>
@@ -609,7 +573,7 @@ no any other browser on my computer, so I don't know other browsers.
 Kick off your echo server with
 </p>
 <div class="org-src-container">
-<pre class="src src-bash">python3 echo_server.py <span style="color: #CC9393;">''</span>
+<pre class="src src-bash">python3 echo_server.py <span style="color: #ffa07a;">''</span>
 </pre>
 </div>
 
@@ -618,7 +582,7 @@ Then fire up your Chrome console, and input these statements
 </p>
 
 
-<div class="figure">
+<div id="org09bdf6b" class="figure">
 <p><img src="../../../files/websocket-test.png" alt="websocket-test.png">
 </p>
 </div>
@@ -647,8 +611,8 @@ you to do complete these.
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-07-26</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

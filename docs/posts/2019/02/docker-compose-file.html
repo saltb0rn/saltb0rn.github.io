@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:43 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>docker-compose.yml文件的编写</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,52 +197,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -256,9 +210,28 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">docker-compose.yml文件的编写</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orgdfbe8bf">Docker Compose 和 Docker Swarm</a></li>
+<li><a href="#orgaf73ec6">docker-compose.yml</a></li>
+<li><a href="#orge20d60f">追加例子: MYSQL + Tornado</a>
+<ul>
+<li><a href="#org7d80cbd">项目内容</a></li>
+<li><a href="#org49ba0b3">项目结构</a></li>
+<li><a href="#org88708e5">docker-compose.yml 配置</a></li>
+<li><a href="#orgb99b864">关于 MYSQL Docker 的额外补充</a></li>
+<li><a href="#org0c812b2">额外思考</a></li>
+</ul>
+</li>
+<li><a href="#orgf85ae05">结语</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="orgc9c9a1d">
 <p>
 去年的时候写过一篇<a href="file:///posts/2018/08/tornado-with-docker.html">用Docker打包Tornado项目</a>的文章,本来是打算很快补上后续文章的,不过那个时候学其他东西就忘记了.前一段时间家里的网络失常,笔记本的系统崩坏以及服务器的各种问题,为了以后可以快速恢复环境,因此要了解 <code>docker</code> 的更多用法,这文章就是给自己备忘的.
 </p>
@@ -269,9 +242,9 @@ for the JavaScript code in this tag.
 
 </div>
 
-<div id="outline-container-orgaa26c75" class="outline-2">
-<h2 id="orgaa26c75">Docker Compose 和 Docker Swarm</h2>
-<div class="outline-text-2" id="text-orgaa26c75">
+<div id="outline-container-orgdfbe8bf" class="outline-2">
+<h2 id="orgdfbe8bf">Docker Compose 和 Docker Swarm</h2>
+<div class="outline-text-2" id="text-orgdfbe8bf">
 <p>
 官方文档介绍:
 </p>
@@ -301,9 +274,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org317c9db" class="outline-2">
-<h2 id="org317c9db">docker-compose.yml</h2>
-<div class="outline-text-2" id="text-org317c9db">
+<div id="outline-container-orgaf73ec6" class="outline-2">
+<h2 id="orgaf73ec6">docker-compose.yml</h2>
+<div class="outline-text-2" id="text-orgaf73ec6">
 <p>
 不论你是用 <code>docker-compose</code> 还是 <code>docker swarm</code>,你都要编写 <code>docker-compose.yml</code> 文件,值得注意的是 <code>docker</code> 的更新是很快的,不同版本的 <code>docker-compose.yml</code> 的能用指令是不一样的.这里是其中一个版本的<a href="https://docs.docker.com/compose/compose-file/">reference</a>,你可以在这里找到其他版本的参考文档,具体就不说了.
 </p>
@@ -316,7 +289,7 @@ for the JavaScript code in this tag.
 首先你要准备一个静态站点的目录以及它的 <code>Nginx</code> 配置文件和一个最新的 <code>Nginx</code> 镜像,其中静态站点目录的内容类似(请结合自己的实际情况来操作,这里为了演示就一切从简)如下:
 </p>
 
-<pre class="example">
+<pre class="example" id="org3a59446">
 site/
   |- index.html
   |- css/
@@ -340,7 +313,7 @@ site/
 根据 <code>Nginx</code> 的官方参考可以了解到 <code>volumes</code> 指令可以满足这一个要求,所以 <code>docker-compose.yml</code> 的配置如下:
 </p>
 
-<pre class="example">
+<pre class="example" id="org31096ef">
 version: "3.2"
 
 services:
@@ -357,7 +330,7 @@ services:
 这里要求目录 <code>conf.d</code> 和 <code>docker-compose.yml</code> 与 <code>site</code> 是目录同级,其中 <code>conf.d</code> 目录是 <code>Nginx</code> 的配置目录,内容如下:
 </p>
 
-<pre class="example">
+<pre class="example" id="org2e49ab9">
 conf.d/
   |- site.conf
 </pre>
@@ -366,7 +339,7 @@ conf.d/
 <code>site.conf</code> 的配置如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgcfa406a">
 server {
     listen 80;
     listen [::]:80;
@@ -400,10 +373,10 @@ server {
 </div>
 
 
-<div id="outline-container-orgaf5a88e" class="outline-2">
-<h2 id="orgaf5a88e">追加例子: MYSQL + Tornado</h2>
-<div class="outline-text-2" id="text-orgaf5a88e">
-<pre class="example">
+<div id="outline-container-orge20d60f" class="outline-2">
+<h2 id="orge20d60f">追加例子: MYSQL + Tornado</h2>
+<div class="outline-text-2" id="text-orge20d60f">
+<pre class="example" id="orge1b5d8c">
 写于 2019/3/17
 </pre>
 
@@ -416,9 +389,9 @@ server {
 </p>
 </div>
 
-<div id="outline-container-org117e211" class="outline-3">
-<h3 id="org117e211">项目内容</h3>
-<div class="outline-text-3" id="text-org117e211">
+<div id="outline-container-org7d80cbd" class="outline-3">
+<h3 id="org7d80cbd">项目内容</h3>
+<div class="outline-text-3" id="text-org7d80cbd">
 <p>
 这个这是一个很简单的 <code>API</code> 服务,使用 <code>Python</code> 做为后端语言,实际上什么后端语言都无所为,根据你自己的实际情况来就好.
 </p>
@@ -429,10 +402,10 @@ server {
 </div>
 </div>
 
-<div id="outline-container-org95d0ae8" class="outline-3">
-<h3 id="org95d0ae8">项目结构</h3>
-<div class="outline-text-3" id="text-org95d0ae8">
-<pre class="example">
+<div id="outline-container-org49ba0b3" class="outline-3">
+<h3 id="org49ba0b3">项目结构</h3>
+<div class="outline-text-3" id="text-org49ba0b3">
+<pre class="example" id="orgede678c">
 server/
   |- sql/
   |    |- init.sql
@@ -469,62 +442,62 @@ server/
 </p>
 
 <div class="org-src-container">
-<pre class="src src-python"><span style="color: #5F7F5F;">#</span><span style="color: #7F9F7F;">! /usr/bin/python3</span>
-<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">-*- coding: utf-8 -*-</span>
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/python3</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">-*- coding: utf-8 -*-</span>
 
-<span style="color: #F0DFAF; font-weight: bold;">import</span> os
-<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.web
-<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.ioloop
-<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.httpserver
-<span style="color: #F0DFAF; font-weight: bold;">import</span> tornado.options
-<span style="color: #F0DFAF; font-weight: bold;">from</span> tornado.options <span style="color: #F0DFAF; font-weight: bold;">import</span> options, define
-<span style="color: #F0DFAF; font-weight: bold;">import</span> pymysql
+<span style="color: #00ffff;">import</span> os
+<span style="color: #00ffff;">import</span> tornado.web
+<span style="color: #00ffff;">import</span> tornado.ioloop
+<span style="color: #00ffff;">import</span> tornado.httpserver
+<span style="color: #00ffff;">import</span> tornado.options
+<span style="color: #00ffff;">from</span> tornado.options <span style="color: #00ffff;">import</span> options, define
+<span style="color: #00ffff;">import</span> pymysql
 
-<span style="color: #DFAF8F;">MYSQL_HOST</span> = os.environ.get<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">'MYSQL_HOST'</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">MYSQL_HOST</span> = os.environ.get(<span style="color: #ffa07a;">'MYSQL_HOST'</span>)
 
-define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"port"</span>, default=8000, <span style="color: #DCDCCC; font-weight: bold;">type</span>=<span style="color: #DCDCCC; font-weight: bold;">int</span>, <span style="color: #DCDCCC; font-weight: bold;">help</span>=<span style="color: #CC9393;">"run server on the given port."</span><span style="color: #DCDCCC;">)</span>
+define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="color: #b0c4de;">type</span>=<span style="color: #b0c4de;">int</span>, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">"run server on the given port."</span>)
 
-<span style="color: #DFAF8F;">database</span> = pymysql.connect<span style="color: #DCDCCC;">(</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   host=MYSQL_HOST,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   database=<span style="color: #CC9393;">'MUSICDB'</span>, port=3306,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   user=<span style="color: #CC9393;">'saltborn'</span>, password=<span style="color: #CC9393;">'saltborn'</span>, charset=<span style="color: #CC9393;">'utf-8'</span><span style="color: #DCDCCC;">)</span>
-
-
-<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">Application</span><span style="color: #DCDCCC;">(</span>tornado.web.Application<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">__init__</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span><span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">handlers</span> = <span style="color: #DCDCCC;">[</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #BFEBBF;">(</span>r<span style="color: #CC9393;">"/music/(?P&lt;id&gt;\d+)/?"</span>,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>MusicSrcHandler,
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span><span style="color: #DCDCCC; font-weight: bold;">dict</span><span style="color: #D0BF8F;">(</span>database=database<span style="color: #D0BF8F;">)</span><span style="color: #BFEBBF;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC;">]</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">settings</span> = <span style="color: #DCDCCC; font-weight: bold;">dict</span><span style="color: #DCDCCC;">(</span>debug=<span style="color: #BFEBBF;">True</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; font-weight: bold;">super</span><span style="color: #DCDCCC;">()</span>.__init__<span style="color: #DCDCCC;">(</span>handlers, **settings<span style="color: #DCDCCC;">)</span>
+<span style="color: #eedd82;">database</span> = pymysql.connect(
+    host=MYSQL_HOST,
+    database=<span style="color: #ffa07a;">'MUSICDB'</span>, port=3306,
+    user=<span style="color: #ffa07a;">'saltborn'</span>, password=<span style="color: #ffa07a;">'saltborn'</span>, charset=<span style="color: #ffa07a;">'utf-8'</span>)
 
 
-<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">MusicSrcHandler</span><span style="color: #DCDCCC;">(</span>tornado.web.RequestHandler<span style="color: #DCDCCC;">)</span>:
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">initialize</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, database<span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.database = database
-
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">get</span><span style="color: #DCDCCC;">(</span><span style="color: #F0DFAF; font-weight: bold;">self</span>, <span style="color: #DCDCCC; font-weight: bold;">id</span><span style="color: #DCDCCC;">)</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">return music src</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.set_header<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Content-Type"</span>, <span style="color: #CC9393;">"application/json"</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">with</span> <span style="color: #F0DFAF; font-weight: bold;">self</span>.database.cursor<span style="color: #DCDCCC;">()</span> <span style="color: #F0DFAF; font-weight: bold;">as</span> cursor:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">sql</span> = <span style="color: #CC9393;">"SELECT `msg` FROM MUSIC WHERE `id` = %s"</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   cursor.execute<span style="color: #DCDCCC;">(</span>sql, <span style="color: #BFEBBF;">(</span><span style="color: #DCDCCC; font-weight: bold;">id</span>,<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">result</span> = cursor.fetchone<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">do something with result, I am not doing here</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #F0DFAF; font-weight: bold;">self</span>.write<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">{</span><span style="color: #CC9393;">"msg"</span>: <span style="color: #DCDCCC; font-weight: bold;">id</span><span style="color: #BFEBBF;">}</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #00ffff;">class</span> <span style="color: #98fb98;">Application</span>(tornado.web.Application):
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">__init__</span>(<span style="color: #00ffff;">self</span>):
+        <span style="color: #eedd82;">handlers</span> = [
+            (r<span style="color: #ffa07a;">"/music/(?P&lt;id&gt;\d+)/?"</span>,
+             MusicSrcHandler,
+             <span style="color: #b0c4de;">dict</span>(database=database))
+        ]
+        <span style="color: #eedd82;">settings</span> = <span style="color: #b0c4de;">dict</span>(debug=<span style="color: #7fffd4;">True</span>)
+        <span style="color: #b0c4de;">super</span>().__init__(handlers, **settings)
 
 
-<span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">main</span><span style="color: #DCDCCC;">()</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   tornado.options.parse_command_line<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   <span style="color: #DFAF8F;">app</span> = Application<span style="color: #DCDCCC;">()</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   app.listen<span style="color: #DCDCCC;">(</span>options.port<span style="color: #DCDCCC;">)</span>
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   tornado.ioloop.IOLoop.current<span style="color: #DCDCCC;">()</span>.start<span style="color: #DCDCCC;">()</span>
+<span style="color: #00ffff;">class</span> <span style="color: #98fb98;">MusicSrcHandler</span>(tornado.web.RequestHandler):
 
-<span style="color: #F0DFAF; font-weight: bold;">if</span> <span style="color: #DCDCCC; font-weight: bold;">__name__</span> == <span style="color: #CC9393;">'__main__'</span>:
-<span style="color: #DCDCCC; background-color: #4F4F4F;"> </span>   main<span style="color: #DCDCCC;">()</span>
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">initialize</span>(<span style="color: #00ffff;">self</span>, database):
+        <span style="color: #00ffff;">self</span>.<span style="color: #eedd82;">database</span> = database
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">get</span>(<span style="color: #00ffff;">self</span>, <span style="color: #b0c4de;">id</span>):
+        <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">return music src</span>
+        <span style="color: #00ffff;">self</span>.set_header(<span style="color: #ffa07a;">"Content-Type"</span>, <span style="color: #ffa07a;">"application/json"</span>)
+        <span style="color: #00ffff;">with</span> <span style="color: #00ffff;">self</span>.database.cursor() <span style="color: #00ffff;">as</span> cursor:
+            <span style="color: #eedd82;">sql</span> = <span style="color: #ffa07a;">"SELECT `msg` FROM MUSIC WHERE `id` = %s"</span>
+            cursor.execute(sql, (<span style="color: #b0c4de;">id</span>,))
+            <span style="color: #eedd82;">result</span> = cursor.fetchone()
+            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">do something with result, I am not doing here</span>
+        <span style="color: #00ffff;">self</span>.write({<span style="color: #ffa07a;">"msg"</span>: <span style="color: #b0c4de;">id</span>})
+
+
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">main</span>():
+    tornado.options.parse_command_line()
+    <span style="color: #eedd82;">app</span> = Application()
+    app.listen(options.port)
+    tornado.ioloop.IOLoop.current().start()
+
+<span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">__name__</span> == <span style="color: #ffa07a;">'__main__'</span>:
+    main()
 </pre>
 </div>
 
@@ -538,10 +511,10 @@ define<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"port"
 </div>
 </div>
 
-<div id="outline-container-orga6e6deb" class="outline-3">
-<h3 id="orga6e6deb">docker-compose.yml 配置</h3>
-<div class="outline-text-3" id="text-orga6e6deb">
-<pre class="example">
+<div id="outline-container-org88708e5" class="outline-3">
+<h3 id="org88708e5">docker-compose.yml 配置</h3>
+<div class="outline-text-3" id="text-org88708e5">
+<pre class="example" id="org2dc5d18">
 version: "3"
 
 services:
@@ -610,9 +583,9 @@ music.api:
 </div>
 </div>
 
-<div id="outline-container-orgaea554e" class="outline-3">
-<h3 id="orgaea554e">关于 MYSQL Docker 的额外补充</h3>
-<div class="outline-text-3" id="text-orgaea554e">
+<div id="outline-container-orgb99b864" class="outline-3">
+<h3 id="orgb99b864">关于 MYSQL Docker 的额外补充</h3>
+<div class="outline-text-3" id="text-orgb99b864">
 <p>
 也有一两个朋友不大了解如何使用 <code>MYSQL</code> 的镜像的,其实很简单(可能官方文档太多了大部份人都懒得看),这里我大概说一下,重点在于 <code>mysql</code> 服务的 <code>volumes</code> 选项那里,
 </p>
@@ -626,22 +599,22 @@ music.api:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sql"><span style="color: #F0DFAF; font-weight: bold;">CREATE</span> DATABASE IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> MUSICDB <span style="color: #7CB8BB;">CHARACTER</span> <span style="color: #F0DFAF; font-weight: bold;">SET</span> utf8;
+<pre class="src src-sql"><span style="color: #00ffff;">CREATE</span> DATABASE IF <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">EXISTS</span> MUSICDB <span style="color: #98fb98;">CHARACTER</span> <span style="color: #00ffff;">SET</span> utf8;
 
 USE MUSICDB;
 
-<span style="color: #F0DFAF; font-weight: bold;">CREATE</span> <span style="color: #F0DFAF; font-weight: bold;">TABLE</span> IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> <span style="color: #93E0E3;">MUSIC</span>(
-       `ID` <span style="color: #7CB8BB;">int</span>(11) <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">NULL</span> AUTO_INCREMENT,
-       `<span style="color: #F0DFAF; font-weight: bold;">NAME</span>` <span style="color: #7CB8BB;">varchar</span>(50) <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">NULL</span>,
-       <span style="color: #F0DFAF; font-weight: bold;">PRIMARY</span> <span style="color: #F0DFAF; font-weight: bold;">KEY</span> (`ID`)) ENGINE=InnoDB;
+<span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> IF <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">EXISTS</span> <span style="color: #87cefa;">MUSIC</span>(
+       `ID` <span style="color: #98fb98;">int</span>(11) <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span> AUTO_INCREMENT,
+       `<span style="color: #00ffff;">NAME</span>` <span style="color: #98fb98;">varchar</span>(50) <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">NULL</span>,
+       <span style="color: #00ffff;">PRIMARY</span> <span style="color: #00ffff;">KEY</span> (`ID`)) ENGINE=InnoDB;
 
-<span style="color: #F0DFAF; font-weight: bold;">CREATE</span> <span style="color: #DCDCCC; font-weight: bold;">USER</span> IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'%'</span> IDENTIFIED <span style="color: #F0DFAF; font-weight: bold;">BY</span> <span style="color: #CC9393;">'saltborn'</span>;
-<span style="color: #F0DFAF; font-weight: bold;">CREATE</span> <span style="color: #DCDCCC; font-weight: bold;">USER</span> IF <span style="color: #F0DFAF; font-weight: bold;">NOT</span> <span style="color: #F0DFAF; font-weight: bold;">EXISTS</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'localhost'</span> IDENTIFIED <span style="color: #F0DFAF; font-weight: bold;">BY</span> <span style="color: #CC9393;">'saltborn'</span>;
+<span style="color: #00ffff;">CREATE</span> <span style="color: #b0c4de;">USER</span> IF <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">EXISTS</span> <span style="color: #ffa07a;">'saltborn'</span>@<span style="color: #ffa07a;">'%'</span> IDENTIFIED <span style="color: #00ffff;">BY</span> <span style="color: #ffa07a;">'saltborn'</span>;
+<span style="color: #00ffff;">CREATE</span> <span style="color: #b0c4de;">USER</span> IF <span style="color: #00ffff;">NOT</span> <span style="color: #00ffff;">EXISTS</span> <span style="color: #ffa07a;">'saltborn'</span>@<span style="color: #ffa07a;">'localhost'</span> IDENTIFIED <span style="color: #00ffff;">BY</span> <span style="color: #ffa07a;">'saltborn'</span>;
 
-<span style="color: #F0DFAF; font-weight: bold;">GRANT</span> <span style="color: #F0DFAF; font-weight: bold;">SELECT</span>, <span style="color: #F0DFAF; font-weight: bold;">INSERT</span>, <span style="color: #F0DFAF; font-weight: bold;">UPDATE</span>, <span style="color: #F0DFAF; font-weight: bold;">DELETE</span> <span style="color: #F0DFAF; font-weight: bold;">ON</span> MUSICDB.* <span style="color: #F0DFAF; font-weight: bold;">TO</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'%'</span>;
-<span style="color: #F0DFAF; font-weight: bold;">GRANT</span> <span style="color: #F0DFAF; font-weight: bold;">SELECT</span>, <span style="color: #F0DFAF; font-weight: bold;">INSERT</span>, <span style="color: #F0DFAF; font-weight: bold;">UPDATE</span>, <span style="color: #F0DFAF; font-weight: bold;">DELETE</span> <span style="color: #F0DFAF; font-weight: bold;">ON</span> MUSICDB.* <span style="color: #F0DFAF; font-weight: bold;">TO</span> <span style="color: #CC9393;">'saltborn'</span>@<span style="color: #CC9393;">'localhost'</span>;
+<span style="color: #00ffff;">GRANT</span> <span style="color: #00ffff;">SELECT</span>, <span style="color: #00ffff;">INSERT</span>, <span style="color: #00ffff;">UPDATE</span>, <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">ON</span> MUSICDB.* <span style="color: #00ffff;">TO</span> <span style="color: #ffa07a;">'saltborn'</span>@<span style="color: #ffa07a;">'%'</span>;
+<span style="color: #00ffff;">GRANT</span> <span style="color: #00ffff;">SELECT</span>, <span style="color: #00ffff;">INSERT</span>, <span style="color: #00ffff;">UPDATE</span>, <span style="color: #00ffff;">DELETE</span> <span style="color: #00ffff;">ON</span> MUSICDB.* <span style="color: #00ffff;">TO</span> <span style="color: #ffa07a;">'saltborn'</span>@<span style="color: #ffa07a;">'localhost'</span>;
 
-FLUSH <span style="color: #F0DFAF; font-weight: bold;">PRIVILEGES</span>;
+FLUSH <span style="color: #00ffff;">PRIVILEGES</span>;
 </pre>
 </div>
 
@@ -659,9 +632,9 @@ FLUSH <span style="color: #F0DFAF; font-weight: bold;">PRIVILEGES</span>;
 </div>
 </div>
 
-<div id="outline-container-org278ccb1" class="outline-3">
-<h3 id="org278ccb1">额外思考</h3>
-<div class="outline-text-3" id="text-org278ccb1">
+<div id="outline-container-org0c812b2" class="outline-3">
+<h3 id="org0c812b2">额外思考</h3>
+<div class="outline-text-3" id="text-org0c812b2">
 <p>
 假设你已经根据上面这些思路自己动手操作过一遍了(选自己熟悉的后端语言写一个简单的程序),那么再想一下 <code>后端程序 + MYSQL + 前端</code> 这样的组合该如何用 <code>docker-compose</code> 打包呢?配置文件该如何写呢?(所有的答案都在这文件里面了).
 </p>
@@ -674,9 +647,9 @@ FLUSH <span style="color: #F0DFAF; font-weight: bold;">PRIVILEGES</span>;
 </div>
 
 
-<div id="outline-container-org4e2d2c9" class="outline-2">
-<h2 id="org4e2d2c9">结语</h2>
-<div class="outline-text-2" id="text-org4e2d2c9">
+<div id="outline-container-orgf85ae05" class="outline-2">
+<h2 id="orgf85ae05">结语</h2>
+<div class="outline-text-2" id="text-orgf85ae05">
 <p>
 由于官方文档的有效例子太少,所以我就自己写了这么一个简单的实验过程,内容虽少但五脏俱全,包含了基本概念以及基础用法.还有就是官方文档的结构实在是太乱了,新手看到估计会很迷茫,所以每篇文章下面都出现大量的 <code>thumbs down</code>,不过官方文档的内容其实质量很好,针对这个问题我在文章用合适的地方放上官方的参考连接.
 </p>
@@ -690,8 +663,8 @@ FLUSH <span style="color: #F0DFAF; font-weight: bold;">PRIVILEGES</span>;
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-02-15</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2022-07-21 四 15:21 -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 2023-02-15 三 12:42 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>直译器的实现技术总结</title>
-<meta name="generator" content="Org mode">
-<meta name="author" content="saltb0rn">
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -29,8 +29,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -38,22 +39,22 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
+    overflow: auto;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -188,8 +189,7 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
 <meta name="referrer" content="same-origin">
@@ -197,52 +197,6 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -256,9 +210,65 @@ for the JavaScript code in this tag.
         </ul>
     </nav>
 </div>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">直译器的实现技术总结</h1>
-<div class="abstract">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orge72e717">函数的定义和调用</a></li>
+<li><a href="#org33fdfee">递归函数</a></li>
+<li><a href="#org7aab69f">词法地址 (lexical/static address)</a></li>
+<li><a href="#orgc11db5c">引用和计算作用 (References and computation effects)</a>
+<ul>
+<li><a href="#orgc8d3931">显示引用</a></li>
+<li><a href="#org5938a74">隐式引用</a></li>
+</ul>
+</li>
+<li><a href="#org4e4d4fe">Mutable Pairs</a></li>
+<li><a href="#org7226765">参数传递方式 (Parameter passing)</a></li>
+<li><a href="#orgf7f626f">控制上下文 (Control Context)</a>
+<ul>
+<li><a href="#org76c5b1b">Continuation-Passing Interpreter</a></li>
+<li><a href="#org3e03e46">Trampolined Interpreter</a></li>
+<li><a href="#org5e76aec">Imperative Interpreter</a></li>
+</ul>
+</li>
+<li><a href="#orgffa58c7">异常 (Exceptions)</a></li>
+<li><a href="#org746c474">线程 (Threads)</a></li>
+<li><a href="#org6554d3f">CPS转换</a></li>
+<li><a href="#org605e12a">类型系统 (Types)</a>
+<ul>
+<li><a href="#org178fde8">类型检测 (Type Checking)</a></li>
+<li><a href="#orgc636e74">类型推导 (Type Inference)</a>
+<ul>
+<li><a href="#orga6f38e3">一个推导结果一致导的例子</a></li>
+<li><a href="#org604158c">一个推导结果不确定的例子</a></li>
+<li><a href="#org19e0156">一个推导结果不一致的例子</a></li>
+<li><a href="#orgd61edf4">一个无法推导的例子</a></li>
+<li><a href="#org82d1f5b">一些实现的关键点</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org6add16e">模块 (Module)</a>
+<ul>
+<li><a href="#org919fc97">SIMPLE-MODULES</a></li>
+<li><a href="#orgeae66d4">Modules That Declare Types</a></li>
+<li><a href="#orgaa9bdae">Module Procedures</a></li>
+</ul>
+</li>
+<li><a href="#org50d7c72">对象和类 (Objects and Classes)</a>
+<ul>
+<li><a href="#orga79bcbc">CLASSES</a></li>
+<li><a href="#orgf077d2e">TYPED-OO</a></li>
+</ul>
+</li>
+<li><a href="#orgfad963a">读后感</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org984309b">
 <p>
 主要是总结 <code>EOPL</code> 上的一些用于实现语言特性的技术,包括词法作用域,动态作用域,并发等等.
 </p>
@@ -277,9 +287,9 @@ for the JavaScript code in this tag.
 先认为我们已经理解变量和环境的概念.
 </p>
 
-<div id="outline-container-org9676cf7" class="outline-2">
-<h2 id="org9676cf7">函数的定义和调用</h2>
-<div class="outline-text-2" id="text-org9676cf7">
+<div id="outline-container-orge72e717" class="outline-2">
+<h2 id="orge72e717">函数的定义和调用</h2>
+<div class="outline-text-2" id="text-orge72e717">
 <p>
 <b>先认为已经了解什么是函数编程</b>
 </p>
@@ -300,7 +310,7 @@ for the JavaScript code in this tag.
 <code>PROC</code> 它的函数都是匿名的,变量的绑定也是发生在函数传参中,定义函数的语法如下
 </p>
 
-<pre class="example">
+<pre class="example" id="orgf4f76ce">
 proc (&lt;arg&gt;) &lt;body&gt;
 </pre>
 
@@ -333,14 +343,14 @@ proc (&lt;arg&gt;) &lt;body&gt;
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> (<span style="color: #93E0E3;">example-maker</span>)
-  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">func</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x) (+ x a)))
-  (<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">a</span> 1)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> (<span style="color: #87cefa;">example-maker</span>)
+  (<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">func</span> (<span style="color: #00ffff;">lambda</span> (x) (+ x a)))
+  (<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">a</span> 1)
   func)
 
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">example</span> (example-maker))
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">example</span> (example-maker))
 
-(example 3) <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">=&gt; 4</span>
+(example 3) <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">=&gt; 4</span>
 </pre>
 </div>
 
@@ -363,14 +373,14 @@ proc (&lt;arg&gt;) &lt;body&gt;
 </div>
 
 
-<div id="outline-container-orgd64f1af" class="outline-2">
-<h2 id="orgd64f1af">递归函数</h2>
-<div class="outline-text-2" id="text-orgd64f1af">
+<div id="outline-container-org33fdfee" class="outline-2">
+<h2 id="org33fdfee">递归函数</h2>
+<div class="outline-text-2" id="text-org33fdfee">
 <p>
 <code>EOPL</code> 里面的 <code>LETREC</code> 语言在 <code>PROC</code> 的基础上支持递归,增加了递归声明语句.
 </p>
 
-<pre class="example">
+<pre class="example" id="org9682ccf">
 letrec proc-name (bound-var) = proc-body in letrec-body
 </pre>
 
@@ -378,7 +388,7 @@ letrec proc-name (bound-var) = proc-body in letrec-body
 解析成 <code>AST</code>,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgeccb481">
 letrec-exp (proc-name bound-var proc-body letrec-body)
 </pre>
 
@@ -411,11 +421,11 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">extend-env-rec : ProcName x BoundVar x ProcBody x LetrecBody -&gt; Env</span>
-(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">extend-env-rec</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (proc-name bound-var proc-body old-env)
-    (<span style="color: #F0DFAF; font-weight: bold;">let</span> ((vec (make-vector 1)))
-      (<span style="color: #F0DFAF; font-weight: bold;">let</span> ((new-env (extend-env proc-name vec old-env)))
+<pre class="src src-scheme"><span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">extend-env-rec : ProcName x BoundVar x ProcBody x LetrecBody -&gt; Env</span>
+(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">extend-env-rec</span>
+  (<span style="color: #00ffff;">lambda</span> (proc-name bound-var proc-body old-env)
+    (<span style="color: #00ffff;">let</span> ((vec (make-vector 1)))
+      (<span style="color: #00ffff;">let</span> ((new-env (extend-env proc-name vec old-env)))
         (vector-set! vec 0
                      (proc-val (procedure bound-var proc-body new-env)))
         new-env))))
@@ -425,9 +435,9 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </div>
 
 
-<div id="outline-container-org6cc2667" class="outline-2">
-<h2 id="org6cc2667">词法地址 (lexical/static address)</h2>
-<div class="outline-text-2" id="text-org6cc2667">
+<div id="outline-container-org7aab69f" class="outline-2">
+<h2 id="org7aab69f">词法地址 (lexical/static address)</h2>
+<div class="outline-text-2" id="text-org7aab69f">
 <p>
 <b>假设你已经知道词法作用域</b>
 </p>
@@ -457,8 +467,8 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x)
-  ((<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (a) (x a))
+<pre class="src src-scheme">(<span style="color: #00ffff;">lambda</span> (x)
+  ((<span style="color: #00ffff;">lambda</span> (a) (x a))
    x))
 </pre>
 </div>
@@ -468,9 +478,9 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x)
-  ((<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (a) (#1 #0))  <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">&#23545;&#20110; x &#26159;&#31532;&#20108;&#23618;,&#23545;&#20110; a &#26159;&#31532;&#19968;&#23618;.</span>
-   #0))                  <span style="color: #5F7F5F;">; </span><span style="color: #7F9F7F;">&#23545;&#20110; x &#26159;&#31532;&#19968;&#23618;.</span>
+<pre class="src src-scheme">(<span style="color: #00ffff;">lambda</span> (x)
+  ((<span style="color: #00ffff;">lambda</span> (a) (#1 #0))  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">&#23545;&#20110; x &#26159;&#31532;&#20108;&#23618;,&#23545;&#20110; a &#26159;&#31532;&#19968;&#23618;.</span>
+   #0))                  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">&#23545;&#20110; x &#26159;&#31532;&#19968;&#23618;.</span>
 </pre>
 </div>
 
@@ -491,8 +501,8 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x y)
-  ((<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (a) (x (a y)))
+<pre class="src src-scheme">(<span style="color: #00ffff;">lambda</span> (x y)
+  ((<span style="color: #00ffff;">lambda</span> (a) (x (a y)))
    x))
 </pre>
 </div>
@@ -502,8 +512,8 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x y)
-  ((<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (a) (#(1 0) #(0 0) (#(1 1))))
+<pre class="src src-scheme">(<span style="color: #00ffff;">lambda</span> (x y)
+  ((<span style="color: #00ffff;">lambda</span> (a) (#(1 0) #(0 0) (#(1 1))))
    #(0 0)))
 </pre>
 </div>
@@ -555,9 +565,9 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 </div>
 
 
-<div id="outline-container-org4f2c363" class="outline-2">
-<h2 id="org4f2c363">引用和计算作用 (References and computation effects)</h2>
-<div class="outline-text-2" id="text-org4f2c363">
+<div id="outline-container-orgc11db5c" class="outline-2">
+<h2 id="orgc11db5c">引用和计算作用 (References and computation effects)</h2>
+<div class="outline-text-2" id="text-orgc11db5c">
 <p>
 到目前为止都是认为值是通过计算产生的,但是计算也可以产生作用(你应该听说过什么是副作用).
 </p>
@@ -578,7 +588,7 @@ letrec-exp (proc-name bound-var proc-body letrec-body)
 内存就是有一个有限的映射(finite map),从变量在内存中的位置(location)到该变量的值,这些值叫做可储存值(storable values),由于历史原因,我们把这个模型叫做 <code>store</code>.
 </p>
 
-<pre class="example">
+<pre class="example" id="orgff2e56e">
 Store : Location -&gt; Value
 </pre>
 
@@ -600,9 +610,9 @@ Store : Location -&gt; Value
 </div>
 
 
-<div id="outline-container-org22ee806" class="outline-3">
-<h3 id="org22ee806">显示引用</h3>
-<div class="outline-text-3" id="text-org22ee806">
+<div id="outline-container-orgc8d3931" class="outline-3">
+<h3 id="orgc8d3931">显示引用</h3>
+<div class="outline-text-3" id="text-orgc8d3931">
 <p>
 (书本的 <code>EXPLICIT-REFS</code> 语言.)
 </p>
@@ -623,7 +633,7 @@ Store : Location -&gt; Value
 这种设计中,语言的值是这样定义的,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgc84e8e9">
 ExpVal = Int + Bool + Proc + Ref(ExpVal)
 DenVal = ExpVal
 </pre>
@@ -653,7 +663,7 @@ Store Passing Specification
 整个计算过程中,不同时刻的 <code>store</code> 的内容都 <b>可能</b> 会被修改,把某个时刻的 <code>store</code> 的值称为 <code>state</code>.
 </p>
 
-<pre class="example">
+<pre class="example" id="org5d508ea">
 计算过程中有作用: (value-of exp env1 store0) = (val, store1)
 
 计算过程中没有作用: (value-of exp env2 store0) = (val, store0)
@@ -684,9 +694,9 @@ Store Passing Specification
 </div>
 
 
-<div id="outline-container-orgbab2c0b" class="outline-3">
-<h3 id="orgbab2c0b">隐式引用</h3>
-<div class="outline-text-3" id="text-orgbab2c0b">
+<div id="outline-container-org5938a74" class="outline-3">
+<h3 id="org5938a74">隐式引用</h3>
+<div class="outline-text-3" id="text-org5938a74">
 <p>
 大部份语言都是采用这种设计, <code>Lisp</code>, <code>JavaScript</code>, <code>Python</code> 等等,不需要程序员手动管理引用.
 </p>
@@ -695,7 +705,7 @@ Store Passing Specification
 这种设计也叫做 <code>call-by-name</code>.除了这一点外,和采用显式引用设计的语言最大区别就是值的定义不一样,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgc7b1ee1">
 ExpVal = Int + Bool + Proc
 DenVal = Ref(ExpVal)
 </pre>
@@ -712,7 +722,7 @@ DenVal = Ref(ExpVal)
 <b>能计算出 <code>Reference</code> 的地方只有 <code>apply-env</code></b>.
 </p>
 
-<pre class="example">
+<pre class="example" id="org6da6065">
 Env : Var -&gt; Ref(Var)
 </pre>
 
@@ -732,14 +742,14 @@ Env : Var -&gt; Ref(Var)
 </div>
 
 
-<div id="outline-container-orgc505d2f" class="outline-2">
-<h2 id="orgc505d2f">Mutable Pairs</h2>
-<div class="outline-text-2" id="text-orgc505d2f">
+<div id="outline-container-org4e4d4fe" class="outline-2">
+<h2 id="org4e4d4fe">Mutable Pairs</h2>
+<div class="outline-text-2" id="text-org4e4d4fe">
 <p>
 关于 <code>Mutable Pair</code> (下文简称 <code>MutPair</code>),可以参考 <code>Scheme</code> 里面的 <code>pair</code>.
 </p>
 
-<pre class="example">
+<pre class="example" id="org030fbda">
 MutPair := (CAR CDR)
 CAR     := RefToVal
 CDR     := RefToNextLocation
@@ -774,9 +784,9 @@ CDR     := RefToNextLocation
 </div>
 
 
-<div id="outline-container-org7d49af3" class="outline-2">
-<h2 id="org7d49af3">参数传递方式 (Parameter passing)</h2>
-<div class="outline-text-2" id="text-org7d49af3">
+<div id="outline-container-org7226765" class="outline-2">
+<h2 id="org7226765">参数传递方式 (Parameter passing)</h2>
+<div class="outline-text-2" id="text-org7226765">
 <p>
 调用函数的时候,形式参数(formal parameter)会绑定实际参数的 <code>denoted value</code>.
 </p>
@@ -814,7 +824,7 @@ CDR     := RefToNextLocation
 在这种设计中,值的定义和 <code>call-by-value</code> 中的一样,
 </p>
 
-<pre class="example">
+<pre class="example" id="org89928e1">
 ExpVal = Int + Bool + Proc
 DenVal = Ref(ExpVal)
 </pre>
@@ -823,7 +833,7 @@ DenVal = Ref(ExpVal)
 在函数内改变参数的值可以改变实际参数的值.
 </p>
 
-<pre class="example">
+<pre class="example" id="orgbad6321">
 let p = proc (x) set x = 4
 in let a = 3
    in begin (p a); a end
@@ -833,7 +843,7 @@ in let a = 3
 在 <code>call-by-value</code> 的设计下,当 <code>(p a)</code> 的 <code>a</code> 等于 <code>4</code> 的时候,最后 <code>a</code> 的值为 <code>3</code>;当程序改成这样,
 </p>
 
-<pre class="example">
+<pre class="example" id="org186b022">
 let p = proc (x) setleft(x,4)
 in let a = pair(3,4)
    in begin (p a); a end
@@ -867,7 +877,7 @@ in let a = pair(3,4)
 函数调用的时候不会先计算出实际参数的值,只有函数体引用到参数才会计算参数的值.比如下面这个,
 </p>
 
-<pre class="example">
+<pre class="example" id="org9c74d36">
 letrec infinite-loop (x) = (infinite-loop -(x,-1))
 in let f = proc (z) 11
    in (f (infinite-loop 0))
@@ -897,7 +907,7 @@ in let f = proc (z) 11
 在这种设计下,值的设定如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="org11668cd">
 DenVal = Ref(ExpVal + Thunk)
 ExpVal = Int + Bool + Proc
 </pre>
@@ -926,18 +936,18 @@ ExpVal = Int + Bool + Proc
 </div>
 
 
-<div id="outline-container-orgb8756f4" class="outline-2">
-<h2 id="orgb8756f4">控制上下文 (Control Context)</h2>
-<div class="outline-text-2" id="text-orgb8756f4">
+<div id="outline-container-orgf7f626f" class="outline-2">
+<h2 id="orgf7f626f">控制上下文 (Control Context)</h2>
+<div class="outline-text-2" id="text-orgf7f626f">
 <p>
 针对特性不同的语言有不同的方法实现控制上下文.之前已经写过一篇关于 <code>[[../06/continuation-passing-style.org][CPS]]</code> 的文章,里面已经解释了 <code>CPS</code>, <code>continuation</code> 和 <code>control context</code> 的概念,就不再赘述了.
 </p>
 </div>
 
 
-<div id="outline-container-orgb0325f3" class="outline-3">
-<h3 id="orgb0325f3">Continuation-Passing Interpreter</h3>
-<div class="outline-text-3" id="text-orgb0325f3">
+<div id="outline-container-org76c5b1b" class="outline-3">
+<h3 id="org76c5b1b">Continuation-Passing Interpreter</h3>
+<div class="outline-text-3" id="text-org76c5b1b">
 <p>
 <code>Continuation-passing interpreter</code> 的目的是实现控制上下文(control context)这一特性,做法就是给 <code>interpreter</code> 的函数,比如 <code>value-of</code>,添加第三个参数,也就是 <code>continuation</code>.
 </p>
@@ -946,7 +956,7 @@ ExpVal = Int + Bool + Proc
 这个直译器是基于 <code>LETREC</code> 重写(overwrite)的,目标是让 <code>value-of</code> 的调用不会导致控制上下文的增长.
 </p>
 
-<pre class="example">
+<pre class="example" id="orgfc87a68">
 FinalAnswer = ExpVal
 Cont : ExpVal -&gt; FinalAnswer
 </pre>
@@ -959,9 +969,9 @@ Cont : ExpVal -&gt; FinalAnswer
 
 
 
-<div id="outline-container-orge355a64" class="outline-3">
-<h3 id="orge355a64">Trampolined Interpreter</h3>
-<div class="outline-text-3" id="text-orge355a64">
+<div id="outline-container-org3e03e46" class="outline-3">
+<h3 id="org3e03e46">Trampolined Interpreter</h3>
+<div class="outline-text-3" id="text-org3e03e46">
 <p>
 用 <code>procedure language</code> 把一个直译器改写为 <code>continuation-passing interpreter</code> 可能不是一个明智的做法.
 </p>
@@ -983,8 +993,8 @@ Cont : ExpVal -&gt; FinalAnswer
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-procedure/k</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (proc arg cont)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">apply-procedure/k</span>
+  (<span style="color: #00ffff;">lambda</span> (proc arg cont)
     (body-of-apply-procedure/k)))
 </pre>
 </div>
@@ -994,9 +1004,9 @@ Cont : ExpVal -&gt; FinalAnswer
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-procedure/k</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (proc arg cont)
-    (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> ()
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">apply-procedure/k</span>
+  (<span style="color: #00ffff;">lambda</span> (proc arg cont)
+    (<span style="color: #00ffff;">lambda</span> ()
       (body-of-apply-procedure/k))))
 </pre>
 </div>
@@ -1009,7 +1019,7 @@ Cont : ExpVal -&gt; FinalAnswer
 书本上的例子是基于上一个小节的 <code>continuation-passing interpreter</code> 修改的,定义修改部分为,
 </p>
 
-<pre class="example">
+<pre class="example" id="org2f64914">
 value-of-program  : Program -&gt; FinalAnswer
 apply-procedure/k : Proc * ExpVal * Cont -&gt; Bounce
 value-of/k        : Exp * Env * Cont -&gt; Bounce
@@ -1020,7 +1030,7 @@ apply-cont        : Cont * ExpVal -&gt; Bounce
 <code>FinalAnswer</code>, <code>Trampoline</code> 和 <code>Bounce</code> 的定义如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="org38c1a11">
 FinalAnswer = ExpVal
 Trampoline : Bounce -&gt; FinalAnswer
 Bounce = ExpVal ∪ (() -&gt; Bounce)
@@ -1031,9 +1041,9 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">trampoline</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (bounce)
-    (<span style="color: #F0DFAF; font-weight: bold;">if</span> (expval? bounce)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">trampoline</span>
+  (<span style="color: #00ffff;">lambda</span> (bounce)
+    (<span style="color: #00ffff;">if</span> (expval? bounce)
         bounce
         (trampoline (bounce)))))
 </pre>
@@ -1047,9 +1057,9 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 
 
 
-<div id="outline-container-org735e050" class="outline-3">
-<h3 id="org735e050">Imperative Interpreter</h3>
-<div class="outline-text-3" id="text-org735e050">
+<div id="outline-container-org5e76aec" class="outline-3">
+<h3 id="org5e76aec">Imperative Interpreter</h3>
+<div class="outline-text-3" id="text-org5e76aec">
 <p>
 并非所有语言都是支持函数式编程,想用这种语言实现控制上下文,那么可以采用寄存器(register)设计方式进行实现.
 </p>
@@ -1066,9 +1076,9 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 </div>
 
 
-<div id="outline-container-orgc076151" class="outline-2">
-<h2 id="orgc076151">异常 (Exceptions)</h2>
-<div class="outline-text-2" id="text-orgc076151">
+<div id="outline-container-orgffa58c7" class="outline-2">
+<h2 id="orgffa58c7">异常 (Exceptions)</h2>
+<div class="outline-text-2" id="text-orgffa58c7">
 <p>
 基于上面的 <code>Continuation-Passing Interpreter</code> 进行修改.异常处理需要基于控制上下文实现的.
 </p>
@@ -1094,9 +1104,9 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 </div>
 
 
-<div id="outline-container-orgcf40a3c" class="outline-2">
-<h2 id="orgcf40a3c">线程 (Threads)</h2>
-<div class="outline-text-2" id="text-orgcf40a3c">
+<div id="outline-container-org746c474" class="outline-2">
+<h2 id="org746c474">线程 (Threads)</h2>
+<div class="outline-text-2" id="text-org746c474">
 <p>
 一次处理多个计算(multiple computations),它们跑在同一个地址空间(address space)里面,这个地址空间是同一个进程(process)的一部分,这些计算叫做线程(threads).
 </p>
@@ -1275,9 +1285,9 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 
 
 
-<div id="outline-container-orgd46fd8d" class="outline-2">
-<h2 id="orgd46fd8d">CPS转换</h2>
-<div class="outline-text-2" id="text-orgd46fd8d">
+<div id="outline-container-org6554d3f" class="outline-2">
+<h2 id="org6554d3f">CPS转换</h2>
+<div class="outline-text-2" id="text-org6554d3f">
 <p>
 前面几个小节都是直接把程序改写成 <code>CPS</code> 风格,这个章节的目标这是编写一个转换程序在不更该原来代码的情况下把原来代码转换成等效于CPS的程序.
 </p>
@@ -1301,8 +1311,8 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 <div class="org-src-container">
 <pre class="src src-scheme">#lang racket
 
-(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x)
-  (<span style="color: #F0DFAF; font-weight: bold;">cond</span>
+(<span style="color: #00ffff;">lambda</span> (x)
+  (<span style="color: #00ffff;">cond</span>
     [(zero? x) 17]
     [(= x 1) (f x)]
     [(= x 2) (+ 22 (f x))]
@@ -1311,30 +1321,30 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
     [else (h (f x) (- 44 y) (g y))]))
 
 
-<span style="color: #5F7F5F;">;; </span><span style="color: #7F9F7F;">after transforming</span>
+<span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">after transforming</span>
 
-(<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (x cont)
-  (<span style="color: #F0DFAF; font-weight: bold;">cond</span>
+(<span style="color: #00ffff;">lambda</span> (x cont)
+  (<span style="color: #00ffff;">cond</span>
     [(zero? x) (cont 17)]
     [(= x 1) (f x cont)]
     [(= x 2)
      (f x
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v)
+        (<span style="color: #00ffff;">lambda</span> (v)
            (+ 22 v)))]
     [(= x 3)
      (f x
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v)
+        (<span style="color: #00ffff;">lambda</span> (v)
            (g 22 v cont)))]
     [(= x 4)
      (f x
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v1)
+        (<span style="color: #00ffff;">lambda</span> (v1)
            (g y
-              (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v2)
+              (<span style="color: #00ffff;">lambda</span> (v2)
                  (cont (+ v1 33 v2))))))]
     [else (f x
-             (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v1)
+             (<span style="color: #00ffff;">lambda</span> (v1)
                 (g y
-                   (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (v2)
+                   (<span style="color: #00ffff;">lambda</span> (v2)
                       (h v1 (- 44 y) v2 cont)))))]))
 </pre>
 </div>
@@ -1347,9 +1357,9 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 
 
 
-<div id="outline-container-org658e639" class="outline-2">
-<h2 id="org658e639">类型系统 (Types)</h2>
-<div class="outline-text-2" id="text-org658e639">
+<div id="outline-container-org605e12a" class="outline-2">
+<h2 id="org605e12a">类型系统 (Types)</h2>
+<div class="outline-text-2" id="text-org605e12a">
 <p>
 在没有运行程序的情况下分析(analyze)/预测(predict)程序的行为,目的是判断程序的运行是否安全.安全意味这运行的时候是否产生错误.
 </p>
@@ -1386,7 +1396,7 @@ Bounce = ExpVal ∪ (() -&gt; Bounce)
 我们可以根据这个关系来设计一套系统来跟踪值的类型: <b>把类型抽象为语言的一种结构,叫做类型结构(type structure)</b>,比如下面是 <code>LETREC</code> 语言的类型结构定义,
 </p>
 
-<pre class="example">
+<pre class="example" id="org985d92d">
 Type ::= int
        | bool
        | (Type -&gt; Type)
@@ -1396,7 +1406,7 @@ Type ::= int
 现在有一个函数如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="org7ebd46a">
 proc (x) if zero?(-(a,1)) then 0 else a+1
 </pre>
 
@@ -1424,7 +1434,7 @@ proc (x) if zero?(-(a,1)) then 0 else a+1
 类型环境的定义如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgdb053f1">
 Type-Environment : Variable -&gt; Type
 </pre>
 
@@ -1432,7 +1442,7 @@ Type-Environment : Variable -&gt; Type
 这个函数和 <code>value-of</code> 这个 <code>observer</code> 很类似,不同在于这个函数计算的是类型,所以我们就叫这个函数 <code>type-of</code>,定义如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgc4b9cbe">
 type-of : Expression * Type-Environment -&gt; (type | nontermination | an-error-other-than-a-type-error)
 </pre>
 
@@ -1441,14 +1451,14 @@ type-of : Expression * Type-Environment -&gt; (type | nontermination | an-error-
 </p>
 
 
-<div class="figure">
+<div id="orged53b2d" class="figure">
 <p><img src="../../../files/simple-typing-rules.png" alt="simple-typing-rules.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>Simple typing rules</p>
 </div>
 
 
-<div class="figure">
+<div id="orgd4d3aba" class="figure">
 <p><img src="../../../files/proc-typing-rule.png" alt="proc-typing-rule.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>Proc typing rule</p>
@@ -1490,9 +1500,9 @@ type-of : Expression * Type-Environment -&gt; (type | nontermination | an-error-
 </div>
 
 
-<div id="outline-container-org09a4938" class="outline-3">
-<h3 id="org09a4938">类型检测 (Type Checking)</h3>
-<div class="outline-text-3" id="text-org09a4938">
+<div id="outline-container-org178fde8" class="outline-3">
+<h3 id="org178fde8">类型检测 (Type Checking)</h3>
+<div class="outline-text-3" id="text-org178fde8">
 <p>
 基于 <code>LETREC</code> 修改获得 <code>CHECKED</code> 语言,为它实现一个类型检测系统.
 </p>
@@ -1500,14 +1510,14 @@ type-of : Expression * Type-Environment -&gt; (type | nontermination | an-error-
 </div>
 
 
-<div id="outline-container-orgaa88143" class="outline-3">
-<h3 id="orgaa88143">类型推导 (Type Inference)</h3>
-<div class="outline-text-3" id="text-orgaa88143">
+<div id="outline-container-orgc636e74" class="outline-3">
+<h3 id="orgc636e74">类型推导 (Type Inference)</h3>
+<div class="outline-text-3" id="text-orgc636e74">
 <p>
 基于 <code>CHECKED</code> 修改得到 <code>INFERRED</code> 语言.把类型的定义变为可选,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgea68d3b">
 Optional-type ::= ?
                 | Type
 Expression    ::= proc (Identifier : Optional-type) Expression
@@ -1519,15 +1529,15 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 </div>
 
-<div id="outline-container-orgc3cc79b" class="outline-4">
-<h4 id="orgc3cc79b">一个推导结果一致导的例子</h4>
-<div class="outline-text-4" id="text-orgc3cc79b">
+<div id="outline-container-orga6f38e3" class="outline-4">
+<h4 id="orga6f38e3">一个推导结果一致导的例子</h4>
+<div class="outline-text-4" id="text-orga6f38e3">
 <p>
 假如我们要推导 <code>proc (f) proc (x) -((f 3), (f x))</code>,那么首先要列出一张包含所有变量表达式, <code>proc</code> 表达式, <code>if</code> 表达式以及 <code>let</code> 表达式的表,并且给每一个都标上一个类型变量.
 </p>
 
 
-<div class="figure">
+<div id="orgdd0a9a2" class="figure">
 <p><img src="../../../files/type-variable-table-1.png" alt="type-variable-table-1.png">
 </p>
 </div>
@@ -1537,7 +1547,7 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 
 
-<div class="figure">
+<div id="org01f7600" class="figure">
 <p><img src="../../../files/type-variable-table-2.png" alt="type-variable-table-2.png">
 </p>
 </div>
@@ -1547,10 +1557,10 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 
 
-<div class="figure">
+<div id="org94cbb5a" class="figure">
 <p><img src="../../../files/unification-1.png" alt="unification-1.png">
 </p>
-<p><span class="figure-number">Figure 5: </span>Unification-1</p>
+<p><span class="figure-number">Figure 3: </span>Unification-1</p>
 </div>
 
 <p>
@@ -1558,10 +1568,10 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 
 
-<div class="figure">
+<div id="orgb296abb" class="figure">
 <p><img src="../../../files/unification-2.png" alt="unification-2.png">
 </p>
-<p><span class="figure-number">Figure 6: </span>Unification-2</p>
+<p><span class="figure-number">Figure 4: </span>Unification-2</p>
 </div>
 
 <p>
@@ -1569,17 +1579,17 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 
 
-<div class="figure">
+<div id="org77fd962" class="figure">
 <p><img src="../../../files/unification-3.png" alt="unification-3.png">
 </p>
-<p><span class="figure-number">Figure 7: </span>Unification-3</p>
+<p><span class="figure-number">Figure 5: </span>Unification-3</p>
 </div>
 
 
-<div class="figure">
+<div id="orgada125e" class="figure">
 <p><img src="../../../files/unification-4.png" alt="unification-4.png">
 </p>
-<p><span class="figure-number">Figure 8: </span>Unification-4</p>
+<p><span class="figure-number">Figure 6: </span>Unification-4</p>
 </div>
 
 <p>
@@ -1587,24 +1597,24 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 
 
-<div class="figure">
+<div id="orgc2710c5" class="figure">
 <p><img src="../../../files/applying-substitution.png" alt="applying-substitution.png">
 </p>
-<p><span class="figure-number">Figure 9: </span>Applying substitution to the equation</p>
+<p><span class="figure-number">Figure 7: </span>Applying substitution to the equation</p>
 </div>
 
 
-<div class="figure">
+<div id="orgc746003" class="figure">
 <p><img src="../../../files/unification-5.png" alt="unification-5.png">
 </p>
-<p><span class="figure-number">Figure 10: </span>Unification-5</p>
+<p><span class="figure-number">Figure 8: </span>Unification-5</p>
 </div>
 
 
-<div class="figure">
+<div id="org3d5e3c2" class="figure">
 <p><img src="../../../files/unification-6.png" alt="unification-6.png">
 </p>
-<p><span class="figure-number">Figure 11: </span>Unification-6</p>
+<p><span class="figure-number">Figure 9: </span>Unification-6</p>
 </div>
 
 <p>
@@ -1612,24 +1622,24 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </p>
 
 
-<div class="figure">
+<div id="org9fbb2c1" class="figure">
 <p><img src="../../../files/unification-7.png" alt="unification-7.png">
 </p>
-<p><span class="figure-number">Figure 12: </span>Unification-7</p>
+<p><span class="figure-number">Figure 10: </span>Unification-7</p>
 </div>
 
 
-<div class="figure">
+<div id="org8373117" class="figure">
 <p><img src="../../../files/unification-8.png" alt="unification-8.png">
 </p>
-<p><span class="figure-number">Figure 13: </span>Unification-8</p>
+<p><span class="figure-number">Figure 11: </span>Unification-8</p>
 </div>
 
 
-<div class="figure">
+<div id="orgdf48f69" class="figure">
 <p><img src="../../../files/unification-9.png" alt="unification-9.png">
 </p>
-<p><span class="figure-number">Figure 14: </span>Unification-9</p>
+<p><span class="figure-number">Figure 12: </span>Unification-9</p>
 </div>
 
 <p>
@@ -1639,27 +1649,27 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </div>
 
 
-<div id="outline-container-org3bc0d56" class="outline-4">
-<h4 id="org3bc0d56">一个推导结果不确定的例子</h4>
-<div class="outline-text-4" id="text-org3bc0d56">
+<div id="outline-container-org604158c" class="outline-4">
+<h4 id="org604158c">一个推导结果不确定的例子</h4>
+<div class="outline-text-4" id="text-org604158c">
 <p>
 这次的例子是 <code>proc (f) (f 11)</code>,
 </p>
 
 
-<div class="figure">
+<div id="org5dcab49" class="figure">
 <p><img src="../../../files/polymorphic-1.png" alt="polymorphic-1.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="org6ade898" class="figure">
 <p><img src="../../../files/polymorphic-2.png" alt="polymorphic-2.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="org29c1353" class="figure">
 <p><img src="../../../files/polymorphic-3.png" alt="polymorphic-3.png">
 </p>
 </div>
@@ -1671,33 +1681,33 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </div>
 
 
-<div id="outline-container-org4e4aaf7" class="outline-4">
-<h4 id="org4e4aaf7">一个推导结果不一致的例子</h4>
-<div class="outline-text-4" id="text-org4e4aaf7">
+<div id="outline-container-org19e0156" class="outline-4">
+<h4 id="org19e0156">一个推导结果不一致的例子</h4>
+<div class="outline-text-4" id="text-org19e0156">
 <p>
 这次的例子是 <code>if x then -(x,1) else 0</code>.
 </p>
 
 
-<div class="figure">
+<div id="org0245576" class="figure">
 <p><img src="../../../files/non-constant-1.png" alt="non-constant-1.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="org5235eeb" class="figure">
 <p><img src="../../../files/non-constant-2.png" alt="non-constant-2.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="org07bc8a7" class="figure">
 <p><img src="../../../files/non-constant-3.png" alt="non-constant-3.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="org7c6d4fa" class="figure">
 <p><img src="../../../files/applying-substitution-2.png" alt="applying-substitution-2.png">
 </p>
 </div>
@@ -1709,27 +1719,27 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </div>
 
 
-<div id="outline-container-org8838854" class="outline-4">
-<h4 id="org8838854">一个无法推导的例子</h4>
-<div class="outline-text-4" id="text-org8838854">
+<div id="outline-container-orgd61edf4" class="outline-4">
+<h4 id="orgd61edf4">一个无法推导的例子</h4>
+<div class="outline-text-4" id="text-orgd61edf4">
 <p>
 这次的例子是 <code>proc (f) zero?((f f))</code>.
 </p>
 
 
-<div class="figure">
+<div id="org8dc1098" class="figure">
 <p><img src="../../../files/occurrence-1.png" alt="occurrence-1.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="org752cfaa" class="figure">
 <p><img src="../../../files/occurrence-2.png" alt="occurrence-2.png">
 </p>
 </div>
 
 
-<div class="figure">
+<div id="orgbae7a65" class="figure">
 <p><img src="../../../files/occurrence-3.png" alt="occurrence-3.png">
 </p>
 </div>
@@ -1745,9 +1755,9 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 </div>
 
 
-<div id="outline-container-org4109d7c" class="outline-4">
-<h4 id="org4109d7c">一些实现的关键点</h4>
-<div class="outline-text-4" id="text-org4109d7c">
+<div id="outline-container-org82d1f5b" class="outline-4">
+<h4 id="org82d1f5b">一些实现的关键点</h4>
+<div class="outline-text-4" id="text-org82d1f5b">
 <p>
 和 <code>CHECKED</code> 一样需要实现一个 <code>type-of</code> <code>observer</code>,实际上它和 <code>IMPLICIT/EXPLICIT-REFS</code> 这两门语言的 <code>value-of</code> 类似, <code>substitution</code> 和 <code>store</code> 上都是数据上下文.
 </p>
@@ -1760,7 +1770,7 @@ Expression    ::= proc (Identifier : Optional-type) Expression
 当然这个过程中还要做 <code>occurrence check</code>.最后 <code>type-of</code> 的定义如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="orgc03160e">
 Answer = Type * Substitution
 type-of : Expression * Type-Environment * Substitution -&gt; Answer
 </pre>
@@ -1770,9 +1780,9 @@ type-of : Expression * Type-Environment * Substitution -&gt; Answer
 </div>
 
 
-<div id="outline-container-orgdd9a9b8" class="outline-2">
-<h2 id="orgdd9a9b8">模块 (Module)</h2>
-<div class="outline-text-2" id="text-orgdd9a9b8">
+<div id="outline-container-org6add16e" class="outline-2">
+<h2 id="org6add16e">模块 (Module)</h2>
+<div class="outline-text-2" id="text-org6add16e">
 <p>
 <b>什么是模块?</b> 当程序变得复杂的时候,就需要把程序分成多个相对独立的部分,并且标明各个部分之间的依赖关系,每个部分就是一个模块.
 </p>
@@ -1807,9 +1817,9 @@ type-of : Expression * Type-Environment * Substitution -&gt; Answer
 </div>
 
 
-<div id="outline-container-org1b99931" class="outline-3">
-<h3 id="org1b99931">SIMPLE-MODULES</h3>
-<div class="outline-text-3" id="text-org1b99931">
+<div id="outline-container-org919fc97" class="outline-3">
+<h3 id="org919fc97">SIMPLE-MODULES</h3>
+<div class="outline-text-3" id="text-org919fc97">
 <p>
 基于 <code>CHECKED</code> 修改.
 </p>
@@ -1837,9 +1847,9 @@ type-of : Expression * Type-Environment * Substitution -&gt; Answer
 </div>
 
 
-<div id="outline-container-org8ccd082" class="outline-3">
-<h3 id="org8ccd082">Modules That Declare Types</h3>
-<div class="outline-text-3" id="text-org8ccd082">
+<div id="outline-container-orgeae66d4" class="outline-3">
+<h3 id="orgeae66d4">Modules That Declare Types</h3>
+<div class="outline-text-3" id="text-orgeae66d4">
 <p>
 基于 <code>SIMPLE-MODULES</code> 进行拓展,该语言名字叫做 <code>OPAQUE-TYPES</code>.
 </p>
@@ -1856,7 +1866,7 @@ type-of : Expression * Type-Environment * Substitution -&gt; Answer
 现在需要多一种  <code>type environment</code> 来维护类型声明和拓展类型的定义,
 </p>
 
-<pre class="example">
+<pre class="example" id="org9a64f99">
 Type :: = int | bool | from m take t | (Type -&gt; Type)
 </pre>
 
@@ -1867,9 +1877,9 @@ Type :: = int | bool | from m take t | (Type -&gt; Type)
 </div>
 
 
-<div id="outline-container-org7db9a0b" class="outline-3">
-<h3 id="org7db9a0b">Module Procedures</h3>
-<div class="outline-text-3" id="text-org7db9a0b">
+<div id="outline-container-orgaa9bdae" class="outline-3">
+<h3 id="orgaa9bdae">Module Procedures</h3>
+<div class="outline-text-3" id="text-orgaa9bdae">
 <p>
 基于 <code>OPAQUE-TYPES</code> 拓展的 <code>PROC-MODULES</code>.
 </p>
@@ -1878,15 +1888,15 @@ Type :: = int | bool | from m take t | (Type -&gt; Type)
 和函数 <code>proc (arg) body</code> 类似, <code>module procedure</code> 的语法如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="org45b057d">
 module-procedure ((Module-Name-Arg : Interface-of-Module) =&gt; Interface-of-New-Module) * body
 </pre>
 
 
-<div class="figure">
+<div id="org4df25c4" class="figure">
 <p><img src="../../../files/module-procedure.png" alt="module-procedure.png">
 </p>
-<p><span class="figure-number">Figure 25: </span>模块函数的例子</p>
+<p><span class="figure-number">Figure 13: </span>模块函数的例子</p>
 </div>
 
 <p>
@@ -1898,9 +1908,9 @@ module-procedure ((Module-Name-Arg : Interface-of-Module) =&gt; Interface-of-New
 
 
 
-<div id="outline-container-orgdbc606f" class="outline-2">
-<h2 id="orgdbc606f">对象和类 (Objects and Classes)</h2>
-<div class="outline-text-2" id="text-orgdbc606f">
+<div id="outline-container-org50d7c72" class="outline-2">
+<h2 id="org50d7c72">对象和类 (Objects and Classes)</h2>
+<div class="outline-text-2" id="text-org50d7c72">
 <p>
 很多编程任务要求通过一个接口管理一部分状态,面向对象编程( <code>Object-oriented programming</code>,后面简称 <code>OOP</code> )可以很好地完成这项任务.
 </p>
@@ -1958,10 +1968,10 @@ module-procedure ((Module-Name-Arg : Interface-of-Module) =&gt; Interface-of-New
 </p>
 
 
-<div class="figure">
+<div id="org8e20b8c" class="figure">
 <p><img src="../../../files/static-method-dispatch.png" alt="static-method-dispatch.png">
 </p>
-<p><span class="figure-number">Figure 26: </span>Static method dispatch</p>
+<p><span class="figure-number">Figure 14: </span>Static method dispatch</p>
 </div>
 
 <p>
@@ -1973,9 +1983,9 @@ module-procedure ((Module-Name-Arg : Interface-of-Module) =&gt; Interface-of-New
 </p>
 </div>
 
-<div id="outline-container-org42b3aed" class="outline-3">
-<h3 id="org42b3aed">CLASSES</h3>
-<div class="outline-text-3" id="text-org42b3aed">
+<div id="outline-container-orga79bcbc" class="outline-3">
+<h3 id="orga79bcbc">CLASSES</h3>
+<div class="outline-text-3" id="text-orga79bcbc">
 <p>
 基于 <code>IMPLICIT-REFS</code> 拓展,因为采用 <code>OOP</code> 的语言必定是 <code>stateful</code>.
 </p>
@@ -1984,7 +1994,7 @@ module-procedure ((Module-Name-Arg : Interface-of-Module) =&gt; Interface-of-New
 值的定义如下,
 </p>
 
-<pre class="example">
+<pre class="example" id="org463f00e">
 ExpVal = Int + Bool + Proc + Listof(ExpVal) + Obj
 DenVal = Ref(ExpVal)
 </pre>
@@ -2006,7 +2016,7 @@ DenVal = Ref(ExpVal)
 </p>
 
 
-<div class="figure">
+<div id="org7e1e7fe" class="figure">
 <p><img src="../../../files/a-simple-object.png" alt="a-simple-object.png">
 </p>
 </div>
@@ -2028,12 +2038,12 @@ DenVal = Ref(ExpVal)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">new-object</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (class-name)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">new-object</span>
+  (<span style="color: #00ffff;">lambda</span> (class-name)
     (an-object
       class-name
-      (<span style="color: #F0DFAF; font-weight: bold;">map</span>
-        (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (field-name)
+      (<span style="color: #00ffff;">map</span>
+        (<span style="color: #00ffff;">lambda</span> (field-name)
           (newref (list &#8217;uninitialized-field field-name)))
       (class-&gt;field-names (lookup-class class-name))))))
 </pre>
@@ -2066,12 +2076,12 @@ DenVal = Ref(ExpVal)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">apply-method</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (m self args)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">apply-method</span>
+  (<span style="color: #00ffff;">lambda</span> (m self args)
     (cases method m
       (a-method (vars body super-name field-names)
         (value-of body
-          (extend-env* vars (<span style="color: #F0DFAF; font-weight: bold;">map</span> newref args)
+          (extend-env* vars (<span style="color: #00ffff;">map</span> newref args)
             (extend-env-with-self-and-super
               self super-name
               (extend-env field-names (object-&gt;fileds self) (empty-env)))))))))
@@ -2087,7 +2097,7 @@ DenVal = Ref(ExpVal)
 </p>
 
 
-<div class="figure">
+<div id="orge659b27" class="figure">
 <p><img src="../../../files/shadow-filed-names.png" alt="shadow-filed-names.png">
 </p>
 </div>
@@ -2133,8 +2143,8 @@ DenVal = Ref(ExpVal)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-scheme">(<span style="color: #F0DFAF; font-weight: bold;">define</span> <span style="color: #93E0E3;">merge-method-envs</span>
-  (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> (super-m-env new-m-env)
+<pre class="src src-scheme">(<span style="color: #00ffff;">define</span> <span style="color: #87cefa;">merge-method-envs</span>
+  (<span style="color: #00ffff;">lambda</span> (super-m-env new-m-env)
     (append new-m-env super-m-env)))
 </pre>
 </div>
@@ -2142,9 +2152,9 @@ DenVal = Ref(ExpVal)
 </div>
 
 
-<div id="outline-container-orga6351b7" class="outline-3">
-<h3 id="orga6351b7">TYPED-OO</h3>
-<div class="outline-text-3" id="text-orga6351b7">
+<div id="outline-container-orgf077d2e" class="outline-3">
+<h3 id="orgf077d2e">TYPED-OO</h3>
+<div class="outline-text-3" id="text-orgf077d2e">
 <p>
 在 <code>CLASSES</code> 的基础上增加以下特性,
 </p>
@@ -2163,10 +2173,10 @@ DenVal = Ref(ExpVal)
 
 
 
-<div id="outline-container-org84c55af" class="outline-2">
-<h2 id="org84c55af">读后感</h2>
-<div class="outline-text-2" id="text-org84c55af">
-<pre class="example">
+<div id="outline-container-orgfad963a" class="outline-2">
+<h2 id="orgfad963a">读后感</h2>
+<div class="outline-text-2" id="text-orgfad963a">
+<pre class="example" id="org5028e7f">
 写于 2018/11/20
 </pre>
 
@@ -2183,8 +2193,8 @@ DenVal = Ref(ExpVal)
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-11-07</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>
