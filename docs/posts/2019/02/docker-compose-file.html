@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-02-15 三 12:43 -->
+<!-- 2023-05-09 Tue 09:46 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>docker-compose.yml文件的编写</title>
@@ -216,22 +216,22 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgdfbe8bf">Docker Compose 和 Docker Swarm</a></li>
-<li><a href="#orgaf73ec6">docker-compose.yml</a></li>
-<li><a href="#orge20d60f">追加例子: MYSQL + Tornado</a>
+<li><a href="#org992a830">Docker Compose 和 Docker Swarm</a></li>
+<li><a href="#org5a8cd37">docker-compose.yml</a></li>
+<li><a href="#org675e28b">追加例子: MYSQL + Tornado</a>
 <ul>
-<li><a href="#org7d80cbd">项目内容</a></li>
-<li><a href="#org49ba0b3">项目结构</a></li>
-<li><a href="#org88708e5">docker-compose.yml 配置</a></li>
-<li><a href="#orgb99b864">关于 MYSQL Docker 的额外补充</a></li>
-<li><a href="#org0c812b2">额外思考</a></li>
+<li><a href="#org5b9b364">项目内容</a></li>
+<li><a href="#org9607864">项目结构</a></li>
+<li><a href="#org56fc12b">docker-compose.yml 配置</a></li>
+<li><a href="#org4805cef">关于 MYSQL Docker 的额外补充</a></li>
+<li><a href="#orga862c89">额外思考</a></li>
 </ul>
 </li>
-<li><a href="#orgf85ae05">结语</a></li>
+<li><a href="#orgb09332b">结语</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgc9c9a1d">
+<div class="abstract" id="org1ac7727">
 <p>
 去年的时候写过一篇<a href="file:///posts/2018/08/tornado-with-docker.html">用Docker打包Tornado项目</a>的文章,本来是打算很快补上后续文章的,不过那个时候学其他东西就忘记了.前一段时间家里的网络失常,笔记本的系统崩坏以及服务器的各种问题,为了以后可以快速恢复环境,因此要了解 <code>docker</code> 的更多用法,这文章就是给自己备忘的.
 </p>
@@ -242,9 +242,9 @@
 
 </div>
 
-<div id="outline-container-orgdfbe8bf" class="outline-2">
-<h2 id="orgdfbe8bf">Docker Compose 和 Docker Swarm</h2>
-<div class="outline-text-2" id="text-orgdfbe8bf">
+<div id="outline-container-org992a830" class="outline-2">
+<h2 id="org992a830">Docker Compose 和 Docker Swarm</h2>
+<div class="outline-text-2" id="text-org992a830">
 <p>
 官方文档介绍:
 </p>
@@ -274,9 +274,9 @@
 </div>
 
 
-<div id="outline-container-orgaf73ec6" class="outline-2">
-<h2 id="orgaf73ec6">docker-compose.yml</h2>
-<div class="outline-text-2" id="text-orgaf73ec6">
+<div id="outline-container-org5a8cd37" class="outline-2">
+<h2 id="org5a8cd37">docker-compose.yml</h2>
+<div class="outline-text-2" id="text-org5a8cd37">
 <p>
 不论你是用 <code>docker-compose</code> 还是 <code>docker swarm</code>,你都要编写 <code>docker-compose.yml</code> 文件,值得注意的是 <code>docker</code> 的更新是很快的,不同版本的 <code>docker-compose.yml</code> 的能用指令是不一样的.这里是其中一个版本的<a href="https://docs.docker.com/compose/compose-file/">reference</a>,你可以在这里找到其他版本的参考文档,具体就不说了.
 </p>
@@ -289,7 +289,7 @@
 首先你要准备一个静态站点的目录以及它的 <code>Nginx</code> 配置文件和一个最新的 <code>Nginx</code> 镜像,其中静态站点目录的内容类似(请结合自己的实际情况来操作,这里为了演示就一切从简)如下:
 </p>
 
-<pre class="example" id="org3a59446">
+<pre class="example" id="org9aab8eb">
 site/
   |- index.html
   |- css/
@@ -313,7 +313,7 @@ site/
 根据 <code>Nginx</code> 的官方参考可以了解到 <code>volumes</code> 指令可以满足这一个要求,所以 <code>docker-compose.yml</code> 的配置如下:
 </p>
 
-<pre class="example" id="org31096ef">
+<pre class="example" id="org38648f1">
 version: "3.2"
 
 services:
@@ -330,7 +330,7 @@ services:
 这里要求目录 <code>conf.d</code> 和 <code>docker-compose.yml</code> 与 <code>site</code> 是目录同级,其中 <code>conf.d</code> 目录是 <code>Nginx</code> 的配置目录,内容如下:
 </p>
 
-<pre class="example" id="org2e49ab9">
+<pre class="example" id="orgfc85f86">
 conf.d/
   |- site.conf
 </pre>
@@ -339,7 +339,7 @@ conf.d/
 <code>site.conf</code> 的配置如下,
 </p>
 
-<pre class="example" id="orgcfa406a">
+<pre class="example" id="orgda7cc79">
 server {
     listen 80;
     listen [::]:80;
@@ -373,10 +373,10 @@ server {
 </div>
 
 
-<div id="outline-container-orge20d60f" class="outline-2">
-<h2 id="orge20d60f">追加例子: MYSQL + Tornado</h2>
-<div class="outline-text-2" id="text-orge20d60f">
-<pre class="example" id="orge1b5d8c">
+<div id="outline-container-org675e28b" class="outline-2">
+<h2 id="org675e28b">追加例子: MYSQL + Tornado</h2>
+<div class="outline-text-2" id="text-org675e28b">
+<pre class="example" id="org413464d">
 写于 2019/3/17
 </pre>
 
@@ -389,9 +389,9 @@ server {
 </p>
 </div>
 
-<div id="outline-container-org7d80cbd" class="outline-3">
-<h3 id="org7d80cbd">项目内容</h3>
-<div class="outline-text-3" id="text-org7d80cbd">
+<div id="outline-container-org5b9b364" class="outline-3">
+<h3 id="org5b9b364">项目内容</h3>
+<div class="outline-text-3" id="text-org5b9b364">
 <p>
 这个这是一个很简单的 <code>API</code> 服务,使用 <code>Python</code> 做为后端语言,实际上什么后端语言都无所为,根据你自己的实际情况来就好.
 </p>
@@ -402,10 +402,10 @@ server {
 </div>
 </div>
 
-<div id="outline-container-org49ba0b3" class="outline-3">
-<h3 id="org49ba0b3">项目结构</h3>
-<div class="outline-text-3" id="text-org49ba0b3">
-<pre class="example" id="orgede678c">
+<div id="outline-container-org9607864" class="outline-3">
+<h3 id="org9607864">项目结构</h3>
+<div class="outline-text-3" id="text-org9607864">
+<pre class="example" id="org879528e">
 server/
   |- sql/
   |    |- init.sql
@@ -457,7 +457,7 @@ server/
 
 define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="color: #b0c4de;">type</span>=<span style="color: #b0c4de;">int</span>, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">"run server on the given port."</span>)
 
-<span style="color: #eedd82;">database</span> = pymysql.connect(
+database = pymysql.connect(
     host=MYSQL_HOST,
     database=<span style="color: #ffa07a;">'MUSICDB'</span>, port=3306,
     user=<span style="color: #ffa07a;">'saltborn'</span>, password=<span style="color: #ffa07a;">'saltborn'</span>, charset=<span style="color: #ffa07a;">'utf-8'</span>)
@@ -465,34 +465,34 @@ define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="c
 
 <span style="color: #00ffff;">class</span> <span style="color: #98fb98;">Application</span>(tornado.web.Application):
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">__init__</span>(<span style="color: #00ffff;">self</span>):
-        <span style="color: #eedd82;">handlers</span> = [
+        handlers = [
             (r<span style="color: #ffa07a;">"/music/(?P&lt;id&gt;\d+)/?"</span>,
              MusicSrcHandler,
              <span style="color: #b0c4de;">dict</span>(database=database))
         ]
-        <span style="color: #eedd82;">settings</span> = <span style="color: #b0c4de;">dict</span>(debug=<span style="color: #7fffd4;">True</span>)
+        settings = <span style="color: #b0c4de;">dict</span>(debug=<span style="color: #7fffd4;">True</span>)
         <span style="color: #b0c4de;">super</span>().__init__(handlers, **settings)
 
 
 <span style="color: #00ffff;">class</span> <span style="color: #98fb98;">MusicSrcHandler</span>(tornado.web.RequestHandler):
 
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">initialize</span>(<span style="color: #00ffff;">self</span>, database):
-        <span style="color: #00ffff;">self</span>.<span style="color: #eedd82;">database</span> = database
+        <span style="color: #00ffff;">self</span>.database = database
 
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">get</span>(<span style="color: #00ffff;">self</span>, <span style="color: #b0c4de;">id</span>):
         <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">return music src</span>
         <span style="color: #00ffff;">self</span>.set_header(<span style="color: #ffa07a;">"Content-Type"</span>, <span style="color: #ffa07a;">"application/json"</span>)
         <span style="color: #00ffff;">with</span> <span style="color: #00ffff;">self</span>.database.cursor() <span style="color: #00ffff;">as</span> cursor:
-            <span style="color: #eedd82;">sql</span> = <span style="color: #ffa07a;">"SELECT `msg` FROM MUSIC WHERE `id` = %s"</span>
+            sql = <span style="color: #ffa07a;">"SELECT `msg` FROM MUSIC WHERE `id` = %s"</span>
             cursor.execute(sql, (<span style="color: #b0c4de;">id</span>,))
-            <span style="color: #eedd82;">result</span> = cursor.fetchone()
+            result = cursor.fetchone()
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">do something with result, I am not doing here</span>
         <span style="color: #00ffff;">self</span>.write({<span style="color: #ffa07a;">"msg"</span>: <span style="color: #b0c4de;">id</span>})
 
 
 <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">main</span>():
     tornado.options.parse_command_line()
-    <span style="color: #eedd82;">app</span> = Application()
+    app = Application()
     app.listen(options.port)
     tornado.ioloop.IOLoop.current().start()
 
@@ -511,10 +511,10 @@ define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="c
 </div>
 </div>
 
-<div id="outline-container-org88708e5" class="outline-3">
-<h3 id="org88708e5">docker-compose.yml 配置</h3>
-<div class="outline-text-3" id="text-org88708e5">
-<pre class="example" id="org2dc5d18">
+<div id="outline-container-org56fc12b" class="outline-3">
+<h3 id="org56fc12b">docker-compose.yml 配置</h3>
+<div class="outline-text-3" id="text-org56fc12b">
+<pre class="example" id="org58e8403">
 version: "3"
 
 services:
@@ -583,9 +583,9 @@ music.api:
 </div>
 </div>
 
-<div id="outline-container-orgb99b864" class="outline-3">
-<h3 id="orgb99b864">关于 MYSQL Docker 的额外补充</h3>
-<div class="outline-text-3" id="text-orgb99b864">
+<div id="outline-container-org4805cef" class="outline-3">
+<h3 id="org4805cef">关于 MYSQL Docker 的额外补充</h3>
+<div class="outline-text-3" id="text-org4805cef">
 <p>
 也有一两个朋友不大了解如何使用 <code>MYSQL</code> 的镜像的,其实很简单(可能官方文档太多了大部份人都懒得看),这里我大概说一下,重点在于 <code>mysql</code> 服务的 <code>volumes</code> 选项那里,
 </p>
@@ -632,9 +632,9 @@ FLUSH <span style="color: #00ffff;">PRIVILEGES</span>;
 </div>
 </div>
 
-<div id="outline-container-org0c812b2" class="outline-3">
-<h3 id="org0c812b2">额外思考</h3>
-<div class="outline-text-3" id="text-org0c812b2">
+<div id="outline-container-orga862c89" class="outline-3">
+<h3 id="orga862c89">额外思考</h3>
+<div class="outline-text-3" id="text-orga862c89">
 <p>
 假设你已经根据上面这些思路自己动手操作过一遍了(选自己熟悉的后端语言写一个简单的程序),那么再想一下 <code>后端程序 + MYSQL + 前端</code> 这样的组合该如何用 <code>docker-compose</code> 打包呢?配置文件该如何写呢?(所有的答案都在这文件里面了).
 </p>
@@ -647,9 +647,9 @@ FLUSH <span style="color: #00ffff;">PRIVILEGES</span>;
 </div>
 
 
-<div id="outline-container-orgf85ae05" class="outline-2">
-<h2 id="orgf85ae05">结语</h2>
-<div class="outline-text-2" id="text-orgf85ae05">
+<div id="outline-container-orgb09332b" class="outline-2">
+<h2 id="orgb09332b">结语</h2>
+<div class="outline-text-2" id="text-orgb09332b">
 <p>
 由于官方文档的有效例子太少,所以我就自己写了这么一个简单的实验过程,内容虽少但五脏俱全,包含了基本概念以及基础用法.还有就是官方文档的结构实在是太乱了,新手看到估计会很迷茫,所以每篇文章下面都出现大量的 <code>thumbs down</code>,不过官方文档的内容其实质量很好,针对这个问题我在文章用合适的地方放上官方的参考连接.
 </p>
@@ -663,7 +663,7 @@ FLUSH <span style="color: #00ffff;">PRIVILEGES</span>;
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2019-02-15</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

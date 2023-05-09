@@ -1,0 +1,142 @@
+#+title: 宝可梦双打对战组合
+#+date: 2022-09-30
+#+index: 宝可梦双打对战组合
+#+tags: pokemon
+#+status: wd
+#+begin_abstract
+记录以及学习各种宝可梦双打对战策略
+#+end_abstract
+
+*** 一些概念
+
+    https://gamerant.com/pokemon-vgc-a-complete-guide/
+
+    
+*** 游戏规则
+
+*** 伤害估算
+
+    #+BEGIN_QUOTE
+    这里不讨论准确的伤害计算, 只是粗略介绍一下计算公式的大概, 方便后面内容张开.
+
+    有兴趣了解里面的细节并且编写自己的伤害计算器的话,
+
+    建议阅读 [[https://www.trainertower.com/dawoblefets-damage-dissertation/][DaWoblefet’s Damage Dissertation- A Complete Guide to the Damage Formula]].
+
+    #+END_QUOTE
+
+    由于具体的伤害计算公式是不太可能在对战中直接口算得出结果的, 因为里面设计很多的取整操作,
+
+    而且不同计算步骤用到的取整方式也不同, 至少有 3 种取整方式, 十分的复杂, 最后的结果还会在 $[0.85, 1]$ 区间波动.
+
+    最重要的是, 在实际对战中也不可能准确知道对手宝可梦的具体参数.
+
+    实际上, 哪怕是目前互联网上很多人使用的伤害计算器, 其计算结果也不一定是对的.
+
+    以上种种信息意味着只能口算得出一个不准确的结果.
+
+    但是, 一个粗略的估算也是有必要的, 这个估算结果可以帮助你决定下一步是否应该使用某个招式.
+
+    把计算公式简化成如下:
+
+    $baseDamage = \frac{1}{250} \times (2 \times atkerLevel + 10) * \frac{atkOrSpa}{defOrSpd} \times movePower + 2$
+
+    $mods = mod_{1} \times mod_{2} \times mod_{3} \times ... \times mod_{n}$
+
+    $damage = baseDamage \times mods \times randomMod$
+
+    $baseDamage$ 是这个公式的重点, 后面会详细介绍.
+
+    $mods$ 则是各种修正, 是否同类型, 招式的有效程度, 攻击方宝可梦是否烧伤等等.
+
+    其中, $randomMod$ 的取值范围是 $[0.85, 1]$.
+
+    # 可以看出这条公式太多乘法了, 不适合口算, 所以如果可以 *把乘除法换成加减法* 就好办多了.
+
+    # https://tieba.baidu.com/p/8019499150
+
+    宝可梦的伤害估算做法基本上就是对伤害进行等级划分, 什么范围内的攻击力打什么范围内的耐久能够让防御方宝可梦的生命值扣除 $\frac{1}{3}$ / $\frac{1}{2}$ / $1$ 等等.
+
+    而伤害等级实际上是来源于平时对战/计算结果的记忆, 这也是人们常说的 "感觉", 打多了自然而言会知道伤害有多少.
+
+    下面有一个方法可以帮助你跳过感觉的培养, 建立一把伤害比例标尺,
+
+    #+BEGIN_QUOTE
+    下面的方法来自于 [[https://www.bilibili.com/video/BV1ag411m74t/?spm_id_from=333.1007.top_right_bar_window_history.content.click][翅膀受伤的谢米 - 教你轻松瞬间口算宝可梦伤害【备战宝可梦朱紫】]] 以及其对应的 [[https://tieba.baidu.com/p/8019499150][贴吧帖子]].
+
+    理解这个方法的前提是需要掌握基础的 *指数运算法则* 和 *对数运算法则*.
+
+    整体思路如下:
+
+    把伤害公式的每一个重要项都换成 *同底* 的指数函数, 这样乘除法就基本就变成指数之间的加减法了;
+
+    对这个公式进行两边取对数, 把最后得出的指数结果叫做 *伤害等级*.
+
+    根据这个伤害等级并不是用来算具体伤害的, 而是用来 "算出" 伤害百分比的.
+
+    而是根据伤害等级
+
+    给伤害等级划分出一个伤害百分比表
+
+    给宝可梦的种族值的攻击种族值(攻击/特攻)和耐久种族值(HP-防御/HP-特防)进行等级划分,
+
+    #+END_QUOTE
+
+    由于我们不过分追求精确, 所以先对 $baseDamage$ 进行简化, 去掉一些不太重要部分.
+
+    在等级对战中, 精灵的等级是固定的, 因此 $baseDamage$ 的 $atkerLevel$ 就是常量 50 了, 这样再把 $baseDamage$ 的常量去掉, 得到:
+
+    $baseDamage = \frac{atkOrSpa}{defOrSpd} \times movePower$.
+
+    最终的伤害公式为 $damage = movePower \times \frac{atkOrSpa}{defOrSpd} \times mods \times randomMods$,
+
+    先不考虑随机 $damage = movePower \times \frac{atkOrSpa}{defOrSpd} \times mods$.
+
+    # 这个时候我们把伤害除以防御方的血量就能得出伤害比例了: $ratio = \frac{damage}{hp} = movePower \times \frac{atkOrSpa}{defOrSpd \times hp} \times mods$.
+
+    $\begin{equation} \left\{ \begin{aligned} & atkOrSpa = a \times 1.2^{x} \\ & defOrSpd = d \times 1.2^{m} \\ & mods = 1.2^{y} \\ & a, d \in const \end{aligned} \right. \end{equation}$
+
+    $damage = movePower \times \frac{a \times 1.2^{x}}{d \times 1.2^{m}} \times 1.2^{y} = \frac{movePower \times a \times 1.2^{x} \times 1.2^{y}}{d \times 1.2^{m}}$
+
+    $damage$ 一定可以写成 $b \times 1.2^{p}$ 的形式, 可以得到 $b \times 1.2^{p} = \frac{movePower \times a}{d} \times 1.2^{x+y-m}$, $\begin{equation} \left\{ \begin{aligned} & b = \frac{movePower \times a}{d} \\ & p = x + y - m \end{aligned} \right. \end{equation}$.
+
+    估算具体伤害并不是我们想要的, 我们想知道的是多少伤害打多少耐久最终会扣防御方宝可梦多少比例的生命值, 所以有 $ratio = \frac{damage}{hp}$.
+
+    我们设 $hp = h \times 1.2^{n}$, 以此保证 $ratio$ 是 $r \times 1.2^{R}$ 的形式, 从而建立一个刻度表.
+
+
+*** 努力值分配
+
+*** 一些术语
+
+    - 输出手 (Attackers)
+
+      攻击(attack)或者特攻(special attack)高的宝可梦
+
+    - 空间手
+
+      习得了[[https://wiki.52poke.com/wiki/%E6%88%8F%E6%B3%95%E7%A9%BA%E9%97%B4%EF%BC%88%E6%8B%9B%E5%BC%8F%EF%BC%89][戏法空间(招式, 英文: Trick Room)]]的宝可梦
+
+    - 招式 (Moves)
+
+    - 特性 (Abilities)
+
+    -
+
+
+*** 组队
+
+    查看当前精灵使用率 https://www.pikalytics.com/
+
+
+*** 策略
+
+**** 空间队 (Trick Room team)
+
+     - 核心(core):
+       - 空间手
+       - 低速攻击手
+
+     - 适用情况:
+       - 对方队伍为高速队
+**** 高速队

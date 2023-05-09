@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-02-15 三 12:42 -->
+<!-- 2023-05-09 Tue 09:46 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A Simple WebSocket Echo Server</title>
@@ -197,38 +197,27 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script>
-  window.MathJax = {
-    tex: {
-      ams: {
-        multlineWidth: '85%'
-      },
-      tags: 'ams',
-      tagSide: 'right',
-      tagIndent: '.8em'
-    },
-    chtml: {
-      scale: 1.0,
-      displayAlign: 'center',
-      displayIndent: '0em'
-    },
-    svg: {
-      scale: 1.0,
-      displayAlign: 'center',
-      displayIndent: '0em'
-    },
-    output: {
-      font: 'mathjax-modern',
-      displayOverflow: 'overflow'
-    }
-  };
-</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
 
-<script
-  id="MathJax-script"
-  async
-  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+        "HTML-CSS": { scale: 1.0,
+                        linebreaks: { automatic: "%LINEBREAKS" },
+                        webFont: "mathjax-modern"
+                       },
+        SVG: {scale: 1.0,
+              linebreaks: { automatic: "%LINEBREAKS" },
+              font: "mathjax-modern"},
+        NativeMML: {scale: 1.0},
+        TeX: { equationNumbers: {autoNumber: "%AUTONUMBER"},
+               MultLineWidth: "85%",
+               TagSide: "amsIDE",
+               TagIndent: ".8em"
+             }
+});
 </script>
+<script src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -244,7 +233,7 @@
 </div>
 <div id="content" class="content">
 <h1 class="title">A Simple WebSocket Echo Server</h1>
-<div class="abstract" id="orge536c15">
+<div class="abstract" id="org6ea14e5">
 <p>
 It's time to learn WebSocket protocol by scratching a simple echo server after reading <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers">Writing WebSocket Servers</a>.
 </p>
@@ -264,7 +253,7 @@ Handshake
 </p>
 
 
-<div id="orgb750af5" class="figure">
+<div id="orga48e4df" class="figure">
 <p><img src="../../../files/handshake.png" alt="handshake.png">
 </p>
 </div>
@@ -301,7 +290,7 @@ Communication
 </p>
 
 
-<div id="orge691c72" class="figure">
+<div id="orgd23f36b" class="figure">
 <p><img src="../../../files/data-frame-format.png" alt="data-frame-format.png">
 </p>
 </div>
@@ -400,18 +389,18 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 <span style="color: #eedd82;">MAGIC_STRING</span> = b<span style="color: #ffa07a;">"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"</span>
 
 <span style="color: #eedd82;">RSP_TO_BAD_REQ</span> = (
-    b<span style="color: #ffa07a;">"HTTP/1.1 400 Bad Request</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
-    b<span style="color: #ffa07a;">"Content-Type: text/plain</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
-    b<span style="color: #ffa07a;">"Connection: close</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
-    b<span style="color: #ffa07a;">"</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
+    b<span style="color: #ffa07a;">"HTTP/1.1 400 Bad Request\r\n"</span>
+    b<span style="color: #ffa07a;">"Content-Type: text/plain\r\n"</span>
+    b<span style="color: #ffa07a;">"Connection: close\r\n"</span>
+    b<span style="color: #ffa07a;">"\r\n"</span>
     b<span style="color: #ffa07a;">"Incorrect request"</span>
 )
 
-<span style="color: #eedd82;">RSP_TO_COMPLETE_HANDSHAKE</span> = (
-    b<span style="color: #ffa07a;">"HTTP/1.1 101 Switching Protocols</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
-    b<span style="color: #ffa07a;">"Upgrade: websocket</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
-    b<span style="color: #ffa07a;">"Connection: Upgrade</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>
-    b<span style="color: #ffa07a;">"Sec-WebSocket-Accept: %s</span><span style="color: #7fffd4;">\r\n\r\n</span><span style="color: #ffa07a;">"</span>)
+RSP_TO_COMPLETE_HANDSHAKE = (
+    b<span style="color: #ffa07a;">"HTTP/1.1 101 Switching Protocols\r\n"</span>
+    b<span style="color: #ffa07a;">"Upgrade: websocket\r\n"</span>
+    b<span style="color: #ffa07a;">"Connection: Upgrade\r\n"</span>
+    b<span style="color: #ffa07a;">"Sec-WebSocket-Accept: %s\r\n\r\n"</span>)
 
 
 <span style="color: #00ffff;">class</span> <span style="color: #98fb98;">EchoRequestHandler</span>(socketserver.BaseRequestHandler):
@@ -424,14 +413,14 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 <span style="color: #ffa07a;">               and send message back.</span>
 <span style="color: #ffa07a;">            3. if handshake failed, tell client that "Bad Request"</span>
 <span style="color: #ffa07a;">        """</span>
-        <span style="color: #eedd82;">is_handshake_completed</span> = <span style="color: #00ffff;">self</span>.handshake()
-        <span style="color: #00ffff;">if</span> is_handshake_completed:
+        is_handshake_completed = <span style="color: #00ffff;">self</span>.handshake()
+        <span style="color: #00ffff;">if</span> <span style="color: #eedd82;">is_handshake_completed</span>:
             <span style="color: #00ffff;">while</span> <span style="color: #7fffd4;">True</span>:
                 (
-                    <span style="color: #eedd82;">fin_and_opcode</span>,
-                    <span style="color: #eedd82;">payload_len_indicator</span>,
-                    <span style="color: #eedd82;">payload_len</span>,
-                    <span style="color: #eedd82;">decoded_payload</span>
+                    fin_and_opcode,
+                    payload_len_indicator,
+                    payload_len,
+                    decoded_payload
                 ) = <span style="color: #00ffff;">self</span>.extract_payload(<span style="color: #00ffff;">self</span>.request.recv(1024).strip())
                 <span style="color: #00ffff;">self</span>.send_back(fin_and_opcode, payload_len_indicator,
                                payload_len, decoded_payload)
@@ -446,9 +435,9 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 <span style="color: #ffa07a;">            4. return True for successful or False for failed to determine</span>
 <span style="color: #ffa07a;">               whether to swap data</span>
 <span style="color: #ffa07a;">        """</span>
-        <span style="color: #eedd82;">_headers</span> = <span style="color: #00ffff;">self</span>.request.recv(1024).strip().split(b<span style="color: #ffa07a;">"</span><span style="color: #7fffd4;">\r\n</span><span style="color: #ffa07a;">"</span>)
+        <span style="color: #eedd82;">_headers</span> = <span style="color: #00ffff;">self</span>.request.recv(1024).strip().split(b<span style="color: #ffa07a;">"\r\n"</span>)
         <span style="color: #eedd82;">headers</span> = {}
-        <span style="color: #00ffff;">for</span> h <span style="color: #00ffff;">in</span> _headers:
+        <span style="color: #00ffff;">for</span> h <span style="color: #00ffff;">in</span> <span style="color: #eedd82;">_headers</span>:
             <span style="color: #00ffff;">try</span>:
                 <span style="color: #eedd82;">key</span>, <span style="color: #eedd82;">value</span> = h.split(b<span style="color: #ffa07a;">":"</span>)
             <span style="color: #00ffff;">except</span> <span style="color: #98fb98;">ValueError</span>:
@@ -492,7 +481,7 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 <span style="color: #ffa07a;">        """</span>
         <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the first byte stores FIN field and opcode field.</span>
         <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the second byte stores MASK field and payload_len indicator</span>
-        <span style="color: #eedd82;">fin_and_opcode</span> = frame[0]
+        fin_and_opcode = frame[0]
         <span style="color: #eedd82;">payload_len_indicator</span> = frame[1] - 128
         <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">extract payload_len according to payload_len_indicator</span>
         <span style="color: #00ffff;">if</span> payload_len_indicator &lt;= 125:
@@ -502,17 +491,17 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
             <span style="color: #eedd82;">mask_key_end</span> = 6
         <span style="color: #00ffff;">elif</span> payload_len_indicator == 126:
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the frames use 2 bytes to store payload_len</span>
-            <span style="color: #eedd82;">payload_len</span> = struct.unpack_from(<span style="color: #ffa07a;">"!H"</span>, frame[2:4])[0]
-            <span style="color: #eedd82;">mask_key</span> = frame[4:8]
-            <span style="color: #eedd82;">mask_key_end</span> = 8
+            payload_len = struct.unpack_from(<span style="color: #ffa07a;">"!H"</span>, frame[2:4])[0]
+            mask_key = frame[4:8]
+            mask_key_end = 8
         <span style="color: #00ffff;">else</span>:
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the frame uses 8 bytes to store payload_len</span>
-            <span style="color: #eedd82;">payload_len</span> = struct.unpack_from(<span style="color: #ffa07a;">"!Q"</span>, frame[2:10])[0]
-            <span style="color: #eedd82;">mask_key</span> = frame[10:14]
-            <span style="color: #eedd82;">mask_key_end</span> = 14
-        <span style="color: #eedd82;">encrypted_payload</span> = frame[
+            payload_len = struct.unpack_from(<span style="color: #ffa07a;">"!Q"</span>, frame[2:10])[0]
+            mask_key = frame[10:14]
+            mask_key_end = 14
+        encrypted_payload = frame[
             mask_key_end: mask_key_end+payload_len]
-        <span style="color: #eedd82;">decoded_payload</span> = <span style="color: #b0c4de;">bytearray</span>(
+        decoded_payload = <span style="color: #b0c4de;">bytearray</span>(
             [
                 encrypted_payload[i] ^ mask_key[i % 4]
                 <span style="color: #00ffff;">for</span> i <span style="color: #00ffff;">in</span> <span style="color: #b0c4de;">range</span>(payload_len)
@@ -528,36 +517,36 @@ check it out on <a href="https://github.com/saltb0rn/ws-echo-server">Github</a>,
 <span style="color: #ffa07a;">        2. not consider the situation that message fragmentation here</span>
 <span style="color: #ffa07a;">        3. how to construct a frame manually</span>
 <span style="color: #ffa07a;">        """</span>
-        <span style="color: #eedd82;">decoded_payload</span> = decoded_payload
+        decoded_payload = decoded_payload
         <span style="color: #00ffff;">if</span> payload_len_indicator &lt;= 125:
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">when payload_len_indicator &lt;= 125,</span>
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">the length of payload is payload_len_indicator</span>
-            <span style="color: #eedd82;">frame</span> = <span style="color: #b0c4de;">bytearray</span>(
+            frame = <span style="color: #b0c4de;">bytearray</span>(
                 [fin_and_opcode, payload_len]) + decoded_payload
         <span style="color: #00ffff;">elif</span> payload_len_indicator == 126:
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">unlike that the payload_len_indicator &lt;= 125,</span>
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">in this case, it is necessary to store payload_len</span>
             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">in other bytes, as well as payload_len_indicator is 127</span>
-            <span style="color: #eedd82;">frame</span> = <span style="color: #b0c4de;">bytearray</span>(
+            frame = <span style="color: #b0c4de;">bytearray</span>(
                 [fin_and_opcode, payload_len_indicator]) + \
                 struct.pack(<span style="color: #ffa07a;">"!H"</span>, payload_len) + decoded_payload
         <span style="color: #00ffff;">else</span>:
-            <span style="color: #eedd82;">frame</span> = <span style="color: #b0c4de;">bytearray</span>(
+            frame = <span style="color: #b0c4de;">bytearray</span>(
                 [fin_and_opcode, payload_len_indicator]) + \
                 struct.pack(<span style="color: #ffa07a;">"!Q"</span>, payload_len) + decoded_payload
         <span style="color: #00ffff;">self</span>.request.sendall(frame)
 
 
 <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">__name__</span> == <span style="color: #ffa07a;">"__main__"</span>:
-    <span style="color: #eedd82;">parser</span> = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description=<span style="color: #ffa07a;">"Kick off a echo websocket server"</span>)
     parser.add_argument(<span style="color: #ffa07a;">'host'</span>, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">'IP or hostname'</span>)
     parser.add_argument(<span style="color: #ffa07a;">'-p'</span>, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">'Port (default=8001)'</span>,
                         metavar=<span style="color: #ffa07a;">'port'</span>, <span style="color: #b0c4de;">type</span>=<span style="color: #b0c4de;">int</span>, default=8001)
-    <span style="color: #eedd82;">args</span> = parser.parse_args()
-    <span style="color: #eedd82;">HOST</span>, <span style="color: #eedd82;">PORT</span> = args.host, args.p
-    socketserver.TCPServer.<span style="color: #eedd82;">allow_reuse_address</span> = <span style="color: #7fffd4;">True</span>
-    <span style="color: #eedd82;">server</span> = socketserver.TCPServer((HOST, PORT), EchoRequestHandler)
+    args = parser.parse_args()
+    HOST, PORT = args.host, args.p
+    socketserver.TCPServer.allow_reuse_address = <span style="color: #7fffd4;">True</span>
+    server = socketserver.TCPServer((HOST, PORT), EchoRequestHandler)
     server.serve_forever()
 
 </pre>
@@ -582,7 +571,7 @@ Then fire up your Chrome console, and input these statements
 </p>
 
 
-<div id="org09bdf6b" class="figure">
+<div id="orgd03e120" class="figure">
 <p><img src="../../../files/websocket-test.png" alt="websocket-test.png">
 </p>
 </div>
@@ -611,7 +600,7 @@ you to do complete these.
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-07-26</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

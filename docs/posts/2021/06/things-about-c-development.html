@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-03-01 三 14:56 -->
+<!-- 2023-05-09 Tue 11:09 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>关于使用C语言开发的那些事</title>
@@ -216,14 +216,16 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org0aea55d">GNU Binutils</a></li>
-<li><a href="#orge2b1f7a">关于使用 GCC 的须知事项</a>
+<li><a href="#org2d37380">GNU Binutils</a></li>
+<li><a href="#org8af97b0">关于使用 GCC 的须知事项</a>
 <ul>
-<li><a href="#orgf01b91d">预处理阶段的一些细节</a></li>
-<li><a href="#orgdfa24b5">头文件以及库文件的一些细节</a></li>
+<li><a href="#org9c3c8c1">预处理阶段的一些细节</a></li>
+<li><a href="#orgb576715">头文件以及库文件的一些细节</a></li>
 </ul>
 </li>
-<li><a href="#orgd48d051">构建工具之 CMake</a></li>
+<li><a href="#orgbf6a653">构建工具之 CMake</a></li>
+<li><a href="#org24447fd">内存检测工具</a></li>
+<li><a href="#orgc385bc6">交叉编译</a></li>
 <li><a href="#about-c">关于 C 语言</a>
 <ul>
 <li><a href="#how-to-read-c-declarations">读懂 C 的声明语法</a></li>
@@ -236,9 +238,13 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgcf15899">
+<div class="abstract" id="orgee3050e">
 <p>
+注意, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, <code>C</code> 语言会被编译成汇编,
+</p>
 
+<p>
+只有学习了汇编你才能具体得看到 <code>C</code> 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
 </p>
 
 <p>
@@ -273,11 +279,27 @@
 最后提一句, 这篇文章里面所有操作都是在 <code>Linux</code> 上完成的.
 </p>
 
+<p>
+<b>UPDATED AT 2023/5/9</b>
+</p>
+
+<p>
+本人发现了一本可以替代这篇笔记的书 "21st Century C",
+</p>
+
+<p>
+这本书对于从汇编转 <code>C</code> 的新手来说是非常不错的实践参考, 并且内容详略得当.
+</p>
+
+<p>
+这篇文章也有些书本上没有的内容, 虽然存在意义不太大了, 但笔记还是得保留下来.
+</p>
+
 </div>
 
-<div id="outline-container-org0aea55d" class="outline-2">
-<h2 id="org0aea55d">GNU Binutils</h2>
-<div class="outline-text-2" id="text-org0aea55d">
+<div id="outline-container-org2d37380" class="outline-2">
+<h2 id="org2d37380">GNU Binutils</h2>
+<div class="outline-text-2" id="text-org2d37380">
 <p>
 学 <code>C</code> 语言时除了掌握 <code>GCC</code> 以及相关的构建工具意外, 还需要掌握一些工具用于使用/调试/分析二进制文件.
 </p>
@@ -292,13 +314,13 @@
 </div>
 </div>
 
-<div id="outline-container-orge2b1f7a" class="outline-2">
-<h2 id="orge2b1f7a">关于使用 GCC 的须知事项</h2>
-<div class="outline-text-2" id="text-orge2b1f7a">
+<div id="outline-container-org8af97b0" class="outline-2">
+<h2 id="org8af97b0">关于使用 GCC 的须知事项</h2>
+<div class="outline-text-2" id="text-org8af97b0">
 </div>
-<div id="outline-container-orgf01b91d" class="outline-3">
-<h3 id="orgf01b91d">预处理阶段的一些细节</h3>
-<div class="outline-text-3" id="text-orgf01b91d">
+<div id="outline-container-org9c3c8c1" class="outline-3">
+<h3 id="org9c3c8c1">预处理阶段的一些细节</h3>
+<div class="outline-text-3" id="text-org9c3c8c1">
 <p>
 我们从一个简单的例子出发:
 </p>
@@ -319,7 +341,7 @@
 </p>
 
 
-<div id="orgd3e6a5a" class="figure">
+<div id="orgdccd5b4" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>GCC编译C语言并生成程序</p>
@@ -703,7 +725,7 @@
 </pre>
 </div>
 
-<pre class="example" id="org9c6a247">
+<pre class="example" id="orgbc8dfd3">
 // right-bracket
 }
 </pre>
@@ -884,9 +906,9 @@
 </div>
 
 
-<div id="outline-container-orgdfa24b5" class="outline-3">
-<h3 id="orgdfa24b5">头文件以及库文件的一些细节</h3>
-<div class="outline-text-3" id="text-orgdfa24b5">
+<div id="outline-container-orgb576715" class="outline-3">
+<h3 id="orgb576715">头文件以及库文件的一些细节</h3>
+<div class="outline-text-3" id="text-orgb576715">
 <p>
 通常情况下, 头文件(<code>.h</code>)的内容都是一些宏/变量的定义以及变量/函数的声明(declarations),
 </p>
@@ -1405,9 +1427,9 @@ nm: sigvec.o: no symbols
 </div>
 
 
-<div id="outline-container-orgd48d051" class="outline-2">
-<h2 id="orgd48d051">构建工具之 CMake</h2>
-<div class="outline-text-2" id="text-orgd48d051">
+<div id="outline-container-orgbf6a653" class="outline-2">
+<h2 id="orgbf6a653">构建工具之 CMake</h2>
+<div class="outline-text-2" id="text-orgbf6a653">
 <p>
 在构建工具这一块, <code>C/C++</code> 相对于其它语言来说有很多选择, 什么 <code>make</code>, <code>CMake</code>, <code>automake</code> 等等, 都能用来构建项目.
 </p>
@@ -1429,7 +1451,7 @@ nm: sigvec.o: no symbols
 </div>
 
 <p>
-(<b>注意</b>, 这里的缩进是一定要用制作表符 <code>tab</code> 而不是空格 <code>space</code>, 否者语法不对).
+(<b>注意</b>, 这里的缩进是一定要用制表符 <code>tab</code> 而不是空格 <code>space</code>, 否则语法不对).
 </p>
 
 <p>
@@ -1484,6 +1506,31 @@ nm: sigvec.o: no symbols
 </div>
 </div>
 
+<div id="outline-container-org24447fd" class="outline-2">
+<h2 id="org24447fd">内存检测工具</h2>
+<div class="outline-text-2" id="text-org24447fd">
+<p>
+<code>Valgrind</code> 以及 <code>ASAN</code>
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc385bc6" class="outline-2">
+<h2 id="orgc385bc6">交叉编译</h2>
+<div class="outline-text-2" id="text-orgc385bc6">
+<p>
+<a href="http://retroshare.sourceforge.net/wiki/index.php/Ubuntu_cross_compilation_for_Windows">http://retroshare.sourceforge.net/wiki/index.php/Ubuntu_cross_compilation_for_Windows</a>
+</p>
+
+<p>
+<a href="https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html">https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html</a>
+</p>
+
+<p>
+<a href="https://www.darlinghq.org/">https://www.darlinghq.org/</a>
+</p>
+</div>
+</div>
 
 <div id="outline-container-about-c" class="outline-2">
 <h2 id="about-c">关于 C 语言</h2>
@@ -1815,6 +1862,18 @@ nm: sigvec.o: no symbols
 
 <p>
 而 <code>C</code> 是没有命名空间和函数重载的, 这个缺点换来了 <code>ABI</code> 兼容良好的优点.
+</p>
+
+<p>
+不过 <code>C++</code> 提供连接规范(linkage specification)来为不同的语言声明连接协议,
+</p>
+
+<p>
+比如 <code>C++</code> 模块可以为 <code>C</code> 模块提供避免名字改编的稳定符号, 从而实现 <code>C</code> 和 <code>C++</code> 的模块相互调用的.
+</p>
+
+<p>
+具体实践可以看这个 <a href="https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html">Mixing C and C++ Code in the Same Program</a>.
 </p></li>
 
 <li><p>
@@ -1896,7 +1955,7 @@ systems in which this is possible, but I'm not aware of them.
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2021-06-13</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

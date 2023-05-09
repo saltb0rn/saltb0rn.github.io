@@ -1,23 +1,3 @@
-*** [[file:posts/2023/02/trig-deg-sin-cos-tan.html?hash=2ae97872e550b5aa80ae64a230b469cb][三角形-关于90度的Sine,Cosine以及Tangent]]
-在初中的数学课堂上, 三角函数(trigonometry) =Sin(e)=, =Cos(ine)= 是在直角三角形(right triangles)这个上下文中进行定义的.
-
-实际上, 它们的定义还可以拓展到单位圆(unit circle)下, 或者是复数 (complex numbers)下.
-
-这篇文章结合直角三角形和单位圆的作为上下文来解释为啥 $sin(90^{\circ}) = 1$ 以及为啥 $cos(90^{\circ}) = 0$.
-
-这篇文章的目的并非聊这个话题的, 而是纠正我自己的一些对于三角函数的误解, 我相信大部分人都有这种误解, 这就是我写出来的原因.
-
-	
-*** [[file:posts/2022/12/reading-note-of-calculus-early-transcendentals-th.html?hash=b4a5e5dd63b130d72f29d7a70ef0d5e0][Calculus: Early Transcendentals 8th Edition 阅读笔记]]
-说是做笔记, 实际上是建立一个快速查阅索引, 针对微积分这方面的知识量全部做笔记不太可能, 这本书就 1000 多页了,
-
-你让我提取重点我也办不到, 一是我不太想只要结论不要过程, 二是这本书的内容全是精华.
-
-于是改变思路, 建立一个索引用来快速阅读这本书, 并写上个人对知识点的一些理解.
-
-这个索引分为 3 个部份: $应用 \rightarrow 知识点$, $知识点 \rightarrow 应用$, $知识点 \rightarrow 书中位置$.
-
-	
 *** [[file:posts/2022/02/webgl-buffer-objects.html?hash=ebab9b21431d185969f7dafe3ddd1610][OpenGL/WebGL自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
@@ -36,38 +16,40 @@
 没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
 
 	
-*** [[file:posts/2022/01/floating-number-in-binary.html?hash=95fbe4cd53aa6b0739afff714bd64a44][计算机眼中的浮点数]]
-pass
-
-	
-*** [[file:posts/2021/11/edm-theory.html?hash=b27b8201eeb3b10d2c3ffd14e5d402bf][EDM必备乐理教程]]
-不懂音乐理论(music theory)也能创作出 =EDM=,但是这样很快就会遇到瓶颈,区别好比在掌握语法和不掌握语法的两种情况下学英语一样,
-
-虽然都可以进行表达,但很明显掌握了语法可以表达的更加精确.
-
-同理掌握了音乐理论可以让自己更加容易创作出更加好的 =EDM=.
-
-而且音乐理论也不仅限于 =EDM=,在其它类型的音乐创作上也可以用得上.
-
-我个人是从 [[https://www.bilibili.com/video/BV1Rt411L7bC][BV1Rt411L7bC]] 学习的,不过说实话,有些地方实在是"一笔带过"了.
-
-不过现在已经是互联网时代了,这些"一笔带过"的地方可以在网上找到补充,正是这个原因才让我写起了这篇笔记.
-
-	
-*** [[file:posts/2021/11/cake-cut.html?hash=270e28bde626a868165ad0ba6f9bc449][切饼问题]]
+*** [[file:posts/2021/11/cake-cut.html?hash=89b204dbf435af8f53061ab2498d73dd][切饼问题]]
 有一块圆形大饼,切 3 刀 *最多* 可以得到多少块?按照这个规律,切刀第 $n$ 刀时可以得到多少块?
 
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/10/math-proofs.html?hash=b6c611212c18e526f9e16f9e55b7ad44][数学证明]]
-这是我在阅读 "How to READ and DO PROOFS" 时的感悟和总结.
+*** [[file:posts/2021/06/things-about-c-development.html?hash=2f23172d75fe4fde8d866e387ab40df6][关于使用C语言开发的那些事]]
+注意, 看这篇笔记时请务必先学习 =x86= 汇编, =C= 语言会被编译成汇编,
 
-最初是为具备阅读(别人写的)证明过程的能力,本来也没打算单独为了这个话题写一篇笔记.
+只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
 
-但我在读完第2章后,脑海突然抛出了一个问题: 数学这门学问是怎么发展来的呢?
+这篇文章是我在上手使用 =C= 语言开发时遇到了一些疑问而突发奇想写出来的,
 
-我一边思考一边到网上寻求答案,然后开始意识到"这篇笔记不能不写".
+这些疑问包括为什么要写头文件, 如何自己发布库文件, 如何发布项目代码, 如何构建项目等等.
+
+相信很多初学者和我有同样的疑问, 很多 =C= 语言的书记都不会收录这些内容, 这也是情有可原的,
+
+毕竟 =C= 语言的工具链比较复杂, 可选择范围太广, 不太可能单独介绍的.
+
+我这篇笔记都是主要是围绕 =GNU= 提供的工具链进行的: =GNU C Compiler=, =GNU Binutils= 和 =GNU Autotools=,
+
+以及 =Kitware= 提供的 =CMAKE=.
+
+本文不是关于 =C= 语言教学的, 只是单纯的工具上手教学, 看之后保证你掌握大概用法, 以及如何查工具文档.
+
+最后提一句, 这篇文章里面所有操作都是在 =Linux= 上完成的.
+
+*UPDATED AT 2023/5/9*
+
+本人发现了一本可以替代这篇笔记的书 "21st Century C",
+
+这本书对于从汇编转 =C= 的新手来说是非常不错的实践参考, 并且内容详略得当.
+
+这篇文章也有些书本上没有的内容, 虽然存在意义不太大了, 但笔记还是得保留下来.
 
 	
 *** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=4e4f1d18c3253d17c1d5565c780b3e09][理解CSS动画]]
@@ -90,7 +72,7 @@ pass
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=77857fc0a7ed4a3cad0a1a6cc09f8571][x86 汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=9b63cbd663cfb24b191e1f53e08c77a5][x86 汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕 =x86= 32 位来讲的, 我读这本书的时候 =x86= 64 位架构已经非常普遍了, 也就是说这本书已经有点过时了, 况且关于浮点数这块基本上没讲过.
@@ -148,7 +130,7 @@ pass
 这篇笔记主要是关于光和材质方面的概念,在学习以后你会知道如何编写 =Fragment Shader= 来控制光照效果,不过我们还是会从没有 =GLSL= 的 =OpenGL 1.X= 开始学习.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=967249b2ec2ebc9e1a47396d5b20e09d][图形学-OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=9865e0ad9921b70f219d2a61984a82fd][图形学-OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换, =OpenGL= 里面还有很多其它变换,本文主要讲述 =OpenGL= 的各种坐标系以及它们之间的转换,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
@@ -432,7 +414,7 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=2476fdb3300d3fada09eb1d8f246464d][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips.html?hash=71737dc12f74037d32bcb49ebab48131][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔

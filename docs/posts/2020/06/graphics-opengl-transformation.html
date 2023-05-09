@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-02-15 三 12:43 -->
+<!-- 2023-05-09 Tue 09:46 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -197,38 +197,27 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script>
-  window.MathJax = {
-    tex: {
-      ams: {
-        multlineWidth: '85%'
-      },
-      tags: 'ams',
-      tagSide: 'right',
-      tagIndent: '.8em'
-    },
-    chtml: {
-      scale: 1.0,
-      displayAlign: 'center',
-      displayIndent: '0em'
-    },
-    svg: {
-      scale: 1.0,
-      displayAlign: 'center',
-      displayIndent: '0em'
-    },
-    output: {
-      font: 'mathjax-modern',
-      displayOverflow: 'overflow'
-    }
-  };
-</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
 
-<script
-  id="MathJax-script"
-  async
-  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+        "HTML-CSS": { scale: 1.0,
+                        linebreaks: { automatic: "%LINEBREAKS" },
+                        webFont: "mathjax-modern"
+                       },
+        SVG: {scale: 1.0,
+              linebreaks: { automatic: "%LINEBREAKS" },
+              font: "mathjax-modern"},
+        NativeMML: {scale: 1.0},
+        TeX: { equationNumbers: {autoNumber: "%AUTONUMBER"},
+               MultLineWidth: "85%",
+               TagSide: "amsIDE",
+               TagIndent: ".8em"
+             }
+});
 </script>
+<script src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -248,35 +237,35 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgda02e97">几个该清楚的概念</a>
+<li><a href="#org9e21813">几个该清楚的概念</a>
 <ul>
-<li><a href="#org16dabbc">齐次空间</a></li>
-<li><a href="#org8417361">平面方程</a></li>
+<li><a href="#org4d055e9">齐次空间</a></li>
+<li><a href="#org09a8d4b">平面方程</a></li>
 </ul>
 </li>
-<li><a href="#org26b1c5f">OpenGL 中对象的变换历程</a>
+<li><a href="#org98b7c3a">OpenGL 中对象的变换历程</a>
 <ul>
-<li><a href="#orgc93debf">对象坐标系</a></li>
-<li><a href="#orga35f101">世界坐标系</a></li>
-<li><a href="#orgba955d4">从对象坐标系到世界坐标系的变换</a></li>
-<li><a href="#orgd2daff4">视点坐标系</a></li>
-<li><a href="#org6450edf">从世界坐标系到视点坐标系的变换</a>
+<li><a href="#org124047f">对象坐标系</a></li>
+<li><a href="#org7248f90">世界坐标系</a></li>
+<li><a href="#orga366dfe">从对象坐标系到世界坐标系的变换</a></li>
+<li><a href="#org17f01ef">视点坐标系</a></li>
+<li><a href="#orged765d7">从世界坐标系到视点坐标系的变换</a>
 <ul>
-<li><a href="#orge17416f">法线向量变换</a></li>
+<li><a href="#orgfaf7cc0">法线向量变换</a></li>
 </ul>
 </li>
-<li><a href="#org14b4f24">3D转化成2D图像</a>
+<li><a href="#org99a85ca">3D转化成2D图像</a>
 <ul>
-<li><a href="#orgb057423">从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
+<li><a href="#org863c381">从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orga9ef1fd">实现参考</a></li>
+<li><a href="#org17b3ca2">实现参考</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgafab18b">
+<div class="abstract" id="org54bec21">
 <p>
 之前只讲了几何变换,也就是最简单的变换, <code>OpenGL</code> 里面还有很多其它变换,本文主要讲述 <code>OpenGL</code> 的各种坐标系以及它们之间的转换,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 </p>
@@ -300,19 +289,19 @@
 </div>
 
 
-<div id="outline-container-orgda02e97" class="outline-2">
-<h2 id="orgda02e97">几个该清楚的概念</h2>
-<div class="outline-text-2" id="text-orgda02e97">
+<div id="outline-container-org9e21813" class="outline-2">
+<h2 id="org9e21813">几个该清楚的概念</h2>
+<div class="outline-text-2" id="text-org9e21813">
 </div>
-<div id="outline-container-org16dabbc" class="outline-3">
-<h3 id="org16dabbc">齐次空间</h3>
-<div class="outline-text-3" id="text-org16dabbc">
+<div id="outline-container-org4d055e9" class="outline-3">
+<h3 id="org4d055e9">齐次空间</h3>
+<div class="outline-text-3" id="text-org4d055e9">
 <p>
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 </p>
 
 
-<div id="org50f9fa5" class="figure">
+<div id="org1c7cbe0" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg">
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -387,11 +376,11 @@
 </div>
 
 
-<div id="outline-container-org8417361" class="outline-3">
-<h3 id="org8417361">平面方程</h3>
-<div class="outline-text-3" id="text-org8417361">
+<div id="outline-container-org09a8d4b" class="outline-3">
+<h3 id="org09a8d4b">平面方程</h3>
+<div class="outline-text-3" id="text-org09a8d4b">
 <p>
-这里先强调一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
+这里先约定一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
 </p>
 
 <p>
@@ -407,21 +396,21 @@
 </p>
 
 
-<div id="orgfdbeb85" class="figure">
+<div id="org9d070ad" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png">
 </p>
 </div>
 
 <p>
-因为平面 \(P\) 不包含原点,所以可以把它看做一个仿射空间,在该空间上, \(p_{1}\) 和 \(p\) 分别是已知的点和 <b>任意的点</b>,而不是从原点出发的向量, 并且 \(p_{1}\) 和 \(p\) 构成直线(向量):
+因为平面 \(P\) 不包含原点,所以可以把它看做一个仿射空间,在该空间上, \(p_{1}\) 和 \(p\) 分别是已知的点和 <b>任意的点</b>, 而不是从原点出发的向量, 并且 \(p_{1}\) 和 \(p\) 构成直线(向量):
 </p>
 
 <p>
-\(\vec{p} - \vec{p_{1}} = \left(x - x_{1}, y - y_{1}, z - z_{1}\right)\).
+\(p - p_{1} = \left(x - x_{1}, y - y_{1}, z - z_{1}\right)\).
 </p>
 
 <p>
-因为 \(\vec{n}\) 垂直平面 \(P\),所以也垂直与 \(P\) 上的任意直线(向量),所以关系成立 \(\vec{n} \cdot \left(\vec{p} - \vec{p_{1}}\right) = 0\),这个就是平面方程 (plane equation),可以用来表示平面 \(P\).根据这条等式可以得到:
+因为 \(\vec{n}\) 垂直平面 \(P\),所以也垂直与 \(P\) 上的任意直线(向量), 所以关系成立 \(\vec{n} \cdot \left(p - p_{1}\right) = 0\),这个就是平面方程 (plane equation),可以用来表示平面 \(P\).根据这条等式可以得到:
 </p>
 
 <p>
@@ -460,11 +449,11 @@
 </div>
 
 
-<div id="outline-container-org26b1c5f" class="outline-2">
-<h2 id="org26b1c5f">OpenGL 中对象的变换历程</h2>
-<div class="outline-text-2" id="text-org26b1c5f">
+<div id="outline-container-org98b7c3a" class="outline-2">
+<h2 id="org98b7c3a">OpenGL 中对象的变换历程</h2>
+<div class="outline-text-2" id="text-org98b7c3a">
 
-<div id="org30611d0" class="figure">
+<div id="orgf3ea79f" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -491,18 +480,18 @@
 </p>
 </div>
 
-<div id="outline-container-orgc93debf" class="outline-3">
-<h3 id="orgc93debf">对象坐标系</h3>
-<div class="outline-text-3" id="text-orgc93debf">
+<div id="outline-container-org124047f" class="outline-3">
+<h3 id="org124047f">对象坐标系</h3>
+<div class="outline-text-3" id="text-org124047f">
 <p>
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
 </p>
 </div>
 </div>
 
-<div id="outline-container-orga35f101" class="outline-3">
-<h3 id="orga35f101">世界坐标系</h3>
-<div class="outline-text-3" id="text-orga35f101">
+<div id="outline-container-org7248f90" class="outline-3">
+<h3 id="org7248f90">世界坐标系</h3>
+<div class="outline-text-3" id="text-org7248f90">
 <p>
 在 <code>OpenGL</code> 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
 </p>
@@ -525,9 +514,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 </div>
 
-<div id="outline-container-orgba955d4" class="outline-3">
-<h3 id="orgba955d4">从对象坐标系到世界坐标系的变换</h3>
-<div class="outline-text-3" id="text-orgba955d4">
+<div id="outline-container-orga366dfe" class="outline-3">
+<h3 id="orga366dfe">从对象坐标系到世界坐标系的变换</h3>
+<div class="outline-text-3" id="text-orga366dfe">
 <p>
 上面中, \(A\) 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, \(B\) 过程是对象经历了从对象坐标系到世界坐标系的变换,
 </p>
@@ -544,7 +533,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 其中 \(\left(\begin{array}{c}m_{1x} \\ m_{1y} \\ m_{1z}\end{array}\right)\), \(\left(\begin{array}{c}m_{2x} \\ m_{2y} \\ m_{2z}\end{array}\right)\) 以及 \(\left(\begin{array}{c}m_{3x} \\ m_{3y} \\ m_{3z}\end{array}\right)\) 分别是 \(x\), \(y\) 以及 \(z\) 轴, 至于 \(\left(\begin{array}{c}d_{x} \\ d_{y} \\ d_{z} \end{array}\right)\) 是负责平移.
 </p>
 
-<pre class="example" id="org7c70086">
+<pre class="example" id="orgc12ab69">
 通过一个 2D 例子想象一下 ,我们已经画了一个三角形,要把它放到已经画好的正方形上,它们都有各自的坐标系,也就是上面提到的对象坐标系,
 
 通常来说都希望系统对象都是居中到坐标系的中心,也就是原点上,或者至少使用原点作为参考点(reference point),
@@ -560,9 +549,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 
 
 
-<div id="outline-container-orgd2daff4" class="outline-3">
-<h3 id="orgd2daff4">视点坐标系</h3>
-<div class="outline-text-3" id="text-orgd2daff4">
+<div id="outline-container-org17f01ef" class="outline-3">
+<h3 id="org17f01ef">视点坐标系</h3>
+<div class="outline-text-3" id="text-org17f01ef">
 <p>
 在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 <code>OpenGL</code> 中也有类似的存在,叫做 <code>viewer</code>,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinate system).
 </p>
@@ -581,9 +570,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 </div>
 
-<div id="outline-container-org6450edf" class="outline-3">
-<h3 id="org6450edf">从世界坐标系到视点坐标系的变换</h3>
-<div class="outline-text-3" id="text-org6450edf">
+<div id="outline-container-orged765d7" class="outline-3">
+<h3 id="orged765d7">从世界坐标系到视点坐标系的变换</h3>
+<div class="outline-text-3" id="text-orged765d7">
 <p>
 一旦模型变换完成后,就可以开始进行到视点坐标系的变换了,这个叫做视点变换(viewing transformation).
 </p>
@@ -597,11 +586,11 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-回到 <code>OpenGL</code> 的 \(lookAt\) 中,相机就是 \(A\), 场景就是 \(B\),回到 \(lookAt\) 中,
+回到 <code>OpenGL</code> 的 \(lookAt\) 中,相机就是 \(A\), 场景就是 \(B\),
 </p>
 
 <p>
-\(lookAt\) 就是相机从位于原点上看着 \(z\) 的负方向,到位于 \(\left(x_{e}, y_{e}, z_{e}\right)\) 上看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的变换,这些坐标都是定义在世界坐标系上.
+\(lookAt\) 就是相机从位于原点上看着 \(z\) 的负方向, 到 \(\left(x_{e}, y_{e}, z_{e}\right)\) 的位置上看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的变换, 这些坐标都是定义在世界坐标系上.
 </p>
 
 <p>
@@ -617,22 +606,22 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-然后是旋转,同样也是反向旋转的,比如相机看一个对象的上方时候,相当于场景围绕自身原点往下旋转.
+然后是旋转, 同样也是反向旋转的, 比如相机要看一个对象的上方时候, 其实就相当于场景围绕自身原点往下旋转.
 </p>
 
 
-<div id="org676b603" class="figure">
+<div id="orgbca623d" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif">
 </p>
 <p><span class="figure-number">Figure 3: </span>相机看小黄鸭的顶部</p>
 </div>
 
 <p>
-这个图的意思是相机还是相对小黄鸭原来的位置(也就是浅色橙线)看着原来的方向,小黄鸭往下旋转相当于相机围绕小黄鸭反方向旋转(单独把相机从旋转后的位置摆放回原来的位置上就看出来了).
+这个图的意思是相机还是相对小黄鸭原来的位置(也就是浅色橙线)看着原来的方向, 小黄鸭往下旋转相当于相机围绕小黄鸭反方向旋转(单独把相机从旋转后的位置摆放回原来的位置上就看出来了).
 </p>
 
 
-<div id="orgee7772a" class="figure">
+<div id="orgb4d87f2" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif">
 </p>
 <p><span class="figure-number">Figure 4: </span>相机看小黄鸭的正前方</p>
@@ -679,9 +668,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 
-<div id="outline-container-orge17416f" class="outline-4">
-<h4 id="orge17416f">法线向量变换</h4>
-<div class="outline-text-4" id="text-orge17416f">
+<div id="outline-container-orgfaf7cc0" class="outline-4">
+<h4 id="orgfaf7cc0">法线向量变换</h4>
+<div class="outline-text-4" id="text-orgfaf7cc0">
 <p>
 别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的,目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案,这个方案用到法线向量.
 </p>
@@ -707,7 +696,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgfe8ecbd" class="figure">
+<div id="orgc940b2e" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png">
 </p>
 </div>
@@ -721,7 +710,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org62ffd11" class="figure">
+<div id="org2571a05" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png">
 </p>
 </div>
@@ -755,7 +744,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org56b0a69" class="figure">
+<div id="org5a5cc94" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png">
 </p>
 </div>
@@ -807,9 +796,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 </div>
 
-<div id="outline-container-org14b4f24" class="outline-3">
-<h3 id="org14b4f24">3D转化成2D图像</h3>
-<div class="outline-text-3" id="text-org14b4f24">
+<div id="outline-container-org99a85ca" class="outline-3">
+<h3 id="org99a85ca">3D转化成2D图像</h3>
+<div class="outline-text-3" id="text-org99a85ca">
 <p>
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上称成为一张 2D 图片.
 </p>
@@ -906,22 +895,22 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 
 
-<div id="outline-container-orgb057423" class="outline-4">
-<h4 id="orgb057423">从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
-<div class="outline-text-4" id="text-orgb057423">
+<div id="outline-container-org863c381" class="outline-4">
+<h4 id="org863c381">从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
+<div class="outline-text-4" id="text-org863c381">
 <p>
 先看一下如何选择相机看到的内容,有两种选择方案,如下,
 </p>
 
 
-<div id="org02d5894" class="figure">
+<div id="orgca5dae9" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="orgfc33ecb" class="figure">
+<div id="org65d74cf" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>正交投影(正交相机看到的内容)</p>
@@ -932,7 +921,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-构造这两个多边体都只需要 6 个参数,分别是 \(l(eft)\), \(r(ight)\), \(b(ottom)\), \(t(op)\), \(n(ear)\) 以及 \(f(ar)\),为了区分方向,我们采用正负号来表示,并让这 6 个参数要满足这样的关系 \(\begin{equation} \left\{ \begin{aligned} l < r \\ b < t \\ n &< f\end{aligned} \right. \end{equation}\).
+构造这两个多边体都只需要 6 个参数, 分别是 \(l(eft)\), \(r(ight)\), \(b(ottom)\), \(t(op)\), \(n(ear)\) 以及 \(f(ar)\),为了区分方向, 我们采用正负号来表示, 并让这 6 个参数要满足这样的关系 \(\begin{equation} \left\{ \begin{aligned} l < r \\ b < t \\ n < f\end{aligned} \right. \end{equation}\).
 </p>
 
 <p>
@@ -949,8 +938,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 
 <ul class="org-ul">
-<li><a id="org5de7570"></a>透视投影<br>
-<div class="outline-text-5" id="text-org5de7570">
+<li><a id="org644876b"></a>透视投影<br>
+<div class="outline-text-5" id="text-org644876b">
 <p>
 这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
 </p>
@@ -969,7 +958,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </ol>
 
 
-<div id="org9daaed6" class="figure">
+<div id="orgb5543cc" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>透视投影2</p>
@@ -988,7 +977,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org8175e7a" class="figure">
+<div id="org5aae802" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png">
 </p>
 </div>
@@ -1026,7 +1015,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org9c67334" class="figure">
+<div id="orgc92fd16" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1053,7 +1042,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org5b489f6" class="figure">
+<div id="org18a98a2" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1120,7 +1109,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org8edf556" class="figure">
+<div id="orgd297841" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>比较不同深度下的精确度</p>
@@ -1160,10 +1149,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 </li>
 
-<li><a id="org9ada760"></a>正交投影<br>
-<div class="outline-text-5" id="text-org9ada760">
+<li><a id="org5261904"></a>正交投影<br>
+<div class="outline-text-5" id="text-org5261904">
 
-<div id="org7a0ba95" class="figure">
+<div id="orga5143d5" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>正交投影2</p>
@@ -1212,9 +1201,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </div>
 
 
-<div id="outline-container-orga9ef1fd" class="outline-2">
-<h2 id="orga9ef1fd">实现参考</h2>
-<div class="outline-text-2" id="text-orga9ef1fd">
+<div id="outline-container-org17b3ca2" class="outline-2">
+<h2 id="org17b3ca2">实现参考</h2>
+<div class="outline-text-2" id="text-org17b3ca2">
 <p>
 学习概念后需要检验自己的理解是否到位,最有效方法就是按照优秀的实践参考进行实践,优秀的参考要保证内容的正确性以及跟所学内容的相关性.
 </p>
@@ -1334,7 +1323,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2020-06-19</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.0.50 (<a href="https://orgmode.org">Org</a> mode 9.6.1)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
