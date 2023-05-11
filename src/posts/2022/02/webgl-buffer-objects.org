@@ -101,7 +101,7 @@
 
 [[../../../files/opengl-rasterization.gif]]
 
-比如动画中的这个过程就是对一个三角形图元进行采样(sampling)得到一个由方块组成的近似三角形.
+比如动画中的这个过程就是对一个三角形图元进行采样(sampling)得到一个由方块组成的近似三角形, 这些方块就是片元.
 
 #+BEGIN_QUOTE
 你可以把采样理解为从一个连续对象上抽取若干个数据形成一个不连续的序列, 该序列和连续对象近似乎;
@@ -111,9 +111,9 @@
 这就是数学里面微分的思想.
 #+END_QUOTE
 
-因为 =OpenGL= 只知道顶点的信息, 要根据这些点画出一个三角形, 就得使用插值(interpolation)的上采样(upsampling)方法来补充顶点之间的点,
+因为 =OpenGL= 只知道顶点的信息, 要根据这些点画出一个三角形,
 
-从而构造出由方块组成的近似三角形.
+就得使用插值(interpolation)的上采样(upsampling)方法来补充顶点之间的点, 从而构造出由方块组成的近似三角形.
 
 油管上有个很直观的[[https://www.youtube.com/watch?v=t7Ztio8cwqM][视频]]解释了整个过程(, 如果访问不了请点击[[../../../files/Rasterizer-Algorithm-Explanation-YouTube.webm][这里的备份]]).
 
@@ -137,17 +137,25 @@
 
 每次接受一个片元作为输入, 设置片元的颜色(设置 =gl_FragColor=), 最后输出处理后的片元.
 
-在下面这个绘制三角形的例子里面, 我们会根据三角形的顶点数据的坐标为它们定义颜色, 这样每个顶点的颜色都不一样了,
+#+BEGIN_QUOTE
+在下面的绘制三角形的例子里面, =vertex shader= 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了), 并把颜色保存到 =varying= 变量 =vColor= 里面.
 
-最后会看到这个三角形会被涂上渐变色, 这是因为 =OpenGL= 会对 =varying= 变量进行插值.
+在光栅化过程中, =OpenGL= 除了会根据顶点数据计算片元序列 $f_{1}, f_{2}, f_{3}, \ldots, f_{n-1}, f_{n}$ 外,
+
+同时还会根据与顶点数据一起定义的 =varying= 变量进行插值得到序列 $v_{1}, v_{2}, v_{3}, \ldots, v_{n-1}, v_{n}$,
+
+并且片元 $f_{i} (i \le n)$ 和 $v_{i} (i \le n)$ 是相关的, 这样就相当于每个片元都有属于自己的 =varying= 变量.
+
+在 =fragment shader= 把片元自己的 =vColor= 设置为自己的颜色, 最后得到一个颜色渐变的三角形.
 
 [[iframe:width: 520px; height: 1020px; border: none; |../../../examples/fragment-shader-example.html]]
+#+END_QUOTE
 
-[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 在没有特别声明的情况下片元就是指输出的片元.
+=Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][ 输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
 
 相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息.
 
-需要知道这些数据的含义, 或者说理解片元, 那么得先了解可能发生在 =Fragment Shader= 后的 =Per-Sample Processing= 阶段做了什么.
+需要知道这些数据的含义, 或者说理解片元, 那么得先了解 =Fragment Shader= 后面的 =Per-Sample Processing= 阶段做了什么.
 
 *Per-Sample Processing*
 
