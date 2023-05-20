@@ -1,15 +1,15 @@
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=ebab9b21431d185969f7dafe3ddd1610][OpenGL/WebGL自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=1632f2cde21153944796b1be3d51f7ee][OpenGL/WebGL自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
 
 身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
 
-也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 =WebGL= 的掌握阶段.
+也因为这样, 图形学学习计划搁置了一年, 当时就停留在贴图映射以及 =WebGL= 的掌握阶段.
 
 我决定先从 =WebGL= 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
 
-=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
+=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收, 储存以及使用数据.
 
 要真正掌握 =OpenGL= 的 =Shading Language= (GLSL) 就需要理解这一块.
 
@@ -22,8 +22,8 @@
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/06/things-about-c-development.html?hash=2f23172d75fe4fde8d866e387ab40df6][关于使用C语言开发的那些事]]
-注意, 看这篇笔记时请务必先学习 =x86= 汇编, =C= 语言会被编译成汇编,
+*** [[file:posts/2021/06/things-about-c-development.html?hash=2cfcccf1e256d10f22b5899f39719e82][关于使用C语言开发的那些事]]
+*注意*, 看这篇笔记时请务必先学习 =x86= 汇编, 因为 =C= 代码会被编译成汇编,
 
 只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
 
@@ -45,7 +45,7 @@
 
 *UPDATED AT 2023/5/9*
 
-本人发现了一本可以替代这篇笔记的书 "21st Century C",
+本人发现了一本可以替代这篇笔记的书 "21st Century C, 2nd Edition",
 
 这本书对于从汇编转 =C= 的新手来说是非常不错的实践参考, 并且内容详略得当.
 

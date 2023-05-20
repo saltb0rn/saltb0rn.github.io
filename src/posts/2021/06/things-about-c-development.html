@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2023-05-09 Tue 10:51 -->
+<!-- 2023-05-18 Thu 15:47 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>关于使用C语言开发的那些事</title>
@@ -201,29 +201,31 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org7c1c830">1. GNU Binutils</a></li>
-<li><a href="#org998d4c9">2. 关于使用 GCC 的须知事项</a>
+<li><a href="#org49a8059">1. GNU Binutils</a></li>
+<li><a href="#orge1b4c7e">2. 关于使用 GCC 的须知事项</a>
 <ul>
-<li><a href="#orgcfdfb0d">2.1. 预处理阶段的一些细节</a></li>
-<li><a href="#orga657264">2.2. 头文件以及库文件的一些细节</a></li>
+<li><a href="#org841f8c7">2.1. 预处理阶段的一些细节</a></li>
+<li><a href="#org28c048e">2.2. 头文件以及库文件的一些细节</a></li>
 </ul>
 </li>
-<li><a href="#orgfadd1e8">3. 构建工具之 CMake</a></li>
-<li><a href="#about-c">4. 关于 C 语言</a>
+<li><a href="#org933e17e">3. 构建工具之 CMake</a></li>
+<li><a href="#org90987a0">4. 内存检测工具</a></li>
+<li><a href="#orgca69491">5. 交叉编译 (cross compilation)</a></li>
+<li><a href="#about-c">6. 关于 C 语言</a>
 <ul>
-<li><a href="#how-to-read-c-declarations">4.1. 读懂 C 的声明语法</a></li>
-<li><a href="#how-to-master-c-pointer">4.2. 指针</a></li>
-<li><a href="#what-is-undefined-behavior">4.3. 未定义行为 (undefined behavior, UB)</a></li>
-<li><a href="#arguments-in-function-declaration">4.4. 函数的参数声明</a></li>
-<li><a href="#difference-between-c-and-cpp">4.5. 对比 C++, C 的优点</a></li>
+<li><a href="#how-to-read-c-declarations">6.1. 读懂 C 的声明语法</a></li>
+<li><a href="#how-to-master-c-pointer">6.2. 指针</a></li>
+<li><a href="#what-is-undefined-behavior">6.3. 未定义行为 (undefined behavior, UB)</a></li>
+<li><a href="#arguments-in-function-declaration">6.4. 函数的参数声明</a></li>
+<li><a href="#difference-between-c-and-cpp">6.5. 对比 C++, C 的优点</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orge4e1272">
+<div class="abstract" id="org611f3a9">
 <p>
-注意, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, <code>C</code> 语言会被编译成汇编,
+<b>注意</b>, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, 因为 <code>C</code> 代码会被编译成汇编,
 </p>
 
 <p>
@@ -262,10 +264,26 @@
 最后提一句, 这篇文章里面所有操作都是在 <code>Linux</code> 上完成的.
 </p>
 
+<p>
+<b>UPDATED AT 2023/5/9</b>
+</p>
+
+<p>
+本人发现了一本可以替代这篇笔记的书 "21st Century C, 2nd Edition",
+</p>
+
+<p>
+这本书对于从汇编转 <code>C</code> 的新手来说是非常不错的实践参考, 并且内容详略得当.
+</p>
+
+<p>
+这篇文章也有些书本上没有的内容, 虽然存在意义不太大了, 但笔记还是得保留下来.
+</p>
+
 </div>
 
-<div id="outline-container-org7c1c830" class="outline-2">
-<h2 id="org7c1c830"><span class="section-number-2">1.</span> GNU Binutils</h2>
+<div id="outline-container-org49a8059" class="outline-2">
+<h2 id="org49a8059"><span class="section-number-2">1.</span> GNU Binutils</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 学 <code>C</code> 语言时除了掌握 <code>GCC</code> 以及相关的构建工具意外, 还需要掌握一些工具用于使用/调试/分析二进制文件.
@@ -281,12 +299,12 @@
 </div>
 </div>
 
-<div id="outline-container-org998d4c9" class="outline-2">
-<h2 id="org998d4c9"><span class="section-number-2">2.</span> 关于使用 GCC 的须知事项</h2>
+<div id="outline-container-orge1b4c7e" class="outline-2">
+<h2 id="orge1b4c7e"><span class="section-number-2">2.</span> 关于使用 GCC 的须知事项</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-orgcfdfb0d" class="outline-3">
-<h3 id="orgcfdfb0d"><span class="section-number-3">2.1.</span> 预处理阶段的一些细节</h3>
+<div id="outline-container-org841f8c7" class="outline-3">
+<h3 id="org841f8c7"><span class="section-number-3">2.1.</span> 预处理阶段的一些细节</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 我们从一个简单的例子出发:
@@ -297,8 +315,8 @@
 <span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>) {
-    printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
-    <span style="color: #00ffff;">return</span> 0;
+  printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -308,7 +326,7 @@
 </p>
 
 
-<div id="org4e6eeb6" class="figure">
+<div id="orgedcc1dc" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>GCC编译C语言并生成程序</p>
@@ -350,8 +368,9 @@
 <ul class="org-ul">
 <li>移除 <code>.c</code> 文件里面的注释;</li>
 <li>使用预处理器的指令生成文本, 或者定义宏(Macro);</li>
-<li>把宏替换成对应的文本;</li>
-</ul>
+<li><p>
+把宏替换成对应的文本;
+</p>
 
 <p>
 <br />
@@ -692,7 +711,7 @@
 </pre>
 </div>
 
-<pre class="example" id="orgfc8fef6">
+<pre class="example" id="orgf0213b8">
 // right-bracket
 }
 </pre>
@@ -706,7 +725,7 @@
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>) {
   printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
   <span style="color: #00ffff;">return</span> 0;
-<span style="color: #b0c4de;">  # 1</span> <span style="color: #ffa07a;">"right-bracket"</span> 1
+<span style="color: #b0c4de;"># 1</span> <span style="color: #ffa07a;">"right-bracket"</span> 1
 }
 <span style="color: #b0c4de;"># 8</span> <span style="color: #ffa07a;">"hello-world.c"</span> 2
 </pre>
@@ -739,9 +758,9 @@
 <span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">MAIN_CLOSURE</span>(...) <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) { __VA_ARGS__ }
 
 <span style="color: #87cefa;">MAIN_CLOSURE</span> (
-  printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
-  <span style="color: #00ffff;">return</span> 0;
-)
+              printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
+              <span style="color: #00ffff;">return</span> 0;
+              )
 </pre>
 </div>
 
@@ -864,17 +883,18 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">MAIN_CLOSURE</span>(...) <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) { \
-    __VA_ARGS__                                               \
-}
+<pre class="src src-c"><span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">MAIN_CLOSURE</span>(...) <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {   \
+    __VA_ARGS__                                                 \
+      }
 </pre>
-</div>
+</div></li>
+</ul>
 </div>
 </div>
 
 
-<div id="outline-container-orga657264" class="outline-3">
-<h3 id="orga657264"><span class="section-number-3">2.2.</span> 头文件以及库文件的一些细节</h3>
+<div id="outline-container-org28c048e" class="outline-3">
+<h3 id="org28c048e"><span class="section-number-3">2.2.</span> 头文件以及库文件的一些细节</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 通常情况下, 头文件(<code>.h</code>)的内容都是一些宏/变量的定义以及变量/函数的声明(declarations),
@@ -900,13 +920,13 @@
 <pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
-    <span style="color: #00ffff;">return</span> a + b;
+  <span style="color: #00ffff;">return</span> a + b;
 }
 
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
-    func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
-    <span style="color: #00ffff;">return</span> 0;
+  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -919,13 +939,13 @@
 <pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
-    func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
-    <span style="color: #00ffff;">return</span> 0;
+  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
+  <span style="color: #00ffff;">return</span> 0;
 }
 
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
-    <span style="color: #00ffff;">return</span> a + b;
+  <span style="color: #00ffff;">return</span> a + b;
 }
 </pre>
 </div>
@@ -942,7 +962,7 @@
 <pre class="src src-sh">simple-c.c: In <span style="color: #00ffff;">function</span> &#8216;main&#8217;:
 simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">function</span> &#8216;func&#8217; [-Wimplicit-function-declaration]
 4 |   func(1, 2);
-  |   ^~~~
+          |   ^~~~
 </pre>
 </div>
 
@@ -973,13 +993,13 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
-    func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
-    <span style="color: #00ffff;">return</span> 0;
+  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
+  <span style="color: #00ffff;">return</span> 0;
 }
 
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
-    <span style="color: #00ffff;">return</span> a + b;
+  <span style="color: #00ffff;">return</span> a + b;
 }
 </pre>
 </div>
@@ -1128,8 +1148,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L.
 
 <p>
 <code>GCC</code> 的 <code>-l</code> 选项就是用来指定要连接的链接库名; <code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
-</p></li>
-</ul>
+</p>
 
 <p>
 <br />
@@ -1388,14 +1407,15 @@ nm: sigvec.o: no symbols
 <div class="org-src-container">
 <pre class="src src-sh">ar x /lib/x86_64-linux-gnu/libc.a printf.o --output .
 </pre>
-</div>
+</div></li>
+</ul>
 </div>
 </div>
 </div>
 
 
-<div id="outline-container-orgfadd1e8" class="outline-2">
-<h2 id="orgfadd1e8"><span class="section-number-2">3.</span> 构建工具之 CMake</h2>
+<div id="outline-container-org933e17e" class="outline-2">
+<h2 id="org933e17e"><span class="section-number-2">3.</span> 构建工具之 CMake</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 在构建工具这一块, <code>C/C++</code> 相对于其它语言来说有很多选择, 什么 <code>make</code>, <code>CMake</code>, <code>automake</code> 等等, 都能用来构建项目.
@@ -1411,9 +1431,9 @@ nm: sigvec.o: no symbols
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">simple-c</span>:  simple-c.c simple-c-func.so
-        gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
 <span style="color: #87cefa;">simple-c-func.so</span>: simple-c-func.c
-        gcc -shared simple-c-func.c -o libsimple-c-func.so
+gcc -shared simple-c-func.c -o libsimple-c-func.so
 </pre>
 </div>
 
@@ -1462,20 +1482,83 @@ nm: sigvec.o: no symbols
 </p>
 
 <p>
-在 <code>*nix</code> 上虽然有各种各样的构建工具帮助你生成 <code>Makefile</code>, 但作为开发人员还是要对它有一定的了解的, 这里有两篇不错的教程, 可以任选一篇来学习:
+在 <code>*nix</code> 上虽然有各种各样的构建工具帮助你生成 <code>Makefile</code>, 但作为开发人员还是要对它有一定的了解的, 这里有个不错教程: <a href="https://makefiletutorial.com/#getting-started">Makefile 指南(en)</a> (英文不好可以看它的<a href="https://makefiletutorial.vercel.app/#/">中文翻译</a>).
 </p>
 
-<ul class="org-ul">
-<li><a href="https://makefiletutorial.com/#getting-started">Makefile 指南</a></li>
-
-<li><a href="https://seisman.github.io/how-to-write-makefile/index.html">跟我一起写Makefile</a></li>
-</ul>
+<p>
+跟着教程走一边基本上就 <code>okay</code> 了.
+</p>
 </div>
 </div>
 
+<div id="outline-container-org90987a0" class="outline-2">
+<h2 id="org90987a0"><span class="section-number-2">4.</span> 内存检测工具</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<code>C</code> 并不是一门内存安全型编程语言, 因此在使用 <code>C</code> 开发时最好使用一些工具来检测是否有内存问题.
+</p>
+
+<p>
+这里推荐两个工具: <code>Valgrind</code> 以及 <code>ASan</code>.
+</p>
+
+<p>
+其中 <code>Valigrind</code> 是 <code>*nix</code> 类系统独占的, 想要快速上手 <code>Valgrind</code> 就得理解它提供的错误信息(实际上默认情况下是 <code>Memcheck</code> 提供的), 关于这点可以看<a href="https://valgrind.org/docs/manual/mc-manual.html#mc-manual.errormsgs">官方文档</a>.
+</p>
+
+<p>
+<code>ASan</code> 已经集成到 <code>GCC</code> 里面了, 具体用法可以看<a href="https://github.com/google/sanitizers/wiki/AddressSanitizer">这里</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgca69491" class="outline-2">
+<h2 id="orgca69491"><span class="section-number-2">5.</span> 交叉编译 (cross compilation)</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+所谓交叉编译是在一个平台上为另外一个平台编译得到可执行代码, 我们把前者叫做编译平台, 后者叫做目标平台.
+</p>
+
+<p>
+这里的平台可以是操作系统(operating system), 也可以是机器架构(architecture).
+</p>
+
+<p>
+编译平台本身是运行不了目标平台上的可执行程序的.
+</p>
+
+<p>
+比如说在 <code>x86_64 Linux</code> 上编译 <code>x86_64 Windows</code> 的程序, 但 <code>x86_64 Linux</code> 并不能运行这个程序.
+</p>
+
+<p>
+和交叉编译相对应的就叫做本地编译 (native compilation), 平台上编译的程序可以在本平台上跑.
+</p>
+
+<p>
+如果一个平台无法或不方便进行本地编译, 那么就需要交叉编译了.
+</p>
+
+<p>
+进行交叉编译需要使用对应的工具链来完成, 具体可以参考以下链接:
+</p>
+
+<p>
+<a href="http://retroshare.sourceforge.net/wiki/index.php/Ubuntu_cross_compilation_for_Windows">http://retroshare.sourceforge.net/wiki/index.php/Ubuntu_cross_compilation_for_Windows</a>
+</p>
+
+<p>
+<a href="https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html">https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html</a>
+</p>
+
+<p>
+<a href="https://www.darlinghq.org/">https://www.darlinghq.org/</a>
+</p>
+</div>
+</div>
 
 <div id="outline-container-about-c" class="outline-2">
-<h2 id="about-c"><span class="section-number-2">4.</span> 关于 C 语言</h2>
+<h2 id="about-c"><span class="section-number-2">6.</span> 关于 C 语言</h2>
 <div class="outline-text-2" id="text-about-c">
 <p>
 <code>C</code> 语言的语法主要分两种 <code>K&amp;R C</code> (<code>Kernighan and Ritchie</code>) 和 <code>ANSI C</code>.
@@ -1516,7 +1599,7 @@ nm: sigvec.o: no symbols
 
 
 <div id="outline-container-how-to-read-c-declarations" class="outline-3">
-<h3 id="how-to-read-c-declarations"><span class="section-number-3">4.1.</span> 读懂 C 的声明语法</h3>
+<h3 id="how-to-read-c-declarations"><span class="section-number-3">6.1.</span> 读懂 C 的声明语法</h3>
 <div class="outline-text-3" id="text-how-to-read-c-declarations">
 <p>
 <code>C/C++</code> 语言的声明语法基本上都是一样, 并且都很难阅读, 个人觉得直接看它们的声明语法也不太直观, 你可以在<a href="https://www.open-std.org/jtc1/sc22/wg14/www/projects#9899">这里</a>找到 C 语言的标准, 看看里面的 <code>Language-Declarations</code> 那一节.
@@ -1529,7 +1612,7 @@ nm: sigvec.o: no symbols
 </div>
 
 <div id="outline-container-how-to-master-c-pointer" class="outline-3">
-<h3 id="how-to-master-c-pointer"><span class="section-number-3">4.2.</span> 指针</h3>
+<h3 id="how-to-master-c-pointer"><span class="section-number-3">6.2.</span> 指针</h3>
 <div class="outline-text-3" id="text-how-to-master-c-pointer">
 <p>
 很多人都说 C 语言的指针很难, 个人认为他们每个人说的难可能实际上都不是指同一个东西.
@@ -1569,9 +1652,9 @@ nm: sigvec.o: no symbols
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">simple-c</span>:  simple-c.c simple-c-func.so
-        gcc -g -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+gcc -g -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
 <span style="color: #87cefa;">simple-c-func.so</span>: simple-c-func.c
-        gcc -g -shared simple-c-func.c -o libsimple-c-func.so
+gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </pre>
 </div>
 
@@ -1594,7 +1677,7 @@ nm: sigvec.o: no symbols
 </div>
 
 <div id="outline-container-what-is-undefined-behavior" class="outline-3">
-<h3 id="what-is-undefined-behavior"><span class="section-number-3">4.3.</span> 未定义行为 (undefined behavior, UB)</h3>
+<h3 id="what-is-undefined-behavior"><span class="section-number-3">6.3.</span> 未定义行为 (undefined behavior, UB)</h3>
 <div class="outline-text-3" id="text-what-is-undefined-behavior">
 <p>
 未定义是指语言规范并未说明该情况该如何处理, 这种情况就是未定义行为.
@@ -1611,9 +1694,9 @@ nm: sigvec.o: no symbols
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span>* <span style="color: #eedd82;">args</span>[]) {
-    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 1;
-    printf(<span style="color: #ffa07a;">"Unpredictable result: %d\n"</span>, (++i) + (++i));
-    <span style="color: #00ffff;">return</span> 0;
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 1;
+  printf(<span style="color: #ffa07a;">"Unpredictable result: %d\n"</span>, (++i) + (++i));
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -1629,7 +1712,7 @@ nm: sigvec.o: no symbols
 </div>
 
 <div id="outline-container-arguments-in-function-declaration" class="outline-3">
-<h3 id="arguments-in-function-declaration"><span class="section-number-3">4.4.</span> 函数的参数声明</h3>
+<h3 id="arguments-in-function-declaration"><span class="section-number-3">6.4.</span> 函数的参数声明</h3>
 <div class="outline-text-3" id="text-arguments-in-function-declaration">
 <p>
 按照参数个数来分类的话, <code>C</code> 语言的函数声明共有 4 种.
@@ -1779,7 +1862,7 @@ nm: sigvec.o: no symbols
 </div>
 
 <div id="outline-container-difference-between-c-and-cpp" class="outline-3">
-<h3 id="difference-between-c-and-cpp"><span class="section-number-3">4.5.</span> 对比 C++, C 的优点</h3>
+<h3 id="difference-between-c-and-cpp"><span class="section-number-3">6.5.</span> 对比 C++, C 的优点</h3>
 <div class="outline-text-3" id="text-difference-between-c-and-cpp">
 <ul class="org-ul">
 <li><p>
@@ -1795,11 +1878,11 @@ nm: sigvec.o: no symbols
 </p>
 
 <p>
-我们都知道 <code>C++</code> 有命名空间以及函数重载, 也就是说可以有很多个同名变量, 函数, 而学过汇编的都知道,
+我们都知道 <code>C++</code> 有命名空间以及函数重载, <code>C++</code> 也就是说可以有很多个同名变量, 函数, 而学过汇编的都知道,
 </p>
 
 <p>
-一个程序里面是不可能有两个的同名符号的, 因此根据 <code>C++</code> 生成的二进制文件里面, 这些重名的函数都是加了一些前后缀来进行避同的.
+一个程序里面是不可能有多个同名符号的, 因此根据 <code>C++</code> 生成的二进制文件里面, 这些重名的函数都是加了一些前后缀来进行避同的.
 </p>
 
 <p>
@@ -1816,6 +1899,10 @@ nm: sigvec.o: no symbols
 
 <p>
 具体实践可以看这个 <a href="https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html">Mixing C and C++ Code in the Same Program</a>.
+</p>
+
+<p>
+本人也写了一个非常简单的例子, 可以参考一下(<a href="../../../files/c-and-cpp.zip">点击下载</a>).
 </p></li>
 
 <li><p>
@@ -1888,6 +1975,10 @@ systems in which this is possible, but I'm not aware of them.
 
 <p>
 而我们也不需要手动实现 <code>OOP</code>, 已经有人现成方案了(参考 <code>Glib</code> 的 <code>GObject</code> 子模块, 有兴趣的可以看一下<a href="https://segmentfault.com/a/1190000003861212">这篇文章</a>).
+</p>
+
+<p>
+如果要自己实现, 那么建议阅读一下 "21st Century C, 2nd Edition" 的第十一章.
 </p></li>
 </ul>
 </div>
@@ -1897,7 +1988,7 @@ systems in which this is possible, but I'm not aware of them.
 <div id="postamble" class="status">
 <p class="date">Date: 2021-06-13</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2023-05-09 Tue 10:51</p>
+<p class="date">Created: 2023-05-18 Thu 15:47</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

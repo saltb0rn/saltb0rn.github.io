@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-05-09 Tue 09:46 -->
+<!-- 2023-05-21 Sun 02:14 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>OpenGL/WebGL自救指南</title>
@@ -197,6 +197,27 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 1.0,
+                        linebreaks: { automatic: "%LINEBREAKS" },
+                        webFont: "mathjax-modern"
+                       },
+        SVG: {scale: 1.0,
+              linebreaks: { automatic: "%LINEBREAKS" },
+              font: "mathjax-modern"},
+        NativeMML: {scale: 1.0},
+        TeX: { equationNumbers: {autoNumber: "%AUTONUMBER"},
+               MultLineWidth: "85%",
+               TagSide: "amsIDE",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -216,12 +237,18 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#how-gl-works">WebGL是如何工作的</a></li>
+<li><a href="#how-gl-works">WebGL是如何工作的</a>
+<ul>
+<li><a href="#orgdf7e454">Vertex Shader</a></li>
+<li><a href="#org2a9d50f">Fragment Shader</a></li>
+</ul>
+</li>
+<li><a href="#org8185d42">undefined</a></li>
 <li><a href="#how-gl-store-data">OpenGL/WebGL 上下文是如何储存数据</a></li>
 <li><a href="#how-gl-use-data">OpenGL/WebGL 上下文是如何使用数据</a></li>
 <li><a href="#glsl-type-qualifier-overview">GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</a>
 <ul>
-<li><a href="#orgdf7e454">Vertex Shader</a>
+<li><a href="#org69ec166">Vertex Shader</a>
 <ul>
 <li><a href="#org5dbda1a">attribute</a></li>
 <li><a href="#org28fb527">uniform</a></li>
@@ -233,7 +260,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org34b9406">
+<div class="abstract" id="org42b7157">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -247,7 +274,7 @@
 </p>
 
 <p>
-也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 <code>WebGL</code> 的掌握阶段.
+也因为这样, 图形学学习计划搁置了一年, 当时就停留在贴图映射以及 <code>WebGL</code> 的掌握阶段.
 </p>
 
 <p>
@@ -255,7 +282,7 @@
 </p>
 
 <p>
-<code>OpenGL/WebGL</code> 上下文(OpenGL/WebGL Context), 也就是 <code>GPU</code>, 是如何接收,储存以及使用数据.
+<code>OpenGL/WebGL</code> 上下文(OpenGL/WebGL Context), 也就是 <code>GPU</code>, 是如何接收, 储存以及使用数据.
 </p>
 
 <p>
@@ -272,69 +299,249 @@
 <h2 id="how-gl-works">WebGL是如何工作的</h2>
 <div class="outline-text-2" id="text-how-gl-works">
 <p>
-事实上, <code>WebGL</code> 如何工作什么的, 已经有很多教程已经讲得很清楚了, 比如下面这两个图文并茂的链接:
+事实上, 要想了解 <code>WebGL</code> 如何工作什么的, 其实和了解 <code>OpenGL</code> 是如何工作是一样的, 也就是说离不开对渲染流程的了解.
 </p>
-
-<ul class="org-ul">
-<li><a href="https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL Fundamentals 的 WebGL是如何工作的</a></li>
-
-<li><a href="https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL2 Fundamentals 的 WebGL是如何工作的</a></li>
-</ul>
 
 <p>
-在开发的时候基本上只要关注 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 两个阶段就可以了:
+而在整个渲染流程里面, 开发人员基本上只会关心其中的 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 两个阶段.
 </p>
 
-<ul class="org-ul">
-<li><p>
-<code>Vertex Shader</code>
+<p>
+所以我一开始是找了关于这块不错的教程来进行学习:
 </p>
 
+<p>
+<a href="https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL Fundamentals 的 WebGL是如何工作的</a>
+</p>
+
+<p>
+<a href="https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL2 Fundamentals 的 WebGL是如何工作的</a>
+</p>
+
+<p>
+然而我发现了一个问题: 初学者只看这两个阶段的话是很难理解它们是如何工作的, 特别在 <code>Fragment Shader</code> 上, 有很多细节是不清楚的.
+</p>
+
+<p>
+于是我又回过头去看官方的 <a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流程概览</a>, 里面的内容实在不够直观, 难以理解.
+</p>
+
+<p>
+所以我决定把它们结合在一起进行理解, 再把个人的理解记录下来.
+</p>
+
+<p>
+因为 <code>WebGL</code> 的渲染流程是老版本的 <code>OpenGL</code> 的渲染流程, 相差了几个过程,
+</p>
+
+<p>
+为了符合 <code>WebGL</code> 的流程, 我只关注了新版渲染流程中的 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 及其前后的几个阶段.
+</p>
+
+<p>
+相比开始找到的教程来说只是针对 <code>Fragment Shader</code> 进行一些细节上补充, 最后, 在阅读这篇笔记时记得配合官方流程说明进行理解, 并以它为准.
+</p>
+
+<p>
+这里我们会先讲解工作流程的大概, 后面会提供一个可运行的例子来讲解一些细节上的东西.
+</p>
+</div>
+
+<div id="outline-container-orgdf7e454" class="outline-3">
+<h3 id="orgdf7e454">Vertex Shader</h3>
+<div class="outline-text-3" id="text-orgdf7e454">
 <p>
 <code>Vertex Shader</code> 根据几何数据计算出另外一种坐标, 每当接收一个顶点数据, <code>Vertex Shader</code> 就运行一遍, 如下图所示:
 </p>
 
 
-<div id="org57ba07f" class="figure">
+<div id="org62f9d59" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif">
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
 </div>
 
 <p>
-<code>Vertex Shader</code> 能做的事情很有限, 就只有 <b>设置</b> (不是返回) 顶点坐标(设置 <code>gl_Position</code> )以及向后面的<a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流水线</a>后面的阶段传递数据.
-</p></li>
-
-<li><p>
-<code>Fragment Shader</code>
+这个过程会得到顶点数据的最终坐标, <code>OpenGL</code> 后面会根据这个坐标来进行渲染.
 </p>
 
 <p>
-在真正理解 <code>Fragment shader</code> 做的事情之前, 我们需要理解一些额外的概念.
+当然开发人员一定要设置 <code>gl_Position</code> 为最终坐标, 这样才能把最终坐标记录到顶点数据中.
 </p>
 
 <p>
-在拿到经过 <code>Vertex Shader</code> 处理的顶点数据后, <code>OpenGL</code> 会按照一定规律把他们组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+最后这些经过处理的顶点数据会流向后续的的渲染流程.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2a9d50f" class="outline-3">
+<h3 id="org2a9d50f">Fragment Shader</h3>
+<div class="outline-text-3" id="text-org2a9d50f">
+<p>
+<code>Fragment Shader</code> 的工作比起 <code>Vertex Shader</code> 的要繁重一点, 画面的效果处理基本上都集中在个阶段.
 </p>
 
+<p>
+要真正理解 <code>Fragment Shader</code> 如何工作就得需要了解它前后发生了什么.
+</p>
+
+<p>
+首先清楚, <code>Fragment Shader</code> 是发生在 <code>Vertex Shader</code> 的几个阶段后的,
+</p>
+
+<p>
+这中间有一个过程: <code>OpenGL</code> 会按照一定规律把顶点组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+</p>
+
+<p>
+这个过程被叫做图元组装(<code>Primitive Assembly</code>). 在计算机中, <code>3D</code> 物体就是由多个面, 或者说图元组成的.
+</p>
+
+<p>
+我们就从这个过程之后开始对后续的流程进行了解.
+</p>
+
+<blockquote>
 <p>
 当然 <code>OpenGL</code> 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(<code>basic primitive</code>), 包括点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
 </p>
+</blockquote>
 
 <p>
-之后就到光栅化(<code>Rasterization</code>)阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>), 我们可以先把像素(pixel)定义为显示在屏幕上的一个颜色点.
+<b>裁剪 (Cliping)</b>
 </p>
 
 <p>
-<code>Fragment Shader</code> 就是一次接收一个片元作为输入, 以处理后的片元作为输出, <a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs">输入</a>和<a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs">输出</a>的片元数据结构是不一样的, 在没有特别声明的情况下片元就是指输出的片元.
+<code>OpenGL</code> 会把超出视野的图元或图元部分进行裁剪, 就像人一样, 看不了视野以外的东西.
 </p>
 
 <p>
-相比于像素而言, 片元除了有 <code>RGBA</code> 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息,
+<b>面剔除 (Face Culling)</b>
 </p>
 
 <p>
-需要知道这些数据的含义, 或者说理解片元, 那么得先了解可能发生在 <code>Fragment Shader</code> 前后的 <code>Per-Sample Processing</code> 阶段做了什么,
+<code>OpenGL</code> 可以检测得到图元面向是正面还是背面观察者(viewer)的, 就如我们生活中看到的物体一样,
+</p>
+
+<p>
+一个时间点内只能在一个角度看到它, 看得到就是正面, 看不到的就是背面, 那么背面也是在视野之外的.
+</p>
+
+<p>
+<code>OpenGL</code> 可以让开发者决定是否取消对物体背面的渲染.
+</p>
+
+<p>
+<b>光栅化 (Rasterization)</b>
+</p>
+
+<p>
+之后就到光栅化阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>), 我们可以先把像素(pixel)定义为显示在屏幕上的一个颜色点.
+</p>
+
+
+<div id="org9106756" class="figure">
+<p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif">
+</p>
+</div>
+
+<p>
+比如动画中的这个过程就是对一个三角形图元进行采样(sampling)得到一个由方块组成的近似三角形, 这些方块就是片元.
+</p>
+
+<blockquote>
+<p>
+你可以把采样理解为从一个连续对象上抽取若干个数据形成一个不连续的序列, 该序列和连续对象近似乎;
+</p>
+
+<p>
+我们把这些抽出来的数据叫做样本(samples), 样本数量越多, 得到的序列就和连续对象越像.
+</p>
+
+<p>
+这就是数学里面微分的思想.
+</p>
+</blockquote>
+
+<p>
+因为 <code>OpenGL</code> 只知道顶点的信息, 要根据这些点画出一个三角形,
+</p>
+
+<p>
+就得使用插值(interpolation)的上采样(upsampling)方法来补充顶点之间的点, 从而构造出由方块组成的近似三角形.
+</p>
+
+<p>
+油管上有个很直观的<a href="https://www.youtube.com/watch?v=t7Ztio8cwqM">视频</a>解释了整个过程(, 如果访问不了请点击<a href="../../../files/Rasterizer-Algorithm-Explanation-YouTube.webm">这里的备份</a>).
+</p>
+
+<blockquote>
+<p>
+视频的是广义上的光栅化, 整合了 <code>OpenGL</code> 的光栅化和 <code>Fragment Shader</code> 两个阶段.
+</p>
+
+<p>
+因此在看的时候要紧记 <b>OpenGL 的光栅化阶段不会计算出片元的颜色</b>, 这是 <code>Fragment Shader</code> 的工作, <code>OpenGL</code> 的光栅化的 <b>主要</b> 工作是确定片元的位置, 证据就在这<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>.
+</p>
+
+<p>
+此外, 光栅化还会对一些其它变量进行插值并输出到下个阶段, 比如在 <code>OpenGL (ES) 2</code> 之前的 <code>varying</code> 变量<sup><a id="fnr.2" class="footref" href="#fn.2" role="doc-backlink">2</a></sup>, 我会在 <code>Fragment Shader</code> 中介绍它.
+</p>
+</blockquote>
+
+<p>
+<b>Fragment Shader</b>
+</p>
+
+<p>
+在得到片元后, <code>OpenGL</code> 就开始对它们进行处理, 这就是我们的主角 <code>Fragment Shader</code> <b>主要</b> 要做的事情了:
+</p>
+
+<p>
+每次接受一个片元作为输入, 设置片元的颜色(设置 <code>gl_FragColor</code>), 最后输出处理后的片元.
+</p>
+
+<blockquote>
+<p>
+在下面的绘制三角形的例子里面, <code>vertex shader</code> 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了), 并把颜色保存到 <code>varying</code> 变量 <code>vColor</code> 里面.
+</p>
+
+<p>
+在光栅化过程中, <code>OpenGL</code> 除了会根据顶点数据计算片元序列 \(f_{1}, f_{2}, f_{3}, \ldots, f_{n-1}, f_{n}\) 外,
+</p>
+
+<p>
+同时还会根据与顶点数据一起定义的 <code>varying</code> 变量进行插值得到序列 \(v_{1}, v_{2}, v_{3}, \ldots, v_{n-1}, v_{n}\),
+</p>
+
+<p>
+并且片元 \(f_{i} (i \le n)\) 和 \(v_{i} (i \le n)\) 是相关的, 这样就相当于每个片元都有属于自己的 <code>varying</code> 变量.
+</p>
+
+<p>
+在 <code>fragment shader</code> 把片元自己的 <code>vColor</code> 设置为自己的颜色, 最后得到一个颜色渐变的三角形.
+</p>
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="../../../examples/fragment-shader-example.html"></iframe>
+</p>
+</blockquote>
+
+<p>
+<code>Fragment Shader</code> <a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs"> 输入</a>和<a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs">输出</a>的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 <code>Fragment Shader</code> 输出的片元.
+</p>
+
+<p>
+相比于像素而言, 片元除了有 <code>RGBA</code> 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息.
+</p>
+
+<p>
+需要知道这些数据的含义, 或者说理解片元, 那么得先了解 <code>Fragment Shader</code> 后面的 <code>Per-Sample Processing</code> 阶段做了什么.
+</p>
+
+<p>
+<b>Per-Sample Processing</b>
 </p>
 
 <p>
@@ -358,7 +565,7 @@
 </p>
 
 
-<div id="org51ef8f0" class="figure">
+<div id="org3738f09" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>模板测试</p>
@@ -377,14 +584,15 @@
 </p>
 
 <p>
-现在对片元的存在有一个充分的了解了, 那么开发人员需要在 <code>Fragment Shader</code> 里面做些什么呢? 其实就是给通过层层测试后的片元设置颜色(设置 <code>gl_FragColor</code>).
-</p></li>
-</ul>
-
-<p>
-<br>
+最后 <code>OpenGL</code> 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
 </p>
+</div>
+</div>
+</div>
 
+<div id="outline-container-org8185d42" class="outline-2">
+<h2 id="org8185d42">undefined</h2>
+<div class="outline-text-2" id="text-org8185d42">
 <p>
 本文会针对这两个阶段里面的一些细节进行深入学习, 为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的<a href="https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data">例子</a>用于讲解, 效果如下:
 </p>
@@ -504,7 +712,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 
-<div id="org068a534" class="figure">
+<div id="orgf15e1d9" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>vertexAttribPointer</p>
@@ -614,9 +822,9 @@ gl.bufferData(target, data, usage);
 </div>
 
 
-<div id="outline-container-orgdf7e454" class="outline-3">
-<h3 id="orgdf7e454">Vertex Shader</h3>
-<div class="outline-text-3" id="text-orgdf7e454">
+<div id="outline-container-org69ec166" class="outline-3">
+<h3 id="org69ec166">Vertex Shader</h3>
+<div class="outline-text-3" id="text-org69ec166">
 <p>
 在<a href="#how-gl-use-data">第 3 章</a>里面我们已经知道怎么把顶点数据传给 <code>GPU</code> 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
 </p>
@@ -732,6 +940,7 @@ gl.bufferData(target, data, usage);
 <li><code>WebGL2 Fundamentals</code> 的 <a href="https://webgl2fundamentals.org/webgl/lessons/webgl-shadertoy.html">Shadertoy 搭建教程</a></li>
 </ul>
 
+
 <p>
 <br>
 </p>
@@ -754,6 +963,7 @@ gl.bufferData(target, data, usage);
 <li><code>WebGL2 Fundamentals</code> 的 <a href="https://webgl2fundamentals.org/webgl/lessons/webgl-drawing-without-data.html">不适用几何数据作图教程</a></li>
 </ul>
 
+
 <p>
 <br>
 </p>
@@ -771,7 +981,17 @@ gl.bufferData(target, data, usage);
 </p>
 </div>
 </div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara"><a href="https://www.khronos.org/opengl/wiki/Fragment_Shader#Optional">Fragment Shader is Optional</a></p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2" role="doc-backlink">2</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara"><a href="../../../files/GLSL_Programming_Rasterization.pdf">GLSL Programming Rasterization</a></p></div></div>
+
+
 </div>
+</div></div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2022-02-11</p>

@@ -9,11 +9,11 @@
 
 身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
 
-也因为这样, 图形学学习计划搁置了一年, 但是就停留在贴图映射以及 =WebGL= 的掌握阶段.
+也因为这样, 图形学学习计划搁置了一年, 当时就停留在贴图映射以及 =WebGL= 的掌握阶段.
 
 我决定先从 =WebGL= 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
 
-=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收,储存以及使用数据.
+=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收, 储存以及使用数据.
 
 要真正掌握 =OpenGL= 的 =Shading Language= (GLSL) 就需要理解这一块.
 
@@ -32,7 +32,7 @@
 
 事实上, 要想了解 =WebGL= 如何工作什么的, 其实和了解 =OpenGL= 是如何工作是一样的, 也就是说离不开对渲染流程的了解.
 
-在整个渲染流程里面, 开发人员基本上只会关心其中的 =Vertex Shader= 和 =Fragment Shader= 两个阶段.
+而在整个渲染流程里面, 开发人员基本上只会关心其中的 =Vertex Shader= 和 =Fragment Shader= 两个阶段.
 
 所以我一开始是找了关于这块不错的教程来进行学习:
 
@@ -48,9 +48,13 @@
 
 所以我决定把它们结合在一起进行理解, 再把个人的理解记录下来.
 
-我也是以重点关注 =Vertex Shader= 和 =Fragment Shader= 两个阶段的角度来记录的,
+因为 =WebGL= 的渲染流程是老版本的 =OpenGL= 的渲染流程, 相差了几个过程,
 
-相比开始找到的教程来说, 会对 =Fragment Shader= 进行一些细节上补充.
+为了符合 =WebGL= 的流程, 我只关注了新版渲染流程中的 =Vertex Shader= 和 =Fragment Shader= 及其前后的几个阶段.
+
+相比开始找到的教程来说只是针对 =Fragment Shader= 进行一些细节上补充, 最后, 在阅读这篇笔记时记得配合官方流程说明进行理解, 并以它为准.
+
+这里我们会先讲解工作流程的大概, 后面会提供一个可运行的例子来讲解一些细节上的东西.
 
 **** Vertex Shader
 
@@ -120,15 +124,9 @@
 #+BEGIN_QUOTE
 视频的是广义上的光栅化, 整合了 =OpenGL= 的光栅化和 =Fragment Shader= 两个阶段.
 
-因此在看的时候要紧记 *OpenGL 的光栅化阶段不会计算出片元的颜色*,
+因此在看的时候要紧记 *OpenGL 的光栅化阶段不会计算出片元的颜色*, 这是 =Fragment Shader= 的工作, =OpenGL= 的光栅化的 *主要* 工作是确定片元的位置, 证据就在这[fn:1:[[https://www.khronos.org/opengl/wiki/Fragment_Shader#Optional][Fragment Shader is Optional]]].
 
-这是 =Fragment Shader= 的工作, =OpenGL= 的光栅化的 *主要* 工作是确定片元的位置.
-
-证据就在这[fn:1:[[https://www.khronos.org/opengl/wiki/Fragment_Shader#Optional][Fragment Shader is Optional]]].
-
-此外, 光栅化还会对一些其它变量进行插值并输出到下个阶段, 比如在 =OpenGL (ES) 2= 之前的 =varying= 变量[fn:2:[[../../../files/GLSL_Programming_Rasterization.pdf][GLSL Programming Rasterization]]],
-
-我们之后也会介绍到它.
+此外, 光栅化还会对一些其它变量进行插值并输出到下个阶段, 比如在 =OpenGL (ES) 2= 之前的 =varying= 变量[fn:2:[[../../../files/GLSL_Programming_Rasterization.pdf][GLSL Programming Rasterization]]], 我会在 =Fragment Shader= 中介绍它.
 #+END_QUOTE
 
 *Fragment Shader*
@@ -148,7 +146,7 @@
 
 在 =fragment shader= 把片元自己的 =vColor= 设置为自己的颜色, 最后得到一个颜色渐变的三角形.
 
-[[iframe:width: 520px; height: 1020px; border: none; |../../../examples/fragment-shader-example.html]]
+[[iframe:width: 520px; height: 1060px; border: none; |../../../examples/fragment-shader-example.html]]
 #+END_QUOTE
 
 =Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][ 输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
@@ -180,7 +178,7 @@
 
 最后 =OpenGL= 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
 
-\\
+*** undefined
 
 本文会针对这两个阶段里面的一些细节进行深入学习, 为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][例子]]用于讲解, 效果如下:
 
