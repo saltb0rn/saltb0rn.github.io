@@ -47,54 +47,54 @@ define("port", default=8000, help="run on the given port", type=int)
 
 def header_checker(header_name, header_value, msg=None):
     def func_wrapper(func):
-	def wrapper(self, *args, **kwargs):
-	    content_type = self.request.headers.get(header_name)
-	    if content_type == header_value:
-		func(self, *args, **kwargs)
-	    else:
-		self.write({"error": msg or "Header is invalid"})
-	return wrapper
+        def wrapper(self, *args, **kwargs):
+            content_type = self.request.headers.get(header_name)
+            if content_type == header_value:
+                func(self, *args, **kwargs)
+            else:
+                self.write({"error": msg or "Header is invalid"})
+        return wrapper
     return func_wrapper
 
 
 class IndexHandler(tornado.web.RequestHandler):
 
     def __init__(self, application, request, **kwargs):
-	super().__init__(application, request, **kwargs)
-	self._headers["Content-Type"] = "application/json"
+        super().__init__(application, request, **kwargs)
+        self._headers["Content-Type"] = "application/json"
 
     def get(self):
-	greeting = self.get_argument('greeting', 'Hello')
-	text = tornado.escape.json_encode({"messages": greeting})
-	self.write(text)
+        greeting = self.get_argument('greeting', 'Hello')
+        text = tornado.escape.json_encode({"messages": greeting})
+        self.write(text)
 
     @header_checker("Content-Type", "application/json")
     def post(self):
-	try:
-	    data = tornado.escape.json_decode(self.request.body)
-	except tornado.escape.json.JSONDecodeError:
-	    self.write({"error": "Invalid JSON format"})
-	else:
-	    self.write(tornado.escape.json_encode(data))
+        try:
+            data = tornado.escape.json_decode(self.request.body)
+        except tornado.escape.json.JSONDecodeError:
+            self.write({"error": "Invalid JSON format"})
+        else:
+            self.write(tornado.escape.json_encode(data))
 
 
 class TestHandler(tornado.web.RequestHandler):
 
     def post(self, intro, msg):
-	self.write('%s %s' % (intro, msg))
+        self.write('%s %s' % (intro, msg))
 
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
     settings = {
-	"debug": True
+        "debug": True
     }
     app = tornado.web.Application(
-	handlers=[
-	    (r"/", IndexHandler),
-	    (r'/test/(?P<intro>[^/]+)/msg/(?P<msg>[^/]+)/', TestHandler),
-	    ],
-	**settings
+        handlers=[
+            (r"/", IndexHandler),
+            (r'/test/(?P<intro>[^/]+)/msg/(?P<msg>[^/]+)/', TestHandler),
+            ],
+        **settings
     )
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)
@@ -120,8 +120,8 @@ tornado==5.1
     ├── docker-entrypoint.sh
     ├── Dockerfile
     └── greeting
-	├── greeting.py
-	└── requirements.txt
+        ├── greeting.py
+        └── requirements.txt
 
     1 directory, 4 files
    #+END_SRC
@@ -183,9 +183,9 @@ tornado==5.1
    fi
    echo "Server is running ..."
    exec python3 \
-	greeting.py \
-	--log-file-prefix="/srv/logs/greeting.log" \
-	"$@"
+        greeting.py \
+        --log-file-prefix="/srv/logs/greeting.log" \
+        "$@"
    #+END_SRC
 
    就是一个普通的脚本,有需要的情况下就创建/srv/logs目录,用来存放log文件,最后就是启动greeting.py.
@@ -194,7 +194,7 @@ tornado==5.1
 2. 执行打包命令
 
    #+BEGIN_SRC sh
-   salt@salt:~/Documents$ sudo docker build -t saltb0rn/greeting greeting-docker
+   salt@salt:~/Documents$ sudo docker build . -t saltb0rn/greeting greeting-docker
    #+END_SRC
 
    -t用于指定打包后的镜像tag,这里是salt0brn/greeting,你可以换一个喜欢的,最后面一个参数就是
@@ -281,8 +281,8 @@ salt@salt:~/Documents$ sudo docker run -i -t --entrypoint=/bin/bash saltb0rn/gre
 
 #+BEGIN_SRC sh
 salt@salt:~/Documents$ sudo docker run -i -t \
-			    --volume=$(pwd)/Pipfile:/srv/Pipfile \
-			    --entrypoint=/bin/bash saltb0rn/greeting
+                            --volume=$(pwd)/Pipfile:/srv/Pipfile \
+                            --entrypoint=/bin/bash saltb0rn/greeting
 #+END_SRC
 
 这个时候在容器里面执行"cat /srv/Pipfile"会看到与~/Documents/Pipfile一样的内容,如果这个时候在容器或者容器之外
