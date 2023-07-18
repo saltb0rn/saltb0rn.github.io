@@ -40,6 +40,7 @@
 
 这篇笔记通篇都使用了这些工具, 很多工具的用法只会简单介绍一下, 更多的内容请自行阅读 =man page=.
 
+
 *** 关于使用 GCC 的须知事项
 
 **** 预处理阶段的一些细节
@@ -274,6 +275,18 @@
   #+END_SRC
 
 
+***** 宏定义时的一些惯例
+
+- =do {} while(0)= 定义: https://stackoverflow.com/a/2687595
+
+- =((void)0)= 占位符: https://stackoverflow.com/a/2198975
+
+- 宏的相关资料
+
+  https://gcc.gnu.org/onlinedocs/cpp/Macros.html
+
+  https://github.com/cpredef/predef/tree/master
+
 **** 头文件以及库文件的一些细节
 
 通常情况下, 头文件(=.h=)的内容都是一些宏/变量的定义以及变量/函数的声明(declarations),
@@ -362,7 +375,7 @@
 
 我们可以反过来只提供声明不提供定义, 看看编译会发生什么?
 
-这里以最终版为例, 把 =func= 注释掉再注释掉, 会得到一个连接器报的错误:
+这里以最终版为例, 把 =func= 注释掉后会得到一个连接器报的错误:
 
 #+BEGIN_SRC sh
   /usr/bin/ld: /tmp/ccxdFKZ5.o: in function `main':
@@ -651,6 +664,7 @@
 
 跟着教程走一边基本上就 =okay= 了.
 
+
 *** 内存检测工具
 
 =C= 并不是一门内存安全型编程语言, 因此在使用 =C= 开发时最好使用一些工具来检测是否有内存问题.
@@ -659,7 +673,10 @@
 
 其中 =Valigrind= 是 =*nix= 类系统独占的, 想要快速上手 =Valgrind= 就得理解它提供的错误信息(实际上默认情况下是 =Memcheck= 提供的), 关于这点可以看[[https://valgrind.org/docs/manual/mc-manual.html#mc-manual.errormsgs][官方文档]].
 
-=ASan= 已经集成到 =GCC= 里面了, 具体用法可以看[[https://github.com/google/sanitizers/wiki/AddressSanitizer][这里]].
+=ASan= 已经集成到 =GCC= 里面了, 只要在编译的时候添加上 =-fsanitize=address= 选项就能对代码进行打桩, 在运行程序的时候会提示潜在的内存问题, 具体用法可以看[[https://github.com/google/sanitizers/wiki/AddressSanitizer][这里]].
+
+=Valgrind= 比 =ASan= 更加准确, 但是速度也比较慢, 精确度和速度得看自己取舍了.
+
 
 *** 交叉编译 (cross compilation)
 
@@ -682,6 +699,7 @@ http://retroshare.sourceforge.net/wiki/index.php/Ubuntu_cross_compilation_for_Wi
 https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html
 
 https://www.darlinghq.org/
+
 
 *** 关于 C 语言
 :PROPERTIES:
@@ -706,6 +724,7 @@ https://www.darlinghq.org/
 
 =K&R C= 的版本号叫 =C78=, 而第一版的 =ANSI C= 版本号叫做 =C89=, 后面的数字代表它们的发布时间, 后面的版本号也是这个规律.
 
+# https://en.cppreference.com/w/c/language/history
 
 **** 读懂 C 的声明语法
 :PROPERTIES:
@@ -715,6 +734,7 @@ https://www.darlinghq.org/
 =C/C++= 语言的声明语法基本上都是一样, 并且都很难阅读, 个人觉得直接看它们的声明语法也不太直观, 你可以在[[https://www.open-std.org/jtc1/sc22/wg14/www/projects#9899][这里]]找到 C 语言的标准, 看看里面的 =Language-Declarations= 那一节.
 
 于是搜索了一番 =how to read c declarations= 看看有没有更加好用的技巧, 结果还真的有: [[https://c-faq.com/decl/spiral.anderson.html][顺时针螺旋法]](. 如果该链接挂了,请阅读[[../../../files/spiral-anderson.html][这里]].)
+
 
 **** 指针
 :PROPERTIES:
@@ -732,6 +752,14 @@ https://www.darlinghq.org/
 指针是 =C= 这类语言的内存管理之道, 哪怕是深谙用法的老练开发人员也很难确保不会因疏忽导致出现[[https://en.wikipedia.org/wiki/Memory_safety#Types_of_memory_errors][内存安全问题]].
 
 新手最常见的疏忽就是使用 =malloc= 在堆上申请了内存区域却忘记使用 =free= 进行释放, =C++= 里面有 =RAII= 来解决这个问题,
+
+#+BEGIN_QUOTE
+=malloc= 会在成功申请空间后返回空间地址, 失败的时候返回 =null= 指针 (也就是 =NULL=).
+
+根据 [[https://www.open-std.org/JTC1/SC22/wg14/www/docs/n1124.pdf][ISO-IEC 9899]] 的 =C standard, 7.20.3.2/2= 可以得知 =free(NULL)= 也是没有问题的.
+
+因此, 在 =free= 时不需要对 =malloc= 返回的地址做额外判断.
+#+END_QUOTE
 
 然而这也没有完全杜绝内存安全问题, 这是因为出现安全问题的原因很多.
 
@@ -753,6 +781,7 @@ https://www.darlinghq.org/
 之后就是根据 =Valgrind= 的信息来修正程序错误了, 因此掌握 =Valgrind= 的关键是理解其[[https://valgrind.org/docs/manual/mc-manual.html#mc-manual.errormsgs][错误信息]]的含义.
 
 最后, 个人建议任何人都应该仔细看一遍 =Valgrind= 的[[https://valgrind.org/docs/manual/quick-start.html][上手教程]], 特别是 =Caveats= 部分.
+
 
 **** 未定义行为 (undefined behavior, UB)
 :PROPERTIES:
@@ -777,6 +806,7 @@ https://www.darlinghq.org/
 =GCC= 编译得到的程序, 其计算结果是 6; 而 =Clang= 编译后得到的程序的计算结果是 5.
 
 这是只是其中一种未定义行为, [[https://en.wikipedia.org/wiki/Undefined_behavior][维基百科]]上总结其它情况, 有兴趣可以看一下.
+
 
 **** 函数的参数声明
 :PROPERTIES:
@@ -878,6 +908,173 @@ https://www.darlinghq.org/
     }
   #+END_SRC
 
+
+**** 不透明结构体 (Opaque Structures)
+
+不透明结构体就是把结构体的声明和定义分开, 声明放在头文件(.h)里面, 定义则是放在实现的源文件(.c)里面, 以达到结构体定义可以被隐藏的目的.
+
+举个例子, 现在定义一个名为 =op_node_s= 的结构体, 并且把它定义为一个新的类型 =op_node_t=, 以及它相关的函数.
+
+*首先* 是头文件 =op_node.h=, 这里面只放声明.
+
+#+BEGIN_SRC c
+  /* op_node.h */
+  #ifndef __OP_NODE__H
+  #define __OP_NODE__H
+  typedef struct op_node_s op_node_t;
+
+  int op_node_new(op_node_t **pp_op_node);
+  void op_node_free(op_node_t *p_op_node);
+  void op_node_set_value(op_node_t *p_op_node, int value);
+  #endif
+#+END_SRC
+
+
+*其次* 是 =op_node.c=, 这里面是头文件声明的相关实现.
+
+#+BEGIN_SRC c
+  /* op_node.c */
+  #include <stdlib.h>
+  #include "op_node.h"
+
+  struct op_node_s {
+    int value;
+  };
+
+  int op_node_new(op_node_t **pp_op_node)
+  {
+    (*pp_op_node) = (op_node_t *)malloc(sizeof(op_node_t));
+    if (NULL == *pp_op_node) {
+      return -1;
+    }
+    (*pp_op_node)->value = 0;
+    return 0;
+  }
+
+  void op_node_free(op_node_t *p_op_node)
+  {
+    free(p_op_node);
+  }
+
+  void op_node_set_value(op_node_t *p_op_node, int value)
+  {
+    p_op_node->value = value;
+  }
+#+END_SRC
+
+#+BEGIN_QUOTE
+在引入 =op_node.h= 后, 我们就能获取到头文件的类型声明了, 但对于结构体的定义, 个人建议不要使用到这些类型声明.
+
+假设我们的 =op_node_s= 是一个递归结构体, 如下:
+
+#+BEGIN_SRC c
+  struct op_node_s {
+    int value;
+    op_node_s *next;
+  };  
+#+END_SRC
+
+尽量不要改成:
+
+#+BEGIN_SRC c
+  struct op_node_s {
+    int value;
+    op_node_t *next;
+  };  
+#+END_SRC
+
+这是因为有可能想要让结构体定义在 =op_node.c= 以外的特定文件中被访问到, 这需要把结构体的定义独立出来再被它们引入,
+
+如果 =op_node_s= 的定义使用了 =op_node.h= 里面的声明, 那么每次引入的时候都要把 =op_node.h= 引入上, 有点麻烦.
+
+通常人们会把结构体的定义放在一个 =_private.h= 后缀的文件中, 以我们的 =op_node_s= 为例子就是 =op_node_private.h=:
+
+#+BEGIN_SRC c
+  /* op_node_private */
+  #ifndef __OP_NODE_PRIVATE__H
+  #define __OP_NODE_PRIVATE__H  
+  struct op_node_s {
+    int value;
+  };
+  #endif
+#+END_SRC
+
+最后把 =op_node.c= 修改如下:
+
+#+BEGIN_SRC c
+  #include <stdlib.h>
+  #include "op_node.h"
+  #include "op_node_private.h"
+
+  int op_node_new(op_node_t **pp_op_node)
+  {
+    (*pp_op_node) = (op_node_t *)malloc(sizeof(op_node_t));
+    if (NULL == *pp_op_node) {
+      return -1;
+    }
+    (*pp_op_node)->value = 0;
+    return 0;
+  }
+
+  void op_node_free(op_node_t *p_op_node)
+  {
+    free(p_op_node);
+  }
+
+  void op_node_set_value(op_node_t *p_op_node, int value)
+  {
+    p_op_node->value = value;
+  }  
+#+END_SRC
+#+END_QUOTE
+
+*最后* 是调用 =op_node_t= 的例子,
+
+#+BEGIN_SRC c
+  /* main.c: test op_node */
+  #include "op_node.h"
+
+  int main(int argc, char **argv)
+  {
+    op_node_t *node;
+    op_node_new(&node);
+    op_node_set_value(node, 10);
+    op_node_free(node);
+    return 0;
+  }
+#+END_sRC
+
+这里需要着重对该使用例子进行一下说明, 在定义/声明不透明结构体时, 只能定义/声明不透明结构体的指针,
+
+也就说 =op_node_t node= 是不行的, 但 =op_node_t *node= 是可以的,
+
+这是因为此时结构体的实现是被隐藏了的, 而引入的头文件 =op_node.h= 里面只有结构体的声明,
+
+编译器是无法在结构体定义缺失的情况下为不透明结构体的变量分配空间, 但编译器还是知道指针的大小的,
+
+同时这也禁止在使用中直接进行 =malloc(sizeof(op_node_t))= 这样的内存分配操作,
+
+只能在 =op_node.c= 提供的 =op_node_new= 函数来完成;
+
+#+BEGIN_QUOTE
+但是直接使用 =free(node)= 操作是没问题的
+#+END_QUOTE
+
+因为同样的理由, 无法直接通过 =node= 来操作结构体的成员 =value=,
+
+编译器会提示 =Incomplete definition of type 'struct op_node_s'= 错误,
+
+只能通过 =op_node.c= 里面提供的函数 =op_node_set_value= 来操作,
+
+所有对于结构体成员的操作都受限于 =op_node.c= 有没有提供相应的实现,
+
+比如这里因为 =op_node.c= 没有提供相应函数而无法获取 =node= 的 =value= 值.
+
+现实中很多软件都使用了不透明结构体, 让使用者专注于 =API= 而不是结构体的细节.
+
+其中的一个例子就是 =SQLite 3=, 它的 =sqlite= 类型就是一个不透明结构体.
+
+
 **** 对比 C++, C 的优点
 :PROPERTIES:
 :CUSTOM_ID: difference-between-c-and-cpp
@@ -901,7 +1098,11 @@ https://www.darlinghq.org/
 
   本人写了一个简单而完整的例子, 可以参考一下([[../../../files/c-and-cpp.zip][点击下载]]).
 
-  另外也可以参考这个 [[https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html][Mixing C and C++ Code in the Same Program]] 来对本人提供的例子进行说明补充.
+  我们把 =C++= 代码导出的 =C API= 叫做 =C Wrapper API= 或者 =C bindings=, 这个例子就是 =C++= 为创建 =C Wrapper API= 的基本原理.
+
+  实际中过程要考虑很多东西, 具体要考虑的事项参考这个 [[https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html][Mixing C and C++ Code in the Same Program]],
+
+  个人觉得这篇文章关于处理 =C++= 的异常(exceptions)和类(classes)的部分说得不是太好, 所以我又额外提供了另外一个例子: [[https://gist.github.com/mikeando/5394166][Example of using C++ from C]].
 
 - 稳定的标准
 
@@ -942,3 +1143,56 @@ https://www.darlinghq.org/
   而我们也不需要手动实现 =OOP=, 已经有人现成方案了(参考 =Glib= 的 =GObject= 子模块, 有兴趣的可以看一下[[https://segmentfault.com/a/1190000003861212][这篇文章]]).
 
   如果要自己实现, 那么建议阅读一下 "21st Century C, 2nd Edition" 的第十一章.
+
+
+**** 一些编码习惯和理由
+
+- 为何人们喜欢把 =if= 相等判断的常量放在双等号前面?
+
+  #+BEGIN_SRC c
+    if (0 == res) {
+      //  ...
+     }
+  #+END_SRC
+
+  这是因为 =C/C++= 语言是可以在 =if= 语句里面对变量进行赋值的, 程序员可能会因为粗心写出如下代码:
+
+  #+BEGIN_SRC c
+    if (res = 0) {  // 原本想写 res == 0
+      //  ...
+     }
+  #+END_SRC
+
+  而把常量放在前面则可以被编译器提示错误.
+
+- 如何禁止编译器提示 ="unused parameter"= 警告?
+
+  方法很多, 但有一个很奇怪的方法可以适用于任何编译器, 比如,
+
+  #+BEGIN_SRC c
+    void f(int x) {
+      return;
+      (void)x;
+    }
+  #+END_SRC
+
+  只要在函数里面使用 =(void)param= 这样就可以禁止这类警告了, 这个例子是在 =return= 之后使用,
+
+  这个其实无所谓, 喜欢的话也可以放在 =return= 之前.
+
+  https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c
+
+
+*** 关于调试
+
+在调试方面来说, 个人认为编译型语言要比解释型语言复杂.
+
+编译型语言的调试就像是别人把一篇文章翻译成另外一种语言, 并要求你看着译本把原文中错误找出来;
+
+解释型语言就是直接把原文给你并要求你把错误找出来.
+
+作为编译型语言的 =C= 来说调试就是一件麻烦事, 不过掌握之后可以让你在排查程序错误中大显神通, 即便程序不是你写的.
+
+如果你是一个 =Linux= 用户, 又会汇编和 =C=, 那么我推荐一本关于调试的书 "Debug Hacks".
+
+这本书的内容可以分为程序调试和 =Linux= 内核调试两大块, 可以根据自身需求去阅读.
