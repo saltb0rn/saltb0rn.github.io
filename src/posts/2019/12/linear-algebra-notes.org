@@ -726,7 +726,7 @@
 
      - 计算方法
 
-       公式: $det\;A = \sum_{i_{1},...,i_{n}}\epsilon_{i_{1}...i_{n}}a_{i_{i}1}a_{i_{2}2}...a_{i_{n}n}$,
+       公式: $det\;A = \sum_{i_{1},...,i_{n}}\epsilon_{i_{1}...i_{n}}a_{i_{1}1}a_{i_{2}2}...a_{i_{n}n}$,
 
        其中 $\epsilon_{i_{1}...i_{n}}$ 有 $n!$ 种组合,是一个行之间的排列组合,结果为 $(-1)^{k}$, $k$ 表示列之间的交换次数,
 
@@ -816,13 +816,115 @@
 
        $\begin{equation} det\;A = a_{11} det\; \left(\begin{array}{c} a_{22} & a_{23} \\ a_{32} & a_{33} \end{array} \right) - a_{21} det\; \left(\begin{array}{c} a_{12} & a_{13} \\ a_{32} & a_{33} \end{array} \right) + a_{31} det\; \left(\begin{array}{c} a_{12} & a_{13} \\ a_{22} & a_{23} \end{array} \right) \end{equation}$
 
+       #+BEGIN_QUOTE
+       我们这个例子演示的是 =3x3= 矩阵的行列式计算, 那么 =4x4= 甚至是以上的矩阵该怎么算呢?
+
+       首先 =3x3= 矩阵的行列式计算思路实际上是把 =3x3= 规模的计算划分成更多个 =2x2= 的行列式的计算总和,
+
+       所以, =4x4= 矩阵的计算其实就是先把 =4x4= 的矩阵划分成多个 =3x3= 的规模的行列式计算, 再对每一个 =3x3= 的规模的计算进行 =2x2= 规模的划分.
+
+       简单来说就是分治法.
+
+       这里从网络找来一个 =C= 语言的实现, 该实现并没有使用前面提到过的使用逆序数的计算方法, 并且按照 *行* 来进行拆分:
+
+       #+BEGIN_SRC C
+         float determinant(float mat[16]) {
+
+           float a11 = mat[0];
+           float a12 = mat[1];
+           float a13 = mat[2];
+           float a14 = mat[3];
+
+           float a21 = mat[4];
+           float a22 = mat[5];
+           float a23 = mat[6];
+           float a24 = mat[7];
+
+           float a31 = mat[8];
+           float a32 = mat[9];
+           float a33 = mat[10];
+           float a34 = mat[11];
+
+           float a41 = mat[12];
+           float a42 = mat[13];
+           float a43 = mat[14];
+           float a44 = mat[15];
+
+           return a11 * (a22 * (a33 * a44 - a34 * a43) - a23 * (a32 * a44 - a34 * a42) + a24 * (a32 * a43 - a33 * a42)) \
+             - a12 * (a21 * (a33 * a44 - a34 * a43) - a23 * (a31 * a44 - a34 * a41) + a24 * (a31 * a43 - a33 * a41)) \
+             + a13 * (a21 * (a32 * a44 - a34 * a42) - a22 * (a31 * a44 - a34 * a41) + a24 * (a31 * a42 - a32 * a41)) \
+             - a14 * (a21 * (a32 * a43 - a33 * a42) - a22 * (a31 * a43 - a33 * a41) + a23 * (a31 * a42 - a32 * a41));
+         }
+       #+END_SRC
+
+       可以看到返回的结果就是先把 =4x4= 划分成 =3x3=, 再把 =3x3= 划分成 =2x2= 来进行计算的.
+
+       不过这个函数其实还是可以优化一下的, 把重复的计算抽象抽象出来, 该算法参考 [[https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/src/mat4.js#L416C17-L416C28][gl-matrix]] 的 =determinant= 的实现:
+
+       #+BEGIN_SRC C
+         float determinant(float mat[16]) {
+
+           float a11 = mat[0];
+           float a12 = mat[1];
+           float a13 = mat[2];
+           float a14 = mat[3];
+
+           float a21 = mat[4];
+           float a22 = mat[5];
+           float a23 = mat[6];
+           float a24 = mat[7];
+
+           float a31 = mat[8];
+           float a32 = mat[9];
+           float a33 = mat[10];
+           float a34 = mat[11];
+
+           float a41 = mat[12];
+           float a42 = mat[13];
+           float a43 = mat[14];
+           float a44 = mat[15];
+
+           /*
+             return a11 * (a22 * (a33 * a44 - a34 * a43) - a23 * (a32 * a44 - a34 * a42) + a24 * (a32 * a43 - a33 * a42)) \
+               - a12 * (a21 * (a33 * a44 - a34 * a43) - a23 * (a31 * a44 - a34 * a41) + a24 * (a31 * a43 - a33 * a41)) \
+               + a13 * (a21 * (a32 * a44 - a34 * a42) - a22 * (a31 * a44 - a34 * a41) + a24 * (a31 * a42 - a32 * a41)) \
+               - a14 * (a21 * (a32 * a43 - a33 * a42) - a22 * (a31 * a43 - a33 * a41) + a23 * (a31 * a42 - a32 * a41));
+
+              优化第一步, 需要先把目前可见的 2x2 的行列式计算抽象出来.
+
+              优化第二步, 把计算进行展开, 再把重复的计算进行抽象.
+            ,*/
+
+           // 以下是 2x2 的行列式计算
+           float b06 = a31 * a42 - a32 * a41;
+           float b07 = a31 * a43 - a33 * a41;
+           float b08 = a31 * a44 - a34 * a41;
+           float b09 = a32 * a43 - a33 * a42;
+           float b10 = a32 * a44 - a34 * a42;
+           float b11 = a33 * a44 - a34 * a43;
+           // 从展开后的结果进行抽象
+           float b00 = a11 * a22 - a12 * a21;
+           float b01 = a11 * a23 - a13 * a21;
+           float b02 = a11 * a24 - a14 * a21;
+           float b03 = a12 * a23 - a13 * a22;
+           float b04 = a12 * a24 - a14 * a22;
+           float b05 = a13 * a24 - a14 * a23;
+
+           return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+         }
+       #+END_SRC
+
+       #+END_QUOTE
+
+       这个根据矩阵的第一列进行的行列公拆分叫做展开第一列.
+
        我们把 *除去* 第 $i$ 行和第 $j$ 列所得的新行列式用 $\Delta^{'}_{ij}$ 表示, $\Delta^{'}_{ij}$ 叫做 *余子式* (minor),所以上面可以写成,
 
        $\begin{equation} det\;A = a_{11} \Delta^{'}_{11} - a_{21} \Delta^{'}_{21} + a_{31} \Delta^{'}_{31} \end{equation}$
 
        除了展开第一列,还可以展开第二列,第三列,所以也等于,
 
-       $\begin{equation} det\;A = - a_{12} \Delta^{'}_{12} + a_{22} \Delta^{'}_{22} - a_{32} \Delta^{'}_{32} \\ det\;A = a_{13} \Delta^{'}_{13} - a_{23} \Delta^{'}_{23} + a_{33} \Delta^{'}_{33} \end{equation}$
+       $\begin{equation} det\;A = - a_{12} \Delta^{'}_{12} + a_{22} \Delta^{'}_{22} - a_{32} \Delta^{'}_{32} = a_{13} \Delta^{'}_{13} - a_{23} \Delta^{'}_{23} + a_{33} \Delta^{'}_{33} \end{equation}$
 
        由于负号太碍眼了,所以定义 $\Delta_{ij} = (-1)^{i+j}\Delta^{'}_{ij}$,用这个符号就可以重写上面关系了,
 
@@ -3266,4 +3368,3 @@
 
 
 **** Jacobi 方法
-     
