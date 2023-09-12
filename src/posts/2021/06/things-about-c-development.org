@@ -783,6 +783,59 @@ https://www.darlinghq.org/
 最后, 个人建议任何人都应该仔细看一遍 =Valgrind= 的[[https://valgrind.org/docs/manual/quick-start.html][上手教程]], 特别是 =Caveats= 部分.
 
 
+***** 泛型指针
+
+在声明或定义指针变量时, 开发人员都要告诉编译器指针指向的内存区域上储存什么类型的数据.
+
+比如, =int *ptr;=, 就是告诉编译器, 变量 =ptr= 储存了一块内存区域的地址, 而这块内存区域就是用来储存整数的;
+
+=char *ptr;= 所指向的内存区域则是用来储存字符的.
+
+有时候开发人员在定义结构体/函数时可能需要记录/传入一些不固定类型的数据, 这种情况可以使用泛型指针 =void *= 来完成.
+
+先把需要记录/传入的数据的指针的类型转换成 =void *= 类型, 然后在使用时从 =void *= 类型转换会原本的指针类型, 最后解引.
+
+#+BEGIN_SRC c
+  #include <stdio.h>
+  void func_generic_ptr(void *data) {
+    printf("%d: ", *(int *)data);
+  }
+
+  int main(int argc, char **args) {
+    int n = 10;
+    func_generic_ptr((void *)&n);
+    return 0;
+  }
+#+END_SRC
+
+还有分配内存的函数 =malloc=, 它的返回值类型就是 =void *=.
+
+之所以可行, 是因为在固定架构下, =CPU= 寻址大小是固定的, 也就是说, 既然指针变量储存的是内存地址, 那么所有类型的指针变量的大小都是一致的.
+
+而指针变量的类型则是告诉编译器: 指针指向的内存区块有多大. 内存区块的大小只有在解引时才有意义, 因为需要知道应该读多少个字节的连续内存, 而不是把区块以外的数据也读取了.
+
+我们可以把物理内存看作是一个数组, 内存地址就是数组元素的索引, 因此内存地址就是一个整数.
+
+=C= 语言的标准定义了一种专门储存内存地址的非指针类型 =uintptr_t= 以及 =intptr_t=, 不用 =int= 来储存则是因为 =int= 的大小不适合用来储存内存地址.
+
+而这两个类型则是专门对此进行调整了的, 在不同平台上能够好好的储存内存地址, 因此可以替代 =void *= 的使用.
+
+#+BEGIN_SRC c
+  #include <stdio.h>
+  #include <stdint.h> // 这两类型定义在该头中
+  void func_generic_ptr(uintptr_t data) {
+    printf("%d: ", *(int *)data);
+  }
+
+  int main(int argc, char **args) {
+    int n = 10;
+    func_generic_ptr((uintptr_t)&n);
+    return 0;
+  }
+#+END_SRC
+
+=uintptr_t= 和 =intptr_t= 更多是用来对内存地址做数学运算的.
+
 **** 未定义行为 (undefined behavior, UB)
 :PROPERTIES:
 :CUSTOM_ID: what-is-undefined-behavior
@@ -893,6 +946,7 @@ https://www.darlinghq.org/
       int sum = 0;
 
       va_start ( argp, count );      /* Initialize the argument list. */
+                                     /* the second of va_start is the name of last argument before arg list. */
 
       for (; i < count; i++ )
         sum += va_arg ( argp, int ); /* Get the next argument value. */
@@ -908,6 +962,54 @@ https://www.darlinghq.org/
     }
   #+END_SRC
 
+  =va_start= 宏初始化参数列表, 该宏的第二个参数是参数列表之前的一个参数, 这里是 =count=;
+
+  =va_arg= 获取列表里面下一个的参数, 其中还得给出该参数的类型, 该例子里面的函数 =add= 的作用是对所有整数进行求和,
+
+  也就是说所有参数都是 =int= 类型, 所以例子里面的参数类型是 =int=.
+
+  =va_end= 结束参数列表调用, 该宏的参数得和 =va_start= 的第一个参数对应.
+
+  如你说见, =add= 需要传入一个 =count= 来表示参数列表的参数个数, 这是因为没有官方宏/函数来获得参数列表的长度.
+
+  不过有人通过宏来 *有限* 地提供获取参数列表的长度, 比如:
+
+  #+BEGIN_SRC c
+    #define VA_NUMS_HELPER(_1, _2, _3, _4, _5, _6, N, ...) N
+    #define VA_NUMS(...) VA_NUMS_HELPER(__VA_ARGS__, 6, 5, 4, 3, 2, 1, 0)
+  #+END_SRC
+
+  这个自定义的 =VA_ARGS= 可以获取到最大长度为 6 的参数列表的长度.
+
+  这个 =VA_ARGS= 利用了 "可变参数宏可以获得 =...= 部分之前的最后一个参数" 的原理以及通过错位传入参数来获得长度.
+
+  #+BEGIN_SRC c
+    VA_ARGS(a, b, c)
+    /*
+      首先展开为 VA_NUMS_HELPER(a, b, c, 6, 5, 4, 3, 2, 1, 0),
+
+      通过观察 VA_NUMS_HELPER 的定义可以发现 (2, 1, 0) 这三个参数就属于 ... 部分,
+
+      所以 VA_NUMS_HELPER 宏就被展开成这 3 个参数的前一位 3, 这也正是参数列表 (a, b, c) 的长度.
+    */
+  #+END_SRC
+
+  之所以说是有限, 是因为在 =VA_NUMS_HELPER= 的宏定义的占位符参数(=_1, _2, _3, _4, _5, _6=) 是固定编码, 并非动态的,
+
+  你想要测量长度超过 6 的参数列表, 那么就得修改 =VA_NUMS_HELPER= 的定义.
+
+  因此, 开发人员无法在不改变 =VA_NUMS_HELPER= 定义的情况下获得任意长度的参数列表.
+
+  那么如何使用这个宏呢? 就以 =add= 为例, 我们定义一个同名宏 (需要注意同名宏要在定义/声明之后):
+
+  #+BEGIN_SRC c
+    // header.h
+    int add (int count, ...);
+    #define add(...) add(VA_NUMS(__VA_ARGS__), __VA_ARGS__)
+
+    // in some c source files
+    add(1, 2, 3);
+  #+END_SRC
 
 **** 不透明结构体 (Opaque Structures)
 
@@ -971,7 +1073,7 @@ https://www.darlinghq.org/
   struct op_node_s {
     int value;
     op_node_s *next;
-  };  
+  };
 #+END_SRC
 
 尽量不要改成:
@@ -980,7 +1082,7 @@ https://www.darlinghq.org/
   struct op_node_s {
     int value;
     op_node_t *next;
-  };  
+  };
 #+END_SRC
 
 这是因为有可能想要让结构体定义在 =op_node.c= 以外的特定文件中被访问到, 这需要把结构体的定义独立出来再被它们引入,
@@ -992,7 +1094,7 @@ https://www.darlinghq.org/
 #+BEGIN_SRC c
   /* op_node_private */
   #ifndef __OP_NODE_PRIVATE__H
-  #define __OP_NODE_PRIVATE__H  
+  #define __OP_NODE_PRIVATE__H
   struct op_node_s {
     int value;
   };
@@ -1024,7 +1126,7 @@ https://www.darlinghq.org/
   void op_node_set_value(op_node_t *p_op_node, int value)
   {
     p_op_node->value = value;
-  }  
+  }
 #+END_SRC
 #+END_QUOTE
 
@@ -1073,6 +1175,81 @@ https://www.darlinghq.org/
 现实中很多软件都使用了不透明结构体, 让使用者专注于 =API= 而不是结构体的细节.
 
 其中的一个例子就是 =SQLite 3=, 它的 =sqlite= 类型就是一个不透明结构体.
+
+
+**** 标签联合体 (Tagged Union)
+
+一个联合体是一个可以储存任意类型的内存区域. 比如一个联合体可以储存 =int= 或 =char= 类型, 那么这个联合体的大小就是 =sizeof(int)=,
+
+因为需要在保证能够储存 =char= 的同时保证储存 =int= 的可能性.
+
+#+BEGIN_SRC c
+  union ExampleUnion { int i; char c };
+
+  union ExampleUnion example = { .i=100 };
+
+  example.c = 'c';
+#+END_SRC
+
+这个例子里面对 =c= 成员进行赋值会对 =i= 成员已存在的数据造成"破坏", 所以, *在同一时间内只能使用一个联合体成员进行数据读写*.
+
+相比结构体, 联合体更加节省内存. 其次, 它还有一个妙用.
+
+=C= 语言的函数无法返回多种可能类型的返回值, 然后有时就是有这种需求.
+
+比如说有一个函数, 接受两个 =int= 型参数, 进行除法运算并返回结果. 按照结果而言, 分三种可能:
+
+一是两个参数满足整除, 那么结果就是 =int=;
+
+二是不满足整除, 那么结果就是 =float/double=;
+
+三是除数是 0, 那么不应该有结果, 或者结果为无限大.
+
+这种时候可以使用标签联合体来解决.
+
+#+BEGIN_SRC c
+  union divResult {
+    int i;                        /* 第一种情况 */
+    float f;                      /* 第二种情况 */
+    char c;                       /* 第三种情况, 我们用一个字符来表示计算无结果, 其实可以不需要该成员 */
+  };
+
+  typedef struct {
+    enum { T1, T2, T3 } type;     /* T1, T2, T3 分别代表上述三种情况, 这三个就是标签 */
+    union divResult value;
+  } divResult_t;
+
+  divResult_t div(int a, int b)
+  {
+    if (b == 0) {
+      return (divResult_t){ .type=T3, .value={ .c='I' } };
+    } if ((a % b) == 0 ) {
+      return (divResult_t){ .type=T1, .value={ .i=(a / b) } };
+    } else {
+      return (divResult_t){ .type=T2, .value={ .f=((float)a / b) } };
+    }
+  }
+
+  int main()
+  {
+    divResult_t res = div(3, 2);
+    if (T2 == res.type) {
+      printf("float result: %.2f\n", res.value.f);
+    }
+
+    divResult_t res2 = div(4, 2);
+    if (T1 == res2.type) {
+      printf("integer result: %d\n", res2.value.i);
+    }
+
+    divResult_t res3 = div(4, 0);
+    if (T3 == res3.type) {
+      printf("Cannot devided by Zero\n");
+    }
+  }
+#+END_SRC
+
+实际上返回多种可能类型的解决方法还有很多, 比如可以使用结构体来替代联合体(, 相比联合体浪费空间); 还能使用 =void *= 或者 =uintptr= 来替代(, 后续根据类型解引).
 
 
 **** 对比 C++, C 的优点
@@ -1178,7 +1355,7 @@ https://www.darlinghq.org/
 
   只要在函数里面使用 =(void)param= 这样就可以禁止这类警告了, 这个例子是在 =return= 之后使用,
 
-  这个其实无所谓, 喜欢的话也可以放在 =return= 之前.
+  这个其实无所谓, 喜欢的话也可以放在 =return= 之前. 另外可以查看这个连接:
 
   https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c
 
@@ -1196,3 +1373,74 @@ https://www.darlinghq.org/
 如果你是一个 =Linux= 用户, 又会汇编和 =C=, 那么我推荐一本关于调试的书 "Debug Hacks".
 
 这本书的内容可以分为程序调试和 =Linux= 内核调试两大块, 可以根据自身需求去阅读.
+
+*** GCC flags 的最佳实践
+
+**** 禁止单精度/双精度/整型之间的隐藏式装换
+
+在 =C= 语言里面, 可以对数据进行隐式转换(implicit conversion). 比如:
+
+#+BEGIN_SRC c
+  int cloest_t = 3.14;
+#+END_SRC
+
+浮点数字面值(例如这里的 =3.14=)是双精度浮点数, 这个赋值会把双精度浮点数转换成整型, 也就是 =cloest_t= 的值是 =3=.
+
+在一些数学计算中, =3= 和 =3.14= 可能会让计算产生截然不同的结果, 这可能是开发人员的粗心导致的,
+
+可以设置编译选现让编译器提醒潜在问题: =GCC= 的 =-Wfloat-conversion=.
+
+该选项会提醒开发人员代码里面进行了 =float= 到 =int= 的隐式转换:
+
+#+BEGIN_QUOTE
+警告原文:
+
+warning: conversion from ‘float’ to ‘int’ may change value [-Wfloat-conversio]
+
+另外, 没有对宏的转换进行警告, 比如:
+
+#+BEGIN_SRC c
+  #define INF 3.14
+
+  int cloest_t = INF;
+#+END_SRC
+
+这点需要自己注意, 个人认为这可能是 BUG, 可能在之后的 =GCC= 版本里面被修正.
+#+END_QUOTE
+
+倘若真的想要进行转换, 那么可以使用显式转换:
+
+#+BEGIN_SRC c
+  int cloest_t = (int)3.14;
+#+END_SRC
+
+这样, 编译器就不会有警告了.
+
+最后就是单精度浮点和双精度浮点之间的转换了.
+
+这个是 =GCC= 手册里面的一个例子, 函数里面让双精度浮点和单精度浮点进行相乘.
+
+#+BEGIN_SRC c
+  float area(float radius) {
+    return 3.14159 * radius * radius;
+  }
+#+END_SRC
+
+针对这个运算, 编译器会先让单精度浮点升格(promotion)为双精度浮点再进行运算, 最后把双精度浮点的结果降格(demotion)为单精度浮点进行返回.
+
+在机器层面上, 双精度浮点数的计算需要更多的代价.
+
+这段代码有两个解决方法:
+
+1. 对 =3.14159= 进行单精度显式转换;
+2. 对浮点数字面值加[[https://en.cppreference.com/w/c/language/floating_constant][后缀]]: =3.14159f=, =f= 表示单精度浮点数. (整型字面值也有其对应[[https://en.cppreference.com/w/c/language/integer_constant][后缀]], 有兴趣的可以看一下.)
+   推荐该方法.
+
+
+针对这类问题, 可以使用 =GCC= 的 =-Wdouble-promotion= 选项来警告该类问题.
+
+事实上, =-Wfloat-conversion= 也会对这个问题进行警告.
+
+总的来说, 为了禁止双精度浮点/单精度浮点/整型之间的隐式转换, 我们应该使用 =-Wdouble-promotion -Wfloat-conversion=,
+
+或者就单独使用 =-Wfloat-conversion=, 而这两个选项是 *不会* 在 =-Wall= 中被启用的.
