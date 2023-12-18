@@ -836,6 +836,7 @@ https://www.darlinghq.org/
 
 =uintptr_t= 和 =intptr_t= 更多是用来对内存地址做数学运算的.
 
+
 **** 未定义行为 (undefined behavior, UB)
 :PROPERTIES:
 :CUSTOM_ID: what-is-undefined-behavior
@@ -1011,11 +1012,16 @@ https://www.darlinghq.org/
     add(1, 2, 3);
   #+END_SRC
 
+
 **** 不透明结构体 (Opaque Structures)
 
 不透明结构体就是把结构体的声明和定义分开, 声明放在头文件(.h)里面, 定义则是放在实现的源文件(.c)里面, 以达到结构体定义可以被隐藏的目的.
 
-举个例子, 现在定义一个名为 =op_node_s= 的结构体, 并且把它定义为一个新的类型 =op_node_t=, 以及它相关的函数.
+假设你现在写了一个程序 =A=, 定义一个 =op_node_s= 的结构体, 由于这个结构体设计了一些隐私, 并不想在发布程序 =A= 时把 =op_node_s= 的定义也发布出去, 只想让用户使用和它相关的函数.
+
+这种情况下就要使用不透明结构体来解决.
+
+具体做法是把 =op_node_s= 的定义去掉, 并且为 =op_node_s= 声明一个新类型 =op_node_t=, 并把函数的声明中的 =op_node_s= 替换成 =op_node_t=.
 
 *首先* 是头文件 =op_node.h=, 这里面只放声明.
 
@@ -1032,7 +1038,7 @@ https://www.darlinghq.org/
 #+END_SRC
 
 
-*其次* 是 =op_node.c=, 这里面是头文件声明的相关实现.
+*其次* 是 =op_node.c=, 这里面是头文件声明的相关实现, 我们的 =op_node_s= 的定义就在这里.
 
 #+BEGIN_SRC c
   /* op_node.c */
@@ -1065,9 +1071,9 @@ https://www.darlinghq.org/
 #+END_SRC
 
 #+BEGIN_QUOTE
-在引入 =op_node.h= 后, 我们就能获取到头文件的类型声明了, 但对于结构体的定义, 个人建议不要使用到这些类型声明.
+在为不透明结构体提供定义时, 需要注意一点: 不建议使用在定义结构体时引用结构体自己的类型声明(甚至是头文件里面的任何声明).
 
-假设我们的 =op_node_s= 是一个递归结构体, 如下:
+假设我们要定义的不透明结构体 =op_node_s= 是一个递归结构体, 如下:
 
 #+BEGIN_SRC c
   struct op_node_s {
@@ -1076,7 +1082,7 @@ https://www.darlinghq.org/
   };
 #+END_SRC
 
-尽量不要改成:
+那么不要定义成:
 
 #+BEGIN_SRC c
   struct op_node_s {
@@ -1085,11 +1091,13 @@ https://www.darlinghq.org/
   };
 #+END_SRC
 
-这是因为有可能想要让结构体定义在 =op_node.c= 以外的特定文件中被访问到, 这需要把结构体的定义独立出来再被它们引入,
+这么做的目的是为了不必要的 =#include= 指令.
 
-如果 =op_node_s= 的定义使用了 =op_node.h= 里面的声明, 那么每次引入的时候都要把 =op_node.h= 引入上, 有点麻烦.
+有时候你可能想然 =op_node_s= 的定义在程序 =A= 的其它地方被使用, 人们通常会把结构体的定义单独定义在 =_private.h= 后缀的文件中,
 
-通常人们会把结构体的定义放在一个 =_private.h= 后缀的文件中, 以我们的 =op_node_s= 为例子就是 =op_node_private.h=:
+在发布程序的其它地方引入该文件, 换在这里的话, 文件的名字正常来说就是 =op_node_private.h=;
+
+如果把 =op_node_s= 修改成了 "不建议" 的形式, 那么每次引入 =op_node_private.h= 时就得同时引入 =op_node.h=, 毕竟 =op_node_t= 是声明在 =op_node.h= 里面.
 
 #+BEGIN_SRC c
   /* op_node_private */
@@ -1130,7 +1138,13 @@ https://www.darlinghq.org/
 #+END_SRC
 #+END_QUOTE
 
-*最后* 是调用 =op_node_t= 的例子,
+*最后* 在发布阶段时, 你要把 =op_node.c= 编译成一个链接库 =O=, 把它和 =op_node.h= 一起打包发布,
+
+用户只需做两件事情就可以调用你的发布功能了:
+
+1. 引入 =op_node.h=
+
+2. 运行程序时连接你发布的库 =O=
 
 #+BEGIN_SRC c
   /* main.c: test op_node */
@@ -1251,6 +1265,10 @@ https://www.darlinghq.org/
 
 实际上返回多种可能类型的解决方法还有很多, 比如可以使用结构体来替代联合体(, 相比联合体浪费空间); 还能使用 =void *= 或者 =uintptr= 来替代(, 后续根据类型解引).
 
+
+**** Async/Await
+
+https://hackaday.com/2019/09/24/asynchronous-routines-for-c/
 
 **** 对比 C++, C 的优点
 :PROPERTIES:
@@ -1373,6 +1391,7 @@ https://www.darlinghq.org/
 如果你是一个 =Linux= 用户, 又会汇编和 =C=, 那么我推荐一本关于调试的书 "Debug Hacks".
 
 这本书的内容可以分为程序调试和 =Linux= 内核调试两大块, 可以根据自身需求去阅读.
+
 
 *** GCC flags 的最佳实践
 
