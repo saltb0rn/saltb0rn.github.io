@@ -1,23 +1,31 @@
-#+title: OpenGL/WebGL自救指南
+#+Title: Shader 编程自救指南
 #+date: 2022-02-11
-#+index: WebGL的Buffer对象
-#+tags: WebGL
+#+index: Shader 编程自救指南
+#+tags: Shader
 #+begin_abstract
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
 
-身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
+同时由于工作繁忙的原因, 图形学学习计划搁置了一年, 当时就停留在贴图映射的阶段.
 
-也因为这样, 图形学学习计划搁置了一年, 当时就停留在贴图映射以及 =WebGL= 的掌握阶段.
+另外搁置搁置还有一个原因, 那就是当时在学习贴图映射时所在的参考书有点不太易懂,
 
-我决定先从 =WebGL= 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
+所以需要找一本更易读的书, 我找到了 [[https://gabrielgambetta.com/computer-graphics-from-scratch/][Computer Graphics from Scratch]], 当这本书当前还没完成编写, 因此决定等它出版了再继续学.
 
-=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收, 储存以及使用数据.
+-----
 
-要真正掌握 =OpenGL= 的 =Shading Language= (GLSL) 就需要理解这一块.
+PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这本书, 期间使用 =C= 语言按照书上的伪代码实践了一遍.
 
-没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
+个人感觉等待这本书的完成是一个正确的选择, 它指导了我编写两个完整的渲染器, 简单易懂地解释了图形学里面一些较为复杂的算法.
+
+我本人在读这本书之前就已经较为深入地学习了一些 [[../..//2020/06/graphics-geometric-transformation.html][数学细节]] 以及 [[../../2020/06/graphics-opengl-transformation.html][OpenGL的渲染管线]],
+
+在跟着书本实践时特地找出这些知识和实践的对应之处, 学习效果非常地好.
+
+这本书清晰了我在学习渲染管线时的一些迷糊之处, 而之前所学的数学细节以及渲染管线知识又很好地弥补了这本书在这方面的空缺.
+
+现在回过头来看 =Shader= 程序如何运作时, 很多东西都豁然开朗了.
 #+end_abstract
 
 # 增加多一个章节, 用来演示如何直接加载 gltf 文件
@@ -25,63 +33,77 @@
 # https://github.com/larsjarlvik/webgl-gltf
 # https://github.com/visgl/loaders.gl
 
-*** WebGL是如何工作的
+*** Shader 是如何工作的
 :PROPERTIES:
 :CUSTOM_ID: how-gl-works
 :END:
 
-事实上, 要想了解 =WebGL= 如何工作什么的, 其实和了解 =OpenGL= 是如何工作是一样的, 也就是说离不开对渲染流程的了解.
+为了了解 =Shader= 是如何工作的, 我们将从最简单的 =WebGL= 开始上手,
 
-而在整个渲染流程里面, 开发人员基本上只会关心其中的 =Vertex Shader= 和 =Fragment Shader= 两个阶段.
+=WebGL= 和 =OpenGL= 的工作方式基本上是一致的, 主要区别在于对工具的要求上,
 
-所以我一开始是找了关于这块不错的教程来进行学习:
+=WebGL= 只要求掌握一点 =JavaScript/HTML= 就可以了;
+
+而对于 =OpenGL=, 很多教程都是要求读者使用 =C/C++= 来完成的, 而使用 =C/C++= 又掌握如何使用编译器以及 =makefile/cmake= 这样控制编译连接的工具的使用, 不是简单的事情.
+
+要想了解 =Shader= 如何工作什么的, 其实和了解 =OpenGL= 是一样的, 离不开对渲染流程的了解.
+
+开发人员所关心的 =Vertex Shader= 和 =Fragment Shader= 就是整个渲染流程里其中的两个环节.
+
+我一开始是找了关于这块不错的教程来进行学习:
 
 [[https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html][WebGL Fundamentals 的 WebGL是如何工作的]]
 
 [[https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html][WebGL2 Fundamentals 的 WebGL是如何工作的]]
 
-然而我发现了一个问题: 初学者只看这两个阶段的话是很难理解它们是如何工作的, 特别在 =Fragment Shader= 上, 有很多细节是不清楚的.
+但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的, 特别是 =Fragment Shader=, 看别人的 =Shader= 还是一头雾水.
 
-于是我又回过头去看官方的 [[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流程概览]], 里面的内容实在不够直观, 难以理解.
+回过头去看官方的 [[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流程概览]], 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 解下来就是个人理解了.
 
 # https://iquilezles.org/articles/
 
-所以我决定把它们结合在一起进行理解, 再把个人的理解记录下来.
+在这之前要了解一件事情, 随着 =OpenGL= 版本的变化, 渲染流程时会发生变化的, WebGL 也是一样.
 
-因为 =WebGL= 的渲染流程是老版本的 =OpenGL= 的渲染流程, 相差了几个过程,
+因此, 这篇文章里面的例子只关注特定版本的 =WebGL=: =WebGL 1.0=, 它对应的 =GLSL= 版本是 [[https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.20.pdf][1.20]].
 
-为了符合 =WebGL= 的流程, 我只关注了新版渲染流程中的 =Vertex Shader= 和 =Fragment Shader= 及其前后的几个阶段.
+#+BEGIN_QUOTE
+由于历史原因, =OpenGL/OpenGL ES/WebGL= 和 =GLSL= 之间的版本对应关系挺混乱的, 幸好维基百科上有列出[[https://en.wikipedia.org/wiki/OpenGL_Shading_Language#Versions][对应关系]].
 
-相比开始找到的教程来说只是针对 =Fragment Shader= 进行一些细节上补充, 最后, 在阅读这篇笔记时记得配合官方流程说明进行理解, 并以它为准.
+如果不了解这一块的话, 你无法知道你的 =Shader= 程序能够运行在什么环境上的.
+#+END_QUOTE
 
-这里我们会先讲解工作流程的大概, 后面会提供一个可运行的例子来讲解一些细节上的东西.
+接下来着重介绍 =Vertex Shader= 和 =Fragment Shader= 及其前后的几个阶段.
 
 **** Vertex Shader
 
-=Vertex Shader= 根据几何数据计算出另外一种坐标, 每当接收一个顶点数据, =Vertex Shader= 就运行一遍, 如下图所示:
+=Vertex Shader= 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标,
+
+所谓的几何数据就是指顶点数据, 这些数据来自于 =CPU= 程序的上传(后面会详细介绍), 每当接收一个几何数据, =Vertex Shader= 就运行一遍,
+
+如下图所示:
 
 #+CAPTION: Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)
 [[../../../files/vertex-shader-anim.gif]]
 
-这个过程会得到顶点数据的最终坐标, =OpenGL= 后面会根据这个坐标来进行渲染.
+由于 =Vertex Shader= 可以自定义, 所以该计算过程不是固定的.
 
-当然开发人员一定要设置 =gl_Position= 为最终坐标, 这样才能把最终坐标记录到顶点数据中.
+在后面的过程中会根据计算所得的坐标来进一步计算出其它可选数据(*可能* 包括色值, 法线, 贴图坐标等等)并进行渲染, 这些数据的计算过程是 =OpenGL= 内部完成的, 开发人员不可干涉.
 
-最后这些经过处理的顶点数据会流向后续的的渲染流程.
+可选数据实际上是由开发人员自定义的, 可以作任何用途, 如果想让 =OpenGL= 计算出可选数据, 那么开发人员必定给出一个 "种子" 提供给 =OpenGL=.
 
-**** Fragment Shader
+裁剪空间的顶点坐标必须被设置为 =gl_Position= 的值, 而可选数据的 "种子" 则是需要通过 =varying= 类型变量来提供.
 
-=Fragment Shader= 的工作比起 =Vertex Shader= 的要繁重一点, 画面的效果处理基本上都集中在个阶段.
+可选数据的计算过程虽然是  =OpenGL= 包揽的, 但想掌握 =Shader= 编程就必须要了解它.
 
-要真正理解 =Fragment Shader= 如何工作就得需要了解它前后发生了什么.
+**** Vertex Shader 之后, Fragment Shader 之前
 
-首先清楚, =Fragment Shader= 是发生在 =Vertex Shader= 的几个阶段后的,
+在 =Vertex Shader= 之后并非马上就到 =Fragment Shader= 了, 这期间会发生一切其他事情.
 
-这中间有一个过程: =OpenGL= 会按照一定规律把顶点组合在一起, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+*图元组装 (Primitive Assembly)*
 
-这个过程被叫做图元组装(=Primitive Assembly=). 在计算机中, =3D= 物体就是由多个面, 或者说图元组成的.
+在通过 =Vertex Shader= 处理完所有输入的顶点数据之后, =OpenGL= 会按照一定规律把输出的顶点组合在一起形成一个几何对象, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
 
-我们就从这个过程之后开始对后续的流程进行了解.
+在计算机中, =3D= 物体就是由多个面(或者说图元)组成的.
 
 #+BEGIN_QUOTE
 当然 =OpenGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
@@ -101,7 +123,11 @@
 
 *光栅化 (Rasterization)*
 
-之后就到光栅化阶段, 该阶段会把一个图元拆分成若干个片元(=fragments=), 片元就是一种类像素数据(=pixel-like data=), 我们可以先把像素(pixel)定义为显示在屏幕上的一个颜色点.
+之后就到光栅化阶段, 该阶段会把一个图元拆分成若干个片元(=fragments=), 片元就是一种类像素数据(=pixel-like data=),
+
+我们可以先把像素(pixel)定义为显示在屏幕上的一个小方块, 该小方块可以显示某个颜色.
+
+片元可以记录小方块在画面上的位置以及颜色, 也可能和有一些可选数据与之关联, 部分可选数据是根据 =Vertex Shader= 定义的可选数据计算而来的.
 
 [[../../../files/opengl-rasterization.gif]]
 
@@ -115,47 +141,259 @@
 这就是数学里面微分的思想.
 #+END_QUOTE
 
-因为 =OpenGL= 只知道顶点的信息, 要根据这些点画出一个三角形,
+然而, =OpenGL= 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
 
-就得使用插值(interpolation)的上采样(upsampling)方法来补充顶点之间的点, 从而构造出由方块组成的近似三角形.
+首先, 会根据 =Vertex Shader= 得出的裁剪空间坐标计算出屏幕坐标(screen space), 也就是计算出顶点对应的片元坐标;
 
-油管上有个很直观的[[https://www.youtube.com/watch?v=t7Ztio8cwqM][视频]]解释了整个过程(, 如果访问不了请点击[[../../../files/Rasterizer-Algorithm-Explanation-YouTube.webm][这里的备份]]).
+再根据这些片元坐标通过线性插值(interpolation)来补充缺失的片元, 从而构造出由方块组成的近似三角形.
+
+#+CAPTION: 三个顶点所对应的片元坐标
+[[file:../../../files/trianglerast_f1_joshbeam.png]]
+
+线性插值的原理很简单, 就是 $y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times t(x_{1} - x_{0}),\ where\ 0 \le t \le 1$.
+
+也可以这么表述: $y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times (x - x_{0}),\ where\ \min(x_{0}, x_{1}) \le x \le\ \max(x_{0}, x_{1})$.
+
+第二种表述方换句话说就是找出 $(x_{0}, y_{0})$ 和 $(x_{1}, y_{1})$ 两点线段上的一个点 $(x, y)$, 这符合我们要找出缺失片元的要求.
+
+由于片元是一格一格的, 因此两个相邻的片元必定在 $x$ 轴/$y$ 轴/同时在 $x$ 和 $y$ 轴方向上相差一个单位.
+
+所以我们的插值代码如下:
+
+#+BEGIN_SRC javascript
+  /*
+    i0: int
+    i1: int
+
+    d0: decimal
+    d1: decimal
+  */
+  function interpolate(i0, d0, i1, d1) {
+    if (i0 == i1) {
+      return [d0];
+    }
+
+    var values = [];
+    var a = (d1 - d0) / (i1 - i0);
+    var d = d0;
+    // incrementing i by 1 is because the difference between each two adjacent pixels is 1
+    for (var i = i0; i <= i1; i++) {
+      values.push(d);
+      d += a;
+    }
+
+    return values;
+  }
+#+END_SRC
+
+我们可以选择两个点的 $x$ 分量来作为 $i0$ 和 $i1$, 让 $y$ 分量作为 $d0$ 和 $d1$;
+
+也可以选择 $y$ 分量作为 $i0$ 和 $i1$, 让 $x$ 分量作为 $d0$ 和 $d1$.
+
+这取决于 $\left|x1 - x0\right|$ 和 $\left|y1 - y0\right|$ 两者之间哪个大.
+
+观察代码, 如果 $\left|i1 - i0\right|$ 比 $\left|d1 - d0\right|$ 要小, 那么 $\left|a\right|$ 就要大于 1, 这和相邻片元相差一个单位并不相符,
+
+在插值过程中会出现片元不相邻的情况, 比如以 $x$ 分量作为 $i0$ 和 $i1$, 并且 $a = 2$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, 22)$;
+
+但如果以 $y$ 作为 $i0$ 和 $i1$, 那么 $a = \frac{1}{2}$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, \lfloor 20.5 \rfloor)$, 这种情况片元就是相邻的.
+
+使用 =interpolate= 函数很容易就能画出一个三角形边线框.
+
+#+BEGIN_SRC javascript
+  // 需要注意的是, p0 p1 p2 三个坐标的分量是 decimal 类型, 这是从裁剪空间转换到屏幕空间得到的结果;
+  // 而屏幕空间上的像素分量是 int 类型, 因此我们需要在关键时候对分量进行取整,
+  // 如果允许的话,最好在计算过程的最后一步给计算结果取整来保证结果尽量精确.
+
+  if (Math.abs(p1.x - p0.x) > Math.abs(p1.y - p0.y)) {
+    let ys01 = interpolate(p0.x | 0, p0.y, p1.x | 0, p1.y);
+    for (let x = p0.x; x <= p1.x; x++) {
+      putPixel(x | 0, ys01[(x - p0.x) | 0] | 0);
+    }
+  } else {
+    let xs01 = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
+    for (let y = p0.y; y <= p1.y; y++) {
+      putPixel(xs01[(y - p0.y) | 0] | 0, y | 0);
+    }
+  }
+
+  if (Math.abs(p2.x - p1.x) > Math.abs(p2.y - p1.y)) {
+    let ys12 = interpolate(p1.x | 0, p1.y, p2.x | 0, p2.y);
+    for (let x = p1.x; x <= p2.x; x++) {
+      putPixel(x | 0, ys12[(x - p1.x) | 0] | 0);
+    }
+  } else {
+    let xs12 = interpolate(p1.y | 0, p1.x, p2.y | 0, p2.x);
+    for (let y = p1.y; y <= p2.y; y++) {
+      putPixel(xs12[(y - p1.y) | 0] | 0, y | 0);
+    }
+  }
+
+  if (Math.abs(p2.x - p0.x) > Math.abs(p2.y - p0.y)) {
+    let ys02 = interpolate(p0.x | 0, p0.y, p2.x | 0, p2.y);
+    for (let x = p0.x; x <= p2.x; x++) {
+      putPixel(x | 0, ys02[(x - p0.x) | 0] | 0);
+    }
+  } else {
+    let xs02 = interpolate(p0.y | 0, p0.x, p2.y | 0, p2.x);
+    for (let y = p0.y; y <= p2.y; y++) {
+      putPixel(xs02[(y - p0.y) | 0] | 0, y | 0);
+    }
+  }
+#+END_SRC
+
+#+CAPTION: 三角形线框
+[[file:../../../files/trianglerast_f2_joshbeam.png]]
+
+绘制填充三角形则复杂一点, 不过很好理解, 它 =OpenGL= 绘制图形的重点.
+
+可以把一个三角形看作一个由多层横线组成的的图形, 每一层的高度为一个像素;
+
+计算出每一层的两个端点, 再根据每层的两端点进行插值绘制出直线, 这些直线构成的就是目标三角形.
+
+#+CAPTION: 实心三角形
+[[file:../../../files/trianglerast_f3_joshbeam_aux.png]]
+
+#+BEGIN_SRC javascript
+  // 首先需要对 p0 p1 p2 三个片元坐标根据 $y$ 分量进行交换排序, 比如从小到大进行排序: p0.y <= p1.y <= p2.y
+  // 这样可以避免讨论哪个点最高,哪个点最低
+  if (p1.y < p0.y) {
+    let temp = p0;
+    p0 = p1;
+    p1 = temp;
+  }
+
+  if (p2.y < p0.y) {
+    let temp = p0;
+    p0 = p2;
+    p2 = temp;
+  }
+
+  if (p2.y < p1.y) {
+    let temp = p1;
+    p1 = p2;
+    p2 = temp;
+  }
+
+  // 把三角形最高的一条边看作是一个端点集合, 把另外两条边的集合看作另外一个端点集合
+  // 注意, 这里的最高边是 p0 连接 p2 的边, 另外两条边分别是 p0 连接 p1 和 p1 连接 p2
+  // 在已知片元的 y 分量时, 可以插值出片元对应的 x 分量
+  const x01 = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
+  const x12 = interpolate(p1.y | 0, p1.x, p2.y | 0, p2.x);
+  const x02 = interpolate(p0.y | 0, p0.x, p2.y | 0, p2.x);
+  // 实际上, p0-p2 的边高度是与 p0-p1 + p1-p2 的高度是一样的, 可以把 p0-p1-p2 单独看作是一条边
+  x01.pop(); // x01 的最后一个元素和 x12 的第一个元素重复实际上是同一个片元的 x 分量
+  const x012 = x01.concat(x12);
+
+  // 接下来只要区分 p0-p2 和 p0-p1-p2 哪个是左边哪个是右边, 再进行逐行插值就可以绘制出三角形了
+  // 区分左右边的方法很简单, 分别取两边的中间点的 x 分量进行对比即可
+  const m = Math.floor(x02.length / 2);
+  let x_left, x_right;
+  if (x02[m] < x012[m]) {
+    x_left = x02;
+    x_right = x012;
+  } else {
+    x_left = x012;
+    x_right = x02;
+  }
+
+  for (let y = p0.y; y <= p2.y; y++) {
+    const xl = x_left[(y - p0.y) | 0];
+    const xr = x_right[(y - p0.y) | 0];
+    for (let x = xl; x <= xr; x++) {
+      putPixel(x | 0, y | 0);
+    }
+  }
+#+END_SRC
+
+以上就是 =OpenGL= 绘制实心三角形的大致原理.
+
+基于该过程, 还可以插值出之前说的可选数据, 只要在计算 =x01/x12/x02= 时进行类似插值就可以:
+
+#+BEGIN_SRC javascript
+  // ...
+  // 对可选数据按照竖向进行插值
+  const h01 = interpolate(p0.y | 0, p0.h, p1.y | 0, p1.h);
+  const h12 = interpolate(p1.y | 0, p1.h, p2.y | 0, p2.h);
+  const h02 = interpolate(p0.y | 0, p0.h, p2.y | 0, p2.h);
+  h01.pop();
+  const h012 = h01.concat(h12);
+
+  // ...
+  let h_left, h_right;
+  if (x02[m]  < x012[m]) {
+    // ...
+    h_left = h02;
+    h_right = h012;
+  } else {
+    // ...
+    h_left = h012;
+    h_right = h02;
+  }
+
+  // ...
+  for (let y = p0.y; y <= p2.y; y++) {
+    const xl = x_left[(y - p0.y) | 0];
+    const xr = x_right[(y - p0.y) | 0];
+
+    const hl = h_left[(y - p0.y) | 0];
+    const hr = h_right[(y - p0.y) | 0];
+
+    // 对可选数据按照横向进行插值
+    const hs = interpolate(xl, hl, xr, hr);
+
+    for (let x = xl; x <= xr; x++) {
+      // 获取当前片元所对应的可选数据 h, 用在之后的 fragment shader 阶段中
+      const h = hs[x - xl];
+      putPixel(x | 0, y | 0);
+    }
+  }
+
+#+END_SRC
+
+到目前位置, 光栅化基本完成, =OpenGL= 会把这些片元逐个给到下一个阶段 *Fragment Shader*.
+
+=OpenGL= 会使用一些变量来传递片元数据, 比如 =gl_FragCoord= 会把片元对应的 $x$ 和 $y$ 分量一并传回;
+
+=gl_FragCoord= 这种是 =OpenGL= 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 =Shader= 程序中用得上.
+
+而可选数据 $h$ 则需要开发人员自定义 =varying= 类型或 =out= 类型变量进行传递, 我们马上就知道具体该怎么做.
+
+**** Fragment Shader
+
+在得到片元后, =OpenGL= 就开始对它们进行处理, 这就是 =Fragment Shader= *主要* 要做的事情了:
+
+每次接受一个片元作为输入, 为片元设置颜色(设置 =gl_FragColor=), 并输出处理后的片元到下一个阶段中.
+
+如果该片元最终能够呈现在屏幕上, 那么该颜色就作为像素的颜色.
+
+为了了解具体是怎么实现的, 我们来看一个例子(基于 =WebGL 1.0/GLSL 1.20= 版本).
 
 #+BEGIN_QUOTE
-视频的是广义上的光栅化, 整合了 =OpenGL= 的光栅化和 =Fragment Shader= 两个阶段.
+在下面的绘制三角形的例子里面, =Vertex Shader= 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了);
 
-因此在看的时候要紧记 *OpenGL 的光栅化阶段不会计算出片元的颜色*, 这是 =Fragment Shader= 的工作, =OpenGL= 的光栅化的 *主要* 工作是确定片元的位置, 证据就在这[fn:1:[[https://www.khronos.org/opengl/wiki/Fragment_Shader#Optional][Fragment Shader is Optional]]].
+=Vertex Shader= 中的 =vColor= 则是作为与 =gl_Position= 关联的可选数据.
 
-此外, 光栅化还会对一些其它变量进行插值并输出到下个阶段, 比如在 =OpenGL (ES) 2= 之前的 =varying= 变量[fn:2:[[../../../files/GLSL_Programming_Rasterization.pdf][GLSL Programming Rasterization]]], 我会在 =Fragment Shader= 中介绍它.
-#+END_QUOTE
+在光栅化的过程中 =OpenGL= 会根据 =Vertex Shader= 传递过来的 =gl_Position= 进行插值, 得到片元坐标以及相关可选数据.
 
-*Fragment Shader*
+片元的坐标会被保存在 =gl_FragCoord= 中; 对于可选数据, =OpenGL= 会在对 =gl_Position= 插值时同时对 =Vertex Shader= 传递过来的 =vColor= 进行插值,
 
-在得到片元后, =OpenGL= 就开始对它们进行处理, 这就是我们的主角 =Fragment Shader= *主要* 要做的事情了:
+并把插值结果传递在 =Fragment Shader= 的 =vColor= 上.
 
-每次接受一个片元作为输入, 设置片元的颜色(设置 =gl_FragColor=), 最后输出处理后的片元.
+这样 =Fragment Shader= 就接受了一个片元以及其相关的可选数据, 根据开发人员的自身要求设置 =gl_FragColor=.
 
-#+BEGIN_QUOTE
-在下面的绘制三角形的例子里面, =vertex shader= 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了), 并把颜色保存到 =varying= 变量 =vColor= 里面.
-
-在光栅化过程中, =OpenGL= 除了会根据顶点数据计算片元序列 $f_{1}, f_{2}, f_{3}, \ldots, f_{n-1}, f_{n}$ 外,
-
-同时还会根据与顶点数据一起定义的 =varying= 变量进行插值得到序列 $v_{1}, v_{2}, v_{3}, \ldots, v_{n-1}, v_{n}$,
-
-并且片元 $f_{i} (i \le n)$ 和 $v_{i} (i \le n)$ 是相关的, 这样就相当于每个片元都有属于自己的 =varying= 变量.
-
-在 =fragment shader= 把片元自己的 =vColor= 设置为自己的颜色, 最后得到一个颜色渐变的三角形.
+该例子里面的 =Fragment Shader= 把与片元关联的 =vColor= 设置为自己的颜色, 最后得到一个颜色渐变的三角形.
 
 [[iframe:width: 520px; height: 1060px; border: none; |../../../examples/fragment-shader-example.html]]
 #+END_QUOTE
 
-=Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][ 输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
+=Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
 
 相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息.
 
 需要知道这些数据的含义, 或者说理解片元, 那么得先了解 =Fragment Shader= 后面的 =Per-Sample Processing= 阶段做了什么.
 
-*Per-Sample Processing*
+**** Fragment Shader 之后 - Per-Sample Processing
 
 该阶段会使用上片元的这些额外值来进行[[https://www.khronos.org/opengl/wiki/Per-Sample_Processing][一系列的测试]], 来决定是否把该片元的色值输出到屏幕上成为像素,
 
@@ -172,29 +410,34 @@
 
 可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
 
-模板测试就是比较对应位置上的像素素值和片元模板值, 比如像上面图那样, 只有模板值等于 1 的片元才能被保留下来.
+模板测试就是比较对应位置上的像素数值和片元模板值, 比如像上面图那样, 只有模板值等于 1 的片元才能被保留下来.
 
 当然判断方法也有可能是大于等于 1, 判断方法不是唯一的, 其他方法可以看[[https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test][官方文档]].
 
 最后 =OpenGL= 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
 
-*** undefined
+*** 细节补充
 
-本文会针对这两个阶段里面的一些细节进行深入学习, 为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][例子]]用于讲解, 效果如下:
+我们约定 =Shader= 代码是运行在 =CPU= 上的, 而调用 =OpenGL/WebGL API= 的代码则是运行在 =CPU= 上的;
+
+当提到调用 =OpenGL/WebGL API= 给 =Shader= 提供数据的时候, 就说从 =CPU= 上传数据到 =GPU=.
+
+这部分的内容主要是补充描述 =GPU= 具体是如何接收来自于 =CPU= 的数据的.
+
+为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的[[https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data][例子]]用于讲解, 效果如下:
 
 [[iframe:../../../examples/learn-webgl-how-to-read-data/index.html]]
 
 在阅读下面的内容前请 *务必* 把例子的代码复制到本地, 然后边阅读边对照, 有疑惑可以修改代码查看效果.
 
-需要注意的是, 这个例子是基于 =WebGL 1.0= 的.
+需要注意的是, 这个例子是基于 =WebGL 1.0/GLSL 1.20= 的.
 
-
-*** OpenGL/WebGL 上下文是如何储存数据
+**** CPU 如何上传数据给 GPU
 :PROPERTIES:
-:CUSTOM_ID: how-gl-store-data
+:CUSTOM_ID: how-cpu-upload-data
 :END:
 
-首先, =OpenGL/WebGL= 上下文会等 =CPU= 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
+首先,  =GPU= 会等 =CPU= 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
 
 我们以 =WebGL= 为例子 (=OpenGL= 其实也差不了太多), 设现有一个名为 =gl= 的 =WebGL= 上下文实例, 要完成上述过程需要进行以下操作:
 
@@ -215,16 +458,41 @@
 
 想要知道 =target= 的值能够是什么, 可以参考[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer][这里]], 这些方法的参考说明都可以在[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext][这里]]找到.
 
+#+BEGIN_QUOTE
+[[https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBufferData.xhtml][参考文档]] =usage= 变量是用来提示 =OpenGL/WebGL= 储存数据的使用模式, 使用模式分为两个方面来讨论:
+
+*数据的访问频率* 以及 *数据的访问性质*.
+
+访问频率有以下几种情况:
+
+- =STREAM=: 数据只会被修改一次并且偶尔使用几次
+- =STATIC=: 数据只会被修改一次并且使用多次
+- =DYNAMIC=: 数据会重复修改并且使用多次
+
+访问性质其实就是在描述数据来源(也就是修改数据的方式)以及用途, 有以下几种情况:
+
+- =DRAW=: 数据由 =CPU= 上传到 =GPU=, 并且作为绘图命令/图片规范命令的数据源
+- =READ=: 数据由 =GPU= 读取到 =CPU=
+- =COPY=: 数据由 =GPU= 读取到 =GPU=, 并且作为绘图命令/图片规范命令的数据源
+
+-----
+
+值得注意的是, =usage= 仅仅是用来 *提示* 数据的使用模式, 目的是想让 =OpenGL/WebGL= 对数据的储存进行优化;
+
+但 =usage= 并不一定要匹配实际的使用模式, 比如说可以对 =STATIC_DRAW= 用途的数据进行多次修改, 并不约束数据的实际使用模式.
+#+END_QUOTE
+
 在 =OpenGL/WebGL= 里面, 这些用来作为物体顶点信息的缓冲区叫做 =Vertex Buffer Object (VBO)=.
 
 一旦有了数据源, 就可以让 =GPU= 根据利用这些数据来渲染了.
 
 人们一般喜欢把这些顶点数据称为几何数据(Geometry Data).
 
-实际上, 除了几何数据以外, 还有其他的数据并非存到缓冲区里面的, 后面介绍这些数据.
+缓冲区并非只能存几何数据, 也可以包含一些其它与几何数据相关的数据;
 
+另外, =OpenGL= 也不规定 =CPU= 上传的数据只能存到缓冲区里, 后面会介绍它们.
 
-*** OpenGL/WebGL 上下文是如何使用数据
+**** GPU 如何从缓冲区读取数据
 :PROPERTIES:
 :CUSTOM_ID: how-gl-use-data
 :END:
@@ -237,17 +505,27 @@
   { x1, y1, z1, x2, y2, z2, x3, y3, z3 }
 #+END_SRC
 
+每个顶点只有 $(x,y,z)$ 坐标数据.
+
 也可能是这样的:
 
 #+BEGIN_SRC c
   { x1, y1, z1, w1, x2, y2, z2, w2, x3, y3, z3, w3 }
 #+END_SRC
 
-当然还有其它的可能.
+现在每个顶点的坐标数据多了一个 $w$ 分量.
+
+也有可能包含了坐标以外的数据:
+
+#+BEGIN_SRC c
+  { x1, y1, z1, w1, r1, g1, b1, a1, x2, y2, z2, w2, r2, g2, b2, a2, x3, y3, z3, w3, r3, g3, b3, a3, }
+#+END_SRC
+
+总的来说, 每个顶点数据可能会有不同属性(attribute), 而不同属性的格式又不是固定的.
 
 那么问题来了, 既然数据格式不一样, =GPU= 是如何读取这些数据才能渲染出一个三角形的呢?
 
-这需要开发人员告诉 =GPU= 如何读取数据, 开发人员需要调用 =gl.vertexAttribPointer(index, size, type, normalized, stride, offset)= 这个 API 来生成一个 =Vertex Array Object (VAO)=,
+这需要开发人员告诉 =GPU= 如何读取数据, 调用 =gl.vertexAttribPointer(index, size, type, normalized, stride, offset)= 这个 API 来生成一个 =Vertex Array Object (VAO)=,
 
 *VAO 可以控制如何从 VBO 里面读取数据, 并把数据绑定给变量* (讲道理, =VAO= 的全称很难能让人理解它的作用).
 
@@ -256,15 +534,29 @@
 #+CAPTION: vertexAttribPointer
 [[../../../files/glVertexAttribPointer-api-overview.png]]
 
-这里面的数据既有顶点坐标(xyz), 还有顶点颜色(rgb)以及其对应的纹理坐标(st), 这里就把这三种数据的集合体看作是一个顶点(每 3 种为一个顶点).
+这里面的顶数据有三种属性: 顶点坐标(xyz), 颜色(rgb)以及纹理坐标(st).
 
 正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者属性之间的排序不同于上图.
 
 这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 =gl.vertexAttribPointer()= 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
 
-=gl.vertexAttribPointer= 的 =index= 参数是 =shader= 程序(shader program)里面 =attribute= 变量的索引值, 可以手动指定, 也可以通过 =gl.getAttribLocation(shaderProgram, attribName)= 来获取.
+=gl.vertexAttribPointer= 的 =index= 参数是 =Shader= 程序(shader program)里面 =attribute= 类型变量的索引值, 可以手动指定, 也可以通过 =gl.getAttribLocation(shaderProgram, attribName)= 来获取.
 
-=attribute= 变量是 =shader= 程序里面定义的变量, 后面会讲到.
+=attribute= 类型变量是 =shader= 程序里面定义的变量, 用来传递缓冲区里面某种数据给 =Vertex Shader= 中, 后面会讲到.
+
+#+BEGIN_QUOTE
+=gl.vertexAttribPointer= 其它参数:
+
+- =size=: 指定某属性由多少个分量组成, 比如图中的 =POSITION= 属性是由 3 个分量组成, 如果读取 =POSITION=, 那么 =size= 应该是 3.
+
+- =type=: 分量的类型, 是整形还是浮点型, 图中的分量类型是浮点型, 浮点型数据大小为 32 位(4 字节), 因此每个分量占了 4 个字节.
+
+- =normalized=: 是否对整形分量限定在某个范围内, 该参数对浮点型分量无效.
+
+- =stride=: 每一组顶点数据的步进, 就比如图中的每一个顶点的属性有 =POSITION/COLOR/TEXTURE=, 加起来共 32 字节, 这就是它的步进.
+
+- =offset=: 顶点数据的属性偏移, 就比如图中顶点数据的每种属性的偏移分别为: =POSITION= 为 0 个字节; =COLOR= 为 12 个字节; =TEXTURE= 为 24 个字节.
+#+END_QUOTE
 
 在 =gl.bindBuffer(target, buffer)= 之后调用 =gl.vertexAttribPointer= 就可以把缓冲区里的数据填充到指定的 =attribute= 变量里面.
 
@@ -278,44 +570,40 @@
 
 =Shader= 程序并非只有 =attribute= 变量, 接下来会对 =GLSL= 变量修饰符进行介绍, 掌握了这一块才能算是真正的掌握 =GLSL=.
 
+**** 如何使用缓冲区的数据进行绘制
 
-*** GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)
+当给缓冲区填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
+
+=WebGL= 有两个基础绘制命令: =gl.drawArrays(mode, first, count)= 以及 =gl.drawElements(mode, count, type, offset)=.
+
+例子使用的是前者进行绘制的, =mode= 是指绘制的 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements#mode][图元种类]], =first= 指定读取图元数据源时的起始索引, =count= 指定图源需要多少个顶点数据;
+
+例子里的 =gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);= 就是绘制一个三角形, 从绑定的数据源的首个位置开始读取, 需要 3 个顶点数据.
+
+=gl.drawElements(mode, count, type, offset)= 则是 =gl.drawArrays= 的内存节省版本, 使用顶点数据的索引来进行绘图, 可以有效节省顶点数据的使用空间.
+
+具体用法可以参考 [[https://webglfundamentals.org/webgl/lessons/webgl-indexed-vertices.html][WebGL Index Vertices]].
+
+在调用绘图命令时 =Shader= 就会开始执行了, 这点在第一节里面已经详细讲述了.
+
+**** GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)
 :PROPERTIES:
 :CUSTOM_ID: glsl-type-qualifier-overview
 :END:
 
-和其他编程语言一样, =GLSL= 的变量也是一样有修饰符的, 这里的修饰符并非指 =int=, =float= 这些 [[https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)][类型标识]];
+和其他编程语言一样, =GLSL= 的变量也是一样有修饰符的, 这里的修饰符并非指 =int=, =float= 这些 [[https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)][数据类型]];
 
 而是指控制变量的储存以及行为的标识, 这么说可能有点不太好理解, 举个例子 "禁止变量在声明后被修改" 的 =const= 就是其中一个修饰符.
+
+这种表示被叫做 [[https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)][类型限定符]].
 
 我们都知道 =GLSL= 的工作内容并不完全像其他编程语言一样, 它的任务是控制图形渲染的, 而这项任务的流程是分成好几个阶段的,
 
 有些数据可以在所有阶段中都能访问到, 而有些数据只能在特定阶段中访问, 还有一些数据能够从这个阶段输出到下一个阶段.
 
-为了标识变量能够在哪些阶段使用, 就需要另外一种 [[https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)][修饰符]] 进行声明, 这些修饰符就是这一小节的重点.
+为了标识变量能够在哪些阶段使用, 就需要使用类型表示符来进行声明, 最常用的有两个: =attribute= 以及 =uniform=.
 
-这里稍微提一下 =OpenGL= 的版本并非和它所支持的 =GLSL= 版本对应的, 也就是 =OpenGL 2.0= 所支持的 =GLSL= 版本并非 =2.0=, 具体可以看 [[https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Version][OpenGL and GLSL Version]],
-
-而不同版本的 =GLSL= 所支持的修饰符是不一定的.
-
-需要注意的是, [[https://www.khronos.org/registry/webgl/specs/1.0/#4.3][WebGL 1.0 规范]] 是基于 =OpenGL ES 2.0= 的, 而 =WebGL 1.0= 必须支持 [[https://www.khronos.org/files/opengles_shading_language.pdf][1.00 版本]] 的着色器语言(Shading Language);
-
-[[https://www.khronos.org/registry/webgl/specs/2.0/#4.3][WebGL 2.0 规范]] 是基于 =OpenGL ES 3.0= 的, 它除了像 =WebGL 1.0= 支持 1.00 版本的 =GLSL= 以外, 还新增对了 [[https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf][3.00 版本]] 的着色器语言的支持.
-
-整体上来说, =WebGL= 的 =GLSL= 比起 =OpenGL= 的 =GLSL= 的版本要低, 而 =OpenGL= 的 =GLSL= 的一些修饰符已被废弃的, 这些已被废弃的修饰符还活跃在 =WebGL 1.0= 的 =GLSL= 上,
-
-因此, 我们需要知道这些被废弃的修饰符和新版中的哪些修饰符对应, 其实这一点在切换 =WebGL= 版本的时候就能够发现, 以 =WebGL= 作为例子进行学习实际上是一个不错的选择.
-
-在大部分的时间里面, 开发人员都是在和 =Vertex Shader= 和 =Fragment Shader= 两个阶段打交道, 因此我们主要其中介绍这两个阶段中能用到的修饰符, 大部分是存储修饰符(Storage Qualitifiers),
-
-在学习的过程中请时不时翻阅上面提供的两个 =GLSL= 版本规范的文档进行参考.
-
-
-**** Vertex Shader
-
-在[[#how-gl-use-data][第 3 章]]里面我们已经知道怎么把顶点数据传给 =GPU= 的了, 获取这些数据后一般来说是要根据这些数据进行计算, 并渲染出图像的.
-
-既然要写 =shader program=, 那么就需要知道如何获取这些顶点数据, 后续可能要根据这些信息进行计算.
+一个 =shader= 变量可以使用多种限定符的组合进行声明, 但要注意遵守[[https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Qualifier_order][顺序]].
 
 ***** attribute
 
@@ -323,9 +611,7 @@
 
 这种变量不能在 =Vertex Shader= 以外的阶段被使用, 同样也不能用在接口块([[https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)][interface block]])里面, 并且这种变量是只读的(read-only).
 
-本例子里面的顶点数据, 实际上是逐个
-
-作为 =Vertex Shader= 的输入, 也就是说 =attribute= 变量接收的数据一般都是顶点数据了,
+作为 =Vertex Shader= 的输入, 也就是说 =attribute= 变量接收的数据是从缓冲区里面读取的.
 
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttrib
 
@@ -333,18 +619,60 @@
 
 例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元(=primitive=)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
 
-也就是可以在 =Vertex Shader= 以及 =Fragment Shader= 访问这些变量, 同样也不能在接口块里面使用,
+可以在 =Vertex Shader= 以及 =Fragment Shader= 访问这些变量, 同样也不能在接口块里面使用. 这种变量是只读的(read-only).
 
-这种变量同样也是只读(read-only).
+=uniform= 是我们前面提到的存到缓冲区以外的数据.
 
 # https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116
 
+**** GLSL 内置变量
+
+这里着重介绍几个稍微重要一点的并且不能被 =Shader= 修改的内置数据.
+
+- =gl_VertexID=
+
+  支持 =GLSL 1.30= 以及之后的版本, 只支持在 =Vertex Shader= 中访问.
+
+  =gl_VertexID= 就是当前被处理的顶点 =ID= (=Vertex ID=).
+
+  比如绘制 20 个顶点: =gl.drawArrays(gl.POINTS, 0, 20)=, 那么第一个顶点的 =ID= 就是 $first + i,\ where\ i = 0$,
+
+  $first$ 是绘图命令 =gl.drawArrays(mode, first, count)= 的第二个参数, $i$ 是由当前处理的第 $i+1$ 个顶点的索引.
+
+  这是对于每次像 =gl.drawArrays= 这样的绘图命令来讲的, 也就是说如果进行第二次调用 =gl.drawArrays(gl.POINTS, 0, 20)= 的话,
+
+  第二次绘制中第一个顶点的 =ID= 必定也是 $first + 0$, 而不是 $first + 20$.
+
+- =gl_PointCoord=
+
+  支持 =GLSL 1.10= 以及之后的版本, 支持在 =Fragment Shader= 中访问.
+
+  =gl_PointCoord= 是点在像素块内的相对坐标, 分量 $x$ 和 $y$ 的范围是 $\left[0, 1\right]$.
+
+  比如在前面的图片 =实心三角形= 中, 点 =p0= 在它所处的片元正中心, 那么该片元的 =gl_PointCoord= 的值就是 $(0.5, 0.5)$,
+
+  如果它处于片元的左上角, 那么值就是 $(0, 0)$.
+
+
+**** 其它常见问题
+
+- =GLSL= 的矩阵是行优先(row major)还是列优先(column major)?
+
+  默认是列优先, 可以通过 [[https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)][Layout Qualifier]] 去修改.
+
+- 为什么看到别人代码的向量的同一个位置的分量会不同, 比如 =vec4= 类型的变量会写 =v4.rgba=, 又有时候会写 =v4.xyzw=, 又有时候会写 =v4.stpq=?
+
+  这几种写法其实都是同一个东西, 比如第一个分量 =r/x/s= 都是同一个东西, 只不过在语义上有所区别.
+
+  如果分量用来表示颜色, 那么就建议用 =rgba=; 如果表示位置坐标, 那么建议用 =xyzw=; 如果表示纹理坐标, 那么建议用 =stpq=;
+
+  但是不能混着用, 比如 =xgba= 这样.
 
 *** 搭建自己的 Shadertoy
 
 如果想在编写 =shader= 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 =shader= 并从中学习, 自己还要动手实践.
 
-有一个叫做 [[https://www.shadertoy.com/][Shadertoy]] 网站, 上面有好多高人分享自己的 =shaders=, 是一个庞大的学习资源库.
+有一个叫做 [[https://www.shadertoy.com/][Shadertoy]] 网站, 上面有好多高人分享自己的 =shaders= (运行于 =WebGL 2.0= / [[https://registry.khronos.org/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf][GLSL 300 ES]]), 是一个庞大的学习资源库.
 
 关于阅读代码, 我是始终坚持一个观点, 那就是读源码的第一点是要读得懂, 否者不可能有所收获;
 
@@ -374,6 +702,66 @@
 
 - =WebGL2 Fundamentals= 的 [[https://webgl2fundamentals.org/webgl/lessons/webgl-shadertoy.html][Shadertoy 搭建教程]]
 
+
+#+BEGIN_QUOTE
+在知道 =Shadertoy= 是如何搭建后, 也可以尝用其他同类型的工具.
+
+个人推荐 [[https://github.com/patriciogonzalezvivo/glslViewer?tab=readme-ov-file][glslViewer]], 可以在这里找到它的[[https://github.com/patriciogonzalezvivo/glslViewer/wiki/GlslViewer-UNIFORMS][内置变量]]说明, 再配合 [[https://github.com/patriciogonzalezvivo/glslViewer/tree/main/examples][官方例子]] 来快速上手, 至于如何使用这些例子请看官方例子目录下的 [[https://github.com/patriciogonzalezvivo/glslViewer/blob/main/examples/Makefile][Makefile]].
+
+推荐理由正是由于它的自带例子, 这份例子新手在习惯 =Shader= 方面而言做的相当友好, 比起一上来在 =Shadertoy= 上面乱找别人的代码来阅读要好,
+
+主打一个循序渐进.
+
+除了 =glslViewer= 的教程外, 还有一个 =Shadertoy Tutorial= 系列的教程也相当不错:
+
+[[https://inspirnathan.com/posts/47-shadertoy-tutorial-part-1][Shadertoy Tutorial Part 1 - Intro]]
+
+[[https://inspirnathan.com/posts/48-shadertoy-tutorial-part-2][Shadertoy Tutorial Part 2 - Circles and Animation]]
+
+[[https://inspirnathan.com/posts/49-shadertoy-tutorial-part-3][Shadertoy Tutorial Part 3 - Squares and Rotation]]
+
+[[https://inspirnathan.com/posts/50-shadertoy-tutorial-part-4][Shadertoy Tutorial Part 4 - Multiple 2D Shapes and Mixing]]
+
+[[https://inspirnathan.com/posts/51-shadertoy-tutorial-part-5][Shadertoy Tutorial Part 5 - 2D SDF Operations and More 2D Shapes]]
+
+[[https://inspirnathan.com/posts/52-shadertoy-tutorial-part-6][Shadertoy Tutorial Part 6 - 3D Scenes with Ray Marching]]
+
+[[https://inspirnathan.com/posts/53-shadertoy-tutorial-part-7][Shadertoy Tutorial Part 7 - Unique Colors and Multiple 3D Objects]]
+
+[[https://inspirnathan.com/posts/54-shadertoy-tutorial-part-8][Shadertoy Tutorial Part 8 - 3D Rotation]]
+
+[[https://inspirnathan.com/posts/55-shadertoy-tutorial-part-9][Shadertoy Tutorial Part 9 - Camera Movement]]
+
+[[https://inspirnathan.com/posts/56-shadertoy-tutorial-part-10][Shadertoy Tutorial Part 10 - Camera Model with a Lookat Point]]
+
+[[https://inspirnathan.com/posts/57-shadertoy-tutorial-part-11][Shadertoy Tutorial Part 11 - Phong Reflection Model]]
+
+[[https://inspirnathan.com/posts/58-shadertoy-tutorial-part-12][Shadertoy Tutorial Part 12 - Fresnel and Rim Lighting]]
+
+[[https://inspirnathan.com/posts/59-shadertoy-tutorial-part-13][Shadertoy Tutorial Part 13 - Shadows]]
+
+[[https://inspirnathan.com/posts/60-shadertoy-tutorial-part-14][Shadertoy Tutorial Part 14 - SDF Operations]]
+
+[[https://inspirnathan.com/posts/61-snowman-shader-in-shadertoy][Snowman Shader in Shadertoy]]
+
+[[https://inspirnathan.com/posts/62-shadertoy-tutorial-part-15][Shadertoy Tutorial Part 15 - Channels, Textures, and Buffers]]
+
+[[https://inspirnathan.com/posts/63-shadertoy-tutorial-part-16][Shadertoy Tutorial Part 16 - Cubemaps and Reflections]]
+
+[[https://inspirnathan.com/posts/64-shader-resources][Shader Resources]]
+
+[[https://inspirnathan.com/posts/65-glow-shader-in-shadertoy][Glow Shader in Shadertoy]]
+
+-----
+
+另外, 上手 =GLSL= 的时候遇到一些内置函数难免会不清楚文档里面的描述的, 所以 =Shadertoy= 的作者 [[https://iquilezles.org/][Inigo Quilez]] 贴心地开发了一个 [[https://graphtoy.com/][Graphtoy]] 可视化这些函数.
+
+PS: 这位大佬除了很多教程文章和视屏, 都是非常不错的进阶资源.
+
+还有如果你不了解[[https://registry.khronos.org/OpenGL-Refpages/gl4/index.php][文档]]上 =Gen*Type= 这个词语是什么意思, 你可以去看 =GLSL= 的语言规范, 我这里可以告诉你的是它的全称是 =Generic * Types=, 中间的 =*= 是做近一步限定的,
+
+比如 =genType= 是 =float/vec2/vec3/vec4=, =genIType= 可以是 =int/ivec2/ivec3/ivec4=.
+#+END_QUOTE
 
 \\
 

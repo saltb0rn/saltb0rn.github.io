@@ -1,6 +1,5 @@
-#+title: 线性代数读书随笔
+#+title: 线性代数读书随笔 (部分内容需要严格验证)
 #+date: 2019-12-09
-#+status: wd
 #+index: 线性代数读书随笔
 #+tags: Math
 #+begin_abstract
@@ -859,7 +858,27 @@ l       这个程序是用 =Ruby= 写的,因为不是所有人都写 =Ruby= (包
 
        可以看到返回的结果就是先把 =4x4= 划分成 =3x3=, 再把 =3x3= 划分成 =2x2= 来进行计算的.
 
-       不过这个函数其实还是可以优化一下的, 把重复的计算抽象抽象出来, 该算法参考 [[https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/src/mat4.js#L416C17-L416C28][gl-matrix]] 的 =determinant= 的实现:
+       -----
+
+       $A = \left(\begin{array}{c} a_{11} & a_{12} & a_{13} & a_{14} \\ a_{21} & a_{22} & a_{23} & a_{24} \\ a_{31} & a_{32} & a_{33} & a_{34} \\ a_{41} & a_{42} & a_{43} & a_{44} \end{array}\right)$
+
+       先拆分第一行的第一列, 它的行列式是 $det\; \left(\begin{array}{c|ccc} a_{11} & 0 & 0 & 0 \\ \hline a_{21} & a_{22} & a_{23} & a_{24} \\ a_{31} & a_{32} & a_{33} & a_{34} \\ a_{41} & a_{42} & a_{43} & a_{44} \end{array}\right)$,
+
+       由于该行列式还不能很方便地算出来, 我们把右下角的分块看作是一个 =3x3= 的矩阵, 对其进行拆分计算得到多个 =2x2= 矩阵的行列式, 而 =2x2= 矩阵的行列式是直接就可以算出来的:
+
+       $det\; \left(\begin{array}{c|cc} a_{22} & 0 & 0 \\ \hline a_{32} & a_{33} & a_{34} \\ a_{42} & a_{43} & a_{44} \end{array}\right) = a_{22} det\; \left(\begin{array}{c} a_{33} & a_{34} \\ a_{43} & a_{44} \end{array}\right)$
+
+       $det\; \left(\begin{array}{c|cc} 0 & a_{23} & 0 \\ \hline a_{32} & a_{33} & a_{34} \\ a_{42} & a_{43} & a_{44} \end{array}\right) \xrightarrow{\text{第三列往前移,交换一次}} -det\; \left(\begin{array}{c|cc} a_{23} & 0 & 0 \\ \hline a_{33} & a_{32} & a_{34} \\ a_{43} & a_{42} & a_{44} \end{array}\right) = -a_{23} det\; \left(\begin{array}{c} a_{32} & a_{34} \\ a_{42} & a_{44} \end{array}\right)$
+
+       $det\; \left(\begin{array}{c|cc} 0 & 0 & a_{24} \\ \hline a_{32} & a_{33} & a_{34} \\ a_{42} & a_{43} & a_{44} \end{array}\right) \xrightarrow{\text{第四列往前移,交换两次}} det\; \left(\begin{array}{c|cc} a_{24} & 0 & 0 \\ \hline a_{34} & a_{32} & a_{33} \\ a_{44} & a_{42} & a_{43} \end{array}\right) = a_{24} det\; \left(\begin{array}{c} a_{32} & a_{33} \\ a_{42} & a_{43} \end{array}\right)$
+
+       这三个行列式相加就是 $det\; \left(\begin{array}{ccc} a_{22} & a_{23} & a_{24} \\ a_{32} & a_{33} & a_{34} \\ a_{42} & a_{43} & a_{44} \end{array}\right)$, 再乘以 $a_{11}$ 就是 $det\; \left(\begin{array}{c|ccc} a_{11} & 0 & 0 & 0 \\ \hline a_{21} & a_{22} & a_{23} & a_{24} \\ a_{31} & a_{32} & a_{33} & a_{34} \\ a_{41} & a_{42} & a_{43} & a_{44} \end{array}\right)$.
+
+       剩下就是分别拆分第一行的第二列, 第一行的第三列和第一行的第四列, 按照同样的方法计算它们的行列式并且相加, 最后就能得出 $det\; A$.
+
+       -----
+
+       不过这个函数其实还是可以优化一下的, 把重复的计算抽象出来, 该算法参考 [[https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/src/mat4.js#L416C17-L416C28][gl-matrix]] 的 =determinant= 的实现:
 
        #+BEGIN_SRC C
          float determinant(float mat[16]) {

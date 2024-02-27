@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <script type="text/javascript">
+         {
+             const canvas = document.getElementById('canvas')
+             const canvas_context = canvas.getContext("2d");
+             const canvas_buffer = canvas_context.getImageData(0, 0, canvas.width, canvas.height);
+             const canvas_pitch = canvas_buffer.width * 4;
+
+             function putPixel(x, y) {
+                 if (x < 0 || x >= canvas.width ||
+                     y < 0 || y >= canvas.height) {
+                     return;
+                 }
+                 let offset = 4 * x + canvas_pitch * y;
+                 canvas_buffer.data[offset++] = 255;
+                 canvas_buffer.data[offset++] = 0;
+                 canvas_buffer.data[offset++] = 0;
+                 canvas_buffer.data[offset++] = 255; // Alpha = 255 (full opacity)
+             }
+
+             let UpdateCanvas = function() {
+                 canvas_context.putImageData(canvas_buffer, 0, 0);
+             }
+
+             function interpolate(i0, d0, i1, d1) {
+                 if (i0 == i1) {
+                     return [d0];
+                 }
+
+                 let values = [];
+                 let a = (d1 - d0) / (i1 - i0);
+                 let d = d0;
+                 // incrementing i by 1 is because the difference between each two adjacent pixels is 1
+                 for (let i = i0; i <= i1; i++) {
+                     values.push(d);
+                     d += a;
+                 }
+
+                 return values;
+             }
+
+
+             const p0 = {
+                 x: 50,
+                 y: 50
+             };
+
+             const p1 = {
+                 x: 150,
+                 y: 100
+             };
+
+             const p2 = {
+                 x: 200,
+                 y: 200
+             };
+
+             if (p1.y < p0.y) {
+                 let temp = p0;
+                 p0 = p1;
+                 p1 = temp;
+             }
+
+             if (p2.y < p0.y) {
+                 let temp = p0;
+                 p0 = p2;
+                 p2 = temp;
+             }
+
+             if (p2.y < p1.y) {
+                 let temp = p1;
+                 p1 = p2;
+                 p2 = temp;
+             }
+
+             // 把三角形最高的一条边看作是一个端点集合, 把另外两条边的集合看作另外一个端点集合
+             // 注意, 这里的最高边是 p0 连接 p2 的边, 另外两条边分别是 p0 连接 p1 和 p1 连接 p2
+             // 在已知片元的 y 分量时, 可以插值出片元对应的 x 分量
+             /* const x01 = interpolate(p0.y, p0.x, p1.y, p1.x);
+              * const x12 = interpolate(p1.y, p1.x, p2.y, p2.x);
+              * const x02 = interpolate(p0.y, p0.x, p2.y, p2.x); */
+             // 实际上, p0-p2 的边高度是与 p0-p1 + p1-p2 的高度是一样的, 可以把 p0-p1-p2 单独看作是一条边
+             /* x01.pop(); // x01 的最后一个元素和 x12 的第一个元素重复实际上是同一个片元的 x 分量
+              * const x012 = x01.concat(x12); */
+
+             // 接下来只要区分 p0-p2 和 p0-p1-p2 哪个是左边哪个是右边, 再进行逐行插值就可以绘制出三角形了
+             // 方法很简单, 分别取两边的中间点的 x 分量进行对比即可
+             /* const m = Math.floor(x02.length / 2);
+              * let x_left, x_right;
+              * if (x02[m] < x012[m]) {
+              *     x_left = x02;
+              *     x_right = x012;
+              * } else {
+              *     x_left = x012;
+              *     x_right = x02;
+              * }
+
+              * for (let y = p0.y; y <= p2.y; y++) {
+              *     const xl = x_left[(y - p0.y) | 0];
+              *     const xr = x_right[(y - p0.y) | 0];
+              *     for (let x = xl; x <= xr; x++) {
+              *         putPixel(x | 0, y | 0);
+              *     }
+              * } */
+
+             if (Math.abs(p1.x - p0.x) > Math.abs(p1.y - p0.y)) {
+                 let ys01 = interpolate(p0.x | 0, p0.y, p1.x | 0, p1.y);
+                 for (let x = p0.x; x <= p1.x; x++) {
+                     putPixel(x | 0, ys01[(x - p0.x) | 0] | 0);
+                 }
+             } else {
+                 let xs01 = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
+                 for (let y = p0.y; y <= p1.y; y++) {
+                     putPixel(xs01[(y - p0.y) | 0] | 0, y | 0);
+                 }
+             }
+
+             if (Math.abs(p2.x - p1.x) > Math.abs(p2.y - p1.y)) {
+                 let ys12 = interpolate(p1.x | 0, p1.y, p2.x | 0, p2.y);
+                 for (let x = p1.x; x <= p2.x; x++) {
+                     putPixel(x | 0, ys12[(x - p1.x) | 0] | 0);
+                 }
+             } else {
+                 let xs12 = interpolate(p1.y | 0, p1.x, p2.y | 0, p2.x);
+                 for (let y = p1.y; y <= p2.y; y++) {
+                     putPixel(xs12[(y - p1.y) | 0] | 0, y | 0);
+                 }
+             }
+
+             if (Math.abs(p2.x - p0.x) > Math.abs(p2.y - p0.y)) {
+                 let ys02 = interpolate(p0.x | 0, p0.y, p2.x | 0, p2.y);
+                 for (let x = p0.x; x <= p2.x; x++) {
+                     putPixel(x | 0, ys02[(x - p0.x) | 0] | 0);
+                 }
+             } else {
+                 let xs02 = interpolate(p0.y | 0, p0.x, p2.y | 0, p2.x);
+                 for (let y = p0.y; y <= p2.y; y++) {
+                     putPixel(xs02[(y - p0.y) | 0] | 0, y | 0);
+                 }
+             }
+
+             UpdateCanvas()
+         }
+        </script>
+    </body>
+</html>

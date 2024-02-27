@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-05-09 Tue 09:46 -->
+<!-- 2024-02-27 Tue 10:15 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>用Docker打包Tornado项目</title>
@@ -212,7 +212,7 @@
 </div>
 <div id="content" class="content">
 <h1 class="title">用Docker打包Tornado项目</h1>
-<div class="abstract" id="org0892f35">
+<div class="abstract" id="org40695a4">
 <p>
 Docker是近几年一种新的容器技术,它的应用场景实在是太广泛了,除了在产品线上使用,我还见到过用来打包GUI应用的
 <a href="http://fabiorehm.com/blog/2014/09/11/running-gui-apps-with-docker/">利用X11 socket与打包的Firefox通信</a>,还有利用同样原理对<a href="https://github.com/JAremko/docker-emacs">Emacs进行打包</a>. 然而强大的工具都需要比较长的时间来学
@@ -272,7 +272,7 @@ define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="c
 <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">header_checker</span>(header_name, header_value, msg=<span style="color: #7fffd4;">None</span>):
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">func_wrapper</span>(func):
         <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">wrapper</span>(<span style="color: #00ffff;">self</span>, *args, **kwargs):
-            content_type = <span style="color: #00ffff;">self</span>.request.headers.get(header_name)
+            <span style="color: #eedd82;">content_type</span> = <span style="color: #00ffff;">self</span>.request.headers.get(header_name)
             <span style="color: #00ffff;">if</span> content_type == header_value:
                 func(<span style="color: #00ffff;">self</span>, *args, **kwargs)
             <span style="color: #00ffff;">else</span>:
@@ -285,17 +285,17 @@ define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="c
 
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">__init__</span>(<span style="color: #00ffff;">self</span>, application, request, **kwargs):
         <span style="color: #b0c4de;">super</span>().__init__(application, request, **kwargs)
-        <span style="color: #00ffff;">self</span>._headers[<span style="color: #ffa07a;">"Content-Type"</span>] = <span style="color: #ffa07a;">"application/json"</span>
+        <span style="color: #00ffff;">self</span>.<span style="color: #eedd82;">_headers</span>[<span style="color: #ffa07a;">"Content-Type"</span>] = <span style="color: #ffa07a;">"application/json"</span>
 
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">get</span>(<span style="color: #00ffff;">self</span>):
-        greeting = <span style="color: #00ffff;">self</span>.get_argument(<span style="color: #ffa07a;">'greeting'</span>, <span style="color: #ffa07a;">'Hello'</span>)
-        text = tornado.escape.json_encode({<span style="color: #ffa07a;">"messages"</span>: greeting})
+        <span style="color: #eedd82;">greeting</span> = <span style="color: #00ffff;">self</span>.get_argument(<span style="color: #ffa07a;">'greeting'</span>, <span style="color: #ffa07a;">'Hello'</span>)
+        <span style="color: #eedd82;">text</span> = tornado.escape.json_encode({<span style="color: #ffa07a;">"messages"</span>: greeting})
         <span style="color: #00ffff;">self</span>.write(text)
 
     <span style="color: #98fb98;">@header_checker</span>(<span style="color: #ffa07a;">"Content-Type"</span>, <span style="color: #ffa07a;">"application/json"</span>)
     <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">post</span>(<span style="color: #00ffff;">self</span>):
         <span style="color: #00ffff;">try</span>:
-            data = tornado.escape.json_decode(<span style="color: #00ffff;">self</span>.request.body)
+            <span style="color: #eedd82;">data</span> = tornado.escape.json_decode(<span style="color: #00ffff;">self</span>.request.body)
         <span style="color: #00ffff;">except</span> tornado.escape.json.JSONDecodeError:
             <span style="color: #00ffff;">self</span>.write({<span style="color: #ffa07a;">"error"</span>: <span style="color: #ffa07a;">"Invalid JSON format"</span>})
         <span style="color: #00ffff;">else</span>:
@@ -310,17 +310,17 @@ define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="c
 
 <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">__name__</span> == <span style="color: #ffa07a;">"__main__"</span>:
     tornado.options.parse_command_line()
-    settings = {
+    <span style="color: #eedd82;">settings</span> = {
         <span style="color: #ffa07a;">"debug"</span>: <span style="color: #7fffd4;">True</span>
     }
-    app = tornado.web.Application(
+    <span style="color: #eedd82;">app</span> = tornado.web.Application(
         handlers=[
             (r<span style="color: #ffa07a;">"/"</span>, IndexHandler),
             (r<span style="color: #ffa07a;">'/test/(?P&lt;intro&gt;[^/]+)/msg/(?P&lt;msg&gt;[^/]+)/'</span>, TestHandler),
             ],
         **settings
     )
-    http_server = tornado.httpserver.HTTPServer(app)
+    <span style="color: #eedd82;">http_server</span> = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
 </pre>
@@ -436,7 +436,7 @@ ENTRYPOINT [<span style="color: #ffa07a;">"docker-entrypoint.sh"</span>]
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">salt@salt:~/Documents$ sudo docker build -t saltb0rn/greeting greeting-docker
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker build . -t saltb0rn/greeting greeting-docker
 </pre>
 </div>
 
@@ -562,7 +562,7 @@ saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以
 
 <div class="org-src-container">
 <pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t <span style="color: #ffa07a;">\</span>
-                            --volume=$(<span style="color: #b0c4de;">pwd</span>)/Pipfile:/srv/Pipfile <span style="color: #ffa07a;">\</span>
+                            --volume=$(<span style="color: #fa8072;">pwd</span>)/Pipfile:/srv/Pipfile <span style="color: #ffa07a;">\</span>
                             --entrypoint=/bin/bash saltb0rn/greeting
 </pre>
 </div>
@@ -588,6 +588,70 @@ saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以
 <p>
 说明一下,&#x2013;publish=8001:8001,第一个8001是容器外通过8001端口对容器暴露的端口进行访问,第二个8001就是
 容器对外暴露的8001端口,如果把&#x2013;port=8001去掉,在本地测试localhost:8001会连接失败,证明参数的确传到了.
+</p>
+
+
+<p>
+<b>Docker Debugging</b>
+</p>
+
+<p>
+在 <code>docker build</code> 的过程中难免会遇到失败的情况, 这就意味这你得不断地需调整 <code>Dockerfile</code> 来通过构建.
+但是调整的前提是要知道问题处在何处, 通过不停地修改 <code>Dockerfile</code> 然后构建来试出错误是很麻烦的一件事情.
+幸好的是, 在构建的过程中, 每当 <code>Docker</code> 执行一次 <code>RUN</code> 命令就会提交<a href="https://docs.docker.com/storage/storagedriver/#images-and-layers">一个新的镜像层(layer/image layer)</a>,
+一个镜像是由一系列的镜像层构成的, 每个镜像层都有它自己的 <code>ID</code>, 我们可以把每个镜像层看作是某个时间点上的镜像,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">  Sending build context to Docker daemon  14.69MB
+Step 1/22 : FROM ubuntu:20.04
+ ---&gt; 6df894023726
+Step 2/22 : ENV IS_DOCKER true
+ ---&gt; Using cache
+ ---&gt; 005f8893fba4
+Step 3/22 : RUN rm /bin/sh &amp;&amp; ln -s /bin/bash /bin/sh
+ ---&gt; Using cache
+ ---&gt; 2402f0d5a607
+Step 4/22 : RUN echo <span style="color: #ffa07a;">'debconf debconf/frontend select Noninteractive'</span> | debconf-set-selections
+ ---&gt; Using cache
+ ---&gt; eda706a31dd9
+ ...
+</pre>
+</div>
+
+<p>
+比如这里的 <code>6df894023726</code>, <code>005f8893fba4</code>, <code>2402f0d5a607</code> 和 <code>eda706a31dd9</code> 就是镜像层的 <code>ID</code>.
+假设构建时在  <code>Step 4</code> 发生了错误, 那么可以使用通过 <code>Step 3</code> 的 <code>ID</code> 进入交互模式来手动执行 <code>Step 4</code> 的命令来检查原因:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">docker run -it 2402f0d5a607 /bin/bash
+</pre>
+</div>
+
+
+<p>
+<b>解决 Docker 使用中网络慢的问题</b>
+</p>
+
+<p>
+<code>Docker</code> 的镜像是寄存在 <a href="https://hub.docker.com">Docker Hub</a> 上的, 因为种种原因, 在中国大陆访问该网站是比较慢的,
+</p>
+
+<p>
+如果你要拉取的一个大小超出 <code>1G</code> 镜像层, 那么可能得等上一天了, 这还没算上拉取失败重试的情况.
+</p>
+
+<p>
+目前有两种解决方法, 一是使用国内的一些 <code>Docker Hub</code> 的镜像站点, 二是使用代理(自备), 代理决定了速度上限.
+</p>
+
+<p>
+第一种方法可以看<a href="https://zhuanlan.zhihu.com/p/642560164?utm_id=0">这里</a>;
+</p>
+
+<p>
+第二种方法可以看<a href="https://docs.docker.com/network/proxy/">官方文档</a>, 需要注意的是, 虽然官方文档没有说明, 但也是支持 <code>socks5</code> 协议的代理的, 具体可以参考这篇<a href="https://typecho.firshare.cn/archives/1071.html">文章</a>.
 </p>
 
 
@@ -623,7 +687,7 @@ Docker还有很多用法,这里是写不下了(不是因为懒),比如如何把�
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-08-16</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.2 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-05-09 Tue 10:08 -->
+<!-- 2024-02-27 Tue 10:15 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>x86 汇编</title>
@@ -197,27 +197,38 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
-
-        "HTML-CSS": { scale: 1.0,
-                        linebreaks: { automatic: "%LINEBREAKS" },
-                        webFont: "mathjax-modern"
-                       },
-        SVG: {scale: 1.0,
-              linebreaks: { automatic: "%LINEBREAKS" },
-              font: "mathjax-modern"},
-        NativeMML: {scale: 1.0},
-        TeX: { equationNumbers: {autoNumber: "%AUTONUMBER"},
-               MultLineWidth: "85%",
-               TagSide: "amsIDE",
-               TagIndent: ".8em"
-             }
-});
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -259,6 +270,7 @@
 <li><a href="#how-to-call-c-functions-in-nasm">调用C库的函数</a></li>
 <li><a href="#orgd552129">阅读GCC产生的汇编码</a>
 <ul>
+<li><a href="#org79034fe">获取 C 源代码的汇编代码</a></li>
 <li><a href="#org7ca44a1">GAS 标签 (Labels)</a></li>
 <li><a href="#org314d823">GAS 汇编器指令 (Directives)</a></li>
 <li><a href="#how-c-code-looks-like-in-gas">C 语言是如何与汇编对应的</a></li>
@@ -267,7 +279,7 @@
 <li><a href="#orgeab7b67">机器码和字节码</a></li>
 </ul>
 </li>
-<li><a href="#orgaba325c">可执行二进制文件格式 - ELF</a>
+<li><a href="#inside-elf">可执行二进制文件格式 - ELF</a>
 <ul>
 <li><a href="#orgb1d28c7">准备</a></li>
 <li><a href="#org460101a">ELF 头</a></li>
@@ -306,7 +318,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org4419a85">
+<div class="abstract" id="orgd0c2127">
 <p>
 这篇笔记的主要参考资料是 <code>Assembly Language Step-by-Step: Programming with Linux 3rd Edition</code>.
 </p>
@@ -486,7 +498,7 @@
 </p>
 
 
-<div id="org1c5f7d8" class="figure">
+<div id="orgeaa7957" class="figure">
 <p><img src="../../../files/memory-cell.png" alt="memory-cell.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>内存单元</p>
@@ -553,7 +565,7 @@
 </p>
 
 
-<div id="orga289dd8" class="figure">
+<div id="org1819dc6" class="figure">
 <p><img src="../../../files/memory-chip.png" alt="memory-chip.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>内存芯片</p>
@@ -620,7 +632,7 @@
 </p>
 
 
-<div id="org00570a4" class="figure">
+<div id="orgb898ccc" class="figure">
 <p><img src="../../../files/memory.png" alt="memory.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>内存系统</p>
@@ -715,7 +727,7 @@
 </p>
 
 
-<div id="orge0e967e" class="figure">
+<div id="org0ef8020" class="figure">
 <p><img src="../../../files/memory-connected-to-cpu.png" alt="memory-connected-to-cpu.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>CPU和内存</p>
@@ -1088,7 +1100,7 @@
 </p>
 
 
-<div id="org31db7a6" class="figure">
+<div id="orgc2bbeca" class="figure">
 <p><img src="../../../files/multitasking.png" alt="multitasking.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>多任务</p>
@@ -1111,7 +1123,7 @@
 </p>
 
 
-<div id="org87baa6e" class="figure">
+<div id="org1e1b215" class="figure">
 <p><img src="../../../files/operating-system.png" alt="operating-system.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>成熟的操作习系统</p>
@@ -1251,7 +1263,7 @@
 </p>
 
 
-<div id="orgb0b958a" class="figure">
+<div id="org871b08e" class="figure">
 <p><img src="../../../files/intel-8080-memory-model.png" alt="intel-8080-memory-model.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>英特尔-8080 内存模型</p>
@@ -1314,7 +1326,7 @@
 </p>
 
 
-<div id="orga6ee1a1" class="figure">
+<div id="orgc139c3f" class="figure">
 <p><img src="../../../files/intel-8086-memory-model.png" alt="intel-8086-memory-model.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>英特尔-8086 内存模型</p>
@@ -1345,7 +1357,7 @@
 </p>
 
 
-<div id="orgd4ea0e4" class="figure">
+<div id="orgcdbb8f5" class="figure">
 <p><img src="../../../files/a-megabyte-through-64k.png" alt="a-megabyte-through-64k.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>任何时候只能访问64K个字节</p>
@@ -1388,7 +1400,7 @@
 </p>
 
 
-<div id="org1a7cc40" class="figure">
+<div id="org7447fca" class="figure">
 <p><img src="../../../files/terms-of-memory.png" alt="terms-of-memory.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>内存术语</p>
@@ -1411,7 +1423,7 @@
 </p>
 
 
-<div id="org01c2c43" class="figure">
+<div id="orgbdb6a0f" class="figure">
 <p><img src="../../../files/mem-addr-vs-seg-addr.png" alt="mem-addr-vs-seg-addr.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>段地址对内存地址</p>
@@ -1490,7 +1502,7 @@
 </p>
 
 
-<div id="org2e4e11b" class="figure">
+<div id="org8d04af6" class="figure">
 <p><img src="../../../files/segements-and-offsets.png" alt="segements-and-offsets.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>同一个字节,不同地址</p>
@@ -1630,7 +1642,7 @@
 </p>
 
 
-<div id="org0199ede" class="figure">
+<div id="org037ef6b" class="figure">
 <p><img src="../../../files/stack.png" alt="stack.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>栈</p>
@@ -1645,7 +1657,7 @@
 </p>
 
 
-<div id="org2f65f8b" class="figure">
+<div id="orgb9526c2" class="figure">
 <p><img src="../../../files/x86-stack.png" alt="x86-stack.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>x86 栈</p>
@@ -1681,8 +1693,7 @@
 
 <p>
 这两个段是只有 <code>386</code> 以及后来的 <code>x86 CPU</code> 才有的.
-</p></li>
-</ul>
+</p>
 
 <p>
 <br>
@@ -1749,7 +1760,7 @@
 </p>
 
 
-<div id="orgbb51a98" class="figure">
+<div id="org60df8e0" class="figure">
 <p><img src="../../../files/32-bit-register.png" alt="32-bit-register.png">
 </p>
 <p><span class="figure-number">Figure 15: </span>32位寄存器</p>
@@ -1776,7 +1787,7 @@
 </p>
 
 
-<div id="org55da3d4" class="figure">
+<div id="orgcfc7d53" class="figure">
 <p><img src="../../../files/8-16-32-bit-register.png" alt="8-16-32-bit-register.png">
 </p>
 <p><span class="figure-number">Figure 16: </span>8位,16位和32位寄存器</p>
@@ -1860,7 +1871,8 @@
 
 <p>
 当然,程序一般都会根据若干个"1位"寄存器上的值来进行决定下一步的行动,这样选择结果就不止2种了.
-</p>
+</p></li>
+</ul>
 </div>
 </div>
 
@@ -1888,7 +1900,7 @@
 </p>
 
 
-<div id="orgdcbfd22" class="figure">
+<div id="orgebbc255" class="figure">
 <p><img src="../../../files/real-mode-flat-model.png" alt="real-mode-flat-model.png">
 </p>
 <p><span class="figure-number">Figure 17: </span>CP/M-80 与实模式平面模型</p>
@@ -1931,7 +1943,7 @@
 </p>
 
 
-<div id="org94ec2b8" class="figure">
+<div id="orgf5524b4" class="figure">
 <p><img src="../../../files/real-mode-segmented-model.png" alt="real-mode-segmented-model.png">
 </p>
 <p><span class="figure-number">Figure 18: </span>DOS与实模式分段模型</p>
@@ -2010,7 +2022,7 @@
 </p>
 
 
-<div id="orge7ee022" class="figure">
+<div id="org85e9993" class="figure">
 <p><img src="../../../files/protected-mode-flat-model.png" alt="protected-mode-flat-model.png">
 </p>
 <p><span class="figure-number">Figure 19: </span>保护模式平面模型</p>
@@ -2163,7 +2175,7 @@
 当源代码文件都是使用 <code>C</code> 这样的高级语言编写的, 那么这种程序翻译器叫做编译器(compiler), <code>GCC</code> 就是一个例子;
 </p>
 
-<pre class="example" id="orgada85cd">
+<pre class="example" id="org43e2015">
 实际上, 把 GCC 叫做编译器驱动器更加准确, 后面也会提到.
 </pre>
 
@@ -2269,7 +2281,7 @@
 </p>
 
 
-<div id="org21e4f7b" class="figure">
+<div id="orgc1a52c9" class="figure">
 <p><img src="../../../files/what-does-assembler-do.png" alt="what-does-assembler-do.png">
 </p>
 <p><span class="figure-number">Figure 20: </span>汇编器的工作</p>
@@ -2328,7 +2340,7 @@
 </p>
 
 
-<div id="orgd5ee24a" class="figure">
+<div id="org0773adf" class="figure">
 <p><img src="../../../files/assembler-and-linker.png" alt="assembler-and-linker.png">
 </p>
 <p><span class="figure-number">Figure 21: </span>汇编器和连接器</p>
@@ -2357,8 +2369,9 @@
 <li>没有赋值的已命名数据, 相当于空白空间, 等程序员后续使用;</li>
 <li>对模块外数据对象的引用;</li>
 <li>调试信息(debugging information);</li>
-<li>一些用来帮助连接器创建可执行程序的杂项(odds and ends);</li>
-</ul>
+<li><p>
+一些用来帮助连接器创建可执行程序的杂项(odds and ends);
+</p>
 
 <p>
 <br>
@@ -2478,7 +2491,8 @@
 
 <p>
 动态连接库具备这种特性, 后面会稍微提一下.
-</p>
+</p></li>
+</ul>
 </div>
 </div>
 
@@ -2490,7 +2504,7 @@
 </p>
 
 
-<div id="org41172b3" class="figure">
+<div id="org942b5b4" class="figure">
 <p><img src="../../../files/the-assembly-language-development-process.png" alt="the-assembly-language-development-process.png">
 </p>
 <p><span class="figure-number">Figure 22: </span>使用汇编语言进行开发的流程</p>
@@ -2553,19 +2567,19 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Executable name : EATSYSCALL</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Version         : 1.0</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Created date    : 1/7/2009</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Last update     : 1/7/2009</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Author          : Jeff Duntemann</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Description     :  A simple assembly app for Linux, using NASM 2.05,</span>
-<span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">demonstrating the use of Linux INT 80H syscalls</span>
-<span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">to display text.</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Build using these commands:</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">or</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">ld -o eatsyscall eatsyscall.o</span>
+<pre class="src src-nasm">        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Executable name : EATSYSCALL</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Version         : 1.0</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Created date    : 1/7/2009</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Last update     : 1/7/2009</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Author          : Jeff Duntemann</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Description     :  A simple assembly app for Linux, using NASM 2.05,</span>
+        <span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">demonstrating the use of Linux INT 80H syscalls</span>
+        <span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">to display text.</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Build using these commands:</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">or</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">ld -o eatsyscall eatsyscall.o</span>
 
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.data</span>                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Section containing initialized data</span>
 <span style="color: #87cefa;">EatMsg</span>: <span style="color: #b0c4de;">db</span> <span style="color: #ffa07a;">"Eat at Joe&#8217;s!"</span>, <span style="color: #7fffd4;">10</span>
@@ -2575,8 +2589,8 @@
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.text</span>                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Section containing code</span>
 
 <span style="color: #00ffff;">global</span> _start                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Linker (ld) needs this to find the entry point!</span>
-                                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">The name of entry point MUST be _start!</span>
-                                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">otherwise error will be raised during linking</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">The name of entry point MUST be _start!</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">otherwise error will be raised during linking</span>
 <span style="color: #87cefa;">_start</span>:                         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">A function definition, named _start</span>
         <span style="color: #b0c4de;">nop</span>                     <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">This no-op keeps gdb happy (see text)</span>
         <span style="color: #b0c4de;">mov</span> <span style="color: #eedd82;">eax</span>, <span style="color: #7fffd4;">4</span>              <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Specify sys_write syscall</span>
@@ -2609,26 +2623,26 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Executable name : EATSYSCALL</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Version         : 1.0</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Created date    : 1/7/2009</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Last update     : 1/7/2009</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Author          : Jeff Duntemann</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Description     :  A simple assembly app for Linux, using NASM 2.05,</span>
-<span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">demonstrating the use of Linux INT 80H syscalls</span>
-<span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">to display text.</span>
-<span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Build using these commands:</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">or</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)</span>
-<span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">ld -o eatsyscall eatsyscall.o</span>
+<pre class="src src-nasm">        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Executable name : EATSYSCALL</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Version         : 1.0</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Created date    : 1/7/2009</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Last update     : 1/7/2009</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Author          : Jeff Duntemann</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Description     :  A simple assembly app for Linux, using NASM 2.05,</span>
+        <span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">demonstrating the use of Linux INT 80H syscalls</span>
+        <span style="color: #ff7f24;">;                    </span><span style="color: #ff7f24;">to display text.</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Build using these commands:</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf -g -F stabs eatsyscall.asm        (this is for 32-bit CPU)</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">or</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">nasm -f elf64 -g -F stabs eatsyscall.asm      (this is for 64-bit CPU)</span>
+        <span style="color: #ff7f24;">;   </span><span style="color: #ff7f24;">ld -o eatsyscall eatsyscall.o</span>
 
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.bss</span>                    <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Section containing unintialized data</span>
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.text</span>                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Section containing code</span>
 
 <span style="color: #00ffff;">global</span> _start                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Linker (ld) needs this to find the entry point!</span>
-                                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">The name of entry point MUST be _start!</span>
-                                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">otherwise error will be raised during linking</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">The name of entry point MUST be _start!</span>
+        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">otherwise error will be raised during linking</span>
 <span style="color: #87cefa;">_start</span>:                         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">A function definition, named _start</span>
         <span style="color: #b0c4de;">nop</span>                     <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">This no-op keeps gdb happy (see text)</span>
         <span style="color: #b0c4de;">mov</span> <span style="color: #eedd82;">eax</span>, <span style="color: #7fffd4;">4</span>              <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Specify sys_write syscall</span>
@@ -2778,11 +2792,11 @@
 </p>
 
 <p>
-一个函数就是一个过程: 要怎么样怎么样处理,执行这个过程就叫做调用(calling),一般来说调用某函数(call the function).
+一个函数就是一个过程: 要怎么样怎么样处理,执行这个过程就叫做调用(calling), 一般来说调用某函数(call the function).
 </p>
 
 <p>
-什么是系统调用呢?本质上属于函数调用,只是这个函数就是系统定义的,用来给应用程序提供有限的硬件资源访问能力.
+什么是系统调用呢? 本质上属于函数调用, 只是这个函数就是系统定义的, 用来给应用程序提供有限的硬件资源访问能力.
 </p>
 
 <p>
@@ -2790,7 +2804,7 @@
 </p>
 
 <p>
-一个函数可能提供参数(arguments/parameters),比如 <code>sys_write</code> 的调用方式是这样定义的:
+一个函数可能提供参数(arguments/parameters), 比如 <code>sys_write</code> 的调用方式是这样定义的:
 </p>
 
 <div class="org-src-container">
@@ -2815,18 +2829,18 @@
 </p>
 
 
-<div id="org8db6efc" class="figure">
+<div id="orgef959eb" class="figure">
 <p><img src="../../../files/system-calls-and-registers.png" alt="system-calls-and-registers.png">
 </p>
 <p><span class="figure-number">Figure 23: </span>系统调用和寄存器</p>
 </div>
 
 <p>
-然后使用 <code>int 0x80</code> 指令来进行调用,调用返回的值会存放到 <code>eax</code> 上,这样就是第一次调用了.
+然后使用 <code>int 0x80</code> 指令来进行调用, 调用返回的值会存放到 <code>eax</code> 上, 这样就是第一次调用了.
 </p>
 
 <p>
-不同架构,不同操作系统上的系统调用的调用规范(calling conventions)是不一样的,
+不同架构, 不同操作系统上的系统调用的调用规范(calling conventions)是不一样的,
 </p>
 
 <p>
@@ -2846,14 +2860,14 @@
 </p>
 
 
-<div id="org9fd26ac" class="figure">
+<div id="orgd7d4086" class="figure">
 <p><img src="../../../files/man-2-syscall.png" alt="man-2-syscall.png">
 </p>
 <p><span class="figure-number">Figure 24: </span>man 2 syscall caller</p>
 </div>
 
 
-<div id="org690fa33" class="figure">
+<div id="orged7bc4e" class="figure">
 <p><img src="../../../files/man-2-syscall-2.png" alt="man-2-syscall-2.png">
 </p>
 <p><span class="figure-number">Figure 25: </span>man 2 syscall args</p>
@@ -2950,7 +2964,7 @@
 如果在前面汇编时没有把 <code>nasm</code> 的 <code>-f</code> 参数设置为和目前架构一样的话,那么你会遇到你人生的第一个连接错误:
 </p>
 
-<pre class="example" id="orga67d865">
+<pre class="example" id="org77a9bda">
 ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86-64 output.
 </pre>
 
@@ -2972,9 +2986,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">eatsyscall</span>: eatsyscall.o
-  ld -o eatsyscall eatsyscall.o
+ld -o eatsyscall eatsyscall.o
 <span style="color: #87cefa;">eatsyscall.o</span>: eatdemo.asm
-  nasm -f elf64 -g  -F stabs eatsyscall.asm
+nasm -f elf64 -g  -F stabs eatsyscall.asm
 </pre>
 </div>
 
@@ -2984,7 +2998,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">TARGET</span>: PREREQUISITES...
-  COMMAND
+COMMAND
 </pre>
 </div>
 
@@ -3039,7 +3053,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 
-<div id="orgf16e2d2" class="figure">
+<div id="org8f8357e" class="figure">
 <p><img src="../../../files/gdb-eatsyscall-part1.png" alt="gdb-eatsyscall-part1.png">
 </p>
 <p><span class="figure-number">Figure 26: </span>初次进入调试</p>
@@ -3074,7 +3088,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org88e920f" class="figure">
+<div id="org4606889" class="figure">
 <p><img src="../../../files/gdb-help.png" alt="gdb-help.png">
 </p>
 <p><span class="figure-number">Figure 27: </span>gdb help</p>
@@ -3093,7 +3107,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org4255878" class="figure">
+<div id="org7ea0ea8" class="figure">
 <p><img src="../../../files/gdb-files-list.png" alt="gdb-files-list.png">
 </p>
 <p><span class="figure-number">Figure 28: </span>gdb list</p>
@@ -3121,7 +3135,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org7f1c717" class="figure">
+<div id="org39ab71b" class="figure">
 <p><img src="../../../files/gdb-files-list-start.png" alt="gdb-files-list-start.png">
 </p>
 <p><span class="figure-number">Figure 29: </span>找到需要暂停的位置</p>
@@ -3152,7 +3166,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org0cb982d" class="figure">
+<div id="org42482aa" class="figure">
 <p><img src="../../../files/gdb-break.png" alt="gdb-break.png">
 </p>
 <p><span class="figure-number">Figure 30: </span>设置断点</p>
@@ -3163,7 +3177,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org31fafb6" class="figure">
+<div id="orgcb324fa" class="figure">
 <p><img src="../../../files/gdb-run.png" alt="gdb-run.png">
 </p>
 <p><span class="figure-number">Figure 31: </span>gdb run</p>
@@ -3178,7 +3192,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org6dbf05a" class="figure">
+<div id="org2695d6f" class="figure">
 <p><img src="../../../files/gdb-where.png" alt="gdb-where.png">
 </p>
 <p><span class="figure-number">Figure 32: </span>gdb where</p>
@@ -3245,7 +3259,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org8e77c6c" class="figure">
+<div id="org8e56e72" class="figure">
 <p><img src="../../../files/gdb-info-registers.png" alt="gdb-info-registers.png">
 </p>
 <p><span class="figure-number">Figure 33: </span>gdb info registers</p>
@@ -3264,7 +3278,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgb275b7b" class="figure">
+<div id="org5e48e58" class="figure">
 <p><img src="../../../files/gdb-examine-data.png" alt="gdb-examine-data.png">
 </p>
 <p><span class="figure-number">Figure 34: </span>检查数据</p>
@@ -3353,7 +3367,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org3d3acb0" class="figure">
+<div id="org9948879" class="figure">
 <p><img src="../../../files/MOV-and-operands.png" alt="MOV-and-operands.png">
 </p>
 <p><span class="figure-number">Figure 35: </span>MOV和它的操作数</p>
@@ -3535,7 +3549,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgb9f41eb" class="figure">
+<div id="org8d82d6c" class="figure">
 <p><img src="../../../files/protected-mode-memory-addressing.png" alt="protected-mode-memory-addressing.png">
 </p>
 </div>
@@ -3654,7 +3668,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org7fe9510" class="figure">
+<div id="org0e00958" class="figure">
 <p><img src="../../../files/x86-EFlags-register.png" alt="x86-EFlags-register.png">
 </p>
 <p><span class="figure-number">Figure 36: </span>x86 EFlags 寄存器</p>
@@ -3851,8 +3865,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 <p>
 在有符号整数运算中,如果运算结果超出操作数的储存能力(计算结果溢出),那么就会采用像 <code>CF</code> 一样的进位处理.
-</p></li>
-</ul>
+</p>
 
 <p>
 <br>
@@ -3892,7 +3905,8 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 <p>
 因此使用指令时需要提前去查看参考文档了解指令对 <code>flags</code> 的影响.
-</p>
+</p></li>
+</ul>
 
 
 <p>
@@ -3982,7 +3996,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 <p>
-上面的例子中的 <code>DoMore</code> 就变成一个函数了,可以使用 <code>CALL</code> 指令进行调用.
+上面的例子中的 <code>DoMore</code> 就变成一个函数了, 可以使用 <code>CALL</code> 指令进行调用.
+</p>
+
+<p>
+在这个例子中, 是在 <code>_start</code> 里面调用 <code>DoMore</code> 的, 所以 <code>_start</code> 被叫做 <code>DoMore</code> 的调用者(caller), <code>DoMore</code> 被叫做被调用者(callee).
 </p>
 
 <p>
@@ -4000,8 +4018,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 在有多个 <code>RET</code> 指令情况下,使用哪个 <code>RET</code> 取决于条件跳转;
 </p></li>
 
-<li>函数可以通过使用 <code>CALL</code> 调用另外一个函数;</li>
-</ul>
+<li><p>
+函数可以通过使用 <code>CALL</code> 调用另外一个函数;
+</p>
 
 <p>
 <br>
@@ -4298,7 +4317,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org43dba6d" class="figure">
+<div id="orgfc1855d" class="figure">
 <p><img src="../../../files/common-ranges-of-signed-values.png" alt="common-ranges-of-signed-values.png">
 </p>
 <p><span class="figure-number">Figure 37: </span>常见的范围</p>
@@ -4345,7 +4364,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org9477e0e" class="figure">
+<div id="orgaac00bc" class="figure">
 <p><img src="../../../files/movsx-instruction.png" alt="movsx-instruction.png">
 </p>
 <p><span class="figure-number">Figure 38: </span>MOVSX 指令</p>
@@ -4392,7 +4411,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgc06ef24" class="figure">
+<div id="org14e174c" class="figure">
 <p><img src="../../../files/mul-instruction.png" alt="mul-instruction.png">
 </p>
 <p><span class="figure-number">Figure 39: </span>MUL 指令用法</p>
@@ -4439,7 +4458,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org79eacdb" class="figure">
+<div id="org542946a" class="figure">
 <p><img src="../../../files/div-instruction.png" alt="div-instruction.png">
 </p>
 <p><span class="figure-number">Figure 40: </span>DIV 指令用法</p>
@@ -4447,7 +4466,8 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 <p>
 最后这里给出 <a href="https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html">Intel</a> 以及 <a href="https://www.amd.com/system/files/TechDocs/24594.pdf">AMD</a> 的指令集文档, 实际上开发的时候尽量根据自己电脑的 <code>CPU</code> 来选择.
-</p>
+</p></li>
+</ul>
 </div>
 </div>
 
@@ -4471,7 +4491,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org966d73d" class="figure">
+<div id="org18b4dc9" class="figure">
 <p><img src="../../../files/the-x86-stack.png" alt="the-x86-stack.png">
 </p>
 <p><span class="figure-number">Figure 41: </span>x86 可执行文件的内存映像</p>
@@ -4589,7 +4609,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 
-<div id="org9dd5591" class="figure">
+<div id="org1189fd5" class="figure">
 <p><img src="../../../files/how-the-stack-works.png" alt="how-the-stack-works.png">
 </p>
 <p><span class="figure-number">Figure 42: </span>栈如何工作</p>
@@ -4637,7 +4657,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org7d15f74" class="figure">
+<div id="org229fc67" class="figure">
 <p><img src="../../../files/interrupt-vector-table.png" alt="interrupt-vector-table.png">
 </p>
 <p><span class="figure-number">Figure 43: </span>中断向量表</p>
@@ -4672,14 +4692,14 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org43acb80" class="figure">
+<div id="orgbaf373a" class="figure">
 <p><img src="../../../files/riding-an-interrupt-vector-into-linux.png" alt="riding-an-interrupt-vector-into-linux.png">
 </p>
 <p><span class="figure-number">Figure 44: </span>int 80h 的完整过程(一)</p>
 </div>
 
 
-<div id="org3483277" class="figure">
+<div id="org6772122" class="figure">
 <p><img src="../../../files/returning-home-from-an-interrupt.png" alt="returning-home-from-an-interrupt.png">
 </p>
 <p><span class="figure-number">Figure 45: </span>int 80h 的完整过程(二)</p>
@@ -4735,7 +4755,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgb997b82" class="figure">
+<div id="org46f19e3" class="figure">
 <p><img src="../../../files/bit-numbering.png" alt="bit-numbering.png">
 </p>
 <p><span class="figure-number">Figure 46: </span>对2个字节进行位编码</p>
@@ -4762,28 +4782,28 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgca0d3ed" class="figure">
+<div id="orga49df54" class="figure">
 <p><img src="../../../files/ADN-truth-table.png" alt="ADN-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 47: </span>AND 真值表</p>
 </div>
 
 
-<div id="org109c27f" class="figure">
+<div id="org268a76f" class="figure">
 <p><img src="../../../files/OR-truth-table.png" alt="OR-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 48: </span>OR 真值表</p>
 </div>
 
 
-<div id="orgc9fa514" class="figure">
+<div id="org8a7a2c3" class="figure">
 <p><img src="../../../files/XOR-truth-table.png" alt="XOR-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 49: </span>XOR 真值表</p>
 </div>
 
 
-<div id="orgf545a9e" class="figure">
+<div id="orgb6b73b7" class="figure">
 <p><img src="../../../files/NOT-truth-table.png" alt="NOT-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 50: </span>NOT 真值表</p>
@@ -4794,7 +4814,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org4cbb32a" class="figure">
+<div id="orgde45b2d" class="figure">
 <p><img src="../../../files/bit-mask.png" alt="bit-mask.png">
 </p>
 <p><span class="figure-number">Figure 51: </span>AND AL, BL</p>
@@ -4809,7 +4829,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgbc3efb6" class="figure">
+<div id="org6b7c9d4" class="figure">
 <p><img src="../../../files/XOR-al-al.png" alt="XOR-al-al.png">
 </p>
 <p><span class="figure-number">Figure 52: </span>XOR AL, AL</p>
@@ -4868,7 +4888,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgecfc032" class="figure">
+<div id="org6ad1f20" class="figure">
 <p><img src="../../../files/rol-al-1.png" alt="rol-al-1.png">
 </p>
 <p><span class="figure-number">Figure 53: </span>ROL AL, 1</p>
@@ -4891,7 +4911,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org1aab638" class="figure">
+<div id="orge3e5006" class="figure">
 <p><img src="../../../files/RCL-AL-1.png" alt="RCL-AL-1.png">
 </p>
 <p><span class="figure-number">Figure 54: </span>RCL AL, 1</p>
@@ -4955,14 +4975,14 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orge1ea3b6" class="figure">
+<div id="org384a58a" class="figure">
 <p><img src="../../../files/jump-instruction-mnemonics.png" alt="jump-instruction-mnemonics.png">
 </p>
 <p><span class="figure-number">Figure 55: </span>条件跳转指令的助记符</p>
 </div>
 
 
-<div id="org20ad8b3" class="figure">
+<div id="org86c8f2e" class="figure">
 <p><img src="../../../files/some-jump-instructions.png" alt="some-jump-instructions.png">
 </p>
 <p><span class="figure-number">Figure 56: </span>条件跳转指令</p>
@@ -5064,7 +5084,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 <div class="org-src-container">
 <pre class="src src-nasm"><span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.data</span>
-DDTable
+        DDTable
         <span style="color: #b0c4de;">db</span> <span style="color: #7fffd4;">10</span>, <span style="color: #7fffd4;">12</span>, <span style="color: #7fffd4;">14</span>, <span style="color: #7fffd4;">16</span>
         <span style="color: #b0c4de;">db</span> <span style="color: #7fffd4;">20</span>, <span style="color: #7fffd4;">22</span>, <span style="color: #7fffd4;">24</span>, <span style="color: #7fffd4;">26</span>
         <span style="color: #b0c4de;">db</span> <span style="color: #7fffd4;">30</span>, <span style="color: #7fffd4;">32</span>, <span style="color: #7fffd4;">34</span>, <span style="color: #7fffd4;">36</span>
@@ -5130,15 +5150,15 @@ DDTable
 <h3 id="orgde1a247">函数(Procedure)</h3>
 <div class="outline-text-3" id="text-orgde1a247">
 <p>
-在学习标签时稍微介绍了一下函数的基本定义以及使用,如果你已经接触过一些高级语言,你会发现还有很多东西没有介绍到,
+在学习标签时稍微介绍了一下函数的基本定义以及使用, 如果你已经接触过一些高级语言, 你会发现还有很多东西没有介绍到,
 </p>
 
 <p>
-比如如何给函数定义参数以及如何传递参数,如何在函数内定义局部变量,如何递归等等,此外还有一些高级语言里面没有体现到的细节.
+比如, 如何给函数定义参数以及如何传递参数, 如何在函数内定义局部变量, 如何递归等等, 此外还有一些高级语言里面没有体现到的细节.
 </p>
 
 <p>
-一旦涉及到函数,那么就要提一个概念: 全局数据(global data)和局部数据(local data).
+一旦涉及到函数, 那么就要提一个概念: 全局数据(global data)和局部数据(local data).
 </p>
 
 <p>
@@ -5146,27 +5166,27 @@ DDTable
 </p>
 
 <p>
-像前面的简单例子 <code>eatsyscall</code> 中,在 <code>.data</code> 和 <code>.bss</code> 区域定义的数据就是全局数据, 如果一个程序分成了好个文件,那么全局数据的区分就更加复杂了, 之后会了解库(library)这个概念.
+像前面的简单例子 <code>eatsyscall</code> 中, 在 <code>.data</code> 和 <code>.bss</code> 区域定义的数据就是全局数据, 如果一个程序分成了好个文件,那么全局数据的区分就更加复杂了, 之后会了解库(library)这个概念.
 </p>
 
 <p>
-而局部数据就是数据只能在函数内或库内进行访问,然而,局部数据并没法像 <code>.data</code> 和 <code>.bss</code> 里面数据那样定义.
+而局部数据就是数据只能在函数内或库内进行访问, 然而, 局部数据并没法像 <code>.data</code> 和 <code>.bss</code> 里面数据那样定义.
 </p>
 
 <p>
-寄存器可以储存数据,然而如果数据个数是不定的,而寄存器的数量又有限,那么该如何储存这么多数据呢?
+寄存器可以储存数据, 然而如果数据个数是不定的, 而寄存器的数量又有限, 那么该如何储存这么多数据呢?
 </p>
 
 <p>
-毫无疑问,需要靠内存来储存数据.
+毫无疑问, 需要靠内存来储存数据.
 </p>
 
 <p>
-对于函数来说,局部数据只有在函数被调用的时候才会可以访问,那么只要让这些数据在函数被调用的时候储存在内存上,函数结束后把这些数据清空掉,而栈正好符合这要求.
+对于函数来说, 局部数据只有在函数被调用的时候才会可以访问, 那么只要让这些数据在函数被调用的时候储存在内存上, 函数结束后把这些数据清空掉, 而栈正好符合这要求.
 </p>
 
 <p>
-举个实际例子,有一个叫做 <code>Add1</code> 的函数,它的作用是计算 \(5 + 6\) 等于多少,计算完毕就结束程序,
+举个实际例子, 有一个叫做 <code>Add1</code> 的函数, 它的作用是计算 \(5 + 6\) 等于多少, 计算完毕就结束程序,
 </p>
 
 <div class="org-src-container">
@@ -5189,11 +5209,11 @@ DDTable
 </div>
 
 <p>
-这个程序有一个问题,那就是调用完 <code>Add1</code> 后, <code>eax</code> 变成11, <code>ebx</code> 变成6, <code>eax</code> 和 <code>ebx</code> 上的值被覆盖了,因此最后的 <code>int 80h</code> 没有调用到 <code>sys_exit()</code>.
+这个程序有一个问题, 那就是调用完 <code>Add1</code> 后, <code>eax</code> 变成11, <code>ebx</code> 变成6, <code>eax</code> 和 <code>ebx</code> 上的值被覆盖了, 因此最后的 <code>int 80h</code> 没有调用到 <code>sys_exit()</code>.
 </p>
 
 <p>
-这 <b>通常</b> 不是我们想要的,想要在不影响寄存器的前提下解决这种问题,通常需要用到栈,按照这个思路把程序改一下,
+这 <b>通常</b> 不是我们想要的, 想要在不影响寄存器的前提下解决这种问题, 通常需要用到栈, 按照这个思路把程序改一下,
 </p>
 
 <div class="org-src-container">
@@ -5220,23 +5240,23 @@ DDTable
 </div>
 
 <p>
-需要注意一下的是,这个是64位程序, <code>PUSH</code> 和 <code>POP</code> 指令的操作数不能是32位寄存器,而 <code>rax</code> 和 <code>rbx</code> 分别是 <code>eax</code> 和 <code>ebx</code> 的64位拓展.
+需要注意一下的是, 这个是64位程序, <code>PUSH</code> 和 <code>POP</code> 指令的操作数不能是32位寄存器, 而 <code>rax</code> 和 <code>rbx</code> 分别是 <code>eax</code> 和 <code>ebx</code> 的 64 位拓展.
 </p>
 
 <p>
-<b>在调用函数之前把需要使用到的寄存器上的数据用栈"备份"下来,在函数调用结束后把数据”恢复“到原来的寄存器上.</b>
+<b>在调用函数之前把需要使用到的寄存器上的数据用栈"备份"下来, 在函数调用结束后把数据”恢复“到原来的寄存器上.</b>
 </p>
 
 <p>
-也就是在调用函数前用 <code>PUSH*</code> 指令把数据压进入栈,调用结束后用 <code>POP*</code> 指令把数据还原好,顺便把栈上不需要的数据清空,也就是 <code>eax</code> 的1和 <code>ebx</code> 的0.
+也就是在调用函数前用 <code>PUSH*</code> 指令把数据压进入栈, 调用结束后用 <code>POP*</code> 指令把数据还原好, 顺便把栈上不需要的数据清空, 也就是 <code>eax</code> 的 1 和 <code>ebx</code> 的 0.
 </p>
 
 <p>
-这样在函数调用结束, <code>eax</code> 和 <code>ebx</code> 的值还分别是原来的1和0,这样程序就可以在计算完后正常退出程序.
+这样在函数调用结束, <code>eax</code> 和 <code>ebx</code> 的值还分别是原来的 1 和 0 ,这样程序就可以在计算完后正常退出程序.
 </p>
 
 <p>
-要注意,以什么顺序把寄存器的值 <code>PUSH</code> 进去的,就得按照 <b>相反</b> 顺序把值 <code>POP</code> 出来,其实这一点只要能够理解栈的工作方式都能明白.
+要注意,以什么顺序把寄存器的值 <code>PUSH</code> 进去的,就得按照 <b>相反</b> 顺序把值 <code>POP</code> 出来, 其实这一点只要能够理解栈的工作方式都能明白.
 </p>
 
 <p>
@@ -5252,7 +5272,7 @@ DDTable
 </p>
 
 <p>
-这个 <code>Add1</code> 实际上没什么用处,因为它只能计算 \(5 + 6\) 这个加法运算,没有发挥到函数的真正作用: 接受参数并进行计算,最后返回计算结果.
+这个 <code>Add1</code> 实际上没什么用处,因为它只能计算 \(5 + 6\) 这个加法运算, 没有发挥到函数的真正作用: 接受参数并进行计算, 最后返回计算结果.
 </p>
 
 <p>
@@ -5283,19 +5303,19 @@ DDTable
 </div>
 
 <p>
-函数内部决定了它使用哪些寄存器,比如这个例子使用了 <code>eax</code> 和 <code>ebx</code>,
+函数内部决定了它使用哪些寄存器, 比如这个例子使用了 <code>eax</code> 和 <code>ebx</code>,
 </p>
 
 <p>
-那么给它传参数就是先给这两个寄存器设置好值,再调用函数,这就是大部分高级语言给函数传参数的真相.
+那么给它传参数就是先给这两个寄存器设置好值, 再调用函数, 这就是大部分高级语言给函数传参数的真相.
 </p>
 
 <p>
-没有规定一定要用什么通用寄存器来进行传递参数,甚至可以不用寄存器而是使用内存(栈)来传递参数.
+没有规定一定要用什么通用寄存器来进行传递参数, 甚至可以不用寄存器而是使用内存(栈)来传递参数.
 </p>
 
 <p>
-然而在没有规范的情况下,调用别人编写的函数会变得很麻烦,在后面 <b>调用C库的函数</b> 会聊到规范的问题.
+然而在没有规范的情况下, 调用别人编写的函数会变得很麻烦, 在后面 <b>调用C库的函数</b> 会聊到规范的问题.
 </p>
 
 <p>
@@ -5344,7 +5364,7 @@ DDTable
 </div>
 
 <p>
-可以看到 <code>Acc</code> 里面使用了 <code>call</code> 指令调用 <code>Acc</code> 自己,并且在调用之前还需要按照"备份和还原寄存器”的老套路.
+可以看到 <code>Acc</code> 里面使用了 <code>call</code> 指令调用 <code>Acc</code> 自己, 并且在调用之前还需要按照"备份和还原寄存器”的老套路.
 </p>
 
 <p>
@@ -5515,7 +5535,7 @@ DDTable
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">main.asm</span>
+<pre class="src src-nasm">        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">main.asm</span>
 <span style="color: #00ffff;">GLOBAL</span> _start
 <span style="color: #00ffff;">EXTERN</span> Acc
 
@@ -5538,7 +5558,7 @@ DDTable
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">mathlib.asm</span>
+<pre class="src src-nasm">        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">mathlib.asm</span>
 <span style="color: #00ffff;">GLOBAL</span> Acc:function
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.data</span>
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.bss</span>
@@ -5570,7 +5590,7 @@ DDTable
 </p>
 
 <p>
-这种由目标文件提供的接口叫做应用程序二进制接口(Application binary interface), 简称 <code>ABI</code>, 和 <code>API</code> 这概念很相似,只是 <code>API</code> 是源代码和库之间的接口.
+这种由目标文件提供的接口叫做应用程序二进制接口(Application binary interface), 简称 <code>ABI</code>, 和 <code>API</code> 这概念很相似, 只是 <code>API</code> 是源代码和库之间的接口.
 </p>
 
 <p>
@@ -5588,8 +5608,8 @@ DDTable
 <div class="org-src-container">
 <pre class="src src-nasm"><span style="color: #00ffff;">GLOBAL</span> myData:data myData.exit-myData
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.data</span>
- <span style="color: #87cefa;">myData</span>: <span style="color: #b0c4de;">db</span> <span style="color: #ffa07a;">'Never gonna give you up'</span>, <span style="color: #7fffd4;">10</span>
- <span style="color: #87cefa;">.exit</span>:
+<span style="color: #87cefa;">myData</span>: <span style="color: #b0c4de;">db</span> <span style="color: #ffa07a;">'Never gonna give you up'</span>, <span style="color: #7fffd4;">10</span>
+<span style="color: #87cefa;">.exit</span>:
 </pre>
 </div>
 
@@ -5615,11 +5635,11 @@ DDTable
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">main</span>: main.o mathlib.o
-        ld -o main main.o mathlib.o
+ld -o main main.o mathlib.o
 <span style="color: #87cefa;">main.o</span>: main.asm
-        nasm -f elf64 -g -F stabs main.asm
+nasm -f elf64 -g -F stabs main.asm
 <span style="color: #87cefa;">mathlib.o</span>: mathlib.asm
-        nasm -f elf64 -g -F stabs mathlib.asm
+nasm -f elf64 -g -F stabs mathlib.asm
 </pre>
 </div>
 
@@ -5629,13 +5649,13 @@ DDTable
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">main</span>: main.o mathlib.a
-        <span style="color: #87cefa;">ld -o main main.o -l</span>:mathlib.a -L.
+<span style="color: #87cefa;">ld -o main main.o -l</span>:mathlib.a -L.
 <span style="color: #87cefa;">main.o</span>: main.asm
-        nasm -f elf64 -g -F stabs main.asm
+nasm -f elf64 -g -F stabs main.asm
 <span style="color: #87cefa;">mathlib.a</span>: mathlib.o
-        ar rcs mathlib.a mathlib.o
+ar rcs mathlib.a mathlib.o
 <span style="color: #87cefa;">mathlib.o</span>: mathlib.asm
-        nasm -f elf64 -g -F stabs mathlib.asm
+nasm -f elf64 -g -F stabs mathlib.asm
 </pre>
 </div>
 
@@ -5662,7 +5682,7 @@ DDTable
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">main.asm</span>
+<pre class="src src-nasm">        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">main.asm</span>
 <span style="color: #00ffff;">GLOBAL</span> _start
 <span style="color: #00ffff;">EXTERN</span> Acc
 
@@ -5698,13 +5718,13 @@ DDTable
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">main</span>: main.o mathlib.so
-        <span style="color: #87cefa;">ld -o main main.o -pie -I/lib64/ld-linux-x86-64.so.2 -L . -rpath . -l</span>:mathlib.so
+<span style="color: #87cefa;">ld -o main main.o -pie -I/lib64/ld-linux-x86-64.so.2 -L . -rpath . -l</span>:mathlib.so
 <span style="color: #87cefa;">main.o</span>: main.asm
-        nasm -f elf64 -g -F stabs main.asm
+nasm -f elf64 -g -F stabs main.asm
 <span style="color: #87cefa;">mathlib.so</span>: mathlib.o
-        ld -shared -o mathlib.so mathlib.o
+ld -shared -o mathlib.so mathlib.o
 <span style="color: #87cefa;">mathlib.o</span>: mathlib.asm
-        nasm -f elf64 -g -F stabs mathlib.asm
+nasm -f elf64 -g -F stabs mathlib.asm
 </pre>
 </div>
 
@@ -5803,7 +5823,7 @@ DDTable
 </p>
 
 
-<div id="orgd2fc9f1" class="figure">
+<div id="orgc4279cf" class="figure">
 <p><img src="../../../files/how-macros-work.png" alt="how-macros-work.png">
 </p>
 <p><span class="figure-number">Figure 57: </span>宏定义以及展开</p>
@@ -5846,11 +5866,11 @@ DDTable
         <span style="color: #b0c4de;">pop</span> <span style="color: #eedd82;">rax</span>
 <span style="color: #b0c4de;">%endmacro</span>
 
- <span style="color: #87cefa;">_start</span>:
-         WriteStr Msg, MsgLen
-         <span style="color: #b0c4de;">mov</span> <span style="color: #eedd82;">eax</span>, <span style="color: #7fffd4;">1</span>
-         <span style="color: #b0c4de;">mov</span> <span style="color: #eedd82;">ebx</span>, <span style="color: #7fffd4;">0</span>
-         <span style="color: #b0c4de;">int</span> <span style="color: #7fffd4;">80H</span>
+<span style="color: #87cefa;">_start</span>:
+        WriteStr Msg, MsgLen
+        <span style="color: #b0c4de;">mov</span> <span style="color: #eedd82;">eax</span>, <span style="color: #7fffd4;">1</span>
+        <span style="color: #b0c4de;">mov</span> <span style="color: #eedd82;">ebx</span>, <span style="color: #7fffd4;">0</span>
+        <span style="color: #b0c4de;">int</span> <span style="color: #7fffd4;">80H</span>
 </pre>
 </div>
 
@@ -5960,11 +5980,11 @@ DDTable
 </p>
 
 <p>
-由于都是在统一个架构统一个系统下进行汇编/编译的,那么彼此的目标文件都是使用了同一套规则的机器码,
+由于都是在同一个架构同一个系统下进行汇编/编译的, 那么彼此的目标文件都是使用了同一套规则的机器码,
 </p>
 
 <p>
-也就是使用了同一门语言,在这个层面上是可以调用彼此的,这就是基本原因.
+也就是使用了同一门语言, 在这个层面上是可以调用彼此的, 这就是基本原因.
 </p>
 
 <p>
@@ -5972,11 +5992,11 @@ DDTable
 </p>
 
 <p>
-在 <code>Linux</code> 上基本上所有 <code>C</code> 程序都是用 <code>GCC</code> 编译得来的,包括 <code>Linux</code> 本身的大部分.
+在 <code>Linux</code> 上基本上所有 <code>C</code> 程序都是用 <code>GCC</code> 编译得来的, 包括 <code>Linux</code> 本身的大部分.
 </p>
 
 <p>
-<code>GCC</code> 编译程序分为很多个步骤,每个步骤都由不同工具完成,可以说 <code>GCC</code> 是一个由多个工具集合而成的工具.
+<code>GCC</code> 编译程序分为很多个步骤, 每个步骤都由不同工具完成, 可以说 <code>GCC</code> 是一个由多个工具集合而成的工具.
 </p>
 
 <p>
@@ -5984,22 +6004,26 @@ DDTable
 </p>
 
 
-<div id="orgc055efd" class="figure">
+<div id="orgf955e32" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png">
 </p>
 <p><span class="figure-number">Figure 58: </span>GCC编译C语言并生成程序</p>
 </div>
 
 <p>
-首先, <code>GCC</code> 会对 <code>C</code> 源代码(<code>.c</code>)进行预处理,所谓的预处理就是对于源代码里面的宏进行展开,得到一份展开了宏的新代码(<code>.c</code>),
+首先, <code>GCC</code> 会对 <code>C</code> 源代码(<code>.c</code>)进行预处理, 所谓的预处理就是对于源代码里面的宏进行展开, 得到一份展开了宏的新代码(<code>.c</code>),
 </p>
 
 <p>
-完成这项工作的工具叫做 <code>C preprocessor</code>, 简称 <code>CPP</code>. <code>C</code> 的宏展开和 <code>NASM</code> 的宏展开很类似,除了语法外,概念上都是一样的.
+完成这项工作的工具叫做 <code>C preprocessor</code>, 简称 <code>CPP</code>.
 </p>
 
 <p>
-然后, <code>GCC</code> 根据展开后的代码生成一份汇编源码(<code>.s</code>),这份汇编源码只能由一个叫做 <code>GAS</code> 的汇编器进行汇编;
+<code>C</code> 的宏展开和 <code>NASM</code> 的宏展开很类似, 除了语法外, 概念上都是一样的.
+</p>
+
+<p>
+然后, <code>GCC</code> 根据展开后的代码生成一份汇编源码(<code>.s</code>), 这份汇编源码只能由一个叫做 <code>GAS</code> 的汇编器进行汇编;
 </p>
 
 <p>
@@ -6007,35 +6031,35 @@ DDTable
 </p>
 
 <p>
-最后 <code>ld</code> 把模块文件连接得到一个可执行文件,当然 <code>GCC</code> 会给 <code>ld</code> 设置了某些参数,和我们之前连接方式是有点差别的.
+最后 <code>ld</code> 把模块文件连接得到一个可执行文件, 当然 <code>GCC</code> 会给 <code>ld</code> 设置了某些参数, 和我们之前连接方式是有点差别的.
 </p>
 
 <p>
-<code>GAS</code> 支持的汇编语法是 <code>AT&amp;T</code>,和使用 <code>INTEL</code> 语法的 <code>NASM</code> 是不一样的.
+<code>GAS</code> 支持的汇编语法是 <code>AT&amp;T</code>, 和使用 <code>INTEL</code> 语法的 <code>NASM</code> 是不一样的.
 </p>
 
 <p>
-不过这不是问题,因为它们生成的模块文件都可以使用 <code>ld</code> 来进行连接.
+不过这不是问题, 因为它们生成的模块文件都可以使用 <code>ld</code> 来进行连接.
 </p>
 
 <p>
-假设有一份根据 <code>NASM</code> 语法编写的源代码叫做 <code>callc.asm</code>,使用了 <code>Linux</code> 标准 <code>C</code> 库 <code>GLIBC</code> 的函数,那么可以这么汇编和连接:
+假设有一份根据 <code>NASM</code> 语法编写的源代码叫做 <code>callc.asm</code>, 使用了 <code>Linux</code> 标准 <code>C</code> 库 <code>GLIBC</code> 的函数, 那么可以这么汇编和连接:
 </p>
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">callc</span>: callc.o
-   gcc -no-pie callc.o -o callc
+gcc -no-pie callc.o -o callc
 <span style="color: #87cefa;">callc.o</span>: callc.asm
-   nasm -f elf64 -g -F stabs callc.asm
+nasm -f elf64 -g -F stabs callc.asm
 </pre>
 </div>
 
 <p>
-最后得到 <code>callc</code> 就是混合产物,这个产物的结构如下:
+最后得到 <code>callc</code> 就是混合产物, 这个产物的结构如下:
 </p>
 
 
-<div id="org09af115" class="figure">
+<div id="orgb7b007e" class="figure">
 <p><img src="../../../files/structure-of-hybrid.png" alt="structure-of-hybrid.png">
 </p>
 <p><span class="figure-number">Figure 59: </span>混合程序的结构</p>
@@ -6058,27 +6082,27 @@ DDTable
 </p>
 
 <p>
-在前面介绍函数时就提到过几乎所有高级语言的函数调用本质都是: 先备份好函数用到的寄存器,然后调用函数,在返回函数后还原寄存器.
+在前面介绍函数时就提到过几乎所有高级语言的函数调用本质都是: 先备份好函数用到的寄存器, 然后调用函数, 在返回函数后还原寄存器.
 </p>
 
 <p>
-不同语言在汇编层面上会有一些区别,也就是具体的调用规范(calling convention)会不太一样,比如某门语言的编译器在生成程序时,
+不同语言在汇编层面上会有一些区别, 也就是具体的调用规范会不太一样, 比如某门语言的编译器在生成程序时,
 </p>
 
 <p>
-规定只能用某几个寄存器来给函数传某一数据类型的参数,别的数据类型参数就用栈来传入,用另外某一个或者两个寄存器用来储存函数返回值等等.
+规定只能用某几个寄存器来给函数传某一数据类型的参数, 别的数据类型参数就用栈来传入, 用另外某一个或者两个寄存器用来储存函数返回值等等.
 </p>
 
 <p>
-调用规范规定了怎么定义 <code>ABI</code>,哪怕是不同的编程语言,只要它们的编译器在生成目标文件时遵守同一个调用规范,它们的目标文件都是可以相互调用的.
+人们为不同的系统定制了一份 <code>ABI</code> 调用规范, 哪怕是不同的编程语言, 只要它们的编译器在生成目标文件时遵守同一个调用规范, 它们的目标文件都是可以相互调用的.
 </p>
 
 <p>
-<code>C</code> 语言编译器 <code>GCC</code> 在 <code>x86</code> 上采用的是 <code>System V ABI</code>,这套 <code>ABI</code> 分 <code>i386</code> 和 <code>x86-64</code> 两个版本,前者就是32位平台,后者是64位平台.
+<code>C</code> 语言编译器 <code>GCC</code> 在 <code>Linux x86</code> 上采用规范的是 <code>System V ABI</code>,  分 <code>i386</code> 和 <code>x86-64</code> 两个版本, 前者就是32位平台, 后者是64位平台.
 </p>
 
 <p>
-i386的 <code>ABI</code> 如下:
+<code>i386</code> 的规范如下:
 </p>
 
 <ul class="org-ul">
@@ -6101,6 +6125,8 @@ i386的 <code>ABI</code> 如下:
 <ul class="org-ul">
 <li>调用函数前必须保留 <code>rbx, rbp, rsp, r12, r13, r14</code> 和 <code>r15</code>,函数结束后需要还原它们;</li>
 
+<li>栈帧多出了一个 <code>red zone</code> 内存块;</li>
+
 <li><p>
 传递参数的方式改变了,对参数进行分类,不同类型使用不同方式传递,总得来说分标量(scalar)和矢量(vector)两大类,
 </p>
@@ -6110,7 +6136,7 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-内存类型数据使用栈来进行传递,等等,具体可以查看 <a href="https://raw.githubusercontent.com/wiki/hjl-tools/x86-psABI/x86-64-psABI-1.0.pdf">System V x64 ABI 的 Parameter Passing</a>;
+内存类型数据使用栈来进行传递,等等,具体可以查看 <a href="https://gitlab.com/x86-psABIs/x86-64-ABI/-/jobs/artifacts/master/raw/x86-64-ABI/abi.pdf?job=build">System V x64 ABI 的 Parameter Passing</a>;
 </p></li>
 
 <li><p>
@@ -6119,31 +6145,26 @@ i386的 <code>ABI</code> 如下:
 
 <p>
 <code>rax</code> 还有一个作用, <code>C</code> 语言支持一种可变参数函数(variable arguments function, varargs function),这种函数的参数数量是不固定的,需要让 <code>rax</code> 记录传递的参数里面有多少个矢量参数.
-</p></li>
-</ul>
+</p>
 
 <p>
 总得来说, <code>x86-64</code> 相对 <code>i386</code> 的 <code>ABI</code> 规范的主要变化就这些,有一个点倒是没有这么改变的,那就是对栈的依赖.
 </p>
 
 <p>
-编译器本质是一个生产汇编代码的机器(robots), 这意味着编译器必须依靠暴力(brute-force)的手段来生成代码, 而这些手段大部分都依靠栈的使用.
+编译器本质是一个生产汇编代码的机器(robots), 这意味着编译器必须依靠暴力(brute-force)的手段来生成代码, 而这些手段大部分都依靠栈来实现.
 </p>
 
 <p>
-<b>对于 <code>C</code> 程序来说, 在每次调用函数时, 编译器会为该分配一块内存区域用于存储数据, 在函数返回后这块区域就会被销毁</b>, 人们会把这块内存区域做栈帧(stack frame),
+<b>对于 <code>C</code> 程序来说, 在每次调用函数时, 编译器会为该分配一块内存区域用于存储函数相关的数据, 在函数返回后这块区域就会被销毁</b>, 人们会把这块内存区域做栈帧(stack frame),
 </p>
 
 <p>
-叫做栈帧是因为它是栈上一个数据, 一个基本单位, 一个栈帧就是一个函数调用, 里面包含了函数各自的数据(函数的局部变量), 函数与函数之间的数据不会发生混乱.
+叫做栈帧是因为它是栈上一个数据, 一个基本单位, 一个栈帧就是一个函数调用, 里面包含了函数各自的数据(函数的局部变量), 保证函数与函数之间的数据不会发生混乱.
 </p>
 
 <p>
-在单纯使用汇编语言开发中是很少见栈帧这个东西, 如果是要从汇编程序中调用高级语言的函数, 那么这一点必须要了解.
-</p>
-
-<p>
-这里有一个问题就是: 如何给函数划分一块区域作为它的栈帧, 或者说怎么 <b>建立栈帧</b> ?
+现在有一个问题就是: 如何给函数划分一块区域作为它的栈帧, 或者说怎么 <b>建立栈帧</b> ?
 </p>
 
 <p>
@@ -6151,11 +6172,11 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-<code>i386</code> 的 <code>ABI</code> 规范规定用 <code>EBP</code> 来储存栈帧的起始位置, <code>ESP</code> 储存栈帧的结尾位置, 每次往栈里面压进了数据, <code>ESP</code> 就会相应减少, 指向下一个栈帧.
+<code>i386</code> 规范规定用 <code>EBP</code> 来储存栈帧的起始位置, <code>ESP</code> 储存栈帧的结尾位置, 每次往栈里面压进了数据, <code>ESP</code> 就会相应减少, 指向下一个栈帧.
 </p>
 
 
-<div id="org665b9a2" class="figure">
+<div id="org93efefc" class="figure">
 <p><img src="../../../files/how-to-define-a-stack-in-c.png" alt="how-to-define-a-stack-in-c.png">
 </p>
 <p><span class="figure-number">Figure 60: </span>Stack in i386 ABI</p>
@@ -6195,15 +6216,19 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-<a id="orgc371273"></a>不过这里隐藏了一个细节: 在调用函数前, 要确保栈指针在 <code>CALL</code> 指令执行后能够对齐 <code>n</code> 字节边界(n-byte boundary, nB boundary),
+<a id="orgc371273"></a>不过这里隐藏了一个细节: 在调用函数前, 要确保栈指针在 <code>CALL</code> 指令执行后能够对齐 <code>n</code> 字节边界(n-byte boundary, nB boundary, n-byte aligned, nB aligned),
 </p>
 
 <p>
-也就是栈指针的值满足 \(*sp\ \ rem\ \ n = 0\), 并且 <code>n</code> 要满足 \(n = 2^{x}, x \in \mathbb{Z}\).
+也就是栈指针的值满足 \(*sp\ \ rem\ \ n = 0\), 并且 <code>n</code> 要满足 \(n = 2^{x}, x \in \mathbb{Z}\), 换个角度就是 \(*sp\) 是 \(n\) 的倍数.
 </p>
 
 <p>
-这个 <code>n</code> 的规定取决于 <code>ABI</code> 方案的定义, <code>x86-64</code> 的规定是16. 有兴趣的话可以了解一下<a href="https://en.wikipedia.org/wiki/Data_structure_alignment">数据对齐</a>的概念.
+这个 <code>n</code> 的规定取决于 <code>ABI</code> 方案的定义, <code>x86-64</code> 的规定是 16.
+</p>
+
+<p>
+有兴趣的话可以了解一下<a href="https://en.wikipedia.org/wiki/Data_structure_alignment">数据对齐</a>的概念, 当人们说数据要对齐 16 字节边界, 就是说要求数据的内存地址是 16 的倍数.
 </p>
 
 <p>
@@ -6386,8 +6411,8 @@ i386的 <code>ABI</code> 如下:
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
-   printf(<span style="color: #ffa07a;">"The answer of %d + %d is %d, and don't you forget it!\n"</span>, 3, 2, 5);
-   <span style="color: #00ffff;">return</span> 0;
+  printf(<span style="color: #ffa07a;">"The answer of %d + %d is %d, and don't you forget it!\n"</span>, 3, 2, 5);
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -6411,8 +6436,8 @@ i386的 <code>ABI</code> 如下:
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
-   printf(<span style="color: #ffa07a;">"The answer of %d + %d is %.2f, and don't you forget it!\n"</span>, 3, 2, 5.0);
-   <span style="color: #00ffff;">return</span> 0;
+  printf(<span style="color: #ffa07a;">"The answer of %d + %d is %.2f, and don't you forget it!\n"</span>, 3, 2, 5.0);
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -6478,8 +6503,8 @@ i386的 <code>ABI</code> 如下:
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
-   printf(<span style="color: #ffa07a;">"%d,%d,%d,%d,%d,%d,%d\n"</span>, 1, 2, 3, 4, 5, 6, 7);
-   <span style="color: #00ffff;">return</span> 0;
+  printf(<span style="color: #ffa07a;">"%d,%d,%d,%d,%d,%d,%d\n"</span>, 1, 2, 3, 4, 5, 6, 7);
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -6522,9 +6547,9 @@ i386的 <code>ABI</code> 如下:
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">main</span>: acc.o main.c
-   gcc -fPIC -o main main.c acc.o
+gcc -fPIC -o main main.c acc.o
 <span style="color: #87cefa;">acc.o</span>: acc.asm
-   nasm -f elf64 -g -F stabs acc.asm
+nasm -f elf64 -g -F stabs acc.asm
 </pre>
 </div>
 
@@ -6533,7 +6558,7 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">acc.asm</span>
+<pre class="src src-nasm">        <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">acc.asm</span>
 <span style="color: #00ffff;">GLOBAL</span> acc:function
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.data</span>
 <span style="color: #00ffff;">SECTION</span> <span style="color: #98fb98;">.bss</span>
@@ -6564,7 +6589,8 @@ i386的 <code>ABI</code> 如下:
 
 <p>
 最终运行程序 <code>main</code> 会打印出这样的结果: "The result is 10".
-</p>
+</p></li>
+</ul>
 </div>
 </div>
 
@@ -6605,11 +6631,24 @@ i386的 <code>ABI</code> 如下:
 
 
 <p>
-一旦知道两者的差异, <code>AT&amp;T</code> 语法就算上手了, 真的吗? 在灵魂相关点来说是, 不同的汇编器还是有不少自己的私货.
+一旦知道两者的差异, <code>AT&amp;T</code> 语法就算上手了, 真的吗? 在"灵魂"角度上来说是的, 不过具体上两者都有自己的"私货".
 </p>
 
 <p>
-让我们来看看 <code>main.c</code> 的 <code>GAS</code> 汇编码吧:
+接下来, 我会先介绍一些 <code>GAS</code> 的基础知识, 再稍微深入了解一下 <code>C</code> 语言一些常见的特性在汇编里面是什么样的.
+</p>
+</div>
+
+
+<div id="outline-container-org79034fe" class="outline-4">
+<h4 id="org79034fe">获取 C 源代码的汇编代码</h4>
+<div class="outline-text-4" id="text-org79034fe">
+<p>
+有很多方法来得到 C 源代码所对应的汇编码, 最常见的就是使用 <code>GCC/objdump</code> 产生会汇编代码.
+</p>
+
+<p>
+比如获取 <code>main.c</code> 的 <code>GAS</code> 汇编代码:
 </p>
 
 <div class="org-src-container">
@@ -6618,16 +6657,16 @@ i386的 <code>ABI</code> 如下:
 </div>
 
 <p>
-这里把 <code>-o</code> 选项设定成输出的汇编码文件名位 <code>main.asm</code>, 如果不指定,默认就是 <code>main.s</code>.
+这里把 <code>-o</code> 选项设定成输出的汇编码文件名位 <code>main.asm</code>, 如果不指定, 默认就是 <code>main.s</code>.
 </p>
 
 <blockquote>
 <p>
-<code>GCC</code> 支持设置优化等级,对应的选项是 <code>-O</code>, 常见的等级有 <code>0</code>, <code>1</code>, <code>2</code>, <code>3</code> 以及 <code>s</code> 这四个.
+<code>GCC</code> 支持设置优化等级, 对应的选项是 <code>-O</code>, 常见的等级有 <code>0</code>, <code>1</code>, <code>2</code>, <code>3</code> 以及 <code>s</code> 这五个.
 </p>
 
 <p>
-如果在编译时没有设置该选项,那么优化等级 <b>默认</b> 为 <code>0</code>, 在实际开发中,一般设置为 <code>2</code>.
+如果在编译时没有设置该选项, 那么优化等级 <b>默认</b> 为 <code>0</code>, 在实际开发中,一般设置为 <code>2</code>.
 </p>
 
 <p>
@@ -6639,15 +6678,15 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-等级越高,编译时间就越长,生成的指令约少,运行效率更高,然而对开发人员来说,使用 <code>C</code> 做开发的要求更加严格.
+等级越高, 编译时间就越长, 生成的指令约少, 运行效率更高, 然而对开发人员来说, <code>C</code> 使用要求更加严格.
 </p>
 
 <p>
-很多初学者在使用 <code>GCC</code> 时不注意优化等级,当他们转向使用 <code>GNU Build System</code> 构建程序时极有可能会出项问题:
+很多初学者在使用 <code>GCC</code> 时不注意优化等级, 当他们转向使用 <code>GNU Build System</code> 构建程序时极有可能会出项问题:
 </p>
 
 <p>
-同一份代码,在优化等级为 <code>0</code> 下编译后得到的程序可以正常运行,但在 <code>GNU Build System</code> 下编译得到的程序却不能正常运行,
+同一份代码, 在优化等级为 <code>0</code> 下编译后得到的程序可以正常运行, 但在 <code>GNU Build System</code> 下编译得到的程序却不能正常运行,
 </p>
 
 <p>
@@ -6663,13 +6702,13 @@ i386的 <code>ABI</code> 如下:
 <pre class="src src-asm">        <span style="color: #00ffff;">.file</span>   <span style="color: #ffa07a;">"main.c"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.section</span>        .rodata
-<span style="color: #87cefa;">.LC0</span>:
+        <span style="color: #00ffff;">.LC0</span>:
         <span style="color: #00ffff;">.string</span> <span style="color: #ffa07a;">"The result is %d\n"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.globl</span>  main
         <span style="color: #00ffff;">.type</span>   main, @function
 <span style="color: #87cefa;">main</span>:
-<span style="color: #87cefa;">.LFB0</span>:
+        <span style="color: #00ffff;">.LFB0</span>:
         <span style="color: #00ffff;">.cfi_startproc</span>
         <span style="color: #00ffff;">endbr64</span>
         <span style="color: #00ffff;">pushq</span>   <span style="color: #eedd82;">%rbp</span>
@@ -6692,7 +6731,7 @@ i386的 <code>ABI</code> 如下:
         <span style="color: #00ffff;">.cfi_def_cfa</span> 7, 8
         <span style="color: #00ffff;">ret</span>
         <span style="color: #00ffff;">.cfi_endproc</span>
-<span style="color: #87cefa;">.LFE0</span>:
+        <span style="color: #00ffff;">.LFE0</span>:
         <span style="color: #00ffff;">.size</span>   main, .-main
         <span style="color: #00ffff;">.ident</span>  <span style="color: #ffa07a;">"GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"</span>
         <span style="color: #00ffff;">.section</span>        .note.GNU-stack,<span style="color: #ffa07a;">""</span>,@progbits
@@ -6716,12 +6755,13 @@ i386的 <code>ABI</code> 如下:
 </div>
 
 <p>
-看上去就 <b>不</b> 比 <code>NASM</code> 的语法清爽, 不过一旦你熟悉了 <code>GAS</code> 的东西后, 你会觉得它的可读性也不差.
+实际上还能添加 <code>-fverbose-asm</code> 选项来把 <code>C</code> 源代码作为注释插入到汇编代码中, 使得汇编代码更加可读.
 </p>
 
 <p>
-我们先从以下几个方面去熟悉它.
+不过, 请先不要依赖这个选项.
 </p>
+</div>
 </div>
 
 <div id="outline-container-org7ca44a1" class="outline-4">
@@ -6772,7 +6812,7 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-<code>LFB0</code> 的 <code>LFB</code> 和 <code>LFE0</code> <code>LFE</code> 分别代表函数局部起点(local function beginning)以及函数局部结尾(local function ending), 分别标志的函数 <code>main</code> 起始以及结束位置, 它们是成对的,
+<code>LFB0</code> 的 <code>LFB</code> 和 <code>LFE0</code> 的 <code>LFE</code> 分别代表函数局部起点(local function beginning)以及函数局部结尾(local function ending), 分别标志的函数 <code>main</code> 起始以及结束位置, 它们是成对的,
 </p>
 
 <p>
@@ -6788,8 +6828,9 @@ i386的 <code>ABI</code> 如下:
 
 <li>再以函数名生成标签;</li>
 
-<li>最后生成一对 <code>.LFB</code> 以及 <code>.LFE</code> 标签, 它们之间包含着函数对应的指令.</li>
-</ul>
+<li><p>
+最后生成一对 <code>.LFB</code> 以及 <code>.LFE</code> 标签, 它们之间包含着函数对应的指令.
+</p>
 
 <p>
 而 <b>局部标签</b> 则是 <code>0:</code>, <code>1:</code>, <code>2:</code>, <code>3:</code> 以及 <code>4:</code> 这种以 <code>0 - 9</code> 作为符号名的标签.
@@ -6800,7 +6841,7 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-<code>GAS</code> 默认不会把局部标签符号到目标文件里面, 除非使用汇编器的 <code>-L</code> 选项;
+<code>GAS</code> 默认不会把局部标签符号写入到目标文件里面, 除非使用汇编器的 <code>-L</code> 选项;
 </p>
 
 <p>
@@ -6813,7 +6854,8 @@ i386的 <code>ABI</code> 如下:
 
 <p>
 更多关于 <code>GAS</code> 局部标签和局部符号的细节请参考<a href="https://sourceware.org/binutils/docs/as/Symbol-Names.html">这里</a>.
-</p>
+</p></li>
+</ul>
 </div>
 </div>
 
@@ -6829,73 +6871,122 @@ i386的 <code>ABI</code> 如下:
 </p>
 
 <p>
-来一个一个解释吧, 首先是 <code>.file</code> 指令, 它告诉汇编器要把当前处理的文件名字写入到调试信息里面,
+来逐个解释吧, 首先是 <code>.file</code> 指令,
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>.file</code> 指令
 </p>
 
 <p>
-比如这里处理的就是 <code>main.c</code>, 下面的内容就这个文件的汇编代码, 直到遇到下一个 <code>.file</code> 执行;
+它告诉汇编器要把当前处理的文件名字写入到调试信息里面, 该例子中处理的文件名字是 <code>main.c</code>,
 </p>
 
 <p>
-然后是 <code>.text</code> 指令, 这个其实就是相当于 <code>NASM</code> 的 <code>SECTION .text</code>, 也就是切换到 <code>.text</code> 节填充字节;
+其下面的内容就这个文件的汇编代码, 直到遇到下一个 <code>.file</code> 执行(该例子只有一个 <code>.file</code> 指令);
+</p></li>
+
+<li><p>
+<code>.text</code> 指令
 </p>
 
 <p>
-<code>.section</code> 就是相当于 <code>NASM</code> 的 <code>SECTION</code> 指令, <code>.section .rodata</code> 就是定义 <code>.rodata</code> 节并且切换到该节进行处理;
+相当于 <code>NASM</code> 的 <code>SECTION .text</code>, 也就是切换到 <code>.text</code> 节填充字节;
+</p></li>
+
+<li><p>
+<code>.section</code> 指令
+</p>
+
+<p>
+相当于 <code>NASM</code> 的 <code>SECTION</code> 指令, <code>.section .rodata</code> 就是定义 <code>.rodata</code> 节并且切换到该节进行处理;
 </p>
 
 <blockquote>
 <p>
-
+你可能会觉得奇怪, 为什么 <code>GAS</code> 在有了 <code>.section</code> 的情况下还搞多一个 <code>.text</code> 来切换节.
 </p>
 
 <p>
-你可能会觉得奇怪, 为什么 <code>GAS</code> 在有了 <code>.section</code> 的情况下还搞多一个 <code>.text</code> 来切换节,
+其实 <code>GAS</code> 里面类似 <code>.text</code> 的节切换指令还有 <code>.data</code> 以及 <code>.bss</code>,
 </p>
 
 <p>
-其实 <code>GAS</code> 里面像 <code>.text</code> 这样的节切换指令还有 <code>.data</code> 以及 <code>.bss</code>, 它们的存在是因为需要兼容比 <code>ELF</code> 更加久远的 <code>a.out</code> 文件,
+它们的存在是因为需要兼容比 <code>ELF</code> 更加久远的 <code>a.out</code> 文件, 这种文件不支持 <code>.text</code>, <code>.data</code> 以及 <code>.bss</code> 以外的节,
 </p>
 
 <p>
-这种文件不支持 <code>.text</code>, <code>.data</code> 以及 <code>.bss</code> 以外的节, 而 <code>.section</code> 指令能够定义或切换任意命名的节, 这两者显然是有冲突的.
+而 <code>.section</code> 指令能够定义或切换任意命名的节, 这两者显然是有冲突的.
 </p>
-</blockquote>
+</blockquote></li>
 
-<p>
-<code>.string, .long</code> 这种就是告诉编译器要怎么储存数据了, 比如 <code>.string "The result is %d\n"</code> 就是要吧 "The result is %d\n" 这个字符串存储到目标文件里;
-</p>
-
-<p>
-<code>.globl</code> 就等价于 <code>NASM</code> 的 <code>GLOBAL</code> 指令了, <code>.globl main</code> 就是 <code>main</code> 定义成全局符号;
+<li><p>
+<code>.string</code>, <code>.long</code>, &#x2026; 指令
 </p>
 
 <p>
-<code>.type</code> 指令把符号标记为某种类型, <code>.type main, @function</code> 就是告诉汇编器符号 <code>main</code> 是函数;
+数据类型指令, 告诉编译器要怎么储存数据.
 </p>
 
 <p>
-<code>.size</code> 指令标记符号的内容大小, 比如 <code>.size main, .-main</code> 就是告诉汇编器符号 <code>main</code> 的内容大小为 <code>.-main</code> 字节,
+比如 <code>.string "The result is %d\n"</code> 就是要吧 "The result is %d\n" 这个字符串存储到目标文件里;
+</p></li>
+
+<li><p>
+<code>.globl</code> 指令
+</p>
+
+<p>
+等价于 <code>NASM</code> 的 <code>GLOBAL</code> 指令, 比如 <code>.globl main</code> 就是 <code>main</code> 定义成全局符号;
+</p></li>
+
+<li><p>
+<code>.type</code> 指令
+</p>
+
+<p>
+标记符号类型, <code>.type main, @function</code> 就是告诉汇编器符号 <code>main</code> 是函数;
+</p></li>
+
+<li><p>
+<code>.size</code> 指令
+</p>
+
+<p>
+标记符号的内容大小, 比如 <code>.size main, .-main</code> 就是告诉汇编器符号 <code>main</code> 的内容大小为 <code>.-main</code> 字节,
 </p>
 
 <p>
 这里的 <code>.-main</code> 是一个表达式, <code>.</code> 表示当前字节的偏移, 标签本质上也是字节的偏移, 也就是说当前的字节偏移减 <code>main</code> 的偏移就是 <code>main</code> 的内容大小;
+</p></li>
+
+<li><p>
+<code>.align</code> 指令
 </p>
 
 <p>
-<code>.align</code> 就是内存对齐指令了, 该命令在不同架构上的计算方式是不一样的, 比如在 <code>i386</code> 上 <code>.align 8</code> 就是告诉要对齐 8 字节边界, 也就是把位置计数器(location counter)移动到 8 的倍数的偏移地址上;
+内存对齐指令, 该命令在不同架构上的计算方式是不一样的, 比如在 <code>i386</code> 上 <code>.align 8</code> 就是告诉要对齐 8 字节边界,
 </p>
 
 <p>
-然而在 <code>ARM</code> 架构下, <code>.align 3</code> 是把位置计数器移动到 \(2^{3} = 8\) 的倍数的偏移地址上;
+也就是把位置计数器(location counter)移动到 8 的倍数的偏移地址上;
 </p>
 
 <p>
-<code>.ident</code> 指令就是告诉汇编器把某些信息添加都目标文件去, 不同平台下作用不太相同, 比如 <code>ELF</code> 文件,
+然而在 <code>ARM</code> 架构下, <code>.align 3</code> 是把位置计数器移动到 \(2^{3} = 8\) 的倍数的偏移地址上.
+</p></li>
+
+<li><p>
+<code>.ident</code> 指令
 </p>
 
 <p>
-<code>.ident  "GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"</code> 就是把 "GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0" 这字符串记录到目标文件的 <code>.comment</code> 节去,
+告诉汇编器把某些信息添加都目标文件去, 不同平台下作用不太相同,
+</p>
+
+<p>
+比如 <code>ELF</code> 文件, <code>.ident  "GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"</code> 就是把 "GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0" 这字符串记录到目标文件的 <code>.comment</code> 节去,
 </p>
 
 <blockquote>
@@ -6913,10 +7004,20 @@ readelf -x .comment target-file
 objdump -s -j .comment target-file
 </pre>
 </div>
+</blockquote></li>
+
+<li><p>
+<code>.cfi_*</code> 系列指令
+</p>
+
+<blockquote>
+<p>
+这些指令可以不用可以去了解, 不影响你阅读汇编代码, 但是了解一下也没什么损失.
+</p>
 </blockquote>
 
 <p>
-最后能看到有一些 <code>.cfi_*</code> 指令, 它们叫做 <code>CFI</code> 指令, 全称 <code>call frame information</code>, 用于提供调试信息, 让调试器能够进行栈回溯(stack-unwinding),
+它们叫做 <code>CFI</code> 指令, 全称 <code>call frame information</code>, 用于提供调试信息, 让调试器能够进行栈回溯(stack-unwinding),
 </p>
 
 <p>
@@ -6936,7 +7037,7 @@ objdump -s -j .comment target-file
 </p>
 
 
-<div id="org8aea893" class="figure">
+<div id="org93bab12" class="figure">
 <p><img src="../../../files/readelf-wF-example.png" alt="readelf-wF-example.png">
 </p>
 <p><span class="figure-number">Figure 61: </span>readelf -wF example (该截图和这里的代码无关)</p>
@@ -6947,8 +7048,22 @@ objdump -s -j .comment target-file
 </p>
 
 <p>
-按照 <a href="https://dwarfstd.org/doc/DWARF4.pdf">DWARF spec</a> 定义, <code>CFA</code> 的值应该是在调用函数时(也就是 <code>call func</code> 时)栈指针(<code>*sp</code>)的值, 这个时候栈指针指向的是函数的栈顶位置, 也就是栈最低位地址.
+按照 <a href="https://dwarfstd.org/doc/DWARF4.pdf">DWARF spec</a> 定义, <code>CFA</code> 的值应该是在调用函数时(也就是 <code>call func</code> 时)栈指针(<code>*sp</code>)的值,
 </p>
+
+<p>
+这个时候栈指针指向的是函数的栈顶位置, 也就是栈最低位地址, <b>简单来说就是栈帧的首地址</b>.
+</p>
+
+<blockquote>
+<ul class="org-ul">
+<li>An area of memory that is allocated on a stack called a “call frame.” The call frame is
+identified by an address on the stack. We refer to this address as the Canonical Frame
+Address or CFA. Typically, the CFA is defined to be the value of the stack pointer at the
+call site in the previous frame (which may be different from its value on entry to the
+current frame).</li>
+</ul>
+</blockquote>
 
 <p>
 (如果不太理解的话, 你也可以参考一下 <code>SO</code> 上的这个<a href="https://stackoverflow.com/questions/7534420/gas-explanation-of-cfi-def-cfa-offset#answers">答案</a>).
@@ -6963,15 +7078,15 @@ objdump -s -j .comment target-file
 </p>
 
 <p>
-<code>.cfi_offset 6, -16</code> 就是把 6 号寄存器的之前的一个值保存在偏移 <code>CFA</code> 负 16 个字节的位置上, 这里的寄存器 <code>6</code>,
+<code>.cfi_offset 6, -16</code> 就是把 6 号寄存器的上一个值保存在 \(CFA - 16\) 的位置上, 可问题是 6 号寄存器究竟是什么呢?
 </p>
 
 <p>
-你可以在 <code>ABI</code> 规范 <code>DWARF Register Number Mapping</code> 部分看到寄存器以及其编号, 6 号寄存器是 <code>RBP</code>.
+可以在 <code>ABI</code> 规范 <code>DWARF Register Number Mapping</code> 部分看到寄存器以及其编号, 6 号寄存器是 <code>RBP</code>.
 </p>
 
 
-<div id="org9eb0d4c" class="figure">
+<div id="org61b0509" class="figure">
 <p><img src="../../../files/x86-register-number-mapping.png" alt="x86-register-number-mapping.png">
 </p>
 <p><span class="figure-number">Figure 62: </span>DWARF Register Number Mapping</p>
@@ -6987,7 +7102,8 @@ objdump -s -j .comment target-file
 
 <p>
 实际上 <code>.cfi_startproc</code> 和 <code>.cfi_end_proc</code> 也会改变 <code>CFA</code> 的计算规则: \(CFA = \%rsp + 8\), 这点可以通过 <code>readelf -wF</code> 来确认.
-</p>
+</p></li>
+</ul>
 </div>
 </div>
 
@@ -6995,13 +7111,29 @@ objdump -s -j .comment target-file
 <h4 id="how-c-code-looks-like-in-gas">C 语言是如何与汇编对应的</h4>
 <div class="outline-text-4" id="text-how-c-code-looks-like-in-gas">
 <p>
-前面两个小节算是用来正式介绍 <code>GAS</code> 这门汇编语言一些和 <code>NASM</code> 特别不同的地方, 现在的你基本上是可以看懂 <code>GAS</code> 的了.
+老实说, 这里不可能把所有东西都囊括, 只能讲一些 <code>C</code> 语言最常见的内容被 <code>GNU</code> 编译成汇编是怎么样的,
 </p>
 
 <p>
-这一节主要是看一下 <code>C</code> 里面最重要常见的东西在被 <code>GNU</code> 编译成了汇编是怎么样的, 这些重要的东西是变量(variables), 函数(functions)以及指针(pointers).
+包括栈帧(stack frame), 参数传递(parameter passing), 函数返回(return value), 变量(variables), 指针(pointers)以及结构体(struct).
 </p>
 
+<p>
+很多其它东西只能自己阅读 <a href="https://gitlab.com/x86-psABIs/x86-64-ABI/-/jobs/artifacts/master/raw/x86-64-ABI/abi.pdf?job=build">System V Application Binary Interface</a> 来学习.
+</p>
+
+<p>
+我这里就配合例子把第三章节内容解释一遍, 这个章节是最重要的基础.
+</p>
+
+<p>
+(就是个人对 ABI 规范文档的阅读笔记).
+</p>
+</div>
+
+<ul class="org-ul">
+<li><a id="orgb966c34"></a>例子一: sqlite3 的使用<br>
+<div class="outline-text-5" id="text-orgb966c34">
 <p>
 为此我准备了一个稍微复杂一点的程序: 对 <code>sqlite</code> 数据库执行 <code>SELECT</code> 语句.
 </p>
@@ -7055,14 +7187,14 @@ objdump -s -j .comment target-file
 <pre class="src src-asm">        <span style="color: #00ffff;">.file</span>    <span style="color: #ffa07a;">"exampledb.c"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.section</span> .rodata
-<span style="color: #87cefa;">.LC0</span>:
+        <span style="color: #00ffff;">.LC0</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"NULL"</span>
-<span style="color: #87cefa;">.LC1</span>:
+        <span style="color: #00ffff;">.LC1</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"Field.%d: %s = %s\n"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.type</span>    callback, @function
 <span style="color: #87cefa;">callback</span>:
-<span style="color: #87cefa;">.LFB0</span>:
+        <span style="color: #00ffff;">.LFB0</span>:
         <span style="color: #00ffff;">.cfi_startproc</span>
         <span style="color: #00ffff;">pushq</span>    <span style="color: #eedd82;">%rbp</span>
         <span style="color: #00ffff;">.cfi_def_cfa_offset</span> 16
@@ -7081,7 +7213,7 @@ objdump -s -j .comment target-file
         <span style="color: #00ffff;">call</span>     fputs@PLT
         <span style="color: #00ffff;">movl</span>     $0, -4(<span style="color: #eedd82;">%rbp</span>)
         <span style="color: #00ffff;">jmp</span>      .L2
-<span style="color: #87cefa;">.L5</span>:
+        <span style="color: #00ffff;">.L5</span>:
         <span style="color: #00ffff;">movl</span>     -4(<span style="color: #eedd82;">%rbp</span>), <span style="color: #eedd82;">%eax</span>
         <span style="color: #00ffff;">cltq</span>
         <span style="color: #00ffff;">leaq</span>     0(,<span style="color: #eedd82;">%rax</span>,8), <span style="color: #eedd82;">%rdx</span>
@@ -7097,9 +7229,9 @@ objdump -s -j .comment target-file
         <span style="color: #00ffff;">addq</span>     <span style="color: #eedd82;">%rdx</span>, <span style="color: #eedd82;">%rax</span>
         <span style="color: #00ffff;">movq</span>     (<span style="color: #eedd82;">%rax</span>), <span style="color: #eedd82;">%rax</span>
         <span style="color: #00ffff;">jmp</span>      .L4
-<span style="color: #87cefa;">.L3</span>:
+        <span style="color: #00ffff;">.L3</span>:
         <span style="color: #00ffff;">leaq</span>     .LC0(<span style="color: #eedd82;">%rip</span>), <span style="color: #eedd82;">%rax</span>
-<span style="color: #87cefa;">.L4</span>:
+        <span style="color: #00ffff;">.L4</span>:
         <span style="color: #00ffff;">movl</span>     -4(<span style="color: #eedd82;">%rbp</span>), <span style="color: #eedd82;">%edx</span>
         <span style="color: #00ffff;">movslq</span>   <span style="color: #eedd82;">%edx</span>, <span style="color: #eedd82;">%rdx</span>
         <span style="color: #00ffff;">leaq</span>     0(,<span style="color: #eedd82;">%rdx</span>,8), <span style="color: #eedd82;">%rcx</span>
@@ -7113,7 +7245,7 @@ objdump -s -j .comment target-file
         <span style="color: #00ffff;">movl</span>     $0, <span style="color: #eedd82;">%eax</span>
         <span style="color: #00ffff;">call</span>     printf@PLT
         <span style="color: #00ffff;">addl</span>     $1, -4(<span style="color: #eedd82;">%rbp</span>)
-<span style="color: #87cefa;">.L2</span>:
+        <span style="color: #00ffff;">.L2</span>:
         <span style="color: #00ffff;">movl</span>     -4(<span style="color: #eedd82;">%rbp</span>), <span style="color: #eedd82;">%eax</span>
         <span style="color: #00ffff;">cmpl</span>     -28(<span style="color: #eedd82;">%rbp</span>), <span style="color: #eedd82;">%eax</span>
         <span style="color: #00ffff;">jl</span>       .L5
@@ -7124,28 +7256,28 @@ objdump -s -j .comment target-file
         <span style="color: #00ffff;">.cfi_def_cfa</span> 7, 8
         <span style="color: #00ffff;">ret</span>
         <span style="color: #00ffff;">.cfi_endproc</span>
-<span style="color: #87cefa;">.LFE0</span>:
+        <span style="color: #00ffff;">.LFE0</span>:
         <span style="color: #00ffff;">.size</span>    callback, .-callback
         <span style="color: #00ffff;">.section</span> .rodata
-<span style="color: #87cefa;">.LC2</span>:
+        <span style="color: #00ffff;">.LC2</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"Example.db"</span>
-<span style="color: #87cefa;">.LC3</span>:
+        <span style="color: #00ffff;">.LC3</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"Can't open database: %s\n"</span>
-<span style="color: #87cefa;">.LC4</span>:
+        <span style="color: #00ffff;">.LC4</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"Opened database successfully\n"</span>
-<span style="color: #87cefa;">.LC5</span>:
+        <span style="color: #00ffff;">.LC5</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"select * from ANIMATION;"</span>
-<span style="color: #87cefa;">.LC6</span>:
+        <span style="color: #00ffff;">.LC6</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"Callback function called:\n"</span>
-<span style="color: #87cefa;">.LC7</span>:
+        <span style="color: #00ffff;">.LC7</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"SQL error: %s\n"</span>
-<span style="color: #87cefa;">.LC8</span>:
+        <span style="color: #00ffff;">.LC8</span>:
         <span style="color: #00ffff;">.string</span>  <span style="color: #ffa07a;">"Operation done successfully\n"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.globl</span>   main
         <span style="color: #00ffff;">.type</span>    main, @function
 <span style="color: #87cefa;">main</span>:
-<span style="color: #87cefa;">.LFB1</span>:
+        <span style="color: #00ffff;">.LFB1</span>:
         <span style="color: #00ffff;">.cfi_startproc</span>
         <span style="color: #00ffff;">pushq</span>    <span style="color: #eedd82;">%rbp</span>
         <span style="color: #00ffff;">.cfi_def_cfa_offset</span> 16
@@ -7177,7 +7309,7 @@ objdump -s -j .comment target-file
         <span style="color: #00ffff;">call</span>     fprintf@PLT
         <span style="color: #00ffff;">movl</span>     $1, <span style="color: #eedd82;">%eax</span>
         <span style="color: #00ffff;">jmp</span>      .L12
-<span style="color: #87cefa;">.L8</span>:
+        <span style="color: #00ffff;">.L8</span>:
         <span style="color: #00ffff;">movq</span>     stderr(<span style="color: #eedd82;">%rip</span>), <span style="color: #eedd82;">%rax</span>
         <span style="color: #00ffff;">movq</span>     <span style="color: #eedd82;">%rax</span>, <span style="color: #eedd82;">%rcx</span>
         <span style="color: #00ffff;">movl</span>     $29, <span style="color: #eedd82;">%edx</span>
@@ -7210,37 +7342,41 @@ objdump -s -j .comment target-file
         <span style="color: #00ffff;">movq</span>     <span style="color: #eedd82;">%rax</span>, <span style="color: #eedd82;">%rdi</span>
         <span style="color: #00ffff;">call</span>     sqlite3_free@PLT
         <span style="color: #00ffff;">jmp</span>      .L11
-<span style="color: #87cefa;">.L10</span>:
+        <span style="color: #00ffff;">.L10</span>:
         <span style="color: #00ffff;">movq</span>     stdout(<span style="color: #eedd82;">%rip</span>), <span style="color: #eedd82;">%rax</span>
         <span style="color: #00ffff;">movq</span>     <span style="color: #eedd82;">%rax</span>, <span style="color: #eedd82;">%rcx</span>
         <span style="color: #00ffff;">movl</span>     $28, <span style="color: #eedd82;">%edx</span>
         <span style="color: #00ffff;">movl</span>     $1, <span style="color: #eedd82;">%esi</span>
         <span style="color: #00ffff;">leaq</span>     .LC8(<span style="color: #eedd82;">%rip</span>), <span style="color: #eedd82;">%rdi</span>
         <span style="color: #00ffff;">call</span>     fwrite@PLT
-<span style="color: #87cefa;">.L11</span>:
+        <span style="color: #00ffff;">.L11</span>:
         <span style="color: #00ffff;">movq</span>     -40(<span style="color: #eedd82;">%rbp</span>), <span style="color: #eedd82;">%rax</span>
         <span style="color: #00ffff;">movq</span>     <span style="color: #eedd82;">%rax</span>, <span style="color: #eedd82;">%rdi</span>
         <span style="color: #00ffff;">call</span>     sqlite3_close@PLT
         <span style="color: #00ffff;">movl</span>     $0, <span style="color: #eedd82;">%eax</span>
-<span style="color: #87cefa;">.L12</span>:
+        <span style="color: #00ffff;">.L12</span>:
         <span style="color: #00ffff;">movq</span>     -8(<span style="color: #eedd82;">%rbp</span>), <span style="color: #eedd82;">%rcx</span>
         <span style="color: #00ffff;">xorq</span>     <span style="color: #eedd82;">%fs</span>:40, <span style="color: #eedd82;">%rcx</span>
         <span style="color: #00ffff;">je</span>       .L13
         <span style="color: #00ffff;">call</span>     __stack_chk_fail@PLT
-<span style="color: #87cefa;">.L13</span>:
+        <span style="color: #00ffff;">.L13</span>:
         <span style="color: #00ffff;">leave</span>
         <span style="color: #00ffff;">.cfi_def_cfa</span> 7, 8
         <span style="color: #00ffff;">ret</span>
         <span style="color: #00ffff;">.cfi_endproc</span>
-<span style="color: #87cefa;">.LFE1</span>:
+        <span style="color: #00ffff;">.LFE1</span>:
         <span style="color: #00ffff;">.size</span>    main, .-main
         <span style="color: #00ffff;">.ident</span>   <span style="color: #ffa07a;">"GCC: (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"</span>
         <span style="color: #00ffff;">.section</span> .note.GNU-stack,<span style="color: #ffa07a;">""</span>,@progbits
 </pre>
 </div>
+</div>
 
+<ul class="org-ul">
+<li><a id="org3c17f1b"></a><b>栈帧 (Stack Frame)</b><br>
+<div class="outline-text-6" id="text-org3c17f1b">
 <p>
-其实源代码和汇编码还是挺一对一的, 首先是第一个函数 <code>callback</code>, 然后再到入口函数 <code>main</code>, 这和 <code>C</code> 源码一致.
+其实源代码和汇编码还是挺一对一的, 首先是第一个函数 <code>callback</code>, 然后再到入口函数 <code>main</code>, 这和 <code>C</code> 源码上下文一致.
 </p>
 
 <p>
@@ -7252,34 +7388,48 @@ objdump -s -j .comment target-file
 </p>
 
 <p>
-在汇编码里可以看到 <code>main</code> 的第一步就是先建立栈帧, 再把函数使用到的局部变量(参数也属于局部变量)全部保存在栈帧里面,
+在汇编码里可以看到 <code>main</code> 的第一步就是先建立栈帧, 再把函数使用到的局部变量(参数也属于局部变量)全部保存在栈帧里面.
 </p>
 
 <p>
-<code>GCC</code> 会计算出函数在运行时需要 <code>n</code> 个字节的栈空间, 然后把栈指针 <code>rsp</code> 指向到 \(rbp - n\) 上.
+栈帧可以看作函数被调用在内存上的布局, <code>GCC</code> 会计算出函数的局部变量需要 <code>n</code> 个字节的内存, 然后把栈指针 <code>rsp</code> 指向到 \(\%rbp - n\) 上.
 </p>
 
 <p>
-栈帧的大小取决于函数使用了多少个局部变量, 变量的大小由它的类型标记, <code>GCC</code> 也因此能够计算的出栈帧的大小.
+局部变量空间的大小取决于变量类型, <code>GCC</code> 会根据变量类型来判断要分配的大小.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #87cefa;">pushq</span>  <span style="color: #00ffff;">%rbp</span>
-<span style="color: #87cefa;">movq</span>   <span style="color: #00ffff;">%rsp</span>, <span style="color: #eedd82;">%rbp</span>
-<span style="color: #87cefa;">subq</span>   <span style="color: #00ffff;">$64</span>, <span style="color: #eedd82;">%rsp</span>
+<pre class="src src-asm"><span style="color: #87cefa;">pushq</span>  <span style="color: #00ffff;">%rbp</span>           # &#22791;&#20221; <span style="color: #eedd82;">%rbp</span>
+<span style="color: #87cefa;">movq</span>   <span style="color: #00ffff;">%rsp</span>, <span style="color: #eedd82;">%rbp</span>     # &#25226;&#35843;&#29992;&#32773; (&#36825;&#37324;&#26159; _start) &#30340; <span style="color: #eedd82;">%rsp</span> &#23492;&#23384;&#22120;&#30340;&#20540;&#20648;&#23384;&#21040; <span style="color: #eedd82;">%rbp</span> &#19978;
+<span style="color: #87cefa;">subq</span>   <span style="color: #00ffff;">$64</span>, <span style="color: #eedd82;">%rsp</span>      # <span style="color: #eedd82;">%rsp</span> = <span style="color: #eedd82;">%rsp</span> - 64
 </pre>
 </div>
 
 <p>
-可以看到这个栈帧的大小是 64 个字节.
+局部变量储存在 \(\%rbp\) 和 \(\%rsp - 64\) 的范围内.
+</p>
+
+<blockquote>
+<p>
+在使用 <code>C</code> 语言开发的时候可能会要用到一些大小不固定的数据, 这种数据就无法单纯靠栈来储存, 因为储存局部变量的空间大小是编译器在编译的时候确定的.
 </p>
 
 <p>
-之后在栈帧上进行数据读写都不会通过修改 <code>%rsp</code> 来完成, <code>GCC</code> 根据 <code>%rbp</code> 的值给每个变量计算并分配好各自地址, 读写数据就是通过这些地址来完成.
+也就是在产生汇编码是确定的, 这种大小不固定的数据的大小是在程序运行时发生改变的, 总不能在程序运行时改变程序自己吧.
 </p>
 
 <p>
-就像 <code>main</code> 的第一个参数 <code>argc</code> 是 <code>int</code> 类型, 占 4 个字节, 根据 <code>x86-64 ABI</code> 的调用规范, 第一个标量参数是存放在 <code>rdi</code> 寄存器上的,
+我们在后面将指针的时候会详细介绍这种数据.
+</p>
+</blockquote>
+
+<p>
+之后在栈帧上进行数据读写都不会通过修改 \(\%rsp\) 来完成, <code>GCC</code> 根据 \(\%rbp\) 的值给每个变量计算并分配好各自地址, 读写数据就是通过这些地址来完成.
+</p>
+
+<p>
+就像 <code>main</code> 的第一个参数 <code>argc</code> 是 <code>int</code> 类型, 占 4 个字节, 根据 <code>x86-64 ABI</code> 的调用规范, 第一个标量参数是存放在 \(\%rdi\) 寄存器上的,
 </p>
 
 <p>
@@ -7299,33 +7449,23 @@ objdump -s -j .comment target-file
 </p>
 
 <p>
-仔细看的话你会发现一个奇怪的地方: 第一个参数的数据只有4个字节, 第二个参数的数据大小可以从 <code>%rsi</code> 看出只要8个字节, 那么为什么两个数据之间的首地址相差了12个字节?
+仔细看的话你会发现一个奇怪的地方: 第一个参数的数据只有4个字节, 第二个参数的数据大小可以从 \(\%rsi\) 看出只要 8 个字节, 那么为什么两个数据之间的首地址相差了 12 个字节?
 </p>
 
 <p>
-其实就是之前讲过的对齐16字节边界, 这里面有4字节空间是空出来的.
+其实就是之前讲过的对齐16字节边界, 这里面有 4 字节空间是空出来的.
 </p>
 
 <p>
-<b>然而并非所有函数都有 <code>subq $N, %rsp</code> 这样的指令来创建栈帧</b>, 那么什么时候有这个指令呢? 现在给你解答.
+<b>然而并非所有函数都有 <code>subq $n, %rsp</code> 这样的指令来创建为局部变量分配空间</b>, 那么什么时候有这个指令呢? 现在给你解答.
 </p>
 
 <p>
-<code>x86-64 ABI</code> 规范有一个 <code>red zone</code> 的概念, 它是指 <code>%rsp</code> 以下的128字节大小空间, 范围是 \(\%rsp - 128\) 到 \(\%rsp - 1\), 并且 <b>约定</b> 信号(signal)或者软中断是不能修改这块区域的.
+<code>x86-64</code> 规范的栈帧比 <code>i386</code> 规范的还多出一个 <code>red zone</code> 的概念, 它是指 \(\%rsp\) 以下的 128 字节大小空间, 范围是 \(\%rsp - 128\) 到 \(\%rsp\), 并且 <b>约定</b> 信号(signal)或者软中断是不能修改这块区域的.
 </p>
 
 <p>
-如果 <code>%rsp</code> 发生了改变(PUSH/POP/MOV etc), <code>red zone</code> 位置也会发生改变.
-</p>
-
-<div class="org-src-container">
-<pre class="src src-asm"><span style="color: #87cefa;">movq</span> <span style="color: #00ffff;">%rsp</span>, <span style="color: #eedd82;">%rbp</span>
-<span style="color: #87cefa;">subq</span> <span style="color: #00ffff;">$64</span>, <span style="color: #eedd82;">%rsp</span>
-</pre>
-</div>
-
-<p>
-从这两句汇编码来看, <code>red zone</code> 位于栈帧的下方.
+如果 \(\%rsp\) 发生了改变(PUSH/POP/MOV etc), <code>red zone</code> 位置也会发生改变.
 </p>
 
 <p>
@@ -7333,7 +7473,7 @@ objdump -s -j .comment target-file
 </p>
 
 <p>
-这个时候叶子函数是不需要调整 <code>%rsp</code> 来分配栈帧的, 也就是没有 <code>subq $N, %rsp</code> 这种语句了;
+这个时候叶子函数是不需要调整 \(\%rsp\) 来分配栈帧的, 也就是没有 <code>subq $n, %rsp</code> 这种语句了;
 </p>
 
 <p>
@@ -7341,9 +7481,20 @@ objdump -s -j .comment target-file
 </p>
 
 <p>
-<br>
+最后根据 <code>x86-64</code> 版的规范, 栈帧长这样:
 </p>
 
+
+<div id="org0abd4ee" class="figure">
+<p><img src="../../../files/x86-64-abi-stack-frame-with-base-pointer.png" alt="x86-64-abi-stack-frame-with-base-pointer.png">
+</p>
+<p><span class="figure-number">Figure 63: </span>stack frame</p>
+</div>
+</div>
+</li>
+
+<li><a id="orgf48df8e"></a><b>Stack canaries</b><br>
+<div class="outline-text-6" id="text-orgf48df8e">
 <p>
 在处理好参数后有这样的指令,
 </p>
@@ -7356,7 +7507,7 @@ xorl    %eax, %eax
 </div>
 
 <p>
-要理解它们要先理解一个概念: <code>stack canary</code>, 这个例子里面的 <code>%fs:40</code> 的值就是作为 <code>stack canary</code>, 这个值就是通过分段寻址(segmented addressing)获得的.
+要理解它们要先理解一个概念: <code>stack canaries</code>, 这个例子里面的 <code>%fs:40</code> 的值就是作为 <code>stack canary</code>, 这个值就是通过分段寻址(segmented addressing)获得的.
 </p>
 
 <p>
@@ -7387,9 +7538,9 @@ xorl    %eax, %eax
         <span style="color: #b0c4de;">call</span>    __stack_chk_fail@PLT
 <span style="color: #87cefa;">.L13</span>:
         <span style="color: #b0c4de;">leave</span>
-        <span style="color: #87cefa;">.cfi_def_cfa</span> <span style="color: #7fffd4;">7</span>, <span style="color: #7fffd4;">8</span>
+<span style="color: #87cefa;">.cfi_def_cfa</span> <span style="color: #7fffd4;">7</span>, <span style="color: #7fffd4;">8</span>
         <span style="color: #b0c4de;">ret</span>
-        <span style="color: #87cefa;">.cfi_endproc</span>
+<span style="color: #87cefa;">.cfi_endproc</span>
 </pre>
 </div>
 
@@ -7404,11 +7555,11 @@ xorl    %eax, %eax
 <p>
 <code>GCC</code> 也支持在编译时选择不进行栈保护检测, 就算启用了也不一定是所有函数都要进行检测, 比如这个例子里的 <code>callback</code> 函数, 这方面可以看看这个链接里面关于安全的小节:  <a href="https://cs.pomona.edu/~ebirrell/classes/cs105/2021sp/schedule.html">CS 105: Computer Systems</a>.
 </p>
+</div>
+</li>
 
-<p>
-<br>
-</p>
-
+<li><a id="orga44789e"></a><b>变量名字 (variables)</b><br>
+<div class="outline-text-6" id="text-orga44789e">
 <p>
 在高级语言里面, 变量的名字是非常重要的, 读写数据都要依靠它们来完成, 然而在汇编层面上完全看不到一个变量的名字, 取而带之的是一个有效地址, 因此我们不能在汇编码上找得到 <code>argc</code> 和 <code>argsv</code> 这两个参数名.
 </p>
@@ -7426,6 +7577,7 @@ xorl    %eax, %eax
 
 <li>程序基本很上的内容就是在给函数准备参数, 而变量就是这些参数, 而函数传参又是有规范的, 根据规范和函数用法可以反推出这些参数对应哪些变量.</li>
 </ol>
+
 
 <p>
 就拿 <code>main</code> 里面的 <code>db</code> 这个局部变量来说, 想找到它对应哪个有效地址, 可以通过找到接受它作为参数的函数, 可以看到有 <code>sqlite3_open</code> 和 <code>sqlite3_exec</code> 这两个函数调用了它.
@@ -7468,9 +7620,19 @@ xorl    %eax, %eax
 </p>
 
 <p>
-<a id="orgf1f55e0"></a>
+再来看另外一个例子 <code>sqlite3_exec</code>, 它的第三个参数是函数的地址,
 </p>
-<blockquote>
+
+<p>
+反正只要这个变量在某个地方被使用了, 那么就一定有办法可以找到它的有效地址; 而对于没有被使用过的变量, <code>GCC</code> 是不会为它们分配空间的.
+</p>
+</div>
+</li>
+</ul>
+</li>
+
+<li><a id="orgfd44279"></a>例子二: 结构体<br>
+<div class="outline-text-5" id="text-orgfd44279">
 <p>
 <code>sqlite3</code> 是一个结构体, <code>C</code> 语言的结构体(structures)本质上就是一个连续的内存.
 </p>
@@ -7511,25 +7673,25 @@ xorl    %eax, %eax
 <pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">struct-in-c.c</span>
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span>* <span style="color: #eedd82;">argvs</span>) {
 
-    <span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">struct</span> {
-        <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">name</span>;
-        <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">age</span>;
-        <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">codepoint</span>;
-        <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">height</span>;
-    } <span style="color: #98fb98;">Person</span>;
+  <span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">struct</span> {
+    <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">name</span>;
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">age</span>;
+    <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">codepoint</span>;
+    <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">height</span>;
+  } <span style="color: #98fb98;">Person</span>;
 
-    <span style="color: #98fb98;">Person</span> <span style="color: #eedd82;">example</span>;
-    example.name = <span style="color: #ffa07a;">"Jack"</span>;
-    example.codepoint = <span style="color: #ffa07a;">'c'</span>;
-    example.age = 18;
-    example.height = 176.0;
+  <span style="color: #98fb98;">Person</span> <span style="color: #eedd82;">example</span>;
+  example.name = <span style="color: #ffa07a;">"Jack"</span>;
+  example.codepoint = <span style="color: #ffa07a;">'c'</span>;
+  example.age = 18;
+  example.height = 176.0;
 
-    <span style="color: #98fb98;">Person</span> *<span style="color: #eedd82;">ptr</span> = &amp;example;
+  <span style="color: #98fb98;">Person</span> *<span style="color: #eedd82;">ptr</span> = &amp;example;
 
-    (*ptr).name = <span style="color: #ffa07a;">"Nick"</span>;
-    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">ptr-&gt;name = "Nick";</span>
+  (*ptr).name = <span style="color: #ffa07a;">"Nick"</span>;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">ptr-&gt;name = "Nick";</span>
 
-    <span style="color: #00ffff;">return</span> 0;
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -7538,15 +7700,15 @@ xorl    %eax, %eax
 <pre class="src src-asm">        <span style="color: #00ffff;">.file</span>   <span style="color: #ffa07a;">"struct-in-c.c"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.section</span>        .rodata
-<span style="color: #87cefa;">.LC0</span>:
+        <span style="color: #00ffff;">.LC0</span>:
         <span style="color: #00ffff;">.string</span> <span style="color: #ffa07a;">"Jack"</span>
-<span style="color: #87cefa;">.LC2</span>:
+        <span style="color: #00ffff;">.LC2</span>:
         <span style="color: #00ffff;">.string</span> <span style="color: #ffa07a;">"Nick"</span>
         <span style="color: #00ffff;">.text</span>
         <span style="color: #00ffff;">.globl</span>  main
         <span style="color: #00ffff;">.type</span>   main, @function
 <span style="color: #87cefa;">main</span>:
-<span style="color: #87cefa;">.LFB0</span>:
+        <span style="color: #00ffff;">.LFB0</span>:
         <span style="color: #00ffff;">.cfi_startproc</span>
         <span style="color: #00ffff;">endbr64</span>
         <span style="color: #00ffff;">pushq</span>   <span style="color: #eedd82;">%rbp</span>
@@ -7576,16 +7738,16 @@ xorl    %eax, %eax
         <span style="color: #00ffff;">subq</span>    <span style="color: #eedd82;">%fs</span>:40, <span style="color: #eedd82;">%rdx</span>
         <span style="color: #00ffff;">je</span>      .L3
         <span style="color: #00ffff;">call</span>    __stack_chk_fail@PLT
-<span style="color: #87cefa;">.L3</span>:
+        <span style="color: #00ffff;">.L3</span>:
         <span style="color: #00ffff;">leave</span>
         <span style="color: #00ffff;">.cfi_def_cfa</span> 7, 8
         <span style="color: #00ffff;">ret</span>
         <span style="color: #00ffff;">.cfi_endproc</span>
-<span style="color: #87cefa;">.LFE0</span>:
+        <span style="color: #00ffff;">.LFE0</span>:
         <span style="color: #00ffff;">.size</span>   main, .-main
         <span style="color: #00ffff;">.section</span>        .rodata
         <span style="color: #00ffff;">.align</span> 4
-<span style="color: #87cefa;">.LC1</span>:
+        <span style="color: #00ffff;">.LC1</span>:
         <span style="color: #00ffff;">.long</span>   1127219200
         <span style="color: #00ffff;">.ident</span>  <span style="color: #ffa07a;">"GCC: (Ubuntu 11.2.0-19ubuntu1) 11.2.0"</span>
         <span style="color: #00ffff;">.section</span>        .note.GNU-stack,<span style="color: #ffa07a;">""</span>,@progbits
@@ -7607,26 +7769,414 @@ xorl    %eax, %eax
 <span style="color: #87cefa;">4</span>:
 </pre>
 </div>
+</div>
+</li>
+
+<li><a id="orgff9965f"></a>例子三: 阅读规范中的参数传递和函数返回 (Parameter Passing and Returning of values)<br>
+<div class="outline-text-5" id="text-orgff9965f">
+<p>
+<code>System V x86-64 ABI</code> 把寄存器和数据类型分别进行了分类, 目的是规定什么类型的寄存器储存什么类型的数据.
+</p>
+
+<p>
+原文很多名词都没有进行解释, 所以阅读起来会极其困难, 有些算法描述得也不太易懂, 本人针对这两点进行了翻译.
+</p>
+
+<p>
+规范里面使用字节(byte)表示 <code>8-bit</code> 对象, 两字节(twobyte)表示 <code>16-bit</code> 对象, 四字节(fourbyte)表示 <code>32-bit</code> 对象,
+</p>
+
+<p>
+八字节(eightbyte)表示 <code>64-bit</code> 对象, 以及十六字节(sixteenbyte)表示 <code>128-bit</code> 对象.
+</p>
+</div>
+
+<ul class="org-ul">
+<li><a id="org496684c"></a>数据表征 (fundamental types)<br>
+<div class="outline-text-6" id="text-org496684c">
+<blockquote>
+<p>
+不同版本的 <code>C</code> 标准所支持的数据类型是不太一样的,
+</p>
+
+<p>
+所以如果在实际编码时发现有些数据类型不存在, 那么就是使用的 <code>C</code> 标准还未支持这些数据类型.
+</p>
 </blockquote>
 
 <p>
-再来看另外一个例子 <code>sqlite3_exec</code>, 它的第三个参数是函数的地址,
+根据数据表征划分, 数据类型分为:
 </p>
 
 <p>
-反正只要这个变量在某个地方被使用了, 那么就一定有办法可以找到它的有效地址; 而对于没有被使用过的变量, <code>GCC</code> 是不会为它们分配空间的.
+基础类型(标量);
 </p>
 
+
+<div id="orgae426a9" class="figure">
+<p><img src="../../../files/system-v-x86-64-scalar-types.png" alt="system-v-x86-64-scalar-types.png">
+</p>
+<p><span class="figure-number">Figure 64: </span>ISO标准和处理器之间的标量类型对应关系</p>
+</div>
+
+<p>
+<code>N-bit</code> 整数, 分 <code>_BitInt(N)</code> 和 <code>unsigned _BitInt(N)</code>, 所有的整数类型都属于 <code>N-bit</code> 整数的旗下;
+</p>
+
+<p>
+特殊类型, 有 <code>__bf16</code>, <code>32-bit IEEE 754</code> 的 <code>16-bit</code> 版本;
+</p>
+
+<p>
+集合体和联合体(<code>aggregates and unions</code>), 集合体就是 <code>C</code> 语言的结构体;
+</p>
+
+<p>
+还可以给集合体或联合体的字段指定储存的位宽, 这个位宽就是位域(bit fields),
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">date</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">d</span>: 5;          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26085;&#26399;&#33539;&#22260;&#20026; 1 ~ 31, &#25152;&#20197; 5 &#20301;&#36275;&#22815;</span>
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">m</span>: 4;          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26376;&#20221;&#20301; 1 ~ 12, &#25152;&#20197; 4 &#20301;&#36275;&#22815;</span>
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">y</span>;
+}
+</pre>
+</div>
+</div>
+</li>
+
+<li><a id="orgd1a1140"></a>寄存器<br>
+<div class="outline-text-6" id="text-orgd1a1140">
+<p>
+<code>AMD64</code> (<code>x86-64</code> 的别称) 提供如下寄存器:
+</p>
+
+<p>
+16 个 <code>64-bit</code> 宽的通用寄存器;
+</p>
+
+<p>
+16 个 <code>128-bit</code> 宽的 <code>SSE (Streaming SIMD Extensions)</code> 寄存器, 分别是 <code>XMM0 - XMM15</code>;
+</p>
+
+<p>
+8 个 <code>80-bit</code> 宽的 <code>x87</code> 浮点寄存器(, 也可以被称为 <code>MMX</code> 或 <code>3DNOW!</code>), 分别是 <code>MM0 - MM7</code>.
+</p>
+
+<p>
+<code>Intel AVX (Advanced Vector Extensions)</code> 提供了 16 个 <code>256-bit</code> 宽的 <code>AVX</code> 寄存器 <code>(YMM0 - YMM15)</code>,
+</p>
+
+<p>
+<code>AVX</code> 寄存器的低 <code>128-bit</code> 被别名为 <code>SSE</code> 寄存器的 <code>XMM0 - XMM15</code>.
+</p>
+
+<p>
+<code>Intel AVX-512</code> 提供了 32 个 <code>512-bit</code> 宽的 <code>SIMD</code> 寄存器 (ZMM0 - ZMM31), <code>AVX-512</code> 寄存器的低 <code>256-bit</code> 被别名为 <code>YMM0 - YMM31</code>,
+</p>
+
+<p>
+在传参和函数返回上, <code>XMMn/YMMn/ZMMn</code> 三个实际上是指同一个寄存器, 后者是前者的拓展, 在同一时间内只能用其中一个,
+</p>
+
+<p>
+我们把 <code>SSE/AVX/AVX-512</code> 寄存器也被统称为向量寄存器(vector register);
+</p>
+
+<p>
+此外, <code>Intel AVX-512</code> 还提供了 8 个 <code>64-bit</code> 宽的向量掩码寄存器(vector mask register, <code>K0 - K7</code>).
+</p>
+
+<p>
+<code>Intel AMX (Intel Advanced Matrix Extensions)</code> 是用来储存矩阵数据的, 目前很少用到它, 我们只要知道 <code>TMM0 - TMM7</code> 是它的寄存器就好.
+</p>
+
+<p>
+有些寄存器是属于调用者的, 有 <code>RBP</code>, <code>RBX</code>, <code>R12</code> 以及 <code>R15</code>, 这种寄存器叫做被调用者保存寄存器(callee-saved registers).
+</p>
+
+<p>
+函数需要把这类寄存器的值储存到它们自己的栈帧中, 就比如 <code>RBP</code>, 每个函数的第一个指令基本都是 <code>pushq %rbp</code>, 在返回前使用 <code>popq %rbp</code> 或者 <code>leave</code> 来把储存的值恢复到 <code>%rbp</code> 上.
+</p>
+
+<p>
+无论经过什么样的一个调用过程, 对于每一个被调用的函数来说, 每个函数都有属于自己的 <code>RBP</code> 的值并且不会因为其它的函数调用发生改变, 这就是跨调用保留(preserved across calls).
+</p>
+</div>
+</li>
+
+<li><a id="org3d41828"></a>参数传递<br>
+<div class="outline-text-6" id="text-org3d41828">
+<p>
+<b>参数类别</b>
+</p>
+
+<p>
+<code>INTEGER</code>: 可以使用一个通用寄存器储存的整数属于该类型;
+</p>
+
+<p>
+<code>SSE</code>: 可以用一个矢量寄存器储存的数据属于该类型;
+</p>
+
+<p>
+<code>SSEUP</code>: 适用与一个矢量寄存器储存并且可以通过寄存器的上半部分字节(upper bytes)进行传递和返回的数据属于该类型;
+</p>
+
+<p>
+<code>X87/X87UP/COMPLEX_X87</code>: 通过 <code>x87 FPU</code> 返回的数据类型属于该类型;
+</p>
+
+<p>
+<code>NO_CLASS</code>: 分类算法里面的初始类别. 填充用, 空集合体和空联合体的数据就属于该类;
+</p>
+
+<p>
+<code>MEMORY</code>: 要通过栈上的内存传递和返回的数据就属于该类型.
+</p>
+
+<p>
+<b>对参数进行分类</b>
+</p>
+
+<blockquote>
+<p>
+在规范文档里面, 这一块的描述不太容易理解, 我自己最后还是找<a href="https://github.com/gcc-mirror/gcc/blob/master/libffi/src/x86/ffi64.c">GCC 的实现</a>(<a href="../../../files/ffi64.c">个人笔记版备份</a>)来看才略微理解.
+</p>
+
+<p>
+<code>GCC</code> 的实现和文档上的有点出入, 但整体上差不太多.
+</p>
+
+<p>
+还有需要注意的是, 编译器对最新规范的支持是有滞后性的, 所以即便读懂了该规范也要根据自己使用的 <code>C</code> 标准和编译器的情况来使用.
+</p>
+</blockquote>
+
+<p>
+每个参数的大小都是 8 字节对齐.
+</p>
+
+<ul class="org-ul">
+<li><code>_Bool</code>, <code>char</code>, <code>short</code>, <code>int</code>, <code>long</code>, <code>long long</code> 以及指针属于 <code>INTEGER</code>.</li>
+
+<li><code>_Float</code>, <code>float</code>, <code>double</code>, <code>_Decimal32</code>, <code>_Decimal64</code> 以及 <code>_m64</code> 属于 <code>SSE</code>.</li>
+
+<li><code>__float128</code>, <code>_Decimal128</code> 以及 <code>__m128</code> 会被对半分成两部分, 最低有效的部分属于 <code>SSE</code>, 最高有效的部分属于 <code>SSEUP</code>.</li>
+
+<li><code>__m256</code> 分成 4 个 8 字节块 (eightbyte chunk), 最低有效的部分属于 <code>SSE</code>, 其它部分属于 <code>SSEUP</code>.</li>
+
+<li><code>__m512</code> 分成 8 个 8 字节块， 最低有效的部分属于 <code>SSE</code>, 其它部分属于 <code>SSEUP</code>.</li>
+
+<li><code>long double</code> 的 <code>64-bit</code> 尾数(64-bit mantissa)属于 <code>X87</code>, <code>16-bit</code> 的指数(16-bit exponent)加上 6 字节的填充属于 <code>X87UP</code>.</li>
+
+<li><p>
+<code>__int128</code> 提供和 <code>INTEGER</code> 的通常操作, 但 <code>__int128</code> 要用两个通用寄存器进行储存.
+</p>
+
+<p>
+为了方便分类, <code>__int128</code> 就像是如下的结构体实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">struct</span> {
+  <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">low</span>, <span style="color: #eedd82;">high</span>;
+} <span style="color: #98fb98;">__int128</span>;
+</pre>
+</div>
+
+<p>
+只是内存中的 <code>__int128</code> 数据得要 16 字节对齐.
+</p>
+
+<p>
+等一下会讨论结构体的参数分类.
+</p></li>
+
+<li><p>
+当 <code>_BitInt(N)</code> 的 \(N \le 64\) 时, <code>_BitInt(N)</code> 属于 <code>INTEGER</code>;
+</p>
+
+<p>
+当 <code>_BitInt(N)</code> 的 \(N \gt 64\) 时, 就把 <code>_BitInt(N)</code> 就像 <code>__int128</code> 那样分类成一个字段宽为 <code>64-bit</code> 的结构体.
+</p></li>
+
+<li><p>
+<code>complex T</code> 类型(也就是复数)中的 <code>T</code> 是 <code>_Float16</code>, <code>float</code>, <code>double</code> 或 <code>__float128</code> 中的一个,
+</p>
+
+<p>
+<code>complex T</code> 就会像如下结构体那样被进行分类:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">complexT</span> {
+  <span style="color: #98fb98;">T</span> <span style="color: #eedd82;">real</span>;
+  <span style="color: #98fb98;">T</span> <span style="color: #eedd82;">imag</span>;
+};
+</pre>
+</div></li>
+
+<li><code>complex long double</code> 会被分类为 <code>COMPLEX_X87</code>.</li>
+
+<li>集合体(结构体和数据)和联合体, 分类算法如下:
+
+<ol class="org-ol">
+<li>如果对象的大小超出 8 个 8 字节, 或者包含未对齐字段, 那么它就属于 <code>MEMORY</code> 类别.</li>
+
+<li><p>
+如果一个 <code>C++</code> 对象不太容易用在调用上, 那么就和 <code>C++ ABI</code> 规定的那样使用一个不可见的引用进行传递.
+</p>
+
+<p>
+具体做法就是把参数列表上的该对象会被替换成一个 <code>INTEGER</code> 类的指针.
+</p></li>
+
+<li>如果集合体的大小超出 8 字节, 那么每个 8 字节块就会被单独分类. 每个 8 字节开始被初始化为 <code>NO_CLASS</code>.</li>
+
+<li><p>
+对象的每个字段也需要分类, 这个过程是递归的, 正因如此, 集合体和联合体会有很多个"候选"类别.
+</p>
+
+<p>
+每个字段的分类需要根据字段和对应的 8 字节块两者的自身类别进行综合考虑, 考虑结果就是作为"候选"类别.
+</p>
+
+<p>
+规则如下:
+</p>
+
+<p>
+a. 如果两者的类别都一样, 那么该类别就是作为"候选"类别.
+</p>
+
+<p>
+b. 如果其中一个的类别是 <code>NO_CLASS</code>, 那么就以另外的对象的类型作为"候选".
+</p>
+
+<p>
+c. 如果其中一个的类别是 <code>MEMORY</code>, 那么"候选"类别就是 <code>MEMORY</code>.
+</p>
+
+<p>
+d. 如果其中一个的类别是 <code>INTEGER</code>, 那么"候选"类别就是 <code>INTEGER</code>.
+</p>
+
+<p>
+e. 如果其中一个的类别是 <code>X87</code>, <code>X87UP</code>, <code>COMPLEX_X87</code>, 那么"候选"类别就是 <code>MEMORY</code>.
+</p>
+
+<p>
+f. 如果前面的规则都不符合, 就以 <code>SSE</code> 作为"候选"类别.
+</p></li>
+
+<li><p>
+当经过前面的分类后, 就要开始进行合并清理(post merger cleanup)过程,
+</p>
+
+<p>
+这个过程就是根据"候选"类别来决定对象如何传递, 规则如下:
+</p>
+
+<p>
+a. 如果集合体里面有一个字段的类别是 <code>MEMORY</code>, 那么整个参数就通过内存传递.
+</p>
+
+<p>
+b. 如果 <code>X87UP</code> 的前面不是 <code>X87</code>, 那么, 整个参数就通过内存传递.
+</p>
+
+<p>
+c. 如果集合体的大小超出 2 个 8 字节, 并且第 1 个 8 字节不是 <code>SSE</code> 类别或其它的 8 字节不是 <code>SSEUP</code>, 那么整个参数就通过内存传递.
+</p>
+
+<p>
+d. 如果 <code>SSEUP</code> 的前面不是 <code>SSE</code> 或 <code>SSEUP</code>, 那么它就被转为 <code>SSE</code> 来处理.
+</p></li>
+</ol></li>
+</ul>
+
+
+<p>
+<b>参数传递</b>
+</p>
+
+<p>
+一旦参数被分好类, 寄存器和栈就会被赋值为这些参数数据.
+</p>
+
+<ol class="org-ol">
+<li>如果为 <code>MEMORY</code> 类型, 那么就把参数传递到栈上的某个地址上, 并且该地址遵守参数的对齐.</li>
+<li>如果为 <code>INTEGER</code> 类型, 那么就使用依次使用 <code>%rdi</code>, <code>%rsi</code>, <code>%rdx</code>, <code>%rcx</code>, <code>%r8</code>, <code>%r9</code> 进行传递.</li>
+<li>如果为 <code>SSE</code> 类型, 那么依次使用 <code>xmm0</code> 到 <code>xmm7</code> 来传递.</li>
+<li>如果为 <code>SSEUP</code> 类型, 那么 8 字节数据就被传递到上一次使用过的向量寄存器中的下一个可用的 8 字节块中.</li>
+<li>如果为 <code>X87</code>, <code>X87UP</code>, <code>COMPLEX_X87</code> 类型, 就被传递到内存上.</li>
+</ol>
+
+
+<p>
+<b>值的返回</b>
+</p>
+
+<ol class="org-ol">
+<li>函数在返回时同样要对返回值进行分类, 与参数分类的算法是一致的.</li>
+<li>如果返回值类型是 <code>MEMORY</code>, 调用者得先为被调用者返回值提供内存空间, 并且把返回值储存在提供的内存上, 以及把内存的地址储存在 <code>%rdi</code> 上.
+在被调用者进行返回的时候, <code>%rdi</code> 上的地址会被赋值到 <code>%rax</code> 上.</li>
+<li>如果返回值类型是 <code>INTEGER</code>, 那么依次使用 <code>%rax</code>, <code>%rdx</code>.</li>
+<li>如果返回值类型是 <code>SSE</code>, 那么依次使用 <code>%xmm0</code>, <code>%xmm1</code>.</li>
+<li>如果返回值类型是 <code>SSEUP</code>, 那么返回 8 字节到上一次使用过的向量寄存器中的下一个可用的 8 字节块中.</li>
+<li>如果返回值类型是 <code>X87</code>, 那么值以一个 <code>80-bit</code> 宽的 <code>X87</code> 数被返回 <code>%st0</code> 上.</li>
+<li>如果返回值类型是 <code>X87UP</code>, 那么值就和上一个 <code>X87</code> 值一起被返回到 <code>%st0</code> 上.</li>
+<li>如果返回值类型是 <code>COMPLEX_X87</code>, 那么复数的实部(real part)被返回到 <code>%st0</code> 上, 虚部(imaginary part)被返回到 <code>%st1</code> 上.</li>
+</ol>
+
+<p>
+<b>寄存器的用法</b>
+</p>
+
+<div id="orgea63713" class="figure">
+<p><img src="../../../files/x86-64-register-usage.png" alt="x86-64-register-usage.png">
+</p>
+<p><span class="figure-number">Figure 65: </span>x86-64 寄存器的用法</p>
+</div>
+</div>
+</li>
+</ul>
+</li>
+
+<li><a id="orgae0b0d8"></a>个人学习心得<br>
+<div class="outline-text-5" id="text-orgae0b0d8">
 <p>
 还有很多东西没有提到, 比如 <code>GCC</code> 会把 <code>C</code> 的结构体, <code>switch</code> 语句, <code>if</code> 语句等等编译成什么样, 这些内容就需要靠自己学习了.
 </p>
 
+<blockquote>
 <p>
-个人推荐去阅读书本 <code>Computer System A Programmer's Perspective 3rd</code> (简称 <code>CSAPP</code>) 的第三章, 边阅读边实践.
+经过这一路的学习, 我相信你必定会觉得这样找出汇编代码和 <code>C</code> 源代码之间的对应关系好累的,
 </p>
 
 <p>
-<br>
+我这里提供三个方便阅读汇编的方法:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">1. &#20351;&#29992; gcc &#32534;&#35793;&#20986;&#24102;&#26377;&#35843;&#35797;&#20449;&#24687;&#30340;&#27719;&#32534;&#20195;&#30721;, &#36825;&#26679;&#27719;&#32534;&#20195;&#30721;&#20250;&#24102; =.loc= &#25351;&#20196;&#26469;&#21578;&#35785;&#20320;&#23427;&#19979;&#38754;&#30340;&#27719;&#32534;&#23545;&#24212;&#28304;&#20195;&#30721;&#30340;&#21738;&#19968;&#34892;</span>
+gcc -S -g main.c -o main.asm
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">2.1 &#20808;&#20351;&#29992; gcc &#32534;&#35793;&#20986;&#24102;&#35843;&#35797;&#20449;&#24687;&#30340;&#30446;&#26631;</span>
+gcc -S -g main.c -o main
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">2.2 &#20877;&#20351;&#29992; objdump &#36755;&#20986;&#21644;&#28304;&#20195;&#30721;&#20132;&#38169;&#30340;&#27719;&#32534;&#20195;&#30721;</span>
+objdump -d -S main &gt; main.asm
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">3. &#20351;&#29992; -fverbose-asm &#36873;&#39033;&#20135;&#29983;&#28304;&#20195;&#30721;&#27880;&#37322;</span>
+gcc -fverbose-asm -S main.c -o main.asm
+</pre>
+</div>
+</blockquote>
+
+<p>
+个人推荐去阅读书本 <code>Computer System A Programmer's Perspective 3rd</code> (简称 <code>CSAPP</code>) 的第三章, 边阅读边实践.
 </p>
 
 <p>
@@ -7681,8 +8231,11 @@ xorl    %eax, %eax
 所以汇编作为 <code>C</code> 的基础完全没有问题.
 </p>
 </div>
+</li>
+</ul>
 </div>
 </div>
+
 
 <div id="outline-container-orgeab7b67" class="outline-3">
 <h3 id="orgeab7b67">机器码和字节码</h3>
@@ -7792,9 +8345,9 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 </div>
 
-<div id="outline-container-orgaba325c" class="outline-2">
-<h2 id="orgaba325c">可执行二进制文件格式 - ELF</h2>
-<div class="outline-text-2" id="text-orgaba325c">
+<div id="outline-container-inside-elf" class="outline-2">
+<h2 id="inside-elf">可执行二进制文件格式 - ELF</h2>
+<div class="outline-text-2" id="text-inside-elf">
 <blockquote>
 <p>
 荀子曰: 不闻不若闻之, 闻之不若见之, 见之不若知之, 知之不若行之. 学至于行而止矣. 行之, 明也.
@@ -7802,7 +8355,15 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </blockquote>
 
 <p>
-在 <code>Linux</code> 上, <code>ELF</code> 是 <code>汇编/C</code> 语言最终产物, 了解这个最终产物的构成就是从一个别样的角度去理解程序本身, 你会知道你写的代码最终会生成什么样的程序, 最后知道想要什么样的程序就改写什么代码.
+在 <code>Linux</code> 上, <code>ELF</code> 是 <code>汇编/C</code> 语言最终产物, 语言里面的很多概念都是为了这个最终产物而存在的, 想要真正理解这些概念, 最好就是了解这个最终产物.
+</p>
+
+<p>
+这一点放到任何一门编译语言上都适用的, 就比如把 <code>C</code> 编译成汇编, 从汇编的角度上可以很好地看透 <code>C</code> 语言的内存管理;
+</p>
+
+<p>
+而 <code>ELF</code> 作为最终产物则是可以很好让我们理解汇编某些指令的作用.
 </p>
 
 <p>
@@ -7811,10 +8372,6 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <p>
 这个章节的目的是给读者提供一个解剖 <code>ELF</code> 文件的实践过程, 读完之后能够反向加深读者对汇编的理解, 以及掌握从字节的层面去分析文件的技能(并不限于 <code>ELF</code> 文件), 以及了解到连接器是如何连接各个模块.
-</p>
-
-<p>
-:CUSTOM<sub>ID</sub>: inside-elf
 </p>
 </div>
 
@@ -7892,10 +8449,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="orgbe93e6e" class="figure">
+<div id="org9ddf597" class="figure">
 <p><img src="../../../files/elf-example-emacs-hexl-mode.png" alt="elf-example-emacs-hexl-mode.png">
 </p>
-<p><span class="figure-number">Figure 63: </span>example 的字节</p>
+<p><span class="figure-number">Figure 66: </span>example 的字节</p>
 </div>
 
 <p>
@@ -7915,11 +8472,11 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-只有把这两者结合起来才能算出字节的偏移地址, 比如第二那个 <code>3e</code> 的字节的偏移地址就为 <code>0x00000010 + 0x02 =&gt; 0x00000012</code>;
+只有把这两者结合起来才能算出字节的偏移地址, 比如第二行的那个 <code>3e</code> 的字节偏移地址就为 <code>0x00000010 + 0x02 =&gt; 0x00000012</code>;
 </p>
 
 <p>
-<code>Area ascii-encode</code> 就是对应 <code>Area byte-data</code> 的 <code>Ascii</code> 编码, 一个字节对应一个字符.
+<code>Area ascii-encoded</code> 就是对应 <code>Area byte-data</code> 的 <code>Ascii</code> 编码, 一个字节对应一个字符.
 </p>
 
 <p>
@@ -7927,7 +8484,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-<a id="orgde721c5"></a> <code>ELF</code> 文件的内容在不同状态下的布局是不一样的, 所谓的不同状态就是只有两个而已: <b>在硬盘上储存时</b> 以及 <b>被加载到了内存上时</b> 两个状态,
+<a id="orgde721c5"></a> <code>ELF</code> 文件的内容在不同状态下的布局是不一样的, 所谓的不同状态就只有 <b>在硬盘上储存时</b> 以及 <b>被加载到了内存上时</b> 两个状态而已,
 </p>
 
 <p>
@@ -7935,10 +8492,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org8854f72" class="figure">
+<div id="org5dd4917" class="figure">
 <p><img src="../../../files/elf-views.jpg" alt="elf-views.jpg">
 </p>
-<p><span class="figure-number">Figure 64: </span>ELF 的链接视图以及执行视图 - 单个文件</p>
+<p><span class="figure-number">Figure 67: </span>ELF 的链接视图以及执行视图 - 单个文件</p>
 </div>
 
 <p>
@@ -7972,10 +8529,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 
 
-<div id="org2d4964a" class="figure">
+<div id="orgf3df9aa" class="figure">
 <p><img src="../../../files/readelf-h-example.png" alt="readelf-h-example.png">
 </p>
-<p><span class="figure-number">Figure 65: </span>readelf -h example</p>
+<p><span class="figure-number">Figure 68: </span>readelf -h example</p>
 </div>
 
 <p>
@@ -8021,7 +8578,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-<code>C</code> 里面的<a href="#orgf1f55e0">结构体</a>的成员在内存里面是按照定义顺序储存的, 也就是说在内存里面, <code>e_ident</code> 一定会在 <code>e_type</code> 之前, <code>e_type</code> 一定会在 <code>e_machine</code> 之前, 如此类推.
+<code>C</code> 里面的结构体的成员在内存里面是按照定义顺序储存的, 也就是说在内存里面, <code>e_ident</code> 一定会在 <code>e_type</code> 之前, <code>e_type</code> 一定会在 <code>e_machine</code> 之前, 如此类推.
 </p>
 
 <p>
@@ -8039,9 +8596,8 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <p>
 该成员类型是长度为 16 的 <code>unsigned char</code> 数组, 在 32/64 位上, 一个 <code>unsigned char</code> 的大小是 1 字节, 因此按照定义该成员在内存里占用 16 个字节.
-</p>
+</p></li>
 
-<ul class="org-ul">
 <li><p>
 <b>偏移范围: 0x00 - 0x03; 字节名: <code>EI_MAG0, EI_MAG1, EI_MAG2, EI_MAG3</code>; 字节值: 0x7f, 0x45, 0x4c, 0x46</b>
 </p>
@@ -8105,7 +8661,6 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <p>
 统一使用 0 填充的区域, 目前没有任何实际意义, 未来可能有用.
 </p></li>
-</ul></li>
 
 <li><p>
 <b>成员名: <code>e_type</code>; 偏移范围: 0x10 - 0x11; 字节值: 0x03, 0x00</b>
@@ -8177,7 +8732,8 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <p>
 这个值实际上就是 <code>_start</code> 标签的内存地址, 你可以通过以下命令来验证:
-</p>
+</p></li>
+</ul>
 
 <div class="org-src-container">
 <pre class="src src-sh">objdump -d example | grep <span style="color: #ffa07a;">"_start"</span>
@@ -8323,8 +8879,9 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <p>
 <code>_start</code> 标签前面的地址就是 <code>0000000000001040</code>, 刚好对应该成员的值.
-</p></li>
+</p>
 
+<ul class="org-ul">
 <li><p>
 <b>成员名: <code>e_phoff</code>; 偏移范围: 0x20 - 0x27; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</b>
 </p>
@@ -8501,10 +9058,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 
 
-<div id="orgb758ad8" class="figure">
+<div id="org0c8b024" class="figure">
 <p><img src="../../../files/readelf-l-example.png" alt="readelf-l-example.png">
 </p>
-<p><span class="figure-number">Figure 66: </span>readelf -l example</p>
+<p><span class="figure-number">Figure 69: </span>readelf -l example</p>
 </div>
 
 <p>
@@ -8656,7 +9213,8 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <p>
 段的掩码(bit mask), 标识段是否可写, 可读以及可执行等等.
-</p>
+</p></li>
+</ul>
 
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">PF_X</span>            (1 &lt;&lt; 0)        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Segment is executable</span><span style="color: #ff7f24;"> */</span>
@@ -8677,8 +9235,9 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <p>
 该例子是可写段.
-</p></li>
+</p>
 
+<ul class="org-ul">
 <li><p>
 <b>成员名: <code>p_offset</code>; 偏移范围: 0x48 - 0x4f; 字节值: 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</b>
 </p>
@@ -8748,7 +9307,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-段的数据对齐<a href="#orgc371273">No description for this link</a>.
+段的数据对齐<a href="#orgc371273">4</a>.
 </p>
 
 <p>
@@ -8766,10 +9325,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org3801bf7" class="figure">
+<div id="orgf93105a" class="figure">
 <p><img src="../../../files/readelf-S-example.png" alt="readelf-S-example.png">
 </p>
-<p><span class="figure-number">Figure 67: </span>readelf -S example</p>
+<p><span class="figure-number">Figure 70: </span>readelf -S example</p>
 </div>
 
 <p>
@@ -9149,9 +9708,8 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 我们的这个例子的节类型是 <code>SHT_PROGBITS</code>
 </p></li>
 
-<li><p>
-<b>成员名: <code>sh_flags</code>; 偏移范围: 0x36c0 - 0x36c7; 字节值: 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</b>
-</p>
+<li><b>成员名: <code>sh_flags</code>; 偏移范围: 0x36c0 - 0x36c7; 字节值: 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</b></li>
+</ul>
 
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Legal values for sh_flags (section flags).</span><span style="color: #ff7f24;">  */</span>
@@ -9176,8 +9734,9 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">SHF_EXCLUDE</span>           (1U &lt;&lt; 31) <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Section is excluded unless</span>
 <span style="color: #ff7f24;">                                            referenced or allocated (Solaris).</span><span style="color: #ff7f24;">*/</span>
 </pre>
-</div></li>
+</div>
 
+<ul class="org-ul">
 <li><p>
 <b>成员名: <code>sh_addr</code>; 偏移范围: 0x36c8 - 0x36cf; 字节值: 0x18, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</b>
 </p>
@@ -9257,7 +9816,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <div id="outline-container-linking" class="outline-2">
 <h2 id="linking">连接</h2>
 <div class="outline-text-2" id="text-linking">
-<pre class="example" id="org89a66c1">
+<pre class="example" id="orgee2895d">
 这部分内容摘录自 CSAPP 的连接.
 </pre>
 
@@ -9473,10 +10032,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="orgca3a726" class="figure">
+<div id="org3e92203" class="figure">
 <p><img src="../../../files/readelf-s-example.png" alt="readelf-s-example.png">
 </p>
-<p><span class="figure-number">Figure 68: </span>readelf -s example</p>
+<p><span class="figure-number">Figure 71: </span>readelf -s example</p>
 </div>
 </div>
 </div>
@@ -9521,10 +10080,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org276544e" class="figure">
+<div id="org8b0f6ed" class="figure">
 <p><img src="../../../files/elf-views-2.png" alt="elf-views-2.png">
 </p>
-<p><span class="figure-number">Figure 69: </span>多个目标文件的同类节聚合</p>
+<p><span class="figure-number">Figure 72: </span>多个目标文件的同类节聚合</p>
 </div>
 
 <p>
@@ -9629,23 +10188,23 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <div class="org-src-container">
 <pre class="src src-c">foreach <span style="color: #98fb98;">section</span> <span style="color: #eedd82;">s</span> {
-    foreach relocation <span style="color: #98fb98;">entry</span> <span style="color: #eedd82;">r</span> {
-        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">s is the array of the 4-byte reference that needs to be relocated</span><span style="color: #ff7f24;"> */</span>
-        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">s also stands for the location to the first 4-byte reference</span><span style="color: #ff7f24;"> */</span>
-        refptr = s + r.r_offset; <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">ptr to reference to be relocated</span><span style="color: #ff7f24;"> */</span>
+  foreach relocation <span style="color: #98fb98;">entry</span> <span style="color: #eedd82;">r</span> {
+    <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">s is the array of the 4-byte reference that needs to be relocated</span><span style="color: #ff7f24;"> */</span>
+    <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">s also stands for the location to the first 4-byte reference</span><span style="color: #ff7f24;"> */</span>
+    refptr = s + r.r_offset; <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">ptr to reference to be relocated</span><span style="color: #ff7f24;"> */</span>
 
-        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Relocate a PC-relative reference</span><span style="color: #ff7f24;"> */</span>
-        <span style="color: #00ffff;">if</span> (r.type == R_X86_64_PC32) {
-            refaddr = ADDR(s) + r.r_offset; <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">ref&#8217;s run-time address</span><span style="color: #ff7f24;"> */</span>
-            *refptr = (<span style="color: #98fb98;">unsigned</span>) (ADDR(r.symbol) + r.r_addend - refaddr);
-        }
-
-        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Relocate an absolute reference</span><span style="color: #ff7f24;"> */</span>
-        <span style="color: #00ffff;">if</span> (r.type == R_X86_64_32) {
-            *refptr = (<span style="color: #98fb98;">unsigned</span>) (ADDR(r.symbol) + r.r_addend);
-        }
-
+    <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Relocate a PC-relative reference</span><span style="color: #ff7f24;"> */</span>
+    <span style="color: #00ffff;">if</span> (r.type == R_X86_64_PC32) {
+      refaddr = ADDR(s) + r.r_offset; <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">ref&#8217;s run-time address</span><span style="color: #ff7f24;"> */</span>
+      *refptr = (<span style="color: #98fb98;">unsigned</span>) (ADDR(r.symbol) + r.r_addend - refaddr);
     }
+
+    <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Relocate an absolute reference</span><span style="color: #ff7f24;"> */</span>
+    <span style="color: #00ffff;">if</span> (r.type == R_X86_64_32) {
+      *refptr = (<span style="color: #98fb98;">unsigned</span>) (ADDR(r.symbol) + r.r_addend);
+    }
+
+  }
 }
 </pre>
 </div>
@@ -9678,10 +10237,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <span style="color: #98fb98;">void</span> <span style="color: #87cefa;">addvec</span>(<span style="color: #98fb98;">int</span> *<span style="color: #eedd82;">x</span>, <span style="color: #98fb98;">int</span> *<span style="color: #eedd82;">y</span>,
             <span style="color: #98fb98;">int</span> *<span style="color: #eedd82;">z</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>)
 {
-    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
-    addcnt++;
-    <span style="color: #00ffff;">for</span> (i = 0; i &lt; n; i++)
-        z[i] = x[i] + y[i];
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
+  addcnt++;
+  <span style="color: #00ffff;">for</span> (i = 0; i &lt; n; i++)
+    z[i] = x[i] + y[i];
 }
 </pre>
 </div>
@@ -9693,10 +10252,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <span style="color: #98fb98;">void</span> <span style="color: #87cefa;">multvec</span>(<span style="color: #98fb98;">int</span> *<span style="color: #eedd82;">x</span>, <span style="color: #98fb98;">int</span> *<span style="color: #eedd82;">y</span>,
              <span style="color: #98fb98;">int</span> *<span style="color: #eedd82;">z</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>)
 {
-    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
-    multcnt++;
-    <span style="color: #00ffff;">for</span> (i = 0; i &lt; n; i++)
-        z[i] = x[i] * y[i];
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
+  multcnt++;
+  <span style="color: #00ffff;">for</span> (i = 0; i &lt; n; i++)
+    z[i] = x[i] * y[i];
 }
 </pre>
 </div>
@@ -9722,9 +10281,9 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>()
 {
-    addvec(x, y, z, 2);
-    printf(<span style="color: #ffa07a;">"z = [%d %d]\n"</span>, z[0], z[1]);
-    <span style="color: #00ffff;">return</span> 0;
+  addvec(x, y, z, 2);
+  printf(<span style="color: #ffa07a;">"z = [%d %d]\n"</span>, z[0], z[1]);
+  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -9750,10 +10309,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org2857666" class="figure">
+<div id="org08fc591" class="figure">
 <p><img src="../../../files/gcc-linking-with-static-library.png" alt="gcc-linking-with-static-library.png">
 </p>
-<p><span class="figure-number">Figure 70: </span>静态连接</p>
+<p><span class="figure-number">Figure 73: </span>静态连接</p>
 </div>
 
 <p>
@@ -9887,10 +10446,10 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 
-<div id="org7e6c233" class="figure">
+<div id="orgb094c7e" class="figure">
 <p><img src="../../../files/gcc-linking-with-dynamic-linking.png" alt="gcc-linking-with-dynamic-linking.png">
 </p>
-<p><span class="figure-number">Figure 71: </span>动态连接</p>
+<p><span class="figure-number">Figure 74: </span>动态连接</p>
 </div>
 
 <p>
@@ -10016,10 +10575,10 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 
-<div id="org680d83e" class="figure">
+<div id="org5af88d4" class="figure">
 <p><img src="../../../files/libvector-data-pic.png" alt="libvector-data-pic.png">
 </p>
-<p><span class="figure-number">Figure 72: </span>使用 GOT 引用一个全局变量</p>
+<p><span class="figure-number">Figure 75: </span>使用 GOT 引用一个全局变量</p>
 </div>
 
 <p>
@@ -10096,10 +10655,10 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 
-<div id="org4f4b5e6" class="figure">
+<div id="org1c7163d" class="figure">
 <p><img src="../../../files/use-got-and-plt-to-call-extern-func.png" alt="use-got-and-plt-to-call-extern-func.png">
 </p>
-<p><span class="figure-number">Figure 73: </span>使用 PLT 和 GOT 调用外部函数, 图(a) 第一次调用 addvec, 图(b) 后续调用 addvec</p>
+<p><span class="figure-number">Figure 76: </span>使用 PLT 和 GOT 调用外部函数, 图(a) 第一次调用 addvec, 图(b) 后续调用 addvec</p>
 </div>
 
 <p>
@@ -10177,7 +10736,7 @@ ar rcs libvector.a addvec.o multvec.o
 <div id="outline-container-org7b6b0ec" class="outline-3">
 <h3 id="org7b6b0ec">库干预 (Library Interpositioning)</h3>
 <div class="outline-text-3" id="text-org7b6b0ec">
-<pre class="example" id="org476c7e2">
+<pre class="example" id="orgec1f65a">
 也有人称之为"库打桩", 个人比较喜欢库干预, 既符合原本词意, 也符合直觉.
 
 但是互联网上用"库打桩"的叫法也不少, 所以还是要知道有这个叫法的.
@@ -10333,51 +10892,51 @@ ar rcs libvector.a addvec.o multvec.o
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Makefile-compile-time</span>
 <span style="color: #87cefa;">mainc</span>: main.c mymalloc.o
-        gcc -I. -o mainc main.c mymalloc.o
+gcc -I. -o mainc main.c mymalloc.o
 
 <span style="color: #87cefa;">mymalloc.o</span>: mymalloc.c
-        gcc -DCOMPILETIME -c mymalloc.c
+gcc -DCOMPILETIME -c mymalloc.c
 
 <span style="color: #87cefa;">.PHONY</span>: run
 
 <span style="color: #87cefa;">run</span>: mainc
-        [ -e mymalloc.o ] &amp;&amp; rm mymalloc.o
-        (./mainc)
+[ -e mymalloc.o ] &amp;&amp; rm mymalloc.o
+(./mainc)
 </pre>
 </div>
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Makefile-link-time</span>
 <span style="color: #87cefa;">mainl</span>: mainl.o mymalloc.o
-        gcc -Wl,--wrap,malloc -Wl,--wrap,free -o mainl mainl.o mymalloc.o
+gcc -Wl,--wrap,malloc -Wl,--wrap,free -o mainl mainl.o mymalloc.o
 
 <span style="color: #87cefa;">mainl.o</span>: main.c
-        gcc -c -o mainl.o main.c
+gcc -c -o mainl.o main.c
 
 <span style="color: #87cefa;">mymalloc.o</span>: mymalloc.c
-        gcc -DLINKTIME -c mymalloc.c
+gcc -DLINKTIME -c mymalloc.c
 
 <span style="color: #87cefa;">.PHONY</span>: run
 
 <span style="color: #87cefa;">run</span>: mainl
-        [ -e mymalloc.o ] &amp;&amp; rm mymalloc.o
-        [ -e mainl.o ] &amp;&amp; rm mainl.o
-        (./mainl)
+[ -e mymalloc.o ] &amp;&amp; rm mymalloc.o
+[ -e mainl.o ] &amp;&amp; rm mainl.o
+(./mainl)
 </pre>
 </div>
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Makefile-run-time</span>
 <span style="color: #87cefa;">mymalloc.so</span>: mymalloc.c
-        gcc -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
+gcc -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
 
 <span style="color: #87cefa;">mainr</span>: main.c
-        gcc -o mainr main.c
+gcc -o mainr main.c
 
 <span style="color: #87cefa;">.PHONY</span>: run
 
 <span style="color: #87cefa;">run</span>: mainr mymalloc.so
-        <span style="color: #eedd82;">(LD_PRELOAD</span>=<span style="color: #ffa07a;">"./mymalloc.so"</span> ./mainr)
+<span style="color: #eedd82;">(LD_PRELOAD</span>=<span style="color: #ffa07a;">"./mymalloc.so"</span> ./mainr)
 </pre>
 </div>
 </div>
@@ -10496,7 +11055,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <div class="org-src-container">
-<pre class="src src-shell"><span style="color: #b0c4de;">export</span> <span style="color: #eedd82;">LD_PRELOAD</span>=$(<span style="color: #b0c4de;">pwd</span>)/mymalloc.so &amp;&amp; ldd mainr &amp;&amp; <span style="color: #b0c4de;">unset</span> LD_PRELOAD
+<pre class="src src-shell"><span style="color: #b0c4de;">export</span> <span style="color: #eedd82;">LD_PRELOAD</span>=$(<span style="color: #fa8072;">pwd</span>)/mymalloc.so &amp;&amp; ldd mainr &amp;&amp; <span style="color: #b0c4de;">unset</span> LD_PRELOAD
 </pre>
 </div>
 
@@ -10546,11 +11105,11 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 <p>
-修正内容就是把 <code>RUNTIME</code> 部分的 <code>fprintf</code> 的调用替换掉原来的 <code>printf</code> 调用.
+我们只要把 <code>RUNTIME</code> 部分的 <code>fprintf</code> 的调用替换成 <code>printf</code> 调用就能还原原本问题了.
 </p>
 
 <p>
-要调试出这个错误原因得先确保两点:
+要调试这个错误原因得先确保两点:
 </p>
 
 <ul class="org-ul">
@@ -10571,10 +11130,10 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="org6e1eae7" class="figure">
+<div id="org2728bc1" class="figure">
 <p><img src="../../../files/core-dump-disabled.png" alt="core-dump-disabled.png">
 </p>
-<p><span class="figure-number">Figure 74: </span>Core Dump 未开启</p>
+<p><span class="figure-number">Figure 77: </span>Core Dump 未开启</p>
 </div>
 
 <p>
@@ -10582,10 +11141,10 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="org5b16475" class="figure">
+<div id="orgffb7dab" class="figure">
 <p><img src="../../../files/core-dump-enabled.png" alt="core-dump-enabled.png">
 </p>
-<p><span class="figure-number">Figure 75: </span>临时开启 Core Dump</p>
+<p><span class="figure-number">Figure 78: </span>临时开启 Core Dump</p>
 </div>
 
 <p>
@@ -10610,29 +11169,27 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 
 <div class="org-src-container">
 <pre class="src src-makefile"><span style="color: #87cefa;">mymalloc.so</span>: mymalloc.c
-        gcc -g -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
+gcc -g -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
 
 <span style="color: #87cefa;">mainr</span>: main.c
-        gcc -g -o mainr main.c
+gcc -g -o mainr main.c
 
 <span style="color: #87cefa;">.PHONY</span>: run
 
 <span style="color: #87cefa;">run</span>: mainr mymalloc.so
-        <span style="color: #eedd82;">(LD_PRELOAD</span>=<span style="color: #ffa07a;">"./mymalloc.so"</span> ./mainr)
+<span style="color: #eedd82;">(LD_PRELOAD</span>=<span style="color: #ffa07a;">"./mymalloc.so"</span> ./mainr)
 </pre>
-</div></li>
-</ul>
-
+</div>
 
 <p>
 在做好准备后就可以重新构建项目并且运行, 这回会出现以下错误:
 </p>
 
 
-<div id="org878810b" class="figure">
+<div id="org29a883a" class="figure">
 <p><img src="../../../files/core-dump-for-csapp-example.png" alt="core-dump-for-csapp-example.png">
 </p>
-<p><span class="figure-number">Figure 76: </span>Core dump file for the example</p>
+<p><span class="figure-number">Figure 79: </span>Core dump file for the example</p>
 </div>
 
 <p>
@@ -10644,10 +11201,10 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="org49743cc" class="figure">
+<div id="orgd028d74" class="figure">
 <p><img src="../../../files/core-dump-debug-for-example.png" alt="core-dump-debug-for-example.png">
 </p>
-<p><span class="figure-number">Figure 77: </span>从 Core File 中获取程序中止时的 backtrace (从后往前看才是函数的调用顺序)</p>
+<p><span class="figure-number">Figure 80: </span>从 Core File 中获取程序中止时的 backtrace (从后往前看才是函数的调用顺序)</p>
 </div>
 
 <p>
@@ -10664,7 +11221,8 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 
 <p>
 所以换成内部没有调用 <code>malloc</code> 的 <code>fprintf</code> 函数就解决问题了.
-</p>
+</p></li>
+</ul>
 </blockquote>
 </div>
 </div>
@@ -10711,7 +11269,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2020-12-14</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.2 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

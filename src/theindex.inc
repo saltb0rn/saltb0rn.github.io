@@ -1,19 +1,34 @@
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=1632f2cde21153944796b1be3d51f7ee][OpenGL/WebGL自救指南]]
+*** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]
+最近公司给我分配了一个任务: 需要开发一个 3D 拓扑图的库.
+
+以前一直都是写应用的, 没有写 JS 库的经验, 现在正好来了一个学习的机会.
+# 记录开发一个Javascript库的过程
+
+	
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=73997aedd530aa52537f9e7a24aa631c][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
 
-身边遇到了不少好人; 当然了, 也有一些不顺心的事情, 但总体上来说是偏好的.
+同时由于工作繁忙的原因, 图形学学习计划搁置了一年, 当时就停留在贴图映射的阶段.
 
-也因为这样, 图形学学习计划搁置了一年, 当时就停留在贴图映射以及 =WebGL= 的掌握阶段.
+另外搁置搁置还有一个原因, 那就是当时在学习贴图映射时所在的参考书有点不太易懂,
 
-我决定先从 =WebGL= 开始进行康复锻炼, 因为当时还是有些地方缺乏理解的:
+所以需要找一本更易读的书, 我找到了 [[https://gabrielgambetta.com/computer-graphics-from-scratch/][Computer Graphics from Scratch]], 当这本书当前还没完成编写, 因此决定等它出版了再继续学.
 
-=OpenGL/WebGL= 上下文(OpenGL/WebGL Context), 也就是 =GPU=, 是如何接收, 储存以及使用数据.
+-----
 
-要真正掌握 =OpenGL= 的 =Shading Language= (GLSL) 就需要理解这一块.
+PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这本书, 期间使用 =C= 语言按照书上的伪代码实践了一遍.
 
-没错, 这篇文章不是主要讲数学的, 数学方面的内容我以后会继续写.
+个人感觉等待这本书的完成是一个正确的选择, 它指导了我编写两个完整的渲染器, 简单易懂地解释了图形学里面一些较为复杂的算法.
+
+我本人在读这本书之前就已经较为深入地学习了一些 [[../..//2020/06/graphics-geometric-transformation.html][数学细节]] 以及 [[../../2020/06/graphics-opengl-transformation.html][OpenGL的渲染管线]],
+
+在跟着书本实践时特地找出这些知识和实践的对应之处, 学习效果非常地好.
+
+这本书清晰了我在学习渲染管线时的一些迷糊之处, 而之前所学的数学细节以及渲染管线知识又很好地弥补了这本书在这方面的空缺.
+
+现在回过头来看 =Shader= 程序如何运作时, 很多东西都豁然开朗了.
 
 	
 *** [[file:posts/2021/11/cake-cut.html?hash=89b204dbf435af8f53061ab2498d73dd][切饼问题]]
@@ -22,7 +37,7 @@
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/06/things-about-c-development.html?hash=2cfcccf1e256d10f22b5899f39719e82][关于使用C语言开发的那些事]]
+*** [[file:posts/2021/06/things-about-c-development.html?hash=34b2e448ff8e4c330c39c9e15daf7286][关于使用C语言开发的那些事]]
 *注意*, 看这篇笔记时请务必先学习 =x86= 汇编, 因为 =C= 代码会被编译成汇编,
 
 只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
@@ -60,7 +75,7 @@
 不确定文档上的说明和我个人的理解是否一致,或者说有没有一些文档上没有说明的内容.
 
 	
-*** [[file:posts/2021/03/remainder-vs-modulo.html?hash=d0a7dabcf6f5b3f2516cea205e3a6cdf][取余和取模的区别]]
+*** [[file:posts/2021/03/remainder-vs-modulo.html?hash=b4977a5d8a39be3a3626e3528bb9ae74][取余和取模的区别]]
 说来惭愧,一直以来都没有真正明白取余(remainder operation)和取模(modulo operation)的区别,不是说他们计算的区别,而是用途上区别,
 
 当然了,计算上的区别我也是不知道的,但是总有一两次会遇得到这其中所暴露的问题,所以今天就想办法理解它们的区别.
@@ -72,7 +87,7 @@
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=9b63cbd663cfb24b191e1f53e08c77a5][x86 汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=f04db9794ea75af802d6bcdd8811f25e][x86 汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕 =x86= 32 位来讲的, 我读这本书的时候 =x86= 64 位架构已经非常普遍了, 也就是说这本书已经有点过时了, 况且关于浮点数这块基本上没讲过.
@@ -130,8 +145,8 @@
 这篇笔记主要是关于光和材质方面的概念,在学习以后你会知道如何编写 =Fragment Shader= 来控制光照效果,不过我们还是会从没有 =GLSL= 的 =OpenGL 1.X= 开始学习.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=9865e0ad9921b70f219d2a61984a82fd][图形学-OpenGL坐标变换]]
-之前只讲了几何变换,也就是最简单的变换, =OpenGL= 里面还有很多其它变换,本文主要讲述 =OpenGL= 的各种坐标系以及它们之间的转换,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=d0a01f84e872a74036d8141ec56ccf6b][图形学-OpenGL坐标变换]]
+之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
 
@@ -142,7 +157,7 @@
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=6c297123aaacb2fca3a254564369bc40][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=7993491243d55ba8a4bb5984d1e5f7f4][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -194,6 +209,10 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 距离上一次英语消灭进行经是几个月前了,当时还是没有坚持下来,现在要开始重启这个计划了,还是不能小看"积累"的力量.
 
 这次的阅读材料取自于 =VA-11 HALL-A:Cyberpunk Bartender Action=,游戏里的日期是 =Tue 13/12=.
+
+	
+*** [[file:posts/2019/12/linear-algebra-notes.html?hash=f16cee94383b82c3be8cba49269fd133][线性代数读书随笔 (部分内容需要严格验证)]]
+"程序员的数学3线性代数"读书随笔
 
 	
 *** [[file:posts/2019/11/canvas-intro.html?hash=d7ed0af41591a9756520e60e15c301e1][Canvas入门而不入土]]
@@ -333,7 +352,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 还有个人建议不要使用书中展示的代码,因为存在一些BUG问题,并且没有得到更新,建议使用书本作者在Github上的repo: [[https://github.com/mwand/eopl3]],该 =repo= 会及时更新.
 
 	
-*** [[file:posts/2018/11/eopl-interpreter.html?hash=3e7e2ed0dfa14d52e3ff8e6e89455815][The Interpreter]]
+*** [[file:posts/2018/11/eopl-interpreter.html?hash=f7cc4e3a660d146d76866e7afeccab86][The Interpreter]]
 之前写了一篇关于 =The Sllgen Parser= 的文章,那是我了解 =parser= 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
 
 之所以要写这两篇文章是因为之前读 =EOPL= 的时候太匆忙了,书本提供的代码只是过了一遍,没有形成一个写 =interpreter= 该有的思路.
@@ -414,7 +433,7 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=71737dc12f74037d32bcb49ebab48131][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips.html?hash=532dd759881529b09d13ad1a509b95b2][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔
@@ -443,7 +462,7 @@ HPC来部署分布式应用,我跳过了这两章节.第2节是讲述异步编�
 书.
 
 	
-*** [[file:posts/2018/08/tornado-with-docker.html?hash=d02ac4862177b723ea37e158dd652ae4][用Docker打包Tornado项目]]
+*** [[file:posts/2018/08/tornado-with-docker.html?hash=03b9c1e75f96d5361a9ff427822bfb75][用Docker打包Tornado项目]]
 Docker是近几年一种新的容器技术,它的应用场景实在是太广泛了,除了在产品线上使用,我还见到过用来打包GUI应用的
 [[http://fabiorehm.com/blog/2014/09/11/running-gui-apps-with-docker/][利用X11 socket与打包的Firefox通信]],还有利用同样原理对[[https://github.com/JAremko/docker-emacs][Emacs进行打包]]. 然而强大的工具都需要比较长的时间来学
 习,其实我自己也没有用过多少次,用Docker的时候大多数都是用来搭个简单的API服务器用来测试,所以这里写一篇简单

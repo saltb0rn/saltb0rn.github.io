@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-05-09 Tue 09:46 -->
+<!-- 2024-02-27 Tue 10:15 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -197,27 +197,38 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
-
-        "HTML-CSS": { scale: 1.0,
-                        linebreaks: { automatic: "%LINEBREAKS" },
-                        webFont: "mathjax-modern"
-                       },
-        SVG: {scale: 1.0,
-              linebreaks: { automatic: "%LINEBREAKS" },
-              font: "mathjax-modern"},
-        NativeMML: {scale: 1.0},
-        TeX: { equationNumbers: {autoNumber: "%AUTONUMBER"},
-               MultLineWidth: "85%",
-               TagSide: "amsIDE",
-               TagIndent: ".8em"
-             }
-});
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
 </script>
-<script src="../../../js/mathjax/es5/tex-mml-chtml.js"></script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -265,9 +276,9 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org54bec21">
+<div class="abstract" id="org925e264">
 <p>
-之前只讲了几何变换,也就是最简单的变换, <code>OpenGL</code> 里面还有很多其它变换,本文主要讲述 <code>OpenGL</code> 的各种坐标系以及它们之间的转换,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
+之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 </p>
 
 <p>
@@ -301,7 +312,7 @@
 </p>
 
 
-<div id="org1c7cbe0" class="figure">
+<div id="orgab1b9ce" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg">
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -351,6 +362,24 @@
 对于 3D 也是适用的,都是增加额外一个维度,不过这个额外的维度意义重大,它引入了透视这个概念,为 3D 坐标映射到 2D 坐标提供了可能(总得来说提供了高维度到低一维度转变的可能).
 </p>
 
+<blockquote>
+<p>
+其实 \(w\) 分量还有有区分点(points)与向量(vectors)的作用.
+</p>
+
+<p>
+假设有一个表达式 \(P = \left(x, y, z\right)\), <b>在没有特殊说明下</b>, 人们无从得知 \(P\) 是点还是向量, 因为点和向量的表示都一样.
+</p>
+
+<p>
+因此人们添加 \(w\) 作为标识用来区分 \(P\) 是点还是向量: \(P = \left(x, y, z, w\right)\).
+</p>
+
+<p>
+当 \(w = 0\) 时, \(P\) 就是向量, 否则 \(P\) 就是点.
+</p>
+</blockquote>
+
 <p>
 更多关于齐次空间的内容可以参考这些资源:
 </p>
@@ -396,7 +425,7 @@
 </p>
 
 
-<div id="org9d070ad" class="figure">
+<div id="org74ad3ae" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png">
 </p>
 </div>
@@ -433,6 +462,36 @@
 因为 \(\vec{p_{1}}\) 和 \(\vec{n}\) 是共线且同向的,所以它们关系满足 \(\vec{p_{1}} = k \cdot \vec{n} = \left(ka, kb, kc\right)\), \(k\) 是一个常量,也就是说 \(ax + by + cz - k \cdot \left(a^{2} + b^{2} + c^{2}\right) = 0\).
 </p>
 
+<blockquote>
+<p>
+实际上平面方程还有一个含义: 那么就是点 \(p\) 到平面 \(P\) 的距离 \(ax + by + cz - k \cdot \left(a^{2} + b^{2} + c^{2}\right)\) 为 0.
+</p>
+
+<p>
+按照这个含义, \(ax + by + cz - k \cdot \left(a^{2} + b^{2} + c^{2}\right)\) 就是点 \(p\) 到平面 \(P\) 的距离.
+</p>
+
+<p>
+但这个距离是有正负的, 因此这个距离也被称为符号距离(signed distance), 这里先把它称呼为 <code>SD</code>;
+</p>
+
+<p>
+所以, \(SD = ax + by + cz - k \cdot \left(a^{2} + b^{2} + c^{2}\right)\).
+</p>
+
+<p>
+那么这个 <code>SD</code> 有什么用呢? 它可以用来判断点 \(p\) 与平面 \(P\) 之间的相对位置.
+</p>
+
+<p>
+比如, \(SD \gt 0\) 表示 \(p\) 在 \(P\) 的正面, \(SD = 0\) 表示 \(p\) 在 \(P\) 里面, \(SD \lt 0\) 表示 \(p\) 在 \(P\) 的背面;
+</p>
+
+<p>
+当然, "正为正, 负为背" 的情况也可以相互反过来, 具体看人们如何定义.
+</p>
+</blockquote>
+
 <p>
 如果 \(\vec{n}\) 是单位向量,因为 \(a^{2} + b^{2} + c^{2} = 1\),所以整个等式变为 \(ax + by + cz - k = 0\),这种情况下 \(k\) 就是平面 \(P\) 到原点的距离 \(d\) 了, 而 \(d = - \left(ax_{1} + by_{1} + cz_{1}\right)\),那么等式变成 \(ax + by + cz + d = 0\).
 </p>
@@ -444,16 +503,29 @@
 <p>
 假设点 \(p = \left(x, y, z, w\right)\) 满足 \(P \cdot p = ax + by + cz + dw = 0\),那么点 \(p\) 就在平面 \(P\) 上.这里 \(d = \frac{-\left(ax_{1} + by_{1} + cz_{1}\right)}{w}\),如果 \(w = 1\),那整个等式就和欧几里得空间下的平面方程一样.
 </p>
-</div>
-</div>
-</div>
 
+<blockquote>
+<p>
+总结一下, 只要有一个平面上的任意点 \(p = \left(x_{1}, y_{1}, z_{1}\right)\) 和该平面的法线向量 \(\hat{n} = \left(a, b, c\right)\), 那么就能确定一个平面方程: \(ax + by + cz + dw = 0\).
+</p>
+
+<p>
+其中 \(d = \frac{-\left(\vec{n} \cdot p\right)}{w}\), 而 \(w\) 是 \(p\) 点的齐次坐标版本 \(p^{'} = \left(\begin{array}{c|c}p | w\end{array}\right)\) 的 \(w\) 分量.
+</p>
+
+<p>
+而通常来说, 人们会用 \(w\) 不为零来表示 \(p^{'}\) 是点坐标, 而不是向量. 当 \(w = 1\) 时, \(d\) 就变得非常好处理.
+</p>
+</blockquote>
+</div>
+</div>
+</div>
 
 <div id="outline-container-org98b7c3a" class="outline-2">
 <h2 id="org98b7c3a">OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-org98b7c3a">
 
-<div id="orgf3ea79f" class="figure">
+<div id="orga5e3874" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -485,6 +557,14 @@
 <div class="outline-text-3" id="text-org124047f">
 <p>
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
+</p>
+
+<p>
+我们假设现在在该坐标系下有一个点 \(p_{o} = \left(x_{o}, y_{o}, z_{o}\right)\),
+</p>
+
+<p>
+这个点会带着我们一探它会经历过哪些变化.
 </p>
 </div>
 </div>
@@ -533,21 +613,33 @@ B. 把对象放到场景(scene)/世界(world)中.
 其中 \(\left(\begin{array}{c}m_{1x} \\ m_{1y} \\ m_{1z}\end{array}\right)\), \(\left(\begin{array}{c}m_{2x} \\ m_{2y} \\ m_{2z}\end{array}\right)\) 以及 \(\left(\begin{array}{c}m_{3x} \\ m_{3y} \\ m_{3z}\end{array}\right)\) 分别是 \(x\), \(y\) 以及 \(z\) 轴, 至于 \(\left(\begin{array}{c}d_{x} \\ d_{y} \\ d_{z} \end{array}\right)\) 是负责平移.
 </p>
 
-<pre class="example" id="orgc12ab69">
+<blockquote>
+<p>
 通过一个 2D 例子想象一下 ,我们已经画了一个三角形,要把它放到已经画好的正方形上,它们都有各自的坐标系,也就是上面提到的对象坐标系,
+</p>
 
+<p>
 通常来说都希望系统对象都是居中到坐标系的中心,也就是原点上,或者至少使用原点作为参考点(reference point),
+</p>
 
-首先把三角形放到正方形的原点上,然后 *通常* 按照缩放,旋转以及平移这个顺序参考正方形的坐标系原点进行几何变换,
+<p>
+首先把三角形放到正方形的原点上,然后 <b>通常</b> 按照缩放,旋转以及平移这个顺序参考正方形的坐标系原点进行几何变换,
+</p>
 
+<p>
 按照这个顺序变换是因为缩放和旋转不会让三角形偏移参考点,而平移是会偏移参考点的,如果先平移再缩放和旋转的话,直接按照参考点进行缩放和旋转会出现问题.
+</p>
 
-不过要记住, OpenGL 里面会按照相反的指令顺序执行变换的,所以如果是想按照 *缩放,旋转和平移* 这个顺序进行变换,那么代码里面就要按照 *平移,旋转和缩放* 这个顺序写.
-</pre>
+<p>
+不过要记住, OpenGL 里面会按照相反的指令顺序执行变换的,所以如果是想按照 <b>缩放,旋转和平移</b> 这个顺序进行变换,那么代码里面就要按照 <b>平移,旋转和缩放</b> 这个顺序写.
+</p>
+</blockquote>
+
+<p>
+这个阶段结束后会得到一个变换过的点 \(p_{m} = M_{model}p_{o} = \left(x_{m}, y_{m}, z_{m}\right)\).
+</p>
 </div>
 </div>
-
-
 
 <div id="outline-container-org17f01ef" class="outline-3">
 <h3 id="org17f01ef">视点坐标系</h3>
@@ -590,7 +682,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-\(lookAt\) 就是相机从位于原点上看着 \(z\) 的负方向, 到 \(\left(x_{e}, y_{e}, z_{e}\right)\) 的位置上看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的变换, 这些坐标都是定义在世界坐标系上.
+\(lookAt\) 就是相机从位于原点上看着 \(z\) 的负方向, 到 \(\left(x_{c}, y_{c}, z_{c}\right)\) 的位置上看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的变换, 这些坐标都是定义在世界坐标系上.
 </p>
 
 <p>
@@ -610,7 +702,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgbca623d" class="figure">
+<div id="org296f271" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif">
 </p>
 <p><span class="figure-number">Figure 3: </span>相机看小黄鸭的顶部</p>
@@ -621,7 +713,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgb4d87f2" class="figure">
+<div id="org397adef" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif">
 </p>
 <p><span class="figure-number">Figure 4: </span>相机看小黄鸭的正前方</p>
@@ -640,31 +732,49 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-假设相机的变换矩阵是 \(M_{r} = \left(\begin{array}{c} l_{x} & u_{x} & f_{x} & 0 \\ l_{y} & u_{y} & f_{y} & 0 \\ l_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\), 那么 \(M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} l_{x} & l_{y} & l_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)\) (由于 \(M_{r}\) 是一个正交坐标系,而正交坐标系的逆矩阵就是它的转置矩阵).
+假设相机的变换矩阵是 \(M_{r} = \left(\begin{array}{c} l_{x} & u_{x} & f_{x} & 0 \\ l_{y} & u_{y} & f_{y} & 0 \\ l_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\), 那么 \(M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} l_{x} & l_{y} & l_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)\).
 </p>
 
 <p>
-相机现在是位于 \(\left(x_{e}, y_{e}, z_{e}\right)\) 看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的,以相机作为原点建立一个正交坐标系,只要求出该坐标系的三个基底变量就可以解得该矩阵.
+(由于 \(M_{r}\) 是一个旋转矩阵, 而旋转矩阵是<a href="https://en.wikipedia.org/wiki/Orthogonal_matrix">正交矩阵</a>, 正交矩阵的逆矩阵就是它的转置矩阵).
 </p>
 
 <p>
-我们很容易得到 \(\left(f_{x}, f_{y}, f_{z}\right)\),也就是从看的目标的位置到相机的位置: \(forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{e}, y_{e}, z_{e}\right)\),然后求出 \(forward\) 的单位向量 \(f\);
+相机现在是位于 \(\left(x_{c}, y_{c}, z_{c}\right)\) 看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的,以相机作为原点建立一个正交坐标系,只要求出该坐标系的三个基底变量就可以解得该矩阵.
 </p>
 
 <p>
-然后把给出的(<b>如果没给出就用 \(\left(0, 1, 0\right)\)</b>)向上方向的向量 \(up\) 与 \(f\) 进行叉积乘法(注意: \(up\) 和 \(f\) 不一定是垂直的,但两者必定会在同一个平面上),求出同时垂直于它们的向量 \(left\),并且求出单位向量 \(f\);
+我们很容易得到 \(\left(f_{x}, f_{y}, f_{z}\right)\),也就是从看的目标的位置到相机的方向: \(forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{c}, y_{c}, z_{c}\right)\),然后求出 \(forward\) 的单位向量 \(f\);
+</p>
+
+<p>
+然后把给出的(<b>如果没给出就用 \(\left(0, 1, 0\right)\)</b>)向上方向的向量 \(up\) 与 \(f\) 进行叉积乘法求出同时垂直于它们的向量 \(left\), 并且求出单位向量 \(l\);
 </p>
 
 <p>
 最后对 \(f\) 和 \(l\) 进行叉积乘法求出同时垂直于它们的向量 \(u\),这样三个基底变量就解出了.
 </p>
 
+<blockquote>
+<p>
+问什么要用 \(up\) 和 \(f\) 求出 \(l\) 后还得反过来让 \(f\) 和 \(l\) 进行叉积求出 \(u\), 而不是直接对 \(up\) 进行规范化得到 \(u\) 呢?
+</p>
+
+<p>
+这是因为我们建立的矩阵 \(M_{r}\) 是正交坐标系, 也就是 \(l/u/f\) 三者是相互垂直的, 然而 \(up\) 和 \(f\) 只是可以构成一个平面, 但不一定垂直.
+</p>
+</blockquote>
+
 <p>
 <b>到了这一步,整个 <code>Vertex Operation</code> 环节就完成了</b>.
 </p>
 
 <p>
-在 <code>OpenGL</code> 里面,模型变换和视点变换是集成为一个阶段
+在 <code>OpenGL</code> 里面,模型变换和视点变换是集成为一个阶段.
+</p>
+
+<p>
+最后会得到一个新的坐标点 \(p_{e} = M_{view}p_{m} = \left(x_{e}, y_{e}, z_{e}\right)\).
 </p>
 </div>
 
@@ -696,7 +806,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgc940b2e" class="figure">
+<div id="orgfc2f6e7" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png">
 </p>
 </div>
@@ -710,7 +820,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org2571a05" class="figure">
+<div id="org4be0cfe" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png">
 </p>
 </div>
@@ -744,7 +854,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org5a5cc94" class="figure">
+<div id="org2cec561" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png">
 </p>
 </div>
@@ -792,6 +902,28 @@ B. 把对象放到场景(scene)/世界(world)中.
 <p>
 <a href="http://www.glprogramming.com/red/appendixf.html">http://www.glprogramming.com/red/appendixf.html</a>
 </p>
+
+<blockquote>
+<p>
+另外, 还有一些值得注意的点, 在涉及法线变换的计算中, \(M_{modelview}\) 中的平移变换是不影响法线的方向, 也就是说平移变换可以忽略.
+</p>
+
+<p>
+同样, \(M_{modelview}\) 里面的缩放变换是等比缩放的(也就是 \(x\), \(y\), \(z\) 各个分量的缩放系数一致), 只会影响法线长度, 不影响发现的方向, 也是可以一同忽略.
+</p>
+
+<p>
+(题外话, 如果缩放不等比, 法线的方向也会发生变化).
+</p>
+
+<p>
+当这两个变换被忽略后得到的矩阵 \(M\) 就是剩下的物体旋转变换和相机旋转变换之间的乘积, 也就是两个正交矩阵之间的积,
+</p>
+
+<p>
+而正交矩阵之间的积依然是正交矩阵, 因此可简单地通过转置就能求出 \(M\) 的逆矩阵.
+</p>
+</blockquote>
 </div>
 </div>
 </div>
@@ -800,7 +932,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 <h3 id="org99a85ca">3D转化成2D图像</h3>
 <div class="outline-text-3" id="text-org99a85ca">
 <p>
-当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上称成为一张 2D 图片.
+当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上成为一张 2D 图片.
 </p>
 
 <p>
@@ -853,7 +985,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-比如 <code>NDC</code> 的 \(x_{n}\) 分量就是裁剪坐标 \(x_{clip}\) 与视口宽度的 <b>一半</b> 的比例,通过这个比例以及视口的尺寸就可以计算出点在视口中的实际位置.
+比如 <code>NDC</code> 的 \(x_{n}\) 分量就是裁剪坐标 \(x_{clip}\) 与视口宽度的 <b>一半</b> 的比例,这个比例乘以视口的尺寸就可以计算出点在视口中的实际位置.
 </p>
 
 
@@ -870,7 +1002,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-屏幕坐标系就是以屏幕左上角为原点,向右为 \(+x\), 向下为 \(+y\),一个像素为一个单位的坐标系,假设视口是一个左上角位于屏幕的 \(\left(x, y\right)\) 并且宽和高分别为 \(w\) 和 \(h\) 的矩形,
+屏幕坐标系就是以屏幕左上角为原点(<code>OpenGL</code> 传统是左下角为原点),向右为 \(+x\), 向下为 \(+y\),一个像素为一个单位的坐标系,假设视口是一个左上角位于屏幕的 \(\left(x, y\right)\) 并且宽和高分别为 \(w\) 和 \(h\) 的矩形,
 </p>
 
 <p>
@@ -903,14 +1035,14 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgca5dae9" class="figure">
+<div id="org18dff9f" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="org65d74cf" class="figure">
+<div id="orgd36428b" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>正交投影(正交相机看到的内容)</p>
@@ -958,7 +1090,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </ol>
 
 
-<div id="orgb5543cc" class="figure">
+<div id="org1e83c3f" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>透视投影2</p>
@@ -969,21 +1101,25 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-假设投影矩阵 \(M_{projection} = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ w_{l} & w_{u} & w_{f} & w \end{array}\right)\),那么变换过程就是: \(\left(\begin{array}{c} x_{clip} \\ y_{clip} \\ z_{clip} \\ w_{clip} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{eye} \\ y_{eye} \\ z_{eye} \\ w_{eye}\end{array}\right)\), 把裁剪后剩下的顶点变换成 <code>NDC</code>, \(\left(\begin{array}{c}x_{ndc} \\ y_{ndc} \\ z_{ndc}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{clip}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)\).
+假设投影矩阵 \(M_{projection} = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ w_{l} & w_{u} & w_{f} & w \end{array}\right)\),那么变换过程就是: \(p_{p} = \left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = M_{projection}\left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)\),
 </p>
 
 <p>
-下图展示了一个视点空间上的点 \(v_{e} = \left(x_{e}, y_{e}, z_{e}\right)\) 如何投影到近裁剪平面的点 \(v_{clip} = \left(x_{p}, y_{p}, z_{p}\right)\) 上.
+把裁剪后剩下的顶点变换成 <code>NDC</code>, \(p_{n} = \left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)\).
+</p>
+
+<p>
+下图展示了一个视点空间上的点 \(p_{e}\) 如何投影到近裁剪平面的点 \(p_{p}\) 上.
 </p>
 
 
-<div id="org5aae802" class="figure">
+<div id="org7d64f52" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png">
 </p>
 </div>
 
 <p>
-从俯视图可以看到 \(x_{e}\) 投影到 \(x_{p}\) 上,可以看到原点加上 \(v_{e}\) 配合 \(z\) 轴可以组成一个三角形,而原点加上 \(v_{p}\) 配合 \(z\) 轴同样可组成一个三角形,并且两个三角形是相似三角形.
+从俯视图可以看到 \(x_{e}\) 投影到 \(x_{p}\) 上,可以看到原点加上 \(p_{e}\) 配合 \(z\) 轴可以组成一个三角形,而原点加上 \(p_{p}\) 配合 \(z\) 轴同样可组成一个三角形,并且两个三角形是相似三角形.
 </p>
 
 <p>
@@ -995,19 +1131,27 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-注意, \(x_{p}\) 和 \(y_{p}\) 都取决于 \(z_{e}\),且成反比关系,考虑到后面还有 <code>NDC</code> 转换: \(\left(\begin{array}{c}x_{ndc} \\ y_{ndc} \\ z_{ndc}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{clip}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)\),索性把 \(w_{clip}\) 取为 \(-z_{eye}\) (取负号是因为 <code>NDC</code> 用的左手坐标系),
+注意, \(x_{p}\) 和 \(y_{p}\) 都取决于 \(z_{e}\),且成反比关系,考虑到后面还有 <code>NDC</code> 转换: \(\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)\),
 </p>
 
 <p>
-所以 \(w_{p}\) 坐标设定成 \(-z_{e}\),透视投影过程变成 \(\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)\),这样透视投影矩阵的第4行就确定了.
+为了方便运算, 可以把 \(w_{p}\) 取为 \(-z_{e}\) (取负号是因为 <code>NDC</code> 用的左手坐标系), 透视投影过程变成 \(\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)\),
 </p>
 
 <p>
-既然如此,那么 \(x_{clip}\) 以及 \(y_{clip}\) 是不是可以分别取 \(nx_{eye}\) 以及 \(ny_{eye}\) 了吗?还不能这么断言,需要找到 \(v_{clip}\) 到 \(v_{ndc}\): \(\left(x_{n}, y_{n}, z_{n}\right)\) 之间映射关系,也就是需要找出 \(x_{p}\), \(y_{p}\) 和 \(z_{p}\) 分别到 \(x_{n}\), \(y_{n}\) 和 \(z_{n}\) 的关系.
+这样透视投影矩阵的第4行就确定了.
 </p>
 
 <p>
-首先是 \(x_{p}\longrightarrow x_{n}: \left[l, r\right] \longrightarrow \left[-1, 1\right]\) 以及 \(y_{p}\longrightarrow y_{n}: \left[t, b\right] \longrightarrow \left[-1, 1\right]\).
+既然如此,那么 \(x_{p}\) 以及 \(y_{p}\) 是不是可以分别取 \(nx_{e}\) 以及 \(ny_{e}\) 了吗?
+</p>
+
+<p>
+还不能这么断言, 仍然需要找到 \(p_{p}\) 到 \(p_{n}\) 之间映射关系来进行验证,也就是找出 \(x_{p}\), \(y_{p}\) 和 \(z_{p}\) 分别到 \(x_{n}\), \(y_{n}\) 和 \(z_{n}\) 的关系.
+</p>
+
+<p>
+\(\begin{equation} \left\{ \begin{aligned} x_{p} \in \left[l, r\right] \longrightarrow x_{n} \in \left[-1, 1\right] \\ y_{p} \in \left[t, b\right] \longrightarrow y_{n} \in \left[-1, 1\right] \end{aligned} \right. \end{equation}\).
 </p>
 
 <p>
@@ -1015,7 +1159,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgc92fd16" class="figure">
+<div id="orgdea86bb" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1026,7 +1170,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-最后把 \(\left(l, -1\right)\) 或者 \(\left(r, 1\right)\) 代入假设的等式中,这里就用 \(\left(r, 1\right)\) 代入,得到 \(1 = \frac{2r}{r-l} + c\), 得到
+最后把 \(\left(l, -1\right)\) 或者 \(\left(r, 1\right)\) 代入假设的等式中求出 \(c\), 这里就用 \(\left(r, 1\right)\) 代入,得到 \(1 = \frac{2r}{r-l} + c\), 得到
 </p>
 
 <p>
@@ -1042,7 +1186,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org18a98a2" class="figure">
+<div id="orga088d60" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1077,7 +1221,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-再根据 \(\left(\begin{array}{c}x_{ndc} \\ y_{ndc} \\ z_{ndc}\end{array}\right) = \left(\begin{array}{c}\frac{x_{clip}}{w_{clip}} \\ \frac{y_{clip}}{w_{clip}} \\ \frac{z_{clip}}{w_{clip}} \end{array}\right)\),可以得到 \(z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}\),因为在视点空间上, \(w_{e} = 1\), 所以 \(z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}\).
+再根据 \(\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)\),可以得到 \(z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}\),因为在视点空间上, \(w_{e} = 1\), 所以 \(z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}\).
 </p>
 
 <p>
@@ -1109,7 +1253,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgd297841" class="figure">
+<div id="org59741dc" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>比较不同深度下的精确度</p>
@@ -1136,7 +1280,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-\(r-l\) 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 \(t-b = \frac{r-l}{aspect}\),最后以宽和高各自的中心点划分,也就是 \(\begin{equation}\left\{\begin{aligned}|r| = |l| = \frac{r-l}{2} \\ |t| = |b| = \frac{t-b}{2}\end{aligned} \right.\end{equation}\),
+\(r-l\) 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 \(t-b = \frac{r-l}{aspect}\),最后以宽和高各自的中心点划分,也就是 \(\begin{equation}\left\{\begin{aligned}\|r\| = \|l\| = \frac{r-l}{2} \\ \|t\| = \|b\| = \frac{t-b}{2}\end{aligned} \right.\end{equation}\),
 </p>
 
 <p>
@@ -1152,7 +1296,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 <li><a id="org5261904"></a>正交投影<br>
 <div class="outline-text-5" id="text-org5261904">
 
-<div id="orga5143d5" class="figure">
+<div id="orgb450b9d" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>正交投影2</p>
@@ -1323,7 +1467,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2020-06-19</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.2 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

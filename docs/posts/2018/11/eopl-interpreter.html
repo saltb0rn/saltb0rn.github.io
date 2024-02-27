@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-05-09 Tue 09:46 -->
+<!-- 2024-02-27 Tue 10:15 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The Interpreter</title>
@@ -228,7 +228,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgd637f77">
+<div class="abstract" id="org0b0baf5">
 <p>
 之前写了一篇关于 <code>The Sllgen Parser</code> 的文章,那是我了解 <code>parser</code> 的笔记,主要是关于语言实现的前端部分,现在以后端部分为主.
 </p>
@@ -283,7 +283,7 @@
 <code>LET</code> 语言有两种值, <code>Int</code> 和 <code>Bool</code>,并且 <code>expressed values</code> 和 <code>denoted values</code> 是一样.
 </p>
 
-<pre class="example" id="orga60b1e8">
+<pre class="example" id="org1824d1a">
 ExpVal = Int + Bool
 DenVal = Int + Bool
 </pre>
@@ -292,7 +292,7 @@ DenVal = Int + Bool
 因为是一样的,所以只需要定义一个 <code>ExpVal</code>, 然后为这些数据定义好接口,用于之后实现这些接口,
 </p>
 
-<pre class="example" id="org2b6417b">
+<pre class="example" id="org372ffb2">
 num-val      : Int → ExpVal
 bool-val     : Bool → ExpVal
 expval-&gt;num  : ExpVal → Int
@@ -303,7 +303,7 @@ expval-&gt;bool : ExpVal → Bool
 并且认为,
 </p>
 
-<pre class="example" id="orgd26dbbd">
+<pre class="example" id="org601a7b2">
 expval-&gt;num  : non-expVal-for-num -&gt; undefined
 expval-&gt;bool : non-expval-for-bool -&gt; undefined
 </pre>
@@ -326,7 +326,7 @@ expval-&gt;bool : non-expval-for-bool -&gt; undefined
 环境就像是数学意义上的函数,定义域(domain)是一个无限的变量集合,值域(range)就是 <code>denoted values</code>,就像这样
 </p>
 
-<pre class="example" id="orgdf34e81">
+<pre class="example" id="org91c0abe">
 Environment : Variable → DenVal
 </pre>
 
@@ -350,7 +350,7 @@ Environment : Variable → DenVal
 为了提高可读性,还会采用缩进,比如
 </p>
 
-<pre class="example" id="orgc76385f">
+<pre class="example" id="orgb8e01a7">
 [x=3]
  [y=7]
   [u=5]ρ
@@ -371,7 +371,7 @@ Environment : Variable → DenVal
 在使用一门语言的时候一般都不能直接操作环境的,所以下面这些接口是 <code>interpreter</code> 内部使用的,
 </p>
 
-<pre class="example" id="org21fcdbe">
+<pre class="example" id="org127f8ae">
 init-env   : () → Env
 env?       : Env → bool
 empty-env  : () → '()
@@ -418,7 +418,7 @@ apply-env  : Env x Var → DenVal
 <code>Expression</code> 的 <code>Constructors</code> 如下,
 </p>
 
-<pre class="example" id="org8987de2">
+<pre class="example" id="org6b11143">
 const-exp : Int → Exp
 zero?-exp : Exp → Exp
 if-exp    : Exp × Exp × Exp → Exp
@@ -431,7 +431,7 @@ let-exp   : Var × Exp × Exp → Exp
 <code>Program</code> 只有一个 <code>constructor</code>,
 </p>
 
-<pre class="example" id="orga9caeed">
+<pre class="example" id="org11ab8c2">
 a-program : Exp -&gt; Program
 </pre>
 </div>
@@ -457,7 +457,7 @@ a-program : Exp -&gt; Program
 <code>Expression</code> 需要一个 <b>可以判断表达式类型并且计算出表达式的值(是Expressed Value,不是 Denoted Value)</b> 的 <code>observer</code>,
 </p>
 
-<pre class="example" id="org3520c55">
+<pre class="example" id="org5f1e564">
 value-of : Exp x Env → ExpVal
 </pre>
 
@@ -469,7 +469,7 @@ value-of : Exp x Env → ExpVal
 其中 <code>=&gt;</code> 表示变换, <code>:=</code> 表示结果的一个子集.
 </p>
 
-<pre class="example" id="orgaa07a6b">
+<pre class="example" id="org3f660d1">
 (value-of (const-exp n) ρ) =&gt; (num-val n)
 
 (value-of (var-exp var) ρ) =&gt; (apply-env ρ var)
@@ -482,7 +482,7 @@ value-of : Exp x Env → ExpVal
 
 (value-of (zero?-exp exp1) ρ)
 := (bool-val #t) if (expval-&gt;num val1) = 0
-:= (bool-val #f) if (expval-&gt;num val1) = 0
+:= (bool-val #f) if (expval-&gt;num val1) ≠ 0
 
 (value-of (if-exp exp1 exp2 exp3) ρ)
 := (value-of exp2 ρ) if (expval-&gt;bool val1) = #t
@@ -500,7 +500,7 @@ value-of : Exp x Env → ExpVal
 <code>Program</code> 需要一个可以计算出它的值 <code>observer</code>,
 </p>
 
-<pre class="example" id="org77fcd7e">
+<pre class="example" id="org3745bcc">
 value-of-program : Program → ExpVal
 </pre>
 
@@ -508,7 +508,7 @@ value-of-program : Program → ExpVal
 具体规范为,
 </p>
 
-<pre class="example" id="org12847d7">
+<pre class="example" id="org1dee07a">
 (value-of-program pgm)
 =&gt; (value-of-program (a-program exp))
 =&gt; (value-of exp ρ)
@@ -673,7 +673,7 @@ value-of-program : Program → ExpVal
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-11-04</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.2 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

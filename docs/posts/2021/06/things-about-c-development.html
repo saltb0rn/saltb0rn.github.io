@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-05-21 Sun 02:14 -->
+<!-- 2024-02-27 Tue 10:15 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>关于使用C语言开发的那些事</title>
@@ -219,7 +219,11 @@
 <li><a href="#org2d37380">GNU Binutils</a></li>
 <li><a href="#org8af97b0">关于使用 GCC 的须知事项</a>
 <ul>
-<li><a href="#org9c3c8c1">预处理阶段的一些细节</a></li>
+<li><a href="#org9c3c8c1">预处理阶段的一些细节</a>
+<ul>
+<li><a href="#orgcb22117">宏定义时的一些惯例</a></li>
+</ul>
+</li>
 <li><a href="#orgb576715">头文件以及库文件的一些细节</a></li>
 </ul>
 </li>
@@ -229,16 +233,30 @@
 <li><a href="#about-c">关于 C 语言</a>
 <ul>
 <li><a href="#how-to-read-c-declarations">读懂 C 的声明语法</a></li>
-<li><a href="#how-to-master-c-pointer">指针</a></li>
+<li><a href="#how-to-master-c-pointer">指针</a>
+<ul>
+<li><a href="#orgeccad10">泛型指针</a></li>
+</ul>
+</li>
 <li><a href="#what-is-undefined-behavior">未定义行为 (undefined behavior, UB)</a></li>
 <li><a href="#arguments-in-function-declaration">函数的参数声明</a></li>
+<li><a href="#orgf69884d">不透明结构体 (Opaque Structures)</a></li>
+<li><a href="#org1215215">标签联合体 (Tagged Union)</a></li>
+<li><a href="#org3b1c57c">Async/Await</a></li>
 <li><a href="#difference-between-c-and-cpp">对比 C++, C 的优点</a></li>
+<li><a href="#orga4a15b7">一些编码习惯和理由</a></li>
+</ul>
+</li>
+<li><a href="#org9672707">关于调试</a></li>
+<li><a href="#orgf38418b">GCC flags 的最佳实践</a>
+<ul>
+<li><a href="#orgdceb9d6">禁止单精度/双精度/整型之间的隐藏式装换</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org1d47ccb">
+<div class="abstract" id="orgda69885">
 <p>
 <b>注意</b>, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, 因为 <code>C</code> 代码会被编译成汇编,
 </p>
@@ -314,6 +332,7 @@
 </div>
 </div>
 
+
 <div id="outline-container-org8af97b0" class="outline-2">
 <h2 id="org8af97b0">关于使用 GCC 的须知事项</h2>
 <div class="outline-text-2" id="text-org8af97b0">
@@ -341,7 +360,7 @@
 </p>
 
 
-<div id="org934fe96" class="figure">
+<div id="orgd1d1df5" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>GCC编译C语言并生成程序</p>
@@ -726,7 +745,7 @@
 </pre>
 </div>
 
-<pre class="example" id="org292edce">
+<pre class="example" id="org861a2a2">
 // right-bracket
 }
 </pre>
@@ -905,8 +924,31 @@
 </div></li>
 </ul>
 </div>
-</div>
 
+
+<div id="outline-container-orgcb22117" class="outline-4">
+<h4 id="orgcb22117">宏定义时的一些惯例</h4>
+<div class="outline-text-4" id="text-orgcb22117">
+<ul class="org-ul">
+<li><code>do {} while(0)</code> 定义: <a href="https://stackoverflow.com/a/2687595">https://stackoverflow.com/a/2687595</a></li>
+
+<li><code>((void)0)</code> 占位符: <a href="https://stackoverflow.com/a/2198975">https://stackoverflow.com/a/2198975</a></li>
+
+<li><p>
+宏的相关资料
+</p>
+
+<p>
+<a href="https://gcc.gnu.org/onlinedocs/cpp/Macros.html">https://gcc.gnu.org/onlinedocs/cpp/Macros.html</a>
+</p>
+
+<p>
+<a href="https://github.com/cpredef/predef/tree/master">https://github.com/cpredef/predef/tree/master</a>
+</p></li>
+</ul>
+</div>
+</div>
+</div>
 
 <div id="outline-container-orgb576715" class="outline-3">
 <h3 id="orgb576715">头文件以及库文件的一些细节</h3>
@@ -1036,7 +1078,7 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-这里以最终版为例, 把 <code>func</code> 注释掉再注释掉, 会得到一个连接器报的错误:
+这里以最终版为例, 把 <code>func</code> 注释掉后会得到一个连接器报的错误:
 </p>
 
 <div class="org-src-container">
@@ -1401,7 +1443,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007f2fcd67b000)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">printf<span style="color: #00ffff;"> in</span> printf.o
+<pre class="src src-sh"><span style="color: #b0c4de;">printf</span><span style="color: #00ffff;"> in</span> printf.o
 nm: sysdep.o: no symbols
 nm: sigvec.o: no symbols
 </pre>
@@ -1506,6 +1548,7 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </div>
 </div>
 
+
 <div id="outline-container-org24447fd" class="outline-2">
 <h2 id="org24447fd">内存检测工具</h2>
 <div class="outline-text-2" id="text-org24447fd">
@@ -1522,10 +1565,15 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-<code>ASan</code> 已经集成到 <code>GCC</code> 里面了, 具体用法可以看<a href="https://github.com/google/sanitizers/wiki/AddressSanitizer">这里</a>.
+<code>ASan</code> 已经集成到 <code>GCC</code> 里面了, 只要在编译的时候添加上 <code>-fsanitize=address</code> 选项就能对代码进行打桩, 在运行程序的时候会提示潜在的内存问题, 具体用法可以看<a href="https://github.com/google/sanitizers/wiki/AddressSanitizer">这里</a>.
+</p>
+
+<p>
+<code>Valgrind</code> 比 <code>ASan</code> 更加准确, 但是速度也比较慢, 精确度和速度得看自己取舍了.
 </p>
 </div>
 </div>
+
 
 <div id="outline-container-org33e1f4c" class="outline-2">
 <h2 id="org33e1f4c">交叉编译 (cross compilation)</h2>
@@ -1572,6 +1620,7 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </div>
 </div>
 
+
 <div id="outline-container-about-c" class="outline-2">
 <h2 id="about-c">关于 C 语言</h2>
 <div class="outline-text-2" id="text-about-c">
@@ -1612,7 +1661,6 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 
-
 <div id="outline-container-how-to-read-c-declarations" class="outline-3">
 <h3 id="how-to-read-c-declarations">读懂 C 的声明语法</h3>
 <div class="outline-text-3" id="text-how-to-read-c-declarations">
@@ -1625,6 +1673,7 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
+
 
 <div id="outline-container-how-to-master-c-pointer" class="outline-3">
 <h3 id="how-to-master-c-pointer">指针</h3>
@@ -1652,6 +1701,20 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 <p>
 新手最常见的疏忽就是使用 <code>malloc</code> 在堆上申请了内存区域却忘记使用 <code>free</code> 进行释放, <code>C++</code> 里面有 <code>RAII</code> 来解决这个问题,
 </p>
+
+<blockquote>
+<p>
+<code>malloc</code> 会在成功申请空间后返回空间地址, 失败的时候返回 <code>null</code> 指针 (也就是 <code>NULL</code>).
+</p>
+
+<p>
+根据 <a href="https://www.open-std.org/JTC1/SC22/wg14/www/docs/n1124.pdf">ISO-IEC 9899</a> 的 <code>C standard, 7.20.3.2/2</code> 可以得知 <code>free(NULL)</code> 也是没有问题的.
+</p>
+
+<p>
+因此, 在 <code>free</code> 时不需要对 <code>malloc</code> 返回的地址做额外判断.
+</p>
+</blockquote>
 
 <p>
 然而这也没有完全杜绝内存安全问题, 这是因为出现安全问题的原因很多.
@@ -1689,7 +1752,91 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 最后, 个人建议任何人都应该仔细看一遍 <code>Valgrind</code> 的<a href="https://valgrind.org/docs/manual/quick-start.html">上手教程</a>, 特别是 <code>Caveats</code> 部分.
 </p>
 </div>
+
+
+<div id="outline-container-orgeccad10" class="outline-4">
+<h4 id="orgeccad10">泛型指针</h4>
+<div class="outline-text-4" id="text-orgeccad10">
+<p>
+在声明或定义指针变量时, 开发人员都要告诉编译器指针指向的内存区域上储存什么类型的数据.
+</p>
+
+<p>
+比如, <code>int *ptr;</code>, 就是告诉编译器, 变量 <code>ptr</code> 储存了一块内存区域的地址, 而这块内存区域就是用来储存整数的;
+</p>
+
+<p>
+<code>char *ptr;</code> 所指向的内存区域则是用来储存字符的.
+</p>
+
+<p>
+有时候开发人员在定义结构体/函数时可能需要记录/传入一些不固定类型的数据, 这种情况可以使用泛型指针 <code>void *</code> 来完成.
+</p>
+
+<p>
+先把需要记录/传入的数据的指针的类型转换成 <code>void *</code> 类型, 然后在使用时从 <code>void *</code> 类型转换会原本的指针类型, 最后解引.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">func_generic_ptr</span>(<span style="color: #98fb98;">void</span> *<span style="color: #eedd82;">data</span>) {
+  printf(<span style="color: #ffa07a;">"%d: "</span>, *(<span style="color: #98fb98;">int</span> *)data);
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">args</span>) {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span> = 10;
+  func_generic_ptr((<span style="color: #98fb98;">void</span> *)&amp;n);
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
 </div>
+
+<p>
+还有分配内存的函数 <code>malloc</code>, 它的返回值类型就是 <code>void *</code>.
+</p>
+
+<p>
+之所以可行, 是因为在固定架构下, <code>CPU</code> 寻址大小是固定的, 也就是说, 既然指针变量储存的是内存地址, 那么所有类型的指针变量的大小都是一致的.
+</p>
+
+<p>
+而指针变量的类型则是告诉编译器: 指针指向的内存区块有多大. 内存区块的大小只有在解引时才有意义, 因为需要知道应该读多少个字节的连续内存, 而不是把区块以外的数据也读取了.
+</p>
+
+<p>
+我们可以把物理内存看作是一个数组, 内存地址就是数组元素的索引, 因此内存地址就是一个整数.
+</p>
+
+<p>
+<code>C</code> 语言的标准定义了一种专门储存内存地址的非指针类型 <code>uintptr_t</code> 以及 <code>intptr_t</code>, 不用 <code>int</code> 来储存则是因为 <code>int</code> 的大小不适合用来储存内存地址.
+</p>
+
+<p>
+而这两个类型则是专门对此进行调整了的, 在不同平台上能够好好的储存内存地址, 因此可以替代 <code>void *</code> 的使用.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdint.h&gt;</span> <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#20004;&#31867;&#22411;&#23450;&#20041;&#22312;&#35813;&#22836;&#20013;</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">func_generic_ptr</span>(<span style="color: #98fb98;">uintptr_t</span> <span style="color: #eedd82;">data</span>) {
+  printf(<span style="color: #ffa07a;">"%d: "</span>, *(<span style="color: #98fb98;">int</span> *)data);
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">args</span>) {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span> = 10;
+  func_generic_ptr((<span style="color: #98fb98;">uintptr_t</span>)&amp;n);
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+<code>uintptr_t</code> 和 <code>intptr_t</code> 更多是用来对内存地址做数学运算的.
+</p>
+</div>
+</div>
+</div>
+
 
 <div id="outline-container-what-is-undefined-behavior" class="outline-3">
 <h3 id="what-is-undefined-behavior">未定义行为 (undefined behavior, UB)</h3>
@@ -1725,6 +1872,7 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
+
 
 <div id="outline-container-arguments-in-function-declaration" class="outline-3">
 <h3 id="arguments-in-function-declaration">函数的参数声明</h3>
@@ -1857,6 +2005,7 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
   <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sum</span> = 0;
 
   va_start ( argp, count );      <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Initialize the argument list.</span><span style="color: #ff7f24;"> */</span>
+                                 <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">the second of va_start is the name of last argument before arg list.</span><span style="color: #ff7f24;"> */</span>
 
   <span style="color: #00ffff;">for</span> (; i &lt; count; i++ )
     sum += va_arg ( argp, <span style="color: #98fb98;">int</span> ); <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Get the next argument value.</span><span style="color: #ff7f24;"> */</span>
@@ -1871,8 +2020,446 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
   <span style="color: #00ffff;">return</span> add ( 4, 1, 0, 3, 4 );
 }
 </pre>
+</div>
+
+<p>
+<code>va_start</code> 宏初始化参数列表, 该宏的第二个参数是参数列表之前的一个参数, 这里是 <code>count</code>;
+</p>
+
+<p>
+<code>va_arg</code> 获取列表里面下一个的参数, 其中还得给出该参数的类型, 该例子里面的函数 <code>add</code> 的作用是对所有整数进行求和,
+</p>
+
+<p>
+也就是说所有参数都是 <code>int</code> 类型, 所以例子里面的参数类型是 <code>int</code>.
+</p>
+
+<p>
+<code>va_end</code> 结束参数列表调用, 该宏的参数得和 <code>va_start</code> 的第一个参数对应.
+</p>
+
+<p>
+如你说见, <code>add</code> 需要传入一个 <code>count</code> 来表示参数列表的参数个数, 这是因为没有官方宏/函数来获得参数列表的长度.
+</p>
+
+<p>
+不过有人通过宏来 <b>有限</b> 地提供获取参数列表的长度, 比如:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">VA_NUMS_HELPER</span>(<span style="color: #eedd82;">_1</span>, <span style="color: #eedd82;">_2</span>, <span style="color: #eedd82;">_3</span>, <span style="color: #eedd82;">_4</span>, <span style="color: #eedd82;">_5</span>, <span style="color: #eedd82;">_6</span>, <span style="color: #eedd82;">N</span>, ...) N
+<span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">VA_NUMS</span>(...) VA_NUMS_HELPER(__VA_ARGS__, 6, 5, 4, 3, 2, 1, 0)
+</pre>
+</div>
+
+<p>
+这个自定义的 <code>VA_ARGS</code> 可以获取到最大长度为 6 的参数列表的长度.
+</p>
+
+<p>
+这个 <code>VA_ARGS</code> 利用了 "可变参数宏可以获得 <code>...</code> 部分之前的最后一个参数" 的原理以及通过错位传入参数来获得长度.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #87cefa;">VA_ARGS</span>(a, b, c)
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  &#39318;&#20808;&#23637;&#24320;&#20026; VA_NUMS_HELPER(a, b, c, 6, 5, 4, 3, 2, 1, 0),</span>
+
+<span style="color: #ff7f24;">  &#36890;&#36807;&#35266;&#23519; VA_NUMS_HELPER &#30340;&#23450;&#20041;&#21487;&#20197;&#21457;&#29616; (2, 1, 0) &#36825;&#19977;&#20010;&#21442;&#25968;&#23601;&#23646;&#20110; ... &#37096;&#20998;,</span>
+
+<span style="color: #ff7f24;">  &#25152;&#20197; VA_NUMS_HELPER &#23439;&#23601;&#34987;&#23637;&#24320;&#25104;&#36825; 3 &#20010;&#21442;&#25968;&#30340;&#21069;&#19968;&#20301; 3, &#36825;&#20063;&#27491;&#26159;&#21442;&#25968;&#21015;&#34920; (a, b, c) &#30340;&#38271;&#24230;.</span>
+<span style="color: #ff7f24;">*/</span>
+</pre>
+</div>
+
+<p>
+之所以说是有限, 是因为在 <code>VA_NUMS_HELPER</code> 的宏定义的占位符参数(<code>_1, _2, _3, _4, _5, _6</code>) 是固定编码, 并非动态的,
+</p>
+
+<p>
+你想要测量长度超过 6 的参数列表, 那么就得修改 <code>VA_NUMS_HELPER</code> 的定义.
+</p>
+
+<p>
+因此, 开发人员无法在不改变 <code>VA_NUMS_HELPER</code> 定义的情况下获得任意长度的参数列表.
+</p>
+
+<p>
+那么如何使用这个宏呢? 就以 <code>add</code> 为例, 我们定义一个同名宏 (需要注意同名宏要在定义/声明之后):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">header.h</span>
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">add</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">count</span>, ...);
+<span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">add</span>(...) add(VA_NUMS(__VA_ARGS__), __VA_ARGS__)
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">in some c source files</span>
+add(1, 2, 3);
+</pre>
 </div></li>
 </ul>
+</div>
+</div>
+
+
+<div id="outline-container-orgf69884d" class="outline-3">
+<h3 id="orgf69884d">不透明结构体 (Opaque Structures)</h3>
+<div class="outline-text-3" id="text-orgf69884d">
+<p>
+不透明结构体就是把结构体的声明和定义分开, 声明放在头文件(.h)里面, 定义则是放在实现的源文件(.c)里面, 以达到结构体定义可以被隐藏的目的.
+</p>
+
+<p>
+假设你现在写了一个程序 <code>A</code>, 定义一个 <code>op_node_s</code> 的结构体, 由于这个结构体设计了一些隐私, 并不想在发布程序 <code>A</code> 时把 <code>op_node_s</code> 的定义也发布出去, 只想让用户使用和它相关的函数.
+</p>
+
+<p>
+这种情况下就要使用不透明结构体来解决.
+</p>
+
+<p>
+具体做法是把 <code>op_node_s</code> 的定义去掉, 并且为 <code>op_node_s</code> 声明一个新类型 <code>op_node_t</code>, 并把函数的声明中的 <code>op_node_s</code> 替换成 <code>op_node_t</code>.
+</p>
+
+<p>
+<b>首先</b> 是头文件 <code>op_node.h</code>, 这里面只放声明.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">op_node.h</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#if</span><span style="color: #b0c4de;">n</span><span style="color: #b0c4de;">def</span> __OP_NODE__H
+<span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">__OP_NODE__H</span>
+<span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">op_node_s</span> <span style="color: #98fb98;">op_node_t</span>;
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">op_node_new</span>(<span style="color: #98fb98;">op_node_t</span> **<span style="color: #eedd82;">pp_op_node</span>);
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">op_node_free</span>(<span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">p_op_node</span>);
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">op_node_set_value</span>(<span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">p_op_node</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>);
+<span style="color: #b0c4de;">#endif</span>
+</pre>
+</div>
+
+
+<p>
+<b>其次</b> 是 <code>op_node.c</code>, 这里面是头文件声明的相关实现, 我们的 <code>op_node_s</code> 的定义就在这里.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">op_node.c</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"op_node.h"</span>
+
+<span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">op_node_s</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>;
+};
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">op_node_new</span>(<span style="color: #98fb98;">op_node_t</span> **<span style="color: #eedd82;">pp_op_node</span>)
+{
+  (*pp_op_node) = (<span style="color: #98fb98;">op_node_t</span> *)malloc(<span style="color: #00ffff;">sizeof</span>(op_node_t));
+  <span style="color: #00ffff;">if</span> (<span style="color: #7fffd4;">NULL</span> == *pp_op_node) {
+    <span style="color: #00ffff;">return</span> -1;
+  }
+  (*pp_op_node)-&gt;value = 0;
+  <span style="color: #00ffff;">return</span> 0;
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">op_node_free</span>(<span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">p_op_node</span>)
+{
+  free(p_op_node);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">op_node_set_value</span>(<span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">p_op_node</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>)
+{
+  p_op_node-&gt;value = value;
+}
+</pre>
+</div>
+
+<blockquote>
+<p>
+在为不透明结构体提供定义时, 需要注意一点: 不建议使用在定义结构体时引用结构体自己的类型声明(甚至是头文件里面的任何声明).
+</p>
+
+<p>
+假设我们要定义的不透明结构体 <code>op_node_s</code> 是一个递归结构体, 如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">op_node_s</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>;
+  <span style="color: #98fb98;">op_node_s</span> *<span style="color: #eedd82;">next</span>;
+};
+</pre>
+</div>
+
+<p>
+那么不要定义成:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">op_node_s</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>;
+  <span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">next</span>;
+};
+</pre>
+</div>
+
+<p>
+这么做的目的是为了不必要的 <code>#include</code> 指令.
+</p>
+
+<p>
+有时候你可能想然 <code>op_node_s</code> 的定义在程序 <code>A</code> 的其它地方被使用, 人们通常会把结构体的定义单独定义在 <code>_private.h</code> 后缀的文件中,
+</p>
+
+<p>
+在发布程序的其它地方引入该文件, 换在这里的话, 文件的名字正常来说就是 <code>op_node_private.h</code>;
+</p>
+
+<p>
+如果把 <code>op_node_s</code> 修改成了 "不建议" 的形式, 那么每次引入 <code>op_node_private.h</code> 时就得同时引入 <code>op_node.h</code>, 毕竟 <code>op_node_t</code> 是声明在 <code>op_node.h</code> 里面.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">op_node_private</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#if</span><span style="color: #b0c4de;">n</span><span style="color: #b0c4de;">def</span> __OP_NODE_PRIVATE__H
+<span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">__OP_NODE_PRIVATE__H</span>
+<span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">op_node_s</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>;
+};
+<span style="color: #b0c4de;">#endif</span>
+</pre>
+</div>
+
+<p>
+最后把 <code>op_node.c</code> 修改如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"op_node.h"</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"op_node_private.h"</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">op_node_new</span>(<span style="color: #98fb98;">op_node_t</span> **<span style="color: #eedd82;">pp_op_node</span>)
+{
+  (*pp_op_node) = (<span style="color: #98fb98;">op_node_t</span> *)malloc(<span style="color: #00ffff;">sizeof</span>(op_node_t));
+  <span style="color: #00ffff;">if</span> (<span style="color: #7fffd4;">NULL</span> == *pp_op_node) {
+    <span style="color: #00ffff;">return</span> -1;
+  }
+  (*pp_op_node)-&gt;value = 0;
+  <span style="color: #00ffff;">return</span> 0;
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">op_node_free</span>(<span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">p_op_node</span>)
+{
+  free(p_op_node);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">op_node_set_value</span>(<span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">p_op_node</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span>)
+{
+  p_op_node-&gt;value = value;
+}
+</pre>
+</div>
+</blockquote>
+
+<p>
+<b>最后</b> 在发布阶段时, 你要把 <code>op_node.c</code> 编译成一个链接库 <code>O</code>, 把它和 <code>op_node.h</code> 一起打包发布,
+</p>
+
+<p>
+用户只需做两件事情就可以调用你的发布功能了:
+</p>
+
+<ol class="org-ol">
+<li>引入 <code>op_node.h</code></li>
+
+<li>运行程序时连接你发布的库 <code>O</code></li>
+</ol>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">main.c: test op_node</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"op_node.h"</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>)
+{
+  <span style="color: #98fb98;">op_node_t</span> *<span style="color: #eedd82;">node</span>;
+  op_node_new(&amp;node);
+  op_node_set_value(node, 10);
+  op_node_free(node);
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+这里需要着重对该使用例子进行一下说明, 在定义/声明不透明结构体时, 只能定义/声明不透明结构体的指针,
+</p>
+
+<p>
+也就说 <code>op_node_t node</code> 是不行的, 但 <code>op_node_t *node</code> 是可以的,
+</p>
+
+<p>
+这是因为此时结构体的实现是被隐藏了的, 而引入的头文件 <code>op_node.h</code> 里面只有结构体的声明,
+</p>
+
+<p>
+编译器是无法在结构体定义缺失的情况下为不透明结构体的变量分配空间, 但编译器还是知道指针的大小的,
+</p>
+
+<p>
+同时这也禁止在使用中直接进行 <code>malloc(sizeof(op_node_t))</code> 这样的内存分配操作,
+</p>
+
+<p>
+只能在 <code>op_node.c</code> 提供的 <code>op_node_new</code> 函数来完成;
+</p>
+
+<blockquote>
+<p>
+但是直接使用 <code>free(node)</code> 操作是没问题的
+</p>
+</blockquote>
+
+<p>
+因为同样的理由, 无法直接通过 <code>node</code> 来操作结构体的成员 <code>value</code>,
+</p>
+
+<p>
+编译器会提示 <code>Incomplete definition of type 'struct op_node_s'</code> 错误,
+</p>
+
+<p>
+只能通过 <code>op_node.c</code> 里面提供的函数 <code>op_node_set_value</code> 来操作,
+</p>
+
+<p>
+所有对于结构体成员的操作都受限于 <code>op_node.c</code> 有没有提供相应的实现,
+</p>
+
+<p>
+比如这里因为 <code>op_node.c</code> 没有提供相应函数而无法获取 <code>node</code> 的 <code>value</code> 值.
+</p>
+
+<p>
+现实中很多软件都使用了不透明结构体, 让使用者专注于 <code>API</code> 而不是结构体的细节.
+</p>
+
+<p>
+其中的一个例子就是 <code>SQLite 3</code>, 它的 <code>sqlite</code> 类型就是一个不透明结构体.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org1215215" class="outline-3">
+<h3 id="org1215215">标签联合体 (Tagged Union)</h3>
+<div class="outline-text-3" id="text-org1215215">
+<p>
+一个联合体是一个可以储存任意类型的内存区域. 比如一个联合体可以储存 <code>int</code> 或 <code>char</code> 类型, 那么这个联合体的大小就是 <code>sizeof(int)</code>,
+</p>
+
+<p>
+因为需要在保证能够储存 <code>char</code> 的同时保证储存 <code>int</code> 的可能性.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">union</span> <span style="color: #98fb98;">ExampleUnion</span> { <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>; <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">c</span> };
+
+<span style="color: #00ffff;">union</span> <span style="color: #98fb98;">ExampleUnion</span> <span style="color: #eedd82;">example</span> = { .i=100 };
+
+example.c = <span style="color: #ffa07a;">'c'</span>;
+</pre>
+</div>
+
+<p>
+这个例子里面对 <code>c</code> 成员进行赋值会对 <code>i</code> 成员已存在的数据造成"破坏", 所以, <b>在同一时间内只能使用一个联合体成员进行数据读写</b>.
+</p>
+
+<p>
+相比结构体, 联合体更加节省内存. 其次, 它还有一个妙用.
+</p>
+
+<p>
+<code>C</code> 语言的函数无法返回多种可能类型的返回值, 然后有时就是有这种需求.
+</p>
+
+<p>
+比如说有一个函数, 接受两个 <code>int</code> 型参数, 进行除法运算并返回结果. 按照结果而言, 分三种可能:
+</p>
+
+<p>
+一是两个参数满足整除, 那么结果就是 <code>int</code>;
+</p>
+
+<p>
+二是不满足整除, 那么结果就是 <code>float/double</code>;
+</p>
+
+<p>
+三是除数是 0, 那么不应该有结果, 或者结果为无限大.
+</p>
+
+<p>
+这种时候可以使用标签联合体来解决.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">union</span> <span style="color: #98fb98;">divResult</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;                        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#31532;&#19968;&#31181;&#24773;&#20917;</span><span style="color: #ff7f24;"> */</span>
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">f</span>;                      <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#31532;&#20108;&#31181;&#24773;&#20917;</span><span style="color: #ff7f24;"> */</span>
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">c</span>;                       <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#31532;&#19977;&#31181;&#24773;&#20917;, &#25105;&#20204;&#29992;&#19968;&#20010;&#23383;&#31526;&#26469;&#34920;&#31034;&#35745;&#31639;&#26080;&#32467;&#26524;, &#20854;&#23454;&#21487;&#20197;&#19981;&#38656;&#35201;&#35813;&#25104;&#21592;</span><span style="color: #ff7f24;"> */</span>
+};
+
+<span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">struct</span> {
+  <span style="color: #00ffff;">enum</span> { <span style="color: #eedd82;">T1</span>, <span style="color: #eedd82;">T2</span>, <span style="color: #eedd82;">T3</span> } <span style="color: #eedd82;">type</span>;     <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">T1, T2, T3 &#20998;&#21035;&#20195;&#34920;&#19978;&#36848;&#19977;&#31181;&#24773;&#20917;, &#36825;&#19977;&#20010;&#23601;&#26159;&#26631;&#31614;</span><span style="color: #ff7f24;"> */</span>
+  <span style="color: #00ffff;">union</span> <span style="color: #98fb98;">divResult</span> <span style="color: #eedd82;">value</span>;
+} <span style="color: #98fb98;">divResult_t</span>;
+
+<span style="color: #98fb98;">divResult_t</span> <span style="color: #87cefa;">div</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span>)
+{
+  <span style="color: #00ffff;">if</span> (b == 0) {
+    <span style="color: #00ffff;">return</span> (divResult_t){ .type=T3, .value={ .c=<span style="color: #ffa07a;">'I'</span> } };
+  } <span style="color: #00ffff;">if</span> ((a % b) == 0 ) {
+    <span style="color: #00ffff;">return</span> (divResult_t){ .type=T1, .value={ .i=(a / b) } };
+  } <span style="color: #00ffff;">else</span> {
+    <span style="color: #00ffff;">return</span> (divResult_t){ .type=T2, .value={ .f=((<span style="color: #98fb98;">float</span>)a / b) } };
+  }
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>()
+{
+  <span style="color: #98fb98;">divResult_t</span> <span style="color: #eedd82;">res</span> = div(3, 2);
+  <span style="color: #00ffff;">if</span> (T2 == res.type) {
+    printf(<span style="color: #ffa07a;">"float result: %.2f\n"</span>, res.value.f);
+  }
+
+  <span style="color: #98fb98;">divResult_t</span> <span style="color: #eedd82;">res2</span> = div(4, 2);
+  <span style="color: #00ffff;">if</span> (T1 == res2.type) {
+    printf(<span style="color: #ffa07a;">"integer result: %d\n"</span>, res2.value.i);
+  }
+
+  <span style="color: #98fb98;">divResult_t</span> <span style="color: #eedd82;">res3</span> = div(4, 0);
+  <span style="color: #00ffff;">if</span> (T3 == res3.type) {
+    printf(<span style="color: #ffa07a;">"Cannot devided by Zero\n"</span>);
+  }
+}
+</pre>
+</div>
+
+<p>
+实际上返回多种可能类型的解决方法还有很多, 比如可以使用结构体来替代联合体(, 相比联合体浪费空间); 还能使用 <code>void *</code> 或者 <code>uintptr</code> 来替代(, 后续根据类型解引).
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org3b1c57c" class="outline-3">
+<h3 id="org3b1c57c">Async/Await</h3>
+<div class="outline-text-3" id="text-org3b1c57c">
+<p>
+<a href="https://hackaday.com/2019/09/24/asynchronous-routines-for-c/">https://hackaday.com/2019/09/24/asynchronous-routines-for-c/</a>
+</p>
 </div>
 </div>
 
@@ -1917,7 +2504,15 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-另外也可以参考这个 <a href="https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html">Mixing C and C++ Code in the Same Program</a> 来对本人提供的例子进行说明补充.
+我们把 <code>C++</code> 代码导出的 <code>C API</code> 叫做 <code>C Wrapper API</code> 或者 <code>C bindings</code>, 这个例子就是 <code>C++</code> 为创建 <code>C Wrapper API</code> 的基本原理.
+</p>
+
+<p>
+实际中过程要考虑很多东西, 具体要考虑的事项参考这个 <a href="https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html">Mixing C and C++ Code in the Same Program</a>,
+</p>
+
+<p>
+个人觉得这篇文章关于处理 <code>C++</code> 的异常(exceptions)和类(classes)的部分说得不是太好, 所以我又额外提供了另外一个例子: <a href="https://gist.github.com/mikeando/5394166">Example of using C++ from C</a>.
 </p></li>
 
 <li><p>
@@ -1998,12 +2593,228 @@ systems in which this is possible, but I'm not aware of them.
 </ul>
 </div>
 </div>
+
+
+<div id="outline-container-orga4a15b7" class="outline-3">
+<h3 id="orga4a15b7">一些编码习惯和理由</h3>
+<div class="outline-text-3" id="text-orga4a15b7">
+<ul class="org-ul">
+<li><p>
+为何人们喜欢把 <code>if</code> 相等判断的常量放在双等号前面?
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">if</span> (0 == res) {
+  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">...</span>
+ }
+</pre>
+</div>
+
+<p>
+这是因为 <code>C/C++</code> 语言是可以在 <code>if</code> 语句里面对变量进行赋值的, 程序员可能会因为粗心写出如下代码:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #00ffff;">if</span> (res = 0) {  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21407;&#26412;&#24819;&#20889; res == 0</span>
+  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">...</span>
+ }
+</pre>
+</div>
+
+<p>
+而把常量放在前面则可以被编译器提示错误.
+</p></li>
+
+<li><p>
+如何禁止编译器提示 <code>"unused parameter"</code> 警告?
+</p>
+
+<p>
+方法很多, 但有一个很奇怪的方法可以适用于任何编译器, 比如,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">void</span> <span style="color: #87cefa;">f</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">x</span>) {
+  <span style="color: #00ffff;">return</span>;
+  (<span style="color: #98fb98;">void</span>)x;
+}
+</pre>
+</div>
+
+<p>
+只要在函数里面使用 <code>(void)param</code> 这样就可以禁止这类警告了, 这个例子是在 <code>return</code> 之后使用,
+</p>
+
+<p>
+这个其实无所谓, 喜欢的话也可以放在 <code>return</code> 之前. 另外可以查看这个连接:
+</p>
+
+<p>
+<a href="https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c">https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c</a>
+</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org9672707" class="outline-2">
+<h2 id="org9672707">关于调试</h2>
+<div class="outline-text-2" id="text-org9672707">
+<p>
+在调试方面来说, 个人认为编译型语言要比解释型语言复杂.
+</p>
+
+<p>
+编译型语言的调试就像是别人把一篇文章翻译成另外一种语言, 并要求你看着译本把原文中错误找出来;
+</p>
+
+<p>
+解释型语言就是直接把原文给你并要求你把错误找出来.
+</p>
+
+<p>
+作为编译型语言的 <code>C</code> 来说调试就是一件麻烦事, 不过掌握之后可以让你在排查程序错误中大显神通, 即便程序不是你写的.
+</p>
+
+<p>
+如果你是一个 <code>Linux</code> 用户, 又会汇编和 <code>C</code>, 那么我推荐一本关于调试的书 "Debug Hacks".
+</p>
+
+<p>
+这本书的内容可以分为程序调试和 <code>Linux</code> 内核调试两大块, 可以根据自身需求去阅读.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgf38418b" class="outline-2">
+<h2 id="orgf38418b">GCC flags 的最佳实践</h2>
+<div class="outline-text-2" id="text-orgf38418b">
+</div>
+<div id="outline-container-orgdceb9d6" class="outline-3">
+<h3 id="orgdceb9d6">禁止单精度/双精度/整型之间的隐藏式装换</h3>
+<div class="outline-text-3" id="text-orgdceb9d6">
+<p>
+在 <code>C</code> 语言里面, 可以对数据进行隐式转换(implicit conversion). 比如:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">cloest_t</span> = 3.14;
+</pre>
+</div>
+
+<p>
+浮点数字面值(例如这里的 <code>3.14</code>)是双精度浮点数, 这个赋值会把双精度浮点数转换成整型, 也就是 <code>cloest_t</code> 的值是 <code>3</code>.
+</p>
+
+<p>
+在一些数学计算中, <code>3</code> 和 <code>3.14</code> 可能会让计算产生截然不同的结果, 这可能是开发人员的粗心导致的,
+</p>
+
+<p>
+可以设置编译选现让编译器提醒潜在问题: <code>GCC</code> 的 <code>-Wfloat-conversion</code>.
+</p>
+
+<p>
+该选项会提醒开发人员代码里面进行了 <code>float</code> 到 <code>int</code> 的隐式转换:
+</p>
+
+<blockquote>
+<p>
+警告原文:
+</p>
+
+<p>
+warning: conversion from ‘float’ to ‘int’ may change value [-Wfloat-conversio]
+</p>
+
+<p>
+另外, 没有对宏的转换进行警告, 比如:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">INF</span> 3.14
+
+<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">cloest_t</span> = INF;
+</pre>
+</div>
+
+<p>
+这点需要自己注意, 个人认为这可能是 BUG, 可能在之后的 <code>GCC</code> 版本里面被修正.
+</p>
+</blockquote>
+
+<p>
+倘若真的想要进行转换, 那么可以使用显式转换:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">cloest_t</span> = (<span style="color: #98fb98;">int</span>)3.14;
+</pre>
+</div>
+
+<p>
+这样, 编译器就不会有警告了.
+</p>
+
+<p>
+最后就是单精度浮点和双精度浮点之间的转换了.
+</p>
+
+<p>
+这个是 <code>GCC</code> 手册里面的一个例子, 函数里面让双精度浮点和单精度浮点进行相乘.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">float</span> <span style="color: #87cefa;">area</span>(<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">radius</span>) {
+  <span style="color: #00ffff;">return</span> 3.14159 * radius * radius;
+}
+</pre>
+</div>
+
+<p>
+针对这个运算, 编译器会先让单精度浮点升格(promotion)为双精度浮点再进行运算, 最后把双精度浮点的结果降格(demotion)为单精度浮点进行返回.
+</p>
+
+<p>
+在机器层面上, 双精度浮点数的计算需要更多的代价.
+</p>
+
+<p>
+这段代码有两个解决方法:
+</p>
+
+<ol class="org-ol">
+<li>对 <code>3.14159</code> 进行单精度显式转换;</li>
+<li>对浮点数字面值加<a href="https://en.cppreference.com/w/c/language/floating_constant">后缀</a>: <code>3.14159f</code>, <code>f</code> 表示单精度浮点数. (整型字面值也有其对应<a href="https://en.cppreference.com/w/c/language/integer_constant">后缀</a>, 有兴趣的可以看一下.)
+推荐该方法.</li>
+</ol>
+
+
+<p>
+针对这类问题, 可以使用 <code>GCC</code> 的 <code>-Wdouble-promotion</code> 选项来警告该类问题.
+</p>
+
+<p>
+事实上, <code>-Wfloat-conversion</code> 也会对这个问题进行警告.
+</p>
+
+<p>
+总的来说, 为了禁止双精度浮点/单精度浮点/整型之间的隐式转换, 我们应该使用 <code>-Wdouble-promotion -Wfloat-conversion</code>,
+</p>
+
+<p>
+或者就单独使用 <code>-Wfloat-conversion</code>, 而这两个选项是 <b>不会</b> 在 <code>-Wall</code> 中被启用的.
+</p>
+</div>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2021-06-13</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 28.2 (<a href="https://orgmode.org">Org</a> mode 9.5.5)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.2 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

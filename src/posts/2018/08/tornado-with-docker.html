@@ -1,0 +1,653 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2023-10-09 Mon 11:25 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>用Docker打包Tornado项目</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">用Docker打包Tornado项目</h1>
+<div class="abstract" id="orgd930856">
+<p>
+Docker是近几年一种新的容器技术,它的应用场景实在是太广泛了,除了在产品线上使用,我还见到过用来打包GUI应用的
+<a href="http://fabiorehm.com/blog/2014/09/11/running-gui-apps-with-docker/">利用X11 socket与打包的Firefox通信</a>,还有利用同样原理对<a href="https://github.com/JAremko/docker-emacs">Emacs进行打包</a>. 然而强大的工具都需要比较长的时间来学
+习,其实我自己也没有用过多少次,用Docker的时候大多数都是用来搭个简单的API服务器用来测试,所以这里写一篇简单
+的教程来示范如何简单的打包,如果标题所示,打包的项目是一个Tornado项目.
+</p>
+
+</div>
+
+<p>
+<b>前提</b>
+</p>
+
+<p>
+这篇文章适合看了官方例子和参考文档后仍然一头雾水或者不知道怎么用来打包和调试项目的任务的人群,没有看过官方
+例子的人看这篇文章也会一头雾水,所以建议去简单的过一下官方的例子再过来.如果这篇文章中的Tornado部分实在会导
+致不了解Tornado的你看不懂的话,那你有两种选择,去找其他符合你要求的教程;第二种,自行了解一下Tornado项目的运
+行方式就可以了,至于我为什么要贴出代码只是因为提供给想要动手实践的朋友一个例子,你可以不用管它写什么,跟Docker
+的关系不太大,还有一点就是Python的依赖管理问题,这是需要你去了解的一点,知道这个例子的requirements.txt是记录
+greeting.py得依赖就可以了.
+</p>
+
+<p>
+<b>目标</b> 打包项目并且保存项目运行时候的log文件
+</p>
+
+<p>
+<b>Tornado项目结构</b>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/greeting-docker$ tree greeting
+greeting/
+&#9500;&#9472;&#9472; greeting.py
+&#9492;&#9472;&#9472; requirements.txt
+
+0 directories, 2 files
+</pre>
+</div>
+
+<p>
+其中greeting.py的代码为
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">! /usr/bin/env python3</span>
+
+<span style="color: #00ffff;">import</span> tornado.httpserver
+<span style="color: #00ffff;">import</span> tornado.ioloop
+<span style="color: #00ffff;">import</span> tornado.options
+<span style="color: #00ffff;">import</span> tornado.web
+<span style="color: #00ffff;">from</span> tornado.options <span style="color: #00ffff;">import</span> define, options
+
+define(<span style="color: #ffa07a;">"port"</span>, default=8000, <span style="color: #b0c4de;">help</span>=<span style="color: #ffa07a;">"run on the given port"</span>, <span style="color: #b0c4de;">type</span>=<span style="color: #b0c4de;">int</span>)
+
+
+<span style="color: #00ffff;">def</span> <span style="color: #87cefa;">header_checker</span>(header_name, header_value, msg=<span style="color: #7fffd4;">None</span>):
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">func_wrapper</span>(func):
+        <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">wrapper</span>(<span style="color: #00ffff;">self</span>, *args, **kwargs):
+            <span style="color: #eedd82;">content_type</span> = <span style="color: #00ffff;">self</span>.request.headers.get(header_name)
+            <span style="color: #00ffff;">if</span> content_type == header_value:
+                func(<span style="color: #00ffff;">self</span>, *args, **kwargs)
+            <span style="color: #00ffff;">else</span>:
+                <span style="color: #00ffff;">self</span>.write({<span style="color: #ffa07a;">"error"</span>: msg <span style="color: #00ffff;">or</span> <span style="color: #ffa07a;">"Header is invalid"</span>})
+        <span style="color: #00ffff;">return</span> wrapper
+    <span style="color: #00ffff;">return</span> func_wrapper
+
+
+<span style="color: #00ffff;">class</span> <span style="color: #98fb98;">IndexHandler</span>(tornado.web.RequestHandler):
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">__init__</span>(<span style="color: #00ffff;">self</span>, application, request, **kwargs):
+        <span style="color: #b0c4de;">super</span>().__init__(application, request, **kwargs)
+        <span style="color: #00ffff;">self</span>.<span style="color: #eedd82;">_headers</span>[<span style="color: #ffa07a;">"Content-Type"</span>] = <span style="color: #ffa07a;">"application/json"</span>
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">get</span>(<span style="color: #00ffff;">self</span>):
+        <span style="color: #eedd82;">greeting</span> = <span style="color: #00ffff;">self</span>.get_argument(<span style="color: #ffa07a;">'greeting'</span>, <span style="color: #ffa07a;">'Hello'</span>)
+        <span style="color: #eedd82;">text</span> = tornado.escape.json_encode({<span style="color: #ffa07a;">"messages"</span>: greeting})
+        <span style="color: #00ffff;">self</span>.write(text)
+
+    <span style="color: #98fb98;">@header_checker</span>(<span style="color: #ffa07a;">"Content-Type"</span>, <span style="color: #ffa07a;">"application/json"</span>)
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">post</span>(<span style="color: #00ffff;">self</span>):
+        <span style="color: #00ffff;">try</span>:
+            <span style="color: #eedd82;">data</span> = tornado.escape.json_decode(<span style="color: #00ffff;">self</span>.request.body)
+        <span style="color: #00ffff;">except</span> tornado.escape.json.JSONDecodeError:
+            <span style="color: #00ffff;">self</span>.write({<span style="color: #ffa07a;">"error"</span>: <span style="color: #ffa07a;">"Invalid JSON format"</span>})
+        <span style="color: #00ffff;">else</span>:
+            <span style="color: #00ffff;">self</span>.write(tornado.escape.json_encode(data))
+
+
+<span style="color: #00ffff;">class</span> <span style="color: #98fb98;">TestHandler</span>(tornado.web.RequestHandler):
+
+    <span style="color: #00ffff;">def</span> <span style="color: #87cefa;">post</span>(<span style="color: #00ffff;">self</span>, intro, msg):
+        <span style="color: #00ffff;">self</span>.write(<span style="color: #ffa07a;">'%s %s'</span> % (intro, msg))
+
+
+<span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">__name__</span> == <span style="color: #ffa07a;">"__main__"</span>:
+    tornado.options.parse_command_line()
+    <span style="color: #eedd82;">settings</span> = {
+        <span style="color: #ffa07a;">"debug"</span>: <span style="color: #7fffd4;">True</span>
+    }
+    <span style="color: #eedd82;">app</span> = tornado.web.Application(
+        handlers=[
+            (r<span style="color: #ffa07a;">"/"</span>, IndexHandler),
+            (r<span style="color: #ffa07a;">'/test/(?P&lt;intro&gt;[^/]+)/msg/(?P&lt;msg&gt;[^/]+)/'</span>, TestHandler),
+            ],
+        **settings
+    )
+    <span style="color: #eedd82;">http_server</span> = tornado.httpserver.HTTPServer(app)
+    http_server.listen(options.port)
+    tornado.ioloop.IOLoop.instance().start()
+</pre>
+</div>
+
+<p>
+requirements.txt就一个tornado的依赖
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/greeting-docker$ cat greeting/requirements.txt
+<span style="color: #eedd82;">tornado</span>==5.1
+</pre>
+</div>
+
+<p>
+<b>打包开始</b>
+</p>
+
+<ol class="org-ol">
+<li><p>
+把greeting放在greeting-docker文件夹里面(这个例子已经放了,当然你也可以用别的名字做为目录名),在greeting-docker
+的目录下编写一个Dockerfile,并且还有一个用于在容器里面启动Tornado项目的脚本docker-entrypoint.sh.整个打包用的
+目录结构如下
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ tree greeting-docker
+greeting-docker/
+&#9500;&#9472;&#9472; docker-entrypoint.sh
+&#9500;&#9472;&#9472; Dockerfile
+&#9492;&#9472;&#9472; greeting
+    &#9500;&#9472;&#9472; greeting.py
+    &#9492;&#9472;&#9472; requirements.txt
+
+1 directory, 4 files
+</pre>
+</div>
+
+<p>
+先说说Dockerfile的内容,我会在Dockerfile里面用注释解析每一个命令的作用
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">FROM frolvlad/alpine-python3:latest
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36873;&#25321;alpine-python3&#20316;&#20026;&#22522;&#30784;&#38236;&#20687;</span>
+MAINTAINER saltb0rn
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#22768;&#26126;&#32500;&#25252;&#20154;&#30340;&#21517;&#23383;</span>
+ENV <span style="color: #eedd82;">DOCKYARD_SRC</span>=greeting
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">ENV&#29992;&#20110;&#35774;&#23450;&#29615;&#22659;&#21464;&#37327;,&#30456;&#23545;&#20110;bash&#37324;&#38754;&#30452;&#25509;&#21019;&#24314;&#21464;&#37327;&#25110;&#32773;&#32473;&#21464;&#37327;&#36171;&#20540;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36825;&#37324;DOCKYARD_SRC&#35774;&#23450;&#30340;&#26159;&#36319;Dockerfile&#21516;&#32423;&#30340;greeting&#30446;&#24405;&#20301;&#32622;,</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#22240;&#20026;&#21019;&#24314;&#38236;&#20687;&#26102;&#20505;&#38656;&#35201;&#25351;&#23450;Dockerfile&#25152;&#22312;&#30340;&#30446;&#24405;,&#25152;&#20197;greeting&#26159;&#30456;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23545;Dockerfile&#20301;&#32622;&#32780;&#35328;&#30340;.DOCKYARD_SRC&#19981;&#26159;&#20869;&#32622;&#30340;&#21464;&#37327;,&#25152;&#20197;&#23427;&#26412;&#36523;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#19981;&#23384;&#22312;&#20160;&#20040;&#29305;&#27530;&#24847;&#20041;,&#25105;&#20204;&#21482;&#26159;&#29992;&#20110;&#21518;&#38754;&#26576;&#20123;&#30446;&#30340;&#32780;&#24050;,&#19979;&#38754;&#20004;&#20010;&#21464;&#37327;&#20063;&#19968;&#26679;,</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23601;&#19981;&#22810;&#35828;&#20102;</span>
+ENV <span style="color: #eedd82;">DOCKYARD_SRVHOME</span>=/srv
+ENV <span style="color: #eedd82;">DOCKYARD_SRVPROJ</span>=/srv/greeting
+
+RUN apk update
+RUN apk add bash
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36825;&#20457;&#26465;RUN&#25351;&#20196;&#25191;&#34892;&#30340;&#26159;Alpine Linux&#30340;&#21629;&#20196;,&#31532;&#19968;&#26465;&#26159;&#26356;&#26032;&#36719;&#20214;&#28304;&#32531;&#23384;;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#31532;&#20108;&#20010;&#26159;&#30001;&#20110;&#20043;&#21518;&#30340;docker-entrypoint.sh&#33050;&#26412;&#29992;&#30340;&#30340;&#26159;bash&#25191;&#34892;,&#32780;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36825;&#20010;&#38236;&#20687;&#27809;&#26377;bash,&#25152;&#20197;&#31532;&#20108;&#20010;&#26159;&#29992;&#26469;&#23433;&#35013;bash&#30340;</span>
+
+WORKDIR $<span style="color: #eedd82;">DOCKYARD_SRVHOME</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20999;&#25442;&#24403;&#21069;&#30446;&#24405;&#20026;/srv/greeting</span>
+
+VOLUME [<span style="color: #ffa07a;">"$DOCKYARD_SRVHOME/logs"</span>]
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36825;&#20010;&#20363;&#23376;&#38656;&#35201;&#25226;&#26085;&#24535;&#25991;&#20214;&#20445;&#30041;&#19979;&#26469;,VOLUME&#21487;&#20197;&#25226;&#36825;&#20123;&#25991;&#20214;&#32473;&#20854;&#23427;&#23481;&#22120;&#35775;&#38382;,</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#21487;&#20197;&#23545;&#36825;&#20123;&#25991;&#20214;&#36827;&#34892;&#22791;&#20221;,&#20043;&#21518;&#20877;&#35828;</span>
+
+COPY $<span style="color: #eedd82;">DOCKYARD_SRC</span> $<span style="color: #eedd82;">DOCKYARD_SRVPROJ</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">COPY&#21629;&#20196;&#23601;&#26159;&#25226;greeting&#22797;&#21046;&#21040;&#23481;&#22120;(&#24212;&#35813;&#26159;&#26032;&#38236;&#20687;&#25165;&#23545;)&#37324;&#36793;,&#22914;&#26524;&#26159;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#22312;&#23481;&#22120;&#37324;&#36793;&#22797;&#21046;&#37324;&#38754;&#30340;&#25991;&#20214;,&#35831;&#29992;RUN cp file1 file2 &#36825;&#26679;&#30340;&#21629;&#20196;</span>
+
+RUN pip3 install -U pip
+RUN pip3 install -r $<span style="color: #eedd82;">DOCKYARD_SRVPROJ</span>/requirements.txt
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23433;&#35013;&#39033;&#30446;&#20381;&#36182;</span>
+
+EXPOSE 8000
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36825;&#20010;Tornado&#39033;&#30446;&#26159;&#30417;&#21548;8000&#31471;&#21475;&#30340;,EXPOSE&#21487;&#20197;&#35753;&#36825;&#20010;&#31471;&#21475;&#32473;&#22806;&#30028;&#35775;&#38382;&#21040;,</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20854;&#23454;&#36825;&#20010;&#21487;&#20197;&#19981;&#29992;&#25351;&#23450;&#37117;&#21487;&#20197;,&#21518;&#38754;&#21487;&#20197;&#36890;&#36807;&#21551;&#21160;&#26102;&#20505;&#30340;&#35774;&#23450;&#38543;&#20415;&#26144;&#23556;&#31471;&#21475;.</span>
+
+WORKDIR $<span style="color: #eedd82;">DOCKYARD_SRVPROJ</span>
+COPY ./docker-entrypoint.sh /bin/
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20999;&#25442;&#24403;&#21069;&#30446;&#24405;,&#25226;&#21551;&#21160;&#33050;&#26412;&#22797;&#21046;&#21040;&#23481;&#22120;&#30340;/bin&#30446;&#24405;&#19979;</span>
+ENTRYPOINT [<span style="color: #ffa07a;">"docker-entrypoint.sh"</span>]
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23481;&#22120;&#20837;&#21475;,&#21551;&#21160;&#23481;&#22120;&#23601;&#20250;&#25191;&#34892;ENTRYPOINT&#25351;&#20196;&#25152;&#25351;&#23450;&#30340;&#21629;&#20196;</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">docker-entrypoint.sh</span>
+<span style="color: #00ffff;">if</span> [ ! -d <span style="color: #ffa07a;">"/srv/logs"</span> ];<span style="color: #00ffff;">then</span>
+    mkdir -p <span style="color: #ffa07a;">"/srv/logs"</span>
+<span style="color: #00ffff;">fi</span>
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"Server is running ..."</span>
+<span style="color: #00ffff;">exec</span> python3 <span style="color: #ffa07a;">\</span>
+     greeting.py <span style="color: #ffa07a;">\</span>
+     --log-file-prefix=<span style="color: #ffa07a;">"/srv/logs/greeting.log"</span> <span style="color: #ffa07a;">\</span>
+     <span style="color: #ffa07a;">"$@"</span>
+</pre>
+</div>
+
+<p>
+就是一个普通的脚本,有需要的情况下就创建/srv/logs目录,用来存放log文件,最后就是启动greeting.py.
+里面的"$@"有点类似与Python里面的*args形参,表示剩下的所有参数,可以通过它来传递额外的参数.
+</p></li>
+
+<li><p>
+执行打包命令
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker build . -t saltb0rn/greeting greeting-docker
+</pre>
+</div>
+
+<p>
+-t用于指定打包后的镜像tag,这里是salt0brn/greeting,你可以换一个喜欢的,最后面一个参数就是
+指定Dockerfile所处的目录.如果文件没有准备错,那么就可以建立成功.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker image ls
+REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+saltb0rn/greeting         latest              0b0472b2426f        3 seconds ago       70.2MB
+frolvlad/alpine-python3   latest              a056c2d555fe        5 weeks ago         54.2MB
+</pre>
+</div></li>
+</ol>
+
+
+<p>
+<b>运行项目</b>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker run --name greeting saltb0rn/greeting
+</pre>
+</div>
+
+<p>
+这样就运行了一个名字叫greeting的容器了.这种方式运行会导致终端被这个进程占用,可以
+把它设为守护进程,也就是在背后运行.
+</p>
+
+<p>
+如果你执行的上面命令并且Ctrl-C中止了容器,想要以守护进程运行的话就得先把原来得容器删
+除掉(除非你给了容器别名字,比如 &#x2013;name greeting2).由于设定了&#x2013;name,所以删除很简单,
+rm指定greeting就好了.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker container rm greeting
+</pre>
+</div>
+
+<p>
+假如没有指定&#x2013;name也没有关系,可以通过以下命令查看在运行中的容器
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker container ls
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+358973f5d79f        saltb0rn/greeting   <span style="color: #ffa07a;">"docker-entrypoint.sh"</span>   13 minutes ago      Up 13 minutes       8000/tcp            greeting
+</pre>
+</div>
+
+<p>
+这个时候如果有很多个类似的容器,那么就要自行根据信息来判断哪个容器是你想要进行操作的.
+这里面CONTAINER ID和NAMES都是唯一的.其实上面的删除命令可以根据CONTAINER ID来删除的,
+这里的话你要先停止容器再进行删除
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker container stop 358973f5d79f
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker container rm 358973f5d79f
+</pre>
+</div>
+
+<p>
+现在开始以守护进程模式运行
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents/$ sudo docker run -d --name greeting saltb0rn/greeting
+</pre>
+</div>
+
+<p>
+<b>访问VOLUME指定的目录</b>
+</p>
+
+<p>
+上面也说过VOLUME指令是把容器那指定的目录给别的容器访问,那么可以通过使用别的容器来这个实验,就用
+frolvlad/alpine-python3来访问上面的greeting容器
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t --volumes-from=greeting frolvlad/alpine-python3
+</pre>
+</div>
+
+<p>
+上面的-i -t分别表示使用交互模式和使用伪终端,也就是说在执行容器里面的终端(shell),&#x2013;volumes-from=greeting
+就是指访问正在运行的greeting容器.如果你执行"ls /srv/logs/greeting.log",它会执行成功,如果运行没有&#x2013;volumes-from=greeting
+的话,这句命令就会失败.你可以在登录进去后利用scp,git等工具把数据备份.
+</p>
+
+<p>
+<b>改变运行时候的入口</b>
+</p>
+
+<p>
+也许你不想用frolvlad/alpine-python3作为交互使用的容器,因为它没有bash,尽管可以安装bash,但是两个镜像中,
+saltb0rn/greeting是已经装好了bash,为何不直接用它呢,其实改变以下入口点就可以不会一运行就执行Tornado项目了.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t --entrypoint=/bin/bash saltb0rn/greeting
+</pre>
+</div>
+
+<p>
+<b>挂载目录/文件到容器中</b>
+</p>
+
+<p>
+假设~/Documents下有一个叫Pipfile的文件,想把它放到容器里面,有两种做法,一是在新建镜像的时候COPY进去,不过
+这样不适合一种情况,如果这个文件要经常更新那就要不断重新build镜像.第二中做法才是我们想要的,把环境和数据分开
+管理,用挂载就可以了,就像外部储存设备一样,用的时候挂载.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker run -i -t <span style="color: #ffa07a;">\</span>
+                            --volume=$(<span style="color: #b0c4de;">pwd</span>)/Pipfile:/srv/Pipfile <span style="color: #ffa07a;">\</span>
+                            --entrypoint=/bin/bash saltb0rn/greeting
+</pre>
+</div>
+
+<p>
+这个时候在容器里面执行"cat /srv/Pipfile"会看到与~/Documents/Pipfile一样的内容,如果这个时候在容器或者容器之外
+对Pipfile进行内容修改,两者内容会同步.可以自行执行"echo edit &gt;&gt; Pipfile"进行观察.
+</p>
+
+<p>
+<b>给Tornado项目传参数</b>
+</p>
+
+<p>
+比如想要给它传个&#x2013;port=8001(执行python3 greeting.py &#x2013;help可以看到能够传入的参数)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">salt@salt:~/Documents$ sudo docker run --publish=8001:8001 saltb0rn/greeting --port=8001
+</pre>
+</div>
+
+<p>
+说明一下,&#x2013;publish=8001:8001,第一个8001是容器外通过8001端口对容器暴露的端口进行访问,第二个8001就是
+容器对外暴露的8001端口,如果把&#x2013;port=8001去掉,在本地测试localhost:8001会连接失败,证明参数的确传到了.
+</p>
+
+
+<p>
+<b>Docker Debugging</b>
+</p>
+
+<p>
+在 <code>docker build</code> 的过程中难免会遇到失败的情况, 这就意味这你得不断地需调整 <code>Dockerfile</code> 来通过构建.
+但是调整的前提是要知道问题处在何处, 通过不停地修改 <code>Dockerfile</code> 然后构建来试出错误是很麻烦的一件事情.
+幸好的是, 在构建的过程中, 每当 <code>Docker</code> 执行一次 <code>RUN</code> 命令就会提交<a href="https://docs.docker.com/storage/storagedriver/#images-and-layers">一个新的镜像层(layer/image layer)</a>,
+一个镜像是由一系列的镜像层构成的, 每个镜像层都有它自己的 <code>ID</code>, 我们可以把每个镜像层看作是某个时间点上的镜像,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">  Sending build context to Docker daemon  14.69MB
+Step 1/22 : FROM ubuntu:20.04
+ ---&gt; 6df894023726
+Step 2/22 : ENV IS_DOCKER true
+ ---&gt; Using cache
+ ---&gt; 005f8893fba4
+Step 3/22 : RUN rm /bin/sh &amp;&amp; ln -s /bin/bash /bin/sh
+ ---&gt; Using cache
+ ---&gt; 2402f0d5a607
+Step 4/22 : RUN echo <span style="color: #ffa07a;">'debconf debconf/frontend select Noninteractive'</span> | debconf-set-selections
+ ---&gt; Using cache
+ ---&gt; eda706a31dd9
+ ...
+</pre>
+</div>
+
+<p>
+比如这里的 <code>6df894023726</code>, <code>005f8893fba4</code>, <code>2402f0d5a607</code> 和 <code>eda706a31dd9</code> 就是镜像层的 <code>ID</code>.
+假设构建时在  <code>Step 4</code> 发生了错误, 那么可以使用通过它的 <code>ID</code> 进入交互模式来排查错误原因:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">docker run -it eda706a31dd9 /bin/bash
+</pre>
+</div>
+
+<p>
+<b>一些关于学习Docker的个人建议</b>
+</p>
+
+<p>
+我刚开始学习使用Docker的时候会因为Dockerfile的指令抓狂,可能因为一上来就直接看参考文档(references)的缘故吧.
+没有Demo的话学一样新的东西会很吃力,因为能够看到一份文档需要的不仅是语言能力,还要对相关概念有一定的理解,或者
+说不实践一下是不懂它表达的意思,而参考文档就是在这方面不太友好.官方文档虽然也有Demo,不过不太可能能真的满足你
+的需求,所以我刚开始学的时候是参考了一篇文章<a href="http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/">Packaging Django applications into Docker container images</a>.
+这篇文章十分好,基本能满足你的需求,比如如何挂载容器外的文件,RUN命令一些常用的参数之类的.其实我这篇笔记就是参考
+它的,只不过把Django换成Tornado罢了.好像还看过打包Flask的,网上应该有不少例子,其实过了这个例子一遍以后基本上
+打包其他东西也没什么问题了.要多参考别人写得Dockerfile,你就可以写得更加熟练了.
+</p>
+
+<p>
+还有一个关于CMD和ENTRYPOINT指令的问题,两个都可以提供容器的入口,有什么区别呢?这是一个挺让新手困惑的问题,这里我就
+不写了,有一篇概括得还不错的<a href="https://www.cnblogs.com/CloudMan6/p/6875834.html">文章</a>可以参考一下.
+</p>
+
+<p>
+<b>结束是另外一个开始</b>
+</p>
+
+<p>
+Docker还有很多用法,这里是写不下了(不是因为懒),比如如何把一个Django项目+Nginx+Gunicorn+数据库一起打包呢?
+如果使用Docker构建集群?如何使用Docker构建分布式?这些涉及到docker-compose和docker-swarm技术.我本人虽然用
+过个一两次,但是对这块也不太了解.打算这个月内做一次实践然后记录下来(咕 咕 咕).
+</p>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 2018-08-16</p>
+<p class="author">Author: saltb0rn</p>
+<p class="date">Created: 2023-10-09 Mon 11:25</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

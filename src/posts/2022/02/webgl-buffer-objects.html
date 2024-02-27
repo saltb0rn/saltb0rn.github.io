@@ -1,0 +1,1591 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2024-02-24 Sat 01:14 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shader 编程自救指南</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="/home/saltb0rn/.emacs.d/assets/mathjax/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Shader 编程自救指南</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#how-gl-works">1. Shader 是如何工作的</a>
+<ul>
+<li><a href="#org1c1ccb3">1.1. Vertex Shader</a></li>
+<li><a href="#orge20a69a">1.2. Vertex Shader 之后, Fragment Shader 之前</a></li>
+<li><a href="#orge1d332c">1.3. Fragment Shader</a></li>
+<li><a href="#org5e3e1f9">1.4. Fragment Shader 之后 - Per-Sample Processing</a></li>
+</ul>
+</li>
+<li><a href="#orgbfe5b08">2. 细节补充</a>
+<ul>
+<li><a href="#how-cpu-upload-data">2.1. CPU 如何上传数据给 GPU</a></li>
+<li><a href="#how-gl-use-data">2.2. GPU 如何从缓冲区读取数据</a></li>
+<li><a href="#org8745062">2.3. 如何使用缓冲区的数据进行绘制</a></li>
+<li><a href="#glsl-type-qualifier-overview">2.4. GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</a>
+<ul>
+<li><a href="#org0be448e">2.4.1. attribute</a></li>
+<li><a href="#orgba29c88">2.4.2. uniform</a></li>
+</ul>
+</li>
+<li><a href="#org1ae9fe3">2.5. GLSL 内置变量</a></li>
+<li><a href="#org54a5704">2.6. 其它常见问题</a></li>
+</ul>
+</li>
+<li><a href="#org319fa3c">3. 搭建自己的 Shadertoy</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org298deb1">
+<p>
+由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
+</p>
+
+<p>
+为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 <code>Blender</code> 建模以及 <code>Godot</code> 的使用等等;
+</p>
+
+<p>
+同时由于工作繁忙的原因, 图形学学习计划搁置了一年, 当时就停留在贴图映射的阶段.
+</p>
+
+<p>
+另外搁置搁置还有一个原因, 那就是当时在学习贴图映射时所在的参考书有点不太易懂,
+</p>
+
+<p>
+所以需要找一本更易读的书, 我找到了 <a href="https://gabrielgambetta.com/computer-graphics-from-scratch/">Computer Graphics from Scratch</a>, 当这本书当前还没完成编写, 因此决定等它出版了再继续学.
+</p>
+
+<hr />
+
+<p>
+PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这本书, 期间使用 <code>C</code> 语言按照书上的伪代码实践了一遍.
+</p>
+
+<p>
+个人感觉等待这本书的完成是一个正确的选择, 它指导了我编写两个完整的渲染器, 简单易懂地解释了图形学里面一些较为复杂的算法.
+</p>
+
+<p>
+我本人在读这本书之前就已经较为深入地学习了一些 <a href="../..//2020/06/graphics-geometric-transformation.html">数学细节</a> 以及 <a href="../../2020/06/graphics-opengl-transformation.html">OpenGL的渲染管线</a>,
+</p>
+
+<p>
+在跟着书本实践时特地找出这些知识和实践的对应之处, 学习效果非常地好.
+</p>
+
+<p>
+这本书清晰了我在学习渲染管线时的一些迷糊之处, 而之前所学的数学细节以及渲染管线知识又很好地弥补了这本书在这方面的空缺.
+</p>
+
+<p>
+现在回过头来看 <code>Shader</code> 程序如何运作时, 很多东西都豁然开朗了.
+</p>
+
+</div>
+
+<div id="outline-container-how-gl-works" class="outline-2">
+<h2 id="how-gl-works"><span class="section-number-2">1.</span> Shader 是如何工作的</h2>
+<div class="outline-text-2" id="text-how-gl-works">
+<p>
+为了了解 <code>Shader</code> 是如何工作的, 我们将从最简单的 <code>WebGL</code> 开始上手,
+</p>
+
+<p>
+<code>WebGL</code> 和 <code>OpenGL</code> 的工作方式基本上是一致的, 主要区别在于对工具的要求上,
+</p>
+
+<p>
+<code>WebGL</code> 只要求掌握一点 <code>JavaScript/HTML</code> 就可以了;
+</p>
+
+<p>
+而对于 <code>OpenGL</code>, 很多教程都是要求读者使用 <code>C/C++</code> 来完成的, 而使用 <code>C/C++</code> 又掌握如何使用编译器以及 <code>makefile/cmake</code> 这样控制编译连接的工具的使用, 不是简单的事情.
+</p>
+
+<p>
+要想了解 <code>Shader</code> 如何工作什么的, 其实和了解 <code>OpenGL</code> 是一样的, 离不开对渲染流程的了解.
+</p>
+
+<p>
+开发人员所关心的 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 就是整个渲染流程里其中的两个环节.
+</p>
+
+<p>
+我一开始是找了关于这块不错的教程来进行学习:
+</p>
+
+<p>
+<a href="https://webglfundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL Fundamentals 的 WebGL是如何工作的</a>
+</p>
+
+<p>
+<a href="https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html">WebGL2 Fundamentals 的 WebGL是如何工作的</a>
+</p>
+
+<p>
+但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的, 特别是 <code>Fragment Shader</code>, 看别人的 <code>Shader</code> 还是一头雾水.
+</p>
+
+<p>
+回过头去看官方的 <a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流程概览</a>, 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 解下来就是个人理解了.
+</p>
+
+<p>
+在这之前要了解一件事情, 随着 <code>OpenGL</code> 版本的变化, 渲染流程时会发生变化的, WebGL 也是一样.
+</p>
+
+<p>
+因此, 这篇文章里面的例子只关注特定版本的 <code>WebGL</code>: <code>WebGL 1.0</code>, 它对应的 <code>GLSL</code> 版本是 <a href="https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.20.pdf">1.20</a>.
+</p>
+
+<blockquote>
+<p>
+由于历史原因, <code>OpenGL/OpenGL ES/WebGL</code> 和 <code>GLSL</code> 之间的版本对应关系挺混乱的, 幸好维基百科上有列出<a href="https://en.wikipedia.org/wiki/OpenGL_Shading_Language#Versions">对应关系</a>.
+</p>
+
+<p>
+如果不了解这一块的话, 你无法知道你的 <code>Shader</code> 程序能够运行在什么环境上的.
+</p>
+</blockquote>
+
+<p>
+接下来着重介绍 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 及其前后的几个阶段.
+</p>
+</div>
+
+<div id="outline-container-org1c1ccb3" class="outline-3">
+<h3 id="org1c1ccb3"><span class="section-number-3">1.1.</span> Vertex Shader</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+<code>Vertex Shader</code> 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标,
+</p>
+
+<p>
+所谓的几何数据就是指顶点数据, 这些数据来自于 <code>CPU</code> 程序的上传(后面会详细介绍), 每当接收一个几何数据, <code>Vertex Shader</code> 就运行一遍,
+</p>
+
+<p>
+如下图所示:
+</p>
+
+
+<div id="org7eb5f83" class="figure">
+<p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif" />
+</p>
+<p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
+</div>
+
+<p>
+由于 <code>Vertex Shader</code> 可以自定义, 所以该计算过程不是固定的.
+</p>
+
+<p>
+在后面的过程中会根据计算所得的坐标来进一步计算出其它可选数据(<b>可能</b> 包括色值, 法线, 贴图坐标等等)并进行渲染, 这些数据的计算过程是 <code>OpenGL</code> 内部完成的, 开发人员不可干涉.
+</p>
+
+<p>
+可选数据实际上是由开发人员自定义的, 可以作任何用途, 如果想让 <code>OpenGL</code> 计算出可选数据, 那么开发人员必定给出一个 "种子" 提供给 <code>OpenGL</code>.
+</p>
+
+<p>
+裁剪空间的顶点坐标必须被设置为 <code>gl_Position</code> 的值, 而可选数据的 "种子" 则是需要通过 <code>varying</code> 类型变量来提供.
+</p>
+
+<p>
+可选数据的计算过程虽然是  <code>OpenGL</code> 包揽的, 但想掌握 <code>Shader</code> 编程就必须要了解它.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge20a69a" class="outline-3">
+<h3 id="orge20a69a"><span class="section-number-3">1.2.</span> Vertex Shader 之后, Fragment Shader 之前</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+在 <code>Vertex Shader</code> 之后并非马上就到 <code>Fragment Shader</code> 了, 这期间会发生一切其他事情.
+</p>
+
+<p>
+<b>图元组装 (Primitive Assembly)</b>
+</p>
+
+<p>
+在通过 <code>Vertex Shader</code> 处理完所有输入的顶点数据之后, <code>OpenGL</code> 会按照一定规律把输出的顶点组合在一起形成一个几何对象, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+</p>
+
+<p>
+在计算机中, <code>3D</code> 物体就是由多个面(或者说图元)组成的.
+</p>
+
+<blockquote>
+<p>
+当然 <code>OpenGL</code> 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(<code>basic primitive</code>), 包括点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
+</p>
+</blockquote>
+
+<p>
+<b>裁剪 (Cliping)</b>
+</p>
+
+<p>
+<code>OpenGL</code> 会把超出视野的图元或图元部分进行裁剪, 就像人一样, 看不了视野以外的东西.
+</p>
+
+<p>
+<b>面剔除 (Face Culling)</b>
+</p>
+
+<p>
+<code>OpenGL</code> 可以检测得到图元面向是正面还是背面观察者(viewer)的, 就如我们生活中看到的物体一样,
+</p>
+
+<p>
+一个时间点内只能在一个角度看到它, 看得到就是正面, 看不到的就是背面, 那么背面也是在视野之外的.
+</p>
+
+<p>
+<code>OpenGL</code> 可以让开发者决定是否取消对物体背面的渲染.
+</p>
+
+<p>
+<b>光栅化 (Rasterization)</b>
+</p>
+
+<p>
+之后就到光栅化阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>),
+</p>
+
+<p>
+我们可以先把像素(pixel)定义为显示在屏幕上的一个小方块, 该小方块可以显示某个颜色.
+</p>
+
+<p>
+片元可以记录小方块在画面上的位置以及颜色, 也可能和有一些可选数据与之关联, 部分可选数据是根据 <code>Vertex Shader</code> 定义的可选数据计算而来的.
+</p>
+
+
+<div id="org949da65" class="figure">
+<p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif" />
+</p>
+</div>
+
+<p>
+比如动画中的这个过程就是对一个三角形图元进行采样(sampling)得到一个由方块组成的近似三角形, 这些方块就是片元.
+</p>
+
+<blockquote>
+<p>
+你可以把采样理解为从一个连续对象上抽取若干个数据形成一个不连续的序列, 该序列和连续对象近似乎;
+</p>
+
+<p>
+我们把这些抽出来的数据叫做样本(samples), 样本数量越多, 得到的序列就和连续对象越像.
+</p>
+
+<p>
+这就是数学里面微分的思想.
+</p>
+</blockquote>
+
+<p>
+然而, <code>OpenGL</code> 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
+</p>
+
+<p>
+首先, 会根据 <code>Vertex Shader</code> 得出的裁剪空间坐标计算出屏幕坐标(screen space), 也就是计算出顶点对应的片元坐标;
+</p>
+
+<p>
+再根据这些片元坐标通过线性插值(interpolation)来补充缺失的片元, 从而构造出由方块组成的近似三角形.
+</p>
+
+
+<div id="org60f7c37" class="figure">
+<p><img src="../../../files/trianglerast_f1_joshbeam.png" alt="trianglerast_f1_joshbeam.png" />
+</p>
+<p><span class="figure-number">Figure 2: </span>三个顶点所对应的片元坐标</p>
+</div>
+
+<p>
+线性插值的原理很简单, 就是 \(y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times t(x_{1} - x_{0}),\ where\ 0 \le t \le 1\).
+</p>
+
+<p>
+也可以这么表述: \(y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times (x - x_{0}),\ where\ \min(x_{0}, x_{1}) \le x \le\ \max(x_{0}, x_{1})\).
+</p>
+
+<p>
+第二种表述方换句话说就是找出 \((x_{0}, y_{0})\) 和 \((x_{1}, y_{1})\) 两点线段上的一个点 \((x, y)\), 这符合我们要找出缺失片元的要求.
+</p>
+
+<p>
+由于片元是一格一格的, 因此两个相邻的片元必定在 \(x\) 轴/\(y\) 轴/同时在 \(x\) 和 \(y\) 轴方向上相差一个单位.
+</p>
+
+<p>
+所以我们的插值代码如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  i0: int</span>
+<span style="color: #ff7f24;">  i1: int</span>
+
+<span style="color: #ff7f24;">  d0: decimal</span>
+<span style="color: #ff7f24;">  d1: decimal</span>
+<span style="color: #ff7f24;">*/</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">interpolate</span>(<span style="color: #eedd82;">i0</span>, <span style="color: #eedd82;">d0</span>, <span style="color: #eedd82;">i1</span>, <span style="color: #eedd82;">d1</span>) {
+  <span style="color: #00ffff;">if</span> (i0 == i1) {
+    <span style="color: #00ffff;">return</span> [d0];
+  }
+
+  <span style="color: #00ffff;">var</span> <span style="color: #eedd82;">values</span> = [];
+  <span style="color: #00ffff;">var</span> <span style="color: #eedd82;">a</span> = (d1 - d0) / (i1 - i0);
+  <span style="color: #00ffff;">var</span> <span style="color: #eedd82;">d</span> = d0;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">incrementing i by 1 is because the difference between each two adjacent pixels is 1</span>
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">var</span> <span style="color: #eedd82;">i</span> = i0; i &lt;= i1; i++) {
+    values.push(d);
+    d += a;
+  }
+
+  <span style="color: #00ffff;">return</span> values;
+}
+</pre>
+</div>
+
+<p>
+我们可以选择两个点的 \(x\) 分量来作为 \(i0\) 和 \(i1\), 让 \(y\) 分量作为 \(d0\) 和 \(d1\);
+</p>
+
+<p>
+也可以选择 \(y\) 分量作为 \(i0\) 和 \(i1\), 让 \(x\) 分量作为 \(d0\) 和 \(d1\).
+</p>
+
+<p>
+这取决于 \(\left|x1 - x0\right|\) 和 \(\left|y1 - y0\right|\) 两者之间哪个大.
+</p>
+
+<p>
+观察代码, 如果 \(\left|i1 - i0\right|\) 比 \(\left|d1 - d0\right|\) 要小, 那么 \(\left|a\right|\) 就要大于 1, 这和相邻片元相差一个单位并不相符,
+</p>
+
+<p>
+在插值过程中会出现片元不相邻的情况, 比如以 \(x\) 分量作为 \(i0\) 和 \(i1\), 并且 \(a = 2\), 那么 \((10, 20)\) 的下一个插值坐标是 \((11, 22)\);
+</p>
+
+<p>
+但如果以 \(y\) 作为 \(i0\) 和 \(i1\), 那么 \(a = \frac{1}{2}\), 那么 \((10, 20)\) 的下一个插值坐标是 \((11, \lfloor 20.5 \rfloor)\), 这种情况片元就是相邻的.
+</p>
+
+<p>
+使用 <code>interpolate</code> 函数很容易就能画出一个三角形边线框.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38656;&#35201;&#27880;&#24847;&#30340;&#26159;, p0 p1 p2 &#19977;&#20010;&#22352;&#26631;&#30340;&#20998;&#37327;&#26159; decimal &#31867;&#22411;, &#36825;&#26159;&#20174;&#35009;&#21098;&#31354;&#38388;&#36716;&#25442;&#21040;&#23631;&#24149;&#31354;&#38388;&#24471;&#21040;&#30340;&#32467;&#26524;;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32780;&#23631;&#24149;&#31354;&#38388;&#19978;&#30340;&#20687;&#32032;&#20998;&#37327;&#26159; int &#31867;&#22411;, &#22240;&#27492;&#25105;&#20204;&#38656;&#35201;&#22312;&#20851;&#38190;&#26102;&#20505;&#23545;&#20998;&#37327;&#36827;&#34892;&#21462;&#25972;,</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#20801;&#35768;&#30340;&#35805;,&#26368;&#22909;&#22312;&#35745;&#31639;&#36807;&#31243;&#30340;&#26368;&#21518;&#19968;&#27493;&#32473;&#35745;&#31639;&#32467;&#26524;&#21462;&#25972;&#26469;&#20445;&#35777;&#32467;&#26524;&#23613;&#37327;&#31934;&#30830;.</span>
+
+<span style="color: #00ffff;">if</span> (Math.abs(p1.x - p0.x) &gt; Math.abs(p1.y - p0.y)) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ys01</span> = interpolate(p0.x | 0, p0.y, p1.x | 0, p1.y);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = p0.x; x &lt;= p1.x; x++) {
+    putPixel(x | 0, ys01[(x - p0.x) | 0] | 0);
+  }
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">xs01</span> = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p1.y; y++) {
+    putPixel(xs01[(y - p0.y) | 0] | 0, y | 0);
+  }
+}
+
+<span style="color: #00ffff;">if</span> (Math.abs(p2.x - p1.x) &gt; Math.abs(p2.y - p1.y)) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ys12</span> = interpolate(p1.x | 0, p1.y, p2.x | 0, p2.y);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = p1.x; x &lt;= p2.x; x++) {
+    putPixel(x | 0, ys12[(x - p1.x) | 0] | 0);
+  }
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">xs12</span> = interpolate(p1.y | 0, p1.x, p2.y | 0, p2.x);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p1.y; y &lt;= p2.y; y++) {
+    putPixel(xs12[(y - p1.y) | 0] | 0, y | 0);
+  }
+}
+
+<span style="color: #00ffff;">if</span> (Math.abs(p2.x - p0.x) &gt; Math.abs(p2.y - p0.y)) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ys02</span> = interpolate(p0.x | 0, p0.y, p2.x | 0, p2.y);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = p0.x; x &lt;= p2.x; x++) {
+    putPixel(x | 0, ys02[(x - p0.x) | 0] | 0);
+  }
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">xs02</span> = interpolate(p0.y | 0, p0.x, p2.y | 0, p2.x);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
+    putPixel(xs02[(y - p0.y) | 0] | 0, y | 0);
+  }
+}
+</pre>
+</div>
+
+
+<div id="org7c154dd" class="figure">
+<p><img src="../../../files/trianglerast_f2_joshbeam.png" alt="trianglerast_f2_joshbeam.png" />
+</p>
+<p><span class="figure-number">Figure 3: </span>三角形线框</p>
+</div>
+
+<p>
+绘制填充三角形则复杂一点, 不过很好理解, 它 <code>OpenGL</code> 绘制图形的重点.
+</p>
+
+<p>
+可以把一个三角形看作一个由多层横线组成的的图形, 每一层的高度为一个像素;
+</p>
+
+<p>
+计算出每一层的两个端点, 再根据每层的两端点进行插值绘制出直线, 这些直线构成的就是目标三角形.
+</p>
+
+
+<div id="org050f296" class="figure">
+<p><img src="../../../files/trianglerast_f3_joshbeam_aux.png" alt="trianglerast_f3_joshbeam_aux.png" />
+</p>
+<p><span class="figure-number">Figure 4: </span>实心三角形</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#39318;&#20808;&#38656;&#35201;&#23545; p0 p1 p2 &#19977;&#20010;&#29255;&#20803;&#22352;&#26631;&#26681;&#25454; $y$ &#20998;&#37327;&#36827;&#34892;&#20132;&#25442;&#25490;&#24207;, &#27604;&#22914;&#20174;&#23567;&#21040;&#22823;&#36827;&#34892;&#25490;&#24207;: p0.y &lt;= p1.y &lt;= p2.y</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#26679;&#21487;&#20197;&#36991;&#20813;&#35752;&#35770;&#21738;&#20010;&#28857;&#26368;&#39640;,&#21738;&#20010;&#28857;&#26368;&#20302;</span>
+<span style="color: #00ffff;">if</span> (p1.y &lt; p0.y) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">temp</span> = p0;
+  p0 = p1;
+  p1 = temp;
+}
+
+<span style="color: #00ffff;">if</span> (p2.y &lt; p0.y) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">temp</span> = p0;
+  p0 = p2;
+  p2 = temp;
+}
+
+<span style="color: #00ffff;">if</span> (p2.y &lt; p1.y) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">temp</span> = p1;
+  p1 = p2;
+  p2 = temp;
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#19977;&#35282;&#24418;&#26368;&#39640;&#30340;&#19968;&#26465;&#36793;&#30475;&#20316;&#26159;&#19968;&#20010;&#31471;&#28857;&#38598;&#21512;, &#25226;&#21478;&#22806;&#20004;&#26465;&#36793;&#30340;&#38598;&#21512;&#30475;&#20316;&#21478;&#22806;&#19968;&#20010;&#31471;&#28857;&#38598;&#21512;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27880;&#24847;, &#36825;&#37324;&#30340;&#26368;&#39640;&#36793;&#26159; p0 &#36830;&#25509; p2 &#30340;&#36793;, &#21478;&#22806;&#20004;&#26465;&#36793;&#20998;&#21035;&#26159; p0 &#36830;&#25509; p1 &#21644; p1 &#36830;&#25509; p2</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#24050;&#30693;&#29255;&#20803;&#30340; y &#20998;&#37327;&#26102;, &#21487;&#20197;&#25554;&#20540;&#20986;&#29255;&#20803;&#23545;&#24212;&#30340; x &#20998;&#37327;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x01</span> = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x12</span> = interpolate(p1.y | 0, p1.x, p2.y | 0, p2.x);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x02</span> = interpolate(p0.y | 0, p0.x, p2.y | 0, p2.x);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23454;&#38469;&#19978;, p0-p2 &#30340;&#36793;&#39640;&#24230;&#26159;&#19982; p0-p1 + p1-p2 &#30340;&#39640;&#24230;&#26159;&#19968;&#26679;&#30340;, &#21487;&#20197;&#25226; p0-p1-p2 &#21333;&#29420;&#30475;&#20316;&#26159;&#19968;&#26465;&#36793;</span>
+x01.pop(); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x01 &#30340;&#26368;&#21518;&#19968;&#20010;&#20803;&#32032;&#21644; x12 &#30340;&#31532;&#19968;&#20010;&#20803;&#32032;&#37325;&#22797;&#23454;&#38469;&#19978;&#26159;&#21516;&#19968;&#20010;&#29255;&#20803;&#30340; x &#20998;&#37327;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x012</span> = x01.concat(x12);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25509;&#19979;&#26469;&#21482;&#35201;&#21306;&#20998; p0-p2 &#21644; p0-p1-p2 &#21738;&#20010;&#26159;&#24038;&#36793;&#21738;&#20010;&#26159;&#21491;&#36793;, &#20877;&#36827;&#34892;&#36880;&#34892;&#25554;&#20540;&#23601;&#21487;&#20197;&#32472;&#21046;&#20986;&#19977;&#35282;&#24418;&#20102;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21306;&#20998;&#24038;&#21491;&#36793;&#30340;&#26041;&#27861;&#24456;&#31616;&#21333;, &#20998;&#21035;&#21462;&#20004;&#36793;&#30340;&#20013;&#38388;&#28857;&#30340; x &#20998;&#37327;&#36827;&#34892;&#23545;&#27604;&#21363;&#21487;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">m</span> = Math.floor(x02.length / 2);
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x_left</span>, <span style="color: #eedd82;">x_right</span>;
+<span style="color: #00ffff;">if</span> (x02[m] &lt; x012[m]) {
+  x_left = x02;
+  x_right = x012;
+} <span style="color: #00ffff;">else</span> {
+  x_left = x012;
+  x_right = x02;
+}
+
+<span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xl</span> = x_left[(y - p0.y) | 0];
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xr</span> = x_right[(y - p0.y) | 0];
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = xl; x &lt;= xr; x++) {
+    putPixel(x | 0, y | 0);
+  }
+}
+</pre>
+</div>
+
+<p>
+以上就是 <code>OpenGL</code> 绘制实心三角形的大致原理.
+</p>
+
+<p>
+基于该过程, 还可以插值出之前说的可选数据, 只要在计算 <code>x01/x12/x02</code> 时进行类似插值就可以:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#31446;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h01</span> = interpolate(p0.y | 0, p0.h, p1.y | 0, p1.h);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h12</span> = interpolate(p1.y | 0, p1.h, p2.y | 0, p2.h);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h02</span> = interpolate(p0.y | 0, p0.h, p2.y | 0, p2.h);
+h01.pop();
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h012</span> = h01.concat(h12);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">h_left</span>, <span style="color: #eedd82;">h_right</span>;
+<span style="color: #00ffff;">if</span> (x02[m]  &lt; x012[m]) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+  h_left = h02;
+  h_right = h012;
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+  h_left = h012;
+  h_right = h02;
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+<span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xl</span> = x_left[(y - p0.y) | 0];
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xr</span> = x_right[(y - p0.y) | 0];
+
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hl</span> = h_left[(y - p0.y) | 0];
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hr</span> = h_right[(y - p0.y) | 0];
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#27178;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hs</span> = interpolate(xl, hl, xr, hr);
+
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = xl; x &lt;= xr; x++) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462;&#24403;&#21069;&#29255;&#20803;&#25152;&#23545;&#24212;&#30340;&#21487;&#36873;&#25968;&#25454; h, &#29992;&#22312;&#20043;&#21518;&#30340; fragment shader &#38454;&#27573;&#20013;</span>
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h</span> = hs[x - xl];
+    putPixel(x | 0, y | 0);
+  }
+}
+
+</pre>
+</div>
+
+<p>
+到目前位置, 光栅化基本完成, <code>OpenGL</code> 会把这些片元逐个给到下一个阶段 <b>Fragment Shader</b>.
+</p>
+
+<p>
+<code>OpenGL</code> 会使用一些变量来传递片元数据, 比如 <code>gl_FragCoord</code> 会把片元对应的 \(x\) 和 \(y\) 分量一并传回;
+</p>
+
+<p>
+<code>gl_FragCoord</code> 这种是 <code>OpenGL</code> 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 <code>Shader</code> 程序中用得上.
+</p>
+
+<p>
+而可选数据 \(h\) 则需要开发人员自定义 <code>varying</code> 类型或 <code>out</code> 类型变量进行传递, 我们马上就知道具体该怎么做.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge1d332c" class="outline-3">
+<h3 id="orge1d332c"><span class="section-number-3">1.3.</span> Fragment Shader</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+在得到片元后, <code>OpenGL</code> 就开始对它们进行处理, 这就是 <code>Fragment Shader</code> <b>主要</b> 要做的事情了:
+</p>
+
+<p>
+每次接受一个片元作为输入, 为片元设置颜色(设置 <code>gl_FragColor</code>), 并输出处理后的片元到下一个阶段中.
+</p>
+
+<p>
+如果该片元最终能够呈现在屏幕上, 那么该颜色就作为像素的颜色.
+</p>
+
+<p>
+为了了解具体是怎么实现的, 我们来看一个例子(基于 <code>WebGL 1.0/GLSL 1.20</code> 版本).
+</p>
+
+<blockquote>
+<p>
+在下面的绘制三角形的例子里面, <code>Vertex Shader</code> 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了);
+</p>
+
+<p>
+<code>Vertex Shader</code> 中的 <code>vColor</code> 则是作为与 <code>gl_Position</code> 关联的可选数据.
+</p>
+
+<p>
+在光栅化的过程中 <code>OpenGL</code> 会根据 <code>Vertex Shader</code> 传递过来的 <code>gl_Position</code> 进行插值, 得到片元坐标以及相关可选数据.
+</p>
+
+<p>
+片元的坐标会被保存在 <code>gl_FragCoord</code> 中; 对于可选数据, <code>OpenGL</code> 会在对 <code>gl_Position</code> 插值时同时对 <code>Vertex Shader</code> 传递过来的 <code>vColor</code> 进行插值,
+</p>
+
+<p>
+并把插值结果传递在 <code>Fragment Shader</code> 的 <code>vColor</code> 上.
+</p>
+
+<p>
+这样 <code>Fragment Shader</code> 就接受了一个片元以及其相关的可选数据, 根据开发人员的自身要求设置 <code>gl_FragColor</code>.
+</p>
+
+<p>
+该例子里面的 <code>Fragment Shader</code> 把与片元关联的 <code>vColor</code> 设置为自己的颜色, 最后得到一个颜色渐变的三角形.
+</p>
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="../../../examples/fragment-shader-example.html"></iframe>
+</p>
+</blockquote>
+
+<p>
+<code>Fragment Shader</code> <a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs">输入</a>和<a href="https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs">输出</a>的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 <code>Fragment Shader</code> 输出的片元.
+</p>
+
+<p>
+相比于像素而言, 片元除了有 <code>RGBA</code> 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息.
+</p>
+
+<p>
+需要知道这些数据的含义, 或者说理解片元, 那么得先了解 <code>Fragment Shader</code> 后面的 <code>Per-Sample Processing</code> 阶段做了什么.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5e3e1f9" class="outline-3">
+<h3 id="org5e3e1f9"><span class="section-number-3">1.4.</span> Fragment Shader 之后 - Per-Sample Processing</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+该阶段会使用上片元的这些额外值来进行<a href="https://www.khronos.org/opengl/wiki/Per-Sample_Processing">一系列的测试</a>, 来决定是否把该片元的色值输出到屏幕上成为像素,
+</p>
+
+<p>
+这里就讨论剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test) 这三个测试(这里是它们的先后顺序).
+</p>
+
+<p>
+其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元;
+</p>
+
+<p>
+而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲区(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
+</p>
+
+<p>
+为了更直观地理解, 我直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
+</p>
+
+
+<div id="org0bb00f6" class="figure">
+<p><img src="../../../files/stencil_test.png" alt="stencil_test.png" />
+</p>
+<p><span class="figure-number">Figure 5: </span>模板测试</p>
+</div>
+
+<p>
+可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
+</p>
+
+<p>
+模板测试就是比较对应位置上的像素数值和片元模板值, 比如像上面图那样, 只有模板值等于 1 的片元才能被保留下来.
+</p>
+
+<p>
+当然判断方法也有可能是大于等于 1, 判断方法不是唯一的, 其他方法可以看<a href="https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test">官方文档</a>.
+</p>
+
+<p>
+最后 <code>OpenGL</code> 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbfe5b08" class="outline-2">
+<h2 id="orgbfe5b08"><span class="section-number-2">2.</span> 细节补充</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+我们约定 <code>Shader</code> 代码是运行在 <code>CPU</code> 上的, 而调用 <code>OpenGL/WebGL API</code> 的代码则是运行在 <code>CPU</code> 上的;
+</p>
+
+<p>
+当提到调用 <code>OpenGL/WebGL API</code> 给 <code>Shader</code> 提供数据的时候, 就说从 <code>CPU</code> 上传数据到 <code>GPU</code>.
+</p>
+
+<p>
+这部分的内容主要是补充描述 <code>GPU</code> 具体是如何接收来自于 <code>CPU</code> 的数据的.
+</p>
+
+<p>
+为了不让文章被上下文断断续续的代码扰乱, 这里准备了一个简单的<a href="https://github.com/saltb0rn/saltb0rn.github.io/tree/master/src/examples/learn-webgl-how-to-read-data">例子</a>用于讲解, 效果如下:
+</p>
+
+<p>
+<iframe width="300" height="300" src="../../../examples/learn-webgl-how-to-read-data/index.html"></iframe>
+</p>
+
+<p>
+在阅读下面的内容前请 <b>务必</b> 把例子的代码复制到本地, 然后边阅读边对照, 有疑惑可以修改代码查看效果.
+</p>
+
+<p>
+需要注意的是, 这个例子是基于 <code>WebGL 1.0/GLSL 1.20</code> 的.
+</p>
+</div>
+
+<div id="outline-container-how-cpu-upload-data" class="outline-3">
+<h3 id="how-cpu-upload-data"><span class="section-number-3">2.1.</span> CPU 如何上传数据给 GPU</h3>
+<div class="outline-text-3" id="text-how-cpu-upload-data">
+<p>
+首先,  <code>GPU</code> 会等 <code>CPU</code> 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
+</p>
+
+<p>
+我们以 <code>WebGL</code> 为例子 (<code>OpenGL</code> 其实也差不了太多), 设现有一个名为 <code>gl</code> 的 <code>WebGL</code> 上下文实例, 要完成上述过程需要进行以下操作:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;&#21306;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">buffer</span> = gl.createBuffer();
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;&#21306;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#21306;&#36827;&#34892;&#25805;&#20316;</span>
+gl.bindBuffer(target, buffer);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
+gl.bufferData(target, data, usage);
+</pre>
+</div>
+
+<p>
+这里对应例子的<a href="https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L92">这一部分(80-92行)</a>.
+</p>
+
+<p>
+由于数据的用途的不同, 缓冲区可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 <code>target</code> 变量.
+</p>
+
+<p>
+想要知道 <code>target</code> 的值能够是什么, 可以参考<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer">这里</a>, 这些方法的参考说明都可以在<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext">这里</a>找到.
+</p>
+
+<blockquote>
+<p>
+<a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBufferData.xhtml">参考文档</a> <code>usage</code> 变量是用来提示 <code>OpenGL/WebGL</code> 储存数据的使用模式, 使用模式分为两个方面来讨论:
+</p>
+
+<p>
+<b>数据的访问频率</b> 以及 <b>数据的访问性质</b>.
+</p>
+
+<p>
+访问频率有以下几种情况:
+</p>
+
+<ul class="org-ul">
+<li><code>STREAM</code>: 数据只会被修改一次并且偶尔使用几次</li>
+<li><code>STATIC</code>: 数据只会被修改一次并且使用多次</li>
+<li><code>DYNAMIC</code>: 数据会重复修改并且使用多次</li>
+</ul>
+
+<p>
+访问性质其实就是在描述数据来源(也就是修改数据的方式)以及用途, 有以下几种情况:
+</p>
+
+<ul class="org-ul">
+<li><code>DRAW</code>: 数据由 <code>CPU</code> 上传到 <code>GPU</code>, 并且作为绘图命令/图片规范命令的数据源</li>
+<li><code>READ</code>: 数据由 <code>GPU</code> 读取到 <code>CPU</code></li>
+<li><code>COPY</code>: 数据由 <code>GPU</code> 读取到 <code>GPU</code>, 并且作为绘图命令/图片规范命令的数据源</li>
+</ul>
+
+<hr />
+
+<p>
+值得注意的是, <code>usage</code> 仅仅是用来 <b>提示</b> 数据的使用模式, 目的是想让 <code>OpenGL/WebGL</code> 对数据的储存进行优化;
+</p>
+
+<p>
+但 <code>usage</code> 并不一定要匹配实际的使用模式, 比如说可以对 <code>STATIC_DRAW</code> 用途的数据进行多次修改, 并不约束数据的实际使用模式.
+</p>
+</blockquote>
+
+<p>
+在 <code>OpenGL/WebGL</code> 里面, 这些用来作为物体顶点信息的缓冲区叫做 <code>Vertex Buffer Object (VBO)</code>.
+</p>
+
+<p>
+一旦有了数据源, 就可以让 <code>GPU</code> 根据利用这些数据来渲染了.
+</p>
+
+<p>
+人们一般喜欢把这些顶点数据称为几何数据(Geometry Data).
+</p>
+
+<p>
+缓冲区并非只能存几何数据, 也可以包含一些其它与几何数据相关的数据;
+</p>
+
+<p>
+另外, <code>OpenGL</code> 也不规定 <code>CPU</code> 上传的数据只能存到缓冲区里, 后面会介绍它们.
+</p>
+</div>
+</div>
+
+<div id="outline-container-how-gl-use-data" class="outline-3">
+<h3 id="how-gl-use-data"><span class="section-number-3">2.2.</span> GPU 如何从缓冲区读取数据</h3>
+<div class="outline-text-3" id="text-how-gl-use-data">
+<p>
+首先需要提及的一点是, <code>GPU</code> 并非直接使用缓冲区来进行渲染, 在说明这点之前, 我们先来明白一个概念.
+</p>
+
+<p>
+<code>VBO</code> 里面的数据格式不是固定的, 比如渲染一个三角形, 它的顶点数据格式可能是这样的:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">{ x1, y1, z1, x2, y2, z2, x3, y3, z3 }
+</pre>
+</div>
+
+<p>
+每个顶点只有 \((x,y,z)\) 坐标数据.
+</p>
+
+<p>
+也可能是这样的:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">{ x1, y1, z1, w1, x2, y2, z2, w2, x3, y3, z3, w3 }
+</pre>
+</div>
+
+<p>
+现在每个顶点的坐标数据多了一个 \(w\) 分量.
+</p>
+
+<p>
+也有可能包含了坐标以外的数据:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">{ x1, y1, z1, w1, r1, g1, b1, a1, x2, y2, z2, w2, r2, g2, b2, a2, x3, y3, z3, w3, r3, g3, b3, a3, }
+</pre>
+</div>
+
+<p>
+总的来说, 每个顶点数据可能会有不同属性(attribute), 而不同属性的格式又不是固定的.
+</p>
+
+<p>
+那么问题来了, 既然数据格式不一样, <code>GPU</code> 是如何读取这些数据才能渲染出一个三角形的呢?
+</p>
+
+<p>
+这需要开发人员告诉 <code>GPU</code> 如何读取数据, 调用 <code>gl.vertexAttribPointer(index, size, type, normalized, stride, offset)</code> 这个 API 来生成一个 <code>Vertex Array Object (VAO)</code>,
+</p>
+
+<p>
+<b>VAO 可以控制如何从 VBO 里面读取数据, 并把数据绑定给变量</b> (讲道理, <code>VAO</code> 的全称很难能让人理解它的作用).
+</p>
+
+<p>
+它控制读取数据的方式其实很简单, 假设下面这里有另外一种数据格式:
+</p>
+
+
+<div id="orgf98691f" class="figure">
+<p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png" />
+</p>
+<p><span class="figure-number">Figure 6: </span>vertexAttribPointer</p>
+</div>
+
+<p>
+这里面的顶数据有三种属性: 顶点坐标(xyz), 颜色(rgb)以及纹理坐标(st).
+</p>
+
+<p>
+正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者属性之间的排序不同于上图.
+</p>
+
+<p>
+这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 <code>gl.vertexAttribPointer()</code> 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
+</p>
+
+<p>
+<code>gl.vertexAttribPointer</code> 的 <code>index</code> 参数是 <code>Shader</code> 程序(shader program)里面 <code>attribute</code> 类型变量的索引值, 可以手动指定, 也可以通过 <code>gl.getAttribLocation(shaderProgram, attribName)</code> 来获取.
+</p>
+
+<p>
+<code>attribute</code> 类型变量是 <code>shader</code> 程序里面定义的变量, 用来传递缓冲区里面某种数据给 <code>Vertex Shader</code> 中, 后面会讲到.
+</p>
+
+<blockquote>
+<p>
+<code>gl.vertexAttribPointer</code> 其它参数:
+</p>
+
+<ul class="org-ul">
+<li><code>size</code>: 指定某属性由多少个分量组成, 比如图中的 <code>POSITION</code> 属性是由 3 个分量组成, 如果读取 <code>POSITION</code>, 那么 <code>size</code> 应该是 3.</li>
+
+<li><code>type</code>: 分量的类型, 是整形还是浮点型, 图中的分量类型是浮点型, 浮点型数据大小为 32 位(4 字节), 因此每个分量占了 4 个字节.</li>
+
+<li><code>normalized</code>: 是否对整形分量限定在某个范围内, 该参数对浮点型分量无效.</li>
+
+<li><code>stride</code>: 每一组顶点数据的步进, 就比如图中的每一个顶点的属性有 <code>POSITION/COLOR/TEXTURE</code>, 加起来共 32 字节, 这就是它的步进.</li>
+
+<li><code>offset</code>: 顶点数据的属性偏移, 就比如图中顶点数据的每种属性的偏移分别为: <code>POSITION</code> 为 0 个字节; <code>COLOR</code> 为 12 个字节; <code>TEXTURE</code> 为 24 个字节.</li>
+</ul>
+</blockquote>
+
+<p>
+在 <code>gl.bindBuffer(target, buffer)</code> 之后调用 <code>gl.vertexAttribPointer</code> 就可以把缓冲区里的数据填充到指定的 <code>attribute</code> 变量里面.
+</p>
+
+<p>
+在填充到 <code>attribute</code> 变量后不要忘记通过 <code>gl.enableVertexAttribArray( RET-VAL-OF-vertexAttribPointer )</code> 启用指针.
+</p>
+
+<p>
+这一段对应例子的<a href="https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116">这一部分(94-114行)</a>: 往 "aVertexPosition" 变量填充了顶点位置坐标数据, 往 "aVertexColor" 变量填充了顶点颜色数据,
+</p>
+
+<p>
+其中 <code>aVertexPosition</code> 和 <code>aVertexColor</code> 是 <code>shader</code> 程序的 <a href="https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L16-L29">Vertex Shader</a> 里面 <b>声明</b> 的 <code>attribute</code> 变量名, 强调这是声明是因为 <code>gl.vertexAttribPointer</code> 的调用实际上就是给这些变量补充定义.
+</p>
+
+<p>
+此外, 当你对 <code>a_vertexPosition</code> 和 <code>a_vertexColor</code> 两个值进行打印, 你会发现它们的值分别是 0 和 1, 正好对应 <code>attribute</code> 变量声明的顺序.
+</p>
+
+<p>
+<code>Shader</code> 程序并非只有 <code>attribute</code> 变量, 接下来会对 <code>GLSL</code> 变量修饰符进行介绍, 掌握了这一块才能算是真正的掌握 <code>GLSL</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8745062" class="outline-3">
+<h3 id="org8745062"><span class="section-number-3">2.3.</span> 如何使用缓冲区的数据进行绘制</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+当给缓冲区填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
+</p>
+
+<p>
+<code>WebGL</code> 有两个基础绘制命令: <code>gl.drawArrays(mode, first, count)</code> 以及 <code>gl.drawElements(mode, count, type, offset)</code>.
+</p>
+
+<p>
+例子使用的是前者进行绘制的, <code>mode</code> 是指绘制的 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements#mode">图元种类</a>, <code>first</code> 指定读取图元数据源时的起始索引, <code>count</code> 指定图源需要多少个顶点数据;
+</p>
+
+<p>
+例子里的 <code>gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);</code> 就是绘制一个三角形, 从绑定的数据源的首个位置开始读取, 需要 3 个顶点数据.
+</p>
+
+<p>
+<code>gl.drawElements(mode, count, type, offset)</code> 则是 <code>gl.drawArrays</code> 的内存节省版本, 使用顶点数据的索引来进行绘图, 可以有效节省顶点数据的使用空间.
+</p>
+
+<p>
+具体用法可以参考 <a href="https://webglfundamentals.org/webgl/lessons/webgl-indexed-vertices.html">WebGL Index Vertices</a>.
+</p>
+
+<p>
+在调用绘图命令时 <code>Shader</code> 就会开始执行了, 这点在第一节里面已经详细讲述了.
+</p>
+</div>
+</div>
+
+<div id="outline-container-glsl-type-qualifier-overview" class="outline-3">
+<h3 id="glsl-type-qualifier-overview"><span class="section-number-3">2.4.</span> GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</h3>
+<div class="outline-text-3" id="text-glsl-type-qualifier-overview">
+<p>
+和其他编程语言一样, <code>GLSL</code> 的变量也是一样有修饰符的, 这里的修饰符并非指 <code>int</code>, <code>float</code> 这些 <a href="https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)">数据类型</a>;
+</p>
+
+<p>
+而是指控制变量的储存以及行为的标识, 这么说可能有点不太好理解, 举个例子 "禁止变量在声明后被修改" 的 <code>const</code> 就是其中一个修饰符.
+</p>
+
+<p>
+这种表示被叫做 <a href="https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)">类型限定符</a>.
+</p>
+
+<p>
+我们都知道 <code>GLSL</code> 的工作内容并不完全像其他编程语言一样, 它的任务是控制图形渲染的, 而这项任务的流程是分成好几个阶段的,
+</p>
+
+<p>
+有些数据可以在所有阶段中都能访问到, 而有些数据只能在特定阶段中访问, 还有一些数据能够从这个阶段输出到下一个阶段.
+</p>
+
+<p>
+为了标识变量能够在哪些阶段使用, 就需要使用类型表示符来进行声明, 最常用的有两个: <code>attribute</code> 以及 <code>uniform</code>.
+</p>
+
+<p>
+一个 <code>shader</code> 变量可以使用多种限定符的组合进行声明, 但要注意遵守<a href="https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Qualifier_order">顺序</a>.
+</p>
+</div>
+
+<div id="outline-container-org0be448e" class="outline-4">
+<h4 id="org0be448e"><span class="section-number-4">2.4.1.</span> attribute</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<p>
+它在这篇文章里面第一个被介绍的修饰符, 它属于存储修饰符, 被它修饰后的变量可以简单理解为 <code>Vertex Shader</code> 的输入,
+</p>
+
+<p>
+这种变量不能在 <code>Vertex Shader</code> 以外的阶段被使用, 同样也不能用在接口块(<a href="https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)">interface block</a>)里面, 并且这种变量是只读的(read-only).
+</p>
+
+<p>
+作为 <code>Vertex Shader</code> 的输入, 也就是说 <code>attribute</code> 变量接收的数据是从缓冲区里面读取的.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgba29c88" class="outline-4">
+<h4 id="orgba29c88"><span class="section-number-4">2.4.2.</span> uniform</h4>
+<div class="outline-text-4" id="text-2-4-2">
+<p>
+例子里面传入了两个 <code>uniform</code> 变量, 这种变量是全局的, 它可以在整个图元(<code>primitive</code>)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
+</p>
+
+<p>
+可以在 <code>Vertex Shader</code> 以及 <code>Fragment Shader</code> 访问这些变量, 同样也不能在接口块里面使用. 这种变量是只读的(read-only).
+</p>
+
+<p>
+<code>uniform</code> 是我们前面提到的存到缓冲区以外的数据.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1ae9fe3" class="outline-3">
+<h3 id="org1ae9fe3"><span class="section-number-3">2.5.</span> GLSL 内置变量</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+这里着重介绍几个稍微重要一点的并且不能被 <code>Shader</code> 修改的内置数据.
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>gl_VertexID</code>
+</p>
+
+<p>
+支持 <code>GLSL 1.30</code> 以及之后的版本, 只支持在 <code>Vertex Shader</code> 中访问.
+</p>
+
+<p>
+<code>gl_VertexID</code> 就是当前被处理的顶点 <code>ID</code> (<code>Vertex ID</code>).
+</p>
+
+<p>
+比如绘制 20 个顶点: <code>gl.drawArrays(gl.POINTS, 0, 20)</code>, 那么第一个顶点的 <code>ID</code> 就是 \(first + i,\ where\ i = 0\),
+</p>
+
+<p>
+\(first\) 是绘图命令 <code>gl.drawArrays(mode, first, count)</code> 的第二个参数, \(i\) 是由当前处理的第 \(i+1\) 个顶点的索引.
+</p>
+
+<p>
+这是对于每次像 <code>gl.drawArrays</code> 这样的绘图命令来讲的, 也就是说如果进行第二次调用 <code>gl.drawArrays(gl.POINTS, 0, 20)</code> 的话,
+</p>
+
+<p>
+第二次绘制中第一个顶点的 <code>ID</code> 必定也是 \(first + 0\), 而不是 \(first + 20\).
+</p></li>
+
+<li><p>
+<code>gl_PointCoord</code>
+</p>
+
+<p>
+支持 <code>GLSL 1.10</code> 以及之后的版本, 支持在 <code>Fragment Shader</code> 中访问.
+</p>
+
+<p>
+<code>gl_PointCoord</code> 是点在像素块内的相对坐标, 分量 \(x\) 和 \(y\) 的范围是 \(\left[0, 1\right]\).
+</p>
+
+<p>
+比如在前面的图片 <code>实心三角形</code> 中, 点 <code>p0</code> 在它所处的片元正中心, 那么该片元的 <code>gl_PointCoord</code> 的值就是 \((0.5, 0.5)\),
+</p>
+
+<p>
+如果它处于片元的左上角, 那么值就是 \((0, 0)\).
+</p></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org54a5704" class="outline-3">
+<h3 id="org54a5704"><span class="section-number-3">2.6.</span> 其它常见问题</h3>
+<div class="outline-text-3" id="text-2-6">
+<ul class="org-ul">
+<li><p>
+<code>GLSL</code> 的矩阵是行优先(row major)还是列优先(column major)?
+</p>
+
+<p>
+默认是列优先, 可以通过 <a href="https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)">Layout Qualifier</a> 去修改.
+</p></li>
+
+<li><p>
+为什么看到别人代码的向量的同一个位置的分量会不同, 比如 <code>vec4</code> 类型的变量会写 <code>v4.rgba</code>, 又有时候会写 <code>v4.xyzw</code>, 又有时候会写 <code>v4.stpq</code>?
+</p>
+
+<p>
+这几种写法其实都是同一个东西, 只是在语义上有区别, 具体意义查看 <code>The OpenGL Shading Language</code> 规范中 <code>Operators</code> 那一小节.
+</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org319fa3c" class="outline-2">
+<h2 id="org319fa3c"><span class="section-number-2">3.</span> 搭建自己的 Shadertoy</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+如果想在编写 <code>shader</code> 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 <code>shader</code> 并从中学习, 自己还要动手实践.
+</p>
+
+<p>
+有一个叫做 <a href="https://www.shadertoy.com/">Shadertoy</a> 网站, 上面有好多高人分享自己的 <code>shaders</code> (运行于 <code>WebGL 2.0</code> / <a href="https://registry.khronos.org/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf">GLSL 300 ES</a>), 是一个庞大的学习资源库.
+</p>
+
+<p>
+关于阅读代码, 我是始终坚持一个观点, 那就是读源码的第一点是要读得懂, 否者不可能有所收获;
+</p>
+
+<p>
+这里的"读得懂"并非说掌握代码所使用得语言, 而是知道源代码里面这么写是为什么, 这个为什么的答案终点就是用了什么算法或者技巧.
+</p>
+
+<p>
+这一点在 <code>shader code</code> 里面是非常好理解的, 在这个 <code>shader</code> 里面,为了实现这个效果使用了哪些数学公式或者概念.
+</p>
+
+<p>
+当做到了这一点我们就能够达到入门水平了, 反过来知道用哪些数学公式或者概念去实现这个效果了;
+</p>
+
+<p>
+如果后面能够深入理解掌握的数学公式或者概念, 就能知道它们能够解决什么问题以及用于实现那些自己以前没有实现过的效果了.
+</p>
+
+<p>
+说了这么多好像, 跟这篇文章的内容无关啊?
+</p>
+
+<p>
+其实不然, 我这里一直都在强调"学习别人要先保证自己学得懂"这个观点, 学不懂是因为你有一些前置条件没达到,
+</p>
+
+<p>
+读得懂 <code>Shadertoy</code> 上的源代码要先知道要理解 <code>Shadertoy</code> 是如何工作, 它上面的 <code>shader</code> 都有 <code>Shadertoy</code> 内置的一些变量,
+</p>
+
+<p>
+清楚这些内置变量的定义是不可缺的, 而要理解清楚它们的定义就得知道在 <code>OpenGL/WebGL</code> 中如何 <code>GPU</code> 传入数据, 如何在 <code>GPU</code> 里面操作数据,
+</p>
+
+<p>
+这不正好是文章的内容吗?
+</p>
+
+<p>
+理解一件事物的最好方式就是把它构造出来, 正好 <code>WebGL Fundamentals</code> 以及 <code>WebGL2 Fundamentals</code> 都提供了教程告诉读者如何从 <code>Shadertoy</code> 扒代码,
+</p>
+
+<p>
+或者如何在 <code>Shadertoy</code> 上面分享代码, 说简单点就是如何搭建自己的 <code>Shadertoy</code>:
+</p>
+
+<ul class="org-ul">
+<li><code>WebGL Fundamentals</code> 的 <a href="https://webglfundamentals.org/webgl/lessons/webgl-shadertoy.html">Shadertoy 搭建教程</a></li>
+
+<li><code>WebGL2 Fundamentals</code> 的 <a href="https://webgl2fundamentals.org/webgl/lessons/webgl-shadertoy.html">Shadertoy 搭建教程</a></li>
+</ul>
+
+
+<blockquote>
+<p>
+在知道 <code>Shadertoy</code> 是如何搭建后, 也可以尝用其他同类型的工具.
+</p>
+
+<p>
+个人推荐 <a href="https://github.com/patriciogonzalezvivo/glslViewer?tab=readme-ov-file">glslViewer</a>, 可以在这里找到它的<a href="https://github.com/patriciogonzalezvivo/glslViewer/wiki/GlslViewer-UNIFORMS">内置变量</a>说明, 再配合 <a href="https://github.com/patriciogonzalezvivo/glslViewer/tree/main/examples">官方例子</a> 来快速上手, 至于如何使用这些例子请看官方例子目录下的 <a href="https://github.com/patriciogonzalezvivo/glslViewer/blob/main/examples/Makefile">Makefile</a>.
+</p>
+
+<p>
+推荐理由正是由于它的自带例子, 这份例子新手在习惯 <code>Shader</code> 方面而言做的相当友好, 比起一上来在 <code>Shadertoy</code> 上面乱找别人的代码来阅读要好,
+</p>
+
+<p>
+主打一个循序渐进.
+</p>
+
+<p>
+除了 <code>glslViewer</code> 的教程外, 还有一个 <code>Shadertoy Tutorial</code> 系列的教程也相当不错:
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/47-shadertoy-tutorial-part-1">Shadertoy Tutorial Part 1 - Intro</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/48-shadertoy-tutorial-part-2">Shadertoy Tutorial Part 2 - Circles and Animation</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/49-shadertoy-tutorial-part-3">Shadertoy Tutorial Part 3 - Squares and Rotation</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/50-shadertoy-tutorial-part-4">Shadertoy Tutorial Part 4 - Multiple 2D Shapes and Mixing</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/51-shadertoy-tutorial-part-5">Shadertoy Tutorial Part 5 - 2D SDF Operations and More 2D Shapes</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/52-shadertoy-tutorial-part-6">Shadertoy Tutorial Part 6 - 3D Scenes with Ray Marching</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/53-shadertoy-tutorial-part-7">Shadertoy Tutorial Part 7 - Unique Colors and Multiple 3D Objects</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/54-shadertoy-tutorial-part-8">Shadertoy Tutorial Part 8 - 3D Rotation</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/55-shadertoy-tutorial-part-9">Shadertoy Tutorial Part 9 - Camera Movement</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/56-shadertoy-tutorial-part-10">Shadertoy Tutorial Part 10 - Camera Model with a Lookat Point</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/57-shadertoy-tutorial-part-11">Shadertoy Tutorial Part 11 - Phong Reflection Model</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/58-shadertoy-tutorial-part-12">Shadertoy Tutorial Part 12 - Fresnel and Rim Lighting</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/59-shadertoy-tutorial-part-13">Shadertoy Tutorial Part 13 - Shadows</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/60-shadertoy-tutorial-part-14">Shadertoy Tutorial Part 14 - SDF Operations</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/61-snowman-shader-in-shadertoy">Snowman Shader in Shadertoy</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/62-shadertoy-tutorial-part-15">Shadertoy Tutorial Part 15 - Channels, Textures, and Buffers</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/63-shadertoy-tutorial-part-16">Shadertoy Tutorial Part 16 - Cubemaps and Reflections</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/64-shader-resources">Shader Resources</a>
+</p>
+
+<p>
+<a href="https://inspirnathan.com/posts/65-glow-shader-in-shadertoy">Glow Shader in Shadertoy</a>
+</p>
+
+<hr />
+
+<p>
+另外, 上手 <code>GLSL</code> 的时候遇到一些内置函数难免会不清楚文档里面的描述的, 所以 <code>Shadertoy</code> 的作者 <a href="https://iquilezles.org/">Inigo Quilez</a> 贴心地开发了一个 <a href="https://graphtoy.com/">Graphtoy</a> 可视化这些函数.
+</p>
+
+<p>
+PS: 这位大佬除了很多教程文章和视屏, 都是非常不错的进阶资源.
+</p>
+
+<p>
+还有如果你不了解<a href="https://registry.khronos.org/OpenGL-Refpages/gl4/index.php">文档</a>上 <code>Gen*Type</code> 这个词语是什么意思, 你可以去看 <code>GLSL</code> 的语言规范, 我这里可以告诉你的是它的全称是 <code>Generic * Types</code>, 中间的 <code>*</code> 是做近一步限定的,
+</p>
+
+<p>
+比如 <code>genType</code> 是 <code>float/vec2/vec3/vec4</code>, <code>genIType</code> 可以是 <code>int/ivec2/ivec3/ivec4</code>.
+</p>
+</blockquote>
+
+<p>
+<br />
+</p>
+
+<p>
+其实这两个教程就是使用的 <code>WebGL</code> 的版本不太一样而已, 选用你喜欢的就好,
+</p>
+
+<p>
+<code>Shadertoy</code> 上的代码基本上都是只用 <code>Fragment Shader</code> 实现效果的, 但是还存在这么一个网站, 它包含了各种只使用 <code>Vertex Shader</code> 但不使用任何几何输入来实现各种效果的 <code>Shader</code> 程序, 它就是 <a href="https://www.vertexshaderart.com/">VertexShaderArt</a>.
+</p>
+
+<p>
+<code>WebGL Fundamentals</code> 以及 <code>WebGL2 Fundamentals</code> 在提供 "Shadertoy 搭建教程" 前提供了对应的教程:
+</p>
+
+<ul class="org-ul">
+<li><code>WebGL Fundamentals</code> 的 <a href="https://webglfundamentals.org/webgl/lessons/webgl-drawing-without-data.html">不使用几何数据作图教程</a></li>
+
+<li><code>WebGL2 Fundamentals</code> 的 <a href="https://webgl2fundamentals.org/webgl/lessons/webgl-drawing-without-data.html">不适用几何数据作图教程</a></li>
+</ul>
+
+
+<p>
+<br />
+</p>
+
+<p>
+在其他人眼里, 它们可能是两个规则不同的游戏, 但因为 <code>Fragment Shader</code> 是针对像素进行处理的, 可玩性比 <code>Vertex Shader</code> 更高, 因此人们可能更偏向 <code>Shadertoy</code>;
+</p>
+
+<p>
+但在我眼里, 它们都是学习资源, 因此我不偏爱于任何一个网站.
+</p>
+
+<p>
+<code>WebGL Fundamentals</code> 和 <code>WebGL2 Fundamentals</code> 这两个网站都声明了: 这些教程的意义就是让你对 <code>WebGL</code> 的工作方式有个更好的理解.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 2022-02-11</p>
+<p class="author">Author: saltb0rn</p>
+<p class="date">Created: 2024-02-24 Sat 01:14</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
