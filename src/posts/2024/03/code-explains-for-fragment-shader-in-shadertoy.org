@@ -1,0 +1,122 @@
+#+title: ShaderToy常见代码解释 (收录中)
+#+date: 2024-03-02
+#+index: code-explains-for-fragment-shader
+#+tags: GLSL
+#+begin_abstract
+在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
+
+不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
+
+对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码.
+
+这篇笔记就是用来记录"明白"这一过程.
+#+end_abstract
+
+*** 计算片元在屏幕上的 UV 坐标
+
+#+BEGIN_QUOTE
+写于 2024/3/3
+#+END_QUOTE
+
+=OpenGL= 的 =UV= 坐标是一个左下角为原点, 向上为 $U$, 向右为 $V$, 且范围都是 $[0, 1]$ 的坐标系.
+
+在 =ShaderToy= 中, 人们把整个画面看作是一张大贴图, 片元就是该大贴图上面的一个纹理像素(texel).
+
+理所当然的片元就有一个 =UV= 坐标, 可以通过片元坐标 $gl\_fragCoord$ 和屏幕分辨率 $iResolution$ 计算出来.
+
+#+BEGIN_SRC c
+  vec2 uv = gl_FragCoord.xy / iResolution.xy; // [0.0, 1.0]
+#+END_SRC
+
+当要注意的是, 为了方便作图, 片元的 =UV= 并非就要固定在 $[0.0, 1.0]$ 之间.
+
+有时候为了方便作图, 会对 =UV= 做一些列变换.
+
+比如把纹理坐标空间的原点从左下角平移到中心,
+
+#+BEGIN_SRC c
+  vec2 uv = (gl_FragCoord.xy / iResolution.xy) - 0.5; // [-0.5, 0.5]
+#+END_SRC
+
+#+BEGIN_QUOTE
+这一步开始已经把一个屏幕平均分成 4 份了.
+#+END_QUOTE
+
+# 补图
+把新的纹理坐标空间的范围拓展到 $[-1.0, 1.0]$,
+
+#+BEGIN_SRC c
+  vec2 uv = 2 * ((gl_FragCoord.xy / iResolution.xy) - 0.5); // [-1.0, 1.0]
+  // 可简化成
+  vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
+#+END_SRC
+
+到目前为止, 我们的 =UV= 计算都是针对屏幕分辨率比例是一比一的情况.
+
+在非一比一情况下绘制个圆形会导致圆变椭圆, 这是因为 *$UV$ 两分量的范围比例和屏幕分辨率比例对不上*, 导致出现拉伸的情况.
+
+解决方法很简单, 对长的那一方维度进行补偿,
+
+#+BEGIN_SRC c
+  vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; // [-1.0, 1.0]
+  if (iResolution.x > iResolution.y) {
+    // 如果屏幕的 X 轴比 Y 轴长
+    uv.x *= iResolution.x / iResolution.y;
+  } else {
+    // 如果屏幕的 Y 轴比 X 轴长, 或两者相等
+    uv.y *= iResolution.y / iResolution.x;
+  }
+#+END_SRC
+
+到目前位置我相信大部分人都能看得懂, 但 =ShaderToy= 上的例子大部分都是把这段代码简化成一句的.
+
+现在来逐个分析,
+
+#+BEGIN_SRC c
+  vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
+  /*
+    等同于
+
+    uv = (2 * gl_FragCoord.xy) / iResolution.xy - iResolution.xy / iResolution.xy
+    uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.xy
+
+    同时可以拆开来看
+
+    uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.x
+    uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.y
+  ,*/
+
+  if (iResolution.x > iResolution.y) {
+    // 如果屏幕的 X 轴比 Y 轴长
+    uv.x *= iResolution.x / iResolution.y;
+    /*
+      等同于
+      uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.x * iResolution.x / iResolution.y
+      uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.y
+
+      如果和 y 分量合并一起计算, 那么就是
+      uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.y
+     ,*/
+  } else {
+    // 如果屏幕的 Y 轴比 X 轴长, 或两者相等
+    uv.y *= iResolution.y / iResolution.x;
+    /*
+      等同于
+      uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.y * iResolution.y / iResolution.x
+      uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.x
+
+      如果和 x 分量合并一起计算, 那么就是
+      uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.x
+     ,*/
+  }
+  /*
+    综合两种情况来看就是
+    uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y)
+   ,*/
+#+END_SRC
+
+所以, =ShaderToy= 上有不少例子都是有这一句(或类似的)
+
+#+BEGIN_SRC c
+vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+#+END_SRC
