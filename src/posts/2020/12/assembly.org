@@ -5375,7 +5375,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   | =SHT_NULL=              | 该类节将不会被使用.                                                                                                                                                                                                                                                                              |
   | =SHT_PROGBITS=          | 该类节拥有程序相关信息, 信息的格式和含义完全取决于程序.                                                                                                                                                                                                                                          |
   | =SHT_SYMTAB=            | 该类节拥有一张符号表(symbol table), 一般来说这些符号用于连接编辑(link editing), 也有 *可能* 用于动态连接(dynamic linking). @@html:<br/>@@ 作为一张完整的符号表, 还有可能包含各种与动态连接无关的符号. @@html:<br/>@@ 除了 =SHT_SYMTAB= 类的节外, 还有 =SHT_DYNSYM= 类的节含有用于动态连接的符号. |
-  | =SHT_STRTAB=            | 该类节是一个字符串表(string table), 每一项就是节的名字.                                                                                                                                                                                                                                          |
+  | =SHT_STRTAB=            | 该类节是一个字符串表(string table), 每一项都代表着某些数据的名字. 可以有很多个这种类型的节, 每个该类型节的用途是不一样的, 比如有 =SHT_STRTAB= 节的项表示符号名, 有的表示节名,                                                                                                                                                                                |
   | =SHT_REL=               | 该类节拥有若干个可重定位项(relocation entries). @@html:<br/>@@ 可重定位条目有 =ElfN_Rel= 以及 =ElfN_Rela= 两种大类型(数据结构), 这里的 =N= 代指 =32= 和 =64=. @@html:<br/>@@ 该类节上的条目类型是 =ElfN_Rel=. 一个目标文件能有多个可重定位节.                                                    |
   | =SHT_RELA=              | 该类节是 =SHT_REL= 拓展, 每一项都是 =ElfN_Rel= 的拓展版本 =ElfN_Rela=.                                                                                                                                                                                                                           |
   | =SHT_HASH=              | 该类节是一个符号哈希表(symbol hash table). @@html:<br/>@@ 一个参与动态连接的目标文件必须有一个符号哈希表, 并且只能有一个.                                                                                                                                                                        |
@@ -5396,7 +5396,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   | =.data=                  | 本节包含已初始化的全局变量(global)和静态(static) =C= 变量(C variables). 局部 =C= 变量不会出现在这个节上. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 和 =SHF_WRITE=.                                                                                         |
   | =.data1=                 | 同 =.data= 节.                                                                                                                                                                                                                                                                                         |
   | =.rodata=                | 本节包含只读数据(read-only data), 比如 =printf= 的格式字符串(format strings)以及 =swtich= 语句的跳转表(jump table). @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                             |
-  | =.rodata1=               | 同 =.rodata1= 节.                                                                                                                                                                                                                                                                                      |
+  | =.rodata1=               | 同 =.rodata= 节.                                                                                                                                                                                                                                                                                       |
   | =.debug=                 | 本节包行一个调试符号表, 有的表项包含局部变量(local variables)的调试信息, @@html:<br/>@@ 有的包含 =typedefs= 的调试信息, 有的包含全局变量(global variables), 有的包含 =C= 源码. 节的内容不固定. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                            |
   | =.line=                  | 本节包含 =C= 源码的行号(line number)和 =.text= 中机器指令行号之间的对应关系.节的内容不固定. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                               |
   | =.comment=               | 本节包含一些版本控制信息, 比如用的什么编译器, 是什么版本. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                 |
@@ -5578,7 +5578,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 从作用域角度来看, 局部符号属于 =STB_LOCAL=, 全局符号就属于 =STB_GLOBAL=;
 
-而初始化角度则是对于全局符号来说的, 如果全局符号没有被初始化, 那么它就属于 =STB_WEAK=, 中文叫弱符号(weak symbol),
+而初始化角度则只是针对全局符号来说的, 如果全局符号没有被初始化, 那么它就属于 =STB_WEAK=, 中文叫弱符号(weak symbol),
 
 而 =STB_GLOBAL= 的符号就是强符号(strong symbol).
 
@@ -5640,7 +5640,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 下面这是连接器的重定位算法的伪代码, 跟 =C= 语言比较类似.
 
-总体上是一个双重循环, 第一行表示在遍历每个节 =s=, 第二行表示在遍历当前遍历节的每个可重定项 =r=.
+总体上是一个双重循环, 第一行表示在遍历每个节, 第二行表示在遍历当前节 =s= 的每个可重定项 =r=.
 
 节 =s= 就是一个可重定项数组, 每个元素 =r= 就是一个 =Elf64_Rela= 结构体变量.
 
