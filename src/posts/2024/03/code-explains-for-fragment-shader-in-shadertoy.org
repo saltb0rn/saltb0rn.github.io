@@ -12,7 +12,7 @@
 这篇笔记就是用来记录"明白"这一过程.
 #+end_abstract
 
-*** 计算片元在屏幕上的 UV 坐标
+*** UV - 计算片元在屏幕上所对应的 UV 坐标
 
 #+BEGIN_QUOTE
 写于 2024/3/3
@@ -55,7 +55,7 @@
 
 在非一比一情况下绘制个圆形会导致圆变椭圆, 这是因为 *$UV$ 两分量的范围比例和屏幕分辨率比例对不上*, 导致出现拉伸的情况.
 
-解决方法很简单, 对长的那一方维度进行补偿,
+解决方法很简单, 对长的那一方维度进行补偿, 使得比例一致.
 
 #+BEGIN_SRC c
   vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; // [-1.0, 1.0]
@@ -68,7 +68,7 @@
   }
 #+END_SRC
 
-到目前位置我相信大部分人都能看得懂, 但 =ShaderToy= 上的例子大部分都是把这段代码简化成一句的.
+到目前为止我相信大部分人都能看得懂, 但 =ShaderToy= 上的例子大部分都是把这段代码简化成一句的.
 
 现在来逐个分析,
 
@@ -115,8 +115,70 @@
    ,*/
 #+END_SRC
 
-所以, =ShaderToy= 上有不少例子都是有这一句(或类似的)
+所以, =ShaderToy= 上有不少例子都是有这一句(或类似的).
 
 #+BEGIN_SRC c
 vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
 #+END_SRC
+
+在大部分的 =ShaderToy= 例子中, =UV= 计算是基础且重要的东西, 这个小节所介绍的 =UV= 计算其实是 =UV= 补偿, 解决画面拉伸的问题.
+
+还会介绍一些其它的 =UV= 计算来实现不同的效果.
+
+*** UV计算 - 平铺(tiling)
+
+这里的平铺就是和计算机的桌面壁纸里的平铺是一个概念: 当一张壁纸不能把桌面铺满, 那么就用重复若干张壁纸铺满桌面.
+
+=Shader= 编程也可以平铺.
+
+我们可以换个角度来思考, 默认情况下, 一个像素所对应 $UV$ 坐标是 =gl_FragCoord.xy / iResolution.xy=, 分量的范围是 $[0, 1]$, 这是针对与整个屏幕来说的.
+
+想要平铺, 我们只要在屏幕的范围内复制多几个 $[0, 1]$ 范围的 $UV$ 坐标空间就好了.
+
+#+CAPTION: 重复了 4 个 $[0, 1]$ 范围的 $UV$ 坐标空间
+[[../../../files/uv-tiling.png]]
+
+话虽如此, 具体应该怎么做呢? 虽然没有标准答案, 但还是有基本法的.
+
+从原本映射关系来看是 $[x_{min}, x_{max}] \rightarrow [0, 1]$ 和 $[y_{min}, y_{max}] \rightarrow [0, 1]$,
+
+想要在更小的屏幕范围内应该一个 $UV$ 空间, 只要改变 $x_{max}$ 和 $y_{max}$ 的值就可以了.
+
+对于看左上角的 $UV$ 空间, 可以通过 =gl_FragCoord.xy / (iResolution.xy / 2)=, 这里就是把 $x_{max}$ 和 $y_{max}$ 分别改变为 =iResolution.x / 2= 和 =iResolution.y / 2=.
+
+接下来的问题就是如何让构造出另外三个 $UV$ 空间呢?
+
+因为当 =gl_FragCoord.x= 超出 =iResolution.x / 2= 时, =gl_FragCoord.x / (iResolution.x / 2)= 的值就是大于 1 的浮点数,
+
+我们的目标是让其它三个 $UV$ 空间的分量范围为 $[0, 1]$, 方法很简单, =glsl= 的内置函数 =fract= 可以去浮点数的小数部分,
+
+比如 =fract(1.1)= 等于 0.1, =fract(2.1)= 也是等于 0.1, 从而形成一个以 0 到 1 为一个周期的周期序列.
+
+这样就可以让其它 $UV$ 空间的分量范围也处于 $[0, 1]$ 之间,
+
+综上所述, $UV$ 的计算方式就变成这样:
+
+#+begin_src c
+  int div_num = 2;
+  vec2 uv = fract(gl_FragCoord.xy / (iResolution.xy / div_num));
+  /*
+    or
+
+    vec2 uv = fract(gl_FragCoord.xy / iResolution.xy * div_num);
+   ,*/
+#+end_src
+
+这并非唯一的方法, 模运算(module)同样可以获取周期序列.
+
+#+begin_src c
+  int div_num = 2;
+  float period = 1.0;
+  vec2 uv = mod(gl_FragCoord.xy / (iResolution.xy / div_num), period);
+  /*
+    or
+
+    vec2 uv = mod(gl_FragCoord.xy / iResolution.xy * div_num, period);
+   ,*/
+#+end_src
+
+并且模运算的周期可以用来对 $UV$ 空间进行等比缩放, 如果把 =period= 定义为 2.0, 那么 $UV$ 的分量范围就是 $[0, 2]$.
