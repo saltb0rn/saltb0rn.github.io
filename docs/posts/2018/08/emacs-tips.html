@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-02-27 Tue 10:15 -->
+<!-- 2024-06-11 Tue 19:51 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Emacs Tips(持续更新)</title>
@@ -506,7 +506,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org939e73b">
+<div class="abstract" id="org6163db7">
 <p>
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 </p>
@@ -688,11 +688,11 @@ P.S: 身边有不少,包括我自己,这里怎么不对呢?跟文档说的不一
 </p>
 
 <p>
-首先要清楚一点, <code>Emacs Lisp</code> 严格上来说没有正则表达式这个数据类型, 它是直接用字符串来表示正则表达式.
+首先要清楚一点, <code>Emacs Lisp</code> 严格上来说没有正则表达式这个数据类型的, 它是直接用字符串来表示正则表达式.
 </p>
 
 <p>
-这么说你可能不太理解, 就比如 <code>Python</code> 和 <code>JavaScript</code>, 它们都有单独的语法来表示正则表达式.
+这么说可能不太好理解, 就拿 <code>Python</code> 和 <code>JavaScript</code> 来说, 这两门语言都是专门为正则表达式定义了语法来和字符串进行区分的.
 </p>
 
 <p>
@@ -712,19 +712,23 @@ P.S: 身边有不少,包括我自己,这里怎么不对呢?跟文档说的不一
 </p>
 
 <p>
-我们把表示字符本身的叫做表达字符含义, 发挥正则定义叫做表达正则含义.
+我们把表示字符本身叫做表达字符含义, 发挥正则定义叫做表达正则含义.
 </p>
 
 <p>
-由此, 一些字符的含义发生了冲突, <code>Emacs Lisp</code> 要求开发人员要对字符的含义进行选择.
+有一些特殊字符会同时存在两种含义, 这个时候就要求开发人员要对字符的含义进行选择.
 </p>
 
 <p>
-具体做法就是使用 <code>\</code> 字符放在需要进行选择的字符前面, 如果被标记的字符是有正则定义的特殊字符,
+具体做法就是使用 <code>\</code> 字符放在需要进行选择的字符前面, 如果被标记的字符是有正则含义的特殊字符,
 </p>
 
 <p>
 那它就会反向表达为字符含义, 否则就直接表达为正则含义.
+</p>
+
+<p>
+就比如 <code>"\."</code> 就是让句号表达了它的字符含义, 用来匹配句号本身.
 </p>
 
 <blockquote>
@@ -746,24 +750,63 @@ P.S: 身边有不少,包括我自己,这里怎么不对呢?跟文档说的不一
 </div>
 
 <p>
-你可以理解为 <code>minibuffer</code> 里面写的并不是字符串(, 毕竟没有双引号包着), 而是转化成字符串之前的形态,
+<code>minibuffer</code> 里面的写法更符合人们心中正则的写法, 你可以理解为 <code>minibuffer</code> 里面的写法就类似于其它编程语言中正则对象的语法;
 </p>
 
 <p>
-最终会在 <code>Emacs</code> 的内部处理中转化成字符串; 而写代码的时候就是内部处理了.
+而开发人员编码中的"正则"只是一个最终会转化成正则对象的字符串.
 </p>
+
+<p>
+开发人员在编写这类字符串的时候需要知道这些字符串心算成正则对象, 方法很简单:
+</p>
+
+<p>
+忽略掉所有转义字符(escaped characters)及相关处理, 移除掉所有其它字符的一个前置 <code>\</code> 符号.
+</p>
+
+<p>
+所谓转义字符就是在字符串中有着由特殊含义的字符, 它们看起来像是一个字符串的字符, 比如 <code>\n</code>, 它表示的是换行符号.
+</p>
+
+<p>
+举些例子:
+</p>
+
+<pre class="example" id="orgd0025c6">
+字符串          正则对象        备注
+"abc\\.txt"    abc\.txt      不存在 "\." 这样的转义字符, 所以把去掉 "." 前面的一个 "\" 符号
+"abc\ndef"     abc\ndef      "\n" 是转义字符, 可以忽略
+"abc\\ndef"    abc\\ndef     "\n" 是转义字符, "\\n" 则是对它进行禁止转义的操作, 可以忽略
+"\\\\"         \\\\          "\\" 是转义字符操作, 禁止 "\" 对后续的字符进行转义, 可以忽略
+</pre>
 </blockquote>
 
 <p>
-虽然说看上去对没有正则含义的字符使用 <code>\</code> 标记好像什么问题, 但字符串本身也是有转义字符(escaped characters)的,
+虽然说看上去对没有正则含义的字符使用 <code>\</code> 标记好像什么问题, 但是万一恰好配出了一个转义字符就麻烦了, 比如对 <code>n</code> 使用就变成换行了;
 </p>
 
 <p>
-这种字符就是以 <code>\</code> 开头的字符序列, 比如换行符 <code>\n</code>, 因此开发人员不能乱用 <code>\</code> 对字符进行标记.
+另外, 正则本身也是有定义一些有着特殊作用的字符(special characters),
 </p>
 
 <p>
-此外, <code>Emacs Lisp</code> 的正则也像字符串那样定义了一些有着特殊含义的字符序列, 他们被称为特殊构造(special constructs).
+比如 <code>[...]</code>, 如果对它使用 <code>\</code> 则会禁用 <code>[...]</code> 在正则里面的作用, 换句话说就是 <code>\[...\]</code> 直接表示 <code>[</code> 和 <code>]</code> 符号本身,
+</p>
+
+<p>
+因此, 开发人员不能乱用 <code>\</code> 对字符进行标记, 需要清楚自己在做什么.
+</p>
+
+<blockquote>
+<pre class="example" id="orgb1d5436">
+字符串          正则对象        备注
+"\\[abc\\]"    \[abc\]       \[ 和 \] 在字符串未被定义, 所以在字符串中需要把 \[ 拆分为 \ 和 [ 两部分进行解析, 因此 \ 需要变成 "\\", \] 同理, 这样也满足了前面的心算方法.
+</pre>
+</blockquote>
+
+<p>
+此外, <code>Emacs Lisp</code> 的正则也像字符串那样定义了一些有着特殊含义的字符序列, 又被称为特殊构造(special constructs).
 </p>
 
 <p>
@@ -771,7 +814,11 @@ P.S: 身边有不少,包括我自己,这里怎么不对呢?跟文档说的不一
 </p>
 
 <p>
-再比如 <code>\w</code> 是用来匹配单词组成(word-constituent)的字符, 需要这样 <code>"\\w"</code> 来发挥正则作用.
+再比如 <code>\w</code> 是用来匹配单词组成(word-constituent)的字符, 需要这样 <code>"\\w"</code> 来发挥正则作用;
+</p>
+
+<p>
+这样得出来的字符串用在前面的心算方法上又可以得出特殊构造本身.
 </p>
 
 <blockquote>
@@ -960,7 +1007,7 @@ sudo修改文件
 以在个人版的Debian上面安装nodejs为例子.
 </p>
 
-<pre class="example" id="orged642e9">
+<pre class="example" id="org65064a4">
 先了解一下sudo,sudo的作用就是以另外一个用户身份执行命令,默认身份是superuser(这里是root),执行时候需要提供这个用户的密码.
 sudo有一个sudoers policy缓存凭证15分钟,除非重写了凭证,否则在这15分钟内以这个用户身份执行命令是不需要再次输入任何密码的.
 </pre>
@@ -1014,7 +1061,7 @@ sudo有一个sudoers policy缓存凭证15分钟,除非重写了凭证,否则在�
 <div id="outline-container-org65cb6bb" class="outline-3">
 <h3 id="org65cb6bb">如何让调试器可以调试user-error?</h3>
 <div class="outline-text-3" id="text-org65cb6bb">
-<pre class="example" id="org6977f9b">
+<pre class="example" id="orgf007028">
 写于 2018/10/21
 </pre>
 
@@ -1040,7 +1087,7 @@ Drew已经在这<a href="https://superuser.com/questions/782313/emacs-make-debug
 <div id="outline-container-org6a9c96f" class="outline-3">
 <h3 id="org6a9c96f">Autoload函数引用未被require的变量,修改该变量后无法读取变量?</h3>
 <div class="outline-text-3" id="text-org6a9c96f">
-<pre class="example" id="orgd42fc27">
+<pre class="example" id="org178bb11">
 写于 2018/10/21
 </pre>
 
@@ -1109,7 +1156,7 @@ Drew已经在这<a href="https://superuser.com/questions/782313/emacs-make-debug
 <div id="outline-container-org91acd07" class="outline-3">
 <h3 id="org91acd07">如何请求接口(JSON)</h3>
 <div class="outline-text-3" id="text-org91acd07">
-<pre class="example" id="org86c0ef2">
+<pre class="example" id="org90cc56f">
 写于 2019/2/26
 </pre>
 <p>
@@ -1147,7 +1194,7 @@ Drew已经在这<a href="https://superuser.com/questions/782313/emacs-make-debug
 <div id="outline-container-org1ba120a" class="outline-3">
 <h3 id="org1ba120a">如果读取JSON文件</h3>
 <div class="outline-text-3" id="text-org1ba120a">
-<pre class="example" id="org29b16bb">
+<pre class="example" id="org084171a">
 写于 2020/10/26
 </pre>
 <p>
@@ -2082,7 +2129,7 @@ g1.close()
 <div id="outline-container-orgf892af2" class="outline-4">
 <h4 id="orgf892af2">非本地退出 (Nonlocal Exits)</h4>
 <div class="outline-text-4" id="text-orgf892af2">
-<pre class="example" id="orged39cb4">
+<pre class="example" id="orgc0b4ae9">
 写于 2018/9/4
 </pre>
 
@@ -2220,7 +2267,7 @@ g1.close()
 如果问这个跟 <code>Python</code> 里面的哪样东西最像,那必然是异常捕捉的 <code>finally</code> 从语,都是不管发生前面什么事情,都会在结束前执行.
 </p>
 
-<pre class="example" id="org6a3e285">
+<pre class="example" id="orgc6af9d1">
 
 这里只是为了作例子, Python 实际处理文本写入最好用 with 上下文管理器(其实一开始我就想用 with 做类比,不过对比发现 finally 更合适).
 
@@ -2870,9 +2917,9 @@ g1.close()
 </p>
 
 <div class="org-src-container">
-<pre class="src src-racket"><span style="color: #8c8c8c;">(</span><span style="color: #93a8c6;">(</span><span style="color: #b0b1a3;">(</span><span style="color: #00ffff;">lambda</span> <span style="color: #97b098;">(</span>x<span style="color: #97b098;">)</span>
-    <span style="color: #97b098;">(</span><span style="color: #00ffff;">lambda</span> <span style="color: #aebed8;">(</span>y<span style="color: #aebed8;">)</span>
-      <span style="color: #aebed8;">(</span><span style="color: #b0c4de;">+</span> x y<span style="color: #aebed8;">)</span><span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span> <span style="color: #7fffd4;">1</span><span style="color: #93a8c6;">)</span> <span style="color: #7fffd4;">2</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-racket">(((<span style="color: #00ffff;">lambda</span> (x)
+    (<span style="color: #00ffff;">lambda</span> (y)
+      (<span style="color: #b0c4de;">+</span> x y))) <span style="color: #7fffd4;">1</span>) <span style="color: #7fffd4;">2</span>)
 </pre>
 </div>
 
@@ -4873,7 +4920,7 @@ debug-on-message
 </div>
 
 
-<div id="org067e94e" class="figure">
+<div id="org26429fc" class="figure">
 <p><img src="../../../files/raise-error.png" alt="raise-error.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>报错的时候</p>
@@ -4899,7 +4946,7 @@ debug-on-message
 
 
 
-<div id="orge9667b5" class="figure">
+<div id="org407f49d" class="figure">
 <p><img src="../../../files/no-error.png" alt="no-error.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>没有错误的时候</p>
@@ -5405,7 +5452,7 @@ undefined
 比如上面 <code>fac</code> 的记录会是这样,
 </p>
 
-<pre class="example" id="orgd065285">
+<pre class="example" id="org1537d9d">
 { fac args: (3)
 :{ fac args: (2)
 ::{ fac args: (1)
@@ -5827,7 +5874,7 @@ undefined
 </p>
 
 
-<div id="org54d4e9c" class="figure">
+<div id="org3d9bfc3" class="figure">
 <p><img src="../../../files/cpu-mem.png" alt="cpu-mem.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>cpu+mem usage</p>
@@ -6024,7 +6071,7 @@ undefined
 其中 <code>addition-test</code> 是注定测试不通过的,
 </p>
 
-<pre class="example" id="org786a5a3">
+<pre class="example" id="org699610f">
 Selector: t
 Passed:  1
 Failed:  1 (1 unexpected)
@@ -6406,7 +6453,7 @@ emacs -batch -l ert -f ert-summarize-tests-batch-and-exit output.log
 比如上面写到的 <code>addition-test</code> 中的 <code>equal</code> 就是这一类谓词,如果把 <code>equal</code> 换成 "=" 号,那么结果就是这样了,
 </p>
 
-<pre class="example" id="org5068d92">
+<pre class="example" id="orgf28d061">
 F addition-test
     Addition
     (ert-test-failed
@@ -8210,7 +8257,7 @@ CLICK-COUNT
 <code>kill-ring-yank-pointer</code> 和 <code>kill ring</code> 列表上的连接是同一个 <code>Lisp</code> 对象,可以通过 <code>eq</code> 测试.
 </p>
 
-<pre class="example" id="org48c7f52">
+<pre class="example" id="org5549276">
 
 kill-ring                  ---- kill-ring-yank-pointer
   |                       |
@@ -11871,7 +11918,7 @@ kill-ring                  ---- kill-ring-yank-pointer
 <b>UTF-8</b> 表示 1 个字节作为基本编码单位,因为每个字符需要的空间不是一样的,因此需要一些位来标识是多少个字节为一个字符,
 </p>
 
-<pre class="example" id="orgf66cac0">
+<pre class="example" id="org5d9051f">
 U+ 0000 ~ U+  007F:  0xxxxxxx
 U+ 0080 ~ U+  07FF:  110xxxxx 10xxxxxx
 U+ 0800 ~ U+  FFFF:  1110xxxx 10xxxxxx 10xxxxxx
@@ -12354,7 +12401,7 @@ U+10000 ~ U+10FFFF:  11110xxx 10xxxxxx 10xxxxxx
 </p>
 
 
-<div id="orgb88f187" class="figure">
+<div id="orgd77dd9e" class="figure">
 <p><img src="../../../files/program-image.jpg" alt="program-image.jpg">
 </p>
 <p><span class="figure-number">Figure 4: </span>C程序的内存映像</p>
@@ -12488,7 +12535,7 @@ gcc source.c         <span style="color: #ff7f24;"># </span><span style="color: 
 <div id="outline-container-orgb97c245" class="outline-2">
 <h2 id="orgb97c245">Emacs 之深藏不漏</h2>
 <div class="outline-text-2" id="text-orgb97c245">
-<pre class="example" id="orgf601824">
+<pre class="example" id="org853cc17">
 写于 2019/12/12
 </pre>
 
@@ -12786,7 +12833,7 @@ Emacs的时候我还用了 <code>Evil</code> 模拟VIM的按键,不过那个时�
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2018-08-31</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.2 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.3 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

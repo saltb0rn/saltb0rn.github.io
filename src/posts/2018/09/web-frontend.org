@@ -1790,9 +1790,9 @@ self.addEventListener(
 
      - 防止对象添加/修改/删除属性的 Object.freeze 以及阻止对象添加/删除属性 Object.seal
 
-       
 
-       
+
+
 
 
 *** BOM API
@@ -1829,7 +1829,7 @@ self.addEventListener(
 
 ** WEB性能分析
 
-   
+
 
 ** 开发用参考资料和后续学习
 
@@ -2143,6 +2143,158 @@ server {
 
 当然要根据实际后端来自行配置.后端是彻底防止别人通过 =iframe= 标签来盗用你的网站,上面通过 =JavaScript= 判断的解决方法可以不用了.
 
+
+*** 响应式布局
+# 准确把移动端适配的章节部分内容去掉
+
+**** 什么是自适应布局(Adaptive Web Layout), 什么是响应式布局(Responsive Web Layout)
+
+早期移动设备还没有流失的时候, 所有网站的页面都是只有一个尺寸的, 每个人的电脑屏幕大小不一样, 页面大小也不会适应电脑屏幕的大小.
+
+随着移动设备的流行, 人们开始关注在小屏幕上的网页浏览体验.
+
+早期开发者尽可能为不同类型的设备开发不同布局的页面(不同设备的尺寸是不一样的), 服务器通过浏览器的请求中的 =User-Agent= 头判断用户使用的是什么类型的设备返回对应页面.
+
+#+BEGIN_QUOTE
+早期如果观察仔细的话, 你会发现在不同设备上访问一些网站时会发现在不同设备上它们的域名是不同的, 比如百度在桌面浏览器访问时的域名是 =www.baidu.com=,
+
+但在移动端浏览器上输入 =www.baidu.com= 会自动重定向到 =m.baidu.com= 上, 也有一些网站隐藏的很好的, 不会进行重定向, 而是服务器动态渲染, 返回不同页面.
+#+END_QUOTE
+
+这样虽然保证了不同设备的浏览体验, 但也增加了开发人员的工作量, 而且难以保证覆盖到所有尺寸可能性, 因为设备在不停的更新, 往往会出现一些以往不存在的尺寸的设备, 还不利于网站的 =SEO=.
+
+随着 =HTML= 和 =CSS= 的发展, 开发者可以不需要根据 =User-Agent= 来判断设备的尺寸了, 媒体查询可以直接根据视口(viewport, 浏览器的可视内容区域)大小来动态设置样式.
+
+媒体查询就像是编程语言里面的 =if-then= 条件语句, 以下是来自于 [[https://www.madebymike.com.au/writing/fluid-type-calc-examples/#heading-fluid-type-with-pixels][Fluid type with pixels]] 的例子,
+
+#+BEGIN_SRC css
+.fluid-type {
+  font-size: 14px;
+}
+
+@media screen and (min-width: 320px) {
+  .fluid-type {
+    font-size: calc(14px + 8 * ((100vw - 320px) / (1280 - 320)));
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .fluid-type {
+    font-size: 22px;
+  }
+}
+#+END_SRC
+
+换成 =JavaScript= 就是类似于:
+
+#+BEGIN_SRC js
+  function getCurrentViewportWidth() {
+    // 获取当前 viewport 的尺寸(px), 也就是 100vw 的大小.
+    // 参考: https://developer.mozilla.org/en-US/docs/Web/CSS/Viewport_concepts
+    return document.documentElement.clientWidth;
+  }
+
+  var fontSizeOfFluidType = 14;
+
+  if (getCurrentViewportWidth() >= 320) { // 相当于 @media screen and (min-width: 320px)
+    fontSizeOfFluidType = 14 + 8 * ((getCurrentViewportWidth() - 320) / (1280 - 320));
+  }
+
+  if (getCurrentViewportWidth() >= 1280) { // 相当于 @media screen and (min-width: 1280px)
+    fontSizeOfFluidType = 22;
+  }
+#+END_SRC
+
+以上的 =CSS= 代码考虑了 "小于等于319px/320px到1279px/大于等于1280px" 三种尺寸范围的情况, 人们称一个媒体查询为一个断点.
+
+有了这个技术就可以让开发者不需要开发多个页面了, 直接通过 =CSS= 为不同大小的设备进行布局, 减少了工作量, 同时解决了自适应无法适配所有设备的问题, 哪怕是非典型尺寸设备也可以轻松覆盖,
+
+提高了网站在不同设备上的体验一致性, 同时还解决了不利于 =SEO= 的问题.
+
+总体上来说, 响应式布局是自适应布局的升级版布局方案, 也是目前主流的在跨端布局方案.
+
+响应式布局这个概念也并不限定于 =WEB= 前端, 其它方向的前端开发上也有响应式布局的概念.
+
+**** 移动端优先和桌面端优先
+
+如你所见, 上面的 =.fluid-type= 中的尺寸范围是从小到大的顺序编写的, 可以看出这套样式是优先为小尺寸的设备布局的, 这叫做移动端优先(mobile first).
+
+如果反过来优先为大尺寸设备进行布局, 那就是桌面端优先(Desktop first). 桌面端优先是让媒体查询从大到小进行编码.
+
+这里就以 =.fluid-type= 为例, 对其修改成桌面端优先.
+
+以大到小的顺序思考范围: "大于等于1280px/1279到320px/小于等于320px",
+
+#+BEGIN_SRC css
+.fluid-type {
+  font-size: 22px;
+}
+
+@media screen and (max-width: 1280px) {
+  .fluid-type {
+    font-size: calc(22px - 8 * ((1280px - 100vw) / (1280 - 320)));
+  }
+}
+
+@media screen and (max-width: 320) {
+  .fluid-type {
+    font-size: 14px;
+  }
+}
+#+END_SRC
+
+**** 流式字体(Fluid Typography)
+
+在定好媒体查询后, 就要根据自身实际情况来在媒体查询里进行布局编码.
+
+通常来说, =div= 这类的盒子元素要实现随着 =viewport= 大小变化而变化是一件很容易的事情, =CSS= 本身就有有很多现成的解决方案,
+
+比如百分比单位, =vw= 单位, =Flexbox= 布局, =grid= 布局等等.
+
+但是字体要实现同样的效果可就没有盒子元素的要来得直接.
+
+如果字体在盒子变化的过程中固定大小不变, 那么就会破坏盒子内容的布局.
+
+这个时候需要名为流式字体的解决方法, 让字体在两个媒体查询断点之间随着 =viewport= 大小变化而变化, 而不是固定不变.
+
+其实前面的 =.fluid-type= 就已经是流式字体了.
+
+它的计算方法很简单, 以桌面优先版本的 =.fluid-type= 为例子.
+
+第一个断点是 =max-width: 1280px=, 它的字体大小应该在 =22px ~ 14px= 这个范围内进行线性变化,
+
+计算方法是: =字体起始值 + (字体起始值 - 字体结束值) * (abs(当前viewport大小 - 当前断点值) / abs(当前断点值 - 下一个断点值))=.
+
+其中 =(abs(当前viewport大小 - 当前断点值) / abs(当前断点值 - 下一个断点值))= 表示了字体在区间范围内变化的百分比, =(字体起始值 - 字体结束值)= 表示了区间分为的最大值,
+
+这两个相乘就可以得到字体变化的具体值.
+
+这个计算方法适用于其他单位, 比如 =rem= 和 =em=; 也适用于字体大小以外的计算, 比如也可以计算字体行高(line-height), 也可以计算盒子 =margin/padding/border= 等等.
+
+
+**** 响应式布局所需要关注其它的方面
+
+响应式布局是一个技术集合, 因此除了前面的媒体查询和流式字体以外, 还有很多技术, 比如响应式图片(Responsive Images), 弹性布局(Flexbox Layout), 网格布局(Grid Layout)等等.
+
+这些东西在互联网上有很多资料. 专门针对于响应式布局编写的书也有不少, 为了知识的系统性, 个人推荐看书.
+
+但这些书好多都没提及流式字体的内容, 所以我这里写的笔记基本上是为了自己针对这些书补充.
+
+并且我相信流式字体的问题也同样困扰着很多刚学习响应式布局的前端开发者.
+
+在中文互联网上, 关于响应式布局的文章好多都是不成体系的, 甚至有的连概念的解释都错, 根本无法支撑起对新手的教学作用.
+
+#+BEGIN_QUOTE
+有点想起之前网络上有人说到一句话: 中国互联网和国外互联网已经是两条路了.
+
+互联网的发达也解决不了因为语言而产生的信息差, 学外语收益还是很大的.
+#+END_QUOTE
+
+以我个人经验, 这里推荐 =Responsive Web Design with HTML5 and CSS Build Future Proof= 这本书的最新版,
+
+推荐它是因为在众多同类书籍中, 它是少数在不停出新版的存在, 毕竟前端标准也是在不停地发展的.
+
+推荐它的另外一个理由是这本书非常偏向实践, 这是学习响应式布局的关键, 毕竟响应式布局也没有什么高大上的理论.
 
 *** 移动端适配
 

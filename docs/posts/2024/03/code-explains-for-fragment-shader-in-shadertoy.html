@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2024-06-11 Tue 19:51 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShaderToy常见代码解释 (收录中)</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content" class="content">
+<h1 class="title">ShaderToy常见代码解释 (收录中)</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orgb6aee9b">UV - 计算片元在屏幕上所对应的 UV 坐标</a></li>
+<li><a href="#org3dadadc">UV计算 - 平铺(tiling)</a></li>
+<li><a href="#org0742dbd">smoothstep 函数</a>
+<ul>
+<li><a href="#org970bf8c">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></li>
+</ul>
+</li>
+<li><a href="#org85af9ac">dFdx/dFdy</a></li>
+<li><a href="#org0031dff">Mix 函数解析</a></li>
+<li><a href="#org9baddb7">Hash函数/随机/噪音</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org192c656">
+<p>
+在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
+</p>
+
+<p>
+不要看这句话看似很 <code>low</code>, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
+</p>
+
+<p>
+对于 <code>ShaderToy</code> 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码, 大胆承认抄别人的代码.
+</p>
+
+<p>
+并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
+</p>
+
+<p>
+这篇笔记就是用来记录"明白"这一过程.
+</p>
+
+<p>
+另外, 这里建议参考一下 <a href="https://thebookofshaders.com/">The Book of Shaders</a> 这本书(截止目前为止还没写完).
+</p>
+
+</div>
+
+<div id="outline-container-orgb6aee9b" class="outline-2">
+<h2 id="orgb6aee9b">UV - 计算片元在屏幕上所对应的 UV 坐标</h2>
+<div class="outline-text-2" id="text-orgb6aee9b">
+<blockquote>
+<p>
+写于 2024/3/3
+</p>
+</blockquote>
+
+<p>
+<code>OpenGL</code> 的 <code>UV</code> 坐标是一个左下角为原点, 向上为 \(U\), 向右为 \(V\), 且范围都是 \([0, 1]\) 的坐标系.
+</p>
+
+<p>
+在 <code>ShaderToy</code> 中, 人们把整个画面看作是一张大贴图, 片元就是该大贴图上面的一个纹理像素(texel).
+</p>
+
+<p>
+片元理所当然地有一个 <code>UV</code> 坐标, 可以通过片元坐标 \(gl\_fragCoord\) 和屏幕分辨率 \(iResolution\) 计算出来.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = gl_FragCoord.xy / iResolution.xy; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[0.0, 1.0]</span>
+</pre>
+</div>
+
+<p>
+当要注意的是, 为了方便作图, 片元的 <code>UV</code> 并非就要固定在 \([0.0, 1.0]\) 之间.
+</p>
+
+<p>
+有时候为了实现某些目的, 需要对 <code>UV</code> 做一些列变换.
+</p>
+
+<p>
+比如把纹理坐标空间的原点从左下角平移到中心,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = (gl_FragCoord.xy / iResolution.xy) - 0.5; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[-0.5, 0.5]</span>
+</pre>
+</div>
+
+<blockquote>
+<p>
+这一步开始已经把一个屏幕平均分成 4 份了.
+</p>
+
+<p>
+\([-0.5, 0.5]\) 分别在 \(u\) 和 \(v\) 两个方向上分为 \([-0.5, 0]\) 和 \([0, 0.5]\) 两个区间.
+</p>
+
+<p>
+因此, \(2 \times 2 = 4\) 份.
+</p>
+</blockquote>
+
+<p>
+把新的纹理坐标空间的范围拓展到 \([-1.0, 1.0]\),
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = 2 * ((gl_FragCoord.xy / iResolution.xy) - 0.5); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[-1.0, 1.0]</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21487;&#31616;&#21270;&#25104;</span>
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
+</pre>
+</div>
+
+<p>
+到目前为止, 我们的 <code>UV</code> 计算都是针对屏幕分辨率比例是一比一的情况.
+</p>
+
+<p>
+在非一比一情况下绘制个圆形会导致圆变椭圆, 这是因为 <b>\(UV\) 两分量的范围比例和屏幕分辨率比例对不上</b>, 导致出现拉伸的情况.
+</p>
+
+<p>
+解决方法很简单, 以屏幕分辨率比例为准, 对 \(UV\) 长的那一方维度分量进行补偿, 使得两者比例一致.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[-1.0, 1.0]</span>
+<span style="color: #00ffff;">if</span> (iResolution.x &gt; iResolution.y) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#23631;&#24149;&#30340; X &#36724;&#27604; Y &#36724;&#38271;</span>
+  uv.x *= iResolution.x / iResolution.y;
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#23631;&#24149;&#30340; Y &#36724;&#27604; X &#36724;&#38271;, &#25110;&#20004;&#32773;&#30456;&#31561;</span>
+  uv.y *= iResolution.y / iResolution.x;
+}
+</pre>
+</div>
+
+<p>
+到目前为止我相信大部分人都能看得懂, 但 <code>ShaderToy</code> 上的例子大部分都是把这段代码简化成一句的.
+</p>
+
+<p>
+现在来逐个分析,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  &#31561;&#21516;&#20110;</span>
+
+<span style="color: #ff7f24;">  uv = (2 * gl_FragCoord.xy) / iResolution.xy - iResolution.xy / iResolution.xy</span>
+<span style="color: #ff7f24;">  uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.xy</span>
+
+<span style="color: #ff7f24;">  &#21516;&#26102;&#21487;&#20197;&#25286;&#24320;&#26469;&#30475;</span>
+
+<span style="color: #ff7f24;">  uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.x</span>
+<span style="color: #ff7f24;">  uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.y</span>
+<span style="color: #ff7f24;">*/</span>
+
+<span style="color: #00ffff;">if</span> (iResolution.x &gt; iResolution.y) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#23631;&#24149;&#30340; X &#36724;&#27604; Y &#36724;&#38271;</span>
+  uv.x *= iResolution.x / iResolution.y;
+  <span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">    &#31561;&#21516;&#20110;</span>
+<span style="color: #ff7f24;">    uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.x * iResolution.x / iResolution.y</span>
+<span style="color: #ff7f24;">    uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.y</span>
+
+<span style="color: #ff7f24;">    &#22914;&#26524;&#21644; y &#20998;&#37327;&#21512;&#24182;&#19968;&#36215;&#35745;&#31639;, &#37027;&#20040;&#23601;&#26159;</span>
+<span style="color: #ff7f24;">    uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.y</span>
+<span style="color: #ff7f24;">   */</span>
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#23631;&#24149;&#30340; Y &#36724;&#27604; X &#36724;&#38271;, &#25110;&#20004;&#32773;&#30456;&#31561;</span>
+  uv.y *= iResolution.y / iResolution.x;
+  <span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">    &#31561;&#21516;&#20110;</span>
+<span style="color: #ff7f24;">    uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.y * iResolution.y / iResolution.x</span>
+<span style="color: #ff7f24;">    uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.x</span>
+
+<span style="color: #ff7f24;">    &#22914;&#26524;&#21644; x &#20998;&#37327;&#21512;&#24182;&#19968;&#36215;&#35745;&#31639;, &#37027;&#20040;&#23601;&#26159;</span>
+<span style="color: #ff7f24;">    uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.x</span>
+<span style="color: #ff7f24;">   */</span>
+}
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  &#32508;&#21512;&#20004;&#31181;&#24773;&#20917;&#26469;&#30475;&#23601;&#26159;</span>
+<span style="color: #ff7f24;">  uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y)</span>
+<span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+
+<p>
+所以, <code>ShaderToy</code> 上有不少例子都是有这一句(或类似的).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+</pre>
+</div>
+
+<p>
+在大部分的 <code>ShaderToy</code> 例子中, <code>UV</code> 计算是基础且重要的东西, 这个小节所介绍的 <code>UV</code> 计算其实是 <code>UV</code> 补偿, 解决画面拉伸的问题.
+</p>
+
+<p>
+还会介绍一些其它的 <code>UV</code> 计算来实现不同的效果.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3dadadc" class="outline-2">
+<h2 id="org3dadadc">UV计算 - 平铺(tiling)</h2>
+<div class="outline-text-2" id="text-org3dadadc">
+<p>
+这里的平铺就是和计算机的桌面壁纸里的平铺是一个概念: 当一张壁纸不能把桌面铺满, 那么就用重复若干张壁纸铺满桌面.
+</p>
+
+<p>
+<code>Shader</code> 编程也可以平铺.
+</p>
+
+<p>
+我们可以换个角度来思考, 默认情况下, 一个像素所对应 \(UV\) 坐标是 <code>gl_FragCoord.xy / iResolution.xy</code>, 分量的范围是 \([0, 1]\), 这是针对与整个屏幕来说的.
+</p>
+
+<p>
+想要平铺, 我们只要在屏幕的范围内复制多几个 \([0, 1]\) 范围的 \(UV\) 坐标空间就好了.
+</p>
+
+
+<div id="orgff0d459" class="figure">
+<p><img src="../../../files/uv-tiling.png" alt="uv-tiling.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>重复了 4 个 \([0, 1]\) 范围的 \(UV\) 坐标空间</p>
+</div>
+
+<p>
+话虽如此, 具体应该怎么做呢? 虽然没有标准答案, 但还是有基本法的.
+</p>
+
+<p>
+从原本映射关系来看是 \([x_{min}, x_{max}] \rightarrow [0, 1]\) 和 \([y_{min}, y_{max}] \rightarrow [0, 1]\),
+</p>
+
+<p>
+想要在更小的屏幕范围内应该一个 \(UV\) 空间, 只要改变 \(x_{max}\) 和 \(y_{max}\) 的值就可以了.
+</p>
+
+<p>
+对于看左上角的 \(UV\) 空间, 可以通过 <code>gl_FragCoord.xy / (iResolution.xy / 2)</code>, 这里就是把 \(x_{max}\) 和 \(y_{max}\) 分别改变为 <code>iResolution.x / 2</code> 和 <code>iResolution.y / 2</code>.
+</p>
+
+<p>
+接下来的问题就是如何让构造出另外三个 \(UV\) 空间呢?
+</p>
+
+<p>
+因为当 <code>gl_FragCoord.x</code> 超出 <code>iResolution.x / 2</code> 时, <code>gl_FragCoord.x / (iResolution.x / 2)</code> 的值就是大于 1 的浮点数,
+</p>
+
+<p>
+我们的目标是让其它三个 \(UV\) 空间的分量范围为 \([0, 1]\), 方法很简单, <code>glsl</code> 的内置函数 <code>fract</code> 可以获取浮点数的小数部分,
+</p>
+
+<p>
+比如 <code>fract(1.1)</code> 等于 0.1, <code>fract(2.1)</code> 也是等于 0.1, 从而形成一个以 0 到 1 为一个周期的周期序列.
+</p>
+
+<p>
+这样就可以让其它 \(UV\) 空间的分量范围也处于 \([0, 1]\) 之间,
+</p>
+
+<p>
+综上所述, \(UV\) 的计算方式就变成这样:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">div_num</span> = 2;
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = fract(gl_FragCoord.xy / (iResolution.xy / div_num));
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  or</span>
+
+<span style="color: #ff7f24;">  vec2 uv = fract(gl_FragCoord.xy / iResolution.xy * div_num);</span>
+<span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+
+<p>
+这并非唯一的方法, 模运算(module)同样可以获取周期序列.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">div_num</span> = 2;
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">period</span> = 1.0;
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = mod(gl_FragCoord.xy / (iResolution.xy / div_num), period);
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  or</span>
+
+<span style="color: #ff7f24;">  vec2 uv = mod(gl_FragCoord.xy / iResolution.xy * div_num, period);</span>
+<span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+
+<p>
+并且模运算的周期可以用来对 \(UV\) 空间进行等比缩放, 如果把 <code>period</code> 定义为 2.0, 那么 \(UV\) 的分量范围就是 \([0, 2]\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0742dbd" class="outline-2">
+<h2 id="org0742dbd">smoothstep 函数</h2>
+<div class="outline-text-2" id="text-org0742dbd">
+<p>
+\(smoothstep\) 函数的定义等价如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  genType clamp(genType x, genType minValue, genType maxValue)</span>
+
+<span style="color: #ff7f24;">  equals</span>
+
+<span style="color: #ff7f24;">  min(max(x, minValue), maxValue)</span>
+<span style="color: #ff7f24;"> */</span>
+
+<span style="color: #98fb98;">genType</span> <span style="color: #87cefa;">smoothstep</span>(<span style="color: #98fb98;">genType</span> <span style="color: #eedd82;">edge0</span>, <span style="color: #98fb98;">genType</span> <span style="color: #eedd82;">edge1</span>, <span style="color: #98fb98;">genType</span> <span style="color: #eedd82;">x</span>) {
+  <span style="color: #98fb98;">genType</span> <span style="color: #eedd82;">t</span> = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+  <span style="color: #00ffff;">return</span> t * t * (3.0 - 2.0 * t);
+}
+</pre>
+</div>
+
+<p>
+\(t\) 是从 \(edge0\) 到 \(edge1\) 的插值, 结果在 \([0, 1.0]\) 内.
+</p>
+
+
+<div id="orga15d38b" class="figure">
+<p><img src="../../../files/smoothstep-t.png" alt="smoothstep-t.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>x, edge0 以及 edge1 三者的关系</p>
+</div>
+
+<p>
+\(smoothstep\) 的返回值 \(f(t) = 3t^{2} - 2t^{3}\) 是一个最高次项为 3 的多项式函数,
+</p>
+
+<p>
+其一阶导数为 \(f^{'}(t) = 6t - 6t^{2} = 6t(1 - t)\), 令 \(f^{'}(t) = 0\) 可以求得两个驻点的 \(t\) 分量: \(0\) 和 \(1\).
+</p>
+
+<p>
+再求出二阶导数 \(f^{''}(t) = 6 - 12t\), 分别把驻点的 \(t\) 分量分别代入到其中, 分别得到 \(f^{''}(0) = 6 > 0\) 和 \(f^{''}(1) = -6 < 0\).
+</p>
+
+<p>
+也就是说函数 \(f(t)\) 在 \(t = 0\) 为极小值, 在 \(t = 1\) 为极大值, \(t\) 在 \([0, 1]\) 这个区间内是单调递增的.
+</p>
+
+<p>
+又刚好 \(t \in [0, 1.0]\), 因此, \(f(t)\) 最小值为 \(f(0) = 0\), 最大值为 \(f(1) = 1\).
+</p>
+
+<p>
+我们再令 \(f^{''}(t) = 0\) 尝试求出函数 \(f(t)\) 在 \([0, 1]\) 区间的拐点, 解得 \(t = 0.5\).
+</p>
+
+<p>
+把 \(t = 0.5\) 代入原函数得到 \(f(t=0.5) = 3 \times 0.5^{2} - 2 \times 0.5^{3} = 0.5\), 得到点 \((0.5, 0.5)\).
+</p>
+
+<p>
+最后求该点处的切线: \(f^{'}(0.5) = \frac{y - 0.5}{x - 0.5} = 1.5 \rightarrow y = 1.5x - 0.25\).
+</p>
+
+<p>
+该切线的导数 \(y^{'} = 1.5\), 表明了函数 \(f(t)\) 在 \(t = 0.5\) 处的斜率的变化率(也就是 \(f^{''}(t)\))是在逐渐增加,
+</p>
+
+<p>
+在 \(t = 0.5\) 的左边 \(f^{''}(t) > 0\) (左边的函数线条为下凸), 在右边则是 \(f^{''}(t) < 0\) (左边的函数线条为下凹). 因此, 点 \((0.5, 0.5)\) 的确是拐点.
+</p>
+
+<p>
+因此, \(smoothstep\) 是一个从 \([edge0, edge1]\) 到 \([0, 1]\) 的映射, 一条变化率为先增后减的曲线.
+</p>
+
+<p>
+最终的函数图像如下:
+</p>
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=smoothstep(0.0,1,x)&v1=true&f2(x,t)=&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0.4302807407932391,-0.05999176204044846,1.9620958899187213"></iframe>
+</p>
+</div>
+
+<div id="outline-container-org970bf8c" class="outline-3">
+<h3 id="org970bf8c"><a href="https://thebookofshaders.com/glossary/?search=smoothstep">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></h3>
+<div class="outline-text-3" id="text-org970bf8c">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#ifdef</span> GL_ES
+precision <span style="color: #98fb98;">mediump</span> <span style="color: #98fb98;">float</span>;
+<span style="color: #b0c4de;">#endif</span>
+
+<span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">PI</span> 3.14159265359
+
+uniform <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">u_resolution</span>;
+uniform <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">u_mouse</span>;
+uniform <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">u_time</span>;
+
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">plot</span>(<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>, <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">pct</span>) {
+  <span style="color: #00ffff;">return</span> smoothstep(pct-0.02, pct, st.y) -
+         smoothstep(pct, pct+0.02, st.y);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>() {
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">smooth interpolation between 0.1 and 0.9</span>
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">y</span> = smoothstep(0.1, 0.9, st.x);
+
+  <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">color</span> = vec3(y);
+
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">pct</span> = plot(st, y);
+  color = (1.0 - pct) * color + pct * vec3(0.0, 1.0, 0.0);
+
+  gl_FragColor = vec4(color, 1.0);
+}
+</pre>
+</div>
+
+<p>
+这段 <code>shader</code> 的算法做的事情很简单: 绘制出 \(smoothstep(0.1, 0.9, x)\) 的函数图.
+</p>
+
+<p>
+做法很简单: 首先计算出 \(st.x\) 经过 \(smoothstep(0.1, 0.9, x)\) 映射后的值 \(y\), 但这样的话所有 \(x\) 分量相同的片元在经过映射后拥有相同的 \(y\), 我们需要判断片元是否处于函数上.
+</p>
+
+<p>
+\(plot\) 函数就是判断片元是否在函数上的. 上面代码中的 \(plot\) 函数其实是优化过了的, 先看未经优化的版本:
+</p>
+
+<p>
+在计算出经过映射的 \(y\) 后, 对片元的 \(y\) 分量和映射 \(y\) 进行对比, 如果两者相等就说明片元在函数上.
+</p>
+
+<p>
+但由于它们两者都是浮点数, 没法直接判断是否相等, 因此只能认为当两者相差小于一个边界时为相等.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">float</span> <span style="color: #87cefa;">plot</span>(<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>, <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">pct</span>) {
+  <span style="color: #00ffff;">return</span> abs(pct - st.y) &lt; 0.01 ? 1.0: 0.0;
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#25110;&#32773;&#20351;&#29992; step &#20989;&#25968;</span>
+<span style="color: #ff7f24;">     step(abs(pct - st.y), 0.01);</span>
+
+<span style="color: #ff7f24;">     type = float/vec2/vec3/vec4</span>
+
+<span style="color: #ff7f24;">     type step(type edge, type x)</span>
+
+<span style="color: #ff7f24;">     equals</span>
+
+<span style="color: #ff7f24;">     returnValue[i] = edge[i] &gt; x[i] ? 0.0: 1.0;</span>
+<span style="color: #ff7f24;">   */</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">return step(abs(pct - st.y), 0.01) ? 1.0: 0.0;</span>
+}
+</pre>
+</div>
+
+<p>
+<b>不过</b> 这样绘制出来的函数图像很生硬, 边界有锯齿, 过渡不够平滑(, 改节标题连接上面的代码可以修改看效果).
+</p>
+
+<p>
+优化后的 \(plot\) 函数就是为了解决过渡不平滑的问题而出现的:
+</p>
+
+<p>
+\(smoothstep(pct-0.02, pct, st.y)\) 的函数图像是 \(smoothstep(0.02, pct+0.02, st.y)\) 图像的左平移, 在水平方向上两者相差 \(0.02 \times 2\) 个距离.
+</p>
+
+<p>
+在 \([ptc-0.02, pct+0.02]\) 区间的某一个位置上, 两个图像 <b>在垂直方向上</b> 相差的距离的变化规律是先增后减少, \(0.02\) 决定着变化率, 越大变化越小, 线条越粗.
+</p>
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=smoothstep(0.1-0.5,0.1,x)&v1=true&f2(x,t)=smoothstep(0.1,0.1+0.5,x)&v2=true&f3(x,t)=smoothstep(0.1-0.5,0.1,x)%20-%20smoothstep(0.1,0.1+0.5,x)&v3=true&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,2.8727045924301255"></iframe>
+</p>
+
+<blockquote>
+<p>
+我们也可以使用 <code>Maxima</code> 进行绘图, <code>Maxima</code> 是一个 <code>CAS</code> 软件, 除了能画图以外还能帮助你进行强大的数学运算.
+</p>
+
+<p>
+个人十分推荐掌握这个工具.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#23450;&#20041; smoothstep &#20989;&#25968; <span style="color: #00ffff;">*/</span>
+smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(
+  t<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">min</span>(<span style="color: #b0c4de;">max</span>((x <span style="color: #00ffff;">-</span> l) <span style="color: #00ffff;">/</span> (u <span style="color: #00ffff;">-</span> l), <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">0</span>), <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">0</span>),
+  <span style="color: #b0c4de;">return</span> (t <span style="color: #00ffff;">*</span> t <span style="color: #00ffff;">*</span> (<span style="color: #7fffd4;">3</span> <span style="color: #00ffff;">-</span> <span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">*</span> t))
+)$
+
+<span style="color: #00ffff;">/*</span> &#32472;&#22270; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">plot2d</span>(<span style="color: #00ffff;">[</span>smoothstep(<span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">-</span><span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span>, x), smoothstep(<span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">+</span><span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">5</span>, x), smoothstep(<span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">-</span><span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span>, x) <span style="color: #00ffff;">-</span> smoothstep(<span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">+</span><span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">5</span>, x) <span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span>x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>);
+</pre>
+</div>
+</blockquote>
+
+<p>
+通过 \(smoothstep(0.1-0.5, 0.1, x) - smoothstep(0.1, 0.1+0.5, x)\) 的图像可以得知, 优化后的 \(plot\) 的变化相对平滑一点.
+</p>
+
+<p>
+回到优化后的 \(plot\) 上, 它的作用就是让 \(st.y\) 在 \([y-0.02, y+0.02]\) 范围内进行插值, 以先增后减的变化率返回 \([0, 1]\) 的值, 而不是像未优化版只返回 \(0\) 或 \(1\) 那样一刀切.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org85af9ac" class="outline-2">
+<h2 id="org85af9ac">dFdx/dFdy</h2>
+<div class="outline-text-2" id="text-org85af9ac">
+<p>
+要想理解 <code>dFdx/dFdy</code> 的作用, 得想知道 <code>GPU</code> 每次都是以 \(2 \times 2\) 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 <code>Fragment Shaders</code>,
+</p>
+
+<p>
+因此, 在一个 <code>Fragment Shader</code> 中, 对于 <code>GPU</code> 来说可以获取当前片元所在方块内的相邻片元的情况.
+</p>
+
+<p>
+我们假设有一个函数 \(p(x, y)\) 可以获取当前片元的(在光栅化过程计算得到的)某个属性 \(attr\): \(attr = p(x, y)\),
+</p>
+
+<p>
+那么当前片元在 \(x\) 轴方向上的下一个相邻片元的属性值则是为 \(attr_{x+1} = p(x + 1, y)\),
+</p>
+
+<p>
+而在 \(y\) 轴方向上的下一个相邻片元的属性值则是为 \(attr_{y+1} = p(x, y + 1)\).
+</p>
+
+<p>
+\(dFdx(attr)\) 其实就是在求在当前片元的 \(x\) 轴方向上的某个属性的 \(attr\) 的偏导数, 因此定义为:
+</p>
+
+<p>
+\(dFdx(attr) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr\).
+</p>
+
+<p>
+\(dFdy(attr)\) 同理, 只不过是在 \(y\) 轴方向上的偏导数, 定义如下:
+</p>
+
+<p>
+\(dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr\).
+</p>
+
+
+<div id="orge31f70b" class="figure">
+<p><img src="../../../files/Shader-Derivatives-1.png" alt="Shader-Derivatives-1.png">
+</p>
+<p><span class="figure-number">Figure 3: </span>dFdx/dFdy</p>
+</div>
+
+<p>
+比如下面这个例子在 <code>Fragment Shader</code> 中使用 \(dFdx\) 和 \(dFdy\) 根据片元的视点空间(view space)坐标计算出面法线.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">vertex shader</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#ifdef</span> GL_ES
+precision <span style="color: #98fb98;">mediump</span> <span style="color: #98fb98;">float</span>;
+<span style="color: #b0c4de;">#endif</span>
+
+uniform <span style="color: #98fb98;">mat4</span> <span style="color: #eedd82;">projectionMatrix</span>;
+uniform <span style="color: #98fb98;">mat4</span> <span style="color: #eedd82;">modelViewMatrix</span>;
+
+in <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">position</span>;
+out <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">normalInterp</span>;
+out <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">pos</span>;
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>(){
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    <span style="color: #98fb98;">vec4</span> <span style="color: #eedd82;">pos4</span> = modelViewMatrix * vec4(position, 1.0);
+
+    normalInterp = normalMatrix * normal;
+    pos = vec3(pos4) / pos4.w;
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">fragment shader</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">#ifdef</span> GL_ES
+precision <span style="color: #98fb98;">mediump</span> <span style="color: #98fb98;">float</span>;
+<span style="color: #b0c4de;">#endif</span>
+
+in <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">pos</span>;
+in <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">normalInterp</span>;
+
+out <span style="color: #98fb98;">vec4</span> <span style="color: #eedd82;">outColor</span>;
+
+uniform <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">bFlat</span>;
+
+<span style="color: #00ffff;">const</span> <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">lightPos</span> = vec3(200, 60, 100);
+<span style="color: #00ffff;">const</span> <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">ambientColor</span> = vec3(0.2, 0.0, 0.0);
+<span style="color: #00ffff;">const</span> <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">diffuseColor</span> = vec3(0.5, 0.0, 0.0);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>() {
+  <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">normal</span> = mix(normalize(normalInterp),
+                    normalize(cross(dFdx(pos), dFdy(pos))), <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#20351;&#29992; dFdx &#21644; dFdy &#27714;&#20986;&#29255;&#20803;&#25152;&#22312;&#24179;&#38754;&#30340;&#38754;&#27861;&#32447;</span><span style="color: #ff7f24;"> */</span>
+                    bFlat);
+  <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">lightDir</span> = normalize(lightPos - pos);
+
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">lambertian</span> = max(dot(lightDir, normal), 0.0);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">specular</span> = 0.0;
+
+  <span style="color: #00ffff;">if</span> (lambertian &gt; 0.0) {
+    <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">viewDir</span> = normalize(-pos);
+    <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">halfDir</span> = normalize(lightDir + viewDir);
+    <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">specAngle</span> = max(dot(halfDir, normal), 0.0);
+    specular = pow(specAngle, 16.0);
+  }
+
+  outColor = vec4(ambientColor + lambertian * diffuseColor + specular * specColor, 1.0);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0031dff" class="outline-2">
+<h2 id="org0031dff">Mix 函数解析</h2>
+</div>
+
+<div id="outline-container-org9baddb7" class="outline-2">
+<h2 id="org9baddb7">Hash函数/随机/噪音</h2>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2024-03-02</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.3 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

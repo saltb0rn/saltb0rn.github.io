@@ -7,9 +7,13 @@
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
 
-对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码.
+对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码, 大胆承认抄别人的代码.
+
+并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
 
 这篇笔记就是用来记录"明白"这一过程.
+
+另外, 这里建议参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完).
 #+end_abstract
 
 *** UV - 计算片元在屏幕上所对应的 UV 坐标
@@ -22,7 +26,7 @@
 
 在 =ShaderToy= 中, 人们把整个画面看作是一张大贴图, 片元就是该大贴图上面的一个纹理像素(texel).
 
-理所当然的片元就有一个 =UV= 坐标, 可以通过片元坐标 $gl\_fragCoord$ 和屏幕分辨率 $iResolution$ 计算出来.
+片元理所当然地有一个 =UV= 坐标, 可以通过片元坐标 $gl\_fragCoord$ 和屏幕分辨率 $iResolution$ 计算出来.
 
 #+BEGIN_SRC c
   vec2 uv = gl_FragCoord.xy / iResolution.xy; // [0.0, 1.0]
@@ -30,7 +34,7 @@
 
 当要注意的是, 为了方便作图, 片元的 =UV= 并非就要固定在 $[0.0, 1.0]$ 之间.
 
-有时候为了方便作图, 会对 =UV= 做一些列变换.
+有时候为了实现某些目的, 需要对 =UV= 做一些列变换.
 
 比如把纹理坐标空间的原点从左下角平移到中心,
 
@@ -40,9 +44,12 @@
 
 #+BEGIN_QUOTE
 这一步开始已经把一个屏幕平均分成 4 份了.
+
+$[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0.5]$ 两个区间.
+
+因此, $2 \times 2 = 4$ 份.
 #+END_QUOTE
 
-# 补图
 把新的纹理坐标空间的范围拓展到 $[-1.0, 1.0]$,
 
 #+BEGIN_SRC c
@@ -55,7 +62,7 @@
 
 在非一比一情况下绘制个圆形会导致圆变椭圆, 这是因为 *$UV$ 两分量的范围比例和屏幕分辨率比例对不上*, 导致出现拉伸的情况.
 
-解决方法很简单, 对长的那一方维度进行补偿, 使得比例一致.
+解决方法很简单, 以屏幕分辨率比例为准, 对 $UV$ 长的那一方维度分量进行补偿, 使得两者比例一致.
 
 #+BEGIN_SRC c
   vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; // [-1.0, 1.0]
@@ -150,7 +157,7 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 
 因为当 =gl_FragCoord.x= 超出 =iResolution.x / 2= 时, =gl_FragCoord.x / (iResolution.x / 2)= 的值就是大于 1 的浮点数,
 
-我们的目标是让其它三个 $UV$ 空间的分量范围为 $[0, 1]$, 方法很简单, =glsl= 的内置函数 =fract= 可以去浮点数的小数部分,
+我们的目标是让其它三个 $UV$ 空间的分量范围为 $[0, 1]$, 方法很简单, =glsl= 的内置函数 =fract= 可以获取浮点数的小数部分,
 
 比如 =fract(1.1)= 等于 0.1, =fract(2.1)= 也是等于 0.1, 从而形成一个以 0 到 1 为一个周期的周期序列.
 
@@ -182,3 +189,234 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 #+end_src
 
 并且模运算的周期可以用来对 $UV$ 空间进行等比缩放, 如果把 =period= 定义为 2.0, 那么 $UV$ 的分量范围就是 $[0, 2]$.
+
+*** smoothstep 函数
+
+$smoothstep$ 函数的定义等价如下:
+
+#+BEGIN_SRC c
+  /*
+    genType clamp(genType x, genType minValue, genType maxValue)
+
+    equals
+
+    min(max(x, minValue), maxValue)
+   ,*/
+
+  genType smoothstep(genType edge0, genType edge1, genType x) {
+    genType t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t);
+  }
+#+END_SRC
+
+$t$ 是从 $edge0$ 到 $edge1$ 的插值, 结果在 $[0, 1.0]$ 内.
+
+#+caption: x, edge0 以及 edge1 三者的关系
+[[../../../files/smoothstep-t.png]]
+
+$smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 的多项式函数,
+
+其一阶导数为 $f^{'}(t) = 6t - 6t^{2} = 6t(1 - t)$, 令 $f^{'}(t) = 0$ 可以求得两个驻点的 $t$ 分量: $0$ 和 $1$.
+
+再求出二阶导数 $f^{''}(t) = 6 - 12t$, 分别把驻点的 $t$ 分量分别代入到其中, 分别得到 $f^{''}(0) = 6 > 0$ 和 $f^{''}(1) = -6 < 0$.
+
+也就是说函数 $f(t)$ 在 $t = 0$ 为极小值, 在 $t = 1$ 为极大值, $t$ 在 $[0, 1]$ 这个区间内是单调递增的.
+
+又刚好 $t \in [0, 1.0]$, 因此, $f(t)$ 最小值为 $f(0) = 0$, 最大值为 $f(1) = 1$.
+
+我们再令 $f^{''}(t) = 0$ 尝试求出函数 $f(t)$ 在 $[0, 1]$ 区间的拐点, 解得 $t = 0.5$.
+
+把 $t = 0.5$ 代入原函数得到 $f(t=0.5) = 3 \times 0.5^{2} - 2 \times 0.5^{3} = 0.5$, 得到点 $(0.5, 0.5)$.
+
+最后求该点处的切线: $f^{'}(0.5) = \frac{y - 0.5}{x - 0.5} = 1.5 \rightarrow y = 1.5x - 0.25$.
+
+该切线的导数 $y^{'} = 1.5$, 表明了函数 $f(t)$ 在 $t = 0.5$ 处的斜率的变化率(也就是 $f^{''}(t)$)是在逐渐增加,
+
+在 $t = 0.5$ 的左边 $f^{''}(t) > 0$ (左边的函数线条为下凸), 在右边则是 $f^{''}(t) < 0$ (左边的函数线条为下凹). 因此, 点 $(0.5, 0.5)$ 的确是拐点.
+
+因此, $smoothstep$ 是一个从 $[edge0, edge1]$ 到 $[0, 1]$ 的映射, 一条变化率为先增后减的曲线.
+
+最终的函数图像如下:
+
+[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=smoothstep(0.0,1,x)&v1=true&f2(x,t)=&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0.4302807407932391,-0.05999176204044846,1.9620958899187213]]
+
+**** [[https://thebookofshaders.com/glossary/?search=smoothstep][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]]
+
+#+BEGIN_SRC c
+  #ifdef GL_ES
+  precision mediump float;
+  #endif
+
+  #define PI 3.14159265359
+
+  uniform vec2 u_resolution;
+  uniform vec2 u_mouse;
+  uniform float u_time;
+
+  float plot(vec2 st, float pct) {
+    return smoothstep(pct-0.02, pct, st.y) -
+           smoothstep(pct, pct+0.02, st.y);
+  }
+
+  void main() {
+    vec2 st = gl_FragCoord.xy / u_resolution;
+
+    // smooth interpolation between 0.1 and 0.9
+    float y = smoothstep(0.1, 0.9, st.x);
+
+    vec3 color = vec3(y);
+
+    float pct = plot(st, y);
+    color = (1.0 - pct) * color + pct * vec3(0.0, 1.0, 0.0);
+
+    gl_FragColor = vec4(color, 1.0);
+  }
+#+END_SRC
+
+这段 =shader= 的算法做的事情很简单: 绘制出 $smoothstep(0.1, 0.9, x)$ 的函数图.
+
+做法很简单: 首先计算出 $st.x$ 经过 $smoothstep(0.1, 0.9, x)$ 映射后的值 $y$, 但这样的话所有 $x$ 分量相同的片元在经过映射后拥有相同的 $y$, 我们需要判断片元是否处于函数上.
+
+$plot$ 函数就是判断片元是否在函数上的. 上面代码中的 $plot$ 函数其实是优化过了的, 先看未经优化的版本:
+
+在计算出经过映射的 $y$ 后, 对片元的 $y$ 分量和映射 $y$ 进行对比, 如果两者相等就说明片元在函数上.
+
+但由于它们两者都是浮点数, 没法直接判断是否相等, 因此只能认为当两者相差小于一个边界时为相等.
+
+#+BEGIN_SRC c
+  float plot(vec2 st, float pct) {
+    return abs(pct - st.y) < 0.01 ? 1.0: 0.0;
+    /* 或者使用 step 函数
+       step(abs(pct - st.y), 0.01);
+
+       type = float/vec2/vec3/vec4
+
+       type step(type edge, type x)
+
+       equals
+
+       returnValue[i] = edge[i] > x[i] ? 0.0: 1.0;
+     ,*/
+    // return step(abs(pct - st.y), 0.01) ? 1.0: 0.0;
+  }
+#+END_SRC
+
+*不过* 这样绘制出来的函数图像很生硬, 边界有锯齿, 过渡不够平滑(, 改节标题连接上面的代码可以修改看效果).
+
+优化后的 $plot$ 函数就是为了解决过渡不平滑的问题而出现的:
+
+$smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02, st.y)$ 图像的左平移, 在水平方向上两者相差 $0.02 \times 2$ 个距离.
+
+在 $[ptc-0.02, pct+0.02]$ 区间的某一个位置上, 两个图像 *在垂直方向上* 相差的距离的变化规律是先增后减少, $0.02$ 决定着变化率, 越大变化越小, 线条越粗.
+
+[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=smoothstep(0.1-0.5,0.1,x)&v1=true&f2(x,t)=smoothstep(0.1,0.1+0.5,x)&v2=true&f3(x,t)=smoothstep(0.1-0.5,0.1,x)%20-%20smoothstep(0.1,0.1+0.5,x)&v3=true&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,2.8727045924301255]]
+
+#+BEGIN_QUOTE
+我们也可以使用 =Maxima= 进行绘图, =Maxima= 是一个 =CAS= 软件, 除了能画图以外还能帮助你进行强大的数学运算.
+
+个人十分推荐掌握这个工具.
+
+#+BEGIN_SRC maxima
+  /* 定义 smoothstep 函数 */
+  smoothstep(l, u, x) := block(
+    t: min(max((x - l) / (u - l), 0.0), 1.0),
+    return (t * t * (3 - 2 * t))
+  )$
+
+  /* 绘图 */
+  plot2d([smoothstep(0.1-0.5, 0.1, x), smoothstep(0.1, 0.1+0.5, x), smoothstep(0.1-0.5, 0.1, x) - smoothstep(0.1, 0.1+0.5, x) ], [x, -2, 2]);
+#+END_SRC
+#+END_QUOTE
+
+通过 $smoothstep(0.1-0.5, 0.1, x) - smoothstep(0.1, 0.1+0.5, x)$ 的图像可以得知, 优化后的 $plot$ 的变化相对平滑一点.
+
+回到优化后的 $plot$ 上, 它的作用就是让 $st.y$ 在 $[y-0.02, y+0.02]$ 范围内进行插值, 以先增后减的变化率返回 $[0, 1]$ 的值, 而不是像未优化版只返回 $0$ 或 $1$ 那样一刀切.
+
+
+*** dFdx/dFdy
+
+要想理解 =dFdx/dFdy= 的作用, 得想知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
+
+因此, 在一个 =Fragment Shader= 中, 对于 =GPU= 来说可以获取当前片元所在方块内的相邻片元的情况.
+
+我们假设有一个函数 $p(x, y)$ 可以获取当前片元的(在光栅化过程计算得到的)某个属性 $attr$: $attr = p(x, y)$,
+
+那么当前片元在 $x$ 轴方向上的下一个相邻片元的属性值则是为 $attr_{x+1} = p(x + 1, y)$,
+
+而在 $y$ 轴方向上的下一个相邻片元的属性值则是为 $attr_{y+1} = p(x, y + 1)$.
+
+$dFdx(attr)$ 其实就是在求在当前片元的 $x$ 轴方向上的某个属性的 $attr$ 的偏导数, 因此定义为:
+
+$dFdx(attr) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr$.
+
+$dFdy(attr)$ 同理, 只不过是在 $y$ 轴方向上的偏导数, 定义如下:
+
+$dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
+
+#+CAPTION: dFdx/dFdy
+[[../../../files/Shader-Derivatives-1.png]]
+
+比如下面这个例子在 =Fragment Shader= 中使用 $dFdx$ 和 $dFdy$ 根据片元的视点空间(view space)坐标计算出面法线.
+
+#+BEGIN_SRC c
+  /* vertex shader */
+  #ifdef GL_ES
+  precision mediump float;
+  #endif
+
+  uniform mat4 projectionMatrix;
+  uniform mat4 modelViewMatrix;
+
+  in vec3 position;
+  out vec3 normalInterp;
+  out vec3 pos;
+
+  void main(){
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      vec4 pos4 = modelViewMatrix * vec4(position, 1.0);
+
+      normalInterp = normalMatrix * normal;
+      pos = vec3(pos4) / pos4.w;
+  }
+#+END_SRC
+
+#+BEGIN_SRC c
+  /* fragment shader */
+  #ifdef GL_ES
+  precision mediump float;
+  #endif
+
+  in vec3 pos;
+  in vec3 normalInterp;
+
+  out vec4 outColor;
+
+  uniform float bFlat;
+
+  const vec3 lightPos = vec3(200, 60, 100);
+  const vec3 ambientColor = vec3(0.2, 0.0, 0.0);
+  const vec3 diffuseColor = vec3(0.5, 0.0, 0.0);
+
+  void main() {
+    vec3 normal = mix(normalize(normalInterp),
+                      normalize(cross(dFdx(pos), dFdy(pos))), /* 使用 dFdx 和 dFdy 求出片元所在平面的面法线 */
+                      bFlat);
+    vec3 lightDir = normalize(lightPos - pos);
+
+    float lambertian = max(dot(lightDir, normal), 0.0);
+    float specular = 0.0;
+
+    if (lambertian > 0.0) {
+      vec3 viewDir = normalize(-pos);
+      vec3 halfDir = normalize(lightDir + viewDir);
+      float specAngle = max(dot(halfDir, normal), 0.0);
+      specular = pow(specAngle, 16.0);
+    }
+
+    outColor = vec4(ambientColor + lambertian * diffuseColor + specular * specColor, 1.0);
+  }
+#+END_SRC
+
+*** Mix 函数解析
+
+*** Hash函数/随机/噪音

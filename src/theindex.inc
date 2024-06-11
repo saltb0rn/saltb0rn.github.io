@@ -1,3 +1,17 @@
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=18dafdc00b01e317893033c761dd815e][ShaderToy常见代码解释 (收录中)]]
+在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
+
+不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
+
+对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码, 大胆承认抄别人的代码.
+
+并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
+
+这篇笔记就是用来记录"明白"这一过程.
+
+另外, 这里建议参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完).
+
+	
 *** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]
 最近公司给我分配了一个任务: 需要开发一个 3D 拓扑图的库.
 
@@ -5,7 +19,7 @@
 # 记录开发一个Javascript库的过程
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=73997aedd530aa52537f9e7a24aa631c][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=15af02dc2827eda5835634784caf24d3][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -37,7 +51,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/06/things-about-c-development.html?hash=34b2e448ff8e4c330c39c9e15daf7286][关于使用C语言开发的那些事]]
+*** [[file:posts/2021/06/things-about-c-development.html?hash=7fb86755187e1435f524f29cd4b8c6ce][关于使用C语言开发的那些事]]
 *注意*, 看这篇笔记时请务必先学习 =x86= 汇编, 因为 =C= 代码会被编译成汇编,
 
 只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
@@ -87,7 +101,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=f04db9794ea75af802d6bcdd8811f25e][x86 汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=ea061c745f0ea2bb17a9cecb7e4ac609][x86 汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕 =x86= 32 位来讲的, 我读这本书的时候 =x86= 64 位架构已经非常普遍了, 也就是说这本书已经有点过时了, 况且关于浮点数这块基本上没讲过.
@@ -137,7 +151,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及连接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=3ec8fb9a9c08484dce9eb51920787ceb][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=aa67d4addc33ceec4c44974519a0998f][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
@@ -145,7 +159,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 这篇笔记主要是关于光和材质方面的概念,在学习以后你会知道如何编写 =Fragment Shader= 来控制光照效果,不过我们还是会从没有 =GLSL= 的 =OpenGL 1.X= 开始学习.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=d0a01f84e872a74036d8141ec56ccf6b][图形学-OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=b65a4607057c876d595fd676f4870624][图形学-OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
@@ -157,7 +171,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=7993491243d55ba8a4bb5984d1e5f7f4][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=6540ac38a3b19b7c4d5b8cc5977df64a][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -415,7 +429,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 还有读完 =Guide= 以后的时间里面都是 =Reference= 的主场了, =Reference= 有很多 =Guide= 没有的东西等着去挖掘,比如新的数据类型,新的细节, =Guide= 只是个开始.
 
 	
-*** [[file:posts/2018/09/web-frontend.html?hash=6f8626bd5a4641f95d223f69c2b7c627][前端学习笔记整理(持续更新)]]
+*** [[file:posts/2018/09/web-frontend.html?hash=f87108427dee51f10862488a0c4b5ac6][前端学习笔记整理(持续更新)]]
 读书的时候对前端热情不高所以敷衍过去了,等要用的时候才发现给自己留了坑,这就很憋屈了,于是静下心来了解一下,主要是了解前端的系统是怎么样的.
 
 HTML,CSS和JavaScript是怎么协作,三者怎么学?
@@ -433,7 +447,7 @@ JavaScript又是怎么回事,语言部分要有哪些要点?APIs部分有没有�
 P.S: 我接触过一些后端开发人员很抗拒前端,大部份认为,"前端都不涉及逻辑的,有什么意思?".这是一个错误的认识,以前的我不太清楚,但是看到现在的网站页面这么复杂还能说出这种话的人明显是没有经过思考的.
 
 	
-*** [[file:posts/2018/08/emacs-tips.html?hash=532dd759881529b09d13ad1a509b95b2][Emacs Tips(持续更新)]]
+*** [[file:posts/2018/08/emacs-tips.html?hash=e739e9c22521e32ef393261393ceabf5][Emacs Tips(持续更新)]]
 如果学一样东西不做知识管理的话,时间久了就会陷入Problem-Google-Solution-Forgotten 这样的循环中,记得读书时候有人说,看那个人做笔记那么
 
 认真但还是考不好,真蠢.首先我个人不认为做笔记是一件蠢事,不过做笔记是需要技巧的,那个考不好的人可能是这里出了问题,或者只是他单纯的只是做笔

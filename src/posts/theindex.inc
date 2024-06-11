@@ -10,6 +10,7 @@
 * C
   - [[file:2022/12/reading-note-of-calculus-early-transcendentals-th.org][Calculus: Early Transcendentals 8th Edition 阅读笔记]]
   - [[file:2019/11/canvas-intro.org][Canvas入门而不入土]]
+  - [[file:2024/03/code-explains-for-fragment-shader-in-shadertoy.org][code-explains-for-fragment-shader]]
   - [[file:2018/06/continuation-passing-style.org][Continuation Passing Style]]
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
 * D
