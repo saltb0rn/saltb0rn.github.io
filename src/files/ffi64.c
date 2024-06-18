@@ -158,9 +158,24 @@ merge_classes (enum x86_64_reg_class class1, enum x86_64_reg_class class2)
    See the x86-64 PS ABI for details.
 */
 static size_t
-classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
-                   size_t byte_offset)
+classify_argument (
+                   ffi_type *type,
+                   enum x86_64_reg_class classes[],
+                   size_t byte_offset
+                   /* NOTE: used to find the chunk, classify_argument() is a recursive function,
+                      that classifies the arguments chunk by chunk */
+                   )
 {
+  /* NOTE: ffi_type struct definition:
+
+     typedef struct _ffi_type
+     {
+         size_t size;
+         unsigned short alignment;
+         unsigned short type;
+         struct _ffi_type **elements;
+     } ffi_type;
+  */
   switch (type->type)
     {
     case FFI_TYPE_UINT8:
@@ -233,6 +248,13 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
         for (i = 0; i < words; i++)
           classes[i] = X86_64_NO_CLASS;
 
+        /* The classes of a object of type struct:
+
+           index:        0                 1                   2                 3
+           fields:   |          field1                |      field2     |       etc
+           classes: { X86_64_NO_CLASS, X86_64_NO_CLASS,  X86_64_NO_CLASS, X86_64_NO_CLASS }
+         */
+
         /* Zero sized arrays or structures are NO_CLASS.  We return 0 to
            signalize memory class, so handle it as special case.  */
         if (!words)
@@ -243,12 +265,22 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
           }
 
         /* NOTE: classification of aggregate and union types - STEP 4 */
-        /* Merge the fields of structure.  */
+        /* Merge the fields of structure. type->elements is the array of fields of structure. */
         for (ptr = type->elements; *ptr != NULL; ptr++)
           {
             size_t num, pos;
 
             byte_offset = FFI_ALIGN (byte_offset, (*ptr)->alignment);
+            /* NOTE: defintion of FFI_ALIGN:
+
+               #define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
+
+               for example, FFI_ALIGN(7, 8) => ((0b111 - 1) | (0b1000 - 1)) + 1
+                                            => (0b110 | 0b111) + 1
+                                            => 0b111 + 1
+                                            => 0b1000
+                                            => 8
+             */
 
             num = classify_argument (*ptr, subclasses, byte_offset % 8);
             if (num == 0)
@@ -257,11 +289,13 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
             for (i = 0; i < num && (i + pos) < words; i++)
               {
                 size_t pos = byte_offset / 8;
+                /* NOTE: compare 2 classes - STEP 4.1 */
                 classes[i + pos] =
                   merge_classes (subclasses[i], classes[i + pos]);
               }
 
             byte_offset += (*ptr)->size;
+            /* move to the offset of next argument */
           }
 
         /* NOTE: classification of aggregate and union types - STEP 5 */
