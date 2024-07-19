@@ -1,4 +1,4 @@
-*** [[file:posts/2024/07/wasm-in-practice.html?hash=b62ffa4b8792190792c90bb48e0edd47][WASM实践]]
+*** [[file:posts/2024/07/wasm-in-practice.html?hash=54b23aa18781ab22421372dc0ddd9d40][WASM实践]]
 在去年通过阅读 =The Art Of WebAssembly= 学习 =WebAssembly= (简称 =WASM=) 之后基本上再无使用过 =WASM= 了,
 
 这本书算得上是一本不错的 =WASM= 入门书, 偏向 =WASM= 的底层, 但关于实际开发的内容很少.
