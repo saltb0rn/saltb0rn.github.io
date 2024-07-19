@@ -1,3 +1,27 @@
+*** [[file:posts/2024/07/wasm-in-practice.html?hash=b62ffa4b8792190792c90bb48e0edd47][WASM实践]]
+在去年通过阅读 =The Art Of WebAssembly= 学习 =WebAssembly= (简称 =WASM=) 之后基本上再无使用过 =WASM= 了,
+
+这本书算得上是一本不错的 =WASM= 入门书, 偏向 =WASM= 的底层, 但关于实际开发的内容很少.
+
+这本书也有介绍到 =Emscripten= 这种使用的工具链, 我也尝试过这个工具, 不过这个工具用起来有一种很难受的感觉:
+
+告诉你只需要那么做, 这么做就可以了, 把里面重要的细节都藏起来了.
+
+这样会出现一个问题: =Emscripten= 就像是针对各种各样的问题提供了对应的解决方案, 只要你遇到了这些问题, 直接按照它提供的方案即可;
+
+然而, 实际开发的问题远远不止这些, 要能够解决这些问题就得自己动手给出解决方案.
+
+发现了这个真相后我就失望的中断了 =WASM= 的实践学习.
+
+正如所有的计算机问题一样, 只要了解底层原理的人才有创造解决方案的能力.
+
+这几天有幸逛到 [[https://www.youtube.com/watch?v=H_cnrhVYsK0&t=1324s&ab_channel=TsodingDaily][Tsoding 老哥的 Easy Web Games in C]] 的视频, 视频内容就是在不依赖 =Emscripten= 的情况下把 [[https://github.com/raysan5/raylib][raylib]] 程序移植到浏览器上;
+
+他本人也是支持了解底层这个观点, 但同时也说了不是反对使用 =Emscripten=, 而是为了让自己拥有解决预想外问题的能力.
+
+在看完他的视频后我重新燃起了探索的欲望, 因此, 这片文章是对 =Tsoding= 视频内容的整理以及拓展, 势必要在实际开发中掌握 =WASM= 的使用.
+
+	
 *** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=18dafdc00b01e317893033c761dd815e][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
@@ -101,7 +125,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=f256d7c767c749e1dc1c56f3af4d1095][x86 汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=d8703e7dc392bb5b9236f10762747d73][x86 汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕 =x86= 32 位来讲的, 我读这本书的时候 =x86= 64 位架构已经非常普遍了, 也就是说这本书已经有点过时了, 况且关于浮点数这块基本上没讲过.

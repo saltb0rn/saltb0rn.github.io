@@ -43,6 +43,7 @@
   - [[file:2018/11/eopl-sllgen.org][The Sllgen Parser]]
 * W
   - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
+  - [[file:2024/07/wasm-in-practice.org][WASM实践]]
   - [[file:2019/11/web-components.org][Web Components]]
 * X
   - [[file:2020/12/assembly.org][x86 汇编]]

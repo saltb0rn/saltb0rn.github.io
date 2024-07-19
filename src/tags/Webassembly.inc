@@ -1,0 +1,1 @@
+- [[file:../posts/2024/07/wasm-in-practice.org][WASM实践]]
