@@ -13,7 +13,22 @@
 
 这篇笔记就是用来记录"明白"这一过程.
 
-另外, 这里建议参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完).
+另外, 这里建议有两点建议:
+
+1. 参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完);
+
+2. 如果在阅读其它人的代码时看到一些自己不理解的函数(=shader= 的函数基本上就是数学函数的翻译), 使用绘图工具绘制其函数图像来了解其行为.
+
+   这里推荐 [[https://graphtoy.com][GraphToy]] 和 [[https://maxima.sourceforge.io/][Maxima]] (=Maxima= 是开源免费的, 有钱人可以选择像 =Mathematica= 或者 =MATLAB= 之类的商业软件).
+
+   =GraphToy= 提供了 =GLSL= 内置函数定义, 专门用于 =Shader= 的编写辅助.
+
+    和 =GraphToy= 不一样, =Maxima= 并不提供 =GLSL= 的内置函数定义, 它是一个代数计算系统, 专门解决数学计算问题, 也包括画图功能,
+
+    想要在 =Maxima= 使用 =GLSL= 的内置函数需要自己定义(, =GLSL= 的内置函数的定义都很简单), 能够自定义函数则是推荐它的理由, 用来
+
+    弥补 =GraphToy= 的不足. 这篇笔记会提供一些函数的 =Maxima= 定义.
+
 #+end_abstract
 
 *** UV - 计算片元在屏幕上所对应的 UV 坐标
@@ -62,10 +77,25 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 
 在非一比一情况下绘制个圆形会导致圆变椭圆, 这是因为 *$UV$ 两分量的范围比例和屏幕分辨率比例对不上*, 导致出现拉伸的情况.
 
-解决方法很简单, 以屏幕分辨率比例为准, 对 $UV$ 长的那一方维度分量进行补偿, 使得两者比例一致.
+解决方法很简单, 以屏幕分辨率比例为准, 对 $UV$ 长的那一方维度分量进行补偿, 使得 $UV$ 分量的范围比例和屏幕分辨率比例一致.
+
+原本的 $UV$ 范围比例固定是 $\frac{x_{uv}}{y_{uv}} = 1$, 而屏幕分辨率比例是 $\frac{x_{iResolution}}{y_{iResolution}}$,
+
+如果屏幕是 $X$ 轴比较长, 那么 $UV$ 就要针对 $x$ 分量进行补偿才能和屏幕分辨率一致: $\frac{x_{uv} * \frac{x_{iResolution}}{y_{iResolution}}}{x_{uv}} = 1 \times \frac{x_{iResolution}}{y_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}$,
+
+如果屏幕是 $Y$ 轴比较长, 那么 $UV$ 就要针对 $y$ 分量进行补偿才能和屏幕分辨率一致: $\frac{x_{uv}}{y_{uv} * \frac{y_{iResolution}}{x_{iResolution}}} = 1 \div \frac{y_{iResolution}}{x_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}$.
+
+#+begin_quote
+你可能会问既然要保证两者比例一样, 为什么还要讨论哪根轴较长呢?
+
+从公式上来看, 如果 $Y$ 比较长的话, 用 $1 \times \frac{x_{iResolution}}{y_{iResolution}}$ 来计算不也是一样可以保证两者比例一致吗?
+
+但是别忘记了 $UV$ 本身就是依赖 $iResolution$ 计算出来的, 这个数字 $1$ 本身就蕴含了这个事实, 后面马上就要揭露这个事实.
+#+end_quote
 
 #+BEGIN_SRC c
   vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; // [-1.0, 1.0]
+  uv.x *= iResolution.x / iResolution.y;
   if (iResolution.x > iResolution.y) {
     // 如果屏幕的 X 轴比 Y 轴长
     uv.x *= iResolution.x / iResolution.y;
@@ -175,7 +205,22 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
    ,*/
 #+end_src
 
-这并非唯一的方法, 模运算(module)同样可以获取周期序列.
+这并非唯一的方法, 事实上 *只要是周期函数都可以获取周期序列来进行平铺*, 比如 =cosine=, =sine= 和 =modulo=, 等等.
+
+=cosine= 和 =sine= 的用法和 =fract= 差不多, 基本上把 =fract= 替换就可以了:
+
+#+begin_src c
+  int div_num = 2;
+  // 别忘记控制好周期
+  vec2 uv = cos(gl_FragCoord.xy / (iResolution.xy / div_num * 2 * PI));
+  /*
+    or
+
+    vec2 uv = fract(gl_FragCoord.xy / iResolution.xy * div_num * 2 * PI);
+   ,*/
+#+end_src
+
+模运算(modulo)有一点不同:
 
 #+begin_src c
   int div_num = 2;
@@ -190,7 +235,15 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 
 并且模运算的周期可以用来对 $UV$ 空间进行等比缩放, 如果把 =period= 定义为 2.0, 那么 $UV$ 的分量范围就是 $[0, 2]$.
 
-*** smoothstep 函数
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml][函数 - smoothstep]]
+
+#+begin_quote
+从这里开始的后面几个章节都会介绍一些常用(或者一些光看名字不知道做啥)的 =GLSL= [[https://gist.github.com/markknol/d06c0167c75ab5c6720fe9083e4319e1][内置函数]], 不过并不会介绍一些典型的数学函数, 比如 =sin/cos/atan= 这些,
+
+这些直接去看数学书就好, 介绍它们会拉长笔记的篇幅.
+
+这些内置函数均可用在 =Fragment Shader= 中.
+#+end_quote
 
 $smoothstep$ 函数的定义等价如下:
 
@@ -277,7 +330,15 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 
 做法很简单: 首先计算出 $st.x$ 经过 $smoothstep(0.1, 0.9, x)$ 映射后的值 $y$, 但这样的话所有 $x$ 分量相同的片元在经过映射后拥有相同的 $y$, 我们需要判断片元是否处于函数上.
 
-$plot$ 函数就是判断片元是否在函数上的. 上面代码中的 $plot$ 函数其实是优化过了的, 先看未经优化的版本:
+$plot$ 函数就是判断片元是否在函数上的.
+
+#+begin_quote
+"判断片元是否在函数上"其实是很多 =shaders= 绘图的思路, 在函数上的话就返回相应的值用于计算片元的颜色表示"片元在函数上", 不在函数上的就返回 0 表示"片元不在在函数上".
+
+我们忽略图像呈现的细节, 得更简单一点: *在确定好 UV 坐标系的原点后, 只要考虑给落在函数上的片元赋予什么颜色即可*.
+#+end_quote
+
+上面代码中的 $plot$ 函数其实是优化过了的, 先看未经优化的版本:
 
 在计算出经过映射的 $y$ 后, 对片元的 $y$ 分量和映射 $y$ 进行对比, 如果两者相等就说明片元在函数上.
 
@@ -309,7 +370,11 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 在 $[ptc-0.02, pct+0.02]$ 区间的某一个位置上, 两个图像 *在垂直方向上* 相差的距离的变化规律是先增后减少, $0.02$ 决定着变化率, 越大变化越小, 线条越粗.
 
-[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=smoothstep(0.1-0.5,0.1,x)&v1=true&f2(x,t)=smoothstep(0.1,0.1+0.5,x)&v2=true&f3(x,t)=smoothstep(0.1-0.5,0.1,x)%20-%20smoothstep(0.1,0.1+0.5,x)&v3=true&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,2.8727045924301255]]
+#+begin_quote
+如果稍微了解过微积分的话, 你应该能感觉到 =plot= 函数像是一个求导函数, 事实上它就是.
+#+end_quote
+
+[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=smoothstep(0.1,0.9,x)&v1=true&f2(x,t)=smoothstep(0.1-0.5,0.9,x)&v2=true&f3(x,t)=smoothstep(0.1,0.9+0.5,x)&v3=true&f4(x,t)=smoothstep(0.1-0.5,0.9,x)-smoothstep(0.1,0.9+0.5,x)&v4=true&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,4.205926793776948]]
 
 #+BEGIN_QUOTE
 我们也可以使用 =Maxima= 进行绘图, =Maxima= 是一个 =CAS= 软件, 除了能画图以外还能帮助你进行强大的数学运算.
@@ -332,14 +397,13 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 回到优化后的 $plot$ 上, 它的作用就是让 $st.y$ 在 $[y-0.02, y+0.02]$ 范围内进行插值, 以先增后减的变化率返回 $[0, 1]$ 的值, 而不是像未优化版只返回 $0$ 或 $1$ 那样一刀切.
 
-
-*** dFdx/dFdy
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml][函数 - dFdx/dFdy]]
 
 要想理解 =dFdx/dFdy= 的作用, 得想知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
 
 因此, 在一个 =Fragment Shader= 中, 对于 =GPU= 来说可以获取当前片元所在方块内的相邻片元的情况.
 
-我们假设有一个函数 $p(x, y)$ 可以获取当前片元的(在光栅化过程计算得到的)某个属性 $attr$: $attr = p(x, y)$,
+我们假设有一个函数 $p(x, y)$ 可以获取位于 $(x, y)$ 的片元的(在光栅化过程计算得到的)某个属性 $attr$: $attr = p(x, y)$,
 
 那么当前片元在 $x$ 轴方向上的下一个相邻片元的属性值则是为 $attr_{x+1} = p(x + 1, y)$,
 
@@ -417,6 +481,191 @@ $dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
   }
 #+END_SRC
 
-*** Mix 函数解析
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/fract.xhtml][函数 - fract]]
+
+#+begin_quote
+对这个函数进行笔记是因为本人在上面碰过壁, 对于 =GLSL= 里面的每个函数请一定要看它的定义, 并且使用绘图工具绘制一遍.
+#+end_quote
+
+=fract= 的官方定义是:
+
+#+BEGIN_SRC maxima
+  /* 定义 fract 函数 */
+  fract(x) := x - floor(x)$
+
+  /* 绘图 */
+  plot2d(fract(x), [x, -2, 2]);
+#+END_SRC
+
+我一开始不理解 $x \to 0$ 时 $fract(x)$ 附近会是 1, 是因为无视了 $floor(x)$ 函数的定义: 返回小于或等于 $x$ 的最接近的整数.
+
+在 $x \ge 0$ 时, $floor(x)$ 和 $trunc(x)$ 的作用是一样的: 直接返回整数部分.
+
+但是根据定义, 对于 $x \lt 0$ 的时候就不一样了, 比如 $floor(-0.01) = -1$, 而不是返回 0, 因此 $fract(-0.01) = -0.01 + 1 = 0.99$.
+
+[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=fract(x)&v1=true&f2(x,t)=floor(x)&v2=true&f3(x,t)=&v3=true&f4(x,t)=&v4=true&f5(x,t)=&v5=false&f6(x,t)=&v6=true&grid=1&coords=0,0,12]]
+
+#+begin_quote
+既然提到了 $floor$ 函数, 我觉得还是有必要提一下 $ceil$ 函数以及 $round$ 函数.
+
+它们三者的作用都是处理掉浮点数的小数部分, 但是处理方式是完全不一样的, 在特殊情况下导致的结果也是天差地别.
+
+如果不是经常使用, 很容易会因为对它们的定义不熟悉而写出意料之外的 =shader code=, 又由于对它们的不熟悉导, 在找出问题时也很难怀疑到它们身上.
+
+所以不要掉以轻心, 我写这个函数就是因为痛苦的经历.
+
+$ceil(x)$ 函数定义就和 $floor(x)$ 的完全相反: 返回大于或等于 $x$ 的最接近整数. $ceil(x)$ 的作用看上去和 $trunc(x)$ 差很远, 所以就不过多解释.
+
+$round(x)$ 就是"四舍五入", 当 $x$ 的小数部分大于或等于 $0.5$ 就进 $1$, 相信很多人都是在小学一/二年纪了解到这个概念, 但是那个时候是没有学负数的(, 学了负数后面好像也没有回顾"四舍五入"这个概念),
+
+这个进 $1$ 是否就像正数那样给 $x$ 的整数部分加 $1$ 呢? 刚好相反, 对于负数而言进 $1$ 是减 $1$, 所以 $round(-1.5) = -2$, 而不是 $0$.
+#+end_quote
+
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/mix.xhtml][函数 - mix]]
+
+这个函数可能换个名字比较好理解一点: $lerp$, 全称 =linear interpolation=.
+
+没错, 这个函数就是计算出线性插值的.
+
+函数定义为 $mix(x, y, a) = x \times (1 - a) + y \times a$.
+
+#+caption: $mix(x, y, a)$
+[[../../../files/func-mix.png]]
+
+#+begin_quote
+这个函数的定义是这么来的,
+
+从 $x$ 到 $y$ 的 *变化率是固定的* (也就是线性的), 并且整个变化间隔只占了 1 个单位, 因此变化率是 $k = \frac{y - x}{1}$.
+
+现在想知道处于这个变化过程中的某一刻 $a$ ($0 <= a <= 1$) 时候的值是多少:
+
+$x + k \times a = x + a \times (y - x) = x + a \times y - a \times x = x \times (1 - a) + y \times a$.
+
+#+end_quote
+
+看到这图你可能会联想到前面同样有插值行为的函数 $smoothstep(edge0, edge1, x)$.
+
+它们之间有三点不同:
+
+1. $mix$ 是线性插值; $smoothstep$ 是埃尔米特(Hermite)插值, 属于非线性插值.
+2. $smoothstep(edge0, edge1, x)$ 的 $edge0$ 和 $edge1$ 要保证 $edge0 \lt edge1$ 的关系(, 甚至要求 $x$ 位于两者之间, 否则无法按预期插值).
+   $mix(x, y, a)$ 中的 $x$ 和 $y$ 没有这个要求, 可以 $x \gt y$ 也可以 $x \lt y$, 甚至可以 $x = y$, $a$ 也没有大小限制.
+3. $smoothstep(edge0, edge1, x)$ 的插值范围是 $[0, 1]$; $mix(x, y, a)$ 的插值范围是没有限制的.
+
+
+[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=mix(2,4,x)&v1=true&f2(x,t)=smoothstep(2,4,x)&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0,0,12]]
+
+如你所见, 在 $mix(2, 4, x)$ 的图像中, $x = 0$ 时 $y = 2$, $x = 1$ 时 $y = 4$,
+
+$mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x = 1$ 时 $y = r$.
+
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/faceforward.xhtml][函数 - faceforward]]
+
+$faceforward(N, I, Nref)$ 函数用于判断入射向量 $I(ncident vector)$ 和表面法线向量 $Nref$ 是否一致朝向(指向同一个半球(hemisphere)/半圆(semicircle)的方向),
+
+如果不是, 就要把法线向量 $N$ 反转($-1 \times N$)并把它作为结果返回, 否则直接返回 $N$.
+
+通常 $Nref$ 的值是和 $N$ 是一样的,
+
+所以这个函数一般是用来判断表面的面向是否为正面, 不是的话就进行纠正, 这就是函数名字的由来.
+
+函数的定义:
+
+#+begin_quote
+如果 $dot(I, Nref) < 0$, 表明 $I$ 是从表面的正面进入, 返回 $N$;
+
+如果 $dot(I, Nref) > 0$, 表明 $I$ 是从表面的背面进入, 返回 $-1 \times N$.
+#+end_quote
+
+#+BEGIN_SRC maxima
+  /* 定义 faceforward 函数 */
+  faceforward(n, i, nr) := block(
+    return (-1 * signum(i . nr) * n)
+  )$
+
+  /* Test */
+  /* faceforward([0, 1], [-4, 2], [0, 1]); */
+  /* faceforward([1, 0], [-4, -2], [1, 0]); */
+#+END_SRC
+
+#+caption: faceforward
+[[../../../files/func-faceforward.png]]
+
+如果不理解的话可以看这图,
+
+$dot(I, Nref) = |I||Nref|cos(angle(I, Nref))$, 其中 $angle(I, Nref)$ 是向量 $I$ 和 向量 $Nref$ 之间的角度.
+
+根据 $cos$ 函数图像可以知道, 如果 $\frac{-\pi}{2} < angle(I, Nref) < \frac{\pi}{2}$, 那么 $dot(I, Nref) > 0$,
+
+很明显, 图中的 $I1$ 符合这种情况: $dot(I1, Nref) > 0$;
+
+如果 $\frac{-\pi}{2} > angle(I, Nref)$ 或 $\frac{\pi}{2} < angle(I, Nref)$, 那么 $dot(I, Nref) < 0$.
+
+没错, $I0$ 符合这种情况(, 准确一点是满足 $\frac{-\pi}{2} > angle(I0, Nref)$), 因此 $dot(I0, Nref) < 0$.
+
+如果还不理解的话, 可以看一下这个地址: [[https://blender.stackexchange.com/questions/279677/mathematically-what-does-faceforward-function-mean][mathematically-what-does-faceforward-fhunction-mean]].
+
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/reflect.xhtml][函数 - reflect]]
+
+$reflect(I, N)$ 函数用于计算 $I$ 射入面向 $N$（需要确保被一般化) 的表面后的反射方向: $I - 2.0 \times dot(N, I) \times N$.
+
+这个函数定义的推导过程可以看我[[../../2020/08/graphics-opengl-light-and-material.html#specular][以前的文章]], 这里不再赘述.
+
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/refract.xhtml][函数 - refract]]
+
+$refract(I, N, eta)$ 函数用于计算出入射光线 $I$ 经过面向 $N$ 表面(surface)后的折射光线的向量, $eta$ 是表面的折射率(indices of refraction).
+
+
+
+https://stackoverflow.com/questions/20801561/glsl-refract-function-explanation-available
+
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/packUnorm.xhtml][函数 - packUnorm]] 和 [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/unpackUnorm.xhtml][函数 - unpackUnorm]]
+
+这两个函数只是用来把数据打包和解包.
+
+举个例子, 我们知道 =Fragment Shader= 里面的片元颜色是这么个结构: $(r, g, b, a)$, 每个分量的范围都是 $[0.0, 1.0]$.
+
+但是在一些程序中的颜色结构中, 分量的范围就变成 $[0, 255]$, 比如浏览器中的 =#F2F1F0=, 这个其实就是 $242 \times 16^{4} + 241 \times 16^{2} + 240 \times 16^{0}$ 的 16 进制表示.
+
+要完成从 $[0.0, 1.0]$ 到 $[0, 255]$ 的转换很简单, 针对分量进行这样的操作: $round(x * 255.0)$.
+
+然而, 这样的话会很繁琐, 毕竟 =GLSL= 支持 =vec4=, 对一个 =vec4= 进行转换就得手写 4 条这样的操作,
+
+因此, =GLSL= 提供了 $packUnorm$ 一套函数来减轻开发人员的负担, 另外还提供了 $unpackUnorm$ 一套函数来完成 "从 $[0, 255]$ 到 $[0.0, 1.0]$" 这样的逆操作.
+
+这里就不再对函数的定义进行详细说明了, 写这个小节是因为初见该函数没了解到它是做什么的而已, 实际了解下来还是挺简单的.
+
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/modf.xhtml][函数 - modf]]
+
+$modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(integer part)会储存在参数 $i$ 中, 小数部分(fractional part)则是作为函数的返回值.
+
+#+begin_quote
+不要和 $mod$ 函数搞混.
+#+end_quote
+
+#+BEGIN_SRC c
+  float f;
+  float i;
+
+  f = modf(1.2, i);
+  /* d = 1, i = 0.2 */
+
+  vec2 fs;
+  vec2 is;
+  fs = modf(vec2(1.2, -3.4), is);
+  /* fs = ivec2(1, -3), is = vec2(0.2, -0.4) */
+#+END_SRC
+
 
 *** Hash函数/随机/噪音
+
+# https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+
+# 什么是随机: https://www.bilibili.com/video/BV1rA411Z7eP/?spm_id_from=333.337.search-card.all.click&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30
+
+# random: https://thebookofshaders.com/10/
+
+# noise functions
+# https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+# hash11: https://www.shadertoy.com/view/llGSzw
+

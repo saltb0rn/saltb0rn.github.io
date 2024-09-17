@@ -356,10 +356,16 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 #+BEGIN_QUOTE
 实际上 =GPU= 是并行计算架构, 并非逐个片元这样传递, 我们这里只是为了方便理解才这么说是 *逐个传递* 的.
 
-实情是是每次以 $2 \times 2$ 的片元作为单位进行传递的, 也就是一次要同时调用 4 个 =Fragment Shaders=.
+实情是每次以 $2 \times 2$ 的片元作为单位进行传递的, 也就是一次要同时调用 4 个 =Fragment Shaders=.
 #+END_QUOTE
 
 =OpenGL= 会使用一些变量来传递片元数据, 比如 =gl_FragCoord= 会把片元对应的 $x$ 和 $y$ 分量一并传回;
+
+=gl_FragCoord= 的类型是 =vec4=, 值是 $\left(x, y, z, 1/w\right)$, 其中 $x$ 和 $y$ 就是片元对应的 $x$ 和 $y$ 分量,
+
+$z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 分量进行插值, 它和 $x$ 和 $y$ 分量的插值略微不一样),
+
+同理, $1/w$ 是根据顶点插值得到的 $w$ 分量的倒数.
 
 =gl_FragCoord= 这种是 =OpenGL= 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 =Shader= 程序中用得上.
 
@@ -764,9 +770,13 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 
 PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶资源.
 
-还有如果你不了解[[https://registry.khronos.org/OpenGL-Refpages/gl4/index.php][文档]]上 =Gen*Type= 这个词语是什么意思, 你可以去看 =GLSL= 的语言规范, 我这里可以告诉你的是它的全称是 =Generic * Types=, 中间的 =*= 是做近一步限定的,
+还有如果你不了解[[https://registry.khronos.org/OpenGL-Refpages/gl4/index.php][文档]]上 =Gen*Type= 这个词语是什么意思, 你可以去看 =GLSL= 的语言规范, 我这里可以告诉你的是它的全称是 =Generic * Types=, 中间的 =*= 是做进一步限定的,
 
 比如 =genType= 是 =float/vec2/vec3/vec4=, =genIType= 可以是 =int/ivec2/ivec3/ivec4=.
+
+并且如果一个函数是这么写的话: =genType func(genType x, genType y)=, 那么 =genType= 的值必定是统一的, 只能一起是 =float=, 或者一起是 =vec2=, 如此类推.
+
+不可能出现像 =vec2 func(float x, float y)= 这种不统一的情况, 这种是错误用法.
 #+END_QUOTE
 
 \\
