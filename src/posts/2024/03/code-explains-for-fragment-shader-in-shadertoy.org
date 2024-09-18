@@ -613,11 +613,60 @@ $reflect(I, N)$ 函数用于计算 $I$ 射入面向 $N$（需要确保被一般�
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/refract.xhtml][函数 - refract]]
 
-$refract(I, N, eta)$ 函数用于计算出入射光线 $I$ 经过面向 $N$ 表面(surface)后的折射光线的向量, $eta$ 是表面的折射率(indices of refraction).
+$refract(I, N, eta)$ 函数用于计算出入射光线 $I$ 经过面向 $N$ 表面(surface)后的折射光线的向量, $eta$ 是表面的折射率比(ratio of indices of refraction).
 
+想了解 $eta$ 的定义, 得先了解斯涅尔定律(=Snell's law=), 又叫折射定律.
 
+#+caption: [[https://www.youtube.com/watch?v=NcCSGtnUUpw&ab_channel=AndyMasley%27sIBPhysicsLectures][折射 & 斯涅尔定律(图来自 IB Physics)]]
+[[../../../files/refraction-and-snells-law-from-physics-ib.jpg]]
 
-https://stackoverflow.com/questions/20801561/glsl-refract-function-explanation-available
+根据定律, $eta = \frac{n_{1}}{n_{2}} = \frac{sin(\theta_{1})}{sin(\theta_{2})}$ 或者 $eta = \frac{n_{2}}{n_{1}} = \frac{sin(\theta_{2})}{sin(\theta_{1})}$? 究竟是哪个呢?
+
+$refract$ 的文档并没有说明这一切, 于是我在 =StackOverflow= 上通过这一篇帖子找到了答案: [[https://stackoverflow.com/questions/20801561/glsl-refract-function-explanation-available][glsl refract function explanation available]].
+
+#+begin_quote
+我还在这篇帖子上收获了另外一个技巧: 在 [[https://books.google.com/][Google Books]] 里面检索一些较为专业的名词/概念, 比如 "refraction vector".
+
+事实上很多这种专业的名词/概念很少会出现在搜索引擎上的, 通常只会出现在教材上, 所以这个技巧对自学者很重要.
+#+end_quote
+
+这篇帖子直接给出了折射向量的公式推导, 不过还是得写下自己的理解(, 因为要看懂它的推导还需要一些额外的概念补充, 以及添加额外说明使它更易懂).
+
+#+caption: 折射向量推导
+[[../../../files/calc-refraction-vector.png]]
+
+图中的向量 $I$ / $N$ / $M$ 都是单位向量, $M$ 是垂直于 $N$ 的向量, 而向量 $T$ 是 $refract(I, N, eta)$ 的返回结果: 折射向量.
+
+从图中可以看出, 求出 $T$ 的关键是求出向量 $M$.
+
+其实, 向量 $H$ 的单位向量就是 $M$, 但两者的大小不一样, 它们的大小关系为: $sin(\theta_{i}) = \frac{|H|}{|I|} = \frac{|H|}{|M|} = |H|$,
+
+因此, $M = \frac{H}{sin(\theta_{i})}$.
+
+现在可以计算出 $T = M \times sin(\theta_{t}) - N \times cos(\theta_{t}) = \frac{sin(\theta_{t})}{sin(\theta_{i})}(N \times cos(\theta_{i}) - I) - N \times cos(\theta_{t}) = (\frac{sin(\theta_{t})}{sin(\theta_{i})} \times cos(\theta_{i}) - cos(\theta_{t})) \times N - \frac{sin(\theta_{t})}{cos(\theta_{i})} \times I$.
+
+现在回过头来看 $eta$, 从计算 $T$ 的方程中, 选择 $eta = \frac{sin(\theta_{t})}{sin(\theta_{i})}$ 比较合适, 所以 $T = (eta \times cos(\theta_{i}) - cos(\theta_{t})) \times N - eta \times I$.
+
+现在 $I$ / $N$ / $eta$ / $T$ 这 4 者的关系已经理清了, 只差 $cos\theta_{t}$ 和 $sin\theta_{t}$ 的值就可以得出 $T$ 的值.
+
+现在已经没办法从上面的图获得任何有用的线索了, 换个思路: 从答案出发找出线索来连接目前得到的结论.
+
+是时候回头仔细看一下 $refract(I, N, eta)$ 的定义了:
+
+#+begin_src c
+  k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+  if (k < 0.0)
+      R = genType(0.0);       // or genDType(0.0)
+  else
+      R = eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+#+end_src
+
+初看代码可能不知道 $k$ 的含义是什么, 相信我只要把 $eta$ 带入进去就明白了:
+
+$k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I) = 1.0 - \frac{sin^{2}(\theta_{t})}{sin^{2}(\theta_{i})} * (1.0 - cos^{2}(\theta_{i})) = 1.0 - \frac{sin^{2}(\theta_{t})}{sin^{2}(\theta_{i})} * sin^{2}(\theta_{i}) = cos^{2}(\theta_{t})$.
+
+现在整个 $refract$ 的定义及其背后的含义已经全部解析完毕.
+
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/packUnorm.xhtml][函数 - packUnorm]] 和 [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/unpackUnorm.xhtml][函数 - unpackUnorm]]
 
@@ -668,4 +717,3 @@ $modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(
 # noise functions
 # https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 # hash11: https://www.shadertoy.com/view/llGSzw
-
