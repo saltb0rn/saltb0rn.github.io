@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-06-06 Thu 19:55 -->
+<!-- 2024-11-07 Thu 21:39 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ShaderToy常见代码解释 (收录中)</title>
@@ -233,20 +233,56 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org3670d1b">1. UV - 计算片元在屏幕上所对应的 UV 坐标</a></li>
-<li><a href="#org82e9d6d">2. UV计算 - 平铺(tiling)</a></li>
-<li><a href="#orge058d5e">3. smoothstep 函数</a>
+<li><a href="#orgdb84853">1. 常见的 UV 计算</a>
 <ul>
-<li><a href="#org834da95">3.1. The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></li>
+<li><a href="#orgedb9d42">1.1. UV - 计算片元在屏幕上所对应的 UV 坐标</a></li>
+<li><a href="#orgc9db2a6">1.2. UV计算 - 平铺(tiling)</a></li>
 </ul>
 </li>
-<li><a href="#org7af0b8d">4. dFdx/dFdy</a></li>
-<li><a href="#org2817101">5. Mix 函数解析</a></li>
-<li><a href="#org190b44b">6. Hash函数/随机/噪音</a></li>
+<li><a href="#orgc2d1a4b">2. GLSL 内置函数</a>
+<ul>
+<li><a href="#org275fa0d">2.1. 函数 - smoothstep</a>
+<ul>
+<li><a href="#org3e0714f">2.1.1. The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></li>
+<li><a href="#orgb02f32e">2.1.2. 编写 <code>Fragment Shader</code> 的思路</a></li>
+</ul>
+</li>
+<li><a href="#org0c92f1e">2.2. 函数 - dFdx/dFdy</a></li>
+<li><a href="#org40b9a52">2.3. 函数 - fract</a></li>
+<li><a href="#org9d61b3b">2.4. 函数 - mix</a></li>
+<li><a href="#org980818a">2.5. 函数 - faceforward</a></li>
+<li><a href="#org70bfbbc">2.6. 函数 - reflect</a></li>
+<li><a href="#org910df8c">2.7. 函数 - refract</a></li>
+<li><a href="#org04a2fc0">2.8. 函数 - packUnorm 和 函数 - unpackUnorm</a></li>
+<li><a href="#orge3f6987">2.9. 函数 - modf</a></li>
+<li><a href="#orgf46da58">2.10. 函数 - texture</a></li>
+</ul>
+</li>
+<li><a href="#orgffa8428">3. 常用自定义函数</a>
+<ul>
+<li><a href="#org2c00520">3.1. remap 函数</a></li>
+<li><a href="#org2862943">3.2. 随机函数/Hash函数</a></li>
+<li><a href="#org6624f61">3.3. 噪音</a></li>
+<li><a href="#org9fbeeb2">3.4. 调色板生成</a></li>
+</ul>
+</li>
+<li><a href="#org085495d">4. 分形 (Fractal)</a>
+<ul>
+<li><a href="#org668a9a2">4.1. 谢尔宾斯基三角形 (Sierpiński Triangle)</a></li>
+<li><a href="#orgce60671">4.2. 分形布朗运动 (Fractal Brownian Motion)</a></li>
+<li><a href="#orgbd6a50e">4.3. madelbrot set</a></li>
+<li><a href="#orgd62652d">4.4. voronoi diagram</a></li>
+</ul>
+</li>
+<li><a href="#org1087c23">5. 图像处理</a>
+<ul>
+<li><a href="#orgcb2dfa5">5.1. 图像边缘检测 (Edge detection)</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgb61f0c5">
+<div class="abstract" id="orgc7eb1d8">
 <p>
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 </p>
@@ -256,8 +292,14 @@
 </p>
 
 <p>
-对于 <code>ShaderToy</code> 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码, 大胆承认抄别人的代码.
+对于 <code>ShaderToy</code> 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去 <b>抄明白</b> 他们的代码, 大胆承认抄别人的代码.
 </p>
+
+<blockquote>
+<p>
+抄的时候要明白代码的每一部分的含义: 对这部分代码修改会产生什么影响, 了解影响是怎么变化的, 以此建立起直观的理解.
+</p>
+</blockquote>
 
 <p>
 并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
@@ -268,14 +310,46 @@
 </p>
 
 <p>
-另外, 这里建议参考一下 <a href="https://thebookofshaders.com/">The Book of Shaders</a> 这本书(截止目前为止还没写完).
+另外, 这里建议有两点建议:
 </p>
+
+<ol class="org-ol">
+<li>参考一下 <a href="https://thebookofshaders.com/">The Book of Shaders</a> 这本书(截止目前为止还没写完);</li>
+
+<li><p>
+如果在阅读其它人的代码时看到一些自己不理解的函数(<code>shader</code> 的函数基本上就是数学函数的翻译), 使用绘图工具绘制其函数图像来了解其行为.
+</p>
+
+<p>
+这里推荐 <a href="https://graphtoy.com">GraphToy</a> 和 <a href="https://maxima.sourceforge.io/">Maxima</a> (<code>Maxima</code> 是开源免费的, 有钱人可以选择像 <code>Mathematica</code> 或者 <code>MATLAB</code> 之类的商业软件).
+</p>
+
+<p>
+<code>GraphToy</code> 提供了 <code>GLSL</code> 内置函数定义, 专门用于 <code>Shader</code> 的编写辅助.
+</p>
+
+<p>
+和 <code>GraphToy</code> 不一样, <code>Maxima</code> 并不提供 <code>GLSL</code> 的内置函数定义, 它是一个代数计算系统, 专门解决数学计算问题, 也包括画图功能,
+</p>
+
+<p>
+想要在 <code>Maxima</code> 使用 <code>GLSL</code> 的内置函数需要自己定义(, <code>GLSL</code> 的内置函数的定义都很简单), 能够自定义函数则是推荐它的理由, 用来
+</p>
+
+<p>
+弥补 <code>GraphToy</code> 的不足. 这篇笔记会提供一些函数的 <code>Maxima</code> 定义.
+</p></li>
+</ol>
 
 </div>
 
-<div id="outline-container-org3670d1b" class="outline-2">
-<h2 id="org3670d1b"><span class="section-number-2">1.</span> UV - 计算片元在屏幕上所对应的 UV 坐标</h2>
+<div id="outline-container-orgdb84853" class="outline-2">
+<h2 id="orgdb84853"><span class="section-number-2">1.</span> 常见的 UV 计算</h2>
 <div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-orgedb9d42" class="outline-3">
+<h3 id="orgedb9d42"><span class="section-number-3">1.1.</span> UV - 计算片元在屏幕上所对应的 UV 坐标</h3>
+<div class="outline-text-3" id="text-1-1">
 <blockquote>
 <p>
 写于 2024/3/3
@@ -350,11 +424,38 @@
 </p>
 
 <p>
-解决方法很简单, 以屏幕分辨率比例为准, 对 \(UV\) 长的那一方维度分量进行补偿, 使得两者比例一致.
+解决方法很简单, 以屏幕分辨率比例为准, 对 \(UV\) 长的那一方维度分量进行补偿, 使得 \(UV\) 分量的范围比例和屏幕分辨率比例一致.
 </p>
+
+<p>
+原本的 \(UV\) 范围比例固定是 \(\frac{x_{uv}}{y_{uv}} = 1\), 而屏幕分辨率比例是 \(\frac{x_{iResolution}}{y_{iResolution}}\),
+</p>
+
+<p>
+如果屏幕是 \(X\) 轴比较长, 那么 \(UV\) 就要针对 \(x\) 分量进行补偿才能和屏幕分辨率一致: \(\frac{x_{uv} * \frac{x_{iResolution}}{y_{iResolution}}}{x_{uv}} = 1 \times \frac{x_{iResolution}}{y_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}\),
+</p>
+
+<p>
+如果屏幕是 \(Y\) 轴比较长, 那么 \(UV\) 就要针对 \(y\) 分量进行补偿才能和屏幕分辨率一致: \(\frac{x_{uv}}{y_{uv} * \frac{y_{iResolution}}{x_{iResolution}}} = 1 \div \frac{y_{iResolution}}{x_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}\).
+</p>
+
+<blockquote>
+<p>
+你可能会问既然要保证两者比例一样, 为什么还要讨论哪根轴较长呢?
+</p>
+
+<p>
+从公式上来看, 如果 \(Y\) 比较长的话, 用 \(1 \times \frac{x_{iResolution}}{y_{iResolution}}\) 来计算不也是一样可以保证两者比例一致吗?
+</p>
+
+<p>
+但是别忘记了 \(UV\) 本身就是依赖 \(iResolution\) 计算出来的, 这个数字 \(1\) 本身就蕴含了这个事实, 后面马上就要揭露这个事实.
+</p>
+</blockquote>
 
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[-1.0, 1.0]</span>
+uv.x *= iResolution.x / iResolution.y;
 <span style="color: #00ffff;">if</span> (iResolution.x &gt; iResolution.y) {
   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#23631;&#24149;&#30340; X &#36724;&#27604; Y &#36724;&#38271;</span>
   uv.x *= iResolution.x / iResolution.y;
@@ -436,9 +537,9 @@
 </div>
 </div>
 
-<div id="outline-container-org82e9d6d" class="outline-2">
-<h2 id="org82e9d6d"><span class="section-number-2">2.</span> UV计算 - 平铺(tiling)</h2>
-<div class="outline-text-2" id="text-2">
+<div id="outline-container-orgc9db2a6" class="outline-3">
+<h3 id="orgc9db2a6"><span class="section-number-3">1.2.</span> UV计算 - 平铺(tiling)</h3>
+<div class="outline-text-3" id="text-1-2">
 <p>
 这里的平铺就是和计算机的桌面壁纸里的平铺是一个概念: 当一张壁纸不能把桌面铺满, 那么就用重复若干张壁纸铺满桌面.
 </p>
@@ -456,7 +557,7 @@
 </p>
 
 
-<div id="org1a662d0" class="figure">
+<div id="org4001097" class="figure">
 <p><img src="../../../files/uv-tiling.png" alt="uv-tiling.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>重复了 4 个 \([0, 1]\) 范围的 \(UV\) 坐标空间</p>
@@ -491,11 +592,25 @@
 </p>
 
 <p>
-比如 <code>fract(1.1)</code> 等于 0.1, <code>fract(2.1)</code> 也是等于 0.1, 从而形成一个以 0 到 1 为一个周期的周期序列.
+比如 <code>fract(1.1)</code> 等于 0.1, <code>fract(2.1)</code> 也是等于 0.1, 从而形成一个以 0 到 0.999&#x2026; (没到 1) 为一个周期的周期序列.
+</p>
+
+<blockquote>
+<p>
+其实可以把第下一个周期头部的 0 看作是上一个周期的 1.
 </p>
 
 <p>
-这样就可以让其它 \(UV\) 空间的分量范围也处于 \([0, 1]\) 之间,
+原因很简单, 假设现在经过划分得到两个周期, 那么 <code>fract(x)</code> 会得到这样的一个序列(, 以 0.1 为步长):
+</p>
+
+<p>
+<code>[0, 0.1, 0.2, ..., 0.9], [0(1), 0.1, 0.2, ..., 0.9], 0(2)</code>
+</p>
+</blockquote>
+
+<p>
+这样就可以让其它 \(UV\) 空间的分量范围也处于 \([0, 1)\) 之间,
 </p>
 
 <p>
@@ -514,7 +629,27 @@
 </div>
 
 <p>
-这并非唯一的方法, 模运算(module)同样可以获取周期序列.
+这并非唯一的方法, 事实上 <b>只要是周期函数都可以获取周期序列来进行平铺</b>, 比如 <code>cosine</code>, <code>sine</code> 和 <code>modulo</code>, 等等.
+</p>
+
+<p>
+<code>cosine</code> 和 <code>sine</code> 的用法和 <code>fract</code> 差不多, 基本上把 <code>fract</code> 替换就可以了:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">div_num</span> = 2;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21035;&#24536;&#35760;&#25511;&#21046;&#22909;&#21608;&#26399;</span>
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = cos(gl_FragCoord.xy / (iResolution.xy / div_num * 2 * PI));
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  or</span>
+
+<span style="color: #ff7f24;">  vec2 uv = fract(gl_FragCoord.xy / iResolution.xy * div_num * 2 * PI);</span>
+<span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+
+<p>
+模运算(modulo)有一点不同:
 </p>
 
 <div class="org-src-container">
@@ -534,10 +669,30 @@
 </p>
 </div>
 </div>
+</div>
 
-<div id="outline-container-orge058d5e" class="outline-2">
-<h2 id="orge058d5e"><span class="section-number-2">3.</span> smoothstep 函数</h2>
-<div class="outline-text-2" id="text-3">
+
+<div id="outline-container-orgc2d1a4b" class="outline-2">
+<h2 id="orgc2d1a4b"><span class="section-number-2">2.</span> GLSL 内置函数</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org275fa0d" class="outline-3">
+<h3 id="org275fa0d"><span class="section-number-3">2.1.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml">函数 - smoothstep</a></h3>
+<div class="outline-text-3" id="text-2-1">
+<blockquote>
+<p>
+从这里开始的后面几个章节都会介绍一些常用(或者一些光看名字不知道做啥)的 <code>GLSL</code> <a href="https://gist.github.com/markknol/d06c0167c75ab5c6720fe9083e4319e1">内置函数</a>, 不过并不会介绍一些典型的数学函数, 比如 <code>sin/cos/atan</code> 这些,
+</p>
+
+<p>
+这些直接去看数学书就好, 介绍它们会拉长笔记的篇幅.
+</p>
+
+<p>
+这些内置函数均可用在 <code>Fragment Shader</code> 中.
+</p>
+</blockquote>
+
 <p>
 \(smoothstep\) 函数的定义等价如下:
 </p>
@@ -563,7 +718,7 @@
 </p>
 
 
-<div id="org4cc247f" class="figure">
+<div id="orgccc36f4" class="figure">
 <p><img src="../../../files/smoothstep-t.png" alt="smoothstep-t.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>x, edge0 以及 edge1 三者的关系</p>
@@ -594,19 +749,19 @@
 </p>
 
 <p>
-把 \(t = 0.5\) 代入原函数得到 \(f(t=0.5) = 3 \times 0.5^{2} - 2 \times 0.5^{3} = 0.5\), 得到点 \((0.5, 0.5)\).
+把 \(t = 0.5\) 代入原函数得到 \(f(t=0.5) = 3 \times 0.5^{2} - 2 \times 0.5^{3} = 0.5\), 得到拐点 \((0.5, 0.5)\).
 </p>
 
 <p>
-最后求该点处的切线: \(f^{'}(0.5) = \frac{y - 0.5}{x - 0.5} = 1.5 \rightarrow y = 1.5x - 0.25\).
+最后求该点处的切线: \(k = f^{'}(0.5) = \frac{y - 0.5}{x - 0.5} = 1.5 \rightarrow y = 1.5x - 0.25\).
 </p>
 
 <p>
-该切线的导数 \(y^{'} = 1.5\), 表明了函数 \(f(t)\) 在 \(t = 0.5\) 处的斜率的变化率(也就是 \(f^{''}(t)\))是在逐渐增加,
+该切线的导数 \(k^{'} = 1.5\), 表明了函数 \(f(t)\) 在 \(t = 0.5\) 处的斜率的变化率(也就是 \(f^{''}(t)\))是在逐渐增加,
 </p>
 
 <p>
-在 \(t = 0.5\) 的左边 \(f^{''}(t) > 0\) (左边的函数线条为下凸), 在右边则是 \(f^{''}(t) < 0\) (左边的函数线条为下凹). 因此, 点 \((0.5, 0.5)\) 的确是拐点.
+在 \(t = 0.5\) 的左边 \(f^{''}(t) > 0\) (函数图像 \(f\) 在 \(x = 0.5\) 左边为上凹), 在右边则是 \(f^{''}(t) < 0\) (函数 \(f\) 在 \(x = 5\) 的右边为下凹). 因此, 点 \((0.5, 0.5)\) 的确是拐点.
 </p>
 
 <p>
@@ -620,11 +775,37 @@
 <p>
 <iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=smoothstep(0.0,1,x)&v1=true&f2(x,t)=&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0.4302807407932391,-0.05999176204044846,1.9620958899187213"></iframe>
 </p>
+
+<blockquote>
+<p>
+如果仔细看文档的话你会发现一句: "Results are undefined if edge0 ≥ edge1".
+</p>
+
+<p>
+然而实践发现: \(edge0 \gt edge1\) 的时候, <code>GraphToy</code> 所绘制的 \(smoothstep\) 函数图像表面依然是有结果的.
+</p>
+
+<p>
+比如, 你可以尝试把上面的 \(smoothstep(0.0, 1, x)\) 换成 \(smoothstep(1, 0.0, x)\) 观察一下: 函数图像会镜像翻转, 从 1 到 0 之间进行插值.
+</p>
+
+<p>
+经过搜索, 发现在 <a href="https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.10.pdf">GLSL 1.10</a> 中 \(smoothstep\) 是没有这一句的, 这一句是从 <a href="https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.20.pdf">GLSL 1.20</a> 开始才有的.
+</p>
+
+<p>
+目前不确定这一句是不是只对一些新版本的 <code>GLSL</code> 生效, 还是说有些 <code>GLSL</code> 的实现没有严格按照标准来.
+</p>
+
+<p>
+其实在数学层面来看, \(edge0 \ge edge1\) 不会导致函数 <code>undefined</code> 的, 目前实践下来也没有出现 <code>undefined</code> 的情况.
+</p>
+</blockquote>
 </div>
 
-<div id="outline-container-org834da95" class="outline-3">
-<h3 id="org834da95"><span class="section-number-3">3.1.</span> <a href="https://thebookofshaders.com/glossary/?search=smoothstep">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></h3>
-<div class="outline-text-3" id="text-3-1">
+<div id="outline-container-org3e0714f" class="outline-4">
+<h4 id="org3e0714f"><span class="section-number-4">2.1.1.</span> <a href="https://thebookofshaders.com/glossary/?search=smoothstep">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></h4>
+<div class="outline-text-4" id="text-2-1-1">
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#ifdef</span> GL_ES
 precision <span style="color: #98fb98;">mediump</span> <span style="color: #98fb98;">float</span>;
@@ -666,7 +847,11 @@ uniform <span style="color: #98fb98;">float</span> <span style="color: #eedd82;"
 </p>
 
 <p>
-\(plot\) 函数就是判断片元是否在函数上的. 上面代码中的 \(plot\) 函数其实是优化过了的, 先看未经优化的版本:
+\(plot\) 函数就是判断片元是否在函数上的.
+</p>
+
+<p>
+上面代码中的 \(plot\) 函数其实是优化过了的, 先看未经优化的版本:
 </p>
 
 <p>
@@ -712,8 +897,14 @@ uniform <span style="color: #98fb98;">float</span> <span style="color: #eedd82;"
 在 \([ptc-0.02, pct+0.02]\) 区间的某一个位置上, 两个图像 <b>在垂直方向上</b> 相差的距离的变化规律是先增后减少, \(0.02\) 决定着变化率, 越大变化越小, 线条越粗.
 </p>
 
+<blockquote>
 <p>
-<iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=smoothstep(0.1-0.5,0.1,x)&v1=true&f2(x,t)=smoothstep(0.1,0.1+0.5,x)&v2=true&f3(x,t)=smoothstep(0.1-0.5,0.1,x)%20-%20smoothstep(0.1,0.1+0.5,x)&v3=true&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,2.8727045924301255"></iframe>
+如果稍微了解过微积分的话, 你应该能感觉到 <code>plot</code> 函数像是一个求导函数, 事实上它就是.
+</p>
+</blockquote>
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=smoothstep(0.1,0.9,x)&v1=true&f2(x,t)=smoothstep(0.1-0.5,0.9,x)&v2=true&f3(x,t)=smoothstep(0.1,0.9+0.5,x)&v3=true&f4(x,t)=smoothstep(0.1-0.5,0.9,x)-smoothstep(0.1,0.9+0.5,x)&v4=true&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,4.205926793776948"></iframe>
 </p>
 
 <blockquote>
@@ -747,22 +938,460 @@ smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: 
 </p>
 </div>
 </div>
+
+<div id="outline-container-orgb02f32e" class="outline-4">
+<h4 id="orgb02f32e"><span class="section-number-4">2.1.2.</span> 编写 <code>Fragment Shader</code> 的思路</h4>
+<div class="outline-text-4" id="text-2-1-2">
+<p>
+刚开始学习 <code>Fragment Shader</code> 时, 我只知道最终目的是为了设置片元的颜色, 然而并不知道如何绘制出自己想要的图像.
+</p>
+
+<p>
+即便去学习别人的代码, 也只能在有参考的情况下写的出来, 完全不知道别人是如何想出来的, 也不知道所谓的阅读代码中学习要学什么内容.
+</p>
+
+<p>
+相信很多经历过新手期的人都和我一样认为阅读别人的代码就是要学习其中的数学概念, 其实也没错, <code>Fragment Shader</code> 多少得涉及一些数学概念.
+</p>
+
+<p>
+然而, 这解释不了为什么有些数学好的人也不能写出自己想要的效果.
+</p>
+
+<p>
+在经过一定量的阅读以及大量的总结后, 发现了一个事实: 不管实现什么效果, 任何 <code>Fragment Shader</code> 在结构上都有一个固定的模式.
+</p>
+
+<p>
+个人认为那些数学好的人没能实现自己想要的效果是因为不了解这个模式, 虽然没办法证明这个观点, 但相信你在看完这个模式后会认同我这个观点.
+</p>
+
+<p>
+<b>开始吧</b>:
+</p>
+
+<ol class="org-ol">
+<li>确定好 <code>UV</code> 坐标系: 原点在哪, 范围在哪.</li>
+
+<li><p>
+<b>时刻记住</b> 片元原本的 <code>UV</code> 坐标 \(st_{0}\) 坐标是 <code>gl_FragCoord.xy / u_resolution</code>;
+</p>
+
+<p>
+<b>代码中的变量 \(st\) 可以看作是片元的一个新属性</b>, 其初始值为 \(st_{0}\) 的值, 但是 \(st\) 可能会在经过计算后发生变化.
+</p>
+
+<p>
+因此, 在 <code>Fragment Shader</code> 里面, 一个片元包含始终有一个关系: \(f(st_{0}) = st\).
+</p>
+
+<p>
+最后, <code>Fragment Shader</code> 绘图的关键在于如何根据 \(st\) 来计算出片元的颜色, 粗略地讲就是 <b>位置决定颜色</b>.
+</p>
+
+<p>
+函数 \(f\) 就是针对 \(st\) 的计算, \(f\) 可以由多个更小的一系列的函数构成, 比如:
+</p>
+
+<p>
+\(f(st_{0}) = st\)
+</p>
+
+<p>
+\(\Downarrow\)
+</p>
+
+<p>
+\(f_{0}(st_{0}) = st_{1}\)
+</p>
+
+<p>
+\(f_{1}(st_{1}) = st_{2}\)
+</p>
+
+<p>
+\(\vdots\)
+</p>
+
+<p>
+\(f_{n}(st_{n}) = st\)
+</p>
+
+<p>
+确定好每一个函数(每一步运算)的输入范围和计算结果范围, 并且要求对函数的变化规律有直观的理解.
+</p>
+
+<blockquote>
+<p>
+这就是为什么开篇就推荐绘图工具, 可以帮助我们对函数变化有直观了解;
+</p>
+
+<p>
+这里再推荐掌握 <a href="https://en.wikipedia.org/wiki/Interval_arithmetic#Interval_operators">区间运算(interval arithmetic)</a> 的应用, 在 <code>Shader</code> 编程中会经常遇到两个函数之间的算术运算,
+</p>
+
+<p>
+为了估算结果通常都是分别确定好两个函数的计算结果范围在对两者进行运算得到最终范围, 区间运算可以帮助我们快而准地估算出结果.
+</p>
+</blockquote>
+
+<p>
+在明白了这一点后, 关键点就在于: 怎么定义出一个可以实现自己想要效果的函数 \(f\).
+</p></li>
+
+<li>思考如何定义函数 \(f\).
+
+<ol class="org-ol">
+<li><p>
+正如前面说的, 位置决定了颜色, 所以, 我们要这么思考: <b>随着位置发生怎么样的变化, 颜色要如何变化呢?</b>
+</p>
+
+<p>
+举几个简单的例子来看看.
+</p>
+
+<p>
+<b>例子一</b>: 往 \(y\) 方向增加, 颜色越亮, 往 \(x\) 方向增加, 颜色越亮.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.x + st.y</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#22686;&#21152;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = clamp((st.x + st.y) * 0.5, 0.0, 1.0);
+
+gl_FragColor = vec4(vec3(color), 1.0);
+</pre>
 </div>
 
 
-<div id="outline-container-org7af0b8d" class="outline-2">
-<h2 id="org7af0b8d"><span class="section-number-2">4.</span> dFdx/dFdy</h2>
-<div class="outline-text-2" id="text-4">
+<div id="org20f2061" class="figure">
+<p><img src="../../../files/how-to-think-of-fun-creation-in-shader.png" alt="how-to-think-of-fun-creation-in-shader.png" />
+</p>
+<p><span class="figure-number">Figure 3: </span>越往右下角方向越亮</p>
+</div>
+
 <p>
-要想理解 <code>dFdx/dFdy</code> 的作用, 得想知道 <code>GPU</code> 每次都是处理 \(2 \times 2\) 这样规模的片元方块, 也就是每次同时调用 4 个 <code>Fragment Shaders</code>,
+<b>例子二</b>: 往 \(y\) 方向增加, 颜色越亮.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.y</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = st.y;
+
+gl_FragColor = vec4(vec3(color), 1.0);
+</pre>
+</div>
+
+
+<div id="org6491b00" class="figure">
+<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-2.png" alt="how-to-think-of-fun-creation-in-shader-2.png" />
+</p>
+<p><span class="figure-number">Figure 4: </span>越往下走越亮</p>
+</div>
+
+<p>
+<b>例子三</b>: 往 \(x\) 方向增加, 颜色越亮.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.x</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#22686;&#21152;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = st.x;
+
+gl_FragColor = vec4(vec3(color), 1.0);
+</pre>
+</div>
+
+
+<div id="org4e8ed1d" class="figure">
+<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-3.png" alt="how-to-think-of-fun-creation-in-shader-3.png" />
+</p>
+<p><span class="figure-number">Figure 5: </span>越往右走越亮</p>
+</div>
+
+<p>
+<b>例子四</b>: 往 \(y\) 方向增加, 颜色越亮; 往 \(x\) 方向增加, 颜色越暗.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.y + (1.0 - st.x)</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#20943;&#23567;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = clamp((st.y + 1.0 - st.x) * 0.5, 0.0, 1.0);
+
+gl_FragColor = vec4(vec3(color), 1.0);
+</pre>
+</div>
+
+
+<div id="org04eff27" class="figure">
+<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-4.png" alt="how-to-think-of-fun-creation-in-shader-4.png" />
+</p>
+<p><span class="figure-number">Figure 6: </span>越往左下角走越亮</p>
+</div>
+
+<p>
+<b>例子五</b>: 往 \(y\) 方向增加, 颜色越亮; 往 \(x\) 方向增加, 颜色越暗, 比上一个例子更明显.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = (st.x + st.y) + (st.y - 2 * st.x) = 2 * st.y - st.x</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#20943;&#23567;</span>
+st += st.yx * vec2(1.0, -2.0);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = clamp((st.x + st.y) * 0.5, 0.0, 1.0);
+
+gl_FragColor = vec4(vec3(color), 1.0);
+</pre>
+</div>
+
+
+<div id="org316d948" class="figure">
+<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-5.png" alt="how-to-think-of-fun-creation-in-shader-5.png" />
+</p>
+<p><span class="figure-number">Figure 7: </span>越往左下角走越亮</p>
+</div>
+
+<p>
+这五个例子中的 \(f\) 都是的线性函数, 凭想象来思考变化是比较轻松的.
 </p>
 
 <p>
-因此, 在一个 <code>Fragment Shader</code> 中, 对于 <code>GPU</code> 来说可以获取当前片元的相邻片元的情况.
+然而, 对于非线性函数来凭想象就不是那么容易了, 所以借助绘图软快速绘制等值曲线(contour curves)来了解变化是一个不错的手段.
 </p>
 
 <p>
-我们假设有一个函数 \(p(x, y)\) 可以获取当前片元的(在光栅化过程计算得到的)某个属性 \(attr\): \(attr = p(x, y)\),
+这里用 <code>Maxima</code> 来演示绘制 \(f(x, y) = x^{2} - y^{2} - 10\) 在 \(x,y \in [-1, 1]\) 的等值线图,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#26354;&#38754;&#22270; <span style="color: #00ffff;">+</span> &#31561;&#20540;&#32447;&#22270; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">draw3d</span>(
+  xlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"x"</span>,
+  ylabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"y"</span>,
+  zlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"z"</span>,
+  contour <span style="color: #00ffff;">=</span> both,
+  contour_levels <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">15</span>,
+  surface_hide <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">true</span>,
+  enhanced3d <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">true</span>,
+  explicit(x<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> y<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span>, x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>, y, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>)
+  )$
+</pre>
+</div>
+
+<div id="org8b5d5e2" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map-0.svg" alt="x2-y2-10-contour-map-0.svg" class="org-svg" width="800px" />
+</p>
+<p><span class="figure-number">Figure 8: </span><code>曲面图 + 等值线图</code></p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#26354;&#38754;&#22270; <span style="color: #00ffff;">+</span> &#31561;&#20540;&#32447;&#22270; <span style="color: #00ffff;">+</span> &#28784;&#38454; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">draw3d</span>(
+  xlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"x"</span>,
+  ylabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"y"</span>,
+  zlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"z"</span>,
+  contour <span style="color: #00ffff;">=</span> both,
+  contour_levels <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">15</span>,
+  surface_hide <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">true</span>,
+  enhanced3d <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">true</span>,
+  palette <span style="color: #00ffff;">=</span> gray,
+  explicit(x<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> y<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> <span style="color: #7fffd4;">10</span>, x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>, y, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>)
+  )$
+</pre>
+</div>
+
+<div id="org116c4d8" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map-1.svg" alt="x2-y2-10-contour-map-1.svg" class="org-svg" width="800px" />
+</p>
+<p><span class="figure-number">Figure 9: </span><code>曲面图 + 等值线图 + 灰阶</code></p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#22312;&#26354;&#38754;&#19978;&#32472;&#21046;&#31561;&#20540;&#32447;&#22270; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">draw3d</span>(
+  xlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"x"</span>,
+  ylabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"y"</span>,
+  zlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"z"</span>,
+  contour <span style="color: #00ffff;">=</span> both,
+  contour_levels <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">15</span>,
+  surface_hide <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">true</span>,
+  explicit(x<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> y<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> <span style="color: #7fffd4;">10</span>, x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>, y, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>)
+  )$
+</pre>
+</div>
+
+<div id="orgee2d029" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map-3.svg" alt="x2-y2-10-contour-map-3.svg" class="org-svg" width="800px" />
+</p>
+<p><span class="figure-number">Figure 10: </span><code>曲面图附加等值线 + 等值线图</code></p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#31561;&#20540;&#32447;&#22270; <span style="color: #00ffff;">+</span> &#28784;&#38454; (&#20010;&#20154;&#20559;&#21521;&#29992;&#36825;&#20010;, &#25928;&#26524;&#22270;&#22914;&#19979;) <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">draw3d</span>(
+  xlabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"x"</span>,
+  ylabel <span style="color: #00ffff;">=</span> <span style="color: #ffa07a;">"y"</span>,
+  view <span style="color: #00ffff;">=</span> <span style="color: #b0c4de;">map</span>,
+  enhanced3d<span style="color: #00ffff;">=</span><span style="color: #7fffd4;">true</span>,
+  palette <span style="color: #00ffff;">=</span> gray,
+  explicit(x<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> y<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> <span style="color: #7fffd4;">10</span>, x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>, y, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span>)
+  )$
+</pre>
+</div>
+
+<div id="org1b5024d" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map.svg" alt="x2-y2-10-contour-map.svg" class="org-svg" width="800px" />
+</p>
+<p><span class="figure-number">Figure 11: </span><code>等值线图 + 灰阶</code></p>
+</div>
+
+<p>
+关于 <code>Maxima</code> 更多的绘图选项请自行阅读<a href="https://maxima.sourceforge.io/docs/manual/maxima_250.html">文档</a>.
+</p></li>
+
+<li><p>
+也可以这么想: 对于在函数 \(f\) 上的片元应该赋予什么颜色, 在函数外的片元又该赋予什么颜色.
+</p>
+
+<p>
+这一点可以参考前面的函数 \(plot\).
+</p></li>
+</ol></li>
+
+<li><p>
+正确思考 <code>Fragment Shader</code> 中的循环.
+</p>
+
+<p>
+<b>时刻记住</b>, <code>Fragment Shader</code> 的一切计算都是针对一个片元的, 对于一个片元的计算是不可能影响到另外一个片元的计算.
+</p>
+
+<p>
+记住这一条之后, 相信对于很多没有接触过 <code>Shader</code> 编程的开发人员来说初次接触 <code>Fragment Shader</code> 的一些迭代会很反直觉:
+</p>
+
+<p>
+既然只是针对一个片元, 为什么像下面的例子会绘制出 4 条直线而不是 1 条直线呢?
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / u_resolution;
+
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = 0.0;
+<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">iterations</span> = 4;
+<span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; iterations; i++, st *= 2.0) {
+  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">st.x + st.y - 1.0 &lt;= 0.01 &#30456;&#24403;&#20110;&#20989;&#25968; y = x</span>
+  color += <span style="color: #98fb98;">float</span>(abs(st.x + st.y - 1.0) &lt;= 0.01); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float(true) =&gt; 1, float(false) =&gt; 0</span>
+}
+
+gl_FragColor = vec4(vec3(color), 1.0);
+</pre>
+</div>
+
+
+<div id="org476c3e8" class="figure">
+<p><img src="../../../files/iteration-in-fragment-shader.png" alt="iteration-in-fragment-shader.png" />
+</p>
+<p><span class="figure-number">Figure 12: </span>输出结果</p>
+</div>
+
+<p>
+观察代码可知每个片元的 \(color\) 要执行 4 轮计算, 每轮计算都 <b>试图</b> 让 \(color\) 自增(我们这里约定能加到 1 才是成功自增), 并且让 \(st\) 翻倍.
+</p>
+
+<p>
+我们知道这是在绘制直线 \(y = x\), 但为什么会绘制出 4 条直线呢?
+</p>
+
+<p>
+<b>绘制过程</b> 是这样的:
+</p>
+
+<p>
+位于直线上的片元的 \(color\) 在整个迭代中实际只能成功自增 1 次, 而不在直线上的片元则是 0 成功的自增.
+</p>
+
+<p>
+这里选第一长的直线 \(l_{A}\) 和第二长的直线 \(l_{B}\) 作为例子进行分析, 它们是同时绘制的,
+</p>
+
+<blockquote>
+<p>
+这里其实没办法确认它们是否严格意义上的同时绘制, 但至少可以确认在执行顺序上两者不会相互影响.
+</p>
+</blockquote>
+
+<p>
+在 \(l_{A}\) 上的片元 \(p_{A}: (x_{0}, y_{0})\) 在整个迭代中的第 1 轮计算就成功自增, \(l_{B}\) 上的片元 \(p_{B}: (x_{1}, y_{1})\) 则是在第 2 轮计算才能成功自增.
+</p>
+
+<p>
+这是因为 \(p_{A}\) 在第 1 轮计算中就符合 \(abs(st.x + st.y - 1.0) \le 0.01\), 之后的 3 轮计算其实没有意义了;
+</p>
+
+<p>
+而 \(p_{B}\) 则是满足 \(2 \times (x_{1} + y_{1}) = x_{0} + y_{0}\), 所以在经过一轮的 \(st\) 翻倍后使得 \(p_{B} = (2 \times x_{1}, 2 \times y_{1})\), \(p_{B}\) 才符合 \(abs(st.x + st.y - 1.0) \le 0.01\).
+</p>
+
+<p>
+第三长的直线和最短的直线也是这个道理, 它们符合条件的轮次分别是第 3 和第 4 轮.
+</p>
+
+<p>
+这个其实就是一个很简单的绘制递归图案的例子, 我之所以选它是想对新人(我)说明一个事实: 在 <code>Fragment Shader</code> 中, <b>有时候</b> 迭代的每一轮计算更像是一次条件筛选, 整个迭代就是反复试验(<code>trial and error</code>).
+</p>
+
+<p>
+这算是 <code>Fragment Shader</code> 编程中比较常见的迭代用法了, 比起类似以累加/累积为目的的迭代用法特殊一点,
+</p>
+
+<p>
+它的特殊点在于 <b>为不同颜色赋予了不同的含义</b>: 白色为"有意义计算", 黑色为"无意义计算", 这就是如何为片元赋予颜色.
+</p></li>
+</ol>
+
+
+<p>
+第 3 步需要运用大量的数学知识, 学习数学知识(主要是微积分)就是为了强化这一步: 根据自己的意愿定义出函数 \(f\).
+</p>
+
+<p>
+相信现在的你能够理解为什么数学好也不一定写好的 <code>Shader</code> 了: 不知道把数学用在何处.
+</p>
+
+<p>
+只有在掌握整个模式后, "不断阅读其他人的代码并从中吸收所涉及的数学概念以及应用方法" 才是有用的.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org0c92f1e" class="outline-3">
+<h3 id="org0c92f1e"><span class="section-number-3">2.2.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml">函数 - dFdx/dFdy</a></h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+要想理解 <code>dFdx/dFdy</code> 的作用, 得想知道 <code>GPU</code> 每次都是以 \(2 \times 2\) 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 <code>Fragment Shaders</code>,
+</p>
+
+<p>
+因此, 在一个 <code>Fragment Shader</code> 中, 对于 <code>GPU</code> 来说可以获取当前片元所在方块内的相邻片元的情况.
+</p>
+
+<p>
+我们假设有一个函数 \(p(x, y)\) 可以获取位于 \((x, y)\) 的片元的(在光栅化过程计算得到的)某个属性 \(attr\): \(attr = p(x, y)\),
 </p>
 
 <p>
@@ -774,7 +1403,11 @@ smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: 
 </p>
 
 <p>
-\(dFdx(attr)\) 其实就是在求在当前片元的 \(x\) 轴方向上的某个属性的 \(attr\) 的偏导数, 因此定义为:
+\(dFdx(attr)\) 其实就是在求在当前片元的 \(x\) 轴方向上的某个属性的 \(attr\) 的偏导数(<code>partial derivative</code>),
+</p>
+
+<p>
+虽然在直觉上上挺相似的, 但它并非人们所知的微积分中的偏导数, 其定义为:
 </p>
 
 <p>
@@ -790,10 +1423,10 @@ smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: 
 </p>
 
 
-<div id="org53dc174" class="figure">
+<div id="org5f352db" class="figure">
 <p><img src="../../../files/Shader-Derivatives-1.png" alt="Shader-Derivatives-1.png" />
 </p>
-<p><span class="figure-number">Figure 3: </span>dFdx/dFdy</p>
+<p><span class="figure-number">Figure 13: </span>dFdx/dFdy</p>
 </div>
 
 <p>
@@ -860,21 +1493,634 @@ uniform <span style="color: #98fb98;">float</span> <span style="color: #eedd82;"
 }
 </pre>
 </div>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = UV;
+<span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">pixels</span>[9];
+<span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">row</span> = 0; row &lt; 3; row++) {
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">col</span> = 0; col &lt; 3; col++) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">shift [row, col] from [0, 2] to [-1, 1]</span>
+    <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = uv + vec2(
+                        <span style="color: #98fb98;">float</span>(col - 1) * emboss_width * 0.01,
+                        <span style="color: #98fb98;">float</span>(row - 1) * emboss_height * 0.01);
+
+    <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#35745;&#31639;&#24403;&#21069;&#29255;&#20803;&#30340;&#30456;&#37051;&#29255;&#20803;&#30340; uv</span>
+<span style="color: #ff7f24;">    uv + vec2(-1 * 0.15 * 0.01) | uv + vec2(0, -1 * 0.15 * 0.01) | uv + vec2(1 * 0.15 * 0.01, -1 * 0.15 * 0.01)</span>
+<span style="color: #ff7f24;"> uv + vec2(-1 * 0.15 * 0.01, 0) | uv + vec2(0) = uv              | uv + vec2(1 * 0.15 * 0.01, 0)</span>
+<span style="color: #ff7f24;"> uv + vec2(-1 * 0.15 * 0.01, 1 * 0.15 * 0.01) | uv + vec2(0, 1 * 0.15 * 0.01) | uv + vec2(1 * 0.15 * 0.01)</span>
+<span style="color: #ff7f24;">    */</span>
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20107;&#23454;&#19978;, &#29255;&#20803;&#20043;&#24046;&#26159; TEXTURE_PIXEL_SIZE, &#24182;&#38750; (emboss_width * 0.01, emboss_height * 0.01)</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vec2 uv = uv + vec2(</span>
+    <span style="color: #ff7f24;">//                     </span><span style="color: #ff7f24;">float(col - 1) * emboss_width * TEXTURE_PIXEL_SIZE.x,</span>
+    <span style="color: #ff7f24;">//                     </span><span style="color: #ff7f24;">float(row - 1) * emboss_height * TEXTURE_PIXEL_SIZE.y);</span>
+    pixels[row * 3 + col] = texture(TEXTURE, uv).rgb;
+  }
+}
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-org2817101" class="outline-2">
-<h2 id="org2817101"><span class="section-number-2">5.</span> Mix 函数解析</h2>
+<div id="outline-container-org40b9a52" class="outline-3">
+<h3 id="org40b9a52"><span class="section-number-3">2.3.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/fract.xhtml">函数 - fract</a></h3>
+<div class="outline-text-3" id="text-2-3">
+<blockquote>
+<p>
+对这个函数进行笔记是因为本人在上面碰过壁, 对于 <code>GLSL</code> 里面的每个函数请一定要看它的定义, 并且使用绘图工具绘制一遍.
+</p>
+</blockquote>
+
+<p>
+<code>fract</code> 的官方定义是:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#23450;&#20041; fract &#20989;&#25968; <span style="color: #00ffff;">*/</span>
+fract(x) <span style="color: #00ffff;">:=</span> x <span style="color: #00ffff;">-</span> <span style="color: #b0c4de;">floor</span>(x)$
+
+<span style="color: #00ffff;">/*</span> &#32472;&#22270; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">plot2d</span>(fract(x), <span style="color: #00ffff;">[</span>x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>);
+</pre>
 </div>
 
-<div id="outline-container-org190b44b" class="outline-2">
-<h2 id="org190b44b"><span class="section-number-2">6.</span> Hash函数/随机/噪音</h2>
+<p>
+我一开始不理解 \(x \to 0\) 时 \(fract(x)\) 附近会是 1, 是因为无视了 \(floor(x)\) 函数的定义: 返回小于或等于 \(x\) 的最接近的整数.
+</p>
+
+<p>
+在 \(x \ge 0\) 时, \(floor(x)\) 和 \(trunc(x)\) 的作用是一样的: 直接返回整数部分.
+</p>
+
+<p>
+但是根据定义, 对于 \(x \lt 0\) 的时候就不一样了, 比如 \(floor(-0.01) = -1\), 而不是返回 0, 因此 \(fract(-0.01) = -0.01 + 1 = 0.99\).
+</p>
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=fract(x)&v1=true&f2(x,t)=floor(x)&v2=true&f3(x,t)=&v3=true&f4(x,t)=&v4=true&f5(x,t)=&v5=false&f6(x,t)=&v6=true&grid=1&coords=0,0,12"></iframe>
+</p>
+
+<blockquote>
+<p>
+既然提到了 \(floor\) 函数, 我觉得还是有必要提一下 \(ceil\) 函数以及 \(round\) 函数.
+</p>
+
+<p>
+它们三者的作用都是处理掉浮点数的小数部分, 但是处理方式是完全不一样的, 在特殊情况下导致的结果也是天差地别.
+</p>
+
+<p>
+如果不是经常使用, 很容易会因为对它们的定义不熟悉而写出意料之外的 <code>shader code</code>, 又由于对它们的不熟悉导, 在找出问题时也很难怀疑到它们身上.
+</p>
+
+<p>
+所以不要掉以轻心, 我写这个函数就是因为痛苦的经历.
+</p>
+
+<p>
+\(ceil(x)\) 函数定义就和 \(floor(x)\) 的完全相反: 返回大于或等于 \(x\) 的最接近整数. \(ceil(x)\) 的作用看上去和 \(trunc(x)\) 差很远, 所以就不过多解释.
+</p>
+
+<p>
+\(round(x)\) 就是"四舍五入", 当 \(x\) 的小数部分大于或等于 \(0.5\) 就进 \(1\), 相信很多人都是在小学一/二年纪了解到这个概念, 但是那个时候是没有学负数的(, 学了负数后面好像也没有回顾"四舍五入"这个概念),
+</p>
+
+<p>
+这个进 \(1\) 是否就像正数那样给 \(x\) 的整数部分加 \(1\) 呢? 刚好相反, 对于负数而言进 \(1\) 是减 \(1\), 所以 \(round(-1.5) = -2\), 而不是 \(0\).
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-org9d61b3b" class="outline-3">
+<h3 id="org9d61b3b"><span class="section-number-3">2.4.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/mix.xhtml">函数 - mix</a></h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+这个函数可能换个名字比较好理解一点: \(lerp\), 全称 <code>linear interpolation</code>.
+</p>
+
+<p>
+没错, 这个函数就是计算出线性插值的.
+</p>
+
+<p>
+函数定义为 \(mix(x, y, a) = x \times (1 - a) + y \times a\).
+</p>
+
+
+<div id="orgbc60c79" class="figure">
+<p><img src="../../../files/func-mix.png" alt="func-mix.png" />
+</p>
+<p><span class="figure-number">Figure 14: </span>\(mix(x, y, a)\)</p>
+</div>
+
+<blockquote>
+<p>
+这个函数的定义是这么来的,
+</p>
+
+<p>
+从 \(x\) 到 \(y\) 的 <b>变化率是固定的</b> (也就是线性的), 并且整个变化间隔只占了 1 个单位, 因此变化率是 \(k = \frac{y - x}{1}\).
+</p>
+
+<p>
+现在想知道处于这个变化过程中的某一刻 \(a\) (\(0 <= a <= 1\)) 时候的值是多少:
+</p>
+
+<p>
+\(x + k \times a = x + a \times (y - x) = x + a \times y - a \times x = x \times (1 - a) + y \times a\).
+</p>
+</blockquote>
+
+<p>
+看到这图你可能会联想到前面同样有插值行为的函数 \(smoothstep(edge0, edge1, x)\).
+</p>
+
+<p>
+它们之间有三点不同:
+</p>
+
+<ol class="org-ol">
+<li>\(mix\) 是线性插值; \(smoothstep\) 是埃尔米特(Hermite)插值, 属于非线性插值.</li>
+<li>\(smoothstep(edge0, edge1, x)\) 的 \(edge0\) 和 \(edge1\) 要保证 \(edge0 \lt edge1\) 的关系(, 甚至要求 \(x\) 位于两者之间, 否则无法按预期插值).
+\(mix(x, y, a)\) 中的 \(x\) 和 \(y\) 没有这个要求, 可以 \(x \gt y\) 也可以 \(x \lt y\), 甚至可以 \(x = y\), \(a\) 也没有大小限制.</li>
+<li>\(smoothstep(edge0, edge1, x)\) 的插值范围是 \([0, 1]\); \(mix(x, y, a)\) 的插值范围是没有限制的.</li>
+</ol>
+
+
+<p>
+<iframe style="width: 520px; height: 1060px; border: none;" src="https://graphtoy.com/?f1(x,t)=mix(2,4,x)&v1=true&f2(x,t)=smoothstep(2,4,x)&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0,0,12"></iframe>
+</p>
+
+<p>
+如你所见, 在 \(mix(2, 4, x)\) 的图像中, \(x = 0\) 时 \(y = 2\), \(x = 1\) 时 \(y = 4\),
+</p>
+
+<p>
+\(mix(l, r, a)\) 的函数图像必定符合这个规律: \(x = 0\) 时 \(y = l\), \(x = 1\) 时 \(y = r\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org980818a" class="outline-3">
+<h3 id="org980818a"><span class="section-number-3">2.5.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/faceforward.xhtml">函数 - faceforward</a></h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+\(faceforward(N, I, Nref)\) 函数用于判断入射向量 \(I(ncident vector)\) 和表面法线向量 \(Nref\) 是否一致朝向(指向同一个半球(hemisphere)/半圆(semicircle)的方向),
+</p>
+
+<p>
+如果不是, 就要把法线向量 \(N\) 反转(\(-1 \times N\))并把它作为结果返回, 否则直接返回 \(N\).
+</p>
+
+<p>
+通常 \(Nref\) 的值是和 \(N\) 是一样的,
+</p>
+
+<p>
+所以这个函数一般是用来判断表面的面向是否为正面, 不是的话就进行纠正, 这就是函数名字的由来.
+</p>
+
+<p>
+函数的定义:
+</p>
+
+<blockquote>
+<p>
+如果 \(dot(I, Nref) < 0\), 表明 \(I\) 是从表面的正面进入, 返回 \(N\);
+</p>
+
+<p>
+如果 \(dot(I, Nref) > 0\), 表明 \(I\) 是从表面的背面进入, 返回 \(-1 \times N\).
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span> &#23450;&#20041; facef<span style="color: #00ffff;">or</span>ward &#20989;&#25968; <span style="color: #00ffff;">*/</span>
+facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(
+  <span style="color: #b0c4de;">return</span> (<span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">*</span> <span style="color: #b0c4de;">signum</span>(i <span style="color: #00ffff;">.</span> nr) <span style="color: #00ffff;">*</span> n)
+)$
+
+<span style="color: #00ffff;">/*</span> Test <span style="color: #00ffff;">*/</span>
+<span style="color: #00ffff;">/*</span> facef<span style="color: #00ffff;">or</span>ward(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">0</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[-</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">0</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>); <span style="color: #00ffff;">*/</span>
+<span style="color: #00ffff;">/*</span> facef<span style="color: #00ffff;">or</span>ward(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[-</span><span style="color: #7fffd4;">4</span>, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">]</span>); <span style="color: #00ffff;">*/</span>
+</pre>
+</div>
+
+
+<div id="org06d15b5" class="figure">
+<p><img src="../../../files/func-faceforward.png" alt="func-faceforward.png" />
+</p>
+<p><span class="figure-number">Figure 15: </span>faceforward</p>
+</div>
+
+<p>
+如果不理解的话可以看这图,
+</p>
+
+<p>
+\(dot(I, Nref) = |I||Nref|cos(angle(I, Nref))\), 其中 \(angle(I, Nref)\) 是向量 \(I\) 和 向量 \(Nref\) 之间的角度.
+</p>
+
+<p>
+根据 \(cos\) 函数图像可以知道, 如果 \(\frac{-\pi}{2} < angle(I, Nref) < \frac{\pi}{2}\), 那么 \(dot(I, Nref) > 0\),
+</p>
+
+<p>
+很明显, 图中的 \(I1\) 符合这种情况: \(dot(I1, Nref) > 0\);
+</p>
+
+<p>
+如果 \(\frac{-\pi}{2} > angle(I, Nref)\) 或 \(\frac{\pi}{2} < angle(I, Nref)\), 那么 \(dot(I, Nref) < 0\).
+</p>
+
+<p>
+没错, \(I0\) 符合这种情况(, 准确一点是满足 \(\frac{-\pi}{2} > angle(I0, Nref)\)), 因此 \(dot(I0, Nref) < 0\).
+</p>
+
+<p>
+如果还不理解的话, 可以看一下这个地址: <a href="https://blender.stackexchange.com/questions/279677/mathematically-what-does-faceforward-function-mean">mathematically-what-does-faceforward-fhunction-mean</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org70bfbbc" class="outline-3">
+<h3 id="org70bfbbc"><span class="section-number-3">2.6.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/reflect.xhtml">函数 - reflect</a></h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+\(reflect(I, N)\) 函数用于计算 \(I\) 射入面向 \(N\)（需要确保被一般化) 的表面后的反射方向: \(I - 2.0 \times dot(N, I) \times N\).
+</p>
+
+<p>
+这个函数定义的推导过程可以看我<a href="../../2020/08/graphics-opengl-light-and-material.html#specular">以前的文章</a>, 这里不再赘述.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org910df8c" class="outline-3">
+<h3 id="org910df8c"><span class="section-number-3">2.7.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/refract.xhtml">函数 - refract</a></h3>
+<div class="outline-text-3" id="text-2-7">
+<p>
+\(refract(I, N, eta)\) 函数用于计算出入射光线 \(I\) 经过面向 \(N\) 表面(surface)后的折射光线的向量, \(eta\) 是表面的折射率比(ratio of indices of refraction).
+</p>
+
+<p>
+想了解 \(eta\) 的定义, 得先了解斯涅尔定律(<code>Snell's law</code>), 又叫折射定律.
+</p>
+
+
+<div id="org381d277" class="figure">
+<p><img src="../../../files/refraction-and-snells-law-from-physics-ib.jpg" alt="refraction-and-snells-law-from-physics-ib.jpg" />
+</p>
+<p><span class="figure-number">Figure 16: </span><a href="https://www.youtube.com/watch?v=NcCSGtnUUpw&amp;ab_channel=AndyMasley%27sIBPhysicsLectures">折射 &amp; 斯涅尔定律(图来自 IB Physics)</a></p>
+</div>
+
+<p>
+根据定律, \(eta = \frac{n_{1}}{n_{2}} = \frac{sin(\theta_{1})}{sin(\theta_{2})}\) 或者 \(eta = \frac{n_{2}}{n_{1}} = \frac{sin(\theta_{2})}{sin(\theta_{1})}\)? 究竟是哪个呢?
+</p>
+
+<p>
+\(refract\) 的文档并没有说明这一切, 于是我在 <code>StackOverflow</code> 上通过这一篇帖子找到了答案: <a href="https://stackoverflow.com/questions/20801561/glsl-refract-function-explanation-available">glsl refract function explanation available</a>.
+</p>
+
+<blockquote>
+<p>
+我还在这篇帖子上收获了另外一个技巧: 在 <a href="https://books.google.com/">Google Books</a> 里面检索一些较为专业的名词/概念, 比如 "refraction vector".
+</p>
+
+<p>
+事实上很多这种专业的名词/概念很少会出现在搜索引擎上的, 通常只会出现在教材上, 所以这个技巧对自学者很重要.
+</p>
+</blockquote>
+
+<p>
+这篇帖子直接给出了折射向量的公式推导, 不过还是得写下自己的理解(, 因为要看懂它的推导还需要一些额外的概念补充, 以及添加额外说明使它更易懂).
+</p>
+
+
+<div id="orgb7a9896" class="figure">
+<p><img src="../../../files/calc-refraction-vector.png" alt="calc-refraction-vector.png" />
+</p>
+<p><span class="figure-number">Figure 17: </span>折射向量推导</p>
+</div>
+
+<p>
+图中的向量 \(I\) / \(N\) / \(M\) 都是单位向量, \(M\) 是垂直于 \(N\) 的向量, 而向量 \(T\) 是 \(refract(I, N, eta)\) 的返回结果: 折射向量.
+</p>
+
+<p>
+从图中可以看出, 求出 \(T\) 的关键是求出向量 \(M\).
+</p>
+
+<p>
+其实, 向量 \(H\) 的单位向量就是 \(M\), 但两者的大小不一样, 它们的大小关系为: \(sin(\theta_{i}) = \frac{|H|}{|I|} = \frac{|H|}{|M|} = |H|\),
+</p>
+
+<p>
+因此, \(M = \frac{H}{sin(\theta_{i})}\).
+</p>
+
+<p>
+现在可以计算出 \(T = M \times sin(\theta_{t}) - N \times cos(\theta_{t}) = \frac{sin(\theta_{t})}{sin(\theta_{i})}(N \times cos(\theta_{i}) - I) - N \times cos(\theta_{t}) = (\frac{sin(\theta_{t})}{sin(\theta_{i})} \times cos(\theta_{i}) - cos(\theta_{t})) \times N - \frac{sin(\theta_{t})}{cos(\theta_{i})} \times I\).
+</p>
+
+<p>
+现在回过头来看 \(eta\), 从计算 \(T\) 的方程中, 选择 \(eta = \frac{sin(\theta_{t})}{sin(\theta_{i})}\) 比较合适, 所以 \(T = (eta \times cos(\theta_{i}) - cos(\theta_{t})) \times N - eta \times I\).
+</p>
+
+<p>
+现在 \(I\) / \(N\) / \(eta\) / \(T\) 这 4 者的关系已经理清了, 只差 \(cos\theta_{t}\) 和 \(sin\theta_{t}\) 的值就可以得出 \(T\) 的值.
+</p>
+
+<p>
+现在已经没办法从上面的图获得任何有用的线索了, 换个思路: 从答案出发找出线索来连接目前得到的结论.
+</p>
+
+<p>
+是时候回头仔细看一下 \(refract(I, N, eta)\) 的定义了:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+<span style="color: #00ffff;">if</span> (k &lt; 0.0)
+    R = genType(0.0);       <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">or genDType(0.0)</span>
+<span style="color: #00ffff;">else</span>
+    R = eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+</pre>
+</div>
+
+<p>
+初看代码可能不知道 \(k\) 的含义是什么, 相信我只要把 \(eta\) 带入进去就明白了:
+</p>
+
+<p>
+\(k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I) = 1.0 - \frac{sin^{2}(\theta_{t})}{sin^{2}(\theta_{i})} * (1.0 - cos^{2}(\theta_{i})) = 1.0 - \frac{sin^{2}(\theta_{t})}{sin^{2}(\theta_{i})} * sin^{2}(\theta_{i}) = cos^{2}(\theta_{t})\).
+</p>
+
+<p>
+现在整个 \(refract\) 的定义及其背后的含义已经全部解析完毕.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org04a2fc0" class="outline-3">
+<h3 id="org04a2fc0"><span class="section-number-3">2.8.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/packUnorm.xhtml">函数 - packUnorm</a> 和 <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/unpackUnorm.xhtml">函数 - unpackUnorm</a></h3>
+<div class="outline-text-3" id="text-2-8">
+<p>
+这两个函数只是用来把数据打包和解包.
+</p>
+
+<p>
+举个例子, 我们知道 <code>Fragment Shader</code> 里面的片元颜色是这么个结构: \((r, g, b, a)\), 每个分量的范围都是 \([0.0, 1.0]\).
+</p>
+
+<p>
+但是在一些程序中的颜色结构中, 分量的范围就变成 \([0, 255]\), 比如浏览器中的 <code>#F2F1F0</code>, 这个其实就是 \(242 \times 16^{4} + 241 \times 16^{2} + 240 \times 16^{0}\) 的 16 进制表示.
+</p>
+
+<p>
+要完成从 \([0.0, 1.0]\) 到 \([0, 255]\) 的转换很简单, 针对分量进行这样的操作: \(round(x * 255.0)\).
+</p>
+
+<p>
+然而, 这样的话会很繁琐, 毕竟 <code>GLSL</code> 支持 <code>vec4</code>, 对一个 <code>vec4</code> 进行转换就得手写 4 条这样的操作,
+</p>
+
+<p>
+因此, <code>GLSL</code> 提供了 \(packUnorm\) 一套函数来减轻开发人员的负担, 另外还提供了 \(unpackUnorm\) 一套函数来完成 "从 \([0, 255]\) 到 \([0.0, 1.0]\)" 这样的逆操作.
+</p>
+
+<p>
+这里就不再对函数的定义进行详细说明了, 写这个小节是因为初见该函数没了解到它是做什么的而已, 实际了解下来还是挺简单的.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge3f6987" class="outline-3">
+<h3 id="orge3f6987"><span class="section-number-3">2.9.</span> <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/modf.xhtml">函数 - modf</a></h3>
+<div class="outline-text-3" id="text-2-9">
+<p>
+\(modf(x, out\ i)\) 把浮点数 \(x\) 分开整数和小数两部分, 整数部分(integer part)会储存在参数 \(i\) 中, 小数部分(fractional part)则是作为函数的返回值.
+</p>
+
+<blockquote>
+<p>
+不要和 \(mod\) 函数搞混.
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">f</span>;
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">i</span>;
+
+f = modf(1.2, i);
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">d = 1, i = 0.2</span><span style="color: #ff7f24;"> */</span>
+
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">fs</span>;
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">is</span>;
+fs = modf(vec2(1.2, -3.4), is);
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">fs = ivec2(1, -3), is = vec2(0.2, -0.4)</span><span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf46da58" class="outline-3">
+<h3 id="orgf46da58"><span class="section-number-3">2.10.</span> 函数 - texture</h3>
+<div class="outline-text-3" id="text-2-10">
+<p>
+<a href="https://learnopengl.com/Getting-started/Textures">https://learnopengl.com/Getting-started/Textures</a>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgffa8428" class="outline-2">
+<h2 id="orgffa8428"><span class="section-number-2">3.</span> 常用自定义函数</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-org2c00520" class="outline-3">
+<h3 id="org2c00520"><span class="section-number-3">3.1.</span> remap 函数</h3>
+<div class="outline-text-3" id="text-3-1">
+<blockquote>
+<p>
+从这里开始会介绍一下 <code>GLSL</code> 没有内置但又常用的函数.
+</p>
+</blockquote>
+
+<p>
+\(remap(value, low1, high1, low2, high2)\): 对 \(value\) 从 \([low1, high1]\) 映射到 \([low2, high2]\) 上, 并返回经过重新映射后的 \(value\).
+</p>
+
+<p>
+因此, 函数的定义是: \(low2 + \frac{value - low1}{high1 - low1} \times (high2 - low2)\).
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org2862943" class="outline-3">
+<h3 id="org2862943"><span class="section-number-3">3.2.</span> 随机函数/Hash函数</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+参考: <a href="https://thebookofshaders.com/10/">https://thebookofshaders.com/10/</a>
+</p>
+
+<p>
+<a href="https://iquilezles.org/articles/sfrand/">https://iquilezles.org/articles/sfrand/</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6624f61" class="outline-3">
+<h3 id="org6624f61"><span class="section-number-3">3.3.</span> 噪音</h3>
+<div class="outline-text-3" id="text-3-3">
+</div>
+</div>
+
+<div id="outline-container-org9fbeeb2" class="outline-3">
+<h3 id="org9fbeeb2"><span class="section-number-3">3.4.</span> 调色板生成</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+参考资料: <a href="https://offscreencanvas.com/issues/generative-shader-color-palettes/">https://offscreencanvas.com/issues/generative-shader-color-palettes/</a>
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org085495d" class="outline-2">
+<h2 id="org085495d"><span class="section-number-2">4.</span> 分形 (Fractal)</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-org668a9a2" class="outline-3">
+<h3 id="org668a9a2"><span class="section-number-3">4.1.</span> 谢尔宾斯基三角形 (Sierpiński Triangle)</h3>
+</div>
+<div id="outline-container-orgce60671" class="outline-3">
+<h3 id="orgce60671"><span class="section-number-3">4.2.</span> 分形布朗运动 (Fractal Brownian Motion)</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+概念参考资料: <a href="https://thebookofshaders.com/13/">https://thebookofshaders.com/13/</a>
+</p>
+
+<blockquote>
+<ul class="org-ul">
+<li><p>
+Experiment by changing the frequency and amplitude for the additional waves.
+</p>
+
+<p>
+pass
+</p></li>
+
+<li><p>
+Is it possible to make two waves cancel each other out? What will that look like?
+</p>
+
+<p>
+是的.
+</p>
+
+<p>
+使得两个正弦波的频率(<code>frequency</code>)和振幅(<code>amplitude</code>)保持一直, 两者偏移(offset)相差 \(PI\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">amplitude</span> = 4.5;
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">frequency</span> = 2.1;
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">offset</span> = PI;
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">y</span> = sin(x*frequency + t)*amplitude;
+y += sin(x*frequency + t + PI)*amplitude;
+</pre>
+</div></li>
+
+<li><p>
+Is it possible to add waves in such a way that they will amplify each other?
+</p>
+
+<p>
+是的.
+</p>
+
+<p>
+有三种方法:
+</p>
+
+<ol class="org-ol">
+<li>相位一致性: 确保 \(frequency\) 和 \(offset\) 保持一致.</li>
+
+<li>频率匹配: 确保 \(frequency\) 保持一致, \(offset\) 之差不能超过 \(PI\).</li>
+
+<li>多波叠加: 使用多种波形的组合, 比如方波, 不过这超出我们的讨论范围了.</li>
+</ol></li>
+
+<li><p>
+Progressively change the number of octaves to iterate from 1 to 2, 4, 8 and 10. See what happens.
+</p>
+
+<p>
+线条的总体形状不发生改变, 只是会一直添加细节, 当 <code>octaves</code> 增加大于 8 时, 细节的增加也不明显了.
+</p></li>
+
+<li><p>
+When you have more than 4 octaves, try changing the lacunarity value.
+</p>
+
+<p>
+线条的周期会明显缩小, 振幅稍微扩大.
+</p></li>
+
+<li><p>
+Also with &gt;4 octaves, change the gain value and see what happens.
+</p>
+
+<p>
+线条的振幅明显扩大.
+</p></li>
+</ul>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-orgbd6a50e" class="outline-3">
+<h3 id="orgbd6a50e"><span class="section-number-3">4.3.</span> madelbrot set</h3>
+</div>
+<div id="outline-container-orgd62652d" class="outline-3">
+<h3 id="orgd62652d"><span class="section-number-3">4.4.</span> voronoi diagram</h3>
+</div>
+</div>
+
+<div id="outline-container-org1087c23" class="outline-2">
+<h2 id="org1087c23"><span class="section-number-2">5.</span> 图像处理</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+<div id="outline-container-orgcb2dfa5" class="outline-3">
+<h3 id="orgcb2dfa5"><span class="section-number-3">5.1.</span> 图像边缘检测 (Edge detection)</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+<code>Sobel</code>.
+</p>
+
+
+<p>
+\(screen\_pixel\_width\_ratio = \frac{1}{screen\_pixel\_width}\)
+</p>
+
+<p>
+\(screen\_pixel\_uv\_x = \frac{x}{screen\_pixel\_width}\)
+</p>
+
+<p>
+\(\frac{screen\_pixel\_uv\_x}{screen\_pixel\_width\_ratio} = \frac{x}{screen\_pixel\_width} \times screen\_pixel\_width = x\)
+</p>
+</div>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="date">Date: 2024-03-02</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2024-06-06 Thu 19:55</p>
+<p class="date">Created: 2024-11-07 Thu 21:39</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

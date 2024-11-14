@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-07-19 Fri 22:55 -->
+<!-- 2024-11-15 Fri 00:21 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>WASM实践</title>
@@ -197,6 +197,38 @@
 <link rel="icon" type="image/png" href="../../../img/icon.png" />
 <!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
 <script src="../../../js/main.js" defer></script>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -238,16 +270,40 @@
 </ul>
 </li>
 <li><a href="#org4cc72f8">学习 raylib 的 WASM 编译</a></li>
+<li><a href="#org91c3a2b">数据传递</a>
+<ul>
+<li><a href="#org5046f53">\(\text{C} \stackrel{\text{WASM}}{\longrightarrow} \text{JavaScript}\)</a>
+<ul>
+<li><a href="#org8568136">字符串 (string)</a></li>
+<li><a href="#org8229329">数组 (Array)</a></li>
+<li><a href="#orgf7f248b">结构体 (struct)</a></li>
+<li><a href="#orgec1101a">联合体 (union)</a></li>
+<li><a href="#org9596dec">指针 (pointer)</a></li>
+<li><a href="#org1d14548">枚举 (enum)</a></li>
+<li><a href="#org7add6d6">函数返回值 (return value)</a></li>
+</ul>
+</li>
+<li><a href="#org15e9794">\(\text{C} \stackrel{\text{WASM}}{\longleftarrow} \text{JavaScript}\)</a>
+<ul>
+<li><a href="#org709dfbb">字符串</a></li>
+<li><a href="#orga7169d6">结构体</a></li>
+<li><a href="#orgebef7b9">数组</a></li>
+<li><a href="#orgcb430c9">联合体</a></li>
+</ul>
+</li>
+<li><a href="#org34162a8">参考资料</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgc09a7f7">
+<div class="abstract" id="orgc3deaae">
 <p>
 在去年通过阅读 <code>The Art Of WebAssembly</code> 学习 <code>WebAssembly</code> (简称 <code>WASM</code>) 之后基本上再无使用过 <code>WASM</code> 了,
 </p>
 
 <p>
-这本书算得上是一本不错的 <code>WASM</code> 入门书, 偏向 <code>WASM</code> 的底层, 但关于实际开发的内容很少.
+这本书算得上是一本不错的 <code>WASM</code> 入门书, 通过 <code>WAT</code> 介绍 <code>WASM</code> 的一些概念, 但关于实际开发的内容很少.
 </p>
 
 <p>
@@ -293,7 +349,7 @@
 <div class="outline-text-2" id="text-orgaaf673f">
 <blockquote>
 <p>
-这里我本人跟练的<a href="https://github.com/saltb0rn/easy-web-game-in-c">项目</a>, 和视频的会有些出入, 这是因为在跟练过程中冒出了一些想法.
+这里我本人跟练的<a href="https://github.com/saltb0rn/easy-web-game-in-c">项目地址</a>, 和视频的会有些出入, 这是因为在跟练过程中冒出了一些个人想法.
 </p>
 </blockquote>
 
@@ -310,7 +366,7 @@
 </p>
 
 <p>
-下半部分演示了用 <code>clang</code> 编译 <code>game.c</code> 得到 <code>game.wasm</code>, 但不让它和 <code>raylib</code> 进行连接,
+下半部分演示了用 <code>clang</code> 编译 <code>game.c</code> 得到 <code>game.wasm</code>, 但不让它和 <code>raylib</code> 进行链接,
 </p>
 
 <p>
@@ -326,7 +382,7 @@
 </p>
 
 <p>
-缺点是需要对 <code>game.c</code> 进行改造成适用于浏览器的发布, 也就是说, 如果想让 <code>game.c</code> 发布到原生平台和浏览器, 那么你需要写两套代码;
+缺点是需要对 <code>game.c</code> 进行改造成适用于浏览器的发布, 也就是说, 如果想让 <code>game.c</code> 发布到原生平台和浏览器, 那么需要写两套代码;
 </p>
 
 <p>
@@ -347,7 +403,7 @@
 </p>
 
 <p>
-每个事件都有有一个回合(turn, 我这里就采用回合制游戏名词作为翻译)用来执行, 在执行完后把控制权交换给浏览器, 浏览器再把控制权交给另外一个事件.
+每个事件都有有一个回合(<code>turn</code>, 我这里就采用回合制游戏名词作为翻译)用来执行, 在执行完后把控制权交换给浏览器, 浏览器再把控制权交给另外一个事件.
 </p>
 
 <p>
@@ -373,7 +429,7 @@
 
 <blockquote>
 <p>
-这里引出一个思考: 什么要 <code>JavaScript</code> 去实现 <code>API</code> 提供给 <code>WASM</code> 呢? 为什么不直接在 <code>C</code> 里面实现呢?
+这里引出一个思考: 什么情况下要 <code>JavaScript</code> 去实现 <code>API</code> 提供给 <code>WASM</code> 呢? 为什么不直接在 <code>C</code> 里面实现呢?
 </p>
 
 <p>
@@ -393,11 +449,11 @@
 </p>
 
 <p>
-另外一种场景是想要手动连接 <code>WASM</code> 模块: 通过 <code>JavaScript</code> 实现 <code>WASM</code> 模块之间的依赖关系从而实现模块之间的连接.
+另外一种场景是想要手动链接 <code>WASM</code> 模块: 通过 <code>JavaScript</code> 实现 <code>WASM</code> 模块之间的依赖关系从而实现模块之间的链接.
 </p>
 
 <p>
-第二种方法相当于手动链接 <code>game.wasm</code> 模块, 视频的例子是便于观众理解 <code>wasm</code> 在浏览器上从加载到连接再到调用一整套流程.
+第二种方法在本质上相当于编译链接中的链接, 视频的例子是便于观众理解 <code>wasm</code> 在浏览器上从加载到链接再到调用一整套流程.
 </p>
 
 <p>
@@ -417,7 +473,7 @@
 使用 <code>clang</code> 编译 <code>WASM</code> 时, 需要设置 <code>--target</code> 选项为符合产生 <code>WASM</code> 的值, <code>--target</code> 值需要符合一种叫做 <a href="https://llvm.org/doxygen/Triple_8h_source.html">target triple</a> 的格式:
 </p>
 
-<pre class="example" id="org7071a90">
+<pre class="example" id="org933c640">
 ARCHITECTURE-VENDOR-OPERATING_SYSTEM
 ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
 </pre>
@@ -453,7 +509,7 @@ ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
 </p>
 
 <p>
-由于我本人的代码中没有像视频中那样把 <code>math.h</code> 的 <code>API</code> 声明复制出来进行忽略, 而是使用 <code>wasi-libc</code> 进行连接(后面会提到),
+由于我本人的代码中没有像视频中那样把 <code>math.h</code> 的 <code>API</code> 声明复制出来进行忽略, 而是使用 <code>wasi-libc</code> 进行链接(后面会提到),
 </p>
 
 <p>
@@ -633,7 +689,7 @@ ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
 </div>
 
 <p>
-原因不明, 可能是编译器的版本不一样, 视频中用的是 <code>clang14</code>, 本人用的是 <code>clang18</code>.
+和视频不一致的原因不明, 可能是编译器的版本不一样, 视频中用的是 <code>clang14</code>, 本人用的是 <code>clang18</code>.
 </p>
 </div>
 </div>
@@ -659,7 +715,7 @@ ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
 </p>
 
 <p>
-因此也不需要执行 <code>main</code> 函数前的初始化工作, <code>-nostartfiles</code> 选项就是告诉连接器不需要负责初始化工作的目标文件(比如下面会提到的 <code>ctr1.o</code>).
+因此也不需要执行 <code>main</code> 函数前的初始化工作, <code>-nostartfiles</code> 选项就是告诉链接器不需要负责初始化工作的目标文件(比如下面会提到的 <code>ctr1.o</code>).
 </p>
 </div>
 </div>
@@ -672,11 +728,11 @@ ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
 </p>
 
 <p>
-<code>--sysroot=/tmp/wasi-libc</code> 则会让编译器/连接器从 <code>/tmp/wasi-libc/include</code> 和 <code>/tmp/wasi-libc/lib</code> 中找文件.
+<code>--sysroot=/tmp/wasi-libc</code> 则会让编译器/链接器从 <code>/tmp/wasi-libc/include</code> 和 <code>/tmp/wasi-libc/lib</code> 中找文件.
 </p>
 
 <p>
-之所以用这个选项是因为我的 <code>game.c</code> 使用了 <code>libc</code> 的函数, <code>game.wasm</code> 需要连接 <code>WASM</code> 的 <code>libc</code>, 这些文件并非位于系统定义的目录中.
+之所以用这个选项是因为我的 <code>game.c</code> 使用了 <code>libc</code> 的函数, <code>game.wasm</code> 需要链接 <code>WASM</code> 的 <code>libc</code>, 这些文件并非位于系统定义的目录中.
 </p>
 
 <blockquote>
@@ -719,11 +775,11 @@ make install <span style="color: #eedd82;">INSTALL_DIR</span>=/tmp/wasi-libc
 </div>
 
 <p>
-首先 <a href="https://en.wikipedia.org/wiki/Crt0">crt1.o</a> 用于可执行文件的连接, 负责可执行文件 <code>main</code> 函数在执行前的所有初始化工作.
+首先 <a href="https://en.wikipedia.org/wiki/Crt0">crt1.o</a> 用于可执行文件的链接, 负责可执行文件 <code>main</code> 函数在执行前的所有初始化工作.
 </p>
 
 <p>
-问题在于连接器 <code>wasm-ld</code> 默认会在 <code>sysroot</code> 下的 <code>lib</code> 目录查找 <code>crt1.o</code>, <code>wasi-libc</code> 的 <code>crt1.o</code> 是位于 <code>/tmp/wasi-libc/lib/wasm32-wasi</code> 中.
+问题在于链接器 <code>wasm-ld</code> 默认会在 <code>sysroot</code> 下的 <code>lib</code> 目录查找 <code>crt1.o</code>, <code>wasi-libc</code> 的 <code>crt1.o</code> 是位于 <code>/tmp/wasi-libc/lib/wasm32-wasi</code> 中.
 </p>
 
 <p>
@@ -753,11 +809,11 @@ make install <span style="color: #eedd82;">INSTALL_DIR</span>=/tmp/wasi-libc
 </p>
 
 <p>
-我冒出了一个想法: 如何在不依赖 <code>Emscripten</code> 的情况下让 <code>WASM</code> 模块连接自己想要的库?
+我冒出了一个想法: 如何在不依赖 <code>Emscripten</code> 的情况下让 <code>WASM</code> 模块链接自己想要的库?
 </p>
 
 <p>
-于是就以连接 <code>C</code> 标准库为目标进行检索, 一番折腾后才发现 <a href="https://wasi.dev/">WebAssembly System Interface</a> (简称 <code>WASI</code>), 提供了各种可用于 <code>WASM</code> 编译链接的目标文件(动态库/静态库), 这些目标文件提供了适用于浏览器以及浏览器以外的运行时的 <code>API</code>.
+于是就以链接 <code>C</code> 标准库为目标进行检索, 一番折腾后才发现 <a href="https://wasi.dev/">WebAssembly System Interface</a> (简称 <code>WASI</code>), 提供了各种可用于 <code>WASM</code> 编译链接的目标文件(动态库/静态库), 这些目标文件提供了适用于浏览器以及浏览器以外的运行时的 <code>API</code>.
 </p>
 
 <p>
@@ -765,14 +821,14 @@ make install <span style="color: #eedd82;">INSTALL_DIR</span>=/tmp/wasi-libc
 </p>
 
 
-<div id="orga8a3bf9" class="figure">
+<div id="orgdee0b83" class="figure">
 <p><img src="../../../files/libc-file-type.png" alt="libc-file-type.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>原生 libc 目标文件的文件类型</p>
 </div>
 
 
-<div id="org44c4ef6" class="figure">
+<div id="orge0cbb80" class="figure">
 <p><img src="../../../files/wasi-libc-file-type.png" alt="wasi-libc-file-type.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>wasi-libc 目标文件的文件类型</p>
@@ -811,7 +867,7 @@ make install <span style="color: #eedd82;">INSTALL_DIR</span>=/tmp/wasi-libc
 <ol class="org-ol">
 <li>使用 <code>clang -c/gcc -c</code> 把所有 <code>.c</code> 文件编译成目标文件 <code>.o</code>;</li>
 <li>使用 <code>llvm-ar/ar</code> 把所有 <code>.o</code> 文件归档成一个静态库文件 <code>.a</code>, 或者一个动态库文件 <code>.so</code>;</li>
-<li>想使用改库只要 <code>clang -l/gcc -l</code> 让调用该库的目标文件或者 <code>.c</code> 文件进行连接即可.</li>
+<li>想使用该库只要 <code>clang -l/gcc -l</code> 让调用该库的目标文件或者 <code>.c</code> 文件进行链接即可.</li>
 </ol>
 
 
@@ -822,7 +878,7 @@ make install <span style="color: #eedd82;">INSTALL_DIR</span>=/tmp/wasi-libc
 <ol class="org-ol">
 <li>使用 <code>clang --target=wasm32-unknown-wasi -c</code> 把所有 <code>.c</code> 文件编译成 <code>WASM</code> 目标文件 <code>.o</code>;</li>
 <li>使用 <code>llvm-ar</code> 把所有 <code>.o</code> 文件归档成一个静态库文件 <code>.a</code>;</li>
-<li>想使用改库只要 <code>clang -l</code> 让调用该库的目标文件或者 <code>.c</code> 文件进行连接即可.</li>
+<li>想使用该库只要 <code>clang -l</code> 让调用该库的目标文件或者 <code>.c</code> 文件进行链接即可.</li>
 </ol>
 
 
@@ -997,16 +1053,15 @@ endif
 </p>
 
 <p>
-如果要使用, 那么就得使用 <code>WASI</code> 或者自己按照制作该库的方法把第三方库编译成 <code>WASM</code> 库再进行连接.
+如果要使用, 那么就得使用 <code>WASI</code> 或者自己按照制作该库的方法把第三方库编译成 <code>WASM</code> 库再进行链接.
 </p>
 
 <p>
-<code>WASI</code> 的使用方法可以参考我的 <code>easy-web-game-in-c</code> 项目的 <code>game.wasm</code> 是如何连接 <code>wasi-libc</code> 的.
+<code>WASI</code> 的使用方法可以参考我的 <code>easy-web-game-in-c</code> 项目的 <code>game.wasm</code> 是如何链接 <code>wasi-libc</code> 的.
 </p>
 </div>
 </div>
 </div>
-
 
 <div id="outline-container-org4cc72f8" class="outline-2">
 <h2 id="org4cc72f8">学习 raylib 的 WASM 编译</h2>
@@ -1028,7 +1083,7 @@ endif
 </p>
 
 <p>
-其实 <code>mini-wasm-lib</code> 的构建思路是一样的, 只是把编译器和归档工具换掉了:
+其实和 <code>mini-wasm-lib</code> 的构建思路是一样的, 只是把编译器和归档工具换掉了:
 </p>
 
 <p>
@@ -1081,6 +1136,1073 @@ emar rcs libraylib.a rcore.o rshapes.o rtextures.o rtext.o rmodels.o utils.o rau
 <p>
 另外, 对于 <code>WASM</code> 的实际开发还得多阅读 <a href="https://emscripten.org/index.html">Emscripten</a> 的文档, 配合以 <code>raylib</code> 作为例子进行学习是非常不错的.
 </p>
+</div>
+</div>
+
+<div id="outline-container-org91c3a2b" class="outline-2">
+<h2 id="org91c3a2b">数据传递</h2>
+<div class="outline-text-2" id="text-org91c3a2b">
+<p>
+这里将会学习 <code>C</code> 代码在被编译成 <code>WASM</code> 后, <code>C</code> 的数据在 <code>WASM</code> 上会是什么样的,
+</p>
+
+<p>
+并且重点演示在 <code>JavaScript</code> 里面如何处理这些数据, 以及如何使用 <code>JavaScript</code> 封装数据传回 <code>WASM</code> 中.
+</p>
+
+<p>
+首先, 数据在 <code>C</code> 和 <code>WASM</code> 中是一样的;
+</p>
+
+<p>
+其次, <code>WASM</code> 的字节序是 <code>little endian</code>;
+</p>
+
+<p>
+最后, 架构所对应的位宽也是和 <code>C</code> 语言一样,
+</p>
+
+<p>
+比如, 在 <code>wasm32</code> 下 <code>C</code> 语言的 <code>long int</code> 在 <code>WASM</code> 上是 4 个字节;
+</p>
+
+<p>
+在 <code>wasm64</code> 下 <code>C</code> 语言的 <code>long int</code> 在 <code>WASM</code> 上是 8 个字节.
+</p>
+
+<p>
+剩下的就是如何处理数据了, 后面的代码全部来源于这个项目: <a href="https://github.com/saltb0rn/wasm-data-passing-examples">wasm-data-passing-examples</a>.
+</p>
+</div>
+
+<div id="outline-container-org5046f53" class="outline-3">
+<h3 id="org5046f53">\(\text{C} \stackrel{\text{WASM}}{\longrightarrow} \text{JavaScript}\)</h3>
+<div class="outline-text-3" id="text-org5046f53">
+<p>
+字符串(<code>string</code>), 指针(<code>pointer</code>), 数组(<code>array</code>)和结构体(<code>struct</code>)在 <code>JavaScript</code> 中是 <code>WebAssembly.Memory.buffer</code> 上的索引, 都是 <code>JavaScript</code> 中的 <code>number</code> 类型.
+</p>
+
+<p>
+枚举(<code>enum</code>)类型本质上是由 <code>int</code> 类型构成的, 因此枚举变量正如 <code>int</code> 类型那样, 在 <code>C</code> 里面是多少, 在 <code>JavaScript</code> 就是多少, 在 <code>JavaScript</code> 里面也是 <code>number</code> 类型.
+</p>
+
+<p>
+联合体(<code>union</code>)在 <code>JavaScript</code> 中同样是 <code>WebAssembly.Memory.buffer</code> 上的索引, 但是它并不像 <code>C</code> 语言那样复用同一块地址, 等会会说明.
+</p>
+
+<p>
+接下来会直接以代码展示在 <code>JavaScript</code> 里面处理从 <code>C</code> 传过来的数据, 为了保持篇幅短小, 这里先约定处理 <code>WASM</code> 模块的 <code>JavaScript</code> 代码:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">wasmExports</span> = <span style="color: #7fffd4;">undefined</span>;
+
+WebAssembly.instantiateStreaming(
+  fetch(<span style="color: #ffa07a;">'c.wasm'</span>),
+  {
+    env: {
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">IMPORTS: &#23454;&#29616;&#22312; C &#20013;&#22768;&#26126;&#19988;&#24453;&#23454;&#29616;&#30340;&#20989;&#25968;</span>
+    }
+  }
+).then((w) =&gt; {
+  wasmExports = w.instance.exports;
+  wasmExports.test();
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">EXPORTS: &#35843;&#29992;&#30001; C &#35821;&#35328;&#23454;&#29616;&#30340;&#20989;&#25968;</span>
+});
+</pre>
+</div>
+
+<p>
+然后在 <code>IMPORTS</code> 里面添加上对应的 <code>JavaScript</code> 函数.
+</p>
+
+<p>
+最后我们的 <code>Makefile</code> 如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-makefile"><span style="color: #87cefa;">.PHONY</span>: clean
+
+<span style="color: #87cefa;">c.wasm</span>: main.c
+        clang \
+        -v \
+        <span style="color: #eedd82;">--target</span>=wasm32 \
+        --no-standard-libraries \
+        -nostartfiles \
+        -Wl,--no-entry \
+        <span style="color: #eedd82;">-Wl,--unresolved-symbols</span>=ignore-all \
+        -Wl,--import-undefined \
+        <span style="color: #eedd82;">-Wl,--export</span>=test,--export=from_js_to_c_struct,--export=from_js_to_c_string,--export=from_js_to_c_enum,--export=from_js_to_c_union,--export=from_c_to_js_return_struct,--export=sum_for_struct,--export=from_c_to_js_return_string,--export=from_c_to_js_return_union,--export=from_c_to_js_return_function_ptr,--export=from_js_to_c_array \
+        -o <span style="color: #87cefa;">$</span><span style="color: #7fffd4;">@</span> $<span style="color: #7fffd4;">^</span>
+
+<span style="color: #87cefa;">clean</span>:
+        rm -rf c.wasm
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org8568136" class="outline-4">
+<h4 id="org8568136">字符串 (string)</h4>
+<div class="outline-text-4" id="text-org8568136">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_string</span>(<span style="color: #98fb98;">char</span> *);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  from_c_to_js_string(<span style="color: #ffa07a;">"Hello, world!"</span>);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_string</span> = (str_addr) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_string(${str_addr})`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">mem</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(wasmExports.memory.buffer);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">C &#35821;&#35328;&#30340;&#23383;&#31526;&#20018;&#26159;&#20197; '\0' &#32467;&#23614;&#30340;, &#25152;&#20197;&#25214;&#21040; str_addr &#20043;&#21518;&#30340;&#31532;&#19968;&#20010; '\0' &#23383;&#31526;&#23601;&#21487;&#20197;&#31639;&#20986;&#23383;&#31526;&#20018;&#38271;&#24230;</span>
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">len</span> = 0;
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ptr</span> = str_addr;
+  <span style="color: #00ffff;">while</span> (mem[ptr] != 0) {
+    len++;
+    ptr++;
+  }
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">bytes</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(wasmExports.memory.buffer, str_addr, len);
+  console.log(<span style="color: #00ffff;">new</span> <span style="color: #98fb98;">TextDecoder</span>().decode(bytes));
+  console.groupEnd();
+};
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; IMPORTS &#20013;&#28155;&#21152; from_c_to_js_string</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8229329" class="outline-4">
+<h4 id="org8229329">数组 (Array)</h4>
+<div class="outline-text-4" id="text-org8229329">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_array</span>(<span style="color: #98fb98;">int</span>[], <span style="color: #98fb98;">int</span>);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  from_c_to_js_array((<span style="color: #98fb98;">int</span>[]){ 1, 2, 3, 4 }, 4);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_array</span> = (arr_addr, len) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_array(${arr_addr}, ${len})`</span>);
+  <span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">    arr &#26159; int &#25968;&#32452;: (int []){ 1, 2, 3, 4 }, &#38271;&#24230;&#20026; 4 &#20010;&#20803;&#32032;, &#27599;&#20010;&#20803;&#32032; 4 bytes, &#20063;&#23601;&#26159; 32 bits.</span>
+<span style="color: #ff7f24;">   */</span>
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">int_arr</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint32Array</span>(wasmExports.memory.buffer, arr_addr, len);
+  console.log(int_arr);
+  console.groupEnd();
+};
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; IMPORTS &#20013;&#28155;&#21152; from_c_to_js_array</span>
+</pre>
+</div>
+
+<p>
+在处理上和字符串很接近, 区别在于每个元素的大小解析不一样.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf7f248b" class="outline-4">
+<h4 id="orgf7f248b">结构体 (struct)</h4>
+<div class="outline-text-4" id="text-orgf7f248b">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">struct</span> {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>;
+  <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">b</span>;
+} <span style="color: #98fb98;">example_struct</span>;   <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">size = 16 bytes in 64-bit, 8 bytes in 32-bit</span><span style="color: #ff7f24;"> */</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_struct</span>(<span style="color: #98fb98;">example_struct</span>);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  from_c_to_js_struct((example_struct){
+      .a = 10,
+      .b = 200
+    });
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_struct</span> = (example_struct_addr) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_struct(${example_struct_addr})`</span>);
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">{ a: int, b: long }</span>
+<span style="color: #ff7f24;">     &#22312; wasm32 &#30340;&#24773;&#20917;&#19979;, size &#20026; 8 bytes;</span>
+<span style="color: #ff7f24;">     &#22312; wasm64 &#30340;&#24773;&#20917;&#19979;, size &#20026; 16 bytes;</span>
+<span style="color: #ff7f24;">     &#21040;&#30446;&#21069;&#20026;&#27490;&#21482;&#25903;&#25345; wasm32.</span>
+<span style="color: #ff7f24;">  */</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Uint32 = 4 bytes * 8 bits = 32 bits</span>
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">data</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint32Array</span>(wasmExports.memory.buffer, example_struct_addr, 2);
+  console.log(<span style="color: #ffa07a;">`example_struct = { a=${data[0]}, b=${data[1]} }`</span>);
+  console.groupEnd();
+};
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; IMPORTS &#20013;&#28155;&#21152; from_c_to_js_struct</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgec1101a" class="outline-4">
+<h4 id="orgec1101a">联合体 (union)</h4>
+<div class="outline-text-4" id="text-orgec1101a">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">union</span> {
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">c</span>;
+  <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">li</span>;
+} <span style="color: #98fb98;">example_union</span>;    <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">size = 8 bytes in 64-bit, 4 bytes in 32-bit</span><span style="color: #ff7f24;"> */</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_union</span>(<span style="color: #98fb98;">example_union</span>);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  <span style="color: #98fb98;">example_union</span> <span style="color: #eedd82;">un</span>;
+
+  un.c = <span style="color: #ffa07a;">'a'</span>;
+  from_c_to_js_union(un, 0);
+
+  un.li = 100;
+  from_c_to_js_union(un, 1);
+
+  un.c = <span style="color: #ffa07a;">'B'</span>;
+  from_c_to_js_union(un, 0);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_union</span> = (example_union_addr, field_index) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_union(${example_union_addr})`</span>);
+  <span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">    example_union &#20026; { c: char, li: long },</span>
+
+<span style="color: #ff7f24;">    &#32852;&#21512;&#20013;&#22823;&#23567;&#26368;&#22823;&#30340;&#23383;&#27573; li, &#31867;&#22411;&#26159; long,</span>
+
+<span style="color: #ff7f24;">    &#22240;&#27492;, example_union &#22312; wasm32 &#19979;&#22823;&#23567;&#20026; 4 &#20010;&#23383;&#33410;, &#22312; wasm64 &#19979;&#22823;&#23567;&#20026; 8 &#20010;&#23383;&#33410;;</span>
+<span style="color: #ff7f24;">  */</span>
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">bytes</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(wasmExports.memory.buffer, example_union_addr, 4);
+  <span style="color: #00ffff;">if</span> (0 == field_index) {
+    console.log(<span style="color: #ffa07a;">`example_union.c = ${String.fromCharCode(bytes[0])}`</span>);
+  } <span style="color: #00ffff;">else</span> {
+    console.log(<span style="color: #ffa07a;">`example_union.li = ${new Uint32Array(bytes)[0]}`</span>);
+  }
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; IMPORTS &#20013;&#28155;&#21152; from_c_to_js_union</span>
+</pre>
+</div>
+
+<p>
+正如你所看到的那样, <code>C</code> 语言中的 <code>test</code> 函数调用了 3 次 <code>from_c_to_js_union</code> 函数, 执行结果如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">=============================
+<span style="color: #87cefa;">from_c_to_js_union</span>(66552)
+example_union.c = a
+=============================
+<span style="color: #87cefa;">from_c_to_js_union</span>(66556)
+example_union.li = 100
+=============================
+<span style="color: #87cefa;">from_c_to_js_union</span>(66560)
+example_union.c = B
+</pre>
+</div>
+
+<p>
+可以看到每次执行 <code>from_c_to_js_union</code> 时 <code>example_union_addr</code> 会以 4 个字节的大小增长, 这个大小刚好为 <code>example_union</code> 在 <code>wasm32</code> 中的大小.
+</p>
+
+<p>
+在 <code>WASM</code> 里面, <code>C</code> 语言的 <code>union</code> 不再是所有字段共用一块内存地址, 而是每次设置一次字段就会开辟一块新的内存空间储存设置的值, 并释放旧的内存空间.
+</p>
+
+<p>
+在这个例子里, 在 <code>JavaScript</code> 中处理 <code>C</code> 传递过来的 <code>example_union</code> 时, 需要额外的字段 <code>field_index</code> 来判断最后一次设置的字段类型, 从而进行正确的解析.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9596dec" class="outline-4">
+<h4 id="org9596dec">指针 (pointer)</h4>
+<div class="outline-text-4" id="text-org9596dec">
+<p>
+其实前面见过的 <code>char *</code> 类型的字符串也是指针, 除了函数(<code>pointer to function</code>)指针以外, 其它类型的指针在 <code>JavaScript</code> 里面的处理都是和字符串都差不多.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_pointer</span>(<span style="color: #98fb98;">example_struct</span> *);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  <span style="color: #98fb98;">example_struct</span> *<span style="color: #eedd82;">est</span>;
+  est-&gt;a = 5;
+  est-&gt;b = 200;
+  from_c_to_js_pointer(est);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_pointer</span> = (est_ptr) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_pointer(${est_ptr})`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">data</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint32Array</span>(wasmExports.memory.buffer, est_ptr, 2);
+  console.log(<span style="color: #ffa07a;">`example_struct = { a=${data[0]}, b=${data[1]} }`</span>);
+  console.groupEnd();
+};
+</pre>
+</div>
+
+<p>
+指针指向什么类型的数据, 就按照该类型对数据进行解析处理.
+</p>
+
+<p>
+不过, 函数指针(<code>function pointer</code>)例外, 因为指针指向的 <code>WASM</code> 函数的引用(<code>function references</code>)会被储存在 <a href="https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Table">WebAssembly.Table</a> 上的, 函数指针就是函数引用在 <code>WebAssembly.Table</code> 上的索引.
+</p>
+
+<blockquote>
+<p>
+<code>WebAssembly.Table</code> 目前只能储存 <code>WASM</code> 函数引用, 或者主环境(<code>host environment</code>)的引用.
+</p>
+
+<p>
+所谓的主环境就是与 <code>WASM</code> 模块交互的那个运行时, 比如浏览器的 <code>JavaScript</code>, 所以主环境的引用就是由主环境创建的定义.
+</p>
+
+<p>
+储存什么数据取决于 <code>WebAssembly.Table</code> 在创建时声明了可以储存什么类型的数据, 根据<a href="https://webassembly.github.io/spec/core/text/types.html#reference-types">规范</a>, 目前只有 <code>funcref</code> 和 <code>externref</code> 两种类型.
+</p>
+
+<p>
+<code>funcref</code> 是指 <code>WASM</code> 函数, <code>externref</code> 是指主环境中的数据.
+</p>
+</blockquote>
+
+<p>
+因此, 在 <code>JavaScript</code> 上只能通过 <code>WebAssembly.Table</code> 来获取指针指向的函数, 接下来演示一番.
+</p>
+
+<p>
+添加两个函数作为函数指针所指向的函数, 分别是静态函数和外部函数.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #00ffff;">static</span> <span style="color: #98fb98;">void</span> <span style="color: #87cefa;">callback_static</span>(<span style="color: #98fb98;">void</span>) {
+  print(<span style="color: #ffa07a;">"Message from static callback!"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">callback_extern</span>(<span style="color: #98fb98;">void</span>) {
+  print(<span style="color: #ffa07a;">"Message from extern callback!"</span>);
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20197;&#20989;&#25968;&#25351;&#38024;&#20316;&#20026;&#21442;&#25968;&#30340;&#20989;&#25968;, &#22312; JavaScript &#37324;&#38754;&#23548;&#20837;</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_function_ptr</span>(<span style="color: #98fb98;">void</span> (*)(<span style="color: #98fb98;">void</span>));
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  from_c_to_js_function_ptr(callback_static);
+  from_c_to_js_function_ptr(callback_extern);
+}
+</pre>
+</div>
+
+<p>
+另外, 还要调整构建方式让 <code>WASM</code> 模块导出 <code>WebAssembly.Table</code> 以及让 <code>WebAssembly.Table</code> 记录函数的引用.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-makefile"><span style="color: #87cefa;">.PHONY</span>: clean
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">1. &#28155;&#21152; -Wl,--export=callback,--export=callback2 &#36873;&#39033;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">2. &#28155;&#21152; -Wl,--export-table &#36873;&#39033;&#23548;&#20986; WebAssembly.Table, &#24182;&#19988;&#33258;&#21160;&#35760;&#24405;&#20989;&#25968;&#25351;&#38024;&#25152;&#25351;&#21521;&#30340;&#20989;&#25968;&#30340;&#24341;&#29992;</span>
+<span style="color: #87cefa;">c.wasm</span>: main.c
+        clang \
+        -v \
+        <span style="color: #eedd82;">--target</span>=wasm32-unknown-wasi \
+        <span style="color: #eedd82;">--sysroot</span>=/tmp/wasi-libc \
+        -nostartfiles \
+        -Wl,--no-entry \
+        <span style="color: #eedd82;">-Wl,--unresolved-symbols</span>=ignore-all \
+        -Wl,--import-undefined \
+        <span style="color: #eedd82;">-Wl,--export</span>=test,--export=from_js_to_c_struct,--export=from_js_to_c_string,--export=from_js_to_c_enum,--export=from_js_to_c_union,--export=from_c_to_js_return_struct,--export=sum_for_struct,--export=from_c_to_js_return_string,--export=from_c_to_js_return_union,--export=from_js_to_c_array \
+        <span style="color: #eedd82;">-Wl,--export</span>=callback,--export=callback2 \
+        -Wl,--export-table \
+        -o <span style="color: #87cefa;">$</span><span style="color: #7fffd4;">@</span> $<span style="color: #7fffd4;">^</span>
+
+<span style="color: #87cefa;">clean</span>:
+        rm -rf c.wasm
+</pre>
+</div>
+
+<p>
+最后在 <code>JavaScript</code> 里面, 添加如下代码:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_function_ptr</span> = (callback_ptr) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_function_ptr(${callback_ptr})`</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#37324;&#32534;&#35793;&#24471;&#21040;&#30340; WASM &#27169;&#22359;&#30340; WebAssembly.Table &#30340;&#23383;&#27573;&#26159; __indirect_function_table</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">callback_ptr &#26159;&#20989;&#25968;&#25351;&#38024;, &#20063;&#23601;&#26159; WebAssembly.Table &#19978;&#20803;&#32032;&#30340;&#32034;&#24341;</span>
+  wasmExports[<span style="color: #ffa07a;">"__indirect_function_table"</span>].get(callback_ptr)(<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#23545;&#20110;&#25509;&#21463;&#21442;&#25968;&#30340;&#20989;&#25968;&#21487;&#20197;&#20256;&#21442;&#25968;</span><span style="color: #ff7f24;"> */</span>);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; IMPORTS &#20013;&#28155;&#21152; from_c_to_js_string</span>
+</pre>
+</div>
+
+<p>
+需要注意一点, 这里的 <code>callback_extern</code> 并不会像其它通过 <code>WebAssembly.Instance.exports</code> 导出的函数那样被导出,
+</p>
+
+<p>
+只能通过 <code>WebAssembly.Table</code> 来访问得到, 这就是函数指针在 <code>WASM</code> 中的样子.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1d14548" class="outline-4">
+<h4 id="org1d14548">枚举 (enum)</h4>
+<div class="outline-text-4" id="text-org1d14548">
+<p>
+枚举变量的类型就是 <code>int</code>, 而基础类型是不需要通过内存传递的, 上面提到的所有复杂数据类型(非基础类型)都得通过内存进行传递.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #00ffff;">typedef</span> <span style="color: #00ffff;">enum</span> { <span style="color: #eedd82;">A</span>=1, <span style="color: #eedd82;">B</span>, <span style="color: #eedd82;">C</span> } <span style="color: #98fb98;">example_enum</span>;
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_c_to_js_enum</span>(<span style="color: #98fb98;">example_enum</span>);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">test</span>(<span style="color: #98fb98;">void</span>) {
+  from_c_to_js_enum(B);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">from_c_to_js_enum</span> = (example_enum) =&gt; {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_enum(${example_enum})`</span>);
+  console.groupEnd();
+};
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; IMPORTS &#20013;&#28155;&#21152; from_c_to_js_enum</span>
+</pre>
+</div>
+
+<p>
+如你所见, 枚举变量的数据在 <code>JavaScript</code> 中不需要通过 <code>WebAssembly.Memory</code> 内存(memory)传递.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7add6d6" class="outline-4">
+<h4 id="org7add6d6">函数返回值 (return value)</h4>
+<div class="outline-text-4" id="text-org7add6d6">
+<p>
+<b>复合数据 (Complex Data)</b>
+</p>
+
+<p>
+根据 <a href="https://webassembly.github.io/spec/core/exec/instructions.html#returning-from-a-function">WASM 的函数返回规范</a>, 目前能返回的数据类型只有 <a href="https://webassembly.github.io/spec/core/exec/runtime.html#syntax-val">number, vector 和 reference</a>, 以及由它们构成的复合数据.
+</p>
+
+<p>
+但浏览器环境的 <code>JavaScript</code> 在调用 <code>WASM</code> 函数时无法获取作为返回值的复合数据.
+</p>
+
+<p>
+比如下面这个例子,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">example_struct</span> <span style="color: #87cefa;">from_c_to_js_return_struct</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">b</span>) {
+  <span style="color: #00ffff;">return</span> (example_struct){.a = a, .b = b};
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_c_to_js_return_struct</span>(<span style="color: #eedd82;">a</span>, <span style="color: #eedd82;">b</span>) {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_return_struct(${a}, ${b})`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">result</span> = wasmExports.from_c_to_js_return_struct(a, b);
+  console.log(result);          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36755;&#20986; undefined</span>
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_c_to_js_return_struct(2, 100)</span>
+</pre>
+</div>
+
+<p>
+这里 <code>result</code> 的输出是 <code>undefined</code>,
+</p>
+
+<p>
+<b>个人猜测</b> 是因为 <code>JavaScript</code> 只能访问到 <code>WASM</code> 栈顶固定范围内的数据, 所以 <code>WASM</code> 函数返回基本类型是可以获取到的, 而复合数据是没法获取到的.
+</p>
+
+<p>
+这么猜测的原因是: <code>WASM</code> 函数 \(A\) 调用其它以复合数据作为返回值的 <code>WASM</code> 函数 \(B\) 没有这种问题.
+</p>
+
+<p>
+比如, 在同为 <code>C</code> 函数的 <code>sum_for_struct</code> 里面调用 <code>from_c_to_js_return_struct</code>,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">long</span> <span style="color: #87cefa;">sum_for_struct</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">b</span>) {
+  <span style="color: #98fb98;">example_struct</span> <span style="color: #eedd82;">st</span> = from_c_to_js_return_struct(a, b);
+  <span style="color: #00ffff;">return</span> st.a + st.b;
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_sum_for_struct</span>(<span style="color: #eedd82;">a</span>, <span style="color: #eedd82;">b</span>) {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`sum_for_struct(${a}, ${b})`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">result</span> = wasmExports.sum_for_struct(a, b);
+  console.log(result);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_sum_for_struct(2, 100)</span>
+</pre>
+</div>
+
+<p>
+这里的 <code>result</code> 会成功输出 102, 说明在 <code>WASM</code> 里面 <code>sum_for_struct</code> 读取到了 <code>from_c_to_js_return_struct</code> 返回的复合数据并完成计算.
+</p>
+
+<p>
+因此得出结论: <code>WASM</code> 编译器实现了 <code>WASM</code> 内部把复合数据复制到栈上的特性, 但在 <code>JavaScript</code> 在读取 <code>WASM</code> 函数返回值方面并未实现像 <code>WASM</code> 那样的复合数据复制机制.
+</p>
+
+<p>
+另外, 联合体也是复合数据.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">example_union</span> <span style="color: #87cefa;">from_c_to_js_return_union</span>(<span style="color: #98fb98;">void</span>) {
+  <span style="color: #00ffff;">return</span> (example_union){
+    .li = 12
+  };
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_c_to_js_return_union</span>() {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_return_union()`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">result</span> = wasmExports.from_c_to_js_return_union();
+  console.log(result);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_c_to_js_return_union()</span>
+</pre>
+</div>
+
+<p>
+这里的 <code>result</code> 输出也是 <code>undefined</code>.
+</p>
+
+
+<p>
+<b>字符串</b>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">char</span>* <span style="color: #87cefa;">from_c_to_js_return_string</span>(<span style="color: #98fb98;">void</span>) {
+  <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">"Hello, world!"</span>
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_c_to_js_return_string</span>() {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_return_string()`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">result</span> = wasmExports.from_c_to_js_return_string();
+  print(result);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_c_to_js_return_string()</span>
+</pre>
+</div>
+
+<p>
+后面就不演示指针的返回了, 和字符串的返回是差不多的.
+</p>
+
+<p>
+函数指针返回倒是稍微有点特殊, 来演示一下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">void</span> (*<span style="color: #87cefa;">from_c_to_js_return_function_ptr</span>(<span style="color: #98fb98;">void</span>))(<span style="color: #98fb98;">void</span>) {
+  <span style="color: #00ffff;">return</span> callback_static;
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_c_to_js_return_function_ptr</span>() {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_c_to_js_return_function_ptr()`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">ptr</span> = wasmExports.from_c_to_js_return_function_ptr();
+  console.log(<span style="color: #ffa07a;">"function ptr: "</span>, ptr);
+  wasmExports[<span style="color: #ffa07a;">"__indirect_function_table"</span>].get(ptr)();
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_c_to_js_return_function_ptr()</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org15e9794" class="outline-3">
+<h3 id="org15e9794">\(\text{C} \stackrel{\text{WASM}}{\longleftarrow} \text{JavaScript}\)</h3>
+<div class="outline-text-3" id="text-org15e9794">
+<p>
+数据从 <code>C</code> 传递到 <code>JavaScript</code> 是比较简单的, 反过来就有点麻烦了.
+</p>
+
+<p>
+前面看到在处理从 <code>C</code> 传递到 <code>JavasCript</code> 的数据时, 除了基本数据类型外, 其它类型全部都要用到 <code>WASM</code> 内存.
+</p>
+
+<p>
+反过来, 如果要把数据从 <code>JavaScript</code> 传递回 <code>C</code> 上就得:
+</p>
+
+<ol class="org-ol">
+<li>在 <code>WASM</code> 内存上为传递的数据分配内存空间, 并把数据写入到分配好的内存空间上.</li>
+
+<li>把内存空间的 <b>首地址</b> 作为参数提供给由 <code>C</code> 编写的 <code>WASM</code> 函数.</li>
+
+<li>在使用后对内存空间进行释放.</li>
+</ol>
+
+
+<p>
+一言蔽之, 得有办法控制 <code>WASM</code> 的内存管理才行. 目前有两种方案:
+</p>
+
+<ol class="org-ol">
+<li>使用现成的内存管理方案, 比如 <code>Emscripten</code> 提供 <code>malloc</code> 内存分配函数以及  <code>free</code> 内存释放函数.</li>
+
+<li>按照 <code>WASM</code> 规范自己实现内存管理.</li>
+</ol>
+
+
+<p>
+第 2 种方案的心智负担太大了, 我们直接用现成的方案, 但这里不打算使用 <code>Emscripten</code>.
+</p>
+
+<p>
+而采用手动链接 <code>wasi-libc</code> 并导出 <code>malloc</code> 和 <code>free</code> 函数完成内存管理.
+</p>
+
+<p>
+只需要修改一下 <code>Makefile</code> 即可:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-makefile"><span style="color: #87cefa;">.PHONY</span>: clean
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">1. &#25226; --target=wasm32 &#26367;&#25442;&#25104; --target=wasm32-unknown-wasi</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">2. &#21435;&#25481; --no-standard-libraries &#36873;&#39033;, &#24182;&#28155;&#21152; wasi-libc &#30340;&#25628;&#32034;&#36335;&#24452;</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">3. &#28155;&#21152;&#20869;&#23384;&#31649;&#29702;&#20989;&#25968;&#30340;&#23548;&#20986; -Wl,--export=malloc,--export=free</span>
+<span style="color: #87cefa;">c.wasm</span>: main.c
+        clang \
+        -v \
+        <span style="color: #eedd82;">--target</span>=wasm32-unknown-wasi \
+        <span style="color: #eedd82;">--sysroot</span>=/tmp/wasi-libc \
+        -nostartfiles \
+        -Wl,--no-entry \
+        <span style="color: #eedd82;">-Wl,--unresolved-symbols</span>=ignore-all \
+        -Wl,--import-undefined \
+        <span style="color: #eedd82;">-Wl,--export</span>=test,--export=from_js_to_c_struct,--export=from_js_to_c_string,--export=from_js_to_c_enum,--export=from_js_to_c_union,--export=from_c_to_js_return_struct,--export=sum_for_struct,--export=from_c_to_js_return_string,--export=from_c_to_js_return_union,--export=from_js_to_c_array \
+        <span style="color: #eedd82;">-Wl,--export</span>=malloc,--export=free \
+        -o <span style="color: #87cefa;">$</span><span style="color: #7fffd4;">@</span> $<span style="color: #7fffd4;">^</span>
+
+<span style="color: #87cefa;">clean</span>:
+        rm -rf c.wasm
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org709dfbb" class="outline-4">
+<h4 id="org709dfbb">字符串</h4>
+<div class="outline-text-4" id="text-org709dfbb">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#22312; JavaScript &#20013;&#23454;&#29616;, &#29992;&#26469;&#36755;&#20986;&#23383;&#31526;&#20018;&#21040;&#25511;&#21046;&#21488;</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">print</span>(<span style="color: #98fb98;">char</span> *);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_js_to_c_string</span>(<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">str</span>) {
+    <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">len</span> = 0;
+    <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">ptr</span> = str;
+    <span style="color: #00ffff;">while</span> (<span style="color: #ffa07a;">'\0'</span> != *ptr) {
+      ptr++;
+      len++;
+    }
+    print(str);
+}
+</pre>
+</div>
+
+<p>
+在 <code>IMPORTS</code> 中添加 <code>print</code> 的定义, 用来把 <code>C</code> 语言的字符串输出到浏览器上:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">print</span>(<span style="color: #eedd82;">cstrAddr</span>) {
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">len</span> = 0;
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ptr</span> = cstrAddr;
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">mem</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(wasmExports.memory.buffer);
+  <span style="color: #00ffff;">while</span> (mem[ptr] != 0) {
+    len++;
+    ptr++;
+  }
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">bytes</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(wasmExports.memory.buffer, cstrAddr, len);
+  console.log(<span style="color: #00ffff;">new</span> <span style="color: #98fb98;">TextDecoder</span>().decode(bytes));
+}
+</pre>
+</div>
+
+<p>
+把下面函数的调用 <code>test_from_js_to_c_string("Message from JavaScript")</code> 添加到 <code>EXPORTS</code> 后面,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_js_to_c_string</span>(<span style="color: #eedd82;">text</span>) {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_js_to_c_string(${text})`</span>);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">jsStr</span> = <span style="color: #ffa07a;">"Message from JavaScript"</span>;
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">cStr</span> = jsStr + <span style="color: #ffa07a;">"\0"</span>;
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">bytesForcStr</span> = (<span style="color: #00ffff;">new</span> <span style="color: #98fb98;">TextEncoder</span>()).encode(cStr);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">strAddr</span> = wasmExports.malloc(bytesForcStr.length);
+  console.log(<span style="color: #ffa07a;">`strAddr = ${strAddr}`</span>);
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">memBlock</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(wasmExports.memory.buffer, strAddr, bytesForcStr.length);
+  memBlock.set(bytesForcStr);
+  wasmExports.from_js_to_c_string(strAddr);
+  wasmExports.free(strAddr);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_js_to_c_string("Message from JavaScript")</span>
+</pre>
+</div>
+
+<p>
+除了函数指针以外, 其它类型的指针传递也和字符串差不多, 只是元素类型不一样而已, 所以后面就不演示的这些指针传递了.
+</p>
+
+<p>
+函数指针是 <code>WebAssembly.Table</code> 上的元素索引, 这些元素通常是 <code>WASM</code> 函数引用, 所谓的传递函数指针就是把这个元素索引传递过去而已.
+</p>
+
+<p>
+这里的关键问题不是传递, 是如何在 <code>WebAssembly.Table</code> 上添加函数引用.
+</p>
+
+<p>
+目前没有办法通过 <code>JavaScript</code> 创建 <code>WASM</code> 函数(<a href="https://github.com/WebAssembly/js-types/blob/main/proposals/js-types/Overview.md#addition-of-webassemblyfunction">WebAssembly.Function 提案</a>还未实现),
+</p>
+
+<p>
+另外, 定义在 <code>WASM</code> 里面的 <code>WebAssembly.Table</code> 的空间是无法增长的, 在上面添加函数引用需要可增长 <code>WebAssembly.Table</code> 才可以,
+</p>
+
+<p>
+可增长的 <code>WebAssembly.Table</code> 可通过 <code>JavaScript</code> 创建, 然后作为 <code>WASM</code> 模块的 <code>imports</code>.
+</p>
+
+<p>
+还需要在构建 <code>WASM</code> 模块时把 <code>Makefile</code> 里面的 <code>-Wl,--export-table</code> 替换成 <code>-Wl,--import-table</code> 表示 <code>WASM</code> 模块不定义 <code>WebAssembly.Table</code> 而是引入外部 <code>WebAssembly.Table</code>,
+</p>
+
+<p>
+修改后的 <code>Makefile</code> 如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-makefile"><span style="color: #87cefa;">.PHONY</span>: clean
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">1. &#25226; -Wl,--export-table &#26367;&#25442;&#25104; -Wl,--import-table</span>
+<span style="color: #87cefa;">c.wasm</span>: main.c
+        clang \
+        -v \
+        <span style="color: #eedd82;">--target</span>=wasm32-unknown-wasi \
+        <span style="color: #eedd82;">--sysroot</span>=/tmp/wasi-libc \
+        -nostartfiles \
+        -Wl,--no-entry \
+        <span style="color: #eedd82;">-Wl,--unresolved-symbols</span>=ignore-all \
+        -Wl,--import-undefined \
+        <span style="color: #eedd82;">-Wl,--export</span>=test,--export=from_js_to_c_struct,--export=from_js_to_c_string,--export=from_js_to_c_enum,--export=from_js_to_c_union,--export=from_c_to_js_return_struct,--export=sum_for_struct,--export=from_c_to_js_return_string,--export=from_c_to_js_return_union,--export=from_c_to_js_return_function_ptr,--export=from_js_to_c_array,--export=from_js_to_c_function_ptr,--export=callback_to_set \
+        <span style="color: #eedd82;">-Wl,--export</span>=callback,--export=callback2 \
+        -Wl,--import-table \
+        <span style="color: #eedd82;">-Wl,--export</span>=malloc,--export=free \
+        -o <span style="color: #87cefa;">$</span><span style="color: #7fffd4;">@</span> $<span style="color: #7fffd4;">^</span>
+
+<span style="color: #87cefa;">clean</span>:
+        rm -rf c.wasm
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">from_js_to_c_function_ptr</span>(<span style="color: #98fb98;">void</span> (*<span style="color: #87cefa;">func_ptr</span>)(<span style="color: #98fb98;">void</span>)) {
+  func_ptr();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27979;&#35797;&#29992;&#30340;&#22238;&#35843;&#20989;&#25968;, &#20316;&#20026;&#21442;&#25968;&#20256;&#20837;&#21040; from_js_to_c_function_ptr</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">callback_to_set</span>(<span style="color: #98fb98;">void</span>) {
+  print(<span style="color: #ffa07a;">"Callback set in WebAssembly.Table!"</span>);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">1. &#21019;&#24314; WebAssembly.Table &#20648;&#23384;&#20989;&#25968;&#24341;&#29992;, &#26368;&#22823;&#38271;&#24230;&#20026; 10, &#21021;&#22987;&#38271;&#24230;&#20026; 3</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">table</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">WebAssembly.Table</span>({ element: <span style="color: #ffa07a;">"anyfunc"</span>, initial: 3, maximum: 10 });
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">2. &#22312; IMPORTS &#28155;&#21152; "'__indirect_function_table': table" &#38190;&#20540;&#23545;</span>
+WebAssembly.instantiateStreaming(
+  fetch(<span style="color: #ffa07a;">'c.wasm'</span>),
+  {
+    env: {
+
+      <span style="color: #ffa07a;">'__indirect_function_table'</span>: table
+
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+    }
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">3. &#21019;&#24314;&#27979;&#35797;&#20989;&#25968;</span>
+  <span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_js_to_c_function_ptr</span>() {
+    console.group(<span style="color: #ffa07a;">"============================="</span>);
+    console.log(<span style="color: #ffa07a;">`from_js_to_c_function_ptr()`</span>);
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35753; WebAssembly.Table &#22686;&#38271; 1, &#24182;&#36820;&#22238;&#26032;&#22320;&#22336;</span>
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">newref</span> = table.grow(1);
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226; callback_to_set &#30340;&#24341;&#29992;&#20648;&#23384;&#22312;&#26368;&#26032;&#22320;&#22336;&#19978;</span>
+    table.set(newref, wasmExports.callback_to_set);
+    wasmExports.from_js_to_c_function_ptr(newref);
+    console.groupEnd();
+  }
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992;: test_from_js_to_c_function_ptr()</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga7169d6" class="outline-4">
+<h4 id="orga7169d6">结构体</h4>
+<div class="outline-text-4" id="text-orga7169d6">
+<p>
+在处理字符串以外的数据, 使用 <code>DataView</code> 对象的 <code>API</code> 来把 <code>JavaScript</code> 的数据编码成 <code>C</code> 数据的话会更加简单.
+</p>
+
+<p>
+这里演示如何为 <code>WASM</code> 函数提供结构体作为参数,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">example_struct</span> <span style="color: #87cefa;">from_js_to_c_struct</span>(<span style="color: #98fb98;">example_struct</span> <span style="color: #eedd82;">st</span>) {
+  <span style="color: #00ffff;">return</span> (example_struct){
+    .a = st.a * 2,
+    .b = st.b * 2
+  };
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_js_to_c_struct</span>() {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">"from_js_to_c_struct((example_struct){ .a=10, .b=200 })"</span>);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">structAddr</span> = wasmExports.malloc(8);
+  console.log(<span style="color: #ffa07a;">`structAddr = ${structAddr}`</span>);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">dv</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">DataView</span>(wasmExports.memory.buffer, structAddr, 8);
+  dv.setInt32(0, 10, <span style="color: #7fffd4;">true</span>);
+  dv.setInt32(4, 200, <span style="color: #7fffd4;">true</span>);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">result</span> = wasmExports.from_js_to_c_struct(structAddr);
+  console.log(result);
+  wasmExports.free(structAddr);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_js_to_c_struct()</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgebef7b9" class="outline-4">
+<h4 id="orgebef7b9">数组</h4>
+<div class="outline-text-4" id="text-orgebef7b9">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">from_js_to_c_array</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">arr</span>[], <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">len</span>) {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sum</span> = 0;
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; len; i++) {
+    sum += arr[i];
+  }
+  <span style="color: #00ffff;">return</span> sum;
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_js_to_c_array</span>(<span style="color: #eedd82;">arr</span>) {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_js_to_c_array([${arr.join(',')}], ${arr.length})`</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">arr &#26159;&#25972;&#24418;&#25968;&#32452;, &#27599;&#20010;&#20803;&#32032;&#30340;&#22823;&#23567;&#20026; 4 bytes</span>
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">arrAddr</span> = wasmExports.malloc(4 * arr.length);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">dv</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">DataView</span>(wasmExports.memory.buffer, arrAddr, 4 * arr.length);
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">i</span> = 0; i &lt; arr.length; i++) {
+    dv.setInt32(i * 4, arr[i], <span style="color: #7fffd4;">true</span>);
+  }
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">result</span> = wasmExports.from_js_to_c_array(arrAddr, arr.length);
+  console.log(result);
+  wasmExports.free(arrAddr);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992; test_from_js_to_c_array([1, 2, 3, 4])</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcb430c9" class="outline-4">
+<h4 id="orgcb430c9">联合体</h4>
+<div class="outline-text-4" id="text-orgcb430c9">
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">main.c</span>
+<span style="color: #98fb98;">long</span> <span style="color: #87cefa;">from_js_to_c_union</span>(<span style="color: #98fb98;">example_union</span> <span style="color: #eedd82;">un</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">fid</span>) {
+  <span style="color: #00ffff;">if</span> (0 == fid)
+    <span style="color: #00ffff;">return</span> (<span style="color: #98fb98;">long</span>)un.c;
+  <span style="color: #00ffff;">else</span>
+    <span style="color: #00ffff;">return</span> un.li;
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">glup.js</span>
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">test_from_js_to_c_union</span>(<span style="color: #eedd82;">value</span>, <span style="color: #eedd82;">fid</span>) {
+  console.group(<span style="color: #ffa07a;">"============================="</span>);
+  console.log(<span style="color: #ffa07a;">`from_js_to_c_union(${value}, ${fid})`</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">32-bit &#19979; example_union &#30340;&#22823;&#23567;&#20026; 4 bytes, 64-bit &#19979;&#20026; 8 bytes</span>
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">unionAddr</span> = wasmExports.malloc(4);
+  console.log(<span style="color: #ffa07a;">`unionAddr = ${unionAddr}`</span>);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">dv</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">DataView</span>(wasmExports.memory.buffer, unionAddr, 4);
+  <span style="color: #00ffff;">if</span> (0 == fid) {
+    dv.setInt8(0, value.charCodeAt(0), <span style="color: #7fffd4;">true</span>);
+  } <span style="color: #00ffff;">else</span> {
+    dv.setInt32(0, value, <span style="color: #7fffd4;">true</span>);
+  }
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">console.log(dv.buffer);</span>
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">result</span> = wasmExports.from_js_to_c_union(unionAddr, fid);
+  console.log(result);
+  wasmExports.free(unionAddr);
+  console.groupEnd();
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#22312; EXPORTS &#20013;&#28155;&#21152;&#35813;&#20989;&#25968;&#30340;&#35843;&#29992;:</span>
+
+<span style="color: #ff7f24;">   test_from_js_to_c_union(200, 1);</span>
+<span style="color: #ff7f24;">   test_from_js_to_c_union('c', 0);</span>
+<span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org34162a8" class="outline-3">
+<h3 id="org34162a8">参考资料</h3>
+<div class="outline-text-3" id="text-org34162a8">
+<p>
+<a href="https://github.com/konsumer/cmem_helpers">https://github.com/konsumer/cmem_helpers</a>
+</p>
+
+<p>
+<a href="https://stackoverflow.com/a/77559398/4817925">https://stackoverflow.com/a/77559398/4817925</a>
+</p>
+
+<p>
+<a href="https://stackoverflow.com/questions/45387728/calling-a-c-style-function-pointer-in-a-webassembly-from-javascript">https://stackoverflow.com/questions/45387728/calling-a-c-style-function-pointer-in-a-webassembly-from-javascript</a>
+</p>
+
+<p>
+<a href="https://stackoverflow.com/questions/50615377/how-do-you-call-a-c-function-that-takes-or-returns-a-struct-by-value-from-js-v">https://stackoverflow.com/questions/50615377/how-do-you-call-a-c-function-that-takes-or-returns-a-struct-by-value-from-js-v</a>
+</p>
+
+<p>
+<a href="https://stackoverflow.com/questions/46750777/passing-a-javascript-array-of-strings-to-a-c-function-with-emscripten">https://stackoverflow.com/questions/46750777/passing-a-javascript-array-of-strings-to-a-c-function-with-emscripten</a>
+</p>
+
+<p>
+<a href="https://log.schemescape.com/posts/webassembly/index.html">https://log.schemescape.com/posts/webassembly/index.html</a>
+</p>
+
+<p>
+<a href="https://surma.dev/things/c-to-webassembly/">https://surma.dev/things/c-to-webassembly/</a>
+</p>
+</div>
 </div>
 </div>
 </div>

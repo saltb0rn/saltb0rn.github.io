@@ -375,7 +375,7 @@
 
 我们可以反过来只提供声明不提供定义, 看看编译会发生什么?
 
-这里以最终版为例, 把 =func= 注释掉后会得到一个连接器报的错误:
+这里以最终版为例, 把 =func= 注释掉后会得到一个链接器报的错误:
 
 #+BEGIN_SRC sh
   /usr/bin/ld: /tmp/ccxdFKZ5.o: in function `main':
@@ -393,21 +393,21 @@
 
 回到例子中, 当不在源代码里面提供 =func= 的定义时, 编译器就会认为 =func= 的定义会在别的地方,
 
-等编译完了就交给连接器在连接时去找 =func= 的定义, 由于没有找到对应的定义, 于似乎它报错了.
+等编译完了就交给链接器在链接时去找 =func= 的定义, 由于没有找到对应的定义, 于似乎它报错了.
 
-解决这个问题除了把注释解除掉外, 还可以在使用 =GCC= 编译时让它连接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
+解决这个问题除了把注释解除掉外, 还可以在使用 =GCC= 编译时让它链接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
 
 库分动态链接库(dynamic link library/shared link library)和静态链接库(static link library),
 
 在 =Linux= 上静态链接库的后缀是 =.a(rchive)=, 动态链接库的后缀是 =.s(hared)o(bject)=.
 
-连接动态链接库的叫做动态连接, 而把多个二进制文件连接为一体的连接方式就叫静态连接, 静态连接不一定非得使用静态库的,
+链接动态链接库的叫做动态链接, 而把多个二进制文件链接为一体的链接方式就叫静态链接, 静态链接不一定非得使用静态库的,
 
-动态连接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
+动态链接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
 
-静态连接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态连接生成的程序本体比动态连接的要大.
+静态链接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态链接生成的程序本体比动态链接的要大.
 
-我们基于前面最终版的代码拆分一下用于后续演示两种连接:
+我们基于前面最终版的代码拆分一下用于后续演示两种链接:
 
 #+BEGIN_SRC c
   // simple-c.c
@@ -426,15 +426,15 @@
   }
 #+END_SRC
 
-*静态连接* 有两种方法:
+*静态链接* 有两种方法:
 
-- *静态连接-1*
+- *静态链接-1*
 
   #+BEGIN_SRC sh
     gcc -o simple-c simple-c.c simple-c-func.c
   #+END_SRC
 
-  这种方法会把中间生成若干个 =.o= 的目标文件, 然后连接器再它们连接起来得到一个程序, 这个过程其实并未使用到静态库.
+  这种方法会把中间生成若干个 =.o= 的目标文件, 然后链接器再它们链接起来得到一个程序, 这个过程其实并未使用到静态库.
 
   这条命令等价于以下:
 
@@ -444,7 +444,7 @@
     gcc -o simple-c simple-c.o simple-c-func.o
   #+END_SRC
 
-- *静态连接-2*
+- *静态链接-2*
 
   #+BEGIN_SRC sh
     gcc -c -o simple-c-func.o simple-c-fun.c
@@ -454,11 +454,11 @@
 
   这里的 =-lsimple-c-func= 就是让 =simple-c= 和 =simple-c-func.a= 进行链接,
 
-  =GCC= 的 =-l= 选项就是用来指定要连接的链接库名; =-L= 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
+  =GCC= 的 =-l= 选项就是用来指定要链接的链接库名; =-L= 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
 
   \\
 
-  *动态连接* 如下:
+  *动态链接* 如下:
 
   #+BEGIN_SRC sh
     gcc -shared simple-c-func.c -o libsimple-c-func.so
@@ -469,7 +469,7 @@
 
   由于编译得到的程序的文件格式是 =ELF=, 并且我们这个库并非在系统搜索的路径里面,
 
-  因此我们需要告诉 =ld= 该连接生成的程序在 *运行时* 需要从自身当前位置查找 =libsimple-c-func.so=,
+  因此我们需要告诉 =ld= 该链接生成的程序在 *运行时* 需要从自身当前位置查找 =libsimple-c-func.so=,
 
   如果 =libsimple-c-func.so= 是位于 =ld= 默认的库查找路径上, 那么最后的编译命令可以写成:
 
@@ -492,9 +492,9 @@
   If both static and shared libraries are found, the linker gives preference to linking with the shared library unless the -static option is used.
   #+END_QUOTE
 
-  可以看到默认情况下是默认连接动态库, 而这个 =-l= 选项是直接传给连接器的, 所以连接器也是这么处理的.
+  可以看到默认情况下是默认链接动态库, 而这个 =-l= 选项是直接传给链接器的, 所以链接器也是这么处理的.
 
-  =GCC= 启动时会调用一个名叫 [[https://gcc.gnu.org/onlinedocs/gccint/Collect2.html][collect2]] 功能, 这个功能调用 =ld= 来生成一张符号表用于查找定义以及进行连接, 它就是一个连接器的封装.
+  =GCC= 启动时会调用一个名叫 [[https://gcc.gnu.org/onlinedocs/gccint/Collect2.html][collect2]] 功能, 这个功能调用 =ld= 来生成一张符号表用于查找定义以及进行链接, 它就是一个链接器的封装.
 
   可以在编译时给 =GCC= 添加一个 =-v= 选项来看看 =GCC= 给 =ld= 传了什么参数, =collect2= 接受的参数就是 =ld= 的参数.
 
@@ -543,9 +543,9 @@
 
   接下来会介绍构建方式, 但在讨论这个话题之前, 我们先回顾一下上个例子 =eatc=, 它调用了 =printf= 函数,
 
-  从代码上看, 它貌似是来源于 =stdio= 库的, 并且连接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
+  从代码上看, 它貌似是来源于 =stdio= 库的, 并且链接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
 
-  你没办法在系统路径上找到 =libstdio.a= 或者 =libstdio.so= 的文件, 你可以 =ldd= 命令看一个可执行程序或者动态链接库连接了哪些动态链接库,
+  你没办法在系统路径上找到 =libstdio.a= 或者 =libstdio.so= 的文件, 你可以 =ldd= 命令看一个可执行程序或者动态链接库链接了哪些动态链接库,
 
   我们对 =ldd eatc= 之后可以看到以下内容:
 
@@ -585,7 +585,7 @@
     ar t /lib/x86_64-linux-gnu/libc.a
   #+END_SRC
 
-  按照前面的说法个, 在静态连接中 =#include "simple-c-func"= 对应一个 =simple-c-func.o= 或者 =simple-c-func.a= 的话,
+  按照前面的说法个, 在静态链接中 =#include "simple-c-func"= 对应一个 =simple-c-func.o= 或者 =simple-c-func.a= 的话,
 
   那么 =libc.a= 是否包含一个 =stdio.o= 的文件, 并且由它提供 =printf= 函数呢?
 
@@ -629,7 +629,7 @@
 
 最早的构建工具应该是 =make=, 使用 =make= 需要先掌握 =Makefile= 的编写, =make= 会根据 =Makefile= 里面的规则对项目进行构建,
 
-比如说前面的 =simple-c= 的动态连接构成的步骤用一个 =Makefile= 解决:
+比如说前面的 =simple-c= 的动态链接构成的步骤用一个 =Makefile= 解决:
 
 #+BEGIN_SRC makefile
   simple-c:  simple-c.c simple-c-func.so
@@ -644,7 +644,7 @@
 
 像这种简单的项目手写 =Makefile= 还是很方便的, 但等到项目复杂度上来了, 编写复杂度也会随之上去, 如果还要考虑平台移植问题, 还有可能需要为别的平台写多一份 =Makefile=.
 
-在 1991 年的时候, 有个名为 =David J. MacKenzie= 的程序员厌倦了为 20 个系统(=*nix= 平台)单独写 =Makefile= 的任务, 因为每个操作系统上的编译器/连接器/头文件/库文件的路径不一定相同,
+在 1991 年的时候, 有个名为 =David J. MacKenzie= 的程序员厌倦了为 20 个系统(=*nix= 平台)单独写 =Makefile= 的任务, 因为每个操作系统上的编译器/链接器/头文件/库文件的路径不一定相同,
 
 于是他写了一个叫做 =configure= 的脚本来根据系统生成 =Makefile=, 只要执行 =./configure && make= 就能开始构建.
 
@@ -1144,7 +1144,7 @@ https://www.darlinghq.org/
 
 1. 引入 =op_node.h=
 
-2. 运行程序时连接你发布的库 =O=
+2. 运行程序时链接你发布的库 =O=
 
 #+BEGIN_SRC c
   /* main.c: test op_node */
@@ -1270,6 +1270,12 @@ https://www.darlinghq.org/
 
 https://hackaday.com/2019/09/24/asynchronous-routines-for-c/
 
+
+**** X Macro
+
+https://en.wikipedia.org/wiki/X_macro
+
+
 **** 对比 C++, C 的优点
 :PROPERTIES:
 :CUSTOM_ID: difference-between-c-and-cpp
@@ -1287,7 +1293,7 @@ https://hackaday.com/2019/09/24/asynchronous-routines-for-c/
 
   而 =C= 是没有命名空间和函数重载的, 这个缺点换来了 =ABI= 兼容良好的优点.
 
-  不过 =C++= 提供连接规范(linkage specification)来为不同的语言声明连接协议,
+  不过 =C++= 提供链接规范(linkage specification)来为不同的语言声明链接协议,
 
   比如 =C++= 模块可以为 =C= 模块提供避免名字改编的稳定符号, 从而实现 =C= 和 =C++= 的模块相互调用的, 这就是 =C/C++= 混合编程的真相.
 
@@ -1373,9 +1379,16 @@ https://hackaday.com/2019/09/24/asynchronous-routines-for-c/
 
   只要在函数里面使用 =(void)param= 这样就可以禁止这类警告了, 这个例子是在 =return= 之后使用,
 
-  这个其实无所谓, 喜欢的话也可以放在 =return= 之前. 另外可以查看这个连接:
+  这个其实无所谓, 喜欢的话也可以放在 =return= 之前. 另外可以查看这个链接:
 
   https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c
+
+
+**** C 语言应用教材
+
+如果想学习 =C= 标准库的使用, 或者说 =Linux= 系统编程, 那么 [[https://www.man7.org/tlpi/][The Linux Programming Interface]] 这本书就是必看的.
+
+这本书的内容可以说是开发人员的必备基础之一, 同时也可以说是 =C= 语言练习册.
 
 
 *** 关于调试

@@ -19,6 +19,8 @@
 * E
   - [[file:2021/11/edm-theory.org][EDM必备乐理教程]]
   - [[file:2018/08/emacs-tips.org][Emacs Tips(持续更新)]]
+* G
+  - [[file:2024/08/godot-learning-diary.org][Godot 4 学习日记]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
@@ -26,6 +28,8 @@
   - [[file:2022/03/dev-js-library-tutorial.org][JS库开发指南]]
 * K
   - [[file:2020/02/kvm-experience-note.org][KVM体验笔记]]
+* L
+  - [[file:2024/10/Learning-Calculus-Early-Transcendentals-8th-index.org][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 * M
   - [[file:2018/07/macros.org][Macro in Racket]]
   - [[file:2018/08/mysql-one-day-journay.org][MYSQL一日游]]

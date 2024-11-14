@@ -49,7 +49,7 @@
 
 我写这篇笔记的目的在后期逐渐发生改变了, 从原来"想要了解"到"想把学到的知识真正的用在创作上",
 
-为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及连接器的工作细节" 这些参考书上没有的内容.
+为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 #+end_abstract
 
 # TODO: 把运行的程序改成进程
@@ -212,7 +212,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 在它们工作的时候, =CPU= 或多或少会对内存进行读写, 也就是会频繁有数据在内存和 =CPU= 之间移动.
 
-内存和 =CPU= 大概是这样连接的,
+内存和 =CPU= 大概是这样链接的,
 
 #+CAPTION: CPU和内存
 [[../../../files/memory-connected-to-cpu.png]]
@@ -259,7 +259,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 也就是说从交换数据的速度来看, 高速缓存没有寄存器高速, 但是高于内存.
 
-而 *更大一部分晶体管* 更像是一个相互连接的开关,在复杂的开关网络中与更多的开关进行连接,
+而 *更大一部分晶体管* 更像是一个相互链接的开关,在复杂的开关网络中与更多的开关进行链接,
 
 这些晶体管叫做逻辑门(gates), 用于逻辑运算, 之后会对它们进行介绍.
 
@@ -473,7 +473,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 但是那个时候大部分的计算机只有内存基本都是 =4K=, =8K= 字节(这里的 =4k= 表示 4000, =8k= 表示 8000),
 
-这也意味着 =CPU= 有一些地址线是空闲的, 它们没有连接到内存上, 因此 =CPU= 的可寻址范围还是决定于内存.
+这也意味着 =CPU= 有一些地址线是空闲的, 它们没有链接到内存上, 因此 =CPU= 的可寻址范围还是决定于内存.
 
 =CP/M-80= 是使用 =Intel 8080= 最多的操作系统, =CP/M-80= 位于内存的顶部,
 
@@ -1005,24 +1005,24 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 \\
 
-*目标代码和连接器*
+*目标代码和链接器*
 
 现代的汇编器生成目标文件并非就是可执行程序, 而是源代码和可执行程序之间的一个中间步骤(intermediate step),
 
 这个中间步骤的目标代码文件叫做目标模块(object module), 它们不能像程序一样可执行,
 
-还需要多一个叫做连接(linking)的步骤, 完成这个工作的程序叫做连接器(linker), 它的作用是把所有目标模块文件变成一个可执行程序.
+还需要多一个叫做链接(linking)的步骤, 完成这个工作的程序叫做链接器(linker), 它的作用是把所有目标模块文件变成一个可执行程序.
 
 这么做的原因是为了能够把大源代码文件拆分成多个更加小的源代码文件, 保持文件大小以及复杂度的可管理性.
 
 因此创建可执行程序的整个过程是这样的:
 
-汇编器对每个源代码文件进行汇编, 然后把所有目标代码文件进行连接为一个可执行程序.
+汇编器对每个源代码文件进行汇编, 然后把所有目标代码文件进行链接为一个可执行程序.
 
-#+CAPTION: 汇编器和连接器
+#+CAPTION: 汇编器和链接器
 [[../../../files/assembler-and-linker.png]]
 
-但这并不意味着只有一个源代码文件的情况下就不需要连接器, 连接器并非只是单纯地把东西块连接起来,
+但这并不意味着只有一个源代码文件的情况下就不需要链接器, 链接器并非只是单纯地把东西块链接起来,
 
 它保证了目标模块外的函数调用能够正确到达对应的目标模块, 以及所有内存引用能够正确引用到该引用的地方,
 
@@ -1036,27 +1036,27 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 - 没有赋值的已命名数据, 相当于空白空间, 等程序员后续使用;
 - 对模块外数据对象的引用;
 - 调试信息(debugging information);
-- 一些用来帮助连接器创建可执行程序的杂项(odds and ends);
+- 一些用来帮助链接器创建可执行程序的杂项(odds and ends);
 
   \\
 
   我们把这些已命名项(item)的名字叫做符号(symbol).
 
-  为了把多个目标模块连接成一个可执行程序, 连接器需要先建立一个叫做符号表(symbol table)的索引,
+  为了把多个目标模块链接成一个可执行程序, 链接器需要先建立一个叫做符号表(symbol table)的索引,
 
-  这个索引记录了它连接的每一个目标模块中的每个符号, 以及哪个符号指向哪个模块内部的哪个位置.
+  这个索引记录了它链接的每一个目标模块中的每个符号, 以及哪个符号指向哪个模块内部的哪个位置.
 
-  然后连接器建立一个映像(image), 它就是程序被加载到内存后的模样.
+  然后链接器建立一个映像(image), 它就是程序被加载到内存后的模样.
 
   建立完毕后, 它会被写入到硬盘/磁盘里面成为可执行程序, 当操作系统运行它的时候, 程序就会按照映像的那样被加载进内存.
 
-  在建立映像中, 最重要的一件事情是连接器使用 *相对地址* 来进行引用.
+  在建立映像中, 最重要的一件事情是链接器使用 *相对地址* 来进行引用.
 
   目标模块允许引用其它模块的符号(symbol), 这种引用叫做外部引用(external references).
 
   这些引用就像洞一样, 可以在后续被填补上, 这些符号所处的模块还没有被编译, 甚至还没被编写.
 
-  连接器在生成映像的时候, 它知道符号在映像中的位置, 它知道在什么地方放入真实地址.
+  链接器在生成映像的时候, 它知道符号在映像中的位置, 它知道在什么地方放入真实地址.
 
   还有就是调试信息, 先解释一下什么是调试(debugging),
 
@@ -1072,7 +1072,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
   程序每秒都会执行成千上百条机器指令, 调试器允许开发人员控制程序的运行进度, 一个时间内执行一条指令, 观察一条指令的效果.
 
-  连接过程有很多细节值得了解, 目前就先了解到这里, 后面会有[[#linking][章节]]详细介绍.
+  链接过程有很多细节值得了解, 目前就先了解到这里, 后面会有[[#linking][章节]]详细介绍.
 
   \\
 
@@ -1094,9 +1094,9 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
   要每次都能正确引用到这个数据, 那么只要保持数据的偏移地址不变, 每次通过偏移地址引用数据就可以了.
 
-  这个特性叫做可重定位性(relocatability), 是现代计算机系统必要部分, 处理可重定位性可能占据了连接器的工作的一大部分.
+  这个特性叫做可重定位性(relocatability), 是现代计算机系统必要部分, 处理可重定位性可能占据了链接器的工作的一大部分.
 
-  动态连接库具备这种特性, 后面会稍微提一下.
+  动态链接库具备这种特性, 后面会稍微提一下.
 
 *** 使用汇编语言开发的流程(下)
 
@@ -1107,7 +1107,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 这里需要明白几个概念: 错误(errors), =bugs= 以及警告(warnings).
 
-在上图可以看到有汇编器错误(assembler errors)和连接器错误(linker errors),
+在上图可以看到有汇编器错误(assembler errors)和链接器错误(linker errors),
 
 它们都是在生成可执行程序的过程中发生的,导致程序生成的中断,这就是第一个概念错误.
 
@@ -1115,7 +1115,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 如果是做了操作系统所禁止的事情,操作系统会发出错误信息以及作出处理,这种错误叫做运行时错误(runtime errors),也是错误的一种,
 
-和前面的汇编器错误和连接器错误不一样的是,汇编器错误和连接器错误分别是由汇编器和连接器发出的.
+和前面的汇编器错误和链接器错误不一样的是,汇编器错误和链接器错误分别是由汇编器和链接器发出的.
 
 警告是在汇编过程中汇编器发出的,告诉程序员源代码里面有些地方有潜在风险,并不会造成目标模块生成中断,
 
@@ -1125,7 +1125,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 让我们来实践书上给出的例子,不过我改变了一些工具上选择.
 
-首先我们是运行在 =64-bit CPU= 的 =x64 Linux= 操作系统上进行实践的,汇编器使用的是 =NASM=,连接器使用的是 =ld=,
+首先我们是运行在 =64-bit CPU= 的 =x64 Linux= 操作系统上进行实践的,汇编器使用的是 =NASM=,链接器使用的是 =ld=,
 
 书本上使用 =kdbg= 作为调试器,它是 =gdb= 的前端, =gdb= 是 =Linux= 内置的,因此我选择直接使用 =gdb=.
 
@@ -1351,7 +1351,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 由于我们使用的是 =64-bit CPU=,因此编译时候需告诉 =nasm= 要生成 =64-bit= 的目标模块,
 
-把 =-f= 参数设定为 =elf64= 就是编译成 =64-bit= 的 =elf= 文件, =elf= 是一种在 =Linux= 系统上使用的 [[https://en.wikipedia.org/wiki/Comparison_of_executable_file_formats][可执行和连接的二进制文件格式]](, 其实还有一些别的系统有使用过).
+把 =-f= 参数设定为 =elf64= 就是编译成 =64-bit= 的 =elf= 文件, =elf= 是一种在 =Linux= 系统上使用的 [[https://en.wikipedia.org/wiki/Comparison_of_executable_file_formats][可执行和链接的二进制文件格式]](, 其实还有一些别的系统有使用过).
 
 不同类型的操作系统上所使用的可执行文件格式都不同, 操作系统在运行程序时会按照所支持的文件格式对程序进行解析,然后加载到内存里面,
 
@@ -1365,7 +1365,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 \\
 
-最后对目标模块进行 *进行连接*:
+最后对目标模块进行 *进行链接*:
 
 #+BEGIN_SRC sh
   ld -o eatsyscall eatsyscall.o
@@ -1373,7 +1373,7 @@ $2^{20} - 1$ 转换为 16 进制就是 =0fffff=,这些编号就是所谓的内�
 
 没有出现错误的情况下就会生成一个叫做 =eatsyscall= 的文件.
 
-如果在前面汇编时没有把 =nasm= 的 =-f= 参数设置为和目前架构一样的话,那么你会遇到你人生的第一个连接错误:
+如果在前面汇编时没有把 =nasm= 的 =-f= 参数设置为和目前架构一样的话,那么你会遇到你人生的第一个链接错误:
 
 #+BEGIN_EXAMPLE
 ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86-64 output.
@@ -1383,7 +1383,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 \\
 
-有时候可能需要频繁修改代码,为了简化每次地的汇编和连接过程,可以使用 =make= 命令,它要求开发人员会编写一点点 =Makefile= 文件.
+有时候可能需要频繁修改代码,为了简化每次地的汇编和链接过程,可以使用 =make= 命令,它要求开发人员会编写一点点 =Makefile= 文件.
 
 在和源代码文件的目录下,新建一个叫做 =Makefile= 的文件,内容如下,
 
@@ -1409,7 +1409,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 =Makefile= 编写完后可以执行 =make= 命令来执行 =Makefile= 的规则.
 
-一旦文件多了,依赖复杂了, =Makefile= 可以很大程度的简化开发者汇编和连接的工作流程,
+一旦文件多了,依赖复杂了, =Makefile= 可以很大程度的简化开发者汇编和链接的工作流程,
 
 =Makefile= 不仅仅只是用于某一门语言,或者说并不一定限于汇编/编译,很多流程处理类的工作都可以通过 =Makefile= 来完成.
 
@@ -2806,19 +2806,19 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 **** 库(Library)
 
-前面有提到过库的这个概念,提到库第一时间想到的就是"把一个程序分成多个模块",生成程序的时候再把模块连接起来.
+前面有提到过库的这个概念,提到库第一时间想到的就是"把一个程序分成多个模块",生成程序的时候再把模块链接起来.
 
-连接方式有两种: 静态连接(static linking)和动态连接(dynamic linking).
+链接方式有两种: 静态链接(static linking)和动态链接(dynamic linking).
 
-静态连接就是把所有模块文件全部"合并"成一个可执行文件,可执行文件的大小基本上就是模块文件大小的总和;
+静态链接就是把所有模块文件全部"合并"成一个可执行文件,可执行文件的大小基本上就是模块文件大小的总和;
 
-动态连接则是把多个模块文件"像连线一样关联"到一起,生成的可执行文件的大小比静态连接得到的可执行文件的大小要小.
+动态链接则是把多个模块文件"像连线一样关联"到一起,生成的可执行文件的大小比静态链接得到的可执行文件的大小要小.
 
-动态连接的模块文件就像可替换的零件一样,每次只要模块文件有更新,无需重新连接生成可执行文件,只要替换需要更新的模块文件就好;
+动态链接的模块文件就像可替换的零件一样,每次只要模块文件有更新,无需重新链接生成可执行文件,只要替换需要更新的模块文件就好;
 
-而静态连接一旦有模块文件要更新,那么重新连接生成整个可执行文件.
+而静态链接一旦有模块文件要更新,那么重新链接生成整个可执行文件.
 
-一般为了方便发布程序,都采用动态连接的方式生成程序;简单的程序一般用静态连接生成.
+一般为了方便发布程序,都采用动态链接的方式生成程序;简单的程序一般用静态链接生成.
 
 我们把上一个节的示例程序作为例子,把循环版的 =Acc= 单独拆出来作为一个模块 =mathlib.asm=,调用 =Acc= 的模块叫做 =main.asm=,
 
@@ -2869,7 +2869,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 这种由目标文件提供的接口叫做应用程序二进制接口(Application binary interface), 简称 =ABI=, 和 =API= 这概念很相似, 只是 =API= 是源代码和库之间的接口.
 
-而 =Acc= 后面跟着的 =:function= 则是告诉 =NASM= =Acc= 是一个函数,这个类型声明是可选的,只是没有的话在连接时 =ld= 命令会有一些警告.
+而 =Acc= 后面跟着的 =:function= 则是告诉 =NASM= =Acc= 是一个函数,这个类型声明是可选的,只是没有的话在链接时 =ld= 命令会有一些警告.
 
 类型声明一共有两种: =:function= 和 =:data=, =:data= 类型是接口标签是一个数据,这里的数据不包括常量,并且 =:data= 后面还可以跟着一个大小声明,
 
@@ -2890,7 +2890,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 一但划分好模块就可以生成可执行文件了,假设两个模块文件是处于同一个目录下的.
 
-先来静态连接,
+先来静态链接,
 
 #+BEGIN_SRC makefile
   main: main.o mathlib.o
@@ -2925,7 +2925,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 如果你的目的是发布库, 那么推荐使用第二种方法.
 
-再来 *动态连接*, 不过在这之前, 我们需要把 =main.asm= 调整一下,
+再来 *动态链接*, 不过在这之前, 我们需要把 =main.asm= 调整一下,
 
 #+BEGIN_SRC nasm
           ; main.asm
@@ -2949,11 +2949,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
           int 80h
 #+END_SRC
 
-调用外部引用 =Acc= 时在其后面加上了 =wrt ..plt= 的声明, =plt= 的全称是程序连接表(=procedure linkage table=), 我们会在后面探究 =ELF= 文件时会对它进行学习.
+调用外部引用 =Acc= 时在其后面加上了 =wrt ..plt= 的声明, =plt= 的全称是程序链接表(=procedure linkage table=), 我们会在后面探究 =ELF= 文件时会对它进行学习.
 
-目前只需要知道这是在声明 =Acc= 是外部模块的一个函数, 有了这个声明, =NASM= 让连接器在连接时生成一个表来查找 =Acc= 的定义(. 参考 [[https://www.nasm.us/doc/nasmdoc8.html#section-8.9.3][Position-Independent Code: ELF Special Symbols and WRT]]).
+目前只需要知道这是在声明 =Acc= 是外部模块的一个函数, 有了这个声明, =NASM= 让链接器在链接时生成一个表来查找 =Acc= 的定义(. 参考 [[https://www.nasm.us/doc/nasmdoc8.html#section-8.9.3][Position-Independent Code: ELF Special Symbols and WRT]]).
 
-连接时需要在生成可执行文件的一步给 =ld= 命令加上 =-pie= 选项, 所以最终的 =Makefile= 是这样的(参考 https://www.nasm.us/doc/nasmdo10.html#section-10.2.5):
+链接时需要在生成可执行文件的一步给 =ld= 命令加上 =-pie= 选项, 所以最终的 =Makefile= 是这样的(参考 https://www.nasm.us/doc/nasmdo10.html#section-10.2.5):
 
 #+BEGIN_SRC makefile
   main: main.o mathlib.so
@@ -2972,19 +2972,19 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 "./main: error while loading shared libraries: mathlib.so: cannot open shared object file: No such file or directory".
 
-比起静态连接, 这里多了一步 =mathlib.so= 的编译, =*.so= 就是 =Linux= 的动态连接库的后缀, =so= 的全称是 =shared object= 的意思.
+比起静态链接, 这里多了一步 =mathlib.so= 的编译, =*.so= 就是 =Linux= 的动态链接库的后缀, =so= 的全称是 =shared object= 的意思.
 
-而且在最后生成可执行文件 =main= 时要告诉 =ld= 命令: =math.o= 文件要如何和动态库 =mathlib.so= 连接.
+而且在最后生成可执行文件 =main= 时要告诉 =ld= 命令: =math.o= 文件要如何和动态库 =mathlib.so= 链接.
 
-=ld= 命令的 =-I= 选项是指定用使用哪一个动态连接器, 当链接生成目标的一个引用动态库的 =ELF= 程序时, 可能需要手动设定一下动态连接器, =Ubuntu= 的64位动态连接器位于 =/lib64/ld-linux-x86-64.so.2=;
+=ld= 命令的 =-I= 选项是指定用使用哪一个动态链接器, 当链接生成目标的一个引用动态库的 =ELF= 程序时, 可能需要手动设定一下动态链接器, =Ubuntu= 的64位动态链接器位于 =/lib64/ld-linux-x86-64.so.2=;
 
 =ld= 的 =-L= 选项是指定在哪个目录下搜索即将链接的库文件, 由于是生成的 =mathlib.so= 在当前目录下, 所以这里指定了 =.=;
 
-=ld= 的 =-l= 选项用来指定要连接哪个库, 它有两种语法 =-l:filename= 以及 =-l name=,
+=ld= 的 =-l= 选项用来指定要链接哪个库, 它有两种语法 =-l:filename= 以及 =-l name=,
 
 第一种是从指定路径下找到名字叫做 =filename= 的库文件, 第二种是从指定的搜索路径中查找名字叫 =libname.a= 或者 =libname.so= 的库文件, 我们这个例子里面用的是第一种写法;
 
-=ld= 的 =-rpath= 选项是指定可执行程序在运行时搜索动态连接库文件的目录,也就是 =main= 在运行时在什么地方找 =mathlib.so= 文件.
+=ld= 的 =-rpath= 选项是指定可执行程序在运行时搜索动态链接库文件的目录,也就是 =main= 在运行时在什么地方找 =mathlib.so= 文件.
 
 当我们得到一个动态链接程序以后, 可以使用 =ldd= 命令来查看它链接了哪些动态库文件,
 
@@ -2996,11 +2996,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   #	mathlib.so => ./mathlib.so (0x00007fd278704000)
 #+END_SRC
 
-=ld= 命令使用 =-shared= 选项意味着最后连接得到的是一个动态连接库.
+=ld= 命令使用 =-shared= 选项意味着最后链接得到的是一个动态链接库.
 
 # 动态库文件叫做位置无关代码(position independent code), 简称 =PIC=, 并非所有架构都支持 =PIC=,
 
-# 在连接成 =ELF= 可执行文件时, 可以让 =ld= 生成位置无关可执行文件(position independent executable/position independent code executable),简称 =PIE=,
+# 在链接成 =ELF= 可执行文件时, 可以让 =ld= 生成位置无关可执行文件(position independent executable/position independent code executable),简称 =PIE=,
 
 # 在运行 =PIE= 的时候, 它会加载 =PIC=, =PIE= 里面的引用的地址全部变为相对地址, 根据相对地址来找到引用对应的实现.
 
@@ -3095,7 +3095,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 宏也可以像函数那样定义在库里面,这种库叫做宏库(macro libraries),一个宏库就是一个包含了源代码的文本而已.
 
-函数库能够单独汇编成一个模块,引用这个模块只要连接起来就好.
+函数库能够单独汇编成一个模块,引用这个模块只要链接起来就好.
 
 可是宏库不一样,只要汇编的模块有引用宏库,那么在汇编时宏库就一定要被传入进去,如果有很多个这样的模块,那么严重影响汇编效率.
 
@@ -3116,9 +3116,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 :CUSTOM_ID: how-to-call-c-functions-in-nasm
 :END:
 
-把汇编语言创建的程序和 =C= 语言的函数连接起来时,得到的其实是一个混合程序了(hybrid).
+把汇编语言创建的程序和 =C= 语言的函数链接起来时,得到的其实是一个混合程序了(hybrid).
 
-为什么汇编和 =C= 语言两门不同的语言所编写的程序能够连接起来并且正常运行?
+为什么汇编和 =C= 语言两门不同的语言所编写的程序能够链接起来并且正常运行?
 
 虽然开发程序时使用的语言不一样,但是得到的目标文件都是使用机器码,
 
@@ -3147,13 +3147,13 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 之后, =GAS= 把这份汇编源码进行汇编得到一个模块文件(=.o=);
 
-最后 =ld= 把模块文件连接得到一个可执行文件, 当然 =GCC= 会给 =ld= 设置了某些参数, 和我们之前连接方式是有点差别的.
+最后 =ld= 把模块文件链接得到一个可执行文件, 当然 =GCC= 会给 =ld= 设置了某些参数, 和我们之前链接方式是有点差别的.
 
 =GAS= 支持的汇编语法是 =AT&T=, 和使用 =INTEL= 语法的 =NASM= 是不一样的.
 
-不过这不是问题, 因为它们生成的模块文件都可以使用 =ld= 来进行连接.
+不过这不是问题, 因为它们生成的模块文件都可以使用 =ld= 来进行链接.
 
-假设有一份根据 =NASM= 语法编写的源代码叫做 =callc.asm=, 使用了 =Linux= 标准 =C= 库 =GLIBC= 的函数, 那么可以这么汇编和连接:
+假设有一份根据 =NASM= 语法编写的源代码叫做 =callc.asm=, 使用了 =Linux= 标准 =C= 库 =GLIBC= 的函数, 那么可以这么汇编和链接:
 
 #+BEGIN_SRC makefile
   callc: callc.o
@@ -3173,7 +3173,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 \\
 
-然而,只保证了"彼此的目标文件使用同一门语言"还是无法保证可以它们在连接起来后能够正常运行.
+然而,只保证了"彼此的目标文件使用同一门语言"还是无法保证可以它们在链接起来后能够正常运行.
 
 在前面介绍函数时就提到过几乎所有高级语言的函数调用本质都是: 先备份好函数用到的寄存器, 然后调用函数, 在返回函数后还原寄存器.
 
@@ -3228,6 +3228,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
     =i386= 规范规定用 =EBP= 来储存栈帧的起始位置, =ESP= 储存栈帧的结尾位置, 每次往栈里面压进了数据, =ESP= 就会相应减少, 指向下一个栈帧.
 
+    <<stack-layout>>
     #+CAPTION: Stack in i386 ABI
     [[../../../files/how-to-define-a-stack-in-c.png]]
 
@@ -3675,7 +3676,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 ***** GAS 标签 (Labels)
 
-=GAS= 有符号(symbol)这一中心概念: 符号是程序员给事物的命名, 连接器则使用符号来连接, 调试器用符号调试.
+=GAS= 有符号(symbol)这一中心概念: 符号是程序员给事物的命名, 链接器则使用符号来链接, 调试器用符号调试.
 
 而 =GAS= 的标签就是一种符号.
 
@@ -3717,7 +3718,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
   对于局部标签, =GAS= 把它们转换成一种更加常规的局部符号.
 
-  在后面讲连接器的时候会还会跟符号打交道, 所以目前你只要知道符号使用来标记东西就行.
+  在后面讲链接器的时候会还会跟符号打交道, 所以目前你只要知道符号使用来标记东西就行.
 
   更多关于 =GAS= 局部标签和局部符号的细节请参考[[https://sourceware.org/binutils/docs/as/Symbol-Names.html][这里]].
 
@@ -4139,11 +4140,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 由于 =argc= 只占用了 4 个字节, 所以就有了 =movl %edi, -52(%rbp)=;
 
-然后第二个参数 =argsv= 是一个字符串指针的数组, 我们要知道的是数组本身就是一个内存地址, 所以它占用 8 个字节,
+然后第二个参数 =argsv= 是一个字符串指针的数组, 要知道的是数组本身就是一个内存地址, 所以它占用 8 个字节,
 
 第二个参数是通过 =%rsi= 传进来的, 所以就有了 =movl %rsi, -64(%rbp)=.
 
-这就是 =main= 的第一个参数和第二个参数被存在栈里面的过程.
+这就是 =main= 的第一个参数和第二个参数被存在栈里面的过程, 它们的布局类似于 [[stack-layout][Stack in i386 ABI]].
 
 仔细看的话你会发现一个奇怪的地方: 第一个参数的数据只有4个字节, 第二个参数的数据大小可以从 $\%rsi$ 看出只要 8 个字节, 那么为什么两个数据之间的首地址相差了 12 个字节?
 
@@ -4712,7 +4713,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 所以理解 =ELF= 文件是那些生活在 =Linux= 操作系统中优秀 =汇编/C= 开发人员的必备技能之一.
 
-这个章节的目的是给读者提供一个解剖 =ELF= 文件的实践过程, 读完之后能够反向加深读者对汇编的理解, 以及掌握从字节的层面去分析文件的技能(并不限于 =ELF= 文件), 以及了解到连接器是如何连接各个模块.
+这个章节的目的是给读者提供一个解剖 =ELF= 文件的实践过程, 读完之后能够反向加深读者对汇编的理解, 以及掌握从字节的层面去分析文件的技能(并不限于 =ELF= 文件), 以及了解到链接器是如何链接各个模块.
 
 **** 准备
 
@@ -4805,9 +4806,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 二进制编辑器所展示的就是 =ELF= 的链接视图, 在把 =ELF= 文件载入到内存时,
 
-在启动程序时, 连接器会按照 =ELF= 文件的信息把 =sections= 划分到对应的 =segment= 里面.
+在启动程序时, 链接器会按照 =ELF= 文件的信息把 =sections= 划分到对应的 =segment= 里面.
 
-这里要强调一点, 不管在连接视图还是执行视图中, =section= 和 =segment= 两者是可以同时存在的,
+这里要强调一点, 不管在链接视图还是执行视图中, =section= 和 =segment= 两者是可以同时存在的,
 
 它们两者与其说是不同的数据, 倒不如说是不同的计量单位.
 
@@ -4836,7 +4837,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 **** ELF 头
 
-=ELF= 头存在的意义是: 保证文件数据能够在连接和执行期间被正确解析. 可见 =ELF= 头是如此的重要.
+=ELF= 头存在的意义是: 保证文件数据能够在链接和执行期间被正确解析. 可见 =ELF= 头是如此的重要.
 
 有好多种方法可以查看到 ELF 文件的头, 最简单的就是通过 =readelf= 读取 =ELF= 的文件头:
 
@@ -5080,9 +5081,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 目标文件本身不包含 =Section to Segment mapping= 的信息, 根据 =readelf= 的[[https://github.com/bminor/binutils-gdb/blob/02a8b5c25806339f801c80a5a364a963b2ece080/binutils/readelf.c#L6283][源代码]]可以知道 =readelf= 是通过节和段的文件偏移(file offset)和大小(size)来得出哪个节在哪个段里面.
 
-# 这是由连接器决定的, 而连接器的连接行为是由 [[https://sourceware.org/binutils/docs/ld/Scripts.html][连接器脚本]] 决定的, 也就是说把哪些节合并到一个段里面就是由这个连接器脚本决定的.
+# 这是由链接器决定的, 而链接器的链接行为是由 [[https://sourceware.org/binutils/docs/ld/Scripts.html][链接器脚本]] 决定的, 也就是说把哪些节合并到一个段里面就是由这个链接器脚本决定的.
 
-# 我们的示例程序 =exampe= 使用的连接器是 =GNU ld=, 可以通过 =ld --verbose= 查看到脚本内容, 里面就包含了节和段是如何对应的.
+# 我们的示例程序 =exampe= 使用的链接器是 =GNU ld=, 可以通过 =ld --verbose= 查看到脚本内容, 里面就包含了节和段是如何对应的.
 
 不过我们还是要从字节读起, 从前面的 =e_phoff= 成员可以知道, 从文件的第 =0x40= 个字节开始就是程序头了, 刚好在 =ELF= 头的后面.
 
@@ -5142,8 +5143,8 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   |-------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
   | =PT_NULL=               | 该类段将不会被使用, 这种段的成员全都是未定义, 这种段会被忽略.                                                                                                                               |
   | =PT_LOAD=               | 该类段会被加载到 =p_vaddr= 成员指向的地址上.                                                                                                                                                |
-  | =PT_DYNAMIC=            | 该类段储存了动态连接的信息.                                                                                                                                                                 |
-  | =PT_INTERP=             | 该类段存放了解释器的信息, 包括路径和大小, 这里的解析器就是连接器(linker). @@html:<br/>@@ 比如我们的例子程序 =example= 的程序头有 =INTERP= 段, 它的连接器就是 "/lib64/ld-linux-x86-64.so.2". |
+  | =PT_DYNAMIC=            | 该类段储存了动态链接的信息.                                                                                                                                                                 |
+  | =PT_INTERP=             | 该类段存放了解释器的信息, 包括路径和大小, 这里的解析器就是链接器(linker). @@html:<br/>@@ 比如我们的例子程序 =example= 的程序头有 =INTERP= 段, 它的链接器就是 "/lib64/ld-linux-x86-64.so.2". |
   | =PT_NOTE=               | 该类段存放了辅助信息的位置, 具体参考 =NOTE= 的数据结构定义, 是 =Elf64_Nhdr(64位)= 和 =Elf32_Nhdr(32位)=.                                                                                    |
   | =PT_SHLIB=              | 该类段目前处于保留状态, 未被定义.                                                                                                                                                           |
   | =PT_PHDR=               | 该类段储存了程序头表自身在文件以及内存中的位置和大小信息.                                                                                                                                   |
@@ -5309,16 +5310,16 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   |-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
   | =SHT_NULL=              | 该类节将不会被使用.                                                                                                                                                                                                                                                                              |
   | =SHT_PROGBITS=          | 该类节拥有程序相关信息, 信息的格式和含义完全取决于程序.                                                                                                                                                                                                                                          |
-  | =SHT_SYMTAB=            | 该类节拥有一张符号表(symbol table), 一般来说这些符号用于连接编辑(link editing), 也有 *可能* 用于动态连接(dynamic linking). @@html:<br/>@@ 作为一张完整的符号表, 还有可能包含各种与动态连接无关的符号. @@html:<br/>@@ 除了 =SHT_SYMTAB= 类的节外, 还有 =SHT_DYNSYM= 类的节含有用于动态连接的符号. |
+  | =SHT_SYMTAB=            | 该类节拥有一张符号表(symbol table), 一般来说这些符号用于链接编辑(link editing), 也有 *可能* 用于动态链接(dynamic linking). @@html:<br/>@@ 作为一张完整的符号表, 还有可能包含各种与动态链接无关的符号. @@html:<br/>@@ 除了 =SHT_SYMTAB= 类的节外, 还有 =SHT_DYNSYM= 类的节含有用于动态链接的符号. |
   | =SHT_STRTAB=            | 该类节是一个字符串表(string table), 每一项都代表着某些数据的名字. 可以有很多个这种类型的节, 每个该类型节的用途是不一样的, 比如有 =SHT_STRTAB= 节的项表示符号名, 有的表示节名,                                                                                                                                                                                |
   | =SHT_REL=               | 该类节拥有若干个可重定位项(relocation entries). @@html:<br/>@@ 可重定位条目有 =ElfN_Rel= 以及 =ElfN_Rela= 两种大类型(数据结构), 这里的 =N= 代指 =32= 和 =64=. @@html:<br/>@@ 该类节上的条目类型是 =ElfN_Rel=. 一个目标文件能有多个可重定位节.                                                    |
   | =SHT_RELA=              | 该类节是 =SHT_REL= 拓展, 每一项都是 =ElfN_Rel= 的拓展版本 =ElfN_Rela=.                                                                                                                                                                                                                           |
-  | =SHT_HASH=              | 该类节是一个符号哈希表(symbol hash table). @@html:<br/>@@ 一个参与动态连接的目标文件必须有一个符号哈希表, 并且只能有一个.                                                                                                                                                                        |
-  | =SHT_DYNAMIC=           | 该类节拥有动态连接的信息, 这种节叫做动态节(dynamic section), 一个目标文件只能最多有一个动态节.                                                                                                                                                                                                   |
+  | =SHT_HASH=              | 该类节是一个符号哈希表(symbol hash table). @@html:<br/>@@ 一个参与动态链接的目标文件必须有一个符号哈希表, 并且只能有一个.                                                                                                                                                                        |
+  | =SHT_DYNAMIC=           | 该类节拥有动态链接的信息, 这种节叫做动态节(dynamic section), 一个目标文件只能最多有一个动态节.                                                                                                                                                                                                   |
   | =SHT_NOTE=              | 该类节拥有某些辅助信息, 参考 =Elf32_Nhdr= 以及 =Elf64_Nhdr= 数据结构.                                                                                                                                                                                                                            |
   | =SHT_NOBITS=            | 该类节在文件映像中不占任何空间, 这种节在被加载到内存时会被组合成 =.bss= 段.                                                                                                                                                                                                                      |
   | =SHT_SHLIB=             | 该类节只是被规范保留下来而已, 还未没有被定义.                                                                                                                                                                                                                                                    |
-  | =SHT_DYNSYM=            | 该类节是一个极其简单的动态连接符号集合(a minimal set of dynamic linking symbols).                                                                                                                                                                                                                |
+  | =SHT_DYNSYM=            | 该类节是一个极其简单的动态链接符号集合(a minimal set of dynamic linking symbols).                                                                                                                                                                                                                |
   | =SHT_LOPROC/SHT_HIPROC= | 在 =[SHT_LOPROC, SHT_HIPROC]= 中间包含了和处理器相关的数据.                                                                                                                                                                                                                                      |
   | =SHT_HIUSER/SHT_LOUSER= | 在 =[SHT_LOUSER, SHT_HIUSER]= 中的节类型能够被程序使用, 只要和当前以及未来定义的节类型不冲突就可以.                                                                                                                                                                                              |
 
@@ -5342,7 +5343,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   | =.dynsym=                | 本节包含动态链接所需的符号表. @@html:<br/>@@ 节类型为 =SHT_DYNSYM=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                                                                                     |
   | =.init=                  | 本节包含程序初始化是的指令. 在程序开始调用函数主入口前执行这些指令. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 以及 =SHF_EXECINSTR=.                                                                                                                        |
   | =.fini=                  | 本节包含程序结束时执行的指令. 在程序正常结束时执行这些指令. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC= 以及 =SHF_EXECINSTR=.                                                                                                                                |
-  | <<sec-interp>> =.interp= | 本节包含程序解释器(也就是连接器)的路径名字. @@html:<br/>@@ 节的类型是 =SHT_PROGBITS=. @@html:<br/>@@ 如果本节被位于一个可载入段中, 那么节的 =sh_flags= 的 =SHF_ALLOC= 会被设置为 1, 否则有 0.                                                                                                          |
+  | <<sec-interp>> =.interp= | 本节包含程序解释器(也就是链接器)的路径名字. @@html:<br/>@@ 节的类型是 =SHT_PROGBITS=. @@html:<br/>@@ 如果本节被位于一个可载入段中, 那么节的 =sh_flags= 的 =SHF_ALLOC= 会被设置为 1, 否则有 0.                                                                                                          |
   | =.gnu.version=           | 本节包含版本符号表(version symbol table), 表的每一项都是 =ElfN_Half= 结构. @@html:<br/>@@ 节类型是 =SHT_GNU_versym=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                                    |
   | =.gnu.version_d=         | 本节包含一个版本符号定义表(version symbol definition table), 表的每一项都是 =ElfN_Verdef= 结构. @@html:<br/>@@ 节类型是 =SHT_GNU_verdef=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                               |
   | =.gnu.version_r=         | 本节包含一个表, 表的每一個元素是版本符号所需的元素, 每个元素都是 =ElfN_Verneed= 结构. @@html:<br/>@@ 节类型为 =SHT_GNU_versym=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                         |
@@ -5351,7 +5352,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   | =.note=                  | 本节包含各种说明(notes). @@html:<br/>@@ 节类型为 =SHT_NOTE=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                                                      |
   | =.note.ABI-tag=          | 本节包含 =ELF= 镜像的运行时 =ABI=, 包括操作系统的名字以及它的运行时版本. @@html:<br/>@@ 节类型为 =SHT_NOTE=. @@html:<br/>@@ 节的 =sh_flags= 只有 =SHF_ALLOC=.                                                                                                                                          |
   | =.note.gnu.build-id=     | 本节包含用于区分 =ELF= 镜像内容的 =ID=. 有着相同 =ID= 的不同文件应该包含同样的可执行内容. @@html:<br/>@@ 节类型为 =SHT_NOTE=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_ALLOC=.                                                                                                                           |
-  | =.note.GNU-stack=        | 本节是 =Linux= 目标文件用来储存栈的属性. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_EXEINSTR=, 这告诉 =GNU= 连接器连接的目标文件需要一个可执行栈(executable stack).                                                                                                |
+  | =.note.GNU-stack=        | 本节是 =Linux= 目标文件用来储存栈的属性. @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为 =SHF_EXEINSTR=, 这告诉 =GNU= 链接器链接的目标文件需要一个可执行栈(executable stack).                                                                                                |
   | =.note.openbsd.ident=    | 本节为 =OpenBSD= 的原生可执行文件通常会包含这的节, 用于标识自己是 =OpenBSD= 的原生可执行文件, 这样内核会在加载文件的时候绕过任何兼容性 =ELF= 二进制仿正测试.                                                                                                                                           |
   | =.plt=                   | 本节包含一个过程链接表(procedure linkage table). @@html:<br/>@@ 节类型为 =SHT_PROGBITS=. @@html:<br/>@@ 节的 =sh_flags= 为空.                                                                                                                                                                          |
   | =.relName=               | 本节包含可重定位信息. 按照惯例, "NAME" 表明了该节是包含了哪个节的可重定位信息. @@html:<br/>@@ 比如 =.rel.text= 就表示它含有和 =.text= 有关的可重定位信息. @@html:<br/>@@ 节类型为 =SHT_REL=. @@html:<br/>@@ 如果目标文件存在包含了本节的可加载段, 那么本节的 =sh_flags= 成员就包含 =SHF_ALLOC=.        |
@@ -5417,7 +5418,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
   该成员的值是某种表(字符串表/符号表)在节头表中的索引(a section header index of some table),
 
-  这个值是用来告诉连接器该节头所描述的节要和什么表进行连接, 解释方式取决于节的类型.
+  这个值是用来告诉链接器该节头所描述的节要和什么表进行链接, 解释方式取决于节的类型.
 
   #+ATTR_HTML: :class table table-bordered table-hover
   | =section type/sh_type=  | =sh_link=      |
@@ -5451,13 +5452,13 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
   因为该节头所描述的节是 =PT_PHDR= 类型, 不是一张表, 因此该成员值为 0.
 
-*** 连接
+*** 链接
 :PROPERTIES:
 :CUSTOM_ID: linking
 :END:
 
 #+BEGIN_EXAMPLE
-这部分内容摘录自 CSAPP 的连接.
+这部分内容摘录自 CSAPP 的链接.
 #+END_EXAMPLE
 
 这里先声明两点:
@@ -5466,13 +5467,13 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 我们这里讨论的是情况都是基于使用 =GCC= 这个编译器驱动器(compiler drivers).
 
-所谓的编译器驱动器就是调用语言预处理器, 编译器, 汇编器以及连接器的软件, 实际上我们也偶尔会把这种工具直接叫做编译器, 比如 =GCC=.
+所谓的编译器驱动器就是调用语言预处理器, 编译器, 汇编器以及链接器的软件, 实际上我们也偶尔会把这种工具直接叫做编译器, 比如 =GCC=.
 
-目前我们对连接的了解只处于把若干个目标文件合在一起而已,
+目前我们对链接的了解只处于把若干个目标文件合在一起而已,
 
 目标文件的符号(symbol)处理过程, 以及如何处理 =PIC(Position-Independent Code)=.
 
-在构建一个可执行文件的过程中, 连接器(linker)需要完成两项重要任务:
+在构建一个可执行文件的过程中, 链接器(linker)需要完成两项重要任务:
 
 - *第一步* 符号解析 (Symbol Resolution)
 
@@ -5482,9 +5483,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
   编译器和汇编器在地址 0 上开始生成代码节和数据节(code and data sections).
 
-  在连接时, 连接器会为每个符号定义(symbol definition)分配一个内存地址, 然后修改所有的符号引用(reference to symbol)指向到符号定义的内存地址上, 这就是连接器对节进行重定位(relocates the sections)的过程.
+  在链接时, 链接器会为每个符号定义(symbol definition)分配一个内存地址, 然后修改所有的符号引用(reference to symbol)指向到符号定义的内存地址上, 这就是链接器对节进行重定位(relocates the sections)的过程.
 
-  连接器只是一个执行者, 它只是根据汇编器生成指令来完成重定位的, 这些指令叫做重定位条目(relocation entries).
+  链接器只是一个执行者, 它只是根据汇编器生成指令来完成重定位的, 这些指令叫做重定位条目(relocation entries).
 
 **** 目标文件
 
@@ -5494,7 +5495,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 |-------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------|
 | 可重定位目标文件(relocatable object file) | 可以在编译时(compile time)与其它可重定位目标文件组合成一个可执行文件的目标文件                                              |
 | 可执行目标文件(executable object file)    | 可以把其数据复制到内存并执行的目标文件                                                                                      |
-| 共享目标文件(shared object file)          | 是可重定位目标文件的一种, 其数据可以在加载时(load time)或运行时(run time)被复制进内存里面并进行动态连接(linked dynamically) |
+| 共享目标文件(shared object file)          | 是可重定位目标文件的一种, 其数据可以在加载时(load time)或运行时(run time)被复制进内存里面并进行动态链接(linked dynamically) |
 
 **** 符号 (Symbol)
 
@@ -5528,7 +5529,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 |------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | =st_name=  | 符号名, 不过成员的值是符号名在字符串表中的索引                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | =st_info=  | 从 =7-4= 位表示符号绑定(bind), =3-0= 位表示符号类型(type).(具体查看 =ELF64_ST_BIND= 和 =ELF64_ST_TYPE= 的宏定义.) @@html:<br/>@@ @@html:<br/>@@ 符号类型的有以下几种, @@html:<br/>@@ =STT_NOTYPE=: 未定义; @@html:<br/>@@ =STT_OBJECT=: 数据对象; @@html:<br/>@@ =STT_FUNC=: 函数; @@html:<br/>@@ =STT_SECTION=: 节; @@html:<br/>@@ =STT_FILE=: 目标文件的源文件; @@html:<br/>@@ =STT_LOPROC / STT_HIPROC=: 在 =[ STT_LOPROC, STT_HIPROC ]= 范围内的值是跟处理器相关的; @@html:<br/>@@ @@html:<br/>@@ 符号绑定有以下几种, @@html:<br/>@@ =STB_WEAK=: 弱绑定; @@html:<br/>@@ =STB_LOCAL=: 局部绑定; @@html:<br/>@@ =STB_GLOBAL=: 全局绑定; @@html:<br/>@@ =STB_LOPROC / STB_HIPROC=: 在 =[ STB_LOPROC, STB_HIPROC ]= 范围内的值是和处理器相关的;                                                                                                                                                                                                                                                                                                               |
-| =st_other= | 控制符号的可见性. @@html:<br/>@@ 原本的 =C= 里面只要使用 =static= 关键字就能把符号限定为当前目标文件可见, 否则符号可以被所有其他目标文件可访问. @@html:<br/>@@ 在一个含有多个文件的共享库里面, 如果想让符号只能让共享库里某几个文件可见, 库外不可见, 那么就得使用特定的编译器/连接器设置符号的可见性. =GCC= 就支持这特性. @@html:<br/>@@ @@html:<br/>@@ 该成员的值可能如下, @@html:<br/>@@ =STV_DEFAULT=: 按照默认规则暴露符号; @@html:<br/>@@ =STV_HIDDEN=: 目标文件里面的符号不会被暴露出来; @@html:<br/>@@ =STV_PROTECTED=: 受保护的符号, 这种符号在当前可执行文件或共享文件外可见, 但是这个符号的引用不能被覆盖(overridden). 举个例子, 如果一个共享库里面的目标文件引用同一个库里的其它目标文件的受保护符号, 哪怕可执行文件定义了一个同名的符号, 目标文件引用的还是这个受保护符号, 不会受到可执行文件的同名符号干扰. @@html:<br/>@@ =STV_INTERNAL=: 符号不能在可执行文件或者共享文件外可见; @@html:<br/>@@ @@html:<br/>@@ 内容参考: @@html:<br/>@@ [[https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html][APPLE 的 Controlling Symbol Visibility]] @@html:<br/>@@ [[https://developer.ibm.com/articles/au-aix-symbol-visibility/][IBM 的 Part1 - Introduction to symbol visibility]] |
+| =st_other= | 控制符号的可见性. @@html:<br/>@@ 原本的 =C= 里面只要使用 =static= 关键字就能把符号限定为当前目标文件可见, 否则符号可以被所有其他目标文件可访问. @@html:<br/>@@ 在一个含有多个文件的共享库里面, 如果想让符号只能让共享库里某几个文件可见, 库外不可见, 那么就得使用特定的编译器/链接器设置符号的可见性. =GCC= 就支持这特性. @@html:<br/>@@ @@html:<br/>@@ 该成员的值可能如下, @@html:<br/>@@ =STV_DEFAULT=: 按照默认规则暴露符号; @@html:<br/>@@ =STV_HIDDEN=: 目标文件里面的符号不会被暴露出来; @@html:<br/>@@ =STV_PROTECTED=: 受保护的符号, 这种符号在当前可执行文件或共享文件外可见, 但是这个符号的引用不能被覆盖(overridden). 举个例子, 如果一个共享库里面的目标文件引用同一个库里的其它目标文件的受保护符号, 哪怕可执行文件定义了一个同名的符号, 目标文件引用的还是这个受保护符号, 不会受到可执行文件的同名符号干扰. @@html:<br/>@@ =STV_INTERNAL=: 符号不能在可执行文件或者共享文件外可见; @@html:<br/>@@ @@html:<br/>@@ 内容参考: @@html:<br/>@@ [[https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html][APPLE 的 Controlling Symbol Visibility]] @@html:<br/>@@ [[https://developer.ibm.com/articles/au-aix-symbol-visibility/][IBM 的 Part1 - Introduction to symbol visibility]] |
 | =st_shndx= | 表示符号和哪个节有关系. 该成员的值是节的索引.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | =st_value= | 符号的内存地址.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | =st_size=  | 符号的大小, 如果符号没有大小或者大小未知, 那么该成员就为 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -5550,36 +5551,36 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 **** 符号解析
 
-符号解析的一个重点问题是: 连接器是如何解决名字重复的符号呢?
+符号解析的一个重点问题是: 链接器是如何解决名字重复的符号呢?
 
 其实挺简单的, 我们知道符号分全局和局部, 局部符号的定义永远都是在自身所处的目标文件内可见, 哪怕各个模块都有一个叫做 =age= 的局部符号, 目标文件之间也是不可能发生局部符号冲突的.
 
 而全局符号则是复杂一点, 这是因为各个目标文件的全局符号都是彼此可见的, 这意味目标文件 =A= 和目标文件 =B= 可能都会有一个相同名字的全局符号.
 
-当然这种情况是允许的, 连接器会遵守以下规则来进行解析:
+当然这种情况是允许的, 链接器会遵守以下规则来进行解析:
 
-- =Rule 1=: 存在多个同名强符号, 连接器会报错.
-- =Rule 2=: 存在一个强符号和多个弱符号, 并且它们都有这相同名字, 连接器会选择强符号.
-- =Rule 3=: 存在多个同名弱符号, 连接器任意选择一个.
+- =Rule 1=: 存在多个同名强符号, 链接器会报错.
+- =Rule 2=: 存在一个强符号和多个弱符号, 并且它们都有这相同名字, 链接器会选择强符号.
+- =Rule 3=: 存在多个同名弱符号, 链接器任意选择一个.
 
 **** 重定位
 
 1. 对节和符号定义进行重定位 (Relocating sections and symbol definitions)
 
-   连接器先把所有输入目标文件的同类节分别聚合在一起成为一个同类型的新节.
+   链接器先把所有输入目标文件的同类节分别聚合在一起成为一个同类型的新节.
 
    #+CAPTION: 多个目标文件的同类节聚合
    [[../../../files/elf-views-2.png]]
 
-   然后连接器给新节/输入文件的节以及符号赋予运行时内存地址(run-time memory address),
+   然后链接器给新节/输入文件的节以及符号赋予运行时内存地址(run-time memory address),
 
    这样一来, 程序中每条指令和符号都有唯一的内存地址了.
 
 2. 对节里面的符号进行重定位 (Relocating symbol references within sections)
 
-   连接器修改代码节和数据节(code and data sections)里面的符号引用指向到正确的运行时内存地址上.
+   链接器修改代码节和数据节(code and data sections)里面的符号引用指向到正确的运行时内存地址上.
 
-   连接器需要依赖可重定位目标文件里一种叫做可重定位条目(relocation entries)的数据结构来完成.
+   链接器需要依赖可重定位目标文件里一种叫做可重定位条目(relocation entries)的数据结构来完成.
 
 
 重定位条目的定义如下:
@@ -5599,7 +5600,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 | =r_info=   | 从 =63-32= 位表示可重定向的符号, 这个值是符号在符号表上的索引. @@html:<br/>@@ (具体查看 =ELF64_R_SYM= 和 =ELF64_R_TYPE= 的宏定义). @@html:<br/>@@ 从 =31-0= 位表示可重定向的类型, 类型有很多种, 下面只讨论最常见的两种: =R_X86_64_32= 和 =R_X86_64_PC32=. @@html:<br/>@@ =R_X86_64_32= 表示把引用重定位到一个 32 位的绝对地址上, 该地址是一个有效地址. @@html:<br/>@@ =R_X86_64_PC32= 表示把引用重定位到一个 32 位的 =PC= 相对地址(=PC-relative address=)上. @@html:<br/>@@ 所谓的 =PC= 相对地址就是相对于程序计数器的当前运行时值的偏移, 由当前 =PC= 的值加上该偏移就能得出一个有效地址. @@html:<br/>@@ 也可以简单地把 =PC= 相对地址理解为两个内存地址之间的差. |
 | =r_addend= | 用于计算出可重定位条目上储存的值.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
-下面这是连接器的重定位算法的伪代码, 跟 =C= 语言比较类似.
+下面这是链接器的重定位算法的伪代码, 跟 =C= 语言比较类似.
 
 总体上是一个双重循环, 第一行表示在遍历每个节, 第二行表示在遍历当前节 =s= 的每个可重定项 =r=.
 
@@ -5607,13 +5608,13 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 =s= 就和 =C= 语言的数组一样表示数组首元素的位置.
 
-这个算法假设连接器已经计算好了每个节和符号的运行时地址,
+这个算法假设链接器已经计算好了每个节和符号的运行时地址,
 
 其中 =ADDR= 是用来获取对象的运行地址的, 比如 =ADDR(s)= 表示节 =s= 的运行时地址, =ADDR(r)= 表示可重定位项 =r= 的运行时地址.
 
 =r.type= 表示可重定位项的类型, =r.symbol= 表示可重定位的符号.
 
-指针 =refptr= 指向可重定位项 =r= 的地址, 在计算出可重定位项应该指向的地址后, 连接器就把这个结果储存在 =refptr= 指向的地址上.
+指针 =refptr= 指向可重定位项 =r= 的地址, 在计算出可重定位项应该指向的地址后, 链接器就把这个结果储存在 =refptr= 指向的地址上.
 
 #+BEGIN_SRC c
   foreach section s {
@@ -5639,11 +5640,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 **** 生成可执行文件
 
-有两种方式生成可执行文件: 静态连接(static linking)和动态连接(dynamic linking).
+有两种方式生成可执行文件: 静态链接(static linking)和动态链接(dynamic linking).
 
-=Linux= 下的连接器实际上是分为静态连接器和动态连接器的, 在进行静态连接时就调用静态连接器, 在进行动态连接时调用动态连接器.
+=Linux= 下的链接器实际上是分为静态链接器和动态链接器的, 在进行静态链接时就调用静态链接器, 在进行动态链接时调用动态链接器.
 
-但在下文遇到"连接器"这个词时, 请自行根据上下文来判断它是哪种连接器.
+但在下文遇到"链接器"这个词时, 请自行根据上下文来判断它是哪种链接器.
 
 后面的内容都会以下面这个例子进行讲解.
 
@@ -5701,17 +5702,17 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   }
 #+END_SRC
 
-***** 静态连接
+***** 静态链接
 
-所有编译系统都提供把相关目标模块文件打包成一个文件的机制, 得到这个文件叫做静态库(static library), 可以作为连接器的输入文件.
+所有编译系统都提供把相关目标模块文件打包成一个文件的机制, 得到这个文件叫做静态库(static library), 可以作为链接器的输入文件.
 
 在 =Linux= 下, 静态库是以一种叫做 =archive= 的文件格式进行储存的, 可以简单地认为它是一个目标文件的压缩包.
 
-相比于把相关目标模块文件再合并成一个目标文件, =archive= 文件能够让连接器在连接时只复制被程序引用到的目标模块文件,
+相比于把相关目标模块文件再合并成一个目标文件, =archive= 文件能够让链接器在链接时只复制被程序引用到的目标模块文件,
 
 从而减去程序用不上的功能, 减少程序发布体积, 以及避免运行时造成的内存浪费.
 
-#+CAPTION: 静态连接
+#+CAPTION: 静态链接
 [[../../../files/gcc-linking-with-static-library.png]]
 
 比如这个例子中的静态库 =libvector.a= 就是这么创建的:
@@ -5721,15 +5722,15 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
   ar rcs libvector.a addvec.o multvec.o
 #+END_SRC
 
-可由于 =main2.c= 只引用到了 =addvec.o= 的函数, 因此连接器只把 =libvector.a= 中的 =addvec.o= 复制到可执行文件中了.
+可由于 =main2.c= 只引用到了 =addvec.o= 的函数, 因此链接器只把 =libvector.a= 中的 =addvec.o= 复制到可执行文件中了.
 
 此外, =main2.c= 也使用了 =libc.a= 中 =printf.o= 的 =printf= 函数, 所以也把 =printf.o= 复制到可执行文件中.
 
-连接器会根据静态库来解析外部引用.
+链接器会根据静态库来解析外部引用.
 
-在符号解析阶段中, 连接器会从左往右对编译器命令中出现的可重定位目标文件, =.c= 文件(会被自动编译成对应的目标文件 =.o=)以及 =archive= 进行扫描,
+在符号解析阶段中, 链接器会从左往右对编译器命令中出现的可重定位目标文件, =.c= 文件(会被自动编译成对应的目标文件 =.o=)以及 =archive= 进行扫描,
 
-连接器在扫描过程中会维护三个集合:
+链接器在扫描过程中会维护三个集合:
 
 集合 =E= 包含了可执行文件所需的所有可重定位目标文件;
 
@@ -5741,15 +5742,15 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 扫描的算法如下:
 
-- 如果输入文件 =f= 是一个目标文件, 那么连接器会把 =f= 添加到集合 =E= 中, 并且更新 =D= 和 =U= 来分别反映 =f= 的符号定义和引用.
+- 如果输入文件 =f= 是一个目标文件, 那么链接器会把 =f= 添加到集合 =E= 中, 并且更新 =D= 和 =U= 来分别反映 =f= 的符号定义和引用.
 
-- 如果输入文件 =f= 是一个 =archive=, 连接器会尝试让未定义符号集合 =U= 和 =f= 中成员所定义的符号进行匹配,
+- 如果输入文件 =f= 是一个 =archive=, 链接器会尝试让未定义符号集合 =U= 和 =f= 中成员所定义的符号进行匹配,
 
   如果 =f= 的成员 =m= 定义了符号可以解析得了 =U= 里面的符号, 那么就把 =m= 添加到 =E= 中, 并且更新 =D= 和 =U= 来反映 =m= 的符号定义和引用.
 
   这个过程会遍历 =f= 中的模块文件直到 =U= 和 =D= 不再发生改变为止. 没有被包含在 =E= 中的模块 =m= 将会被忽略.
 
-- 在结束对所有输入文件的扫描时, 如果 =U= 是还是非空集合, 那么连接器会输出错误并且中止连接.
+- 在结束对所有输入文件的扫描时, 如果 =U= 是还是非空集合, 那么链接器会输出错误并且中止链接.
 
   否则把 =E= 中的所有文件合并成一个可执行文件.
 
@@ -5760,19 +5761,19 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 因此, 在命令行中的文件顺序需要保证一点: 引用了符号 =s= 的文件 =A= 位于定义了 =s= 的文件 =B= 之前.
 
-***** 动态连接
+***** 动态链接
 
-静态连接有一些缺点:
+静态链接有一些缺点:
 
-- <<static-link-disadv-1>>如果要更新程序的某一部分的功能, 那么就需要重新编译和连接生成整个程序;
+- <<static-link-disadv-1>>如果要更新程序的某一部分的功能, 那么就需要重新编译和链接生成整个程序;
 - <<static-link-disadv-2>>基本上所有程序都会引用标准 =I/O= 函数 =printf= 以及 =scanf=, 多个程序程序的运行会导致内存里面出现多份重复的 =printf= 以及 =scanf=, 导致严重的资源浪费.
 
 
-而动态连接可以把静态连接的缺点解决掉, 动态库(dynamic libraries)是一种对标静态库的东西,
+而动态链接可以把静态链接的缺点解决掉, 动态库(dynamic libraries)是一种对标静态库的东西,
 
-它可以在运行时(run time)/加载时(load time)被加载到任意的内存地址上并跟程序进行连接.
+它可以在运行时(run time)/加载时(load time)被加载到任意的内存地址上并跟程序进行链接.
 
-这个过程叫做动态连接(dynamic linking), 由程序调用的动态连接器(dynamic linker)执行完成.
+这个过程叫做动态链接(dynamic linking), 由程序调用的动态链接器(dynamic linker)执行完成.
 
 动态库也叫做共享库(shared libraries), 共享库也叫共享目标(shared objects), 这些库在 =Linux= 上是以 =.so= 作为后缀.
 
@@ -5780,29 +5781,29 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 首先, 在任意文件系统上只能有唯一一个 =.so= 文件来对应特别的库, =.so= 文件的代码以及数据(code and data)在所有引用了该库的可执行目标文件之间是共享的.
 
-其次, 在内存中, 一个 =.so= 文件的 =.text= 节的副本在不同进程之间是共享的, 这解决了静态连接的[[static-link-disadv-2][第二个缺点]].
+其次, 在内存中, 一个 =.so= 文件的 =.text= 节的副本在不同进程之间是共享的, 这解决了静态链接的[[static-link-disadv-2][第二个缺点]].
 
-#+CAPTION: 动态连接
+#+CAPTION: 动态链接
 [[../../../files/gcc-linking-with-dynamic-linking.png]]
 
-这个例子中的可执行文件 =prog21= 能够在运行时跟 =libvector.so= 进行连接.
+这个例子中的可执行文件 =prog21= 能够在运行时跟 =libvector.so= 进行链接.
 
-基本思路就是在生成可执行文件时静态地执行部分连接(do some of the linking statically), 在加载可执行文件时动态地完成连接过程.
+基本思路就是在生成可执行文件时静态地执行部分链接(do some of the linking statically), 在加载可执行文件时动态地完成链接过程.
 
-在这个过程中 =libvector.so= 的代码节和数据节并没有被复制到 =prog21= 中, 连接器只是复制了一些重定位信息和符号表信息,
+在这个过程中 =libvector.so= 的代码节和数据节并没有被复制到 =prog21= 中, 链接器只是复制了一些重定位信息和符号表信息,
 
-在加载程序时, 连接器再根据这些信息去解析出对 =libvector.so= 中的代码以及数据的引用.
+在加载程序时, 链接器再根据这些信息去解析出对 =libvector.so= 中的代码以及数据的引用.
 
-在 =loader= 加载并且运行 =prog21= 时会加载其中已连接的部分, 然后 =loader= 注意到 =prog21= 有 [[sec-interp][.interp]] 节, =loader= 加载并且运行动态连接器(dynamic loader);
+在 =loader= 加载并且运行 =prog21= 时会加载其中已链接的部分, 然后 =loader= 注意到 =prog21= 有 [[sec-interp][.interp]] 节, =loader= 加载并且运行动态链接器(dynamic loader);
 
-动态连接器再执行重定位来完成连接任务:
+动态链接器再执行重定位来完成链接任务:
 
 - 重定位 =libc.so= 中的代码以及数据到某内存段上;
 - 重定位 =libvector.so= 中的代码以及数据到另外一个内存段上;
 - 重定位 =prog21= 中所有对 =libc.so= 和 =libvector.so= 符号定义的引用;
 
 
-最后动态连接器把控制权交给程序. 从这个时候开始共享库的位置就固定下来了, 并且不会在程序运行的时候发生改变.
+最后动态链接器把控制权交给程序. 从这个时候开始共享库的位置就固定下来了, 并且不会在程序运行的时候发生改变.
 
 **** 地址无关代码 (Position-Independent Code, PIC)
 
@@ -5821,7 +5822,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 - 每个的操作系统给动态库分配内存的方式是不同的, 这造成了更多的管理难题.
 
 
-<<pic>> 操作系统需要一种方法来编译共享库的代码段, 在无需连接器修改调用模块(calling module, 也就是引用外部符号的模块)的代码段的情况下, 把它们加载到内存的任何地方.
+<<pic>> 操作系统需要一种方法来编译共享库的代码段, 在无需链接器修改调用模块(calling module, 也就是引用外部符号的模块)的代码段的情况下, 把它们加载到内存的任何地方.
 
 在这种方法下, 无数个进程可以共享一份代码段的副本, <<shared-data-segment>>当然每个进程有属于自己的读写数据段副本(own copy of the read/write data segment).
 
@@ -5856,7 +5857,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 比如说 =libvector.so= 中的 =GOT= 中的 =GOT[3]= 到 =add1= 指令的距离在运行时内固定不变的, 这里为 =0x2008b9= 个字节, 这个距离可以作为 =GOT[3]= 相对于 =add1= 上一条指令位置的 =PC= 相对地址的偏移.
 
-由于 =addcnt= 是定义在 =libvector.so= 里面的, 在编译器生成共享库模块时, 根据数据 =PIC= 引用的生成原理来给 =addcnt= 生成一个 =PC= 相对地址并且添加一个可重定位项, 让连接器解析它, 整个过程不需要 =GOT=;
+由于 =addcnt= 是定义在 =libvector.so= 里面的, 在编译器生成共享库模块时, 根据数据 =PIC= 引用的生成原理来给 =addcnt= 生成一个 =PC= 相对地址并且添加一个可重定位项, 让链接器解析它, 整个过程不需要 =GOT=;
 
 然而, 如果 =addcnt= 是定义在其它模块上, 那么通过 =GOT= 进行间接访问就是有必要的.
 
@@ -5870,9 +5871,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 在程序调用共享库的函数时, 编译器是无法预测到函数的运行时地址的, 因为在运行时内, 共享模块可以加载到任何地址上.
 
-正常情况下编译器可以为引用产生重定位记录, 在加载程序时, 动态连接器根据这份记录解析引用.
+正常情况下编译器可以为引用产生重定位记录, 在加载程序时, 动态链接器根据这份记录解析引用.
 
-然而, 这种方法需要连接器修改调用模块的代码段, 这并不符合 =PIC= 的[[pic][定义]].
+然而, 这种方法需要链接器修改调用模块的代码段, 这并不符合 =PIC= 的[[pic][定义]].
 
 =GNU= 编译系统使用了一项名为 *延迟绑定* (lazy binding) 来解决这个问题, 将函数地址的绑定推迟到第一次调用该函数时.
 
@@ -5895,13 +5896,13 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 *PLT* 是一个数组, 每个条目都是 16 个字节大小的字节码, 每一个都是用于跳转的过程(procedure).
 
-=PLT[0]= 是一个过程, 它是用来跳转到动态连接器的入口的, 换句话就是调用动态连接器.
+=PLT[0]= 是一个过程, 它是用来跳转到动态链接器的入口的, 换句话就是调用动态链接器.
 
 =PLT[1]= 调用系统启动函数(=__libc_start_main=)用来初始化执行环境, 调用 =main= 函数并且处理返回值.
 
 =PLT[2]= 开始就是调用用户代码了, 比如 =PLT[2]= 和 =PLT[3]= 分别调用 =addvec= 和 =printf=.
 
-*GOT* 和 =PLT= 合作时, =GOT[0]= 和 =GOT[1]= 包含了动态连接器解析函数地址时所需要的信息, =GOT[2]= 就是动态连接器的入口;
+*GOT* 和 =PLT= 合作时, =GOT[0]= 和 =GOT[1]= 包含了动态链接器解析函数地址时所需要的信息, =GOT[2]= 就是动态链接器的入口;
 
 之后的一个 =GOT= 项就对应一个被调用的函数, 用于在运行时解析其地址, 每个条目都有一个对应的 =PLT= 项, 因此每个 =PLT= 项目也对应一个共享库函数调用.
 
@@ -5921,8 +5922,8 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 2) 跳转到 =addvec= 调用对应的 =GOT= 项(=GOT[4]=)所储存的地址 =0x4005c6= 上,
    该地址上的指令是 =pushq $0x1=, 其中 =$0x1= 表示的是函数 =addvec= 的 =ID=.
 3) 在把 =addvec= 的 =ID= 压进栈后, =PLT[2]= 跳转到 =PLT[0]= 所在的地址上, 该地址上是指令 =pushq *GOT[1]=.
-4) 在把 =GOT[1]= 压进栈后, 跳转到 =GOT[2]= 项所储存的地址(也就是连接器的地址)上, 也就是调用连接器.
-   连接器以刚压入栈中的两项数据作为参数, 找出 =addvec= 的运行时地址 =X=, 并且把该地址储存到 =GOT[4]= 上.
+4) 在把 =GOT[1]= 压进栈后, 跳转到 =GOT[2]= 项所储存的地址(也就是链接器的地址)上, 也就是调用链接器.
+   链接器以刚压入栈中的两项数据作为参数, 找出 =addvec= 的运行时地址 =X=, 并且把该地址储存到 =GOT[4]= 上.
 
 
 *后续调用(b)*
@@ -5938,9 +5939,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 但是互联网上用"库打桩"的叫法也不少, 所以还是要知道有这个叫法的.
 #+END_EXAMPLE
 
-所谓的库干预就是自定义与库函数同名同类型的函数, 让连接器连接这些自定义函数, 而不是原本的库函数, 达到拦截效果;
+所谓的库干预就是自定义与库函数同名同类型的函数, 让链接器链接这些自定义函数, 而不是原本的库函数, 达到拦截效果;
 
-库干预可以发生在编译时, 连接时或者运行时.
+库干预可以发生在编译时, 链接时或者运行时.
 
 库干预最常见的一个用法就是给目标函数创建一个包裹函数, 在不影响目标函数原有功能的情况下拦截其输入以及输出.
 
@@ -6132,17 +6133,17 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 毫无疑问 =mainc= 不是像源代码那样调用 =libc= 库的 =malloc= 以及 =free=, 而是我们定义的 =mymalloc= 和 =myfree=.
 
-***** 连接时干预
+***** 链接时干预
 
 这个情况下使用的 =Makefile= 是 =Makefile-link-time=.
 
-这种方式是利用 =Linux= 动态连接器的 =--wrap= 选项来控制对符号引用的解析.
+这种方式是利用 =Linux= 动态链接器的 =--wrap= 选项来控制对符号引用的解析.
 
 具体用法是 =--wrap=symbol=, 对 =symbol= 的引用会变为对 =__wrap_symbol= 的引用,
 
 而对 =__real_symbol= 的引用就会变成对 =symbol= 的引用.
 
-=gcc= 的 =-Wl= 选项就是对连接器传递参数而已, =gcc -Wl,--wrap,malloc= 就是对连接器设置 =--wrap=malloc=.
+=gcc= 的 =-Wl= 选项就是对链接器传递参数而已, =gcc -Wl,--wrap,malloc= 就是对链接器设置 =--wrap=malloc=.
 
 结合 =main.c= 和 =mymalloc.c= 的 =LINKTIME= 部分来看, =main.c= 里面引用 =malloc= 和 =free= 就分别变成引用 =__wrap_malloc= 和 =__wrap_free=;
 
@@ -6154,9 +6155,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 这个情况下使用的是 =Makefile= 是 =Makefile-run-time=.
 
-我们知道, 共享库的加载和连接是在载入程序时候完成的; 然而事实是程序在运行的过程中也可加载和连接共享库.
+我们知道, 共享库的加载和链接是在载入程序时候完成的; 然而事实是程序在运行的过程中也可加载和链接共享库.
 
-=Linux= 提供了一套动态连接器的接口, 开发人员可以使用它来在运行时实现共享库的加载和连接.
+=Linux= 提供了一套动态链接器的接口, 开发人员可以使用它来在运行时实现共享库的加载和链接.
 
 这些接口由 =libc= 的 =dlfcn= 提供, 这里就不对这个库进行详细说明了,
 

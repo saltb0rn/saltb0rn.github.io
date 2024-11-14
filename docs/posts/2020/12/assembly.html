@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-07-19 Fri 22:44 -->
+<!-- 2024-11-15 Fri 00:21 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>x86 汇编</title>
@@ -287,7 +287,7 @@
 <li><a href="#org9eb43e1">ELF 节头 (Section header)</a></li>
 </ul>
 </li>
-<li><a href="#linking">连接</a>
+<li><a href="#linking">链接</a>
 <ul>
 <li><a href="#org1b903da">目标文件</a></li>
 <li><a href="#org690173b">符号 (Symbol)</a></li>
@@ -295,8 +295,8 @@
 <li><a href="#orga3674d8">重定位</a></li>
 <li><a href="#org6c2c166">生成可执行文件</a>
 <ul>
-<li><a href="#org6209dac">静态连接</a></li>
-<li><a href="#orgb9ad97c">动态连接</a></li>
+<li><a href="#org00f1375">静态链接</a></li>
+<li><a href="#org47f9f90">动态链接</a></li>
 </ul>
 </li>
 <li><a href="#orgbb8ca04">地址无关代码 (Position-Independent Code, PIC)</a>
@@ -308,7 +308,7 @@
 <li><a href="#org7b6b0ec">库干预 (Library Interpositioning)</a>
 <ul>
 <li><a href="#org20ca7e4">编译时干预</a></li>
-<li><a href="#org3f26695">连接时干预</a></li>
+<li><a href="#orgc69e6d6">链接时干预</a></li>
 <li><a href="#orgac99118">运行时干预</a></li>
 </ul>
 </li>
@@ -318,7 +318,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org855548e">
+<div class="abstract" id="orgdd9ab27">
 <p>
 这篇笔记的主要参考资料是 <code>Assembly Language Step-by-Step: Programming with Linux 3rd Edition</code>.
 </p>
@@ -412,7 +412,7 @@
 </p>
 
 <p>
-为此加强了一下书中后期"从汇编转向 <code>C</code> 语言这一部分"的内容, 从而加入了 "<code>ELF</code> 文件解析以及连接器的工作细节" 这些参考书上没有的内容.
+为此加强了一下书中后期"从汇编转向 <code>C</code> 语言这一部分"的内容, 从而加入了 "<code>ELF</code> 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 </p>
 
 </div>
@@ -498,7 +498,7 @@
 </p>
 
 
-<div id="org156ab64" class="figure">
+<div id="org32ff4ac" class="figure">
 <p><img src="../../../files/memory-cell.png" alt="memory-cell.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>内存单元</p>
@@ -565,7 +565,7 @@
 </p>
 
 
-<div id="org26e795c" class="figure">
+<div id="org392201c" class="figure">
 <p><img src="../../../files/memory-chip.png" alt="memory-chip.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>内存芯片</p>
@@ -632,7 +632,7 @@
 </p>
 
 
-<div id="org639ab51" class="figure">
+<div id="org6d7f902" class="figure">
 <p><img src="../../../files/memory.png" alt="memory.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>内存系统</p>
@@ -723,11 +723,11 @@
 </p>
 
 <p>
-内存和 <code>CPU</code> 大概是这样连接的,
+内存和 <code>CPU</code> 大概是这样链接的,
 </p>
 
 
-<div id="org9ca6130" class="figure">
+<div id="org4a90e72" class="figure">
 <p><img src="../../../files/memory-connected-to-cpu.png" alt="memory-connected-to-cpu.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>CPU和内存</p>
@@ -814,7 +814,7 @@
 </p>
 
 <p>
-而 <b>更大一部分晶体管</b> 更像是一个相互连接的开关,在复杂的开关网络中与更多的开关进行连接,
+而 <b>更大一部分晶体管</b> 更像是一个相互链接的开关,在复杂的开关网络中与更多的开关进行链接,
 </p>
 
 <p>
@@ -1100,7 +1100,7 @@
 </p>
 
 
-<div id="orgf0eebf3" class="figure">
+<div id="org43320eb" class="figure">
 <p><img src="../../../files/multitasking.png" alt="multitasking.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>多任务</p>
@@ -1123,7 +1123,7 @@
 </p>
 
 
-<div id="orgc3b43f9" class="figure">
+<div id="orgcd6baf9" class="figure">
 <p><img src="../../../files/operating-system.png" alt="operating-system.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>成熟的操作习系统</p>
@@ -1247,7 +1247,7 @@
 </p>
 
 <p>
-这也意味着 <code>CPU</code> 有一些地址线是空闲的, 它们没有连接到内存上, 因此 <code>CPU</code> 的可寻址范围还是决定于内存.
+这也意味着 <code>CPU</code> 有一些地址线是空闲的, 它们没有链接到内存上, 因此 <code>CPU</code> 的可寻址范围还是决定于内存.
 </p>
 
 <p>
@@ -1263,7 +1263,7 @@
 </p>
 
 
-<div id="org4209a80" class="figure">
+<div id="org2e43f26" class="figure">
 <p><img src="../../../files/intel-8080-memory-model.png" alt="intel-8080-memory-model.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>英特尔-8080 内存模型</p>
@@ -1326,7 +1326,7 @@
 </p>
 
 
-<div id="org181b824" class="figure">
+<div id="org0493fc8" class="figure">
 <p><img src="../../../files/intel-8086-memory-model.png" alt="intel-8086-memory-model.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>英特尔-8086 内存模型</p>
@@ -1357,7 +1357,7 @@
 </p>
 
 
-<div id="org14205fc" class="figure">
+<div id="orgb2ada3a" class="figure">
 <p><img src="../../../files/a-megabyte-through-64k.png" alt="a-megabyte-through-64k.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>任何时候只能访问64K个字节</p>
@@ -1400,7 +1400,7 @@
 </p>
 
 
-<div id="org5566481" class="figure">
+<div id="org2e43bd7" class="figure">
 <p><img src="../../../files/terms-of-memory.png" alt="terms-of-memory.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>内存术语</p>
@@ -1423,7 +1423,7 @@
 </p>
 
 
-<div id="org7be1005" class="figure">
+<div id="orgdb16a79" class="figure">
 <p><img src="../../../files/mem-addr-vs-seg-addr.png" alt="mem-addr-vs-seg-addr.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>段地址对内存地址</p>
@@ -1502,7 +1502,7 @@
 </p>
 
 
-<div id="orgb703659" class="figure">
+<div id="org2cc14a2" class="figure">
 <p><img src="../../../files/segements-and-offsets.png" alt="segements-and-offsets.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>同一个字节,不同地址</p>
@@ -1642,7 +1642,7 @@
 </p>
 
 
-<div id="org1da69f3" class="figure">
+<div id="org03e64a1" class="figure">
 <p><img src="../../../files/stack.png" alt="stack.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>栈</p>
@@ -1657,7 +1657,7 @@
 </p>
 
 
-<div id="org5854a83" class="figure">
+<div id="orga5bc9d6" class="figure">
 <p><img src="../../../files/x86-stack.png" alt="x86-stack.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>x86 栈</p>
@@ -1760,7 +1760,7 @@
 </p>
 
 
-<div id="org2f94b07" class="figure">
+<div id="org981edcb" class="figure">
 <p><img src="../../../files/32-bit-register.png" alt="32-bit-register.png">
 </p>
 <p><span class="figure-number">Figure 15: </span>32位寄存器</p>
@@ -1787,7 +1787,7 @@
 </p>
 
 
-<div id="orgb576fdb" class="figure">
+<div id="orgfd3db5a" class="figure">
 <p><img src="../../../files/8-16-32-bit-register.png" alt="8-16-32-bit-register.png">
 </p>
 <p><span class="figure-number">Figure 16: </span>8位,16位和32位寄存器</p>
@@ -1900,7 +1900,7 @@
 </p>
 
 
-<div id="orgc46337d" class="figure">
+<div id="org268cd34" class="figure">
 <p><img src="../../../files/real-mode-flat-model.png" alt="real-mode-flat-model.png">
 </p>
 <p><span class="figure-number">Figure 17: </span>CP/M-80 与实模式平面模型</p>
@@ -1943,7 +1943,7 @@
 </p>
 
 
-<div id="org4158aaa" class="figure">
+<div id="org76bfcf6" class="figure">
 <p><img src="../../../files/real-mode-segmented-model.png" alt="real-mode-segmented-model.png">
 </p>
 <p><span class="figure-number">Figure 18: </span>DOS与实模式分段模型</p>
@@ -2022,7 +2022,7 @@
 </p>
 
 
-<div id="orge4640fb" class="figure">
+<div id="orgd19caef" class="figure">
 <p><img src="../../../files/protected-mode-flat-model.png" alt="protected-mode-flat-model.png">
 </p>
 <p><span class="figure-number">Figure 19: </span>保护模式平面模型</p>
@@ -2175,7 +2175,7 @@
 当源代码文件都是使用 <code>C</code> 这样的高级语言编写的, 那么这种程序翻译器叫做编译器(compiler), <code>GCC</code> 就是一个例子;
 </p>
 
-<pre class="example" id="orgab27d02">
+<pre class="example" id="org3a01271">
 实际上, 把 GCC 叫做编译器驱动器更加准确, 后面也会提到.
 </pre>
 
@@ -2281,7 +2281,7 @@
 </p>
 
 
-<div id="org7f6b443" class="figure">
+<div id="org1c5b798" class="figure">
 <p><img src="../../../files/what-does-assembler-do.png" alt="what-does-assembler-do.png">
 </p>
 <p><span class="figure-number">Figure 20: </span>汇编器的工作</p>
@@ -2312,7 +2312,7 @@
 </p>
 
 <p>
-<b>目标代码和连接器</b>
+<b>目标代码和链接器</b>
 </p>
 
 <p>
@@ -2324,7 +2324,7 @@
 </p>
 
 <p>
-还需要多一个叫做连接(linking)的步骤, 完成这个工作的程序叫做连接器(linker), 它的作用是把所有目标模块文件变成一个可执行程序.
+还需要多一个叫做链接(linking)的步骤, 完成这个工作的程序叫做链接器(linker), 它的作用是把所有目标模块文件变成一个可执行程序.
 </p>
 
 <p>
@@ -2336,18 +2336,18 @@
 </p>
 
 <p>
-汇编器对每个源代码文件进行汇编, 然后把所有目标代码文件进行连接为一个可执行程序.
+汇编器对每个源代码文件进行汇编, 然后把所有目标代码文件进行链接为一个可执行程序.
 </p>
 
 
-<div id="org711c6ce" class="figure">
+<div id="orgd50dcf7" class="figure">
 <p><img src="../../../files/assembler-and-linker.png" alt="assembler-and-linker.png">
 </p>
-<p><span class="figure-number">Figure 21: </span>汇编器和连接器</p>
+<p><span class="figure-number">Figure 21: </span>汇编器和链接器</p>
 </div>
 
 <p>
-但这并不意味着只有一个源代码文件的情况下就不需要连接器, 连接器并非只是单纯地把东西块连接起来,
+但这并不意味着只有一个源代码文件的情况下就不需要链接器, 链接器并非只是单纯地把东西块链接起来,
 </p>
 
 <p>
@@ -2370,7 +2370,7 @@
 <li>对模块外数据对象的引用;</li>
 <li>调试信息(debugging information);</li>
 <li><p>
-一些用来帮助连接器创建可执行程序的杂项(odds and ends);
+一些用来帮助链接器创建可执行程序的杂项(odds and ends);
 </p>
 
 <p>
@@ -2382,15 +2382,15 @@
 </p>
 
 <p>
-为了把多个目标模块连接成一个可执行程序, 连接器需要先建立一个叫做符号表(symbol table)的索引,
+为了把多个目标模块链接成一个可执行程序, 链接器需要先建立一个叫做符号表(symbol table)的索引,
 </p>
 
 <p>
-这个索引记录了它连接的每一个目标模块中的每个符号, 以及哪个符号指向哪个模块内部的哪个位置.
+这个索引记录了它链接的每一个目标模块中的每个符号, 以及哪个符号指向哪个模块内部的哪个位置.
 </p>
 
 <p>
-然后连接器建立一个映像(image), 它就是程序被加载到内存后的模样.
+然后链接器建立一个映像(image), 它就是程序被加载到内存后的模样.
 </p>
 
 <p>
@@ -2398,7 +2398,7 @@
 </p>
 
 <p>
-在建立映像中, 最重要的一件事情是连接器使用 <b>相对地址</b> 来进行引用.
+在建立映像中, 最重要的一件事情是链接器使用 <b>相对地址</b> 来进行引用.
 </p>
 
 <p>
@@ -2410,7 +2410,7 @@
 </p>
 
 <p>
-连接器在生成映像的时候, 它知道符号在映像中的位置, 它知道在什么地方放入真实地址.
+链接器在生成映像的时候, 它知道符号在映像中的位置, 它知道在什么地方放入真实地址.
 </p>
 
 <p>
@@ -2442,7 +2442,7 @@
 </p>
 
 <p>
-连接过程有很多细节值得了解, 目前就先了解到这里, 后面会有<a href="#linking">章节</a>详细介绍.
+链接过程有很多细节值得了解, 目前就先了解到这里, 后面会有<a href="#linking">章节</a>详细介绍.
 </p>
 
 <p>
@@ -2486,11 +2486,11 @@
 </p>
 
 <p>
-这个特性叫做可重定位性(relocatability), 是现代计算机系统必要部分, 处理可重定位性可能占据了连接器的工作的一大部分.
+这个特性叫做可重定位性(relocatability), 是现代计算机系统必要部分, 处理可重定位性可能占据了链接器的工作的一大部分.
 </p>
 
 <p>
-动态连接库具备这种特性, 后面会稍微提一下.
+动态链接库具备这种特性, 后面会稍微提一下.
 </p></li>
 </ul>
 </div>
@@ -2504,7 +2504,7 @@
 </p>
 
 
-<div id="orgd8b221d" class="figure">
+<div id="org6e09bc9" class="figure">
 <p><img src="../../../files/the-assembly-language-development-process.png" alt="the-assembly-language-development-process.png">
 </p>
 <p><span class="figure-number">Figure 22: </span>使用汇编语言进行开发的流程</p>
@@ -2515,7 +2515,7 @@
 </p>
 
 <p>
-在上图可以看到有汇编器错误(assembler errors)和连接器错误(linker errors),
+在上图可以看到有汇编器错误(assembler errors)和链接器错误(linker errors),
 </p>
 
 <p>
@@ -2531,7 +2531,7 @@
 </p>
 
 <p>
-和前面的汇编器错误和连接器错误不一样的是,汇编器错误和连接器错误分别是由汇编器和连接器发出的.
+和前面的汇编器错误和链接器错误不一样的是,汇编器错误和链接器错误分别是由汇编器和链接器发出的.
 </p>
 
 <p>
@@ -2551,7 +2551,7 @@
 </p>
 
 <p>
-首先我们是运行在 <code>64-bit CPU</code> 的 <code>x64 Linux</code> 操作系统上进行实践的,汇编器使用的是 <code>NASM</code>,连接器使用的是 <code>ld</code>,
+首先我们是运行在 <code>64-bit CPU</code> 的 <code>x64 Linux</code> 操作系统上进行实践的,汇编器使用的是 <code>NASM</code>,链接器使用的是 <code>ld</code>,
 </p>
 
 <p>
@@ -2829,7 +2829,7 @@
 </p>
 
 
-<div id="orgc900899" class="figure">
+<div id="org785f458" class="figure">
 <p><img src="../../../files/system-calls-and-registers.png" alt="system-calls-and-registers.png">
 </p>
 <p><span class="figure-number">Figure 23: </span>系统调用和寄存器</p>
@@ -2860,14 +2860,14 @@
 </p>
 
 
-<div id="org42f216d" class="figure">
+<div id="orgf56507f" class="figure">
 <p><img src="../../../files/man-2-syscall.png" alt="man-2-syscall.png">
 </p>
 <p><span class="figure-number">Figure 24: </span>man 2 syscall caller</p>
 </div>
 
 
-<div id="org79e61c8" class="figure">
+<div id="orgc272afb" class="figure">
 <p><img src="../../../files/man-2-syscall-2.png" alt="man-2-syscall-2.png">
 </p>
 <p><span class="figure-number">Figure 25: </span>man 2 syscall args</p>
@@ -2920,7 +2920,7 @@
 </p>
 
 <p>
-把 <code>-f</code> 参数设定为 <code>elf64</code> 就是编译成 <code>64-bit</code> 的 <code>elf</code> 文件, <code>elf</code> 是一种在 <code>Linux</code> 系统上使用的 <a href="https://en.wikipedia.org/wiki/Comparison_of_executable_file_formats">可执行和连接的二进制文件格式</a>(, 其实还有一些别的系统有使用过).
+把 <code>-f</code> 参数设定为 <code>elf64</code> 就是编译成 <code>64-bit</code> 的 <code>elf</code> 文件, <code>elf</code> 是一种在 <code>Linux</code> 系统上使用的 <a href="https://en.wikipedia.org/wiki/Comparison_of_executable_file_formats">可执行和链接的二进制文件格式</a>(, 其实还有一些别的系统有使用过).
 </p>
 
 <p>
@@ -2948,7 +2948,7 @@
 </p>
 
 <p>
-最后对目标模块进行 <b>进行连接</b>:
+最后对目标模块进行 <b>进行链接</b>:
 </p>
 
 <div class="org-src-container">
@@ -2961,10 +2961,10 @@
 </p>
 
 <p>
-如果在前面汇编时没有把 <code>nasm</code> 的 <code>-f</code> 参数设置为和目前架构一样的话,那么你会遇到你人生的第一个连接错误:
+如果在前面汇编时没有把 <code>nasm</code> 的 <code>-f</code> 参数设置为和目前架构一样的话,那么你会遇到你人生的第一个链接错误:
 </p>
 
-<pre class="example" id="orgd9ae60a">
+<pre class="example" id="org053b922">
 ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86-64 output.
 </pre>
 
@@ -2977,7 +2977,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-有时候可能需要频繁修改代码,为了简化每次地的汇编和连接过程,可以使用 <code>make</code> 命令,它要求开发人员会编写一点点 <code>Makefile</code> 文件.
+有时候可能需要频繁修改代码,为了简化每次地的汇编和链接过程,可以使用 <code>make</code> 命令,它要求开发人员会编写一点点 <code>Makefile</code> 文件.
 </p>
 
 <p>
@@ -3019,7 +3019,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-一旦文件多了,依赖复杂了, <code>Makefile</code> 可以很大程度的简化开发者汇编和连接的工作流程,
+一旦文件多了,依赖复杂了, <code>Makefile</code> 可以很大程度的简化开发者汇编和链接的工作流程,
 </p>
 
 <p>
@@ -3057,7 +3057,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 
-<div id="org594bec4" class="figure">
+<div id="org8d654a9" class="figure">
 <p><img src="../../../files/gdb-eatsyscall-part1.png" alt="gdb-eatsyscall-part1.png">
 </p>
 <p><span class="figure-number">Figure 26: </span>初次进入调试</p>
@@ -3092,7 +3092,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orge599395" class="figure">
+<div id="org3344a1d" class="figure">
 <p><img src="../../../files/gdb-help.png" alt="gdb-help.png">
 </p>
 <p><span class="figure-number">Figure 27: </span>gdb help</p>
@@ -3111,7 +3111,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orga52902d" class="figure">
+<div id="org667a1f8" class="figure">
 <p><img src="../../../files/gdb-files-list.png" alt="gdb-files-list.png">
 </p>
 <p><span class="figure-number">Figure 28: </span>gdb list</p>
@@ -3139,7 +3139,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org8c5d754" class="figure">
+<div id="orga632563" class="figure">
 <p><img src="../../../files/gdb-files-list-start.png" alt="gdb-files-list-start.png">
 </p>
 <p><span class="figure-number">Figure 29: </span>找到需要暂停的位置</p>
@@ -3170,7 +3170,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org33d6997" class="figure">
+<div id="org4d26f44" class="figure">
 <p><img src="../../../files/gdb-break.png" alt="gdb-break.png">
 </p>
 <p><span class="figure-number">Figure 30: </span>设置断点</p>
@@ -3181,7 +3181,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgec23c54" class="figure">
+<div id="orgc4b18f6" class="figure">
 <p><img src="../../../files/gdb-run.png" alt="gdb-run.png">
 </p>
 <p><span class="figure-number">Figure 31: </span>gdb run</p>
@@ -3196,7 +3196,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orge485a3d" class="figure">
+<div id="org9402050" class="figure">
 <p><img src="../../../files/gdb-where.png" alt="gdb-where.png">
 </p>
 <p><span class="figure-number">Figure 32: </span>gdb where</p>
@@ -3263,7 +3263,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org4fc123d" class="figure">
+<div id="org8d82fbb" class="figure">
 <p><img src="../../../files/gdb-info-registers.png" alt="gdb-info-registers.png">
 </p>
 <p><span class="figure-number">Figure 33: </span>gdb info registers</p>
@@ -3282,7 +3282,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgf590ed3" class="figure">
+<div id="org78821e9" class="figure">
 <p><img src="../../../files/gdb-examine-data.png" alt="gdb-examine-data.png">
 </p>
 <p><span class="figure-number">Figure 34: </span>检查数据</p>
@@ -3371,7 +3371,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgafb6313" class="figure">
+<div id="orgce858cb" class="figure">
 <p><img src="../../../files/MOV-and-operands.png" alt="MOV-and-operands.png">
 </p>
 <p><span class="figure-number">Figure 35: </span>MOV和它的操作数</p>
@@ -3553,7 +3553,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org4831bbd" class="figure">
+<div id="org395047e" class="figure">
 <p><img src="../../../files/protected-mode-memory-addressing.png" alt="protected-mode-memory-addressing.png">
 </p>
 </div>
@@ -3672,7 +3672,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org7a57292" class="figure">
+<div id="orgbbce9b8" class="figure">
 <p><img src="../../../files/x86-EFlags-register.png" alt="x86-EFlags-register.png">
 </p>
 <p><span class="figure-number">Figure 36: </span>x86 EFlags 寄存器</p>
@@ -4321,7 +4321,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgb44797c" class="figure">
+<div id="orge805aad" class="figure">
 <p><img src="../../../files/common-ranges-of-signed-values.png" alt="common-ranges-of-signed-values.png">
 </p>
 <p><span class="figure-number">Figure 37: </span>常见的范围</p>
@@ -4368,7 +4368,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org6a10b62" class="figure">
+<div id="orge9cd3b0" class="figure">
 <p><img src="../../../files/movsx-instruction.png" alt="movsx-instruction.png">
 </p>
 <p><span class="figure-number">Figure 38: </span>MOVSX 指令</p>
@@ -4415,7 +4415,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org323611d" class="figure">
+<div id="orgf6db333" class="figure">
 <p><img src="../../../files/mul-instruction.png" alt="mul-instruction.png">
 </p>
 <p><span class="figure-number">Figure 39: </span>MUL 指令用法</p>
@@ -4462,7 +4462,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org6602d77" class="figure">
+<div id="org4d1a90e" class="figure">
 <p><img src="../../../files/div-instruction.png" alt="div-instruction.png">
 </p>
 <p><span class="figure-number">Figure 40: </span>DIV 指令用法</p>
@@ -4495,7 +4495,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orga40709b" class="figure">
+<div id="org1952573" class="figure">
 <p><img src="../../../files/the-x86-stack.png" alt="the-x86-stack.png">
 </p>
 <p><span class="figure-number">Figure 41: </span>x86 可执行文件的内存映像</p>
@@ -4613,7 +4613,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 
-<div id="org1839567" class="figure">
+<div id="orgc9de1c9" class="figure">
 <p><img src="../../../files/how-the-stack-works.png" alt="how-the-stack-works.png">
 </p>
 <p><span class="figure-number">Figure 42: </span>栈如何工作</p>
@@ -4661,7 +4661,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org7daad37" class="figure">
+<div id="org56eb89e" class="figure">
 <p><img src="../../../files/interrupt-vector-table.png" alt="interrupt-vector-table.png">
 </p>
 <p><span class="figure-number">Figure 43: </span>中断向量表</p>
@@ -4696,14 +4696,14 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org6d54793" class="figure">
+<div id="orgcadebdb" class="figure">
 <p><img src="../../../files/riding-an-interrupt-vector-into-linux.png" alt="riding-an-interrupt-vector-into-linux.png">
 </p>
 <p><span class="figure-number">Figure 44: </span>int 80h 的完整过程(一)</p>
 </div>
 
 
-<div id="orge7d5510" class="figure">
+<div id="org72f6afb" class="figure">
 <p><img src="../../../files/returning-home-from-an-interrupt.png" alt="returning-home-from-an-interrupt.png">
 </p>
 <p><span class="figure-number">Figure 45: </span>int 80h 的完整过程(二)</p>
@@ -4759,7 +4759,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orge8aad3e" class="figure">
+<div id="org765622b" class="figure">
 <p><img src="../../../files/bit-numbering.png" alt="bit-numbering.png">
 </p>
 <p><span class="figure-number">Figure 46: </span>对2个字节进行位编码</p>
@@ -4786,28 +4786,28 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org80157e3" class="figure">
+<div id="org1187692" class="figure">
 <p><img src="../../../files/ADN-truth-table.png" alt="ADN-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 47: </span>AND 真值表</p>
 </div>
 
 
-<div id="orgbfe14b7" class="figure">
+<div id="orgb849a04" class="figure">
 <p><img src="../../../files/OR-truth-table.png" alt="OR-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 48: </span>OR 真值表</p>
 </div>
 
 
-<div id="orgab7a8c9" class="figure">
+<div id="org9d509d9" class="figure">
 <p><img src="../../../files/XOR-truth-table.png" alt="XOR-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 49: </span>XOR 真值表</p>
 </div>
 
 
-<div id="org870840d" class="figure">
+<div id="org695390a" class="figure">
 <p><img src="../../../files/NOT-truth-table.png" alt="NOT-truth-table.png">
 </p>
 <p><span class="figure-number">Figure 50: </span>NOT 真值表</p>
@@ -4818,7 +4818,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org53b1c7e" class="figure">
+<div id="org400722b" class="figure">
 <p><img src="../../../files/bit-mask.png" alt="bit-mask.png">
 </p>
 <p><span class="figure-number">Figure 51: </span>AND AL, BL</p>
@@ -4833,7 +4833,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org8287e19" class="figure">
+<div id="orga9c8087" class="figure">
 <p><img src="../../../files/XOR-al-al.png" alt="XOR-al-al.png">
 </p>
 <p><span class="figure-number">Figure 52: </span>XOR AL, AL</p>
@@ -4892,7 +4892,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orga483cce" class="figure">
+<div id="orgf770488" class="figure">
 <p><img src="../../../files/rol-al-1.png" alt="rol-al-1.png">
 </p>
 <p><span class="figure-number">Figure 53: </span>ROL AL, 1</p>
@@ -4915,7 +4915,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="orgaefb765" class="figure">
+<div id="orgad76751" class="figure">
 <p><img src="../../../files/RCL-AL-1.png" alt="RCL-AL-1.png">
 </p>
 <p><span class="figure-number">Figure 54: </span>RCL AL, 1</p>
@@ -4979,14 +4979,14 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org6339627" class="figure">
+<div id="orgbd033cb" class="figure">
 <p><img src="../../../files/jump-instruction-mnemonics.png" alt="jump-instruction-mnemonics.png">
 </p>
 <p><span class="figure-number">Figure 55: </span>条件跳转指令的助记符</p>
 </div>
 
 
-<div id="org1005f05" class="figure">
+<div id="org94ac837" class="figure">
 <p><img src="../../../files/some-jump-instructions.png" alt="some-jump-instructions.png">
 </p>
 <p><span class="figure-number">Figure 56: </span>条件跳转指令</p>
@@ -5507,31 +5507,31 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 <h3 id="org920ad5f">库(Library)</h3>
 <div class="outline-text-3" id="text-org920ad5f">
 <p>
-前面有提到过库的这个概念,提到库第一时间想到的就是"把一个程序分成多个模块",生成程序的时候再把模块连接起来.
+前面有提到过库的这个概念,提到库第一时间想到的就是"把一个程序分成多个模块",生成程序的时候再把模块链接起来.
 </p>
 
 <p>
-连接方式有两种: 静态连接(static linking)和动态连接(dynamic linking).
+链接方式有两种: 静态链接(static linking)和动态链接(dynamic linking).
 </p>
 
 <p>
-静态连接就是把所有模块文件全部"合并"成一个可执行文件,可执行文件的大小基本上就是模块文件大小的总和;
+静态链接就是把所有模块文件全部"合并"成一个可执行文件,可执行文件的大小基本上就是模块文件大小的总和;
 </p>
 
 <p>
-动态连接则是把多个模块文件"像连线一样关联"到一起,生成的可执行文件的大小比静态连接得到的可执行文件的大小要小.
+动态链接则是把多个模块文件"像连线一样关联"到一起,生成的可执行文件的大小比静态链接得到的可执行文件的大小要小.
 </p>
 
 <p>
-动态连接的模块文件就像可替换的零件一样,每次只要模块文件有更新,无需重新连接生成可执行文件,只要替换需要更新的模块文件就好;
+动态链接的模块文件就像可替换的零件一样,每次只要模块文件有更新,无需重新链接生成可执行文件,只要替换需要更新的模块文件就好;
 </p>
 
 <p>
-而静态连接一旦有模块文件要更新,那么重新连接生成整个可执行文件.
+而静态链接一旦有模块文件要更新,那么重新链接生成整个可执行文件.
 </p>
 
 <p>
-一般为了方便发布程序,都采用动态连接的方式生成程序;简单的程序一般用静态连接生成.
+一般为了方便发布程序,都采用动态链接的方式生成程序;简单的程序一般用静态链接生成.
 </p>
 
 <p>
@@ -5598,7 +5598,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-而 <code>Acc</code> 后面跟着的 <code>:function</code> 则是告诉 <code>NASM</code> <code>Acc</code> 是一个函数,这个类型声明是可选的,只是没有的话在连接时 <code>ld</code> 命令会有一些警告.
+而 <code>Acc</code> 后面跟着的 <code>:function</code> 则是告诉 <code>NASM</code> <code>Acc</code> 是一个函数,这个类型声明是可选的,只是没有的话在链接时 <code>ld</code> 命令会有一些警告.
 </p>
 
 <p>
@@ -5634,7 +5634,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-先来静态连接,
+先来静态链接,
 </p>
 
 <div class="org-src-container">
@@ -5682,7 +5682,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-再来 <b>动态连接</b>, 不过在这之前, 我们需要把 <code>main.asm</code> 调整一下,
+再来 <b>动态链接</b>, 不过在这之前, 我们需要把 <code>main.asm</code> 调整一下,
 </p>
 
 <div class="org-src-container">
@@ -5709,15 +5709,15 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 <p>
-调用外部引用 <code>Acc</code> 时在其后面加上了 <code>wrt ..plt</code> 的声明, <code>plt</code> 的全称是程序连接表(<code>procedure linkage table</code>), 我们会在后面探究 <code>ELF</code> 文件时会对它进行学习.
+调用外部引用 <code>Acc</code> 时在其后面加上了 <code>wrt ..plt</code> 的声明, <code>plt</code> 的全称是程序链接表(<code>procedure linkage table</code>), 我们会在后面探究 <code>ELF</code> 文件时会对它进行学习.
 </p>
 
 <p>
-目前只需要知道这是在声明 <code>Acc</code> 是外部模块的一个函数, 有了这个声明, <code>NASM</code> 让连接器在连接时生成一个表来查找 <code>Acc</code> 的定义(. 参考 <a href="https://www.nasm.us/doc/nasmdoc8.html#section-8.9.3">Position-Independent Code: ELF Special Symbols and WRT</a>).
+目前只需要知道这是在声明 <code>Acc</code> 是外部模块的一个函数, 有了这个声明, <code>NASM</code> 让链接器在链接时生成一个表来查找 <code>Acc</code> 的定义(. 参考 <a href="https://www.nasm.us/doc/nasmdoc8.html#section-8.9.3">Position-Independent Code: ELF Special Symbols and WRT</a>).
 </p>
 
 <p>
-连接时需要在生成可执行文件的一步给 <code>ld</code> 命令加上 <code>-pie</code> 选项, 所以最终的 <code>Makefile</code> 是这样的(参考 <a href="https://www.nasm.us/doc/nasmdo10.html#section-10.2.5">https://www.nasm.us/doc/nasmdo10.html#section-10.2.5</a>):
+链接时需要在生成可执行文件的一步给 <code>ld</code> 命令加上 <code>-pie</code> 选项, 所以最终的 <code>Makefile</code> 是这样的(参考 <a href="https://www.nasm.us/doc/nasmdo10.html#section-10.2.5">https://www.nasm.us/doc/nasmdo10.html#section-10.2.5</a>):
 </p>
 
 <div class="org-src-container">
@@ -5745,15 +5745,15 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-比起静态连接, 这里多了一步 <code>mathlib.so</code> 的编译, <code>*.so</code> 就是 <code>Linux</code> 的动态连接库的后缀, <code>so</code> 的全称是 <code>shared object</code> 的意思.
+比起静态链接, 这里多了一步 <code>mathlib.so</code> 的编译, <code>*.so</code> 就是 <code>Linux</code> 的动态链接库的后缀, <code>so</code> 的全称是 <code>shared object</code> 的意思.
 </p>
 
 <p>
-而且在最后生成可执行文件 <code>main</code> 时要告诉 <code>ld</code> 命令: <code>math.o</code> 文件要如何和动态库 <code>mathlib.so</code> 连接.
+而且在最后生成可执行文件 <code>main</code> 时要告诉 <code>ld</code> 命令: <code>math.o</code> 文件要如何和动态库 <code>mathlib.so</code> 链接.
 </p>
 
 <p>
-<code>ld</code> 命令的 <code>-I</code> 选项是指定用使用哪一个动态连接器, 当链接生成目标的一个引用动态库的 <code>ELF</code> 程序时, 可能需要手动设定一下动态连接器, <code>Ubuntu</code> 的64位动态连接器位于 <code>/lib64/ld-linux-x86-64.so.2</code>;
+<code>ld</code> 命令的 <code>-I</code> 选项是指定用使用哪一个动态链接器, 当链接生成目标的一个引用动态库的 <code>ELF</code> 程序时, 可能需要手动设定一下动态链接器, <code>Ubuntu</code> 的64位动态链接器位于 <code>/lib64/ld-linux-x86-64.so.2</code>;
 </p>
 
 <p>
@@ -5761,7 +5761,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-<code>ld</code> 的 <code>-l</code> 选项用来指定要连接哪个库, 它有两种语法 <code>-l:filename</code> 以及 <code>-l name</code>,
+<code>ld</code> 的 <code>-l</code> 选项用来指定要链接哪个库, 它有两种语法 <code>-l:filename</code> 以及 <code>-l name</code>,
 </p>
 
 <p>
@@ -5769,7 +5769,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-<code>ld</code> 的 <code>-rpath</code> 选项是指定可执行程序在运行时搜索动态连接库文件的目录,也就是 <code>main</code> 在运行时在什么地方找 <code>mathlib.so</code> 文件.
+<code>ld</code> 的 <code>-rpath</code> 选项是指定可执行程序在运行时搜索动态链接库文件的目录,也就是 <code>main</code> 在运行时在什么地方找 <code>mathlib.so</code> 文件.
 </p>
 
 <p>
@@ -5786,7 +5786,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </div>
 
 <p>
-<code>ld</code> 命令使用 <code>-shared</code> 选项意味着最后连接得到的是一个动态连接库.
+<code>ld</code> 命令使用 <code>-shared</code> 选项意味着最后链接得到的是一个动态链接库.
 </p>
 
 <p>
@@ -5827,7 +5827,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org579da8e" class="figure">
+<div id="org3e112ed" class="figure">
 <p><img src="../../../files/how-macros-work.png" alt="how-macros-work.png">
 </p>
 <p><span class="figure-number">Figure 57: </span>宏定义以及展开</p>
@@ -5938,7 +5938,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-函数库能够单独汇编成一个模块,引用这个模块只要连接起来就好.
+函数库能够单独汇编成一个模块,引用这个模块只要链接起来就好.
 </p>
 
 <p>
@@ -5972,11 +5972,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 <h3 id="how-to-call-c-functions-in-nasm">调用C库的函数</h3>
 <div class="outline-text-3" id="text-how-to-call-c-functions-in-nasm">
 <p>
-把汇编语言创建的程序和 <code>C</code> 语言的函数连接起来时,得到的其实是一个混合程序了(hybrid).
+把汇编语言创建的程序和 <code>C</code> 语言的函数链接起来时,得到的其实是一个混合程序了(hybrid).
 </p>
 
 <p>
-为什么汇编和 <code>C</code> 语言两门不同的语言所编写的程序能够连接起来并且正常运行?
+为什么汇编和 <code>C</code> 语言两门不同的语言所编写的程序能够链接起来并且正常运行?
 </p>
 
 <p>
@@ -6008,7 +6008,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org95ab8e3" class="figure">
+<div id="orgfd71079" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png">
 </p>
 <p><span class="figure-number">Figure 58: </span>GCC编译C语言并生成程序</p>
@@ -6035,7 +6035,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-最后 <code>ld</code> 把模块文件连接得到一个可执行文件, 当然 <code>GCC</code> 会给 <code>ld</code> 设置了某些参数, 和我们之前连接方式是有点差别的.
+最后 <code>ld</code> 把模块文件链接得到一个可执行文件, 当然 <code>GCC</code> 会给 <code>ld</code> 设置了某些参数, 和我们之前链接方式是有点差别的.
 </p>
 
 <p>
@@ -6043,11 +6043,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-不过这不是问题, 因为它们生成的模块文件都可以使用 <code>ld</code> 来进行连接.
+不过这不是问题, 因为它们生成的模块文件都可以使用 <code>ld</code> 来进行链接.
 </p>
 
 <p>
-假设有一份根据 <code>NASM</code> 语法编写的源代码叫做 <code>callc.asm</code>, 使用了 <code>Linux</code> 标准 <code>C</code> 库 <code>GLIBC</code> 的函数, 那么可以这么汇编和连接:
+假设有一份根据 <code>NASM</code> 语法编写的源代码叫做 <code>callc.asm</code>, 使用了 <code>Linux</code> 标准 <code>C</code> 库 <code>GLIBC</code> 的函数, 那么可以这么汇编和链接:
 </p>
 
 <div class="org-src-container">
@@ -6063,7 +6063,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 
-<div id="org4cc4be9" class="figure">
+<div id="org7377ec9" class="figure">
 <p><img src="../../../files/structure-of-hybrid.png" alt="structure-of-hybrid.png">
 </p>
 <p><span class="figure-number">Figure 59: </span>混合程序的结构</p>
@@ -6082,7 +6082,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-然而,只保证了"彼此的目标文件使用同一门语言"还是无法保证可以它们在连接起来后能够正常运行.
+然而,只保证了"彼此的目标文件使用同一门语言"还是无法保证可以它们在链接起来后能够正常运行.
 </p>
 
 <p>
@@ -6179,8 +6179,11 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 <code>i386</code> 规范规定用 <code>EBP</code> 来储存栈帧的起始位置, <code>ESP</code> 储存栈帧的结尾位置, 每次往栈里面压进了数据, <code>ESP</code> 就会相应减少, 指向下一个栈帧.
 </p>
 
+<p>
+<a id="org0df390e"></a>
+</p>
 
-<div id="orge214452" class="figure">
+<div id="orgd4dd338" class="figure">
 <p><img src="../../../files/how-to-define-a-stack-in-c.png" alt="how-to-define-a-stack-in-c.png">
 </p>
 <p><span class="figure-number">Figure 60: </span>Stack in i386 ABI</p>
@@ -6772,7 +6775,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 <h4 id="org7ca44a1">GAS 标签 (Labels)</h4>
 <div class="outline-text-4" id="text-org7ca44a1">
 <p>
-<code>GAS</code> 有符号(symbol)这一中心概念: 符号是程序员给事物的命名, 连接器则使用符号来连接, 调试器用符号调试.
+<code>GAS</code> 有符号(symbol)这一中心概念: 符号是程序员给事物的命名, 链接器则使用符号来链接, 调试器用符号调试.
 </p>
 
 <p>
@@ -6853,7 +6856,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 </p>
 
 <p>
-在后面讲连接器的时候会还会跟符号打交道, 所以目前你只要知道符号使用来标记东西就行.
+在后面讲链接器的时候会还会跟符号打交道, 所以目前你只要知道符号使用来标记东西就行.
 </p>
 
 <p>
@@ -7041,7 +7044,7 @@ objdump -s -j .comment target-file
 </p>
 
 
-<div id="org933b69c" class="figure">
+<div id="orgc6fdccf" class="figure">
 <p><img src="../../../files/readelf-wF-example.png" alt="readelf-wF-example.png">
 </p>
 <p><span class="figure-number">Figure 61: </span>readelf -wF example (该截图和这里的代码无关)</p>
@@ -7090,7 +7093,7 @@ current frame).</li>
 </p>
 
 
-<div id="org55a4d45" class="figure">
+<div id="org9c64a8a" class="figure">
 <p><img src="../../../files/x86-register-number-mapping.png" alt="x86-register-number-mapping.png">
 </p>
 <p><span class="figure-number">Figure 62: </span>DWARF Register Number Mapping</p>
@@ -7441,7 +7444,7 @@ current frame).</li>
 </p>
 
 <p>
-然后第二个参数 <code>argsv</code> 是一个字符串指针的数组, 我们要知道的是数组本身就是一个内存地址, 所以它占用 8 个字节,
+然后第二个参数 <code>argsv</code> 是一个字符串指针的数组, 要知道的是数组本身就是一个内存地址, 所以它占用 8 个字节,
 </p>
 
 <p>
@@ -7449,7 +7452,7 @@ current frame).</li>
 </p>
 
 <p>
-这就是 <code>main</code> 的第一个参数和第二个参数被存在栈里面的过程.
+这就是 <code>main</code> 的第一个参数和第二个参数被存在栈里面的过程, 它们的布局类似于 <a href="#org0df390e">Stack in i386 ABI</a>.
 </p>
 
 <p>
@@ -7489,7 +7492,7 @@ current frame).</li>
 </p>
 
 
-<div id="orgc986a50" class="figure">
+<div id="orgadbfd81" class="figure">
 <p><img src="../../../files/x86-64-abi-stack-frame-with-base-pointer.png" alt="x86-64-abi-stack-frame-with-base-pointer.png">
 </p>
 <p><span class="figure-number">Figure 63: </span>stack frame</p>
@@ -7817,7 +7820,7 @@ xorl    %eax, %eax
 </p>
 
 
-<div id="org4d7f878" class="figure">
+<div id="org6851c7d" class="figure">
 <p><img src="../../../files/system-v-x86-64-scalar-types.png" alt="system-v-x86-64-scalar-types.png">
 </p>
 <p><span class="figure-number">Figure 64: </span>ISO标准和处理器之间的标量类型对应关系</p>
@@ -8139,7 +8142,7 @@ d. 如果 <code>SSEUP</code> 的前面不是 <code>SSE</code> 或 <code>SSEUP</c
 <b>寄存器的用法</b>
 </p>
 
-<div id="orgf9f48ff" class="figure">
+<div id="orge200eb0" class="figure">
 <p><img src="../../../files/x86-64-register-usage.png" alt="x86-64-register-usage.png">
 </p>
 <p><span class="figure-number">Figure 65: </span>x86-64 寄存器的用法</p>
@@ -8375,7 +8378,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-这个章节的目的是给读者提供一个解剖 <code>ELF</code> 文件的实践过程, 读完之后能够反向加深读者对汇编的理解, 以及掌握从字节的层面去分析文件的技能(并不限于 <code>ELF</code> 文件), 以及了解到连接器是如何连接各个模块.
+这个章节的目的是给读者提供一个解剖 <code>ELF</code> 文件的实践过程, 读完之后能够反向加深读者对汇编的理解, 以及掌握从字节的层面去分析文件的技能(并不限于 <code>ELF</code> 文件), 以及了解到链接器是如何链接各个模块.
 </p>
 </div>
 
@@ -8484,7 +8487,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="orgadd18e4" class="figure">
+<div id="org783d71f" class="figure">
 <p><img src="../../../files/elf-example-emacs-hexl-mode.png" alt="elf-example-emacs-hexl-mode.png">
 </p>
 <p><span class="figure-number">Figure 66: </span>example 的字节</p>
@@ -8527,7 +8530,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="orgc95bdb9" class="figure">
+<div id="org8e64d10" class="figure">
 <p><img src="../../../files/elf-views.jpg" alt="elf-views.jpg">
 </p>
 <p><span class="figure-number">Figure 67: </span>ELF 的链接视图以及执行视图 - 单个文件</p>
@@ -8538,11 +8541,11 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-在启动程序时, 连接器会按照 <code>ELF</code> 文件的信息把 <code>sections</code> 划分到对应的 <code>segment</code> 里面.
+在启动程序时, 链接器会按照 <code>ELF</code> 文件的信息把 <code>sections</code> 划分到对应的 <code>segment</code> 里面.
 </p>
 
 <p>
-这里要强调一点, 不管在连接视图还是执行视图中, <code>section</code> 和 <code>segment</code> 两者是可以同时存在的,
+这里要强调一点, 不管在链接视图还是执行视图中, <code>section</code> 和 <code>segment</code> 两者是可以同时存在的,
 </p>
 
 <p>
@@ -8562,7 +8565,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org66e90fd" class="figure">
+<div id="orgc5aa117" class="figure">
 <p><img src="../../../files/typical-elf-executable-object-file.png" alt="typical-elf-executable-object-file.png">
 </p>
 <p><span class="figure-number">Figure 68: </span>典型的 ELF 执行文件</p>
@@ -8586,7 +8589,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <h3 id="org460101a">ELF 头</h3>
 <div class="outline-text-3" id="text-org460101a">
 <p>
-<code>ELF</code> 头存在的意义是: 保证文件数据能够在连接和执行期间被正确解析. 可见 <code>ELF</code> 头是如此的重要.
+<code>ELF</code> 头存在的意义是: 保证文件数据能够在链接和执行期间被正确解析. 可见 <code>ELF</code> 头是如此的重要.
 </p>
 
 <p>
@@ -8599,7 +8602,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 
 
-<div id="org05cfb58" class="figure">
+<div id="orgd721ada" class="figure">
 <p><img src="../../../files/readelf-h-example.png" alt="readelf-h-example.png">
 </p>
 <p><span class="figure-number">Figure 69: </span>readelf -h example</p>
@@ -8817,7 +8820,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org3f20170" class="figure">
+<div id="orgb7c058d" class="figure">
 <p><img src="../../../files/objdump-d-example-grep-_start.png" alt="objdump-d-example-grep-_start.png">
 </p>
 <p><span class="figure-number">Figure 70: </span><code>objdump -d example | grep "_start"</code></p>
@@ -9027,7 +9030,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 
 
-<div id="orge80983b" class="figure">
+<div id="orgcc37742" class="figure">
 <p><img src="../../../files/readelf-l-example.png" alt="readelf-l-example.png">
 </p>
 <p><span class="figure-number">Figure 71: </span>readelf -l example</p>
@@ -9149,12 +9152,12 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><code>PT_DYNAMIC</code></td>
-<td class="org-left">该类段储存了动态连接的信息.</td>
+<td class="org-left">该类段储存了动态链接的信息.</td>
 </tr>
 
 <tr>
 <td class="org-left"><code>PT_INTERP</code></td>
-<td class="org-left">该类段存放了解释器的信息, 包括路径和大小, 这里的解析器就是连接器(linker). <br/> 比如我们的例子程序 <code>example</code> 的程序头有 <code>INTERP</code> 段, 它的连接器就是 "/lib64/ld-linux-x86-64.so.2".</td>
+<td class="org-left">该类段存放了解释器的信息, 包括路径和大小, 这里的解析器就是链接器(linker). <br/> 比如我们的例子程序 <code>example</code> 的程序头有 <code>INTERP</code> 段, 它的链接器就是 "/lib64/ld-linux-x86-64.so.2".</td>
 </tr>
 
 <tr>
@@ -9312,7 +9315,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="orgd0bc210" class="figure">
+<div id="orgfd4f6da" class="figure">
 <p><img src="../../../files/readelf-S-example.png" alt="readelf-S-example.png">
 </p>
 <p><span class="figure-number">Figure 72: </span>readelf -S example</p>
@@ -9327,7 +9330,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org4d0e2fe" class="figure">
+<div id="orgc4c3d3f" class="figure">
 <p><img src="../../../files/the-second-section-header.png" alt="the-second-section-header.png">
 </p>
 <p><span class="figure-number">Figure 73: </span>the second section header</p>
@@ -9376,7 +9379,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org8c4fb46" class="figure">
+<div id="orge58e17d" class="figure">
 <p><img src="../../../files/readelf-p-shstrtab-example.png" alt="readelf-p-shstrtab-example.png">
 </p>
 <p><span class="figure-number">Figure 74: </span>readelf -p .shstrtab example</p>
@@ -9463,7 +9466,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><code>SHT_SYMTAB</code></td>
-<td class="org-left">该类节拥有一张符号表(symbol table), 一般来说这些符号用于连接编辑(link editing), 也有 <b>可能</b> 用于动态连接(dynamic linking). <br/> 作为一张完整的符号表, 还有可能包含各种与动态连接无关的符号. <br/> 除了 <code>SHT_SYMTAB</code> 类的节外, 还有 <code>SHT_DYNSYM</code> 类的节含有用于动态连接的符号.</td>
+<td class="org-left">该类节拥有一张符号表(symbol table), 一般来说这些符号用于链接编辑(link editing), 也有 <b>可能</b> 用于动态链接(dynamic linking). <br/> 作为一张完整的符号表, 还有可能包含各种与动态链接无关的符号. <br/> 除了 <code>SHT_SYMTAB</code> 类的节外, 还有 <code>SHT_DYNSYM</code> 类的节含有用于动态链接的符号.</td>
 </tr>
 
 <tr>
@@ -9483,12 +9486,12 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><code>SHT_HASH</code></td>
-<td class="org-left">该类节是一个符号哈希表(symbol hash table). <br/> 一个参与动态连接的目标文件必须有一个符号哈希表, 并且只能有一个.</td>
+<td class="org-left">该类节是一个符号哈希表(symbol hash table). <br/> 一个参与动态链接的目标文件必须有一个符号哈希表, 并且只能有一个.</td>
 </tr>
 
 <tr>
 <td class="org-left"><code>SHT_DYNAMIC</code></td>
-<td class="org-left">该类节拥有动态连接的信息, 这种节叫做动态节(dynamic section), 一个目标文件只能最多有一个动态节.</td>
+<td class="org-left">该类节拥有动态链接的信息, 这种节叫做动态节(dynamic section), 一个目标文件只能最多有一个动态节.</td>
 </tr>
 
 <tr>
@@ -9508,7 +9511,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><code>SHT_DYNSYM</code></td>
-<td class="org-left">该类节是一个极其简单的动态连接符号集合(a minimal set of dynamic linking symbols).</td>
+<td class="org-left">该类节是一个极其简单的动态链接符号集合(a minimal set of dynamic linking symbols).</td>
 </tr>
 
 <tr>
@@ -9619,7 +9622,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><a id="org124ee55"></a> <code>.interp</code></td>
-<td class="org-left">本节包含程序解释器(也就是连接器)的路径名字. <br/> 节的类型是 <code>SHT_PROGBITS</code>. <br/> 如果本节被位于一个可载入段中, 那么节的 <code>sh_flags</code> 的 <code>SHF_ALLOC</code> 会被设置为 1, 否则有 0.</td>
+<td class="org-left">本节包含程序解释器(也就是链接器)的路径名字. <br/> 节的类型是 <code>SHT_PROGBITS</code>. <br/> 如果本节被位于一个可载入段中, 那么节的 <code>sh_flags</code> 的 <code>SHF_ALLOC</code> 会被设置为 1, 否则有 0.</td>
 </tr>
 
 <tr>
@@ -9664,7 +9667,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><code>.note.GNU-stack</code></td>
-<td class="org-left">本节是 <code>Linux</code> 目标文件用来储存栈的属性. <br/> 节类型为 <code>SHT_PROGBITS</code>. <br/> 节的 <code>sh_flags</code> 为 <code>SHF_EXEINSTR</code>, 这告诉 <code>GNU</code> 连接器连接的目标文件需要一个可执行栈(executable stack).</td>
+<td class="org-left">本节是 <code>Linux</code> 目标文件用来储存栈的属性. <br/> 节类型为 <code>SHT_PROGBITS</code>. <br/> 节的 <code>sh_flags</code> 为 <code>SHF_EXEINSTR</code>, 这告诉 <code>GNU</code> 链接器链接的目标文件需要一个可执行栈(executable stack).</td>
 </tr>
 
 <tr>
@@ -9799,7 +9802,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-这个值是用来告诉连接器该节头所描述的节要和什么表进行连接, 解释方式取决于节的类型.
+这个值是用来告诉链接器该节头所描述的节要和什么表进行链接, 解释方式取决于节的类型.
 </p>
 
 <table class="table table-bordered table-hover">
@@ -9914,10 +9917,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 
 <div id="outline-container-linking" class="outline-2">
-<h2 id="linking">连接</h2>
+<h2 id="linking">链接</h2>
 <div class="outline-text-2" id="text-linking">
-<pre class="example" id="org54d4390">
-这部分内容摘录自 CSAPP 的连接.
+<pre class="example" id="orgeb90f86">
+这部分内容摘录自 CSAPP 的链接.
 </pre>
 
 <p>
@@ -9933,11 +9936,11 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-所谓的编译器驱动器就是调用语言预处理器, 编译器, 汇编器以及连接器的软件, 实际上我们也偶尔会把这种工具直接叫做编译器, 比如 <code>GCC</code>.
+所谓的编译器驱动器就是调用语言预处理器, 编译器, 汇编器以及链接器的软件, 实际上我们也偶尔会把这种工具直接叫做编译器, 比如 <code>GCC</code>.
 </p>
 
 <p>
-目前我们对连接的了解只处于把若干个目标文件合在一起而已,
+目前我们对链接的了解只处于把若干个目标文件合在一起而已,
 </p>
 
 <p>
@@ -9945,7 +9948,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-在构建一个可执行文件的过程中, 连接器(linker)需要完成两项重要任务:
+在构建一个可执行文件的过程中, 链接器(linker)需要完成两项重要任务:
 </p>
 
 <ul class="org-ul">
@@ -9966,11 +9969,11 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-在连接时, 连接器会为每个符号定义(symbol definition)分配一个内存地址, 然后修改所有的符号引用(reference to symbol)指向到符号定义的内存地址上, 这就是连接器对节进行重定位(relocates the sections)的过程.
+在链接时, 链接器会为每个符号定义(symbol definition)分配一个内存地址, 然后修改所有的符号引用(reference to symbol)指向到符号定义的内存地址上, 这就是链接器对节进行重定位(relocates the sections)的过程.
 </p>
 
 <p>
-连接器只是一个执行者, 它只是根据汇编器生成指令来完成重定位的, 这些指令叫做重定位条目(relocation entries).
+链接器只是一个执行者, 它只是根据汇编器生成指令来完成重定位的, 这些指令叫做重定位条目(relocation entries).
 </p></li>
 </ul>
 </div>
@@ -10009,7 +10012,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left">共享目标文件(shared object file)</td>
-<td class="org-left">是可重定位目标文件的一种, 其数据可以在加载时(load time)或运行时(run time)被复制进内存里面并进行动态连接(linked dynamically)</td>
+<td class="org-left">是可重定位目标文件的一种, 其数据可以在加载时(load time)或运行时(run time)被复制进内存里面并进行动态链接(linked dynamically)</td>
 </tr>
 </tbody>
 </table>
@@ -10087,7 +10090,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 
 <tr>
 <td class="org-left"><code>st_other</code></td>
-<td class="org-left">控制符号的可见性. <br/> 原本的 <code>C</code> 里面只要使用 <code>static</code> 关键字就能把符号限定为当前目标文件可见, 否则符号可以被所有其他目标文件可访问. <br/> 在一个含有多个文件的共享库里面, 如果想让符号只能让共享库里某几个文件可见, 库外不可见, 那么就得使用特定的编译器/连接器设置符号的可见性. <code>GCC</code> 就支持这特性. <br/> <br/> 该成员的值可能如下, <br/> <code>STV_DEFAULT</code>: 按照默认规则暴露符号; <br/> <code>STV_HIDDEN</code>: 目标文件里面的符号不会被暴露出来; <br/> <code>STV_PROTECTED</code>: 受保护的符号, 这种符号在当前可执行文件或共享文件外可见, 但是这个符号的引用不能被覆盖(overridden). 举个例子, 如果一个共享库里面的目标文件引用同一个库里的其它目标文件的受保护符号, 哪怕可执行文件定义了一个同名的符号, 目标文件引用的还是这个受保护符号, 不会受到可执行文件的同名符号干扰. <br/> <code>STV_INTERNAL</code>: 符号不能在可执行文件或者共享文件外可见; <br/> <br/> 内容参考: <br/> <a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html">APPLE 的 Controlling Symbol Visibility</a> <br/> <a href="https://developer.ibm.com/articles/au-aix-symbol-visibility/">IBM 的 Part1 - Introduction to symbol visibility</a></td>
+<td class="org-left">控制符号的可见性. <br/> 原本的 <code>C</code> 里面只要使用 <code>static</code> 关键字就能把符号限定为当前目标文件可见, 否则符号可以被所有其他目标文件可访问. <br/> 在一个含有多个文件的共享库里面, 如果想让符号只能让共享库里某几个文件可见, 库外不可见, 那么就得使用特定的编译器/链接器设置符号的可见性. <code>GCC</code> 就支持这特性. <br/> <br/> 该成员的值可能如下, <br/> <code>STV_DEFAULT</code>: 按照默认规则暴露符号; <br/> <code>STV_HIDDEN</code>: 目标文件里面的符号不会被暴露出来; <br/> <code>STV_PROTECTED</code>: 受保护的符号, 这种符号在当前可执行文件或共享文件外可见, 但是这个符号的引用不能被覆盖(overridden). 举个例子, 如果一个共享库里面的目标文件引用同一个库里的其它目标文件的受保护符号, 哪怕可执行文件定义了一个同名的符号, 目标文件引用的还是这个受保护符号, 不会受到可执行文件的同名符号干扰. <br/> <code>STV_INTERNAL</code>: 符号不能在可执行文件或者共享文件外可见; <br/> <br/> 内容参考: <br/> <a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html">APPLE 的 Controlling Symbol Visibility</a> <br/> <a href="https://developer.ibm.com/articles/au-aix-symbol-visibility/">IBM 的 Part1 - Introduction to symbol visibility</a></td>
 </tr>
 
 <tr>
@@ -10132,7 +10135,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="orgaeb2ab8" class="figure">
+<div id="orgbe9b300" class="figure">
 <p><img src="../../../files/readelf-s-example.png" alt="readelf-s-example.png">
 </p>
 <p><span class="figure-number">Figure 75: </span>readelf -s example</p>
@@ -10144,7 +10147,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <h3 id="orgcd38a04">符号解析</h3>
 <div class="outline-text-3" id="text-orgcd38a04">
 <p>
-符号解析的一个重点问题是: 连接器是如何解决名字重复的符号呢?
+符号解析的一个重点问题是: 链接器是如何解决名字重复的符号呢?
 </p>
 
 <p>
@@ -10156,13 +10159,13 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-当然这种情况是允许的, 连接器会遵守以下规则来进行解析:
+当然这种情况是允许的, 链接器会遵守以下规则来进行解析:
 </p>
 
 <ul class="org-ul">
-<li><code>Rule 1</code>: 存在多个同名强符号, 连接器会报错.</li>
-<li><code>Rule 2</code>: 存在一个强符号和多个弱符号, 并且它们都有这相同名字, 连接器会选择强符号.</li>
-<li><code>Rule 3</code>: 存在多个同名弱符号, 连接器任意选择一个.</li>
+<li><code>Rule 1</code>: 存在多个同名强符号, 链接器会报错.</li>
+<li><code>Rule 2</code>: 存在一个强符号和多个弱符号, 并且它们都有这相同名字, 链接器会选择强符号.</li>
+<li><code>Rule 3</code>: 存在多个同名弱符号, 链接器任意选择一个.</li>
 </ul>
 </div>
 </div>
@@ -10176,18 +10179,18 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-连接器先把所有输入目标文件的同类节分别聚合在一起成为一个同类型的新节.
+链接器先把所有输入目标文件的同类节分别聚合在一起成为一个同类型的新节.
 </p>
 
 
-<div id="org327e4d9" class="figure">
+<div id="orge7ffe09" class="figure">
 <p><img src="../../../files/elf-views-2.png" alt="elf-views-2.png">
 </p>
 <p><span class="figure-number">Figure 76: </span>多个目标文件的同类节聚合</p>
 </div>
 
 <p>
-然后连接器给新节/输入文件的节以及符号赋予运行时内存地址(run-time memory address),
+然后链接器给新节/输入文件的节以及符号赋予运行时内存地址(run-time memory address),
 </p>
 
 <p>
@@ -10199,11 +10202,11 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-连接器修改代码节和数据节(code and data sections)里面的符号引用指向到正确的运行时内存地址上.
+链接器修改代码节和数据节(code and data sections)里面的符号引用指向到正确的运行时内存地址上.
 </p>
 
 <p>
-连接器需要依赖可重定位目标文件里一种叫做可重定位条目(relocation entries)的数据结构来完成.
+链接器需要依赖可重定位目标文件里一种叫做可重定位条目(relocation entries)的数据结构来完成.
 </p></li>
 </ol>
 
@@ -10255,7 +10258,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </table>
 
 <p>
-下面这是连接器的重定位算法的伪代码, 跟 <code>C</code> 语言比较类似.
+下面这是链接器的重定位算法的伪代码, 跟 <code>C</code> 语言比较类似.
 </p>
 
 <p>
@@ -10271,7 +10274,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-这个算法假设连接器已经计算好了每个节和符号的运行时地址,
+这个算法假设链接器已经计算好了每个节和符号的运行时地址,
 </p>
 
 <p>
@@ -10283,7 +10286,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-指针 <code>refptr</code> 指向可重定位项 <code>r</code> 的地址, 在计算出可重定位项应该指向的地址后, 连接器就把这个结果储存在 <code>refptr</code> 指向的地址上.
+指针 <code>refptr</code> 指向可重定位项 <code>r</code> 的地址, 在计算出可重定位项应该指向的地址后, 链接器就把这个结果储存在 <code>refptr</code> 指向的地址上.
 </p>
 
 <div class="org-src-container">
@@ -10315,15 +10318,15 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 <h3 id="org6c2c166">生成可执行文件</h3>
 <div class="outline-text-3" id="text-org6c2c166">
 <p>
-有两种方式生成可执行文件: 静态连接(static linking)和动态连接(dynamic linking).
+有两种方式生成可执行文件: 静态链接(static linking)和动态链接(dynamic linking).
 </p>
 
 <p>
-<code>Linux</code> 下的连接器实际上是分为静态连接器和动态连接器的, 在进行静态连接时就调用静态连接器, 在进行动态连接时调用动态连接器.
+<code>Linux</code> 下的链接器实际上是分为静态链接器和动态链接器的, 在进行静态链接时就调用静态链接器, 在进行动态链接时调用动态链接器.
 </p>
 
 <p>
-但在下文遇到"连接器"这个词时, 请自行根据上下文来判断它是哪种连接器.
+但在下文遇到"链接器"这个词时, 请自行根据上下文来判断它是哪种链接器.
 </p>
 
 <p>
@@ -10389,11 +10392,11 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </div>
 </div>
 
-<div id="outline-container-org6209dac" class="outline-4">
-<h4 id="org6209dac">静态连接</h4>
-<div class="outline-text-4" id="text-org6209dac">
+<div id="outline-container-org00f1375" class="outline-4">
+<h4 id="org00f1375">静态链接</h4>
+<div class="outline-text-4" id="text-org00f1375">
 <p>
-所有编译系统都提供把相关目标模块文件打包成一个文件的机制, 得到这个文件叫做静态库(static library), 可以作为连接器的输入文件.
+所有编译系统都提供把相关目标模块文件打包成一个文件的机制, 得到这个文件叫做静态库(static library), 可以作为链接器的输入文件.
 </p>
 
 <p>
@@ -10401,7 +10404,7 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 <p>
-相比于把相关目标模块文件再合并成一个目标文件, <code>archive</code> 文件能够让连接器在连接时只复制被程序引用到的目标模块文件,
+相比于把相关目标模块文件再合并成一个目标文件, <code>archive</code> 文件能够让链接器在链接时只复制被程序引用到的目标模块文件,
 </p>
 
 <p>
@@ -10409,10 +10412,10 @@ LOAD R2, <span style="color: #7fffd4;">3</span>    // &#25226;&#31435;&#21363;&#
 </p>
 
 
-<div id="org83062c7" class="figure">
+<div id="org60b68ac" class="figure">
 <p><img src="../../../files/gcc-linking-with-static-library.png" alt="gcc-linking-with-static-library.png">
 </p>
-<p><span class="figure-number">Figure 77: </span>静态连接</p>
+<p><span class="figure-number">Figure 77: </span>静态链接</p>
 </div>
 
 <p>
@@ -10426,7 +10429,7 @@ ar rcs libvector.a addvec.o multvec.o
 </div>
 
 <p>
-可由于 <code>main2.c</code> 只引用到了 <code>addvec.o</code> 的函数, 因此连接器只把 <code>libvector.a</code> 中的 <code>addvec.o</code> 复制到可执行文件中了.
+可由于 <code>main2.c</code> 只引用到了 <code>addvec.o</code> 的函数, 因此链接器只把 <code>libvector.a</code> 中的 <code>addvec.o</code> 复制到可执行文件中了.
 </p>
 
 <p>
@@ -10434,15 +10437,15 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-连接器会根据静态库来解析外部引用.
+链接器会根据静态库来解析外部引用.
 </p>
 
 <p>
-在符号解析阶段中, 连接器会从左往右对编译器命令中出现的可重定位目标文件, <code>.c</code> 文件(会被自动编译成对应的目标文件 <code>.o</code>)以及 <code>archive</code> 进行扫描,
+在符号解析阶段中, 链接器会从左往右对编译器命令中出现的可重定位目标文件, <code>.c</code> 文件(会被自动编译成对应的目标文件 <code>.o</code>)以及 <code>archive</code> 进行扫描,
 </p>
 
 <p>
-连接器在扫描过程中会维护三个集合:
+链接器在扫描过程中会维护三个集合:
 </p>
 
 <p>
@@ -10466,10 +10469,10 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <ul class="org-ul">
-<li>如果输入文件 <code>f</code> 是一个目标文件, 那么连接器会把 <code>f</code> 添加到集合 <code>E</code> 中, 并且更新 <code>D</code> 和 <code>U</code> 来分别反映 <code>f</code> 的符号定义和引用.</li>
+<li>如果输入文件 <code>f</code> 是一个目标文件, 那么链接器会把 <code>f</code> 添加到集合 <code>E</code> 中, 并且更新 <code>D</code> 和 <code>U</code> 来分别反映 <code>f</code> 的符号定义和引用.</li>
 
 <li><p>
-如果输入文件 <code>f</code> 是一个 <code>archive</code>, 连接器会尝试让未定义符号集合 <code>U</code> 和 <code>f</code> 中成员所定义的符号进行匹配,
+如果输入文件 <code>f</code> 是一个 <code>archive</code>, 链接器会尝试让未定义符号集合 <code>U</code> 和 <code>f</code> 中成员所定义的符号进行匹配,
 </p>
 
 <p>
@@ -10481,7 +10484,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p></li>
 
 <li><p>
-在结束对所有输入文件的扫描时, 如果 <code>U</code> 是还是非空集合, 那么连接器会输出错误并且中止连接.
+在结束对所有输入文件的扫描时, 如果 <code>U</code> 是还是非空集合, 那么链接器会输出错误并且中止链接.
 </p>
 
 <p>
@@ -10504,29 +10507,29 @@ ar rcs libvector.a addvec.o multvec.o
 </div>
 </div>
 
-<div id="outline-container-orgb9ad97c" class="outline-4">
-<h4 id="orgb9ad97c">动态连接</h4>
-<div class="outline-text-4" id="text-orgb9ad97c">
+<div id="outline-container-org47f9f90" class="outline-4">
+<h4 id="org47f9f90">动态链接</h4>
+<div class="outline-text-4" id="text-org47f9f90">
 <p>
-静态连接有一些缺点:
+静态链接有一些缺点:
 </p>
 
 <ul class="org-ul">
-<li><a id="orge9b7cc9"></a>如果要更新程序的某一部分的功能, 那么就需要重新编译和连接生成整个程序;</li>
+<li><a id="orge9b7cc9"></a>如果要更新程序的某一部分的功能, 那么就需要重新编译和链接生成整个程序;</li>
 <li><a id="orgb7efe7f"></a>基本上所有程序都会引用标准 <code>I/O</code> 函数 <code>printf</code> 以及 <code>scanf</code>, 多个程序程序的运行会导致内存里面出现多份重复的 <code>printf</code> 以及 <code>scanf</code>, 导致严重的资源浪费.</li>
 </ul>
 
 
 <p>
-而动态连接可以把静态连接的缺点解决掉, 动态库(dynamic libraries)是一种对标静态库的东西,
+而动态链接可以把静态链接的缺点解决掉, 动态库(dynamic libraries)是一种对标静态库的东西,
 </p>
 
 <p>
-它可以在运行时(run time)/加载时(load time)被加载到任意的内存地址上并跟程序进行连接.
+它可以在运行时(run time)/加载时(load time)被加载到任意的内存地址上并跟程序进行链接.
 </p>
 
 <p>
-这个过程叫做动态连接(dynamic linking), 由程序调用的动态连接器(dynamic linker)执行完成.
+这个过程叫做动态链接(dynamic linking), 由程序调用的动态链接器(dynamic linker)执行完成.
 </p>
 
 <p>
@@ -10542,38 +10545,38 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-其次, 在内存中, 一个 <code>.so</code> 文件的 <code>.text</code> 节的副本在不同进程之间是共享的, 这解决了静态连接的<a href="#orgb7efe7f">第二个缺点</a>.
+其次, 在内存中, 一个 <code>.so</code> 文件的 <code>.text</code> 节的副本在不同进程之间是共享的, 这解决了静态链接的<a href="#orgb7efe7f">第二个缺点</a>.
 </p>
 
 
-<div id="org087ba78" class="figure">
+<div id="org0ce905c" class="figure">
 <p><img src="../../../files/gcc-linking-with-dynamic-linking.png" alt="gcc-linking-with-dynamic-linking.png">
 </p>
-<p><span class="figure-number">Figure 78: </span>动态连接</p>
+<p><span class="figure-number">Figure 78: </span>动态链接</p>
 </div>
 
 <p>
-这个例子中的可执行文件 <code>prog21</code> 能够在运行时跟 <code>libvector.so</code> 进行连接.
+这个例子中的可执行文件 <code>prog21</code> 能够在运行时跟 <code>libvector.so</code> 进行链接.
 </p>
 
 <p>
-基本思路就是在生成可执行文件时静态地执行部分连接(do some of the linking statically), 在加载可执行文件时动态地完成连接过程.
+基本思路就是在生成可执行文件时静态地执行部分链接(do some of the linking statically), 在加载可执行文件时动态地完成链接过程.
 </p>
 
 <p>
-在这个过程中 <code>libvector.so</code> 的代码节和数据节并没有被复制到 <code>prog21</code> 中, 连接器只是复制了一些重定位信息和符号表信息,
+在这个过程中 <code>libvector.so</code> 的代码节和数据节并没有被复制到 <code>prog21</code> 中, 链接器只是复制了一些重定位信息和符号表信息,
 </p>
 
 <p>
-在加载程序时, 连接器再根据这些信息去解析出对 <code>libvector.so</code> 中的代码以及数据的引用.
+在加载程序时, 链接器再根据这些信息去解析出对 <code>libvector.so</code> 中的代码以及数据的引用.
 </p>
 
 <p>
-在 <code>loader</code> 加载并且运行 <code>prog21</code> 时会加载其中已连接的部分, 然后 <code>loader</code> 注意到 <code>prog21</code> 有 <a href="#org124ee55">.interp</a> 节, <code>loader</code> 加载并且运行动态连接器(dynamic loader);
+在 <code>loader</code> 加载并且运行 <code>prog21</code> 时会加载其中已链接的部分, 然后 <code>loader</code> 注意到 <code>prog21</code> 有 <a href="#org124ee55">.interp</a> 节, <code>loader</code> 加载并且运行动态链接器(dynamic loader);
 </p>
 
 <p>
-动态连接器再执行重定位来完成连接任务:
+动态链接器再执行重定位来完成链接任务:
 </p>
 
 <ul class="org-ul">
@@ -10584,7 +10587,7 @@ ar rcs libvector.a addvec.o multvec.o
 
 
 <p>
-最后动态连接器把控制权交给程序. 从这个时候开始共享库的位置就固定下来了, 并且不会在程序运行的时候发生改变.
+最后动态链接器把控制权交给程序. 从这个时候开始共享库的位置就固定下来了, 并且不会在程序运行的时候发生改变.
 </p>
 </div>
 </div>
@@ -10619,7 +10622,7 @@ ar rcs libvector.a addvec.o multvec.o
 
 
 <p>
-<a id="org3137794"></a> 操作系统需要一种方法来编译共享库的代码段, 在无需连接器修改调用模块(calling module, 也就是引用外部符号的模块)的代码段的情况下, 把它们加载到内存的任何地方.
+<a id="org3137794"></a> 操作系统需要一种方法来编译共享库的代码段, 在无需链接器修改调用模块(calling module, 也就是引用外部符号的模块)的代码段的情况下, 把它们加载到内存的任何地方.
 </p>
 
 <p>
@@ -10675,7 +10678,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 
-<div id="org67e63c0" class="figure">
+<div id="orgd6c8cca" class="figure">
 <p><img src="../../../files/libvector-data-pic.png" alt="libvector-data-pic.png">
 </p>
 <p><span class="figure-number">Figure 79: </span>使用 GOT 引用一个全局变量</p>
@@ -10690,7 +10693,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-由于 <code>addcnt</code> 是定义在 <code>libvector.so</code> 里面的, 在编译器生成共享库模块时, 根据数据 <code>PIC</code> 引用的生成原理来给 <code>addcnt</code> 生成一个 <code>PC</code> 相对地址并且添加一个可重定位项, 让连接器解析它, 整个过程不需要 <code>GOT</code>;
+由于 <code>addcnt</code> 是定义在 <code>libvector.so</code> 里面的, 在编译器生成共享库模块时, 根据数据 <code>PIC</code> 引用的生成原理来给 <code>addcnt</code> 生成一个 <code>PC</code> 相对地址并且添加一个可重定位项, 让链接器解析它, 整个过程不需要 <code>GOT</code>;
 </p>
 
 <p>
@@ -10719,11 +10722,11 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-正常情况下编译器可以为引用产生重定位记录, 在加载程序时, 动态连接器根据这份记录解析引用.
+正常情况下编译器可以为引用产生重定位记录, 在加载程序时, 动态链接器根据这份记录解析引用.
 </p>
 
 <p>
-然而, 这种方法需要连接器修改调用模块的代码段, 这并不符合 <code>PIC</code> 的<a href="#org3137794">定义</a>.
+然而, 这种方法需要链接器修改调用模块的代码段, 这并不符合 <code>PIC</code> 的<a href="#org3137794">定义</a>.
 </p>
 
 <p>
@@ -10755,7 +10758,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 
-<div id="org333b30b" class="figure">
+<div id="org50f18c7" class="figure">
 <p><img src="../../../files/use-got-and-plt-to-call-extern-func.png" alt="use-got-and-plt-to-call-extern-func.png">
 </p>
 <p><span class="figure-number">Figure 80: </span>使用 PLT 和 GOT 调用外部函数, 图(a) 第一次调用 addvec, 图(b) 后续调用 addvec</p>
@@ -10770,7 +10773,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-<code>PLT[0]</code> 是一个过程, 它是用来跳转到动态连接器的入口的, 换句话就是调用动态连接器.
+<code>PLT[0]</code> 是一个过程, 它是用来跳转到动态链接器的入口的, 换句话就是调用动态链接器.
 </p>
 
 <p>
@@ -10782,7 +10785,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-<b>GOT</b> 和 <code>PLT</code> 合作时, <code>GOT[0]</code> 和 <code>GOT[1]</code> 包含了动态连接器解析函数地址时所需要的信息, <code>GOT[2]</code> 就是动态连接器的入口;
+<b>GOT</b> 和 <code>PLT</code> 合作时, <code>GOT[0]</code> 和 <code>GOT[1]</code> 包含了动态链接器解析函数地址时所需要的信息, <code>GOT[2]</code> 就是动态链接器的入口;
 </p>
 
 <p>
@@ -10816,8 +10819,8 @@ ar rcs libvector.a addvec.o multvec.o
 <li>跳转到 <code>addvec</code> 调用对应的 <code>GOT</code> 项(<code>GOT[4]</code>)所储存的地址 <code>0x4005c6</code> 上,
 该地址上的指令是 <code>pushq $0x1</code>, 其中 <code>$0x1</code> 表示的是函数 <code>addvec</code> 的 <code>ID</code>.</li>
 <li>在把 <code>addvec</code> 的 <code>ID</code> 压进栈后, <code>PLT[2]</code> 跳转到 <code>PLT[0]</code> 所在的地址上, 该地址上是指令 <code>pushq *GOT[1]</code>.</li>
-<li>在把 <code>GOT[1]</code> 压进栈后, 跳转到 <code>GOT[2]</code> 项所储存的地址(也就是连接器的地址)上, 也就是调用连接器.
-连接器以刚压入栈中的两项数据作为参数, 找出 <code>addvec</code> 的运行时地址 <code>X</code>, 并且把该地址储存到 <code>GOT[4]</code> 上.</li>
+<li>在把 <code>GOT[1]</code> 压进栈后, 跳转到 <code>GOT[2]</code> 项所储存的地址(也就是链接器的地址)上, 也就是调用链接器.
+链接器以刚压入栈中的两项数据作为参数, 找出 <code>addvec</code> 的运行时地址 <code>X</code>, 并且把该地址储存到 <code>GOT[4]</code> 上.</li>
 </ol>
 
 
@@ -10836,18 +10839,18 @@ ar rcs libvector.a addvec.o multvec.o
 <div id="outline-container-org7b6b0ec" class="outline-3">
 <h3 id="org7b6b0ec">库干预 (Library Interpositioning)</h3>
 <div class="outline-text-3" id="text-org7b6b0ec">
-<pre class="example" id="orgd203abc">
+<pre class="example" id="orgf6efe6c">
 也有人称之为"库打桩", 个人比较喜欢库干预, 既符合原本词意, 也符合直觉.
 
 但是互联网上用"库打桩"的叫法也不少, 所以还是要知道有这个叫法的.
 </pre>
 
 <p>
-所谓的库干预就是自定义与库函数同名同类型的函数, 让连接器连接这些自定义函数, 而不是原本的库函数, 达到拦截效果;
+所谓的库干预就是自定义与库函数同名同类型的函数, 让链接器链接这些自定义函数, 而不是原本的库函数, 达到拦截效果;
 </p>
 
 <p>
-库干预可以发生在编译时, 连接时或者运行时.
+库干预可以发生在编译时, 链接时或者运行时.
 </p>
 
 <p>
@@ -11078,15 +11081,15 @@ ar rcs libvector.a addvec.o multvec.o
 </div>
 </div>
 
-<div id="outline-container-org3f26695" class="outline-4">
-<h4 id="org3f26695">连接时干预</h4>
-<div class="outline-text-4" id="text-org3f26695">
+<div id="outline-container-orgc69e6d6" class="outline-4">
+<h4 id="orgc69e6d6">链接时干预</h4>
+<div class="outline-text-4" id="text-orgc69e6d6">
 <p>
 这个情况下使用的 <code>Makefile</code> 是 <code>Makefile-link-time</code>.
 </p>
 
 <p>
-这种方式是利用 <code>Linux</code> 动态连接器的 <code>--wrap</code> 选项来控制对符号引用的解析.
+这种方式是利用 <code>Linux</code> 动态链接器的 <code>--wrap</code> 选项来控制对符号引用的解析.
 </p>
 
 <p>
@@ -11098,7 +11101,7 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-<code>gcc</code> 的 <code>-Wl</code> 选项就是对连接器传递参数而已, <code>gcc -Wl,--wrap,malloc</code> 就是对连接器设置 <code>--wrap=malloc</code>.
+<code>gcc</code> 的 <code>-Wl</code> 选项就是对链接器传递参数而已, <code>gcc -Wl,--wrap,malloc</code> 就是对链接器设置 <code>--wrap=malloc</code>.
 </p>
 
 <p>
@@ -11123,11 +11126,11 @@ ar rcs libvector.a addvec.o multvec.o
 </p>
 
 <p>
-我们知道, 共享库的加载和连接是在载入程序时候完成的; 然而事实是程序在运行的过程中也可加载和连接共享库.
+我们知道, 共享库的加载和链接是在载入程序时候完成的; 然而事实是程序在运行的过程中也可加载和链接共享库.
 </p>
 
 <p>
-<code>Linux</code> 提供了一套动态连接器的接口, 开发人员可以使用它来在运行时实现共享库的加载和连接.
+<code>Linux</code> 提供了一套动态链接器的接口, 开发人员可以使用它来在运行时实现共享库的加载和链接.
 </p>
 
 <p>
@@ -11230,7 +11233,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="org514e813" class="figure">
+<div id="org867dd8d" class="figure">
 <p><img src="../../../files/core-dump-disabled.png" alt="core-dump-disabled.png">
 </p>
 <p><span class="figure-number">Figure 81: </span>Core Dump 未开启</p>
@@ -11241,7 +11244,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="orge7701e7" class="figure">
+<div id="orga680667" class="figure">
 <p><img src="../../../files/core-dump-enabled.png" alt="core-dump-enabled.png">
 </p>
 <p><span class="figure-number">Figure 82: </span>临时开启 Core Dump</p>
@@ -11286,7 +11289,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="org0d253c1" class="figure">
+<div id="org665fc86" class="figure">
 <p><img src="../../../files/core-dump-for-csapp-example.png" alt="core-dump-for-csapp-example.png">
 </p>
 <p><span class="figure-number">Figure 83: </span>Core dump file for the example</p>
@@ -11301,7 +11304,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff084646000)
 </p>
 
 
-<div id="orgcd04529" class="figure">
+<div id="org2213551" class="figure">
 <p><img src="../../../files/core-dump-debug-for-example.png" alt="core-dump-debug-for-example.png">
 </p>
 <p><span class="figure-number">Figure 84: </span>从 Core File 中获取程序中止时的 backtrace (从后往前看才是函数的调用顺序)</p>

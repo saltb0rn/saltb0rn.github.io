@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-06-11 Tue 19:51 -->
+<!-- 2024-11-06 Wed 16:20 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Shader 编程自救指南</title>
@@ -275,7 +275,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org96a999a">
+<div class="abstract" id="orgbaa603c">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -410,7 +410,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="org3af495c" class="figure">
+<div id="org78bb515" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif">
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
@@ -504,7 +504,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="org6bf5fbb" class="figure">
+<div id="org3e06e75" class="figure">
 <p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif">
 </p>
 </div>
@@ -540,18 +540,18 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="orgd14d124" class="figure">
+<div id="orgb61611d" class="figure">
 <p><img src="../../../files/trianglerast_f1_joshbeam.png" alt="trianglerast_f1_joshbeam.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>三个顶点所对应的片元坐标</p>
 </div>
 
 <p>
-线性插值的原理很简单, 就是 \(y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times t(x_{1} - x_{0}),\ where\ 0 \le t \le 1\).
+线性插值的原理很简单, 就是 \(y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times t(x_{1} - x_{0}),\ \mathrm{where}\ 0 \le t \le 1\).
 </p>
 
 <p>
-也可以这么表述: \(y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times (x - x_{0}),\ where\ \min(x_{0}, x_{1}) \le x \le\ \max(x_{0}, x_{1})\).
+也可以这么表述: \(y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times (x - x_{0}),\ \mathrm{where}\ \min(x_{0}, x_{1}) \le x \le\ \max(x_{0}, x_{1})\).
 </p>
 
 <p>
@@ -665,7 +665,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </div>
 
 
-<div id="org69a08b9" class="figure">
+<div id="org0d7dfd3" class="figure">
 <p><img src="../../../files/trianglerast_f2_joshbeam.png" alt="trianglerast_f2_joshbeam.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>三角形线框</p>
@@ -684,7 +684,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="org9599cde" class="figure">
+<div id="orgfa5fb57" class="figure">
 <p><img src="../../../files/trianglerast_f3_joshbeam_aux.png" alt="trianglerast_f3_joshbeam_aux.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>实心三角形</p>
@@ -803,12 +803,24 @@ h01.pop();
 </p>
 
 <p>
-实情是是每次以 \(2 \times 2\) 的片元作为单位进行传递的, 也就是一次要同时调用 4 个 <code>Fragment Shaders</code>.
+实情是每次以 \(2 \times 2\) 的片元作为单位进行传递的, 也就是一次要同时调用 4 个 <code>Fragment Shaders</code>.
 </p>
 </blockquote>
 
 <p>
 <code>OpenGL</code> 会使用一些变量来传递片元数据, 比如 <code>gl_FragCoord</code> 会把片元对应的 \(x\) 和 \(y\) 分量一并传回;
+</p>
+
+<p>
+<code>gl_FragCoord</code> 的类型是 <code>vec4</code>, 值是 \(\left(x, y, z, 1/w\right)\), 其中 \(x\) 和 \(y\) 就是片元对应的 \(x\) 和 \(y\) 分量,
+</p>
+
+<p>
+\(z\) 是根据顶点插值得到的 \(z\) 分量(, 上面的代码没有针对 \(z\) 分量进行插值, 它和 \(x\) 和 \(y\) 分量的插值略微不一样),
+</p>
+
+<p>
+同理, \(1/w\) 是根据顶点插值得到的 \(w\) 分量的倒数.
 </p>
 
 <p>
@@ -912,7 +924,7 @@ h01.pop();
 </p>
 
 
-<div id="org722bed2" class="figure">
+<div id="orgceb25c8" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>模板测试</p>
@@ -1129,7 +1141,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 
-<div id="orgda304ec" class="figure">
+<div id="org3839628" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>vertexAttribPointer</p>
@@ -1320,7 +1332,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-比如绘制 20 个顶点: <code>gl.drawArrays(gl.POINTS, 0, 20)</code>, 那么第一个顶点的 <code>ID</code> 就是 \(first + i,\ where\ i = 0\),
+比如绘制 20 个顶点: <code>gl.drawArrays(gl.POINTS, 0, 20)</code>, 那么第一个顶点的 <code>ID</code> 就是 \(first + i,\ \mathrm{where}\ i = 0\),
 </p>
 
 <p>
@@ -1565,11 +1577,19 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-还有如果你不了解<a href="https://registry.khronos.org/OpenGL-Refpages/gl4/index.php">文档</a>上 <code>Gen*Type</code> 这个词语是什么意思, 你可以去看 <code>GLSL</code> 的语言规范, 我这里可以告诉你的是它的全称是 <code>Generic * Types</code>, 中间的 <code>*</code> 是做近一步限定的,
+还有如果你不了解<a href="https://registry.khronos.org/OpenGL-Refpages/gl4/index.php">文档</a>上 <code>Gen*Type</code> 这个词语是什么意思, 你可以去看 <code>GLSL</code> 的语言规范, 我这里可以告诉你的是它的全称是 <code>Generic * Types</code>, 中间的 <code>*</code> 是做进一步限定的,
 </p>
 
 <p>
 比如 <code>genType</code> 是 <code>float/vec2/vec3/vec4</code>, <code>genIType</code> 可以是 <code>int/ivec2/ivec3/ivec4</code>.
+</p>
+
+<p>
+并且如果一个函数是这么写的话: <code>genType func(genType x, genType y)</code>, 那么 <code>genType</code> 的值必定是统一的, 只能一起是 <code>float</code>, 或者一起是 <code>vec2</code>, 如此类推.
+</p>
+
+<p>
+不可能出现像 <code>vec2 func(float x, float y)</code> 这种不统一的情况, 这种是错误用法.
 </p>
 </blockquote>
 
@@ -1643,7 +1663,7 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2022-02-11</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.3 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.4 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

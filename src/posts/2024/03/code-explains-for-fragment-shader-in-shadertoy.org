@@ -7,7 +7,11 @@
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
 
-对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码, 大胆承认抄别人的代码.
+对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去 *抄明白* 他们的代码, 大胆承认抄别人的代码.
+
+#+begin_quote
+抄的时候要明白代码的每一部分的含义: 对这部分代码修改会产生什么影响, 了解影响是怎么变化的, 以此建立起直观的理解.
+#+end_quote
 
 并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
 
@@ -30,6 +34,10 @@
     弥补 =GraphToy= 的不足. 这篇笔记会提供一些函数的 =Maxima= 定义.
 
 #+end_abstract
+
+# https://clauswilke.com/art/post/shaders
+
+** 常见的 UV 计算
 
 *** UV - 计算片元在屏幕上所对应的 UV 坐标
 
@@ -189,9 +197,17 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 
 我们的目标是让其它三个 $UV$ 空间的分量范围为 $[0, 1]$, 方法很简单, =glsl= 的内置函数 =fract= 可以获取浮点数的小数部分,
 
-比如 =fract(1.1)= 等于 0.1, =fract(2.1)= 也是等于 0.1, 从而形成一个以 0 到 1 为一个周期的周期序列.
+比如 =fract(1.1)= 等于 0.1, =fract(2.1)= 也是等于 0.1, 从而形成一个以 0 到 0.999... (没到 1) 为一个周期的周期序列.
 
-这样就可以让其它 $UV$ 空间的分量范围也处于 $[0, 1]$ 之间,
+#+begin_quote
+其实可以把第下一个周期头部的 0 看作是上一个周期的 1.
+
+原因很简单, 假设现在经过划分得到两个周期, 那么 =fract(x)= 会得到这样的一个序列(, 以 0.1 为步长):
+
+=[0, 0.1, 0.2, ..., 0.9], [0(1), 0.1, 0.2, ..., 0.9], 0(2)=
+#+end_quote
+
+这样就可以让其它 $UV$ 空间的分量范围也处于 $[0, 1)$ 之间,
 
 综上所述, $UV$ 的计算方式就变成这样:
 
@@ -234,6 +250,9 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 #+end_src
 
 并且模运算的周期可以用来对 $UV$ 空间进行等比缩放, 如果把 =period= 定义为 2.0, 那么 $UV$ 的分量范围就是 $[0, 2]$.
+
+
+** GLSL 内置函数
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml][函数 - smoothstep]]
 
@@ -279,19 +298,33 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 
 我们再令 $f^{''}(t) = 0$ 尝试求出函数 $f(t)$ 在 $[0, 1]$ 区间的拐点, 解得 $t = 0.5$.
 
-把 $t = 0.5$ 代入原函数得到 $f(t=0.5) = 3 \times 0.5^{2} - 2 \times 0.5^{3} = 0.5$, 得到点 $(0.5, 0.5)$.
+把 $t = 0.5$ 代入原函数得到 $f(t=0.5) = 3 \times 0.5^{2} - 2 \times 0.5^{3} = 0.5$, 得到拐点 $(0.5, 0.5)$.
 
-最后求该点处的切线: $f^{'}(0.5) = \frac{y - 0.5}{x - 0.5} = 1.5 \rightarrow y = 1.5x - 0.25$.
+最后求该点处的切线: $k = f^{'}(0.5) = \frac{y - 0.5}{x - 0.5} = 1.5 \rightarrow y = 1.5x - 0.25$.
 
-该切线的导数 $y^{'} = 1.5$, 表明了函数 $f(t)$ 在 $t = 0.5$ 处的斜率的变化率(也就是 $f^{''}(t)$)是在逐渐增加,
+该切线的导数 $k^{'} = 1.5$, 表明了函数 $f(t)$ 在 $t = 0.5$ 处的斜率的变化率(也就是 $f^{''}(t)$)是在逐渐增加,
 
-在 $t = 0.5$ 的左边 $f^{''}(t) > 0$ (左边的函数线条为下凸), 在右边则是 $f^{''}(t) < 0$ (左边的函数线条为下凹). 因此, 点 $(0.5, 0.5)$ 的确是拐点.
+在 $t = 0.5$ 的左边 $f^{''}(t) > 0$ (函数图像 $f$ 在 $x = 0.5$ 左边为上凹), 在右边则是 $f^{''}(t) < 0$ (函数 $f$ 在 $x = 5$ 的右边为下凹). 因此, 点 $(0.5, 0.5)$ 的确是拐点.
 
 因此, $smoothstep$ 是一个从 $[edge0, edge1]$ 到 $[0, 1]$ 的映射, 一条变化率为先增后减的曲线.
 
 最终的函数图像如下:
 
 [[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=smoothstep(0.0,1,x)&v1=true&f2(x,t)=&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0.4302807407932391,-0.05999176204044846,1.9620958899187213]]
+
+#+begin_quote
+如果仔细看文档的话你会发现一句: "Results are undefined if edge0 ≥ edge1".
+
+然而实践发现: $edge0 \gt edge1$ 的时候, =GraphToy= 所绘制的 $smoothstep$ 函数图像表面依然是有结果的.
+
+比如, 你可以尝试把上面的 $smoothstep(0.0, 1, x)$ 换成 $smoothstep(1, 0.0, x)$ 观察一下: 函数图像会镜像翻转, 从 1 到 0 之间进行插值.
+
+经过搜索, 发现在 [[https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.10.pdf][GLSL 1.10]] 中 $smoothstep$ 是没有这一句的, 这一句是从 [[https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.20.pdf][GLSL 1.20]] 开始才有的.
+
+目前不确定这一句是不是只对一些新版本的 =GLSL= 生效, 还是说有些 =GLSL= 的实现没有严格按照标准来.
+
+其实在数学层面来看, $edge0 \ge edge1$ 不会导致函数 =undefined= 的, 目前实践下来也没有出现 =undefined= 的情况.
+#+end_quote
 
 **** [[https://thebookofshaders.com/glossary/?search=smoothstep][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]]
 
@@ -331,12 +364,6 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 做法很简单: 首先计算出 $st.x$ 经过 $smoothstep(0.1, 0.9, x)$ 映射后的值 $y$, 但这样的话所有 $x$ 分量相同的片元在经过映射后拥有相同的 $y$, 我们需要判断片元是否处于函数上.
 
 $plot$ 函数就是判断片元是否在函数上的.
-
-#+begin_quote
-"判断片元是否在函数上"其实是很多 =shaders= 绘图的思路, 在函数上的话就返回相应的值用于计算片元的颜色表示"片元在函数上", 不在函数上的就返回 0 表示"片元不在在函数上".
-
-我们忽略图像呈现的细节, 得更简单一点: *在确定好 UV 坐标系的原点后, 只要考虑给落在函数上的片元赋予什么颜色即可*.
-#+end_quote
 
 上面代码中的 $plot$ 函数其实是优化过了的, 先看未经优化的版本:
 
@@ -397,6 +424,280 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 回到优化后的 $plot$ 上, 它的作用就是让 $st.y$ 在 $[y-0.02, y+0.02]$ 范围内进行插值, 以先增后减的变化率返回 $[0, 1]$ 的值, 而不是像未优化版只返回 $0$ 或 $1$ 那样一刀切.
 
+**** 编写 =Fragment Shader= 的思路
+
+刚开始学习 =Fragment Shader= 时, 我只知道最终目的是为了设置片元的颜色, 然而并不知道如何绘制出自己想要的图像.
+
+即便去学习别人的代码, 也只能在有参考的情况下写的出来, 完全不知道别人是如何想出来的, 也不知道所谓的阅读代码中学习要学什么内容.
+
+相信很多经历过新手期的人都和我一样认为阅读别人的代码就是要学习其中的数学概念, 其实也没错, =Fragment Shader= 多少得涉及一些数学概念.
+
+然而, 这解释不了为什么有些数学好的人也不能写出自己想要的效果.
+
+在经过一定量的阅读以及大量的总结后, 发现了一个事实: 不管实现什么效果, 任何 =Fragment Shader= 在结构上都有一个固定的模式.
+
+个人认为那些数学好的人没能实现自己想要的效果是因为不了解这个模式, 虽然没办法证明这个观点, 但相信你在看完这个模式后会认同我这个观点.
+
+*开始吧*:
+
+1. 确定好 =UV= 坐标系: 原点在哪, 范围在哪.
+
+2. *时刻记住* 片元原本的 =UV= 坐标 $st_{0}$ 坐标是 =gl_FragCoord.xy / u_resolution=;
+
+   *代码中的变量 $st$ 可以看作是片元的一个新属性*, 其初始值为 $st_{0}$ 的值, 但是 $st$ 可能会在经过计算后发生变化.
+
+   因此, 在 =Fragment Shader= 里面, 一个片元包含始终有一个关系: $f(st_{0}) = st$.
+
+   最后, =Fragment Shader= 绘图的关键在于如何根据 $st$ 来计算出片元的颜色, 粗略地讲就是 *位置决定颜色*.
+
+   函数 $f$ 就是针对 $st$ 的计算, $f$ 可以由多个更小的一系列的函数构成, 比如:
+
+   $f(st_{0}) = st$
+
+   $\Downarrow$
+
+   $f_{0}(st_{0}) = st_{1}$
+
+   $f_{1}(st_{1}) = st_{2}$
+
+   $\vdots$
+
+   $f_{n}(st_{n}) = st$
+
+   确定好每一个函数(每一步运算)的输入范围和计算结果范围, 并且要求对函数的变化规律有直观的理解.
+
+   #+begin_quote
+   这就是为什么开篇就推荐绘图工具, 可以帮助我们对函数变化有直观了解;
+
+   这里再推荐掌握 [[https://en.wikipedia.org/wiki/Interval_arithmetic#Interval_operators][区间运算(interval arithmetic)]] 的应用, 在 =Shader= 编程中会经常遇到两个函数之间的算术运算,
+
+   为了估算结果通常都是分别确定好两个函数的计算结果范围在对两者进行运算得到最终范围, 区间运算可以帮助我们快而准地估算出结果.
+   #+end_quote
+
+   在明白了这一点后, 关键点就在于: 怎么定义出一个可以实现自己想要效果的函数 $f$.
+
+3. 思考如何定义函数 $f$.
+
+   1. 正如前面说的, 位置决定了颜色, 所以, 我们要这么思考: *随着位置发生怎么样的变化, 颜色要如何变化呢?*
+
+      举几个简单的例子来看看.
+
+      *例子一*: 往 $y$ 方向增加, 颜色越亮, 往 $x$ 方向增加, 颜色越亮.
+
+      #+begin_src c
+        vec2 st = gl_FragCoord.xy / u_resolution;
+
+        // f(st) = st.x + st.y
+        // y 增加, color 增加
+        // x 增加, color 增加
+        float color = clamp((st.x + st.y) * 0.5, 0.0, 1.0);
+
+        gl_FragColor = vec4(vec3(color), 1.0);
+      #+end_src
+
+      #+caption: 越往右下角方向越亮
+      [[../../../files/how-to-think-of-fun-creation-in-shader.png]]
+
+      *例子二*: 往 $y$ 方向增加, 颜色越亮.
+
+      #+begin_src c
+        vec2 st = gl_FragCoord.xy / u_resolution;
+
+        // f(st) = st.y
+        // y 增加, color 增加
+        float color = st.y;
+
+        gl_FragColor = vec4(vec3(color), 1.0);
+      #+end_src
+
+      #+caption: 越往下走越亮
+      [[../../../files/how-to-think-of-fun-creation-in-shader-2.png]]
+
+      *例子三*: 往 $x$ 方向增加, 颜色越亮.
+
+      #+begin_src c
+        vec2 st = gl_FragCoord.xy / u_resolution;
+
+        // f(st) = st.x
+        // x 增加, color 增加
+        float color = st.x;
+
+        gl_FragColor = vec4(vec3(color), 1.0);
+      #+end_src
+
+      #+caption: 越往右走越亮
+      [[../../../files/how-to-think-of-fun-creation-in-shader-3.png]]
+
+      *例子四*: 往 $y$ 方向增加, 颜色越亮; 往 $x$ 方向增加, 颜色越暗.
+
+      #+begin_src c
+        vec2 st = gl_FragCoord.xy / u_resolution;
+
+        // f(st) = st.y + (1.0 - st.x)
+        // y 增加, color 增加
+        // x 增加, color 减小
+        float color = clamp((st.y + 1.0 - st.x) * 0.5, 0.0, 1.0);
+
+        gl_FragColor = vec4(vec3(color), 1.0);
+      #+end_src
+
+      #+caption: 越往左下角走越亮
+      [[../../../files/how-to-think-of-fun-creation-in-shader-4.png]]
+
+      *例子五*: 往 $y$ 方向增加, 颜色越亮; 往 $x$ 方向增加, 颜色越暗, 比上一个例子更明显.
+
+      #+begin_src c
+        vec2 st = gl_FragCoord.xy / u_resolution;
+        // f(st) = (st.x + st.y) + (st.y - 2 * st.x) = 2 * st.y - st.x
+        // y 增加, color 增加
+        // x 增加, color 减小
+        st += st.yx * vec2(1.0, -2.0);
+        float color = clamp((st.x + st.y) * 0.5, 0.0, 1.0);
+
+        gl_FragColor = vec4(vec3(color), 1.0);
+      #+end_src
+
+      #+caption: 越往左下角走越亮
+      [[../../../files/how-to-think-of-fun-creation-in-shader-5.png]]
+
+      这五个例子中的 $f$ 都是的线性函数, 凭想象来思考变化是比较轻松的.
+
+      然而, 对于非线性函数来凭想象就不是那么容易了, 所以借助绘图软快速绘制等值曲线(contour curves)来了解变化是一个不错的手段.
+
+      这里用 =Maxima= 来演示绘制 $f(x, y) = x^{2} - y^{2} - 10$ 在 $x,y \in [-1, 1]$ 的等值线图,
+
+      #+begin_src maxima
+        /* 曲面图 + 等值线图 */
+        draw3d(
+          xlabel = "x",
+          ylabel = "y",
+          zlabel = "z",
+          contour = both,
+          contour_levels = 15,
+          surface_hide = true,
+          enhanced3d = true,
+          explicit(x^2 - y^2, x, -1, 1, y, -1, 1)
+          )$
+      #+end_src
+      #+attr_html: :width 800px
+      #+caption: =曲面图 + 等值线图=
+      [[../../../files/x2-y2-10-contour-map-0.svg]]
+
+      #+begin_src maxima
+        /* 曲面图 + 等值线图 + 灰阶 */
+        draw3d(
+          xlabel = "x",
+          ylabel = "y",
+          zlabel = "z",
+          contour = both,
+          contour_levels = 15,
+          surface_hide = true,
+          enhanced3d = true,
+          palette = gray,
+          explicit(x^2 - y^2 - 10, x, -1, 1, y, -1, 1)
+          )$
+      #+end_src
+      #+attr_html: :width 800px
+      #+caption: =曲面图 + 等值线图 + 灰阶=
+      [[../../../files/x2-y2-10-contour-map-1.svg]]
+
+      #+begin_src maxima
+        /* 在曲面上绘制等值线图 */
+        draw3d(
+          xlabel = "x",
+          ylabel = "y",
+          zlabel = "z",
+          contour = both,
+          contour_levels = 15,
+          surface_hide = true,
+          explicit(x^2 - y^2 - 10, x, -1, 1, y, -1, 1)
+          )$
+      #+end_src
+      #+attr_html: :width 800px
+      #+caption: =曲面图附加等值线 + 等值线图=
+      [[../../../files/x2-y2-10-contour-map-3.svg]]
+
+      #+begin_src maxima
+        /* 等值线图 + 灰阶 (个人偏向用这个, 效果图如下) */
+        draw3d(
+          xlabel = "x",
+          ylabel = "y",
+          view = map,
+          enhanced3d=true,
+          palette = gray,
+          explicit(x^2 - y^2 - 10, x, -1, 1, y, -1, 1)
+          )$
+      #+end_src
+      #+attr_html: :width 800px
+      #+caption: =等值线图 + 灰阶=
+      [[../../../files/x2-y2-10-contour-map.svg]]
+
+      关于 =Maxima= 更多的绘图选项请自行阅读[[https://maxima.sourceforge.io/docs/manual/maxima_250.html][文档]].
+
+   2. 也可以这么想: 对于在函数 $f$ 上的片元应该赋予什么颜色, 在函数外的片元又该赋予什么颜色.
+
+      这一点可以参考前面的函数 $plot$.
+
+4. 正确思考 =Fragment Shader= 中的循环.
+
+   *时刻记住*, =Fragment Shader= 的一切计算都是针对一个片元的, 对于一个片元的计算是不可能影响到另外一个片元的计算.
+
+   记住这一条之后, 相信对于很多没有接触过 =Shader= 编程的开发人员来说初次接触 =Fragment Shader= 的一些迭代会很反直觉:
+
+   既然只是针对一个片元, 为什么像下面的例子会绘制出 4 条直线而不是 1 条直线呢?
+
+   #+begin_src c
+     vec2 st = gl_FragCoord.xy / u_resolution;
+
+     float color = 0.0;
+     int iterations = 4;
+     for (int i = 0; i < iterations; i++, st *= 2.0) {
+       //  st.x + st.y - 1.0 <= 0.01 相当于函数 y = x
+       color += float(abs(st.x + st.y - 1.0) <= 0.01); // float(true) => 1, float(false) => 0
+     }
+
+     gl_FragColor = vec4(vec3(color), 1.0);
+   #+end_src
+
+   #+caption: 输出结果
+   [[../../../files/iteration-in-fragment-shader.png]]
+
+   观察代码可知每个片元的 $color$ 要执行 4 轮计算, 每轮计算都 *试图* 让 $color$ 自增(我们这里约定能加到 1 才是成功自增), 并且让 $st$ 翻倍.
+
+   我们知道这是在绘制直线 $y = x$, 但为什么会绘制出 4 条直线呢?
+
+   *绘制过程* 是这样的:
+
+   位于直线上的片元的 $color$ 在整个迭代中实际只能成功自增 1 次, 而不在直线上的片元则是 0 成功的自增.
+
+   这里选第一长的直线 $l_{A}$ 和第二长的直线 $l_{B}$ 作为例子进行分析, 它们是同时绘制的,
+
+   #+begin_quote
+   这里其实没办法确认它们是否严格意义上的同时绘制, 但至少可以确认在执行顺序上两者不会相互影响.
+   #+end_quote
+
+   在 $l_{A}$ 上的片元 $p_{A}: (x_{0}, y_{0})$ 在整个迭代中的第 1 轮计算就成功自增, $l_{B}$ 上的片元 $p_{B}: (x_{1}, y_{1})$ 则是在第 2 轮计算才能成功自增.
+
+   这是因为 $p_{A}$ 在第 1 轮计算中就符合 $abs(st.x + st.y - 1.0) \le 0.01$, 之后的 3 轮计算其实没有意义了;
+
+   而 $p_{B}$ 则是满足 $2 \times (x_{1} + y_{1}) = x_{0} + y_{0}$, 所以在经过一轮的 $st$ 翻倍后使得 $p_{B} = (2 \times x_{1}, 2 \times y_{1})$, $p_{B}$ 才符合 $abs(st.x + st.y - 1.0) \le 0.01$.
+
+   第三长的直线和最短的直线也是这个道理, 它们符合条件的轮次分别是第 3 和第 4 轮.
+
+   这个其实就是一个很简单的绘制递归图案的例子, 我之所以选它是想对新人(我)说明一个事实: 在 =Fragment Shader= 中, *有时候* 迭代的每一轮计算更像是一次条件筛选, 整个迭代就是反复试验(=trial and error=).
+
+   这算是 =Fragment Shader= 编程中比较常见的迭代用法了, 比起类似以累加/累积为目的的迭代用法特殊一点,
+
+   它的特殊点在于 *为不同颜色赋予了不同的含义*: 白色为"有意义计算", 黑色为"无意义计算", 这就是如何为片元赋予颜色.
+
+
+第 3 步需要运用大量的数学知识, 学习数学知识(主要是微积分)就是为了强化这一步: 根据自己的意愿定义出函数 $f$.
+
+相信现在的你能够理解为什么数学好也不一定写好的 =Shader= 了: 不知道把数学用在何处.
+
+只有在掌握整个模式后, "不断阅读其他人的代码并从中吸收所涉及的数学概念以及应用方法" 才是有用的.
+
+
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml][函数 - dFdx/dFdy]]
 
 要想理解 =dFdx/dFdy= 的作用, 得想知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
@@ -409,7 +710,9 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 而在 $y$ 轴方向上的下一个相邻片元的属性值则是为 $attr_{y+1} = p(x, y + 1)$.
 
-$dFdx(attr)$ 其实就是在求在当前片元的 $x$ 轴方向上的某个属性的 $attr$ 的偏导数, 因此定义为:
+$dFdx(attr)$ 其实就是在求在当前片元的 $x$ 轴方向上的某个属性的 $attr$ 的偏导数(=partial derivative=),
+
+虽然在直觉上上挺相似的, 但它并非人们所知的微积分中的偏导数, 其定义为:
 
 $dFdx(attr) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr$.
 
@@ -480,6 +783,33 @@ $dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
     outColor = vec4(ambientColor + lambertian * diffuseColor + specular * specColor, 1.0);
   }
 #+END_SRC
+
+# 添加使用迭代获得邻接片元的颜色例子
+# 如果只是想获取其它片元的颜色, 可以按照以下思路.
+#+begin_src c
+  vec2 uv = UV;
+  vec3 pixels[9];
+  for (int row = 0; row < 3; row++) {
+    for (int col = 0; col < 3; col++) {
+      // shift [row, col] from [0, 2] to [-1, 1]
+      vec2 uv = uv + vec2(
+                          float(col - 1) * emboss_width * 0.01,
+                          float(row - 1) * emboss_height * 0.01);
+
+      /* 计算当前片元的相邻片元的 uv
+      uv + vec2(-1 * 0.15 * 0.01) | uv + vec2(0, -1 * 0.15 * 0.01) | uv + vec2(1 * 0.15 * 0.01, -1 * 0.15 * 0.01)
+   uv + vec2(-1 * 0.15 * 0.01, 0) | uv + vec2(0) = uv              | uv + vec2(1 * 0.15 * 0.01, 0)
+   uv + vec2(-1 * 0.15 * 0.01, 1 * 0.15 * 0.01) | uv + vec2(0, 1 * 0.15 * 0.01) | uv + vec2(1 * 0.15 * 0.01)
+      ,*/
+
+      // 事实上, 片元之差是 TEXTURE_PIXEL_SIZE, 并非 (emboss_width * 0.01, emboss_height * 0.01)
+      // vec2 uv = uv + vec2(
+      //                     float(col - 1) * emboss_width * TEXTURE_PIXEL_SIZE.x,
+      //                     float(row - 1) * emboss_height * TEXTURE_PIXEL_SIZE.y);
+      pixels[row * 3 + col] = texture(TEXTURE, uv).rgb;
+    }
+  }
+#+end_src
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/fract.xhtml][函数 - fract]]
 
@@ -667,7 +997,6 @@ $k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I) = 1.0 - \frac{sin^{2}(\theta
 
 现在整个 $refract$ 的定义及其背后的含义已经全部解析完毕.
 
-
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/packUnorm.xhtml][函数 - packUnorm]] 和 [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/unpackUnorm.xhtml][函数 - unpackUnorm]]
 
 这两个函数只是用来把数据打包和解包.
@@ -705,15 +1034,107 @@ $modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(
   /* fs = ivec2(1, -3), is = vec2(0.2, -0.4) */
 #+END_SRC
 
+*** 函数 - texture
 
-*** Hash函数/随机/噪音
+https://learnopengl.com/Getting-started/Textures
+
+** 常用自定义函数
+
+*** remap 函数
+
+#+begin_quote
+从这里开始会介绍一下 =GLSL= 没有内置但又常用的函数.
+#+end_quote
+
+$remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射到 $[low2, high2]$ 上, 并返回经过重新映射后的 $value$.
+
+因此, 函数的定义是: $low2 + \frac{value - low1}{high1 - low1} \times (high2 - low2)$.
+
+
+*** 随机函数/Hash函数
+
+参考: https://thebookofshaders.com/10/
+
+https://iquilezles.org/articles/sfrand/
+
+*** 噪音
 
 # https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 
 # 什么是随机: https://www.bilibili.com/video/BV1rA411Z7eP/?spm_id_from=333.337.search-card.all.click&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30
 
-# random: https://thebookofshaders.com/10/
-
 # noise functions
 # https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 # hash11: https://www.shadertoy.com/view/llGSzw
+
+*** 调色板生成
+
+参考资料: https://offscreencanvas.com/issues/generative-shader-color-palettes/
+
+
+** 分形 (Fractal)
+
+*** 谢尔宾斯基三角形 (Sierpiński Triangle)
+*** 分形布朗运动 (Fractal Brownian Motion)
+
+概念参考资料: https://thebookofshaders.com/13/
+
+#+begin_quote
+- Experiment by changing the frequency and amplitude for the additional waves.
+
+  pass
+
+- Is it possible to make two waves cancel each other out? What will that look like?
+
+  是的.
+
+  使得两个正弦波的频率(=frequency=)和振幅(=amplitude=)保持一直, 两者偏移(offset)相差 $PI$.
+
+  #+begin_src c
+    float amplitude = 4.5;
+    float frequency = 2.1;
+    float offset = PI;
+    float y = sin(x*frequency + t)*amplitude;
+    y += sin(x*frequency + t + PI)*amplitude;
+  #+end_src
+
+- Is it possible to add waves in such a way that they will amplify each other?
+
+  是的.
+
+  有三种方法:
+
+  1. 相位一致性: 确保 $frequency$ 和 $offset$ 保持一致.
+
+  2. 频率匹配: 确保 $frequency$ 保持一致, $offset$ 之差不能超过 $PI$.
+
+  3. 多波叠加: 使用多种波形的组合, 比如方波, 不过这超出我们的讨论范围了.
+
+- Progressively change the number of octaves to iterate from 1 to 2, 4, 8 and 10. See what happens.
+
+  线条的总体形状不发生改变, 只是会一直添加细节, 当 =octaves= 增加大于 8 时, 细节的增加也不明显了.
+
+- When you have more than 4 octaves, try changing the lacunarity value.
+
+  线条的周期会明显缩小, 振幅稍微扩大.
+
+- Also with >4 octaves, change the gain value and see what happens.
+
+  线条的振幅明显扩大.
+#+end_quote
+
+*** madelbrot set
+*** voronoi diagram
+
+** 图像处理
+
+*** 图像边缘检测 (Edge detection)
+
+=Sobel=.
+
+
+$screen\_pixel\_width\_ratio = \frac{1}{screen\_pixel\_width}$
+
+$screen\_pixel\_uv\_x = \frac{x}{screen\_pixel\_width}$
+
+$\frac{screen\_pixel\_uv\_x}{screen\_pixel\_width\_ratio} = \frac{x}{screen\_pixel\_width} \times screen\_pixel\_width = x$

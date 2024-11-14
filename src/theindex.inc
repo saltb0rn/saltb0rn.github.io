@@ -1,7 +1,33 @@
-*** [[file:posts/2024/07/wasm-in-practice.html?hash=54b23aa18781ab22421372dc0ddd9d40][WASM实践]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=fdb65906ed9e020ca0cd7d6eaf14c936][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
+
+笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的,
+
+所以和以往写的笔记不同, 该文档更像是草稿纸, 需要偶尔花时间来更新(PS: 目前未完成), 最总这份草稿纸会变成个人专用的微积分字典.
+
+对知识点标页码是因为微积分的 *知识点太多* 了, 哪怕是对定理都推了一遍也是有可能会忘掉的.
+
+另外, 微积分很多知识点需要数形结合才能更好理解, 比如函数连续的几何意义, 不同类型的函数所对应的函数图像如何, 函数相应特征在不同情况下所对应的几何表象如何.
+
+做不到熟练理解和使用其中知识点的话, 就无法很好用来解决问题. 这些理解是需要个人去挖掘和整理的.
+
+我学习微积分的目的是因为在自学图形学, 图形学并非只需要微积分, 但微积分的使用比例和线性代数是差不多高的.
+
+另外, 我会在一些笔记附上 [[https://maxima.sourceforge.io/][Maxima]] 的代码, 学习微积分最好掌握一款 =CAS= 用于画图以及计算是很有必要的, 学习 =Maxima= 的话推荐这本书 [[https://www.amazon.com/Mathematics-Engineers-Scientists-Labs-Maxima/dp/1771887273][Mathematics for Engineers and Science Labs Using Maxima]].
+
+最后, 是关于是否要做习题的问题, 个人的观点是有时间就做, 因为有些习题会介绍新定理, 对于拓展视野还是不错的.
+
+这本书其实是有 *答案本* 的, 可以在网络上找的到, 所以不用担心解不出来, 或者说不知道自己的答案是否正确.
+
+我个人的做题策略是, 如果对题目没有解决思路就直接抄答案, 但要求理解其思路;
+
+即便是已经解决出来了, 也不妨碍看别人的解决思路, 学习多样的解决思路, 找出不同思路之间的联系是数学的灵魂, 正如不同的数学分支之间的联系一样.
+
+	
+*** [[file:posts/2024/07/wasm-in-practice.html?hash=62c93b73171087c1ab08a2030bd84a32][WASM实践]]
 在去年通过阅读 =The Art Of WebAssembly= 学习 =WebAssembly= (简称 =WASM=) 之后基本上再无使用过 =WASM= 了,
 
-这本书算得上是一本不错的 =WASM= 入门书, 偏向 =WASM= 的底层, 但关于实际开发的内容很少.
+这本书算得上是一本不错的 =WASM= 入门书, 通过 =WAT= 介绍 =WASM= 的一些概念, 但关于实际开发的内容很少.
 
 这本书也有介绍到 =Emscripten= 这种使用的工具链, 我也尝试过这个工具, 不过这个工具用起来有一种很难受的感觉:
 
@@ -22,18 +48,37 @@
 在看完他的视频后我重新燃起了探索的欲望, 因此, 这片文章是对 =Tsoding= 视频内容的整理以及拓展, 势必要在实际开发中掌握 =WASM= 的使用.
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=18dafdc00b01e317893033c761dd815e][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=a45c709a6c74c8f863c074fb1fbfbf64][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
 
-对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去抄明白他们的代码, 大胆承认抄别人的代码.
+对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去 *抄明白* 他们的代码, 大胆承认抄别人的代码.
+
+#+begin_quote
+抄的时候要明白代码的每一部分的含义: 对这部分代码修改会产生什么影响, 了解影响是怎么变化的, 以此建立起直观的理解.
+#+end_quote
 
 并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
 
 这篇笔记就是用来记录"明白"这一过程.
 
-另外, 这里建议参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完).
+另外, 这里建议有两点建议:
+
+1. 参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完);
+
+2. 如果在阅读其它人的代码时看到一些自己不理解的函数(=shader= 的函数基本上就是数学函数的翻译), 使用绘图工具绘制其函数图像来了解其行为.
+
+   这里推荐 [[https://graphtoy.com][GraphToy]] 和 [[https://maxima.sourceforge.io/][Maxima]] (=Maxima= 是开源免费的, 有钱人可以选择像 =Mathematica= 或者 =MATLAB= 之类的商业软件).
+
+   =GraphToy= 提供了 =GLSL= 内置函数定义, 专门用于 =Shader= 的编写辅助.
+
+    和 =GraphToy= 不一样, =Maxima= 并不提供 =GLSL= 的内置函数定义, 它是一个代数计算系统, 专门解决数学计算问题, 也包括画图功能,
+
+    想要在 =Maxima= 使用 =GLSL= 的内置函数需要自己定义(, =GLSL= 的内置函数的定义都很简单), 能够自定义函数则是推荐它的理由, 用来
+
+    弥补 =GraphToy= 的不足. 这篇笔记会提供一些函数的 =Maxima= 定义.
+
 
 	
 *** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]
@@ -43,7 +88,7 @@
 # 记录开发一个Javascript库的过程
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=15af02dc2827eda5835634784caf24d3][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=02eb73fd181b1c6e71c76b809b43f955][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -75,7 +120,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/06/things-about-c-development.html?hash=7fb86755187e1435f524f29cd4b8c6ce][关于使用C语言开发的那些事]]
+*** [[file:posts/2021/06/things-about-c-development.html?hash=f9deb7505b824cb43a060c49a48565e7][关于使用C语言开发的那些事]]
 *注意*, 看这篇笔记时请务必先学习 =x86= 汇编, 因为 =C= 代码会被编译成汇编,
 
 只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
@@ -125,7 +170,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 确实, =OpenGL= 透视和 =CSS= 中的透视概念上是一个东西,但在实际使用上两者还是有差别.
 
 	
-*** [[file:posts/2020/12/assembly.html?hash=d8703e7dc392bb5b9236f10762747d73][x86 汇编]]
+*** [[file:posts/2020/12/assembly.html?hash=a271ae3ff96c4611d7027a6321ac4660][x86 汇编]]
 这篇笔记的主要参考资料是 =Assembly Language Step-by-Step: Programming with Linux 3rd Edition=.
 
 这本书的内容是围绕 =x86= 32 位来讲的, 我读这本书的时候 =x86= 64 位架构已经非常普遍了, 也就是说这本书已经有点过时了, 况且关于浮点数这块基本上没讲过.
@@ -172,19 +217,31 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 
 我写这篇笔记的目的在后期逐渐发生改变了, 从原来"想要了解"到"想把学到的知识真正的用在创作上",
 
-为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及连接器的工作细节" 这些参考书上没有的内容.
+为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=aa67d4addc33ceec4c44974519a0998f][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=d035fa815a7f313cde1e8b860bc5d742][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
 
-这篇笔记主要是关于光和材质方面的概念,在学习以后你会知道如何编写 =Fragment Shader= 来控制光照效果,不过我们还是会从没有 =GLSL= 的 =OpenGL 1.X= 开始学习.
+这篇笔记主要是关于光和材质方面的概念,在学习以后你会知道如何编写 =Fragment Shader= 来控制光照效果.
+
+这篇笔记要求你阅读过我其它文章:
+
+1. [[../../2020/06/graphics-opengl-transformation.html][图形学-OpenGL坐标变换]]
+
+   需要知道光照计算发生在哪个阶段;
+
+   阴影要求投影变换.
+
+2. [[../../2022/02/webgl-buffer-objects.html][Shader 编程自救指南]]
+
+   需要插值是如何进行.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=b65a4607057c876d595fd676f4870624][图形学-OpenGL坐标变换]]
-之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline, 我也不知道为什么会这么翻译)很有必要.
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=9b24641a06b78b8f7de13cb4b891f45f][图形学-OpenGL坐标变换]]
+之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
 
@@ -195,7 +252,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=6540ac38a3b19b7c4d5b8cc5977df64a][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=d005fd3e3ae9ab7a10d0fc57719966c4][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -249,7 +306,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 这次的阅读材料取自于 =VA-11 HALL-A:Cyberpunk Bartender Action=,游戏里的日期是 =Tue 13/12=.
 
 	
-*** [[file:posts/2019/12/linear-algebra-notes.html?hash=f16cee94383b82c3be8cba49269fd133][线性代数读书随笔 (部分内容需要严格验证)]]
+*** [[file:posts/2019/12/linear-algebra-notes.html?hash=1112133559f5d7e8dc1628640329d052][线性代数读书随笔 (部分内容需要严格验证)]]
 "程序员的数学3线性代数"读书随笔
 
 	

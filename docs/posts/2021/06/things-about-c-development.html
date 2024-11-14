@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2024-06-11 Tue 19:51 -->
+<!-- 2024-11-15 Fri 00:21 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>关于使用C语言开发的那些事</title>
@@ -243,8 +243,10 @@
 <li><a href="#orgf69884d">不透明结构体 (Opaque Structures)</a></li>
 <li><a href="#org1215215">标签联合体 (Tagged Union)</a></li>
 <li><a href="#org3b1c57c">Async/Await</a></li>
+<li><a href="#orgac0c782">X Macro</a></li>
 <li><a href="#difference-between-c-and-cpp">对比 C++, C 的优点</a></li>
 <li><a href="#orga4a15b7">一些编码习惯和理由</a></li>
+<li><a href="#org56adce0">C 语言应用教材</a></li>
 </ul>
 </li>
 <li><a href="#org9672707">关于调试</a></li>
@@ -256,7 +258,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgd2e5b75">
+<div class="abstract" id="orgb9192fe">
 <p>
 <b>注意</b>, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, 因为 <code>C</code> 代码会被编译成汇编,
 </p>
@@ -360,7 +362,7 @@
 </p>
 
 
-<div id="org991ddab" class="figure">
+<div id="orgbb49c7b" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>GCC编译C语言并生成程序</p>
@@ -745,7 +747,7 @@
 </pre>
 </div>
 
-<pre class="example" id="org8c5366f">
+<pre class="example" id="orgec50365">
 // right-bracket
 }
 </pre>
@@ -1078,7 +1080,7 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-这里以最终版为例, 把 <code>func</code> 注释掉后会得到一个连接器报的错误:
+这里以最终版为例, 把 <code>func</code> 注释掉后会得到一个链接器报的错误:
 </p>
 
 <div class="org-src-container">
@@ -1109,11 +1111,11 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-等编译完了就交给连接器在连接时去找 <code>func</code> 的定义, 由于没有找到对应的定义, 于似乎它报错了.
+等编译完了就交给链接器在链接时去找 <code>func</code> 的定义, 由于没有找到对应的定义, 于似乎它报错了.
 </p>
 
 <p>
-解决这个问题除了把注释解除掉外, 还可以在使用 <code>GCC</code> 编译时让它连接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
+解决这个问题除了把注释解除掉外, 还可以在使用 <code>GCC</code> 编译时让它链接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
 </p>
 
 <p>
@@ -1125,19 +1127,19 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-连接动态链接库的叫做动态连接, 而把多个二进制文件连接为一体的连接方式就叫静态连接, 静态连接不一定非得使用静态库的,
+链接动态链接库的叫做动态链接, 而把多个二进制文件链接为一体的链接方式就叫静态链接, 静态链接不一定非得使用静态库的,
 </p>
 
 <p>
-动态连接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
+动态链接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
 </p>
 
 <p>
-静态连接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态连接生成的程序本体比动态连接的要大.
+静态链接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态链接生成的程序本体比动态链接的要大.
 </p>
 
 <p>
-我们基于前面最终版的代码拆分一下用于后续演示两种连接:
+我们基于前面最终版的代码拆分一下用于后续演示两种链接:
 </p>
 
 <div class="org-src-container">
@@ -1160,12 +1162,12 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </div>
 
 <p>
-<b>静态连接</b> 有两种方法:
+<b>静态链接</b> 有两种方法:
 </p>
 
 <ul class="org-ul">
 <li><p>
-<b>静态连接-1</b>
+<b>静态链接-1</b>
 </p>
 
 <div class="org-src-container">
@@ -1174,7 +1176,7 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </div>
 
 <p>
-这种方法会把中间生成若干个 <code>.o</code> 的目标文件, 然后连接器再它们连接起来得到一个程序, 这个过程其实并未使用到静态库.
+这种方法会把中间生成若干个 <code>.o</code> 的目标文件, 然后链接器再它们链接起来得到一个程序, 这个过程其实并未使用到静态库.
 </p>
 
 <p>
@@ -1189,7 +1191,7 @@ gcc -o simple-c simple-c.o simple-c-func.o
 </div></li>
 
 <li><p>
-<b>静态连接-2</b>
+<b>静态链接-2</b>
 </p>
 
 <div class="org-src-container">
@@ -1204,7 +1206,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L.
 </p>
 
 <p>
-<code>GCC</code> 的 <code>-l</code> 选项就是用来指定要连接的链接库名; <code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
+<code>GCC</code> 的 <code>-l</code> 选项就是用来指定要链接的链接库名; <code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
 </p>
 
 <p>
@@ -1212,7 +1214,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L.
 </p>
 
 <p>
-<b>动态连接</b> 如下:
+<b>动态链接</b> 如下:
 </p>
 
 <div class="org-src-container">
@@ -1230,7 +1232,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
 </p>
 
 <p>
-因此我们需要告诉 <code>ld</code> 该连接生成的程序在 <b>运行时</b> 需要从自身当前位置查找 <code>libsimple-c-func.so</code>,
+因此我们需要告诉 <code>ld</code> 该链接生成的程序在 <b>运行时</b> 需要从自身当前位置查找 <code>libsimple-c-func.so</code>,
 </p>
 
 <p>
@@ -1268,11 +1270,11 @@ If both static and shared libraries are found, the linker gives preference to li
 </blockquote>
 
 <p>
-可以看到默认情况下是默认连接动态库, 而这个 <code>-l</code> 选项是直接传给连接器的, 所以连接器也是这么处理的.
+可以看到默认情况下是默认链接动态库, 而这个 <code>-l</code> 选项是直接传给链接器的, 所以链接器也是这么处理的.
 </p>
 
 <p>
-<code>GCC</code> 启动时会调用一个名叫 <a href="https://gcc.gnu.org/onlinedocs/gccint/Collect2.html">collect2</a> 功能, 这个功能调用 <code>ld</code> 来生成一张符号表用于查找定义以及进行连接, 它就是一个连接器的封装.
+<code>GCC</code> 启动时会调用一个名叫 <a href="https://gcc.gnu.org/onlinedocs/gccint/Collect2.html">collect2</a> 功能, 这个功能调用 <code>ld</code> 来生成一张符号表用于查找定义以及进行链接, 它就是一个链接器的封装.
 </p>
 
 <p>
@@ -1348,11 +1350,11 @@ If both static and shared libraries are found, the linker gives preference to li
 </p>
 
 <p>
-从代码上看, 它貌似是来源于 <code>stdio</code> 库的, 并且连接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
+从代码上看, 它貌似是来源于 <code>stdio</code> 库的, 并且链接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
 </p>
 
 <p>
-你没办法在系统路径上找到 <code>libstdio.a</code> 或者 <code>libstdio.so</code> 的文件, 你可以 <code>ldd</code> 命令看一个可执行程序或者动态链接库连接了哪些动态链接库,
+你没办法在系统路径上找到 <code>libstdio.a</code> 或者 <code>libstdio.so</code> 的文件, 你可以 <code>ldd</code> 命令看一个可执行程序或者动态链接库链接了哪些动态链接库,
 </p>
 
 <p>
@@ -1413,7 +1415,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007f2fcd67b000)
 </div>
 
 <p>
-按照前面的说法个, 在静态连接中 <code>#include "simple-c-func"</code> 对应一个 <code>simple-c-func.o</code> 或者 <code>simple-c-func.a</code> 的话,
+按照前面的说法个, 在静态链接中 <code>#include "simple-c-func"</code> 对应一个 <code>simple-c-func.o</code> 或者 <code>simple-c-func.a</code> 的话,
 </p>
 
 <p>
@@ -1483,7 +1485,7 @@ nm: sigvec.o: no symbols
 </p>
 
 <p>
-比如说前面的 <code>simple-c</code> 的动态连接构成的步骤用一个 <code>Makefile</code> 解决:
+比如说前面的 <code>simple-c</code> 的动态链接构成的步骤用一个 <code>Makefile</code> 解决:
 </p>
 
 <div class="org-src-container">
@@ -1507,7 +1509,7 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-在 1991 年的时候, 有个名为 <code>David J. MacKenzie</code> 的程序员厌倦了为 20 个系统(<code>*nix</code> 平台)单独写 <code>Makefile</code> 的任务, 因为每个操作系统上的编译器/连接器/头文件/库文件的路径不一定相同,
+在 1991 年的时候, 有个名为 <code>David J. MacKenzie</code> 的程序员厌倦了为 20 个系统(<code>*nix</code> 平台)单独写 <code>Makefile</code> 的任务, 因为每个操作系统上的编译器/链接器/头文件/库文件的路径不一定相同,
 </p>
 
 <p>
@@ -2273,7 +2275,7 @@ add(1, 2, 3);
 <ol class="org-ol">
 <li>引入 <code>op_node.h</code></li>
 
-<li>运行程序时连接你发布的库 <code>O</code></li>
+<li>运行程序时链接你发布的库 <code>O</code></li>
 </ol>
 
 <div class="org-src-container">
@@ -2463,6 +2465,17 @@ example.c = <span style="color: #ffa07a;">'c'</span>;
 </div>
 </div>
 
+
+<div id="outline-container-orgac0c782" class="outline-3">
+<h3 id="orgac0c782">X Macro</h3>
+<div class="outline-text-3" id="text-orgac0c782">
+<p>
+<a href="https://en.wikipedia.org/wiki/X_macro">https://en.wikipedia.org/wiki/X_macro</a>
+</p>
+</div>
+</div>
+
+
 <div id="outline-container-difference-between-c-and-cpp" class="outline-3">
 <h3 id="difference-between-c-and-cpp">对比 C++, C 的优点</h3>
 <div class="outline-text-3" id="text-difference-between-c-and-cpp">
@@ -2492,7 +2505,7 @@ example.c = <span style="color: #ffa07a;">'c'</span>;
 </p>
 
 <p>
-不过 <code>C++</code> 提供连接规范(linkage specification)来为不同的语言声明连接协议,
+不过 <code>C++</code> 提供链接规范(linkage specification)来为不同的语言声明链接协议,
 </p>
 
 <p>
@@ -2646,13 +2659,27 @@ systems in which this is possible, but I'm not aware of them.
 </p>
 
 <p>
-这个其实无所谓, 喜欢的话也可以放在 <code>return</code> 之前. 另外可以查看这个连接:
+这个其实无所谓, 喜欢的话也可以放在 <code>return</code> 之前. 另外可以查看这个链接:
 </p>
 
 <p>
 <a href="https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c">https://stackoverflow.com/questions/3599160/how-can-i-suppress-unused-parameter-warnings-in-c</a>
 </p></li>
 </ul>
+</div>
+</div>
+
+
+<div id="outline-container-org56adce0" class="outline-3">
+<h3 id="org56adce0">C 语言应用教材</h3>
+<div class="outline-text-3" id="text-org56adce0">
+<p>
+如果想学习 <code>C</code> 标准库的使用, 或者说 <code>Linux</code> 系统编程, 那么 <a href="https://www.man7.org/tlpi/">The Linux Programming Interface</a> 这本书就是必看的.
+</p>
+
+<p>
+这本书的内容可以说是开发人员的必备基础之一, 同时也可以说是 <code>C</code> 语言练习册.
+</p>
 </div>
 </div>
 </div>
@@ -2814,7 +2841,7 @@ warning: conversion from ‘float’ to ‘int’ may change value [-Wfloat-conv
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2021-06-13</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.3 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.4 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
