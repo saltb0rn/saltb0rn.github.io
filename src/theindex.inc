@@ -24,7 +24,7 @@
 即便是已经解决出来了, 也不妨碍看别人的解决思路, 学习多样的解决思路, 找出不同思路之间的联系是数学的灵魂, 正如不同的数学分支之间的联系一样.
 
 	
-*** [[file:posts/2024/07/wasm-in-practice.html?hash=62c93b73171087c1ab08a2030bd84a32][WASM实践]]
+*** [[file:posts/2024/07/wasm-in-practice.html?hash=f0a81a0b0c404ae56b4cd927c4057311][WASM实践]]
 在去年通过阅读 =The Art Of WebAssembly= 学习 =WebAssembly= (简称 =WASM=) 之后基本上再无使用过 =WASM= 了,
 
 这本书算得上是一本不错的 =WASM= 入门书, 通过 =WAT= 介绍 =WASM= 的一些概念, 但关于实际开发的内容很少.
@@ -46,6 +46,13 @@
 他本人也是支持了解底层这个观点, 但同时也说了不是反对使用 =Emscripten=, 而是为了让自己拥有解决预想外问题的能力.
 
 在看完他的视频后我重新燃起了探索的欲望, 因此, 这片文章是对 =Tsoding= 视频内容的整理以及拓展, 势必要在实际开发中掌握 =WASM= 的使用.
+
+他还有另外一个[[https://www.youtube.com/watch?v=2qV-1JhxWeE&ab_channel=TsodingDaily][视频介绍]] =WebAssembly= 和 =WASI= 的, 很好的介绍了 =WebAssembly= 的各个概念, 内容上几乎可以替代 =The Art Of WebAssembly= 了,
+
+后面还演示了如何使用 =Rust= 生成 =WebAssembly= 模块, 如果你是个想学习 =WebAssembly= 的 =Ruster=, 这个视频请不要错过.
+
+我这篇笔记则是围绕如何使用 =C= 生成 =WebAssembly= 模块展开的.
+
 
 	
 *** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=a45c709a6c74c8f863c074fb1fbfbf64][ShaderToy常见代码解释 (收录中)]]
