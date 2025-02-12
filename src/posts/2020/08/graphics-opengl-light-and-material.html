@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-11-08 Fri 17:32 -->
+<!-- 2025-02-12 Wed 15:49 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-光和材质</title>
@@ -233,37 +233,51 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org06ac69a">1. 现实与计算机中颜色</a></li>
-<li><a href="#org873333a">2. 光照模型</a>
+<li><a href="#org18a678e">1. 现实与计算机中颜色</a></li>
+<li><a href="#org5912bca">2. 光照模型</a>
 <ul>
-<li><a href="#org9cbb576">2.1. 最基础的光照模型 - Phong lighting model</a>
+<li><a href="#org48fa882">2.1. 最基础的光照模型 - Phong lighting model</a>
 <ul>
-<li><a href="#orgdd3253b">2.1.1. 光源</a></li>
-<li><a href="#org7186848">2.1.2. 材质</a></li>
-<li><a href="#org929a6ca">2.1.3. 光照计算</a></li>
+<li><a href="#orge95fdda">2.1.1. 光源</a></li>
+<li><a href="#org853b59e">2.1.2. 材质</a></li>
+<li><a href="#org718f1c3">2.1.3. 光照计算</a></li>
 </ul>
 </li>
-<li><a href="#org8f6f29a">2.2. OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
+<li><a href="#org6990d05">2.2. OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
 <ul>
-<li><a href="#org32d3d73">2.2.1. 光在 OpenGL 中的定义</a></li>
-<li><a href="#org622331e">2.2.2. 材质在 OpenGL 中的定义</a></li>
-<li><a href="#orgcd178aa">2.2.3. 光线计算</a></li>
+<li><a href="#org7c590ae">2.2.1. 光在 OpenGL 中的定义</a></li>
+<li><a href="#org848736f">2.2.2. 材质在 OpenGL 中的定义</a></li>
+<li><a href="#orgea50d14">2.2.3. 光线计算</a></li>
 </ul>
 </li>
-<li><a href="#orgc74b0c0">2.3. 基于物理的渲染 - PBR (Physically Based Rendering)</a>
+<li><a href="#org204fb64">2.3. 基于物理的渲染 - PBR (Physically Based Rendering)</a>
 <ul>
-<li><a href="#org43d7c48">2.3.1. 微表面和宏表面 (Micro and Macro Surface)</a></li>
-<li><a href="#orgabe638e">2.3.2. 辐射度量(radiometric quantities)</a></li>
-<li><a href="#org0bbd34b">2.3.3. 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF</a></li>
+<li><a href="#org624cc00">2.3.1. 微表面和宏表面 (Micro and Macro Surface)</a></li>
+<li><a href="#orgf73c6cb">2.3.2. 辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</a></li>
+<li><a href="#org1d563b9">2.3.3. 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org6151cee">3. 阴影</a></li>
+<li><a href="#org655a0ea">3. 阴影</a></li>
+<li><a href="#orga310919">4. 附录</a>
+<ul>
+<li><a href="#slope-space">4.1. 斜率空间 (Slope Space)</a>
+<ul>
+<li><a href="#orge4176e6">4.1.1. 斜率空间和极坐标之间的转换</a></li>
+<li><a href="#why-slope-space">4.1.2. 为什么需要斜率空间</a></li>
+<li><a href="#org6c0ca99">4.1.3. 斜率空间上的分布函数</a></li>
+<li><a href="#orgd1565d8">4.1.4. 从斜率空间上的正态分布函数到 <code>NDF</code></a></li>
+<li><a href="#t-distribution-in-slope-space">4.1.5. 从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></a></li>
+</ul>
+</li>
+<li><a href="#org394fdc2">4.2. 各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org313b0dd">
+<div class="abstract" id="org59298e7">
 <p>
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 </p>
@@ -305,8 +319,8 @@
 </div>
 
 
-<div id="outline-container-org06ac69a" class="outline-2">
-<h2 id="org06ac69a"><span class="section-number-2">1.</span> 现实与计算机中颜色</h2>
+<div id="outline-container-org18a678e" class="outline-2">
+<h2 id="org18a678e"><span class="section-number-2">1.</span> 现实与计算机中颜色</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 <b>在物理学上,我们之所以能够看到一件物体是因为光照射到物体上,然后物体再反射光,最后被我们眼睛接收到.</b>
@@ -325,7 +339,7 @@
 </p>
 
 
-<div id="orgc13dab0" class="figure">
+<div id="org4f120d7" class="figure">
 <p><img src="../../../files/wave.jpeg" alt="wave.jpeg" />
 </p>
 </div>
@@ -368,7 +382,7 @@
 </p>
 
 
-<div id="orga687bfa" class="figure">
+<div id="org1451470" class="figure">
 <p><img src="../../../files/cone-response.jpg" alt="cone-response.jpg" />
 </p>
 </div>
@@ -437,8 +451,8 @@
 </div>
 
 
-<div id="outline-container-org873333a" class="outline-2">
-<h2 id="org873333a"><span class="section-number-2">2.</span> 光照模型</h2>
+<div id="outline-container-org5912bca" class="outline-2">
+<h2 id="org5912bca"><span class="section-number-2">2.</span> 光照模型</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 光的意义在于它能够照明物体,所以并不能只谈光,需要从 <b>照明</b> 与 <b>被照明</b> 这两角度进行了解,主动照明的当然就是光源(light source)了,被照明的是物体,光照射到物体发生什么完全由物体表面材质(material)特点决定,比如颜色,光泽度,是平还是圆的等等.
@@ -449,23 +463,23 @@
 </p>
 </div>
 
-<div id="outline-container-org9cbb576" class="outline-3">
-<h3 id="org9cbb576"><span class="section-number-3">2.1.</span> 最基础的光照模型 - Phong lighting model</h3>
+<div id="outline-container-org48fa882" class="outline-3">
+<h3 id="org48fa882"><span class="section-number-3">2.1.</span> 最基础的光照模型 - Phong lighting model</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 这一部分通过介绍最基础的光照模型来入门光照计算.
 </p>
 </div>
 
-<div id="outline-container-orgdd3253b" class="outline-4">
-<h4 id="orgdd3253b"><span class="section-number-4">2.1.1.</span> 光源</h4>
+<div id="outline-container-orge95fdda" class="outline-4">
+<h4 id="orge95fdda"><span class="section-number-4">2.1.1.</span> 光源</h4>
 <div class="outline-text-4" id="text-2-1-1">
 <p>
 这部分的内容主要是围绕光源以及光的反射进行讨论,现实中光的反射方式有两种: 镜面反射(specular reflection)和漫反射(diffuse reflection),光如何反射是取决于反射面(也就是它照射的物体表面)的,如果反射面光滑,那么就是镜面反射;相反,反射面粗糙,那么就是漫反射.
 </p>
 
 
-<div id="org707a65a" class="figure">
+<div id="orgd68db58" class="figure">
 <p><img src="../../../files/diffuse-vs-specular.png" alt="diffuse-vs-specular.png" />
 </p>
 </div>
@@ -480,7 +494,7 @@
 </p>
 
 
-<div id="orgf53e777" class="figure">
+<div id="org32801b6" class="figure">
 <p><img src="../../../files/reflection-cone.png" alt="reflection-cone.png" />
 </p>
 </div>
@@ -490,7 +504,7 @@
 </p>
 
 
-<div id="orgaa85be8" class="figure">
+<div id="org81b39bc" class="figure">
 <p><img src="../../../files/specular_hilites.png" alt="specular_hilites.png" />
 </p>
 </div>
@@ -558,8 +572,8 @@
 </div>
 
 
-<div id="outline-container-org7186848" class="outline-4">
-<h4 id="org7186848"><span class="section-number-4">2.1.2.</span> 材质</h4>
+<div id="outline-container-org853b59e" class="outline-4">
+<h4 id="org853b59e"><span class="section-number-4">2.1.2.</span> 材质</h4>
 <div class="outline-text-4" id="text-2-1-2">
 <p>
 现实中每个物体对同样的光都有不同的反应,比如金属品和木制品,通常金属品的表面更加光滑,反光效果更好,而木制品一般都比较粗糙,反光效果比较差.
@@ -602,8 +616,8 @@
 </div>
 
 
-<div id="outline-container-org929a6ca" class="outline-4">
-<h4 id="org929a6ca"><span class="section-number-4">2.1.3.</span> 光照计算</h4>
+<div id="outline-container-org718f1c3" class="outline-4">
+<h4 id="org718f1c3"><span class="section-number-4">2.1.3.</span> 光照计算</h4>
 <div class="outline-text-4" id="text-2-1-3">
 <p>
 在开始介绍光照模型前先思考一个问题,还记得在讲坐标变换时所提到的"光照计算"吗?它到底是干什么的呢?结合上面的概念"铺垫",不能发现有一个词语从开始至今不停地出现在我们面前:颜色.
@@ -626,7 +640,7 @@
 </p>
 
 
-<div id="org6c08e4b" class="figure">
+<div id="org17784f3" class="figure">
 <p><img src="../../../files/basic_lighting_phong.png" alt="basic_lighting_phong.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>(图片来源于网络)</p>
@@ -660,7 +674,7 @@
 </div>
 
 <ol class="org-ol">
-<li><a id="org36fd736"></a>ambient<br />
+<li><a id="org9f09786"></a>ambient<br />
 <div class="outline-text-5" id="text-2-1-3-1">
 <p>
 假设光源产生了 \(\mathrm{ambient\_strength}\) 比例的 \(\mathrm{ambient}\), 那么 \(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color}\).
@@ -685,14 +699,14 @@
 </li>
 
 
-<li><a id="org80aa353"></a>diffuse<br />
+<li><a id="orgeb8eae3"></a>diffuse<br />
 <div class="outline-text-5" id="text-2-1-3-2">
 <p>
 而 \(\mathrm{diffuse}\) 需要根据 <b>照射点到光的方向</b> \(L\) 以及 <b>物体表面方向</b> \(N\) 来确定结果,
 </p>
 
 
-<div id="org0969f22" class="figure">
+<div id="org7801134" class="figure">
 <p><img src="../../../files/diffuse_light.png" alt="diffuse_light.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>漫反射(图片来源于网络)</p>
@@ -707,7 +721,7 @@
 </p>
 
 <p>
-要注意一下 \(L\) 和 \(N\) 都必须是单位向量,因为 \(L \cdot N = \|L\|\|N\|\cos\theta\),如果 \(L\) 和 \(N\) 都是单位向量的话 \(L \cdot N = \cos\theta\).
+要注意一下 \(L\) 和 \(N\) 都必须是单位向量,因为 \(L \cdot N = |L||N|\cos\theta\),如果 \(L\) 和 \(N\) 都是单位向量的话 \(L \cdot N = \cos\theta\).
 </p>
 
 <p>
@@ -728,7 +742,7 @@
 </p>
 
 
-<div id="org249ddcd" class="figure">
+<div id="org32fb195" class="figure">
 <p><img src="../../../files/basic_lighting_specular_theory.png" alt="basic_lighting_specular_theory.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>镜面反射(图片来源于网络)</p>
@@ -790,7 +804,7 @@
 </li>
 
 
-<li><a id="orga61f086"></a>result<br />
+<li><a id="org1b99bc4"></a>result<br />
 <div class="outline-text-5" id="text-2-1-3-4">
 <p>
 最后就是我们眼中的结果,也就是经过物体反射的光: \(\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times \mathrm{object\_color}\).
@@ -831,8 +845,8 @@
 </div>
 </div>
 
-<div id="outline-container-org8f6f29a" class="outline-3">
-<h3 id="org8f6f29a"><span class="section-number-3">2.2.</span> OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
+<div id="outline-container-org6990d05" class="outline-3">
+<h3 id="org6990d05"><span class="section-number-3">2.2.</span> OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 <code>Blinn-Phong shading model</code> 是基于 <code>Phong lighting model</code> 改进的,主要改进了镜面反射光的计算.
@@ -877,8 +891,8 @@
 </blockquote>
 </div>
 
-<div id="outline-container-org32d3d73" class="outline-4">
-<h4 id="org32d3d73"><span class="section-number-4">2.2.1.</span> 光在 OpenGL 中的定义</h4>
+<div id="outline-container-org7c590ae" class="outline-4">
+<h4 id="org7c590ae"><span class="section-number-4">2.2.1.</span> 光在 OpenGL 中的定义</h4>
 <div class="outline-text-4" id="text-2-2-1">
 <p>
 当光照射到物体表面时,物体材质的颜色就意味着是对光的反射率.
@@ -1079,8 +1093,8 @@
 </div>
 
 
-<div id="outline-container-org622331e" class="outline-4">
-<h4 id="org622331e"><span class="section-number-4">2.2.2.</span> 材质在 OpenGL 中的定义</h4>
+<div id="outline-container-org848736f" class="outline-4">
+<h4 id="org848736f"><span class="section-number-4">2.2.2.</span> 材质在 OpenGL 中的定义</h4>
 <div class="outline-text-4" id="text-2-2-2">
 <p>
 直接从 <code>glMaterial*(face, pname, param)</code> 切入主题,下面是它能够设置的材质属性参数 <code>pname</code> 说明:
@@ -1162,8 +1176,8 @@
 </div>
 </div>
 
-<div id="outline-container-orgcd178aa" class="outline-4">
-<h4 id="orgcd178aa"><span class="section-number-4">2.2.3.</span> 光线计算</h4>
+<div id="outline-container-orgea50d14" class="outline-4">
+<h4 id="orgea50d14"><span class="section-number-4">2.2.3.</span> 光线计算</h4>
 <div class="outline-text-4" id="text-2-2-3">
 <p>
 <b>这里的颜色模式用的是 RGBA 模式</b>.
@@ -1299,11 +1313,11 @@
 </p>
 
 <p>
-先计算出光源到直线的单位向量 \(\vec{n} = \frac{v - \mathrm{GL\_POSITION}}{\|v - \mathrm{GL\_POSITION}\|} = \frac{(x_{v} - x_{l}, y_{v} - y_{l}, z_{v} - z_{l})}{\sqrt{(x_{v} - x_{l})^{2} + (y_{v} - y_{l})^{2} + (z_{v} - z_{l})^{2}}}\),
+先计算出光源到直线的单位向量 \(\vec{n} = \frac{v - \mathrm{GL\_POSITION}}{|v - \mathrm{GL\_POSITION}|} = \frac{(x_{v} - x_{l}, y_{v} - y_{l}, z_{v} - z_{l})}{\sqrt{(x_{v} - x_{l})^{2} + (y_{v} - y_{l})^{2} + (z_{v} - z_{l})^{2}}}\),
 </p>
 
 <p>
-然后通过 \(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION} = \|\vec{n}\|\|\mathrm{GL\_SPOT\_DIRECTION}\|\cos\theta\) 来求出夹角的 \(cosie\) 值.
+然后通过 \(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION} = |\vec{n}||\mathrm{GL\_SPOT\_DIRECTION}|\cos\theta\) 来求出夹角的 \(cosie\) 值.
 </p>
 
 <p>
@@ -1359,11 +1373,11 @@
 </p>
 
 <p>
-<b>如果是位置光源(\(w \neq 0\))</b>,那么指向光源的方向就是 <b>从顶点到光源的方向</b>,那么 \(L = \frac{\mathrm{GL\_POSITION} - v}{\|\mathrm{GL\_POSITION} - v\|} = \frac{(x_{l} - x_{v}, y_{l} - y_{v}, z_{l} - z_{v})}{\|(x_{l} - x_{v}, y_{l} - y_{v}, z_{l} - z_{v}\|}\).
+<b>如果是位置光源(\(w \neq 0\))</b>,那么指向光源的方向就是 <b>从顶点到光源的方向</b>,那么 \(L = \frac{\mathrm{GL\_POSITION} - v}{|\mathrm{GL\_POSITION} - v|} = \frac{(x_{l} - x_{v}, y_{l} - y_{v}, z_{l} - z_{v})}{|(x_{l} - x_{v}, y_{l} - y_{v}, z_{l} - z_{v}|}\).
 </p>
 
 <p>
-一旦计算出 \(L\) 以后,就进而可以得出 \(L\) 和 \(N\) 夹角 \(\theta\) 的 \(cosine\) 值了: \(cos\theta = \frac{L \cdot N}{\|L\|\|N\|}\), 这个值也表示了 \(L\) 和 \(N\) 不一致的时顶点接收到入射光的强度系数.
+一旦计算出 \(L\) 以后,就进而可以得出 \(L\) 和 \(N\) 夹角 \(\theta\) 的 \(cosine\) 值了: \(cos\theta = \frac{L \cdot N}{|L||N|}\), 这个值也表示了 \(L\) 和 \(N\) 不一致的时顶点接收到入射光的强度系数.
 </p>
 
 <p>
@@ -1419,7 +1433,7 @@
 </p>
 
 
-<div id="orgeebd4ef" class="figure">
+<div id="orgb295c1f" class="figure">
 <p><img src="../../../files/advanced_lighting_over_90.png" alt="advanced_lighting_over_90.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>镜面反射2(图片来源于网络)</p>
@@ -1430,18 +1444,18 @@
 </p>
 
 <p>
-<code>James F. Blinn</code> 在 1977 年提出了一个 \(\mathrm{specular}\) 计算方法: 不依赖反射向量,利用半角向量 <a id="orge8d3e51"></a>\(H\) (halfway vector)进行角度的计算,半角向量就是 \(L\) 和 \(V\) 夹角的 \(\frac{1}{2}\) 的那个方向,
+<code>James F. Blinn</code> 在 1977 年提出了一个 \(\mathrm{specular}\) 计算方法: 不依赖反射向量,利用半角向量 <a id="orgdf5be0d"></a>\(H\) (halfway vector)进行角度的计算,半角向量就是 \(L\) 和 \(V\) 夹角的 \(\frac{1}{2}\) 的那个方向,
 </p>
 
 
-<div id="orgd1c5f1b" class="figure">
+<div id="org24db072" class="figure">
 <p><img src="../../../files/advanced_lighting_halfway_vector.png" alt="advanced_lighting_halfway_vector.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>半角向量(图片来源于网络)</p>
 </div>
 
 <p>
-只要把 \(L\) 或者 \(V\) 平移一下就可以发现 \(H = \frac{L + V}{\|L + V\|}\), 然后把原本计算 \(R \cdot V\) 改为计算 \(H \cdot N\).
+只要把 \(L\) 或者 \(V\) 平移一下就可以发现 \(H = \frac{L + V}{|L + V|}\), 然后把原本计算 \(R \cdot V\) 改为计算 \(H \cdot N\).
 </p>
 
 <p>
@@ -1457,38 +1471,56 @@
 </div>
 
 
-<div id="outline-container-orgc74b0c0" class="outline-3">
-<h3 id="orgc74b0c0"><span class="section-number-3">2.3.</span> 基于物理的渲染 - PBR (Physically Based Rendering)</h3>
+<div id="outline-container-org204fb64" class="outline-3">
+<h3 id="org204fb64"><span class="section-number-3">2.3.</span> 基于物理的渲染 - PBR (Physically Based Rendering)</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
-反射率方程 (The reflectance equation):
+这个章节大部分内容涉及到了微积分和概率论的知识, 理解难度比之前的内容大一点.
 </p>
 
 <p>
-\(L_{o}(p, \omega_{o}) = \int_{\Omega}f_{r}(p, \omega_{i}, \omega_{o})L_{i}(p, \omega_{i})|w_{i} \cdot n|\mathrm{d}\omega_{i}\).
+原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质,
+</p>
+
+<p>
+然后再开一个章节(有必要的话可能要单独写一篇笔记)来把推导整理进来.
 </p>
 </div>
 
-<div id="outline-container-org43d7c48" class="outline-4">
-<h4 id="org43d7c48"><span class="section-number-4">2.3.1.</span> 微表面和宏表面 (Micro and Macro Surface)</h4>
+<div id="outline-container-org624cc00" class="outline-4">
+<h4 id="org624cc00"><span class="section-number-4">2.3.1.</span> 微表面和宏表面 (Micro and Macro Surface)</h4>
 <div class="outline-text-4" id="text-2-3-1">
+<p>
+在 <code>3D</code> 建模中, 宏表面是实际存在的, 由顶点构成, 宏表面的法线由顶点法线决定;
+</p>
 
-<div id="org7280bea" class="figure">
+<p>
+微表面只在理论层面上存在, 由多个微平面(microfacets)构成, 这些微平面的法线是杂乱无章的, 因此, 只有一部分微平面才能反射光线.
+</p>
+
+
+<div id="orgb016bee" class="figure">
 <p><img src="../../../files/micro-vs-macro-surface.png" alt="micro-vs-macro-surface.png" width="400px" />
 </p>
-<p><span class="figure-number">Figure 6: </span>微表面和宏表面</p>
+<p><span class="figure-number">Figure 6: </span>微表面和宏表面, \(n\) 是宏表面的法线, \(m\) 是微表面的法线</p>
 </div>
 
 <p>
-在 <code>3D</code> 建模中, 不管是宏表面还是微表面, 它们都是由顶点构成.
+在图形学中, 对于几何体外观的建模, 总会假设一定的建模尺度和观察尺度:
 </p>
 
-<p>
-区别在于两者的法线来源不一样, 宏表面的法线由顶点信息提供, 而微表面的法线是通过 <code>BRDF</code> 计算出来.
-</p>
+<ul class="org-ul">
+<li>宏观尺度 (Macroscale): 通过三角形网格(mesh)对几何体外观进行建模, 由顶点法线(Vertex Normal)给每个顶点提供法线信息.</li>
 
+<li>中尺度 (Mesoscale): 通过纹理(贴图)对几何外观进行建模, 由法线贴图(Normal Map)给每个像素提供法线信息.</li>
+
+<li>微观尺度 (Microscale): 通过 <code>BRDF</code> 为几何外观进行建模, <code>BRDF</code> 会使用一个微表面的法线分布函数 <code>NDF</code> (<code>Normal Distribution Function</code>), 配合粗糙度贴图(Roughness Map)统计出一个宏表面上有多少微平面可以反射光线, 给每个亚像素(subpixel)提供法线.</li>
+</ul>
+
+
+<blockquote>
 <p>
-<code>BRDF</code> 建模会为平面上的每个亚像素(subpixel)计算出法线, 通过数学统计模拟出现实中的表面在细微层面上的凹凸不平.
+<b>亚像素</b>
 </p>
 
 <p>
@@ -1504,28 +1536,33 @@
 </p>
 
 
-<div id="orgcf6b4a7" class="figure">
+<div id="org3f11aa6" class="figure">
 <p><img src="../../../files/subpixel.png" alt="subpixel.png" width="400px" />
 </p>
 <p><span class="figure-number">Figure 7: </span>亚像素</p>
 </div>
+</blockquote>
 
 <p>
-相比法线贴图为每个像素提供法线来说, <code>BRDF</code> 更细, 自然而言地需要掌握一定的微积分知识才能看得懂下面的内容.
+目前图形学中大多数微观尺度的结构都是高度场(<code>heightfields</code>), 所谓高度场就是所有亚像素点的深度信息的集合.
+</p>
+
+<p>
+我们这里讨论的微表面就是一个高度场, 高度场结构的微表面有一个特征: 微平面的法线 \(m\) 不能向下.
+</p>
+
+<p>
+接下来就是分部地解析反射率方程 (The reflectance equation): \(L_{o}(p, \omega_{o}) = \int_{\Omega}f_{r}(p, \omega_{i}, \omega_{o})L_{i}(p, \omega_{i})|w_{i} \cdot n|d\omega_{i}\).
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgabe638e" class="outline-4">
-<h4 id="orgabe638e"><span class="section-number-4">2.3.2.</span> 辐射度量(radiometric quantities)</h4>
+<div id="outline-container-orgf73c6cb" class="outline-4">
+<h4 id="orgf73c6cb"><span class="section-number-4">2.3.2.</span> 辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</h4>
 <div class="outline-text-4" id="text-2-3-2">
-<p>
-如何得出 \(L_{i}(p, \omega_{i})\)
-</p>
 </div>
-
 <ol class="org-ol">
-<li><a id="orgd7754a4"></a>能量 (energy)<br />
+<li><a id="orga9713da"></a>能量 (energy)<br />
 <div class="outline-text-5" id="text-2-3-2-1">
 <p>
 光源发射出光子, 光子的能量(焦耳, joules): \(Q = \frac{hc}{\lambda}\),
@@ -1542,10 +1579,14 @@
 <p>
 光子的波长 \(\lambda\).
 </p>
+
+<p>
+当然, 我们会用颜色代表光的能量.
+</p>
 </div>
 </li>
 
-<li><a id="orgbba4c08"></a>通量 (flux)<br />
+<li><a id="org058350a"></a>通量 (flux)<br />
 <div class="outline-text-5" id="text-2-3-2-2">
 <p>
 能量测量可以发生在一段时间内, 比如说计算一个物体在接受光照一段时间后所受到的所有能量是多少.
@@ -1556,7 +1597,7 @@
 </p>
 
 <p>
-\(\Phi = \lim\limits_{\Delta t \to 0}\frac{\Delta Q}{\Delta t} = \frac{\mathrm{d}Q}{\mathrm{d}t}\)
+\(\Phi = \lim\limits_{\Delta t \to 0}\frac{\Delta Q}{\Delta t} = \frac{dQ}{dt}\)
 </p>
 
 <p>
@@ -1564,19 +1605,19 @@
 </p>
 
 <p>
-把通量的计算看作是一个关于时间 \(t\) 的函数 \(\Phi(t)\), 可以在一个时间范围内 \([t_{0}, t_{1}]\) 对 \(\Phi(t)\) 进行积分, 算出共接受了多少能量:
+把通量的计算看作是一个关于时间 \(t\) 的函数 \(\Phi(t)\), 根据微积分第一基本定理, 可以在一个时间范围内 \([t_{0}, t_{1}]\) 对 \(\Phi(t)\) 进行积分, 算出共接受了多少能量:
 </p>
 
 <p>
-\(Q = \int_{t_{0}}^{t_{1}}\Phi(t)\mathrm{d}t\)
+\(Q = \int_{t_{0}}^{t_{1}}\Phi(t)dt\)
 </p>
 </div>
 </li>
 
-<li><a id="org9db4fbb"></a>辐射度 (Irradiance)<br />
+<li><a id="orgd3b9f64"></a>辐射度 (Irradiance)<br />
 <div class="outline-text-5" id="text-2-3-2-3">
 <p>
-也称辐射通量密度, 是指单位面积内接受的功率是多少: \(E = \frac{\Phi}{A}\), 其中 \(A\) 是面积大小.
+也称辐射通量密度, 是指单位面积 \(A\) 内接受的功率是多少: \(E = \frac{\Phi}{A}\).
 </p>
 
 <p>
@@ -1600,10 +1641,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <p>
 假设有一个点处于球体上, 它的球体坐标系为 \((r, \theta, \varphi)\), 根据该定律的说法就是只有 \(\theta\) 会影响照明区域的大小.
 </p>
+
+<p>
+围绕由法线定义的旋转轴对称(rationally symmetrical)叫做各向同性(isotropic), 否则就是各向异性(anisotropic).
+</p>
 </blockquote>
 
 
-<div id="org76c1a82" class="figure">
+<div id="orgef4b2ab" class="figure">
 <p><img src="../../../files/Kugelkoord-lokb-e.svg" alt="Kugelkoord-lokb-e.svg" class="org-svg" />
 </p>
 <p><span class="figure-number">Figure 8: </span>球体坐标系</p>
@@ -1618,30 +1663,30 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org61e11f5" class="figure">
+<div id="org90797ca" class="figure">
 <p><img src="../../../files/lamberts-law.png" alt="lamberts-law.png" />
 </p>
-<p><span class="figure-number">Figure 9: </span>平面 A 和 其投影平面 B 的关系</p>
+<p><span class="figure-number">Figure 9: </span>平面 N 和 平面 M 之间的投影关系</p>
 </div>
 
 <p>
-可以得到 \(\frac{M}{N} = \cos\theta = \frac{\omega \cdot n}{\|\omega\|\|n\|}\), 因为 \(\omega\) 和 \(n\) 都是单位向量, 所以 \(\|\omega\| = \|n\| = 1\).
+可以得到 \(\frac{M}{N} = \cos\theta = \frac{\omega \cdot n}{|\omega||n|}\), 因为 \(\omega\) 和 \(n\) 都是单位向量, 所以 \(|\omega| = |n| = 1\).
 </p>
 
 <p>
-所以假设平面 \(M\) 的辐射度是 \(E_{M}\) 投影面的 \(N\) 的辐射度 \(E_{N} = \frac{\Phi}{N} = \frac{\Phi \cos\theta}{N}\).
+所以平面 \(N\) 的辐射度为 \(E_{N} = \frac{\Phi}{N} = \frac{\Phi \cos\theta}{M} = E_{M} \times \cos\theta\).
 </p>
 
 <p>
-可以对辐射度进行积分算出照射面的功率: \(\Phi = \int_{A}E(p)\mathrm{d}A\).
+可以对辐射度进行积分算出照射面的功率: \(\Phi = \int_{A}E(p)dA\).
 </p>
 </div>
 </li>
 
-<li><a id="orgee57cfd"></a>辐射强度(Intensity)<br />
+<li><a id="orgec9d34b"></a>辐射强度(Intensity)<br />
 <div class="outline-text-5" id="text-2-3-2-4">
 <p>
-辐射强度是描述每一个立体角(<code>solid angle</code>)受到的辐射通量 \(\Phi\) 是多少, 单位是 \(\mathrm{W/sr}\), 用 \(I\) 表示: \(I(\omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta \phi}{\Delta \omega} = \frac{\mathrm{d}\phi}{\mathrm{d}\omega}\).
+辐射强度是描述每一个立体角(<code>solid angle</code>)受到的辐射通量 \(\Phi\) 是多少, 单位是 \(\mathrm{W/sr}\), 用 \(I\) 表示: \(I(\omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta \phi}{\Delta \omega} = \frac{d\phi}{d\omega}\).
 </p>
 
 <blockquote>
@@ -1650,11 +1695,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-一立体角是指在球面上所截取的面积等于以球半径为边长的平方, 单位为球面度 \(\mathrm{sr}\).
+1 立体角大小是指在球面上所截取的面积等于以球半径为边长的平方, 单位为球面度 \(\mathrm{sr}\).
 </p>
 
 
-<div id="org32cbc49" class="figure">
+<div id="org51af5a8" class="figure">
 <p><img src="../../../files/480px-Solid_Angle,_1_Steradian.svg.png" alt="480px-Solid_Angle,_1_Steradian.svg.png" />
 </p>
 <p><span class="figure-number">Figure 10: </span>\(1\ \mathrm{sr}\)</p>
@@ -1674,31 +1719,71 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 <p>
-可以对强度进行积分反求出辐射通量 \(\Phi = \int_{\Omega}I(\omega)\mathrm{d}\omega\).
+可以对强度进行积分反求出辐射通量 \(\Phi = \int_{\Omega}I(\omega)d\omega\).
 </p>
 </div>
 </li>
 
-<li><a id="org256d9c7"></a>辐射 (Radiance)<br />
+<li><a id="org2a759c4"></a>辐射 (Radiance)<br />
 <div class="outline-text-5" id="text-2-3-2-5">
 <p>
-辐射 \(L\) 是指在某个点上每差分面积(differental area)接受到多少差分辐射通量(differental flux), 这个度量与辐射强度 \(I\) 类似,
+辐射 \(L\) 是指在某个点上每微元面积(differental area)接受到多少微元辐射通量(differental flux), 这个度量与辐射强度 \(I\) 类似,
 </p>
 
 <p>
-让 \(L\) 定义为位于 \(p\) 点上, 在 \(w\) 方向上, 每单位面积受到/发射了多少辐射通量: \(L(p, \omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta E_{\omega}(p)}{\Delta \omega} = \frac{\mathrm{d}E_{\omega}(p)}{\mathrm{d}\omega} = \frac{\mathrm{d}E_{\omega}(p)}{\mathrm{d}\omega}\)
+让 \(L\) 定义为位于 \(p\) 点上, 在 \(\omega\) 方向上每 \(d{\omega}\) 立体角每单位投影面积 \(dA^{\perp}\) 上受到/发射了多少辐射通量:
 </p>
 
 <p>
-用 \(E_{\omega}\) 表示 \(\mathrm{d}A\) 直于 \(\omega\) 的辐射度, 用 \(\mathrm{d}A^{\perp}\) 表示 \(\mathrm{d}A\) 的投影面积, \(\mathrm{d}A\) 是 \(p\) 点所占的平面面积, \(\mathrm{d}A^{\perp}\) 处于垂直于 \(\omega\) 的平面上,
+\(L(p, \omega) = \lim\limits_{\Delta \omega \to 0}\lim\limits_{\Delta A^{\perp} \to 0} \frac{\Delta \Phi}{\Delta \omega \Delta A^{\perp}} = \lim\limits_{\Delta \omega \to 0}\frac{\Delta E_{\omega}(p)}{\Delta \omega} = \frac{dE_{\omega}(p)}{d\omega} = \frac{dE_{\omega}(p)}{d\omega}\).
+</p>
+
+<blockquote>
+<p>
+这里直接方向向量 \(\omega\) 的微元 \(d\omega\) 表示为立体角, 其背后的依据是把方向向量 \((x, y, z)\) 转换成以 \((x_{0}, y_{0}, z_{0})\) 为球心的球体坐标系后再计算微元:
+</p>
+
+<ol class="org-ol">
+<li>球体半径 \(r = \sqrt{(x - x_{0})^{2} + (y - y_{0})^{2} + (z - z_{0})^{2}}\), 这里以单位球体为研究对象, 因此 \(r = 1\).</li>
+<li>极角 \(\theta = \arccos(\frac{z - z_{0}}{r})\).</li>
+<li>方位角 \(\phi = \arctan(\frac{y - y_{0}}{x - x_{0}})\).</li>
+<li>因此, 方向向量的变化量就转化成极角和方位角的变化量: \(d\theta\) 和 \(d\phi\).</li>
+</ol>
+
+
+
+<div id="orgb3ad666" class="figure">
+<p><img src="../../../files/differential-solid-angle.png" alt="differential-solid-angle.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 11: </span>微元立体角 \(d\omega\)</p>
+</div>
+
+<p>
+严格来讲, 不应该用 \(d\omega\) 来表示立体角度的, 这里有写符号滥用的嫌疑了, 读者很容易搞混.
+</p>
+
+<p>
+不过, 有一些材料就是会用方向向量的微元来表示立体角的, 所以才强调一番.
+</p>
+</blockquote>
+
+<p>
+用 \(E_{\omega}\) 表示垂直于 \(\omega\) 的辐射度, 用 \(dA^{\perp}\) 表示 \(dA\) 在 \(\omega\) 方向上的假想垂直平面的投影面积, \(dA\) 是 \(p\) 点所占的平面面积,
 </p>
 
 <p>
 \(\theta\) 是 \(\omega\) 和 平面 \(A\) 的面法线 \(n\) 的夹角, 并且 \(\omega\) 和 \(n\) 是单位向量.
 </p>
 
+
+<div id="org212e735" class="figure">
+<p><img src="../../../files/radiance.png" alt="radiance.png" />
+</p>
+<p><span class="figure-number">Figure 12: </span>辐射投影关系</p>
+</div>
+
 <p>
-所以 \(E_{\omega} = \frac{\Phi}{A^{\perp}} = \frac{\Phi}{A \times \omega \cdot n} = \frac{\Phi}{A \times \cos\theta}\), 最终 \(L(p, \omega) = \frac{\mathrm{d}}{\mathrm{d} \omega}(\frac{\mathrm{d}\Phi}{\mathrm{d}(A \cos\theta)}) = \frac{\mathrm{d}^{2}\Phi}{\mathrm{d}{\omega}\mathrm{d}(A \cos\theta)}\).
+所以 \(E_{\omega} = \frac{\Phi}{A^{\perp}} = \frac{\Phi}{A \times \omega \cdot n} = \frac{\Phi}{A \times \cos\theta}\), 最终 \(L(p, \omega) = \frac{d}{d \omega}(\frac{d\Phi}{d(A \cos\theta)}) = \frac{d^{2}\Phi}{d{\omega}d(A \cos\theta)}\).
 </p>
 
 <blockquote>
@@ -1708,15 +1793,19 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 <p>
-事实上我们并不太关心 \(A\) 具体是多少, 只关心光照射前和被反射后之间的比例关系, 所以 \(L = \frac{\mathrm{d}^{2}\Phi}{\mathrm{d}{\omega}\mathrm{d}(\cos\theta)} = \frac{\mathrm{d}^{2}\Phi}{\mathrm{d}{\omega}\mathrm{d}(\omega \cdot n)}\).
+事实上我们并不太关心 \(A\) 具体是多少, 只关心投影前后的比例关系, 所以:
 </p>
 
 <p>
-同样, 可以进行积分算出位于面向 \(n\) 平面上以 \(p\) 点作为半球体中心(其球面度为 \(\Omega = 2 \pi\))的辐射强度有多少:
+\(L = \frac{d^{2}\Phi}{d{\omega}d(\cos\theta)} = \frac{d^{2}\Phi}{d{\omega}d(\omega \cdot n)} \rightarrow L_{A} = L \times \cos\theta = L \times (\omega \cdot n)\).
 </p>
 
 <p>
-\(E(p, n) = \int_{\Omega}L(p, \omega)|w \cdot n|\mathrm{d}\omega = \int_{\Omega}L(p, \omega)|\cos\theta|\mathrm{d}\omega\).
+同样, 根据微积分第一基本定理, 可以计算出以平面 \(A\) 上的 \(p\) 点作为半球体中心(其球面度为 \(\Omega = 2 \pi\))所受到的辐射度:
+</p>
+
+<p>
+\(E(p, n) = \int_{\Omega}L(p, \omega)|\omega \cdot n|d\omega = \int_{\Omega}L(p, \omega)|\cos\theta|d\omega\).
 </p>
 </div>
 </li>
@@ -1724,8 +1813,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 
 
-<div id="outline-container-org0bbd34b" class="outline-4">
-<h4 id="org0bbd34b"><span class="section-number-4">2.3.3.</span> 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF</h4>
+<div id="outline-container-org1d563b9" class="outline-4">
+<h4 id="org1d563b9"><span class="section-number-4">2.3.3.</span> 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</h4>
 <div class="outline-text-4" id="text-2-3-3">
 <p>
 能量守恒(Energy Conservation): 出射光的能量不能超过入射光的能量, 排除自发光的表面光.
@@ -1788,35 +1877,53 @@ angle of incidence of illumination, since illumination is over a larger area at 
 \(f_{\mathrm{lambert}} = \frac{c}{\pi}\), \(c\) 是表面颜色(surface color) 或者反射率(albedo), 就像 \(\mathrm{GL\_DIFFUSE}_{\mathrm{material}}\) 一样决定了反射多少漫反射光.
 </p>
 
-
-
 <p>
-\(f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}\) 计算反射光.
+\(f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}\) 计算反射光, 其中 \(D\) 是法线分布函数, \(G\) 是几何函数, \(F\) 是菲涅尔方程. 接下来分别学习这 3 个部分.
+</p>
+</div>
+
+<ol class="org-ol">
+<li><a id="org8a37aaf"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF)</b><br />
+<div class="outline-text-5" id="text-2-3-3-1">
+<blockquote>
+<p>
+这里有个关于翻译上的讨论, 正态分布函数的英文也叫 <code>Normal Distribution Function</code>.
 </p>
 
 <p>
-\(D\) 表示法线分布函数(<code>normal Distribution function</code>), 它是一个概率密度函数(<code>probability density functions</code>), 统计在特定大小的立体角 \(\mathrm{d}\omega\) 内的有多少微表面的法线向量 \(m\) 对齐宏表面的<a href="#orge8d3e51">半角向量</a> \(h\), 其中 \(h\) 和 \(m\) 都是单位向量.
+但是这里的 <code>Normal</code> 应该是翻译成法线, 理由是 <code>NDF</code> 的全定义域积分并不等于 1,
 </p>
-
-
 
 <p>
-<code>Trowbridge-Reitz GGX</code>
+正态分布函数作为一个概率密度函数(<code>probability density function</code>), 它的全定义域积分是 1.
+</p>
+
+<p>
+因此, <code>NDF</code> 并非正态分布函数. 但是 <code>NDF</code> 和概率密度函数有着密切联系, 人们用概率密度函数来对连续表面的法线分布进行建模.
+</p>
+
+<p>
+事实上, 不止法线分布, 表面很多其它方面的数学建模都是通过概率论来完成的.
+</p>
+</blockquote>
+
+<p>
+\(DFG\) 中的 \(D\) 就是一个 <code>NDF</code> ,  <code>NDF</code> 并不是一个具体的函数, 是一类函数的统称, 有很多种选择.
+</p>
+
+<p>
+它描述的是: 在以 \(m\) 为中心的立体角 \(d\omega_{m}\) 内, 找出所有朝向宏表面的<a href="#orgdf5be0d">半角向量</a> \(h\) 方向的微平面(也就是微平面的法线向量 \(m = h\), 其中 \(h\) 和 \(m\) 都是单位向量), 并计算出它们的总面积 \(dS_{m=h}\), 统计出每立体角内 \(dS_{m=h}\) 与(立体角 \(d\omega_{m}\) 内的)微表面面积 \(dS\) 之间的比例为多少: \(D(m) = \frac{dS_{m=h}}{dS \times d\omega_{m}}\), 单位是 \(1 / \mathrm{steradians}\).
 </p>
 
 
-<div id="org9612c43" class="figure">
+<div id="org87a700b" class="figure">
 <p><img src="../../../files/micro-macro-area-0.png" alt="micro-macro-area-0.png" />
 </p>
-<p><span class="figure-number">Figure 11: </span>微表面在宏表面上的投影</p>
+<p><span class="figure-number">Figure 13: </span>微平面在宏表面上的投影, \(dA_{h}\) 是微平面面积, \(dA\) 微平面在是宏表面上的投影</p>
 </div>
 
 <p>
-统计 \(m\) 对齐 \(h\) 的理由是因为一般是把宏表面的半角向量 \(h\) 作为微表面的的法线向量来计算反射.
-</p>
-
-<p>
-<b>只有符合 \(m = h\) 的光线才会对 <code>BRDF</code> 有贡献, 因为只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到.</b>
+统计 \(m\) 对齐 \(h\) 的理由是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 所以一般是把宏表面的半角向量 \(h\) 作为微平面的的法线向量来计算反射.
 </p>
 
 <p>
@@ -1824,55 +1931,341 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org690a514" class="figure">
+<div id="org77e4170" class="figure">
 <p><img src="../../../files/micro-macro-area-1.png" alt="micro-macro-area-1.png" />
 </p>
-<p><span class="figure-number">Figure 12: </span>宏表面的半角向量作为微表面的法线向量</p>
+<p><span class="figure-number">Figure 14: </span>宏表面的半角向量作为微平面的法线向量</p>
 </div>
 
 
-<div id="orgd1c7bdb" class="figure">
+<div id="orgf4ef1fc" class="figure">
 <p><img src="../../../files/real-time-rendering-4th-microfacet.png" alt="real-time-rendering-4th-microfacet.png" width="504px" />
 </p>
-<p><span class="figure-number">Figure 13: </span>所有符合 \(m = h\) 的微表面</p>
+<p><span class="figure-number">Figure 15: </span>所有符合 \(m = h\) 的微平面</p>
 </div>
 
 <p>
-我们用 \(D(m)\) 来表示这个统计结果, 它的单位是 \(1 / \mathrm{steradians}\).
+\(D(m)\) 就 <b>像</b> 是概率密度函数一样, 对 \(D(m)\) 在整个球体上进行积分可以得出整个微表面的总面积 \(S = \int_{m \in \Theta}D(m)d\omega_{m}\) (\(\Theta\) 表示整个球体的球面度).
 </p>
 
 <p>
-\(\mathrm{d}A = (m \cdot n) \times \mathrm{d}A_{m}\)
+根据投影关系: \(dA = (m \cdot n) \times dA_{m}\), 其中 \(0 \lt m \cdot n \le 1\) 可以得出微表面的总面积始终不小于宏表面总面积.
 </p>
 
 <p>
-\(n \cdot h = \cos\theta\)
+我们把宏表面的总面积约定为 1, 那么 \(\int_{m \in \Theta}D(m)d\omega_{m} \ge 1\).
 </p>
 
 <p>
-\(\pi(\cos^{2}\theta \times a^{2} - \cos^{2}\theta + 1)^{2} = \pi(\cos^{2}\theta \times a^{2} + \sin^{2}\theta)^{2} = \pi \cos^{4}\theta(a^{2} + \tan^{2}\theta)^{2}\)
+换而言之, 微表面到宏表面上的投影为 1: \(\int_{m \in \Theta}D(m)(m \cdot n)d\omega_{m} = 1\).
 </p>
 
 <p>
-\(\cos^{2}\theta \times a^{2} - \cos^{2}\theta = \int_{1}^{a^{2}} -2 \cos\theta \sin\theta = \int_{1}^{a^{2}} -\sin 2 \theta = -1 \times \int_{1}^{a^{2}} \sin 2 \theta\)
+一般来说, 微表面和宏表面两者在垂直于视线 \(v\) 的平面 \(P_{v^{\perp}}\) 上的投影是相等的:
 </p>
 
+<p>
+\(\int_{m \in \Theta}D(m)(m \cdot v)d\omega_{m} = n \cdot v = \cos\theta_{o}\), 其中 \(\theta_{o}\) 是 \(n\) 和 \(v\) 之间的夹角.
+</p>
+
+
+<div id="orgd8b8b45" class="figure">
+<p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v.png" alt="micro-macro-projected-onto-plane-prep-to-v.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 16: </span>微表面和宏表面在垂直于 \(v\) 的平面的投影</p>
+</div>
+
+<p>
+\(\int_{m \in \Theta}D(m)(m \cdot v)d\omega_{m}\) 是微表面在 \(P_{v^{\perp}}\) 上的投影, \(n \cdot v\) 是宏表面在 \(P_{v^{\perp}}\) 上的投影.
+</p>
+
+<p>
+另外, 没有把上面积分公式中的点积(<code>dot product</code>)限制在大于等于 0, 因为投影会产生正负抵消.
+</p>
+
+<p>
+当多个微平面的投影重叠是, 面向 \(-m\) 的微平面的投影抵消了面向 \(m\) 为平面的投影.
+</p>
+
+<p>
+我们的目的是通过宏表面的信息和粗糙度来计算出全部符合条件的微平面的面积之和.
+</p>
+
+<p>
+尽管存在许多投影重叠的微平面, 但对于最终渲染而言只需关心可见的微平面(未被遮挡的微平面), 也就是所有投影重叠的微平面中最接近相机的那一个.
+</p>
+
+<p>
+同样, 可见微平面的在视线方向 \(v\) 上的投影面积和宏平面在视线方向 \(v\) 上的投影面积是一样的.
+</p>
+
+
+<div id="org7c4c4e8" class="figure">
+<p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v-visible.png" alt="micro-macro-projected-onto-plane-prep-to-v-visible.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 17: </span>可见微平面和宏表面在垂直于 \(v\) 的平面的投影</p>
+</div>
+
+<p>
+为此需要定义遮蔽函数(masking function) \(G_{1}\) 来描述所有沿着视线方向 \(v\) 的可见微平面的总面积 \(S_{m=v}\) (也就是红色部分) 与符合 \(m = h\) 的微平面的总面积 \(S_{m=h}\) 的比例: \(G_{1}(v, m) = \frac{S_{m=v}}{S_{m=h}}\).
+</p>
+
+<p>
+\(\int_{m \in \Theta}G_{1}(v, m) D(m)(m \cdot v)^{+}d\omega_{m} = n \cdot v\), 其中 \((m \cdot v)^{+}\) 表示将 \(m \cdot v\) 限制为大于等于 0, 也就是在微平面背后的情况不进行计算.
+</p>
+
+<p>
+\(G_{1}(v, m)D(m)\) 表示了可见微平面的法线分布, \(G_{1}(v, m)\) 就是后面要介绍的几何函数, 通过描述微平面的自遮蔽属性来对微表面轮廓进行建模.
+</p>
+
+<p>
+\(D(m)\) 只能描述法线分布, 没法描述微表面轮廓, 几何函数就是用来补全这一块的空缺.
+</p>
+
+<p>
+总结下来, 一个基于物理的微平面 <code>NDF</code>  \(D(m)\) 得具备下基本性质:
+</p>
+
+<ol class="org-ol">
+<li><p>
+微平面法线密度始终为非负值:
+</p>
+
+<p>
+\(0 \le D(m) \le \infty\)
+</p></li>
+
+<li><p>
+微表面的总面积始终不小于宏表面的总面积:
+</p>
+
+<p>
+\(\int_{m \in \Theta}D(m)d\omega_{m} \ge 1\)
+</p></li>
+
+<li><p>
+在任何方向 \(v\) 上进行观察, 微表面的投影面积始终与宏表面的投影面积相同:
+</p>
+
+<p>
+\(\int_{m \in \Theta}D(m)(m \cdot v)d\omega_{m} = n \cdot v\)
+</p></li>
+
+<li><p>
+如果从宏表面的法线方向 \(n\) 进行观察(也就是在 \(n\) 的方向进行投影), 那么可以对 \(D(m)\) 的积分进行归一化:
+</p>
+
+<p>
+\(\int_{m \in \Theta}D(m)(m \cdot n)d\omega_{m} = 1\)
+</p></li>
+</ol>
+
+
+<p>
+为了方便操纵 \(D(m)\) 的分布, 人们通过加入粗糙度(<code>roughness</code>) \(\alpha\) 作为影响因子, 因此, \(D(m)\) 可以改写成 \(D(m, \alpha)\) 形式.
+</p>
+
+<p>
+在具体选择一个 <code>NDF</code> 时, 通常会通过两个方面去考量如何:
+</p>
+
+<ol class="org-ol">
+<li><p>
+是各向同性(<code>isotropic</code>)的还是各向异性的(<code>anisotropic</code>)
+</p>
+
+<p>
+如果 <code>NDF</code> 围绕由宏表面的面法线 \(n\) 定义的旋转轴对称, 那么该 <code>NDF</code> 就是各向同性的, 否则就是各向异性的.
+</p></li>
+
+<li><p>
+是否具备形状不变性(<code>shape invariance</code>)
+</p>
+
+<p>
+形状不变性是指粗糙度 \(\alpha\) 决定的是对微平面的缩放, 如下图:
+</p>
+
+
+<div id="org2fba106" class="figure">
+<p><img src="../../../files/shape-invariance.png" alt="shape-invariance.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 18: </span>粗糙度变小, 微平面数量的变少, 但微平面的面积变大, 微表面更平滑</p>
+</div>
+
+<p>
+具有形状不变性的 <code>NDF</code> 都可以写这种形式: \(D(m, \alpha) = \frac{1}{\alpha^{2}(n \cdot m)^{4}} \times g(\frac{\sqrt{1 - (n \cdot m)^{2}}}{\alpha(n \cdot m)}) = \frac{1}{\alpha^{2} \cos^{4}\theta_{m}} \times g(\frac{\sqrt{1 - \cos^{2}\theta_{m}}}{\alpha \cos\theta_{m}})\),
+</p>
+
+<p>
+\(\theta_{m}\) 是 \(m\) 和宏表面的面法线 \(n\) 之间的夹角, \(g\) 是一元函数, 用来决定 \(D\) 的形状,
+</p>
+
+<p>
+可以把 \(g(\frac{\sqrt{1 - \cos^{2}\theta_{m}}}{\alpha \cos\theta_{m}})\) 改写成 \(f(\frac{\tan\theta_{m}}{\alpha})\), 然后 \(D(m, \alpha)\) 可以改写成 \(D(\theta_{m}, \alpha) = \frac{1}{\alpha^{2}\cos^{4}\theta_{m}} \times f(\frac{\tan\theta_{m}}{\alpha})\).
+</p>
+
+<p>
+具备形状不变性的 <code>NDF</code> 可以推导出该 <code>NDF</code> 归一化的各向异性版本以及方便与推导出几何函数 \(G\) (后面会介绍几何函数).
+</p>
+
+<p>
+只要不成比例得拉伸表面就可以将各向同性的形状不变分布转换成各向异性分布, 这个特性要求理解<a href="#slope-space">斜率空间</a>这个概念, 在附录中的<a href="#why-slope-space">为什么需要斜率空间</a>会介绍表面变换和斜率空间变换的关系.
+</p>
+
+
+<div id="org78a79fa" class="figure">
+<p><img src="../../../files/isotropic-to-anisotropic.png" alt="isotropic-to-anisotropic.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 19: </span>图片来自 [Heitz 2014]</p>
+</div></li>
+</ol>
+
+
+<p>
+目前同时符合各向同性和形状不变性这两个条件的主流 <code>NDF</code> 有两个: <code>Beckmann Distribution</code> 和 <code>GGX (Trowbridge-Reitz) Distribution</code>.
+</p>
+
+
+<div id="org1352391" class="figure">
+<p><img src="../../../files/ggx-vs-beckmann.png" alt="ggx-vs-beckmann.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 20: </span>GGX VS Beckmann (图片来自 <a href="https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/">https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/</a>)</p>
+</div>
+
+<p>
+<code>GGX Distribution</code> 比起 <code>Beckmann Distribution</code> 有更长的尾部, 也就是说在衰减到一定程度之后衰减速度变小, 导致长尾 <code>(long tail)</code>.
+</p>
+
+
+<div id="orgb8aed93" class="figure">
+<p><img src="../../../files/ndf_beckmann_trowbridge.jpg" alt="ndf_beckmann_trowbridge.jpg" width="504px" />
+</p>
+<p><span class="figure-number">Figure 21: </span>更长的尾部一味着更明显的光晕</p>
+</div>
+
+<p>
+因为篇幅限制, 这里只给出 <code>GGX Distribution</code> 的 <code>NDF</code> 定义:
+</p>
+
+<p>
+\(D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \sigma) = \frac{\sigma^{2} \chi^{+}(m \cdot n)}{\pi (m \cdot n)^{4} (\sigma^{2} - \frac{(m \cdot n)^{2} - 1}{(m \cdot n)^{2}})^{2}} = \frac{\sigma^{2}\chi^{+}(m \cdot n)}{\pi ((m \cdot n)^{2}(\sigma^{2} - 1) + 1)^{2}}\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">PI</span> 3.1415926538
+
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">D_GGX</span> (<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">n_microfacet</span>, <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">n_macrosurface</span>, <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">roughness</span>) {
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">alpha_2</span> = roughness * roughness;
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">cos_theta</span> = <span style="color: #b0c4de;">dot</span>(n_microfacet, n_macrosurface);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">d</span> = cos_theta * cos_theta * (alpha_2 - 1) + 1;
+  <span style="color: #00ffff;">return</span> alpha_2 / (PI * d * d);
+}
+</pre>
+</div>
+
+<p>
+关于 <code>GGX NDF</code> 的推导可以看<a href="#t-distribution-in-slope-space">斜率空间中的T分布函数</a>.
+</p>
+</div>
+</li>
+
+<li><a id="orgef8de61"></a><b>几何函数 (<code>Geometry function</code>)</b><br />
+<div class="outline-text-5" id="text-2-3-3-2">
+<p>
+几何函数是对微表面轮廓的建模, 具体做法是描述微平面之间的阴影和遮蔽属性, 函数的结果表示所有符合 \(m=h\) 的微平面中, 在入射 \(L\) 和反射 \(V\) 方向上同时可见的微平面总面积比例.
+</p>
+
+<p>
+我们用 \(G\) 来表示几何函数, 几何函数有两种形式: \(G_{1}\) 和 \(G_{2}\).
+</p>
+
+<p>
+\(G_{1}\) 在前面有介绍过, 这里介绍的含义会和前面的有些差别: 描述微平面在单个方向(光线方向 \(L\) 或视线方向 \(V\))上的可见比例.
+</p>
+
+<p>
+在视线方向 \(V\) 上可见就叫做遮蔽函数(<code>masking function</code>), 在光线方向 \(L\) 上可见叫做阴影函数(<code>shadowing function</code>).
+</p>
+
+
+<div id="org2d229fb" class="figure">
+<p><img src="../../../files/shadowing-and-masking.png" alt="shadowing-and-masking.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 22: </span>阴影和遮蔽</p>
+</div>
+
+<p>
+实际上, 虽然阴影区并没有从 \(L\) 接收到任何直射光, 但它们有可能从附近接收到直射光区域中接收到间接反射的光, 只是微平面理论忽略了这些互相反射.
+</p>
+
+<p>
+\(G_{2}\) 则是描述微平面在光照方向 \(L\) 和观察方向 \(V\) 上的可见比例, 被称为联合遮蔽阴影函数(<code>joint masking-shadowing function</code>),
+</p>
+
+<p>
+在实践中, \(G_{2}\) 是由 \(G_{1}\) 推导而来, 它就是默认情况下的几何函数 \(G\).
+</p>
+
+
+<div id="org2410f00" class="figure">
+<p><img src="../../../files/G1_vs_G2.png" alt="G1_vs_G2.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 23: </span>\(G_{2}\) 和 \(G_{1}\)</p>
+</div>
+
+<p>
+简单来说, 只要研究出 \(G_{1}\), 就可以推导出 \(G_{2}\), 在讨论 <code>NDF</code> 时, 我们就拥有这一条关系:
+</p>
+
+<p>
+\(\int_{m \in \Theta}G_{1}(v, m) D(m)(m \cdot v)^{+}d\omega_{m} = n \cdot v\).
+</p>
+
+<p>
+但单凭这一条关系并不能得出具体的 \(G_{1}\), 因为 \(G_{1}(v, m)\) 是二元函数, 仅固定视线方向 \(v\), \(m\) 是会存在无数种可能满足这一关系的.
+</p>
+
+<p>
+\(m\) 作为微平面的法线, 它们的排列代表的是微表面轮廓(<code>microsurface profile</code>), 因此要确定具体的 \(G_{1}\) 就得先确定微表面的轮廓.
+</p>
+
+<p>
+微表面轮廓的选择会对 <code>BRDF</code> 的形状产生强烈影响, 如图所示.
+</p>
+
+
+<div id="orgf9e2525" class="figure">
+<p><img src="../../../files/microsurface-profile.png" alt="microsurface-profile.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 24: </span>图片修改自 [Heitz 2014]: 相同的法线分布但不同的轮廓导致不同的 <code>BRDF</code></p>
+</div>
+
+<p>
+表面轮廓有好几种模型, <code>Heitz</code> 在 <code>[Heitz 2014]</code> 证明了只有两种模型基于物理: <b><code>Smith</code> 遮蔽函数 (<code>Smith masking function</code>)</b> 和 <b><code>V</code> 腔遮蔽函数 (<code>V-cavity masking function</code>)</b>.
+</p>
+</div>
+</li>
+
+
+
+
+
+<li><a id="org4caf391"></a>菲涅尔方程<br />
+<div class="outline-text-5" id="text-2-3-3-3">
 <p>
 \(F\) 表示菲涅尔方程(<code>Fresnel equation</code>)
 </p>
-
-<p>
-\(G\) 表示几何函数(<code>Geometry function</code>)
-</p>
 </div>
+</li>
+</ol>
 </div>
 </div>
 </div>
 
 
-
-<div id="outline-container-org6151cee" class="outline-2">
-<h2 id="org6151cee"><span class="section-number-2">3.</span> 阴影</h2>
+<div id="outline-container-org655a0ea" class="outline-2">
+<h2 id="org655a0ea"><span class="section-number-2">3.</span> 阴影</h2>
 <div class="outline-text-2" id="text-3">
 <ol class="org-ol">
 <li><p>
@@ -1893,11 +2286,688 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ol>
 </div>
 </div>
+
+
+<div id="outline-container-orga310919" class="outline-2">
+<h2 id="orga310919"><span class="section-number-2">4.</span> 附录</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-slope-space" class="outline-3">
+<h3 id="slope-space"><span class="section-number-3">4.1.</span> 斜率空间 (Slope Space)</h3>
+<div class="outline-text-3" id="text-slope-space">
+<p>
+斜率空间实际上是基于平面上直线的斜率推广到三维空间.
+</p>
+
+<p>
+对于平面上的直线 \(y = kx + b\), 它的斜率为 \(k = \frac{\Delta y}{\Delta x}\), 是关于 \(\frac{\Delta y}{\Delta x}\) 的变化率, 这是二维空间上的斜率.
+</p>
+
+<p>
+对于三维空间中的直线 \(z = Ax + By + c\), 它的斜率是一个二维向量 \((A = \frac{\Delta z}{\Delta x}, B = \frac{\Delta z}{\Delta y})\), 这个向量(梯度向量)就是斜率空间的一个对象,
+</p>
+
+<p>
+为了避免符号冲突, 我们给斜率空间的对象上面加上波浪号, 比如可以用 \(\widetilde{k}\) 来表示该直线的斜率, 它的分量分别是 \(\widetilde{x} = A\) 和 \(\widetilde{y} = B\).
+</p>
+
+<p>
+那么我们应该如何把三维向量 \(n = (x, y, z)\) 转换成斜率空间对象 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\) 呢?
+</p>
+
+<p>
+核心思想和三维直线是一样的, \(\widetilde{x}\) 和 \(\widetilde{y}\) 都和 \(z\) 有关, 那么就把 \(z\) 作为参数对 \(n\) 进行参数化.
+</p>
+
+
+<div id="orgeb7f30b" class="figure">
+<p><img src="../../../files/normal-to-slope.png" alt="normal-to-slope.png" />
+</p>
+<p><span class="figure-number">Figure 25: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
+</div>
+
+<p>
+\(n\) 在平面 \(xz\) 上的投影为 \(n_{x} = (x, 0, z)\), 该平面以逆时针为旋转方向,
+</p>
+
+<blockquote>
+<p>
+这个旋转方向是由平面的两个基向量的叉积结果决定的, 该叉积结果是一个垂直于平面的法线向量, 法线向量决定了平面是背面还是正面,
+</p>
+
+<p>
+非特殊情况下, 一个平面笛卡尔坐标系只要满足在水平方向往右以及在垂直方向往上为正, 那么这个平面就是为正面, 只要是正面, 那么旋转方向就为逆时针方向.
+</p>
+</blockquote>
+
+<p>
+\(\widetilde{x} = \tan (-\beta) = \tan[-(\frac{\pi}{2} - \alpha)] = -\cot \alpha = -\frac{\Delta x}{\Delta z} = -\frac{x}{z}\).
+</p>
+
+
+<div id="org2ef746f" class="figure">
+<p><img src="../../../files/normal-xz.png" alt="normal-xz.png" />
+</p>
+<p><span class="figure-number">Figure 26: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
+</div>
+
+<p>
+\(n\) 在平面 \(yz\) 上的投影为 \(n_{y} = (0, y, z)\), 该平面以顺时针为旋转方向,
+</p>
+
+<p>
+\(\widetilde{y} = \tan (-B) = \tan[-(\frac{\pi}{2} - A)] = -\cot A = -\frac{\Delta y}{\Delta z} = -\frac{y}{z}\).
+</p>
+
+
+<div id="org45cfd55" class="figure">
+<p><img src="../../../files/normal-yz.png" alt="normal-yz.png" />
+</p>
+<p><span class="figure-number">Figure 27: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
+</div>
+
+<p>
+这里讨论的向量 \(n\) 是属于球体的上半部分, 因此 \(z \gt 0\).
+</p>
+
+<p>
+为了对应变化前笛卡尔坐标系的 \(xy\) 平面, 我们让斜率空间在水平方向上往左和在垂直方向上往下为正,
+</p>
+
+<p>
+这样 \(\widetilde{n}\) 就和在 \(z+\) 方向上看到的 \(n\) 一样位于平面的右上角象限,
+</p>
+
+<p>
+并且和笛卡尔坐标系中的 \(xy\) 平面一样以逆时针为旋转方向.
+</p>
+
+
+<div id="orge493a80" class="figure">
+<p><img src="../../../files/normal-in-slope-space.png" alt="normal-in-slope-space.png" />
+</p>
+<p><span class="figure-number">Figure 28: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
+</div>
+
+<p>
+总结下来, 笛卡尔坐标系的 \(n = (x, y, z)\) 转换成斜率空间 \(\widetilde{n}\) 的方法为: \(\widetilde{n} = (\widetilde{x} = -\frac{x}{z}, \widetilde{y} = -\frac{y}{z})\).
+</p>
+
+<p>
+\(n\) 和 \(\widetilde{n}\) 的关系是一对一的(也就是双射关系), 所以可以很简单地把 \(\widetilde{n}\) 转换回笛卡尔坐标系上:
+</p>
+
+<p>
+因为 \(n\) 是单位向量, 所以可以得出该关系: \(x^{2} + y^{2} + z^{2} = {z^{2}}(\frac{x^{2}}{z^{2}} + \frac{y^{2}}{z^{2}} + 1) = {z^{2}}(\widetilde{x}^{2} + \widetilde{y}^{2} + 1) = 1\).
+</p>
+
+<p>
+然后其中的 \((\widetilde{x}^{2} + \widetilde{y}^{2} + 1) = \frac{1}{{z^{2}}} = |(\widetilde{x}, \widetilde{y}, 1)|^{2} = |(-\widetilde{x}, -\widetilde{y}, 1)|^{2}\).
+</p>
+
+<p>
+因为 \(z \gt 0\), 所以 \(|(\widetilde{x}, \widetilde{y}, 1)| = |(-\widetilde{x}, -\widetilde{y}, 1)| = \frac{1}{z}\).
+</p>
+
+<p>
+根据以上关系可以得出 \(\frac{(-\widetilde{x}, -\widetilde{y}, 1)}{\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2} + 1}} = \frac{(-(-\frac{x}{z}), -(-\frac{y}{z}), 1)}{\frac{1}{z}} = (x, y, z) = n\).
+</p>
+</div>
+
+<div id="outline-container-orge4176e6" class="outline-4">
+<h4 id="orge4176e6"><span class="section-number-4">4.1.1.</span> 斜率空间和极坐标之间的转换</h4>
+<div class="outline-text-4" id="text-4-1-1">
+<p>
+以极角 \(\theta\) 和方位角 \(\phi\) 作为参数进行参数化可以把极坐标转换到斜率空间上.
+</p>
+
+<p>
+做法是先把极坐标转换成笛卡尔坐标: \(\begin{equation*}\left\{ \begin{aligned} x &= \sin\theta \cos\phi \\ y &= \sin\theta \sin\phi \\ z &= \cos\theta \end{aligned} \right.\end{equation*}\).
+</p>
+
+<blockquote>
+<p>
+把笛卡尔坐标转换成极坐标: \(\begin{equation*}\left\{ \begin{aligned} \theta &= \arccos(z) \\ \phi &= \arctan(\frac{y}{x}) \end{aligned} \right.\end{equation*}\).
+</p>
+</blockquote>
+
+<p>
+然后把笛卡尔坐标转换到斜率空间上: \(\begin{equation*}\left\{ \begin{aligned} \widetilde{x} &= -\tan\theta \cos\phi \\ \widetilde{y} &= -\tan\theta \sin\phi \end{aligned} \right.\end{equation*}\).
+</p>
+
+<p>
+从斜率空间转换会极坐标上稍微需要推导一下,
+</p>
+
+<p>
+根据 <a href="#orgeb7f30b">25</a>, \(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
+</p>
+
+<p>
+根据笛卡尔坐标到斜率空间上的转换可以得出 \(\tan\phi = \frac{-\widetilde{y}}{-\widetilde{x}} = \frac{-\frac{y}{z}}{\frac{x}{z}} = \frac{y}{x}\).
+</p>
+
+<p>
+最终, 得到从斜率空间转换会极坐标上的关系: \(\begin{equation*}\left\{ \begin{aligned} \theta &= \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}}) \\ \phi &= \arctan(\frac{-\widetilde{y}}{-\widetilde{x}}) \end{aligned} \right.\end{equation*}\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-why-slope-space" class="outline-4">
+<h4 id="why-slope-space"><span class="section-number-4">4.1.2.</span> 为什么需要斜率空间</h4>
+<div class="outline-text-4" id="text-why-slope-space">
+<ol class="org-ol">
+<li>微表面是一个高度场, 法线被限制在球体的上半部分中. 而我们的斜率空间是通过参数化球体上半部分(\(z \gt 0\))得到的, 两者非常契合.</li>
+
+<li><p>
+通过调整微平面的法线向量 \(n\) 来改变微平面的方向是限制的: 不能让微平面面向球体上半部分以外的范围.
+</p>
+
+<p>
+而斜率空间是没有边界的, 因为斜率空间是通过参数化球体上半部分得到的, 所以不管怎么调整 \(\widetilde{n}\) 都不需要担心出现越界问题.
+</p></li>
+
+<li><p>
+<b>很多</b> 针对表面的线性变换都能在斜率空间上找到对应的变换, 而且两者的对应关系十分简单.
+</p>
+
+<p>
+斜率空间的这些变换通常被参数化 <code>BRDF</code> 模型用来实现粗糙度, 各向异性.
+</p>
+
+<ul class="org-ul">
+<li><p>
+微表面在水平方向上缩放 \((\alpha_{x}, \alpha_{y})\) 倍, 微平面 \(n\) 在斜率空间上的 \(\widetilde{n}\) 就缩放 \((\frac{1}{\alpha_{x}}, \frac{1}{\alpha_{y}})\) 倍.
+</p>
+
+<p>
+这里需要透过法线和平面垂直的关系才能看出来, 假设 \(p_{1} = (x_{1}, y_{1}, z_{1})\) 和 \(p_{0} = (x_{0}, y_{0}, z_{0})\) 是平面上的两个点, 这两个点构成的直线 \(l = p_{1} - p_{0} = (x_{1} - x_{0}, y_{1} - y_{0}, z_{1} - z_{0}) = (x_{l}, y_{l}, z_{l})\) 与法线向量 \(n = (x, y, z)\) 垂直:
+</p>
+
+<p>
+\(n \cdot l = (x, y, z) \cdot (x_{l}, y_{l}, z_{l}) = 0\).
+</p>
+
+<p>
+让平面在水平方向进行缩放会导致直线 \(l\) 在 \(x\) 和 \(y\) 分量上缩放得到: \(l^{'} = (\alpha_{x} x_{l}, \alpha_{y} y_{l}, z_{l})\),
+</p>
+
+<p>
+为了保证 \(n \cdot l^{'} = 0\) 成立, \(n\) 需要做如下变换 \((\frac{x}{\alpha_{x}}, \frac{y}{\alpha_{y}}, z)\).
+</p>
+
+<p>
+最后把变换后的 \(n\) 转换到斜率空间上得到 \(\widetilde{n} = (-\frac{x}{z \alpha_{x}}, -\frac{y}{z \alpha_{y}}) = (\frac{\widetilde{x}}{\alpha_{x}}, \frac{\widetilde{y}}{\alpha_{y}})\).
+</p>
+
+<blockquote>
+<p>
+接下来其它的变换都是遵守类似的规律: 微表面发生变换, 从而影响微平面的法线变量 \(n\), 进而影响 \(\widetilde{n}\).
+</p>
+
+<p>
+因此, 后面会一直使用法线 \(n\) 和直线 \(l = p_{1} - p_{0}\) 作为讨论例子, 不再重复声明, 并且进一步简化描述.
+</p>
+</blockquote></li>
+
+<li><p>
+沿着表面的 \(z+\) 方向缩放 \(\alpha\) 倍, 微平面 \(n\) 在斜率空间上的 \(\widetilde{n}\) 就缩放 \(\alpha\) 倍.
+</p>
+
+<p>
+对微平面的 \(z\) 分量进行缩放, 得到变换后的直线 \(l^{'} = (x_{l}, y_{l}, \alpha z_{l})\).
+</p>
+
+<p>
+为了保证 \(n \cdot l^{'} = 0\), \(n\) 需要变换为 \((x, y, \frac{z}{\alpha})\), 最终 \(\widetilde{n} = (-\frac{\alpha x}{z}, -\frac{\alpha y}{z}) = (-\alpha \widetilde{x}, -\alpha \widetilde{y})\).
+</p></li>
+
+<li><p>
+围绕 \(z\) 轴对表面旋转 \(\theta\) 度, 斜率空间的斜率也是旋转 \(\theta\) 角.
+</p>
+
+<p>
+先假设表面的旋转矩阵为 \(M_{\mathrm{r}} = \left( \begin{array}{c} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{array} \right)\), 表面的变换的逆矩阵是其面法线的变换矩阵.
+</p>
+
+<p>
+因为 \(M_{r}\) 旋转矩阵(旋转矩阵是正交矩阵), 所以它的转置矩阵就是它的逆矩阵.
+</p>
+
+<p>
+由此可得, 法线 \(n\) 的变换矩阵为 \(M_{r}^{-1} = M_{r}^{T} = \left( \begin{array}{c} \cos\theta & \sin\theta & 0 \\ -\sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{array} \right)\).
+</p>
+
+<p>
+所以, \(n\) 经过变换后为 \(M_{r}^{-1} n = \left( \begin{array}{c} \cos\theta & \sin\theta & 0 \\ -\sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} x \\ y \\ z \end{array} \right) = \left( \begin{array}{c} x \cos\theta + y \sin\theta \\ -x\sin\theta + y \cos\theta \\ z \end{array} \right)\).
+</p>
+
+<p>
+最终 \(\widetilde{n} = (-\frac{x \cos\theta + y \sin\theta}{z},  -\frac{-x\sin\theta + y \cos\theta}{z}) = \left( \begin{array}{c} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta  \end{array} \right) \left( \begin{array}{c} \widetilde{x} = -\frac{x}{z} \\ \widetilde{y} = -\frac{y}{z} \end{array} \right)\),
+</p>
+
+<p>
+这个矩阵 \(\left( \begin{array}{c} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta  \end{array} \right)\) 就是往逆时针方向旋转 \(\theta\) 度.
+</p>
+
+<blockquote>
+<p>
+其实前面的两个变换也可以通过矩阵进行分析, 而且从矩阵角度分析的效率更高, 有兴趣的可以自行尝试.
+</p>
+</blockquote></li>
+
+<li>围绕 \(y\) 轴对表面旋转, 或者围绕 \(x\) 轴对表面旋转, 在斜率空间上就是透视投影.</li>
+
+<li>从水平方向上对微表面进行剪切变换 \(\left( \begin{array}{c} 1 & k_{2} \\ k_{1} & 1 \end{array} \right)\)</li>
+</ul></li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org6c0ca99" class="outline-4">
+<h4 id="org6c0ca99"><span class="section-number-4">4.1.3.</span> 斜率空间上的分布函数</h4>
+<div class="outline-text-4" id="text-4-1-3">
+<p>
+在 <code>BRDF</code> 模型中, <code>NDF</code> 就是先在斜率空间上定义的: \(D(\widetilde{n})\), 最后再把 \(D(\widetilde{n})\) 变换到其它空间上, 比如笛卡尔坐标系 \(D(n_{\mathrm{cartesian}})\) 或极坐标系上: \(D(n_{\mathrm{polar}})\).
+</p>
+
+<p>
+因为斜率空间是一个无边界的 <code>2D</code> 平面, 所以可以在上面引入一元或二元概率密度函数, 比如说引入正态分布函数. 有时候斜率空间上的概率密度函数被称为 \(P^{22}(\widetilde{n})\) 函数.
+</p>
+
+<p>
+为了把 \(P^{22}(\widetilde{n})\) 变换到其它空间上得到概率密度函数 \(P(n)\), 就得找出 \(P^{22}(\widetilde{n})\) 和 \(P(n)\) 之间的关系.
+</p>
+
+<p>
+那么该如何找出这个变换呢? 可以尝试从概率密度函数的一些特性入手.
+</p>
+
+<p>
+概率密度函数的值就是 \(\frac{符合特定条件的样本数量}{\text{总样本数量}}\), 对概率密度函数在特定范围内进行积分, 得到是 \(\frac{\text{特定范围内的样本数量}}{\text{总样本数量}}\).
+</p>
+
+<p>
+比如以下例子,
+</p>
+
+
+<div id="org72ae62a" class="figure">
+<p><img src="../../../files/fx-pdf.png" alt="fx-pdf.png" />
+</p>
+<p><span class="figure-number">Figure 29: </span>身高在 [60, 70] 英寸内的女性比例</p>
+</div>
+
+<p>
+这个比例也等于 \(\frac{\text{阴影面积}}{\text{总面积}}\), 为 \(\int_{60}^{70} f(x) dx\).
+</p>
+
+<p>
+切换空间其实就和切换单位一样, 切换单位后, 函数在定义域上发生改变, 并且函数的定义也要适应定义域的改变而发生改变.
+</p>
+
+<p>
+假设这个例子的函数 \(y = f(x)\) 的定义域为 \([50, 80]\), 在把单位从英寸切换成厘米后, 得到定义域为 \([50 * 2.64, 80 * 2.64] = [132, 211.2]\) 的函数 \(g(x^{'})\).
+</p>
+
+<p>
+不管是什么单位, 特定身高范围内的女性占比是不会变的, 也就是说 \(\int_{60}^{70} f(x) dx = \int_{60 * 2.64}^{70 * 2.64} g(x^{'}) dx^{'}\).
+</p>
+
+<p>
+你也可以这么想, 在一元函数的积分中, \(f(x)dx\) 是一个矩形的面积, 当 \(f(x)\) 转换成 \(g(x^{'})\) 后, 这个矩形的面积和 \(g(x^{'})dx^{'}\) 是一样的,
+</p>
+
+<p>
+这两个矩形只是形状发生了改变而已, 面积大小没变.
+</p>
+
+<blockquote>
+<p>
+在二元函数的积分中, \(f(x)dx\) (\(x\) 是二维向量) 就是体积, 也是等同于 \(g(x^{'})dx^{'}\), 就不赘述了.
+</p>
+</blockquote>
+
+<p>
+因此, 我们可以得出这一个关系: \(f(x) dx = g(x^{'}) dx^{'}\).
+</p>
+
+<p>
+也就是说, 在 \(x \mapsto x^{'}\) 前提下, 找出 \(f(x)\) 和 \(g(x^{'})\) 之间的关系就可以得到想要的变换了,
+</p>
+
+<p>
+比如从 \(f(x)\) 变换到 \(g(x^{'})\) 上: \(f(x) dx = g(x^{'}) dx^{'} \rightarrow g(x^{'}) = \frac{dx}{dx^{'}} f(x)\), 其中 \(\frac{dx}{dx^{'}}\) 就是从 \(f(x)\) 到 \(g(x^{'})\) 的变换.
+</p>
+
+<p>
+同理, 回到 \(P^{22}\) 和 \(P\) 之间的转换, 可以得到这个变换关系 \(\begin{equation*} P^{22}(\widetilde{n}) d\widetilde{n} = P(n) dn \rightarrow \left\{ \begin{aligned} & P(n) = \frac{d\widetilde{n}}{dn} P^{22}(\widetilde{n}) \\ & P^{22}(\widetilde{n}) = \frac{dn}{d\widetilde{n}}P(n) \end{aligned} \right. \end{equation*}\).
+</p>
+
+<p>
+那么现在的关键是如何找出 \(\frac{d\widetilde{n}}{dn}\) 或 \(\frac{dn}{d\widetilde{n}}\) 呢?
+</p>
+
+<p>
+\(\frac{d\widetilde{n}}{dn}\) 和 \(\frac{dn}{d\widetilde{n}}\) 刚好又是雅可比行列式(the determinant of Jacobian Matrix), 所以问题就变成了: 如何解出雅可比行列式.
+</p>
+
+<p>
+目前的<a href="https://www.reedbeta.com/blog/slope-space-in-brdf-theory/">参考文章</a>的求解方法涉及了微分形式(<a href="../../../files/diffforms.pdf">differential forms</a>)的形式论和几何代数, 已经超出了本人的知识水平了, 其中的解释本人会在挣够相关知识后进行补充, 这里就直接给出答案了:
+</p>
+
+<p>
+从斜率空间到极坐标系的雅可比行列式是 \(\frac{d\widetilde{n}}{dn} = \frac{1}{\cos^{4}\theta}\);
+</p>
+
+<p>
+从极坐标系到斜率空间的雅可比行列式是 \(\frac{dn}{d\widetilde{n}} = \cos^{4}\theta\).
+</p>
+
+<p>
+在得到雅可比行列式后, 就可以在斜率空间上引入想要的分布函数, 改变其参数并对函数乘以 \(\frac{d\widetilde{n}}{dn}\) 得到在论文中看到的分布函数.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd1565d8" class="outline-4">
+<h4 id="orgd1565d8"><span class="section-number-4">4.1.4.</span> 从斜率空间上的正态分布函数到 <code>NDF</code></h4>
+<div class="outline-text-4" id="text-4-1-4">
+<p>
+比如把<a href="https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Bivariate_case">二元正态分布函数</a>引入斜率空间得到: \(D(\widetilde{m}, \sigma) = \frac{1}{2 \pi \sigma^{2}} \times e^{-\frac{|\widetilde{m}|^{2}}{2 \sigma^{2}}}\),
+</p>
+
+<p>
+让 \(D(\widetilde{m}, \sigma)\) 乘以 \(\frac{1}{\cos^{4}\theta}\) 就可以得到 <code>NDF</code>: \(D(m = (\theta, \phi), \sigma) = \frac{1}{\cos^{4}\theta}D(\widetilde{m}, \sigma) = \frac{1}{2 \pi \sigma^{2} \cos^{4}\theta} \times e^{-\frac{\tan^{2}\theta}{2 \sigma^{2}}}\).
+</p>
+
+<p>
+这个 <code>NDF</code> 就是各向同性的 <code>Beckmann Distribution</code>.
+</p>
+
+<p>
+\(\sigma\) 就是粗糙度, 但也有文献上用 \(\alpha\) 来替代, 看到它们其中任意一个要意识到实际上是一个东西.
+</p>
+
+<p>
+你可能在其它文献中看到的 <code>NDF</code> 这么写: \(D(m, \alpha) = \frac{1}{\pi \alpha^{2} \cos^{4}\theta} \times e^{-\frac{\tan^{2}\theta}{\alpha^{2}}}\), 这是因为令 \(\alpha = \sqrt{2}\sigma\).
+</p>
+
+<p>
+另外, 斜率空间本身就限制了 \(m\) 不可能超出上半球范围, 但是笛卡尔坐标或者极坐标并没有该限制, 所以我们需要注意 \(\theta\) 的范围: \(\theta \in [-\frac{\pi}{2}, \frac{\pi}{2}]\), 范围外的统一不进行计算.
+</p>
+
+<p>
+所以 <code>NDF</code> 的完整定义是: \(D(m = (\theta, \phi), \sigma) = \frac{\chi^{+}(\cos\theta)}{2 \pi \sigma^{2} \cos^{4}\theta} \times e^{-\frac{\tan^{2}\theta}{2 \sigma^{2}}}\), 其中 \(\begin{equation*}\chi^{+}(x) = \begin{cases} 1, &  x \gt 0 \\ 0, & x \le 0 \end{cases}\end{equation*}\).
+</p>
+
+<blockquote>
+<p>
+后面还会用到 \(\chi^{+}(x)\) 这个函数, 请记住它.
+</p>
+</blockquote>
+
+<p>
+通过观察可以看到 \(D(m, \alpha)\) 的定义和 \(m\) 的 \(\phi\) 没有任何关系, 而 \(\theta\) 又刚好是微平面面法线 \(m\) 和宏表面法线 \(n\) 的夹角, 所以 \(D(m, \alpha)\) 又有另外两种写法:
+</p>
+
+<ul class="org-ul">
+<li>\(D(\theta, \alpha) = \frac{\chi^{+}(\cos\theta)}{\pi \alpha^{2} \cos^{4}\theta} \times e^{-\frac{\tan^{2}\theta}{\alpha^{2}}}\)</li>
+
+<li>\(D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \alpha) = \frac{\chi^{+}(m \cdot n)}{\pi \alpha^{2} (m \cdot n)^{4}} \times e^{\frac{(m \cdot n)^2 - 1}{\alpha^{2} (m \cdot n)^{2}}}\)</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-t-distribution-in-slope-space" class="outline-4">
+<h4 id="t-distribution-in-slope-space"><span class="section-number-4">4.1.5.</span> 从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></h4>
+<div class="outline-text-4" id="text-t-distribution-in-slope-space">
+<p>
+把<a href="https://en.wikipedia.org/wiki/Multivariate_t-distribution">二元T分布函数</a>引入斜率空间得到: \(D(\widetilde{m}, \sigma) = \frac{\sigma^{2}}{\pi (\sigma^{2} + |\widetilde{m}|^{2})^{2}}\),
+</p>
+
+<p>
+同样乘以 \(\frac{1}{\cos^{4}\theta}\) 得到 <code>NDF</code>: \(D(m = (\theta, \phi), \sigma) = \frac{\sigma^{2}}{\pi \cos^{4}\theta (\sigma^{2} + \tan^{2}\theta)^{2}}\).
+</p>
+
+<p>
+再限制一下 \(\theta\) 的范围: \(D(m, \sigma) = \frac{\sigma^{2}\chi^{+}(\cos\theta)}{\pi \cos^{4}\theta (\sigma^{2} + \tan^{2}\theta)^{2}}\).
+</p>
+
+<p>
+这个 <code>NDF</code> 就是各向同性的 <code>GGX (Trowbridge-Reitz) Distribution</code>.
+</p>
+
+<p>
+另外, 有些文档会用下面的形式来表示 <code>GGX Distribution</code>:
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} D(m = (\theta, \phi), \sigma) &= \frac{\sigma^{2}\chi^{+}(\cos\theta)}{\pi \cos^{4}\theta (\sigma^{2} + \tan^{2}\theta)^{2}} \\ &= \frac{\sigma^{2}\chi^{+}(\cos\theta)}{\pi ((\cos^{2}\theta) \sigma^{2} + \sin^{2}\theta)^{2}} \\ &= \frac{\sigma^{2}\chi^{+}(\cos\theta)}{\pi ((\cos^{2}\theta) \sigma^{2} + (1 - \cos^{2}\theta))^{2}} \\ &= \frac{\sigma^{2}\chi^{+}(\cos\theta)}{\pi ((\cos^{2}\theta)(\sigma^{2} - 1) + 1)^{2}} \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+\(D(m, \sigma)\) 同样和 \(m\) 的 \(\phi\) 没有任何关系, 所以类似前面的 <code>Beckmann Distribution</code> 一样可以改写成另外两种表示:
+</p>
+
+<ul class="org-ul">
+<li>\(D(\theta, \sigma) = \frac{\sigma^{2}\chi^{+}(\cos\theta)}{\pi \cos^{4}\theta (\sigma^{2} + \tan^{2}\theta)^{2}}\)</li>
+
+<li>\(D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \sigma) = \frac{\sigma^{2} \chi^{+}(m \cdot n)}{\pi (m \cdot n)^{4} (\sigma^{2} - \frac{(m \cdot n)^{2} - 1}{(m \cdot n)^{2}})^{2}} = \frac{\sigma^{2}\chi^{+}(m \cdot n)}{\pi ((m \cdot n)^{2}(\sigma^{2} - 1) + 1)^{2}}\)</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org394fdc2" class="outline-3">
+<h3 id="org394fdc2"><span class="section-number-3">4.2.</span> 各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</h3>
+<div class="outline-text-3" id="text-4-2">
+<blockquote>
+<p>
+整理自 "Microfacet Models for Refraction through Rough Surfaces"
+</p>
+</blockquote>
+
+
+<div id="orgb5decc1" class="figure">
+<p><img src="../../../files/g1_deriving.png" alt="g1_deriving.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 30: </span>G1</p>
+</div>
+
+<p>
+几何函数的定义是依赖于 <code>NDF</code> 的, 所以需要从 <code>NDF</code> 下手, 特别是要把 <code>NDF</code> 变换到斜率空间上 \(P_{22}\).
+</p>
+
+<p>
+\(P_{22}(\widetilde{m} = (\widetilde{x}, \widetilde{y}))\), 令 \(p = \widetilde{x}\) 和 \(q = \widetilde{y}\).
+</p>
+
+<p>
+\(P_{1}(\xi)\): 微表面的高度为 \(\xi\) 的概率.
+</p>
+
+<p>
+\(P_{2}(q)\): 微平面的斜率为 \(q\) 的概率, 其定义为 \(P_{2}(q) = \int_{-\infty}^{\infty}P_{22}(p, q)dp\), 是边缘分布.
+</p>
+
+<blockquote>
+<p>
+因为 \(P_{22}(p, q)\) 是由各向同性 <code>NDF</code> 变换来的, 所以 \(P_{2}(q) = P_{2}(p) = \int_{-\infty}^{\infty}P_{22}(p, q)dq\).
+</p>
+
+<p>
+在讨论微平面斜率的分布时, 只选其中之一即可.
+</p>
+</blockquote>
+
+<p>
+\(S(\xi_{0}, \mu)\): 位于表面高度 \(\xi_{0}\) 的点在射线 \(v\) 上可见的概率, \(\mu\) 是射线 \(v\) 的斜率, \(\mu = |\tan(\frac{\pi}{2} - \theta_{v})| = |-\cot\theta_{v}| = |\frac{\cos\theta_{v}}{\sin\theta_{v}}| = |\frac{n \cdot v}{\sqrt{1 - n \cdot v}}|\);
+</p>
+
+<p>
+光线在距离 \(\tau\) 的位置的高度为 \(\xi_{0} + \mu \tau\), \(g(\tau)\Delta \tau\) 为射线 \(v\) 第一次于平面相交的射线部分, 也就是射线 \(v\) 在 \([\tau, \tau + \Delta \tau]\) 处被阻挡;
+</p>
+
+<p>
+最终 \(S(\xi_{0}, \mu)\) 的定义为 \(S(\xi_{0}, \mu) = e^{-\int_{0}^{\infty}g(\tau)d\tau}\), 其中 \(g(\tau)d\tau\) 作为衰减系数.
+</p>
+
+<blockquote>
+<p>
+根据描述可以发现 \(S(\xi_{0}, \mu)\) 的作用非常接近几何函数, 事实上的确如此, 可以说两者就差一步.
+</p>
+</blockquote>
+
+<p>
+为了定义 \(g\), 要先假设表面斜率分布和高度两者是不相关的(法线/遮蔽独立, <code>normal/masking independence</code>), \(g\) 的行为概括为:
+</p>
+
+<p>
+在开始时位于表面上方的射线中，有多少比例在结束时(相交时)位于表面下方.
+</p>
+
+<p>
+观察<a href="#orgb5decc1">推导图</a>, \(\xi\) 和 \(q\) 分别是在表面 \(\tau\) 处的高度和斜率, 如果在 \(\tau\) 处 \(\xi_{0} + \mu\tau \gt \xi\), 那么射线在表面之上;
+</p>
+
+<p>
+如果在 \(\tau + \Delta \tau\) 处 \((q - \mu)\Delta \tau \gt (\xi_{0} + \mu\tau) - \xi\), 那么射线在表面之下.
+</p>
+
+<blockquote>
+<p>
+把射线在表面之下的条件改成这样更易理解: \(\xi + q\Delta \tau \gt \xi_{0} + \mu\tau + \mu\Delta\tau\).
+</p>
+</blockquote>
+
+<p>
+因此, \(g(\tau) = \frac{\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq}{\int_{-\infty}^{\xi_{0} + \mu\tau}P_{1}(\xi)d\xi}\), 回到 \(S(\xi_{0}, \mu)\) 的定义上 \(S(\xi_{0}, \mu) = e^{-\int_{0}^{\infty} g(\tau) d\tau} = e^{\int_{-\infty}^{0} g(\tau) d\tau} = e^{\Lambda(\mu) \ln f(\xi_{0})} = f(\xi_{0})^{\Lambda(\mu)}\).
+</p>
+
+<blockquote>
+<p>
+由于 \(g(\tau)\) 的分子是关于 \(q\) 积分的, \(P_1(\xi_0 + \mu \tau)\) 和 \(q\) 无关, 可得:
+</p>
+
+<p>
+\(\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq = P_{1}(\xi_{0} + \mu\tau) \int_{\mu}^{\infty}(q - \mu)P_{2}(q)dq\).
+</p>
+
+<p>
+令 \(q\) 是随机变量 \(Q\) 支撑集里面的元素, 根据无意识统计学家定理(<code>LOTUS</code>), 可以发现 \(\int_{\mu}^{\infty}(q - \mu)P_{2}(q)dq\) 是一个期望,
+</p>
+
+<p>
+其中 \(z(q) = q - \mu\), 所以该等式的含义是在 \(q \ge \mu\) 时随机变量 \(z(Q)\) 的期望,
+</p>
+
+<p>
+另外根据概率和期望之间的桥梁: 假设 \(A\) 是事件, \(I_A\) 是事件 \(A\) 的指示随机变量, 那么 \(P(A) = E(I_A)\).
+</p>
+
+<p>
+所以分子 \(P_{1}(\xi_{0} + \mu\tau) \int_{\mu}^{\infty}(q - \mu)P_{2}(q)dq\) 的完整含义是射线高度为 \(\xi_0 + \mu\) 且微平面的斜率 \(q\) 大于射线 \(\mu\) 的概率.
+</p>
+
+<p>
+另外根据微积分基础定理可得知 \(\mu P_{1}(\xi_{0} + \mu \tau)\) 是分母 \(\int_{-\infty}^{\xi_{0} + \mu\tau}P_{1}(\xi)d\xi\) 关于 \(\tau\) 的导数.
+</p>
+
+<p>
+令分母为 \(f(\xi_{0} + \mu\tau) = \int_{-\infty}^{\xi_{0} + \mu\tau}P_{1}(\xi)d\xi\), \(f(\xi_{0} + \mu\tau)\) 表示微平面高度小于等于射线高度 \(\xi_{0} + \mu\tau\) 的概率.
+</p>
+
+<p>
+分母是用来对分子进行归一化, 使得 \(g(\tau)\) 限定在一个合理范围内.
+</p>
+
+<p>
+因为函数 \(P_1\) 是概率密度函数, 所以它的反导函数 \(f\) 是累积分布函数.
+</p>
+
+<p>
+使用链式法则对 \(f(\xi_{0} + \mu \tau)\) 关于 \(\tau\) 求导就可以得出 \(\mu P_{1}(\xi_{0} + \mu \tau)\).
+</p>
+
+<p>
+所以 \(g(\tau)\) 可以改为以斜率 \(\mu\) 的函数: \(h(\mu) = \frac{\mu P_{1}(\xi_{0} + \mu \tau) \frac{1}{\mu} \int_{\mu}^{\infty}(q - \mu)P_{2}(q)dq}{f(\xi_{0} + \mu \tau)}\).
+</p>
+
+<p>
+令 \(\Lambda(\mu) = \frac{1}{\mu} \int_{\mu}^{\infty}(q - \mu)P_{2}(q)dq\), 最后 \(h(\mu) = \Lambda(\mu) \frac{\mu P_{1}(\xi_{0} + \mu \tau)}{f(\xi_{0} + \mu \tau)} = g(\tau)\).
+</p>
+
+<p>
+对于形式如 \(\int_{a}^{b} \frac{f^{'}(x)}{f(x)} dx\) 的积分, 采用换元积分法令 \(F = f(x)\) 以及 \(dF = f^{'}(x)dx\) 得到 \(\int_{f(a)}^{f(b)} \frac{1}{F} dF\).
+</p>
+
+<p>
+根据微积分基本定理可得 \(\int_{f(a)}^{f(b)} \frac{1}{F}dF = \left. \ln F \right]_{f(a)}^{f(b)} = \left. \ln f(x) \right]_{f(a)}^{f(b)}\).
+</p>
+
+<p>
+采用换元法令 \(z = \xi_0 + \mu \tau\), \(d z = \mu d \tau\),
+</p>
+
+<p>
+可得 \(\int_{0}^{\infty} g(\tau) d\tau = \int_{0}^{\infty} h(\mu) d\tau = \Lambda(\mu) \int_{0}^{\infty} \frac{\mu P_{1}(\xi_{0} + \mu \tau)}{f(\xi_{0} + \mu \tau)} d\tau = \Lambda (\mu) \int_{\xi_0}^{\xi_0 + \mu \infty} \frac{P_{1}(z)}{f(z)} dz\).
+</p>
+
+<p>
+因为 \(f^{'}(z) = P_{1}(z)\), 所以 \(\Lambda (\mu) \int_{\xi_0}^{\xi_0 + \mu \infty} \frac{P_{1}(z)}{f(z)} dz = \Lambda (\mu) \int_{\xi_0}^{\xi_0 + \mu \infty} \frac{P_{1}(z)}{f(z)} dz = \Lambda (\mu) \left. \ln f(z) \right]_{\xi_0}^{\xi_0 + \mu \infty}\).
+</p>
+
+<p>
+又因为 \(f\) 是累积分布函数, 所以 \(f(\xi_0 + \mu \infty) = 1 \rightarrow \ln f(\xi_0 + \mu \infty) = 0\), 可得 \(\Lambda (\mu) \left. \ln f(z) \right]_{\xi_0}^{\xi_0 + \mu \infty} = - \Lambda(\mu) \ln f(\xi_0)\).
+</p>
+
+<p>
+最后得出 \(S(\xi_0, \mu) = f(\xi_0)^{\Lambda (\mu)}\).
+</p>
+</blockquote>
+
+<p>
+再对所有 \(\xi_{0}\) 为起始的表面高度进行积分, 找出点在射线 \(v\) 上的平均可见性(期望) \(S_{1}(\mu) = \int_{-\infty}^{\infty}S(\xi_{0}, \mu)P_{1}(\xi_{0})d\xi_{0} = \frac{1}{1 + \Lambda(\mu)}\).
+</p>
+
+<blockquote>
+<p>
+前面得知 \(S(\xi_0, \mu) = f(\xi_0)^{\Lambda (\mu)}\), 其中 \(P_{1}(\xi_0)\) 是 \(f(\xi_0)\) 关于 \(\xi_0\) 的导数: \(f^{'}(\xi_0) = P_1(\xi_0)\),
+</p>
+
+<p>
+采用换元法令 \(g = f(\xi_0)\), \(dg = P_{1}(\xi_0) d\xi_0 = df(\xi_0)\), 可得 \(S_{1}(\mu) = \int_{f(-\infty)}^{f(\infty)} f(\xi_0)^{\Lambda(\mu)} df(\xi_0) = \int_{f(-\infty)}^{f(\infty)} g^{\Lambda (\mu)} dg\).
+</p>
+
+<p>
+根据微积分基本定理可以得出 \(S_{1}(\mu) = \left. \frac{1}{1 + \Lambda(\mu)} g^{1 + \Lambda(\mu)} \right]_{f(-\infty)}^{f(\infty)} = \frac{1}{1 + \Lambda(\mu)} ( f(\infty)^{1 + \Lambda(\mu)} - f(-\infty)^{1 + \Lambda(\mu)})\).
+</p>
+
+<p>
+因为函数 \(f\) 是累积分布函数, 所以 \(\begin{equation*} \left\{ \begin{aligned} & f(\infty)^{1 + \Lambda(\mu)} = 1 \\ & f(-\infty)^{1 + \Lambda(\mu)} = 0 \end{aligned} \right. \end{equation*}\), 最终 \(S_{1}(\mu) = \frac{1}{1 + \Lambda(\mu)}\).
+</p>
+</blockquote>
+
+<p>
+为了确保物理计算的正确性, 还要保证 <b>方向一致性 (sideness agreement)</b>: 确保射线位于宏表面和微表面的同一侧.
+</p>
+
+<p>
+做法很简单, 设 \(m\) 和 \(n\) 分别为微平面和宏平面的法线, 射线为 \(v\), 只要 \(v \cdot m\) 和 \(v \cdot n\) 两者正负相同即可, 也就是 \(\frac{v \cdot m}{v \cdot n} \gt 0\) 即表示 \(v\) 在 \(m\) 和 \(n\) 的同一侧.
+</p>
+
+<p>
+经过方向一致性的约束就可以得到几何函数了: \(G_1(v, m) = \chi^{+}(\frac{v \cdot m}{v \cdot n})S_1(\mu) = \chi^{+}(\frac{v \cdot m}{v \cdot n})\frac{1}{1 + \Lambda(\mu)}\).
+</p>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="date">Date: 2020-08-17</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2024-11-08 Fri 17:32</p>
+<p class="date">Created: 2025-02-12 Wed 15:49</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

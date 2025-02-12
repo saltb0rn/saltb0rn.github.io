@@ -38,7 +38,6 @@
 # https://clauswilke.com/art/post/shaders
 
 ** 常见的 UV 计算
-
 *** UV - 计算片元在屏幕上所对应的 UV 坐标
 
 #+BEGIN_QUOTE
@@ -51,7 +50,7 @@
 
 片元理所当然地有一个 =UV= 坐标, 可以通过片元坐标 $gl\_fragCoord$ 和屏幕分辨率 $iResolution$ 计算出来.
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   vec2 uv = gl_FragCoord.xy / iResolution.xy; // [0.0, 1.0]
 #+END_SRC
 
@@ -61,7 +60,7 @@
 
 比如把纹理坐标空间的原点从左下角平移到中心,
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   vec2 uv = (gl_FragCoord.xy / iResolution.xy) - 0.5; // [-0.5, 0.5]
 #+END_SRC
 
@@ -75,7 +74,7 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 
 把新的纹理坐标空间的范围拓展到 $[-1.0, 1.0]$,
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   vec2 uv = 2 * ((gl_FragCoord.xy / iResolution.xy) - 0.5); // [-1.0, 1.0]
   // 可简化成
   vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
@@ -89,21 +88,20 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 
 原本的 $UV$ 范围比例固定是 $\frac{x_{uv}}{y_{uv}} = 1$, 而屏幕分辨率比例是 $\frac{x_{iResolution}}{y_{iResolution}}$,
 
-如果屏幕是 $X$ 轴比较长, 那么 $UV$ 就要针对 $x$ 分量进行补偿才能和屏幕分辨率一致: $\frac{x_{uv} * \frac{x_{iResolution}}{y_{iResolution}}}{x_{uv}} = 1 \times \frac{x_{iResolution}}{y_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}$,
+如果屏幕是 $X$ 轴比较长, 那么 $UV$ 就要针对 $x$ 分量进行补偿才能和屏幕分辨率一致: $\frac{x_{uv} \times \frac{x_{iResolution}}{y_{iResolution}}}{x_{uv}} = 1 \times \frac{x_{iResolution}}{y_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}$,
 
-如果屏幕是 $Y$ 轴比较长, 那么 $UV$ 就要针对 $y$ 分量进行补偿才能和屏幕分辨率一致: $\frac{x_{uv}}{y_{uv} * \frac{y_{iResolution}}{x_{iResolution}}} = 1 \div \frac{y_{iResolution}}{x_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}$.
+如果屏幕是 $Y$ 轴比较长, 那么 $UV$ 就要针对 $y$ 分量进行补偿才能和屏幕分辨率一致: $\frac{x_{uv}}{y_{uv} \times \frac{y_{iResolution}}{x_{iResolution}}} = 1 \div \frac{y_{iResolution}}{x_{iResolution}} = \frac{x_{iResolution}}{y_{iResolution}}$.
 
 #+begin_quote
 你可能会问既然要保证两者比例一样, 为什么还要讨论哪根轴较长呢?
 
 从公式上来看, 如果 $Y$ 比较长的话, 用 $1 \times \frac{x_{iResolution}}{y_{iResolution}}$ 来计算不也是一样可以保证两者比例一致吗?
 
-但是别忘记了 $UV$ 本身就是依赖 $iResolution$ 计算出来的, 这个数字 $1$ 本身就蕴含了这个事实, 后面马上就要揭露这个事实.
+但是别忘记了 $UV$ 本身就是依赖 $iResolution$ 计算出来的, 因此这个数字 $1$ 本身就依赖于 $iResolution$, 下面的代码可以证明这点.
 #+end_quote
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; // [-1.0, 1.0]
-  uv.x *= iResolution.x / iResolution.y;
   if (iResolution.x > iResolution.y) {
     // 如果屏幕的 X 轴比 Y 轴长
     uv.x *= iResolution.x / iResolution.y;
@@ -117,7 +115,7 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 
 现在来逐个分析,
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
   /*
     等同于
@@ -162,7 +160,7 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 
 所以, =ShaderToy= 上有不少例子都是有这一句(或类似的).
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
 vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
 #+END_SRC
 
@@ -251,9 +249,7 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 
 并且模运算的周期可以用来对 $UV$ 空间进行等比缩放, 如果把 =period= 定义为 2.0, 那么 $UV$ 的分量范围就是 $[0, 2]$.
 
-
 ** GLSL 内置函数
-
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml][函数 - smoothstep]]
 
 #+begin_quote
@@ -266,7 +262,7 @@ vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolutio
 
 $smoothstep$ 函数的定义等价如下:
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   /*
     genType clamp(genType x, genType minValue, genType maxValue)
 
@@ -328,7 +324,7 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 
 **** [[https://thebookofshaders.com/glossary/?search=smoothstep][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]]
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   #ifdef GL_ES
   precision mediump float;
   #endif
@@ -371,7 +367,7 @@ $plot$ 函数就是判断片元是否在函数上的.
 
 但由于它们两者都是浮点数, 没法直接判断是否相等, 因此只能认为当两者相差小于一个边界时为相等.
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   float plot(vec2 st, float pct) {
     return abs(pct - st.y) < 0.01 ? 1.0: 0.0;
     /* 或者使用 step 函数
@@ -697,7 +693,6 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 只有在掌握整个模式后, "不断阅读其他人的代码并从中吸收所涉及的数学概念以及应用方法" 才是有用的.
 
-
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml][函数 - dFdx/dFdy]]
 
 要想理解 =dFdx/dFdy= 的作用, 得想知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
@@ -725,7 +720,7 @@ $dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
 
 比如下面这个例子在 =Fragment Shader= 中使用 $dFdx$ 和 $dFdy$ 根据片元的视点空间(view space)坐标计算出面法线.
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   /* vertex shader */
   #ifdef GL_ES
   precision mediump float;
@@ -747,7 +742,7 @@ $dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
   }
 #+END_SRC
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   /* fragment shader */
   #ifdef GL_ES
   precision mediump float;
@@ -923,9 +918,9 @@ $faceforward(N, I, Nref)$ 函数用于判断入射向量 $I(ncident vector)$ 和
 
 如果不理解的话可以看这图,
 
-$dot(I, Nref) = |I||Nref|cos(angle(I, Nref))$, 其中 $angle(I, Nref)$ 是向量 $I$ 和 向量 $Nref$ 之间的角度.
+$dot(I, Nref) = |I||Nref|\cos(angle(I, Nref))$, 其中 $angle(I, Nref)$ 是向量 $I$ 和 向量 $Nref$ 之间的角度.
 
-根据 $cos$ 函数图像可以知道, 如果 $\frac{-\pi}{2} < angle(I, Nref) < \frac{\pi}{2}$, 那么 $dot(I, Nref) > 0$,
+根据 $\cos$ 函数图像可以知道, 如果 $\frac{-\pi}{2} < angle(I, Nref) < \frac{\pi}{2}$, 那么 $dot(I, Nref) > 0$,
 
 很明显, 图中的 $I1$ 符合这种情况: $dot(I1, Nref) > 0$;
 
@@ -947,10 +942,11 @@ $refract(I, N, eta)$ 函数用于计算出入射光线 $I$ 经过面向 $N$ 表�
 
 想了解 $eta$ 的定义, 得先了解斯涅尔定律(=Snell's law=), 又叫折射定律.
 
+#+attr_html: :width 800px
 #+caption: [[https://www.youtube.com/watch?v=NcCSGtnUUpw&ab_channel=AndyMasley%27sIBPhysicsLectures][折射 & 斯涅尔定律(图来自 IB Physics)]]
 [[../../../files/refraction-and-snells-law-from-physics-ib.jpg]]
 
-根据定律, $eta = \frac{n_{1}}{n_{2}} = \frac{sin(\theta_{1})}{sin(\theta_{2})}$ 或者 $eta = \frac{n_{2}}{n_{1}} = \frac{sin(\theta_{2})}{sin(\theta_{1})}$? 究竟是哪个呢?
+根据定律, $eta = \frac{n_{1}}{n_{2}} = \frac{\sin(\theta_{1})}{\sin(\theta_{2})}$ 或者 $eta = \frac{n_{2}}{n_{1}} = \frac{\sin(\theta_{2})}{\sin(\theta_{1})}$? 究竟是哪个呢?
 
 $refract$ 的文档并没有说明这一切, 于是我在 =StackOverflow= 上通过这一篇帖子找到了答案: [[https://stackoverflow.com/questions/20801561/glsl-refract-function-explanation-available][glsl refract function explanation available]].
 
@@ -969,15 +965,15 @@ $refract$ 的文档并没有说明这一切, 于是我在 =StackOverflow= 上通
 
 从图中可以看出, 求出 $T$ 的关键是求出向量 $M$.
 
-其实, 向量 $H$ 的单位向量就是 $M$, 但两者的大小不一样, 它们的大小关系为: $sin(\theta_{i}) = \frac{|H|}{|I|} = \frac{|H|}{|M|} = |H|$,
+其实, 向量 $H$ 的单位向量就是 $M$, 但两者的大小不一样, 它们的大小关系为: $\sin(\theta_{i}) = \frac{|H|}{|I|} = \frac{|H|}{|M|} = |H|$,
 
-因此, $M = \frac{H}{sin(\theta_{i})}$.
+因此, $M = \frac{H}{\sin(\theta_{i})}$.
 
-现在可以计算出 $T = M \times sin(\theta_{t}) - N \times cos(\theta_{t}) = \frac{sin(\theta_{t})}{sin(\theta_{i})}(N \times cos(\theta_{i}) - I) - N \times cos(\theta_{t}) = (\frac{sin(\theta_{t})}{sin(\theta_{i})} \times cos(\theta_{i}) - cos(\theta_{t})) \times N - \frac{sin(\theta_{t})}{cos(\theta_{i})} \times I$.
+现在可以计算出 $T = M \times \sin(\theta_{t}) - N \times \cos(\theta_{t}) = \frac{\sin(\theta_{t})}{\sin(\theta_{i})}(N \times \cos(\theta_{i}) - I) - N \times \cos(\theta_{t}) = (\frac{\sin(\theta_{t})}{\sin(\theta_{i})} \times \cos(\theta_{i}) - \cos(\theta_{t})) \times N - \frac{\sin(\theta_{t})}{\cos(\theta_{i})} \times I$.
 
-现在回过头来看 $eta$, 从计算 $T$ 的方程中, 选择 $eta = \frac{sin(\theta_{t})}{sin(\theta_{i})}$ 比较合适, 所以 $T = (eta \times cos(\theta_{i}) - cos(\theta_{t})) \times N - eta \times I$.
+现在回过头来看 $eta$, 从计算 $T$ 的方程中, 选择 $eta = \frac{\sin(\theta_{t})}{\sin(\theta_{i})}$ 比较合适, 所以 $T = (eta \times \cos(\theta_{i}) - \cos(\theta_{t})) \times N - eta \times I$.
 
-现在 $I$ / $N$ / $eta$ / $T$ 这 4 者的关系已经理清了, 只差 $cos\theta_{t}$ 和 $sin\theta_{t}$ 的值就可以得出 $T$ 的值.
+现在 $I$ / $N$ / $eta$ / $T$ 这 4 者的关系已经理清了, 只差 $\cos\theta_{t}$ 和 $\sin\theta_{t}$ 的值就可以得出 $T$ 的值.
 
 现在已经没办法从上面的图获得任何有用的线索了, 换个思路: 从答案出发找出线索来连接目前得到的结论.
 
@@ -993,7 +989,7 @@ $refract$ 的文档并没有说明这一切, 于是我在 =StackOverflow= 上通
 
 初看代码可能不知道 $k$ 的含义是什么, 相信我只要把 $eta$ 带入进去就明白了:
 
-$k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I) = 1.0 - \frac{sin^{2}(\theta_{t})}{sin^{2}(\theta_{i})} * (1.0 - cos^{2}(\theta_{i})) = 1.0 - \frac{sin^{2}(\theta_{t})}{sin^{2}(\theta_{i})} * sin^{2}(\theta_{i}) = cos^{2}(\theta_{t})$.
+$k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I) = 1.0 - \frac{\sin^{2}(\theta_{t})}{\sin^{2}(\theta_{i})} * (1.0 - \cos^{2}(\theta_{i})) = 1.0 - \frac{\sin^{2}(\theta_{t})}{\sin^{2}(\theta_{i})} * \sin^{2}(\theta_{i}) = \cos^{2}(\theta_{t})$.
 
 现在整个 $refract$ 的定义及其背后的含义已经全部解析完毕.
 
@@ -1021,7 +1017,7 @@ $modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(
 不要和 $mod$ 函数搞混.
 #+end_quote
 
-#+BEGIN_SRC c
+#+BEGIN_SRC glsl
   float f;
   float i;
 
@@ -1039,7 +1035,6 @@ $modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(
 https://learnopengl.com/Getting-started/Textures
 
 ** 常用自定义函数
-
 *** remap 函数
 
 #+begin_quote
@@ -1049,7 +1044,6 @@ https://learnopengl.com/Getting-started/Textures
 $remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射到 $[low2, high2]$ 上, 并返回经过重新映射后的 $value$.
 
 因此, 函数的定义是: $low2 + \frac{value - low1}{high1 - low1} \times (high2 - low2)$.
-
 
 *** 随机函数/Hash函数
 
@@ -1071,6 +1065,15 @@ https://iquilezles.org/articles/sfrand/
 
 参考资料: https://offscreencanvas.com/issues/generative-shader-color-palettes/
 
+** 其它软件的内置函数
+
+大部分软件的 =Shader Language= 在语法上并不会相差太多, 甚至连内置函数也是差不多.
+
+这一章节主要是对一些 =GLSL= 上没有但在其它软件存在的内置函数, 在了解这些内置函数的作用后你就可以看明白其它软件的 =Shader Code=, 以学习思路.
+
+*** Unreal Engine: rcp
+
+https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2
 
 ** 分形 (Fractal)
 
