@@ -24,6 +24,8 @@
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
+* I
+  - [[file:2024/11/introduction-to-probability.org][Introduction To Probability 的阅读草稿纸]]
 * J
   - [[file:2022/03/dev-js-library-tutorial.org][JS库开发指南]]
 * K
@@ -78,6 +80,8 @@
   - [[file:2022/09/pokemon-double-battle-combos.org][宝可梦双打对战组合]]
 * 数
   - [[file:2021/10/math-proofs.org][数学证明]]
+* 流
+  - [[file:2025/02/fluid-typography.org][流式排版]]
 * 理
   - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
   - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]
