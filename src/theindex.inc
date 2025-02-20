@@ -235,7 +235,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=a3d56278766b4132bc1a38b90996526a][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=e8eae4a14aa014d31beb53f93e0f2bb4][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
