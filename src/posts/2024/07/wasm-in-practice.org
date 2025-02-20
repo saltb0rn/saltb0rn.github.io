@@ -932,22 +932,22 @@ clean:
 
 ***** 函数返回值 (return value)
 
-*复合数据 (Complex Data)*
+- *复合数据 (Complex Data)*
 
-根据 [[https://webassembly.github.io/spec/core/exec/instructions.html#returning-from-a-function][WASM 的函数返回规范]], 目前能返回的数据类型只有 [[https://webassembly.github.io/spec/core/exec/runtime.html#syntax-val][number, vector 和 reference]], 以及由它们构成的复合数据.
+  根据 [[https://webassembly.github.io/spec/core/exec/instructions.html#returning-from-a-function][WASM 的函数返回规范]], 目前能返回的数据类型只有 [[https://webassembly.github.io/spec/core/exec/runtime.html#syntax-val][number, vector 和 reference]], 以及由它们构成的复合数据.
 
-但浏览器环境的 =JavaScript= 在调用 =WASM= 函数时无法获取作为返回值的复合数据.
+  但浏览器环境的 =JavaScript= 在调用 =WASM= 函数时无法获取作为返回值的复合数据.
 
-比如下面这个例子,
+  比如下面这个例子,
 
-#+BEGIN_SRC c
+  #+BEGIN_SRC c
   // main.c
   example_struct from_c_to_js_return_struct(int a, long b) {
     return (example_struct){.a = a, .b = b};
   }
-#+END_SRC
+  #+END_SRC
 
-#+BEGIN_SRC javascript
+  #+BEGIN_SRC javascript
   // glup.js
   function test_from_c_to_js_return_struct(a, b) {
     console.group("=============================");
@@ -958,25 +958,25 @@ clean:
   }
 
   // 在 EXPORTS 中添加该函数的调用 test_from_c_to_js_return_struct(2, 100)
-#+END_SRC
+  #+END_SRC
 
-这里 =result= 的输出是 =undefined=,
+  这里 =result= 的输出是 =undefined=,
 
-*个人猜测* 是因为 =JavaScript= 只能访问到 =WASM= 栈顶固定范围内的数据, 所以 =WASM= 函数返回基本类型是可以获取到的, 而复合数据是没法获取到的.
+  *个人猜测* 是因为 =JavaScript= 只能访问到 =WASM= 栈顶固定范围内的数据, 所以 =WASM= 函数返回基本类型是可以获取到的, 而复合数据是没法获取到的.
 
-这么猜测的原因是: =WASM= 函数 $A$ 调用其它以复合数据作为返回值的 =WASM= 函数 $B$ 没有这种问题.
+  这么猜测的原因是: =WASM= 函数 $A$ 调用 =WASM= 函数 $B$ 并成功读取 $B$ 的返回值, 而 $B$ 的返回值是复合数据.
 
-比如, 在同为 =C= 函数的 =sum_for_struct= 里面调用 =from_c_to_js_return_struct=,
+  比如, 在同为 =C= 函数的 =sum_for_struct= 里面调用 =from_c_to_js_return_struct=,
 
-#+BEGIN_SRC c
+  #+BEGIN_SRC c
   // main.c
   long sum_for_struct(int a, long b) {
     example_struct st = from_c_to_js_return_struct(a, b);
     return st.a + st.b;
   }
-#+END_SRC
+  #+END_SRC
 
-#+BEGIN_SRC javascript
+  #+BEGIN_SRC javascript
   // glup.js
   function test_sum_for_struct(a, b) {
     console.group("=============================");
@@ -987,24 +987,24 @@ clean:
   }
 
   // 在 EXPORTS 中添加该函数的调用 test_sum_for_struct(2, 100)
-#+END_SRC
+  #+END_SRC
 
-这里的 =result= 会成功输出 102, 说明在 =WASM= 里面 =sum_for_struct= 读取到了 =from_c_to_js_return_struct= 返回的复合数据并完成计算.
+  这里的 =result= 会成功输出 102, 说明在 =WASM= 里面 =sum_for_struct= 读取到了 =from_c_to_js_return_struct= 返回的复合数据并完成计算.
 
-因此得出结论: =WASM= 编译器实现了 =WASM= 内部把复合数据复制到栈上的特性, 但在 =JavaScript= 在读取 =WASM= 函数返回值方面并未实现像 =WASM= 那样的复合数据复制机制.
+  因此得出结论: =WASM= 编译器实现了 =WASM= 内部把复合数据复制到栈上的特性, 但在 =JavaScript= 在读取 =WASM= 函数返回值方面并未实现像 =WASM= 那样的复合数据复制机制.
 
-另外, 联合体也是复合数据.
+  另外, 联合体也是复合数据.
 
-#+BEGIN_SRC c
+  #+BEGIN_SRC c
   // main.c
   example_union from_c_to_js_return_union(void) {
     return (example_union){
       .li = 12
     };
   }
-#+END_SRC
+  #+END_SRC
 
-#+BEGIN_SRC javascript
+  #+BEGIN_SRC javascript
   // glup.js
   function test_from_c_to_js_return_union() {
     console.group("=============================");
@@ -1015,21 +1015,20 @@ clean:
   }
 
   // 在 EXPORTS 中添加该函数的调用 test_from_c_to_js_return_union()
-#+END_SRC
+  #+END_SRC
 
-这里的 =result= 输出也是 =undefined=.
+  这里的 =result= 输出也是 =undefined=.
 
+- *字符串*
 
-*字符串*
-
-#+BEGIN_SRC c
+  #+BEGIN_SRC c
   // main.c
   char* from_c_to_js_return_string(void) {
     return "Hello, world!"
   }
-#+END_SRC
+  #+END_SRC
 
-#+BEGIN_SRC javascript
+  #+BEGIN_SRC javascript
   // glup.js
   function test_from_c_to_js_return_string() {
     console.group("=============================");
@@ -1040,20 +1039,20 @@ clean:
   }
 
   // 在 EXPORTS 中添加该函数的调用 test_from_c_to_js_return_string()
-#+END_SRC
+  #+END_SRC
 
-后面就不演示指针的返回了, 和字符串的返回是差不多的.
+  后面就不演示指针的返回了, 和字符串的返回是差不多的.
 
-函数指针返回倒是稍微有点特殊, 来演示一下:
+  函数指针返回倒是稍微有点特殊, 来演示一下:
 
-#+BEGIN_SRC c
+  #+BEGIN_SRC c
   // main.c
   void (*from_c_to_js_return_function_ptr(void))(void) {
     return callback_static;
   }
-#+END_SRC
+  #+END_SRC
 
-#+BEGIN_SRC javascript
+  #+BEGIN_SRC javascript
   // glup.js
   function test_from_c_to_js_return_function_ptr() {
     console.group("=============================");
@@ -1065,7 +1064,7 @@ clean:
   }
 
   // 在 EXPORTS 中添加该函数的调用 test_from_c_to_js_return_function_ptr()
-#+END_SRC
+  #+END_SRC
 
 
 **** $\text{C} \stackrel{\text{WASM}}{\longleftarrow} \text{JavaScript}$

@@ -2,3 +2,4 @@
 - [[file:../posts/2021/03/remainder-vs-modulo.org][取余和取模的区别]]
 - [[file:../posts/2021/11/cake-cut.org][切饼问题]]
 - [[file:../posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.org][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+- [[file:../posts/2024/11/introduction-to-probability.org][Introduction To Probability 的阅读草稿纸]]

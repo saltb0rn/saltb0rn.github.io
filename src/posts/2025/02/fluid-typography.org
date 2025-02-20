@@ -1,0 +1,180 @@
+#+title: 流式排版
+#+date: 2025-02-20
+#+index: 流式排版
+#+tags: web
+
+#+begin_abstract
+这篇笔记是 =2022= 年学习响应式布局时写的, 今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
+#+end_abstract
+
+*** 流体字体计算的公式推导
+
+流式字体排版(=fluid typography=)是指排版值(=typographic values=, 包括字体大小, 行高, 字符间距等等)随着视口大小(通常是视口宽度)变化而发生线性变化.
+
+它可以让网页看上去更加"响应式", 而不是像阶梯函数(=step function=)那样跳跃式变化.
+
+#+begin_quote
+由于和视口大小有着密不可分的关系, 因此, 请确保开发时在页面写入了以下 =meta-tag= 把视口宽度调成设备宽度:
+
+#+BEGIN_SRC html
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+#+END_SRC
+#+end_quote
+
+这是最为简单的流式字体排版计算的模板:
+
+#+BEGIN_SRC css
+  /* 100vw < xa */
+  .fluid {
+      font-size: [ya];
+  }
+
+  /* 100vw ≥ xa */
+  @media screen and (min-width: [xa]) {
+      .fluid {
+          font-size: calc([ya] + (100vw - [xa]) * (([yb] - [ya]) / ([xb] - [xa])));
+      }
+  }
+
+  /* 100vw ≥ xb */
+  @media screen and (min-width: [xb]) {
+      .fluid {
+          font-size: [yb];
+      }
+  }
+#+END_SRC
+
+该计算过程是通过代入线性插值公式 $y = y_{a} + \frac{(x - x_{a}) (y_{b} - y_{a})}{x_{b} - x_{a}}$ 得出来的.
+
+其中 $y$ 是在当前的视口宽度下的字体大小;
+
+*而 $x$ 是当前的视口宽度, 也就是 $100\mathrm{vw}$, 虽然写的是固定值, 但它代表着浏览器视口当前的像素大小, 所以 $100\mathrm{vw}$ 本质上是变量*;
+
+$x_{a}$ 和 $x_{b}$ 为视口尺寸断点;
+
+$y_{a}$ 是在视口宽度 $x_{a}$ 下所对应的字体大小, $y_{b}$ 则是在视口宽度 $x_{b}$ 下所对应的字体大小;
+
+这就是在 $x_{a}$ 和 $x_{b}$ 两个断点(breakpoints)之间的字体大小计算.
+
+在不同情况下断点的数量是不一样的, 每两个相邻的断点之间的字体变化是不一样的,
+
+也就是说假设有 $a$, $b$ 和 $c$ 三个断点, 那么应该有两个计算过程: $f_{[a, b]}(x)$ 和 $f_{[b, c]}(x)$, 这两个计算过程的推导方式都是一样的.
+
+#+begin_quote
+这里肯定的是 $f_{[a, b]}$ 和 $f_{[b, c]}$ 的函数图像是不能在断点 $b$ 上连接形成一条直线的,
+
+也就是说 $f_{[a, b]}$ 不能用在断点 $b$ 和 $c$ 之间的字体大小计算上, 反之亦然.
+
+因为如果成立的话, 断点 $b$ 就没有存在的必要, 到时候 $f_{[a, b]}$ 和 $f_{[b, c]}$ 会在 $b$ 处连接形成一个函数 $f_{[a, c]}$,
+
+并且该函数在 $b$ 上可微.
+#+end_quote
+
+另外, 有的开发者是通过斜截式 $y = kx + c$ 进行得出字体大小的计算过程, 看上去与线性插值的显得不一样, 但两者实则相等的.
+
+把插值公式变为斜截式很简单: $y = y_{a} + \frac{(x - x_{a})(y_{b} - y_{a})}{x_{b} - x_{a}} = \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x + y_{a} - \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x_{a}$, 其中 $\begin{equation*} \left\{ \begin{aligned} k &= \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \\ c &= y_{a} - k \times x_{a} \end{aligned} \right. \end{equation*}$.
+
+也可以说斜截式就是插值式简化后的结果, 下面这个例子可以很好的支持该观点,
+
+#+BEGIN_SRC css
+  /* 100vw < 375px */
+  .fluid {
+      font-size: 16px;
+  }
+
+  /* 100vw ≥ 375px */
+  @media screen and (min-width: 375px) {
+      .fluid {
+          font-size: calc(16px + (100vw - 375px) * ((22 - 16) / (1125 - 375)));
+      }
+  }
+
+  /* 100vw ≥ 1125px */
+  @media screen and (min-width: 1125px) {
+      .fluid {
+          font-size: 22px;
+      }
+  }
+#+END_SRC
+
+化简为斜截式, 代入可得 $\begin{equation*} \left\{ \begin{aligned} k &= \frac{22\mathrm{px} - 16\mathrm{px}}{1125\mathrm{px} - 375\mathrm{px}} = 0.008 \\ c &= 16\mathrm{px} - 0.008 \times 375\mathrm{px} = 13\mathrm{px} \end{aligned} \right. \end{equation*}$, 已知 $x$ 代表当前视口宽度, 所以 $x = 100\mathrm{vw}$,
+
+最后可得: $y = kx + c = 100k \times 1\mathrm{vw} + c = (0.008 \times 100)\mathrm{vw} + 13\mathrm{px} = 0.8\mathrm{vw} + 13\mathrm{px}$.
+
+#+BEGIN_SRC css
+  /* 100vw < 375px */
+  .fluid {
+      font-size: 16px;
+  }
+
+  /* 100vw ≥ 375px */
+  @media screen and (min-width: 375px) {
+      .fluid {
+          font-size: calc(0.8vw + 13px);
+      }
+  }
+
+  /* 100vw ≥ 1125px */
+  @media screen and (min-width: 1125px) {
+      .fluid {
+          font-size: 22px;
+      }
+  }
+#+END_SRC
+
+如果目标浏览器支持较新的 =css= 函数: [[https://developer.mozilla.org/en-US/docs/Web/CSS/clamp][clamp]], 还可以对上面样式进行一步简化:
+
+#+BEGIN_SRC css
+  .fluid {
+      font-size: clamp(16px, calc(0.8vw + 13px), 22px);
+  }
+#+END_SRC
+
+这个方法我也是从其它地方看到的, 然而并没有详细说明, 为此需要验证一番:
+
+$\text{clamp(}y_{a}, y, y_{b}\text{)}$ 会把 $y = kx + c$ 限制在 $y_{a}$ 和 $y_{b}$ 之间.
+
+当 $y = kx + c = 100k \times 1\mathrm{vw} + y_{a} - k \times x_{a} \lt y_{a}$ 时, 可以得出 $1\mathrm{vw} \lt (\frac{k \times x_{a}}{100k} = \frac{x_{a}}{100})$, 也就是 $100\mathrm{vw} \lt x_{a}$, 同时 $y$ 被限制为 $y_{a}$;
+
+当 $y = kx + c = 100k \times 1\mathrm{vw} + y_{a} - k \times x_{a} \gt y_{b}$ 时, 可以得出 $1\mathrm{vw} \gt \frac{x_{b}}{100}$, 也就是 $100\mathrm{vw} \gt x_{b}$, 同时 $y$ 被限制为 $y_{b}$;
+
+#+begin_quote
+$1\mathrm{vw} \gt \frac{x_{b}}{100k}$ 这个关系不容易看出来, 它的计算过程如下:
+
+$y = kx + c = 100k \times 1\mathrm{vw} + y_{a} - k \times x_{a} \gt y_{b} \rightarrow 1\mathrm{vw} \gt \frac{y_{b} - y_{a} + k \times x_{a}}{100k}$
+
+令分子 $y_{b} - y_{a} + k \times x_{a} = z$,
+
+$\begin{equation*} \begin{aligned} z &= y_{b} - y_{a} + k \times x_{a} \\ &= y_{b} - y_{a} + \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x_{a} \\ &= \frac{(y_{b} - y_{a})(x_{b} - x_{a})}{x_{b} - x_{a}} + \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x_{a} \\ &= \frac{(x_{b} - x_{a} + x_{a})(y_{b} - y_{a})}{x_{b} - x_{a}} \\ &= \frac{x_{b}(y_{b} - y_{a})}{x_{b} - x_{a}} \end{aligned} \end{equation*}$
+
+所以, $1\mathrm{vw} \gt (\frac{z}{100k} = \frac{x_{b}(y_{b} - y_{a})}{x_{b} - x_{a}} \times \frac{x_{b} - x_{a}}{y_{b} - y_{a}} \times \frac{1}{100} = \frac{x_{b}}{100})$.
+#+end_quote
+
+这就说明简化前后的 =CSS= 模板是等价的.
+
+把数据代入可以得到结论: 当 $100\mathrm{vw} \lt 375\mathrm{px}$ 时, $y$ 被限制在 $16\mathrm{px}$; 当 $100\mathrm{vw} \gt 1125\mathrm{px}$ 时, $y$ 被限制在 $22\mathrm{px}$.
+
+*** =CSS= 的一些限制
+
+=CSS= 的 =calc= 函数绝对是流式排版的核心之一, 它虽支持四则运算, 但乘法和除法有一个限制: 只能有单位与无单位或者无单位与无单位的值才能进行运算, 这导致着 =calc= 不能把有单位的值转换成无单位的值, 比如说 $calc((100vw - 375px) / 1px)$ 是不可行的.
+
+这意味着有些插值方法使用不了, 比如 =GLSL= 的 [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml][smoothstep]] 插值实现就不可行:
+
+#+BEGIN_SRC css
+  /* 100vw ≥ 375px */
+  @media screen and (min-width: 375px) {
+      .fluid {
+          --t: calc((100vw - 375px) / (1125 - 375)); /* --t 的值是带单位的 */
+          font-size: calc(16px + (3 * var(--t) * var(--t) - 2 * var(--t) * var(--t) * var(--t)) * (22 - 16));
+          /* 因为 --t 是带单位的, 所以这个运算是不成立的 */
+      }
+  }
+#+END_SRC
+
+=SASS= 预编译器可以获得无单位值, 所以考虑用 =SASS= 实现这一类插值.
+
+*** 参考
+
+https://www.smashingmagazine.com/2016/05/fluid-typography/
+
+https://www.smashingmagazine.com/2022/01/modern-fluid-typography-css-clamp/

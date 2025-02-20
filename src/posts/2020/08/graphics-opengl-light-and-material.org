@@ -680,9 +680,7 @@ $\mathrm{Contributions\_From\_Light\_Sources} = \displaystyle\sum_{i=0}^{n-1}\ma
 
 这个章节大部分内容涉及到了微积分和概率论的知识, 理解难度比之前的内容大一点.
 
-原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质,
-
-然后再开一个章节(有必要的话可能要单独写一篇笔记)来把推导整理进来.
+原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质, 因此会把一些推导会整理在附录中.
 
 **** 微表面和宏表面 (Micro and Macro Surface)
 
@@ -866,12 +864,7 @@ $L = \frac{d^{2}\Phi}{d{\omega}d(\cos\theta)} = \frac{d^{2}\Phi}{d{\omega}d(\ome
 
 $E(p, n) = \int_{\Omega}L(p, \omega)|\omega \cdot n|d\omega = \int_{\Omega}L(p, \omega)|\cos\theta|d\omega$.
 
-
 **** 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: $f_{r}(p, \omega_i, \omega_o)$
-
-# https://www.reedbeta.com/blog/hows-the-ndf-really-defined/
-
-# https://github.com/QianMo/PBR-White-Paper/blob/master/content/part%204/README.md
 
 能量守恒(Energy Conservation): 出射光的能量不能超过入射光的能量, 排除自发光的表面光.
 
@@ -908,9 +901,7 @@ $k_{\mathrm{specular}} + k_{\mathrm{diffuse}} = 1.0$
 
 $f_{\mathrm{lambert}} = \frac{c}{\pi}$, $c$ 是表面颜色(surface color) 或者反射率(albedo), 就像 $\mathrm{GL\_DIFFUSE}_{\mathrm{material}}$ 一样决定了反射多少漫反射光.
 
-$f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}$ 计算反射光, $f_{\mathrm{cook-torrance}}$ 的定义离不开源于最早的 =BRDF=, 其中 $D$ 是法线分布函数, $G$ 是几何函数, $F$ 是菲涅尔方程.
-
-接下来分别学习这 3 个部分, 并在最后介绍 $f_{\mathrm{cook-torrance}}$ 是怎么推导出来的.
+$f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}$ 计算反射光, $f_{\mathrm{cook-torrance}}$ 的定义离不开源于最早的 =BRDF=, 其中 $D$ 是法线分布函数, $G$ 是几何函数, $F$ 是菲涅尔方程. 接下来分别学习这 3 个部分, 并在最后介绍 $f_{\mathrm{cook-torrance}}$ 是怎么推导出来的.
 
 另外, 为了方便码字, 在解析 =BRDF= 这部分的内容里面会采用 $v$ 代表 $\omega_{o}$, $l$ 代表 $\omega_{i}$.
 
@@ -940,6 +931,11 @@ $\alpha$ 是微平面的粗糙度
 因此, =NDF= 并非正态分布函数. 但是 =NDF= 和概率密度函数有着密切联系, 人们用概率密度函数来对连续表面的法线分布进行建模.
 
 事实上, 不止法线分布, 表面很多其它方面的数学建模都是通过概率论来完成的.
+
+参考资料:
+
+- [[https://zhuanlan.zhihu.com/p/69380665][毛星云:【基于物理的渲染（PBR）白皮书】（四）法线分布函数相关总结]]
+- [[https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf][Bruce Walter: Microfacet Models for Refraction through Rough Surfaces]]
 #+END_QUOTE
 
 $DFG$ 中的 $D$ 就是一个 =NDF=,  =NDF= 并不是一个具体的函数, 是一类函数的统称, 有很多种选择.
@@ -950,12 +946,6 @@ $DFG$ 中的 $D$ 就是一个 =NDF=,  =NDF= 并不是一个具体的函数, 是�
 
 #+caption: 微平面在宏表面上的投影, $dA_{m}$ 是微平面总面积, $dA$ 微平面在是宏表面上的投影
 [[../../../files/micro-macro-area-0.png]]
-
-# https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf
-
-# https://zhuanlan.zhihu.com/p/564814632
-
-# https://zhuanlan.zhihu.com/p/69380665
 
 =BRDF= 把入射光 $l$ 和视线 $v$ 两者共同决定的[[halfway-vector][半角向量]] $h$ 定义为微平面的法线向量, 是因为 *只有 $m = h$ 才能让入射光 $l$ 正确在视线 $v$ 上进行反射, 从而被相机接收到*, 而统计内容就是被看到的那部分.
 
@@ -1091,7 +1081,9 @@ $D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \alpha) = \frac{\alpha^
 
 ***** *几何函数 (=Geometry Functions=): $G(v, l, m)$*
 
-# https://zhuanlan.zhihu.com/p/81708753
+#+begin_quote
+参考资料: [[https://zhuanlan.zhihu.com/p/81708753][毛星云:【基于物理的渲染（PBR）白皮书】（五）几何函数相关总结]]
+#+end_quote
 
 几何函数是对微表面轮廓的建模, 具体做法是描述微平面之间的阴影和遮蔽属性, 函数的结果表示所有符合 $m=h$ 的微平面中, 在入射 $L$ 和反射 $V$ 方向上同时可见的微平面总面积比例.
 
@@ -1255,10 +1247,6 @@ $\begin{equation*} \begin{aligned} \Lambda(v) &= \frac{-1 + \sqrt{1 + (\frac{\al
 =GGX NDF= 的 $\Lambda(v)$ 的推导过程以后补充.
 #+end_quote
 
-
-
-# $G_1(v) = \frac{n \cdot v}{(n \cdot v)(1 - k) + k}$, 其中 $\begin{cases} \alpha = (\frac{roughness + 1}{2})^2 \\ k = \frac{\alpha}{2} \end{cases}$.
-
 游戏和电影工业对于 =GGX-Smith= 遮蔽阴影函数的选用方面可以总为两个主要阶段:
 
 *在 =SIGGRAP 2014= 之前*, =Smith= 分离的遮蔽阴影函数; *在 =SIGGRAP 2014= 之后*, =Smith= 相关的遮蔽阴影函数.
@@ -1321,8 +1309,11 @@ $\begin{equation*}\begin{aligned} G_2(v, l, m) &= \frac{\chi^{+}(v \cdot m) \chi
 
   $G_2(v, l, m) = \frac{0.5}{\Lambda(v) + \Lambda(l)}$
 
-
 ***** *菲涅耳反射 (=Fresnel Reflection=): $F(v, m, F_0)$*
+
+#+begin_quote
+参考资料: [[https://learnopengl.com/PBR/Theory][LearnOpenGL - PBR Theory]]
+#+end_quote
 
 菲涅耳方程描述了被反射光与被折射光的比例, 入射光在照射到表面后会因为折射而损失部分能量, 因此, 被反射光和入射光的能量并不相等.
 
@@ -1347,7 +1338,13 @@ $\begin{equation*}\begin{aligned} G_2(v, l, m) &= \frac{\chi^{+}(v \cdot m) \chi
 
 ***** *$f_{\mathrm{cook-torrance}}$ 的推导*
 
-https://blog.csdn.net/haozi2008/article/details/111061303
+#+begin_quote
+参考资料:
+
+- [[https://pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models#TheTorrancendashSparrowModel][PBR Book - Reflection Models - The Torrance-Sparrow Model]]
+- [[https://blog.csdn.net/haozi2008/article/details/111061303][PBR 三 光照模型的分类和BRDF概述]]
+- [[https://zhuanlan.zhihu.com/p/28059221][毛星云:【《Real-Time Rendering 3rd》 提炼总结】(六) 第七章 · 高级着色：BRDF及相关技术]]
+#+end_quote
 
 $4(v \cdot n)(l \cdot n)$ 是源自于 =Microfacet Cook-Torrance BRDF= 模型推导的结果, 该模型还有另外一个名字: =Torrance-Sparrow Model=.
 
@@ -1393,17 +1390,132 @@ $\begin{equation*} \begin{aligned} L(p, v) &= \frac{d^2 \Phi_v}{d\omega_v \cos\t
 
 最后, 加入几何函数就得到 =Cook-Torrance BRDF= 中的 $f_{\mathrm{cook-torrance}} = \frac{F(l, m, F_0) D(m) G(v, l, m)}{4 (v \cdot n) (l \cdot n)}$.
 
+**** 完整的反射率方程
 
-** 阴影
+经过前面的推导后, 我们对反射率方程有了新的认识:
 
-1. 通过光源进行投影, 计算出在光源"眼中所见"的顶点深度, 获得光源的 =depth buffer=.
+$L_o(p, \omega_o) = \int_{\Omega} (k_{\mathrm{diffuse}} \frac{c}{\pi} + k_{\mathrm{specular}} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)}) L_i(p, \omega_i) n \cdot \omega_i d\omega_i$, 其中 $h = \frac{\omega_i + \omega_o}{|\omega_i + \omega_o|}$.
 
-   光的变换: $M_{\mathrm{project\_for\_light}}M_{\mathrm{view\_for\_light}}$
+可以进一步变换, 把方程分成漫反射辐射度(=diffuse irradiance=)和镜面反射辐射度(=specular irradiance=):
 
-2. 计算出顶点在经过光的变换后得出:
+$\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{diffuse}} \frac{c}{\pi} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + \int_{\Omega} k_{\mathrm{specular}} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \\ &= k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + k_{\mathrm{specular}} \int_{\Omega} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \end{aligned} \end{equation*}$
 
-   $P_{\mathrm{ndc\_for\_light}} = M_{\mathrm{project\_for\_light}}M_{\mathrm{view\_for\_light}}M_{model}P_{object}$
+**** 创作 =PBR= 材质 (Authoring PBR Materials)
 
+#+attr_html: :width 504px
+#+caption: 常见 PBR 贴图
+[[../../../files/pbr-materials.png]]
+
+在了解 =PBR= 的理论以后, 就可以描述美术人员如何为 =PBR= 方程创作制作表面的物理参数, 每个参数都可以通过纹理贴图来定义或建模, 并且纹理贴图能够以逐片元的精度(=per-fragment=)控制表面的物理属性.
+
+以下是 =PBR= 管线中常用的贴图类型:
+
+- 反照率贴图 (=Albedo texture=)
+
+  反照率贴图为每个纹素(=texel=)指定表面的颜色, 如果纹素为金属材质则对应其基础反射率.
+
+  作用基本上与中的漫反射贴图 (=diffuse texture=) 一致, 漫反射贴图通常包含了细微阴影或暗部凹陷, 这正是反照率贴图需要避免的部分, 只能包含表面颜色或者金属的基础反射率.
+
+  反照率贴图是 $f_{\mathrm{lambert}} = \frac{c}{\pi}$ 中的 $c$ 的来源.
+
+- 法线贴图 (=Normal map=)
+
+  法线贴图逐片元地指定宏表面的法线, 是 $n$ 的来源, 用来模拟表面的凹凸效果.
+
+- 金属贴图 (=Metallic map=)
+
+  金属贴图定义纹素是否金属, 具体定义取决于引擎的设置, 通常灰度值(=grayscale value=), 或直接使用非黑即白的二值化形式.
+
+- 粗糙度贴图 (=Roughness map=)
+
+  粗糙度贴图以逐纹素的方式定义表面的粗糙度. 粗糙度影响表面微观几何的统计分布方向. 表面越粗糙, 反射越宽泛且模糊, 而越光滑, 反射越集中且清晰.
+
+  部分引擎使用光滑度贴图 (=Smoothness map=) 而非粗糙度贴图, 因为一些美术人员认为光滑更直观, 可以通过 $1.0 - smoothness$ 转换成粗糙度.
+
+- 环境光遮蔽贴图 (=Ambient occlusion map=, 简称 =AO map=)
+
+  环境光遮蔽贴图为表面以及其周围几何体设置额外的阴影因子, 给反照率贴图补充阴影信息, 提高视觉效果.
+
+
+# **** IBL
+
+# #+begin_quote
+# 这方面的内容偏实现, 以后有空时就再补上, 或者单独写一篇笔记进行记录.
+# #+end_quote
+
+# http://www.codinglabs.net/article_physically_based_rendering.aspx
+
+# $L_o(p, \omega_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i$
+
+# 转换成极坐标
+
+# $\cos\theta_i = n \cdot \omega_i$
+
+# $d\omega_i = \sin\theta_i d\phi_i d\theta_i$
+
+# $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\phi_i = 0}^{2\pi} \int_{\theta_i = 0}^{\frac{\pi}{2}} L_i(p, \phi_i, \theta_i) \cos\theta_i \sin\theta_i d\phi_i d\theta_i$
+
+# 黎曼和
+
+# $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \sum\limits_{\phi_i = 0}^{n_1} \sum\limits_{\theta_i = 0}^{n_2} L_i(p, \phi_i, \theta_i)\cos\theta_i \sin\theta_i \Delta\phi_i \Delta\theta_i$
+
+# $\Delta\phi_i = \frac{2 \pi}{n_1}$
+
+# $\Delta\theta_i = \frac{\pi}{2 n_2}$
+
+# $\Delta\phi_i \Delta\theta_i = \frac{\pi^2}{n_1 n_2}$
+
+# 因为 $\Delta\phi_i \Delta\theta_i = \frac{\pi^2}{n_1 n_2}$ 是常数, 所以独立于求和运算之外: $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c \pi}{n_1 n_2} \sum\limits_{\phi_i = 0}^{n_1} \sum\limits_{\theta_i = 0}^{n_2} L_i(p, \phi_i, \theta_i)\cos\theta_i \sin\theta_i$.
+
+# ***** *立方体贴图卷积 (=Cubemap convolution=)*
+
+
+** COMMENT 阴影
+
+阴影生成并没有用到什么新的数学公式, 所有的数学公式全都在之前的文章用总结完了.
+
+阴影的生成很简单, 首先用一组 =Shader= 的 =vertex shader= 以光线为角度生成一个 [[../../../2020/06/graphics-opengl-transformation.html#depth-buffer][depth buffer (depth map)]] 并储存在贴图中, 这个贴图就叫做阴影贴图 (=shadow map=);
+
+然后在另外一组 =Shader= 的 =fragment shader= 中对比当前片元的深度与阴影贴图中的深度, 来确定该顶点是否在阴影之中.
+
+#+attr_html: :width 504px
+#+caption: 阴影贴图
+[[../../../files/shadow_mapping_theory_spaces.png]]
+
+生成 =depth buffer= 有两种选择: 一是用正交投影生成线性 =depth buffer=, 二是用透视投影生成非线性 =depth buffer=.
+
+#+attr_html: :width 504px
+#+caption: 正交投影 vs 透视投影
+[[../../../files/shadow_mapping_projection.png]]
+
+两者的用途是不一样的, 正交投影用于给定向光源生成阴影贴图, 透视投影用于给位置光源计算阴影贴图.
+
+先从正交投影开始,
+
+1. 通过光源进行 *正交投影*, 计算出要成像的顶点 $P_{object}$ 在光源"眼中所见"的投影坐标 $P_{clip}$, 并生成阴影贴图:
+
+   $P_{\mathrm{clip}} = M_{\mathrm{light\_ortho\_proj}}M_{\mathrm{light\_view}}M_{\mathrm{model}} P_{object}$
+
+   该等式用在第一组 =Shader= 的 =vertex shader= 中, 用来生成阴影贴图;
+
+   此外, 还会用在第二组 =Shader= 的 =fragment shader= 中, 用来计算当前片元的线性深度值.
+
+2. $P_{\mathrm{clip}}$ 需要在第二组 =Shader= 的 =vertex shader= 中进行计算, 并传到第二组 =Shader= 的 =fragment shader= 中,
+
+   再根据 $P_{\mathrm{clip}}$ 计算出线性深度值 $d_{\mathrm{linear}}$, 从阴影贴图中找出与它相关的深度值 $d$, 对两者进行对比, 从而确定该片元是否处于阴影之中:
+
+   #+BEGIN_SRC glsl
+     // vertex shader
+     
+   #+END_SRC
+
+   #+BEGIN_SRC glsl
+     // fragment shader
+
+     void main() {
+
+     }
+   #+END_SRC
 
 ** 附录
 
@@ -1411,6 +1523,10 @@ $\begin{equation*} \begin{aligned} L(p, v) &= \frac{d^2 \Phi_v}{d\omega_v \cos\t
 :PROPERTIES:
 :CUSTOM_ID: slope-space
 :END:
+
+#+begin_quote
+参考资料: [[https://www.reedbeta.com/blog/slope-space-in-brdf-theory/][Nathan Reed: Slope Space in BRDF Theory]]
+#+end_quote
 
 斜率空间实际上是基于平面上直线的斜率推广到三维空间.
 
@@ -1707,6 +1823,7 @@ $D(m, \sigma)$ 同样和 $m$ 的 $\phi$ 没有任何关系, 所以类似前面�
 # $P_{22}(\widetilde{n}) d A = P(n) d B$
 
 <<G1-derivation>>
+
 *** 各向同性 =NDF= 的几何函数 $G_{1}$ 推导
 
 #+begin_quote
@@ -1844,11 +1961,9 @@ $\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq = P_{1}(\xi_{0} 
 
 而数学和图形学的内容又非常需要连续的长时间去投入精力学习, 所以就暂时搁置 =PBR= 的学习计划了.
 
-在 =2021= 年到 =2023= 年底这段时间里面, 我是想学又学不了, 想玩游戏但又自责浪费时间导致玩不好, 那段时间我还买了不少游戏但还没通关, 甚至是还没打开过, 这种思想上长期的分裂导致我精神和身体都出现了问题.
+在 =2021= 年到 =2023= 年底这段时间里面, 我是想学又学不了, 想玩游戏但又自责在浪费学习时间, 那段时间我买了不少游戏但还没通关, 甚至是还没打开过, 这种思想上长期的分裂导致我精神和身体都出现了问题.
 
-#+begin_quote
-什么, 你说我不喜欢玩游戏? 如果不喜欢玩游戏, 那么我现在就不会学习游戏开发了.
-#+end_quote
+不要以为我不喜欢玩游戏, 正是因为小时候玩游戏才想着长大后有属于自己的游戏, 才有现在的的学习游戏开发.
 
 在 =2024= 年处公司缩编裁员后, 我花了 8 个月时间折腾完一些事情, 然后就开始学习游戏开发技术了.
 
@@ -1866,23 +1981,27 @@ $\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq = P_{1}(\xi_{0} 
 
 在通过 =depth buffer= 实现迷雾效果时, 发现相同的代码在视频中和我现实中的效果不一样, 经过一番检查和搜索后找到了问题,
 
-我的项目是使用 =OpenGL= 渲染的, 视频的是使用 =Vulkan=, 它们的 =depth buffer= 的生成方式是不一样的,
+我的项目是使用 =OpenGL= 渲染的, 视频的是使用 =Vulkan=, 它们的 =depth buffer= 的生成方式是不一样的, 需要手动进行转换来解决问题,
 
 所以问题又变成了该如何把 =Vulkan= 中的 =depth buffer= 转换成 =OpenGL= 的那般, 解决方法来源于对 =OpenGL= 的渲染管线中透视投影的进一步推导,
 
-这一块恰好是之前落下的内容, 所以解决这个问题花了不少时间去推导, 花了大概三天吧, 开始时有一部分时间花在搜索现成答案上, 当然没有找到.
+这一块恰好是之前落下的内容, 所以解决这个问题花了不少时间去推导, 花了大概三天吧, 开始时有一部分时间花在搜索现成答案上, 然而戏剧的部分要来了:
 
-这件事足以可以反驳什么事情都可以边干边学的观点, 这次的问题不算复杂, 只花了三天时间, 那么下一次呢?
+在一开始的搜索中我就找到了答案, 但不知道它是我要的解决方法, 这是在推导完成后才发现.
 
-只要你是真心想做游戏, 那么这些知识是必定会用得上的, 早晚的问题而已, 所以暂停了 =Godot= 的学习去把 =PBR= 补上.
+幸运的是这次的问题不算复杂, 所以只花了三天时间, 那么下一次呢? 不幸的是一开始就与解决方法擦肩而过.
+
+不管从哪个方面来说, 提前掌握需要的知识都可以加快问题的解决效率, 这里有足以可以反驳什么事情都可以边干边学的观点.
+
+只要是真心想做游戏, 那么这些知识是必定会用得上的, 早晚的问题而已, 所以暂停了 =Godot= 的学习去把 =PBR= 补上.
 
 =PBR= 的内容需要微积分和概率论作为前提, 这两者花了两个月左右, =PBR= 本身则是花了一个多月的时间.
 
 线性代数和渲染管线我虽不说学得好, 但到达看懂资料的程度也不过是前后花了一个多月, 而且还是每天下班后只花 =2= 到 =3= 个小时来学的,
 
-换作每天 8 小时的上班时间来说, 也只不过是上了半个月左右的班而已, 但学习微积分 / 概率论 / =PBR= 是实打实地上了三个月班, 而且每天还要熬夜加班.
+换作每天 =8= 小时的上班时间来说, 也只不过是上了半个月左右的班而已, 但学习微积分 / 概率论 / =PBR= 是实打实地上了三个月班, 而且每天还要熬夜加班, 换做每天花 =2= 到 =3= 个小时去学习, 则是要八个月.
 
-从 =LearnOpenGL= 的目录看去, 比较基础和难的内容就这一些了, 剩下的都是可以边干边学的知识, 也能够覆盖基本的游戏开发了, 所以该回去 =Godot= 上学习游戏开发了.
+到了这一步再从 =LearnOpenGL= 的目录看去, 比较基础和难的内容就这一些了, 剩下的都是可以边干边学的知识, 也能够覆盖基本的游戏开发了, 所以该回去 =Godot= 上学习游戏开发了.
 
 从开始的恶补数学到现在的推导出大部分公式, 真正花费的其实半年都不到, 但整个学习过程因为其它事情横跨了 =4= 年多 (=2019= 年底 - =2025= 年初), 回头望去满是感慨: 不也能做得到吗?
 
@@ -1890,10 +2009,8 @@ $\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq = P_{1}(\xi_{0} 
 
 最重要的是, 我的成为独立游戏开发者之旅结束了, 游戏开发之旅开始, 我现在是个 =Level one= 的游戏开发者, 那种熬夜去补知识的日子过去了, 也不用因为玩一会游戏而感到自责, 思想上的分裂不复存在.
 
-#+begin_quote
-在我的成为独立游戏开发者之旅中, [[https://www.zhihu.com/people/mao-xing-yun][毛星云]]前辈的 ="PBR 白皮书"= 系列给我提供了明确的学习方向, 这个系列早在 =2021= 年时就被我收藏了, 可惜前辈在 =2021= 年 =12= 月 =11= 日因抑郁跳楼结束自己生命.
+最后, 这里要特别感谢[[https://www.zhihu.com/people/mao-xing-yun][毛星云]]前辈, 在我的成为独立游戏开发者之旅中, 前辈的 ="PBR 白皮书"= 系列给我提供了明确的学习方向, 这个系列早在 =2021= 年时就被我收藏了, 可惜前辈在 =2021= 年 =12= 月 =11= 日因抑郁跳楼结束自己生命.
 
-前辈的资料并不是我唯一的学习资料, 但绝对是主要的参考资料, 没有毛星云前辈的整理, 我现在都不知道要读哪些论文/书籍, 不知道重点学习什么, 不知猴年马月才能完成这篇笔记.
+前辈的资料是我主要的参考资料, 没有毛星云前辈的整理, 我现在都不知道要读哪些论文/书籍, 不知道重点学习什么, 不知猴年马月才能完成这篇笔记.
 
-在此, [[https://www.bilibili.com/video/BV1Ge4y1d7YA?spm_id_from=333.788.player.player_end_recommend_autoplay&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30][缅怀毛星云前辈]], 感谢前辈帮助了千千万万个像我这样的追梦者, 为中国的游戏行业做出了巨大贡献.
-#+end_quote
+在此, [[https://www.bilibili.com/video/BV1Ge4y1d7YA?spm_id_from=333.788.player.player_end_recommend_autoplay&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30][缅怀毛星云前辈]], 感谢前辈帮助了千千万万个像我这样的追梦者.

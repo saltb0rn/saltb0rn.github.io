@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2025-02-20 Thu 23:13 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>流式排版</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content" class="content">
+<h1 class="title">流式排版</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orgffa1ad3">流体字体计算的公式推导</a></li>
+<li><a href="#org56fa67d"><code>CSS</code> 的一些限制</a></li>
+<li><a href="#org21ed16b">参考</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="orgd851466">
+<p>
+这篇笔记是 <code>2022</code> 年学习响应式布局时写的, 今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
+</p>
+
+</div>
+
+<div id="outline-container-orgffa1ad3" class="outline-2">
+<h2 id="orgffa1ad3">流体字体计算的公式推导</h2>
+<div class="outline-text-2" id="text-orgffa1ad3">
+<p>
+流式字体排版(<code>fluid typography</code>)是指排版值(<code>typographic values</code>, 包括字体大小, 行高, 字符间距等等)随着视口大小(通常是视口宽度)变化而发生线性变化.
+</p>
+
+<p>
+它可以让网页看上去更加"响应式", 而不是像阶梯函数(<code>step function</code>)那样跳跃式变化.
+</p>
+
+<blockquote>
+<p>
+由于和视口大小有着密不可分的关系, 因此, 请确保开发时在页面写入了以下 <code>meta-tag</code> 把视口宽度调成设备宽度:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-html">&lt;<span style="color: #87cefa;">meta</span> <span style="color: #eedd82;">name</span>=<span style="color: #ffa07a;">"viewport"</span> <span style="color: #eedd82;">content</span>=<span style="color: #ffa07a;">"width=device-width, initial-scale=1.0"</span>&gt;
+</pre>
+</div>
+</blockquote>
+
+<p>
+这是最为简单的流式字体排版计算的模板:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-css"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &lt; xa</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #87cefa;">.fluid</span> {
+    <span style="color: #00ffff;">font-size</span>: [ya];
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; xa</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: [xa]) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #00ffff;">font-size</span>: calc([ya] + (100vw - [xa]) * (([yb] - [ya]) / ([xb] - [xa])));
+    }
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; xb</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: [xb]) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #00ffff;">font-size</span>: [yb];
+    }
+}
+</pre>
+</div>
+
+<p>
+该计算过程是通过代入线性插值公式 \(y = y_{a} + \frac{(x - x_{a}) (y_{b} - y_{a})}{x_{b} - x_{a}}\) 得出来的.
+</p>
+
+<p>
+其中 \(y\) 是在当前的视口宽度下的字体大小;
+</p>
+
+<p>
+<b>而 \(x\) 是当前的视口宽度, 也就是 \(100\mathrm{vw}\), 虽然写的是固定值, 但它代表着浏览器视口当前的像素大小, 所以 \(100\mathrm{vw}\) 本质上是变量</b>;
+</p>
+
+<p>
+\(x_{a}\) 和 \(x_{b}\) 为视口尺寸断点;
+</p>
+
+<p>
+\(y_{a}\) 是在视口宽度 \(x_{a}\) 下所对应的字体大小, \(y_{b}\) 则是在视口宽度 \(x_{b}\) 下所对应的字体大小;
+</p>
+
+<p>
+这就是在 \(x_{a}\) 和 \(x_{b}\) 两个断点(breakpoints)之间的字体大小计算.
+</p>
+
+<p>
+在不同情况下断点的数量是不一样的, 每两个相邻的断点之间的字体变化是不一样的,
+</p>
+
+<p>
+也就是说假设有 \(a\), \(b\) 和 \(c\) 三个断点, 那么应该有两个计算过程: \(f_{[a, b]}(x)\) 和 \(f_{[b, c]}(x)\), 这两个计算过程的推导方式都是一样的.
+</p>
+
+<blockquote>
+<p>
+这里肯定的是 \(f_{[a, b]}\) 和 \(f_{[b, c]}\) 的函数图像是不能在断点 \(b\) 上连接形成一条直线的,
+</p>
+
+<p>
+也就是说 \(f_{[a, b]}\) 不能用在断点 \(b\) 和 \(c\) 之间的字体大小计算上, 反之亦然.
+</p>
+
+<p>
+因为如果成立的话, 断点 \(b\) 就没有存在的必要, 到时候 \(f_{[a, b]}\) 和 \(f_{[b, c]}\) 会在 \(b\) 处连接形成一个函数 \(f_{[a, c]}\),
+</p>
+
+<p>
+并且该函数在 \(b\) 上可微.
+</p>
+</blockquote>
+
+<p>
+另外, 有的开发者是通过斜截式 \(y = kx + c\) 进行得出字体大小的计算过程, 看上去与线性插值的显得不一样, 但两者实则相等的.
+</p>
+
+<p>
+把插值公式变为斜截式很简单: \(y = y_{a} + \frac{(x - x_{a})(y_{b} - y_{a})}{x_{b} - x_{a}} = \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x + y_{a} - \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x_{a}\), 其中 \(\begin{equation*} \left\{ \begin{aligned} k &= \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \\ c &= y_{a} - k \times x_{a} \end{aligned} \right. \end{equation*}\).
+</p>
+
+<p>
+也可以说斜截式就是插值式简化后的结果, 下面这个例子可以很好的支持该观点,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-css"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &lt; 375px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #87cefa;">.fluid</span> {
+    <span style="color: #00ffff;">font-size</span>: 16px;
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; 375px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: 375px) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #00ffff;">font-size</span>: calc(16px + (100vw - 375px) * ((22 - 16) / (1125 - 375)));
+    }
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; 1125px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: 1125px) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #00ffff;">font-size</span>: 22px;
+    }
+}
+</pre>
+</div>
+
+<p>
+化简为斜截式, 代入可得 \(\begin{equation*} \left\{ \begin{aligned} k &= \frac{22\mathrm{px} - 16\mathrm{px}}{1125\mathrm{px} - 375\mathrm{px}} = 0.008 \\ c &= 16\mathrm{px} - 0.008 \times 375\mathrm{px} = 13\mathrm{px} \end{aligned} \right. \end{equation*}\), 已知 \(x\) 代表当前视口宽度, 所以 \(x = 100\mathrm{vw}\),
+</p>
+
+<p>
+最后可得: \(y = kx + c = 100k \times 1\mathrm{vw} + c = (0.008 \times 100)\mathrm{vw} + 13\mathrm{px} = 0.8\mathrm{vw} + 13\mathrm{px}\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-css"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &lt; 375px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #87cefa;">.fluid</span> {
+    <span style="color: #00ffff;">font-size</span>: 16px;
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; 375px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: 375px) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #00ffff;">font-size</span>: calc(0.8vw + 13px);
+    }
+}
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; 1125px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: 1125px) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #00ffff;">font-size</span>: 22px;
+    }
+}
+</pre>
+</div>
+
+<p>
+如果目标浏览器支持较新的 <code>css</code> 函数: <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/clamp">clamp</a>, 还可以对上面样式进行一步简化:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-css"><span style="color: #87cefa;">.fluid</span> {
+    <span style="color: #00ffff;">font-size</span>: clamp(16px, calc(0.8vw + 13px), 22px);
+}
+</pre>
+</div>
+
+<p>
+这个方法我也是从其它地方看到的, 然而并没有详细说明, 为此需要验证一番:
+</p>
+
+<p>
+\(\text{clamp(}y_{a}, y, y_{b}\text{)}\) 会把 \(y = kx + c\) 限制在 \(y_{a}\) 和 \(y_{b}\) 之间.
+</p>
+
+<p>
+当 \(y = kx + c = 100k \times 1\mathrm{vw} + y_{a} - k \times x_{a} \lt y_{a}\) 时, 可以得出 \(1\mathrm{vw} \lt (\frac{k \times x_{a}}{100k} = \frac{x_{a}}{100})\), 也就是 \(100\mathrm{vw} \lt x_{a}\), 同时 \(y\) 被限制为 \(y_{a}\);
+</p>
+
+<p>
+当 \(y = kx + c = 100k \times 1\mathrm{vw} + y_{a} - k \times x_{a} \gt y_{b}\) 时, 可以得出 \(1\mathrm{vw} \gt \frac{x_{b}}{100}\), 也就是 \(100\mathrm{vw} \gt x_{b}\), 同时 \(y\) 被限制为 \(y_{b}\);
+</p>
+
+<blockquote>
+<p>
+\(1\mathrm{vw} \gt \frac{x_{b}}{100k}\) 这个关系不容易看出来, 它的计算过程如下:
+</p>
+
+<p>
+\(y = kx + c = 100k \times 1\mathrm{vw} + y_{a} - k \times x_{a} \gt y_{b} \rightarrow 1\mathrm{vw} \gt \frac{y_{b} - y_{a} + k \times x_{a}}{100k}\)
+</p>
+
+<p>
+令分子 \(y_{b} - y_{a} + k \times x_{a} = z\),
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} z &= y_{b} - y_{a} + k \times x_{a} \\ &= y_{b} - y_{a} + \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x_{a} \\ &= \frac{(y_{b} - y_{a})(x_{b} - x_{a})}{x_{b} - x_{a}} + \frac{y_{b} - y_{a}}{x_{b} - x_{a}} \times x_{a} \\ &= \frac{(x_{b} - x_{a} + x_{a})(y_{b} - y_{a})}{x_{b} - x_{a}} \\ &= \frac{x_{b}(y_{b} - y_{a})}{x_{b} - x_{a}} \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+所以, \(1\mathrm{vw} \gt (\frac{z}{100k} = \frac{x_{b}(y_{b} - y_{a})}{x_{b} - x_{a}} \times \frac{x_{b} - x_{a}}{y_{b} - y_{a}} \times \frac{1}{100} = \frac{x_{b}}{100})\).
+</p>
+</blockquote>
+
+<p>
+这就说明简化前后的 <code>CSS</code> 模板是等价的.
+</p>
+
+<p>
+把数据代入可以得到结论: 当 \(100\mathrm{vw} \lt 375\mathrm{px}\) 时, \(y\) 被限制在 \(16\mathrm{px}\); 当 \(100\mathrm{vw} \gt 1125\mathrm{px}\) 时, \(y\) 被限制在 \(22\mathrm{px}\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org56fa67d" class="outline-2">
+<h2 id="org56fa67d"><code>CSS</code> 的一些限制</h2>
+<div class="outline-text-2" id="text-org56fa67d">
+<p>
+<code>CSS</code> 的 <code>calc</code> 函数绝对是流式排版的核心之一, 它虽支持四则运算, 但乘法和除法有一个限制: 只能有单位与无单位或者无单位与无单位的值才能进行运算, 这导致着 <code>calc</code> 不能把有单位的值转换成无单位的值, 比如说 \(calc((100vw - 375px) / 1px)\) 是不可行的.
+</p>
+
+<p>
+这意味着有些插值方法使用不了, 比如 <code>GLSL</code> 的 <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml">smoothstep</a> 插值实现就不可行:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-css"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">100vw &#8805; 375px</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #b0c4de;">@media</span> screen and (min-width: 375px) {
+    <span style="color: #87cefa;">.fluid</span> {
+        <span style="color: #eedd82;">--t</span>: calc((100vw - 375px) / (1125 - 375)); <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">--t &#30340;&#20540;&#26159;&#24102;&#21333;&#20301;&#30340;</span><span style="color: #ff7f24;"> */</span>
+        <span style="color: #00ffff;">font-size</span>: calc(16px + (3 * var(<span style="color: #eedd82;">--t</span>) * var(<span style="color: #eedd82;">--t</span>) - 2 * var(<span style="color: #eedd82;">--t</span>) * var(<span style="color: #eedd82;">--t</span>) * var(<span style="color: #eedd82;">--t</span>)) * (22 - 16));
+        <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#22240;&#20026; --t &#26159;&#24102;&#21333;&#20301;&#30340;, &#25152;&#20197;&#36825;&#20010;&#36816;&#31639;&#26159;&#19981;&#25104;&#31435;&#30340;</span><span style="color: #ff7f24;"> */</span>
+    }
+}
+</pre>
+</div>
+
+<p>
+<code>SASS</code> 预编译器可以获得无单位值, 所以考虑用 <code>SASS</code> 实现这一类插值.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org21ed16b" class="outline-2">
+<h2 id="org21ed16b">参考</h2>
+<div class="outline-text-2" id="text-org21ed16b">
+<p>
+<a href="https://www.smashingmagazine.com/2016/05/fluid-typography/">https://www.smashingmagazine.com/2016/05/fluid-typography/</a>
+</p>
+
+<p>
+<a href="https://www.smashingmagazine.com/2022/01/modern-fluid-typography-css-clamp/">https://www.smashingmagazine.com/2022/01/modern-fluid-typography-css-clamp/</a>
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2025-02-20</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.4 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

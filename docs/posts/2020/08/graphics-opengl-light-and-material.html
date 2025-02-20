@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-02-12 Wed 16:13 -->
+<!-- 2025-02-20 Thu 23:13 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-光和材质</title>
@@ -270,11 +270,12 @@
 <li><a href="#org1ee4f35">微表面和宏表面 (Micro and Macro Surface)</a></li>
 <li><a href="#org17d527a">辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</a></li>
 <li><a href="#orgcf6dad0">双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</a></li>
+<li><a href="#org2c3aa99">完整的反射率方程</a></li>
+<li><a href="#org8e6b82b">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org203da69">阴影</a></li>
 <li><a href="#org3f4b4d7">附录</a>
 <ul>
 <li><a href="#slope-space">斜率空间 (Slope Space)</a>
@@ -289,10 +290,11 @@
 <li><a href="#org1c3e85a">各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</a></li>
 </ul>
 </li>
+<li><a href="#org0ebbc71">完结心声</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org20946ed">
+<div class="abstract" id="org1a10b4c">
 <p>
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 </p>
@@ -310,25 +312,9 @@
 </p>
 
 <ol class="org-ol">
-<li><p>
-<a href="../../2020/06/graphics-opengl-transformation.html">图形学-OpenGL坐标变换</a>
-</p>
+<li><a href="../../2020/06/graphics-opengl-transformation.html">图形学-OpenGL坐标变换</a>: 需要知道光照计算发生在哪个阶段; 阴影要求投影变换.</li>
 
-<p>
-需要知道光照计算发生在哪个阶段;
-</p>
-
-<p>
-阴影要求投影变换.
-</p></li>
-
-<li><p>
-<a href="../../2022/02/webgl-buffer-objects.html">Shader 编程自救指南</a>
-</p>
-
-<p>
-需要插值是如何进行.
-</p></li>
+<li><a href="../../2022/02/webgl-buffer-objects.html">Shader 编程自救指南</a>: 需要插值是如何进行.</li>
 </ol>
 
 </div>
@@ -354,7 +340,7 @@
 </p>
 
 
-<div id="org08edca0" class="figure">
+<div id="orgd11fcdd" class="figure">
 <p><img src="../../../files/wave.jpeg" alt="wave.jpeg">
 </p>
 </div>
@@ -397,7 +383,7 @@
 </p>
 
 
-<div id="orgdf00ac1" class="figure">
+<div id="org205dace" class="figure">
 <p><img src="../../../files/cone-response.jpg" alt="cone-response.jpg">
 </p>
 </div>
@@ -494,7 +480,7 @@
 </p>
 
 
-<div id="orgbcc0083" class="figure">
+<div id="orge8158be" class="figure">
 <p><img src="../../../files/diffuse-vs-specular.png" alt="diffuse-vs-specular.png">
 </p>
 </div>
@@ -509,7 +495,7 @@
 </p>
 
 
-<div id="org3a16725" class="figure">
+<div id="org6fcdcf3" class="figure">
 <p><img src="../../../files/reflection-cone.png" alt="reflection-cone.png">
 </p>
 </div>
@@ -519,7 +505,7 @@
 </p>
 
 
-<div id="org2aea2c1" class="figure">
+<div id="org957832d" class="figure">
 <p><img src="../../../files/specular_hilites.png" alt="specular_hilites.png">
 </p>
 </div>
@@ -655,7 +641,7 @@
 </p>
 
 
-<div id="orgaf5edc7" class="figure">
+<div id="org65839f0" class="figure">
 <p><img src="../../../files/basic_lighting_phong.png" alt="basic_lighting_phong.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>(图片来源于网络)</p>
@@ -721,7 +707,7 @@
 </p>
 
 
-<div id="org7ea663a" class="figure">
+<div id="org5a47eb6" class="figure">
 <p><img src="../../../files/diffuse_light.png" alt="diffuse_light.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>漫反射(图片来源于网络)</p>
@@ -757,7 +743,7 @@
 </p>
 
 
-<div id="org4a95980" class="figure">
+<div id="org30ee664" class="figure">
 <p><img src="../../../files/basic_lighting_specular_theory.png" alt="basic_lighting_specular_theory.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>镜面反射(图片来源于网络)</p>
@@ -1448,7 +1434,7 @@
 </p>
 
 
-<div id="orgd130c24" class="figure">
+<div id="org9ecc701" class="figure">
 <p><img src="../../../files/advanced_lighting_over_90.png" alt="advanced_lighting_over_90.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>镜面反射2(图片来源于网络)</p>
@@ -1463,7 +1449,7 @@
 </p>
 
 
-<div id="org34cc244" class="figure">
+<div id="org0ef9a2a" class="figure">
 <p><img src="../../../files/advanced_lighting_halfway_vector.png" alt="advanced_lighting_halfway_vector.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>半角向量(图片来源于网络)</p>
@@ -1494,11 +1480,7 @@
 </p>
 
 <p>
-原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质,
-</p>
-
-<p>
-然后再开一个章节(有必要的话可能要单独写一篇笔记)来把推导整理进来.
+原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质, 因此会把一些推导会整理在附录中.
 </p>
 </div>
 
@@ -1514,7 +1496,7 @@
 </p>
 
 
-<div id="orge72260e" class="figure">
+<div id="org6c56631" class="figure">
 <p><img src="../../../files/micro-vs-macro-surface.png" alt="micro-vs-macro-surface.png" width="400px">
 </p>
 <p><span class="figure-number">Figure 6: </span>微表面和宏表面, \(n\) 是宏表面的法线, \(m\) 是微表面的法线</p>
@@ -1551,7 +1533,7 @@
 </p>
 
 
-<div id="orga231151" class="figure">
+<div id="org93022c1" class="figure">
 <p><img src="../../../files/subpixel.png" alt="subpixel.png" width="400px">
 </p>
 <p><span class="figure-number">Figure 7: </span>亚像素</p>
@@ -1663,7 +1645,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 
-<div id="orgd4633d9" class="figure">
+<div id="org444791a" class="figure">
 <p><img src="../../../files/Kugelkoord-lokb-e.svg" alt="Kugelkoord-lokb-e.svg" class="org-svg">
 </p>
 <p><span class="figure-number">Figure 8: </span>球体坐标系</p>
@@ -1678,7 +1660,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org467e44d" class="figure">
+<div id="orge06349a" class="figure">
 <p><img src="../../../files/lamberts-law.png" alt="lamberts-law.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>平面 N 和 平面 M 之间的投影关系</p>
@@ -1714,7 +1696,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org53cb89d" class="figure">
+<div id="org090458b" class="figure">
 <p><img src="../../../files/480px-Solid_Angle,_1_Steradian.svg.png" alt="480px-Solid_Angle,_1_Steradian.svg.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>\(1\ \mathrm{sr}\)</p>
@@ -1727,10 +1709,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <p>
 半球体表面积(不包含底部): \(\frac{4 \pi r^{2}}{2}\), 其球面度为 \(2 \pi\).
 </p>
-
-<p>
-<a href="https://www.youtube.com/watch?v=VmnkkWLwVsc&amp;ab_channel=EngineeringStreamlined">https://www.youtube.com/watch?v=VmnkkWLwVsc&amp;ab_channel=EngineeringStreamlined</a>
-</p>
 </blockquote>
 
 <p>
@@ -1739,14 +1717,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </li>
 
-<li><a id="org97d51e2"></a>辐射 (Radiance)<br>
-<div class="outline-text-5" id="text-org97d51e2">
+<li><a id="radiance"></a>辐射 (Radiance)<br>
+<div class="outline-text-5" id="text-radiance">
 <p>
 辐射 \(L\) 是指在某个点上每微元面积(differental area)接受到多少微元辐射通量(differental flux), 这个度量与辐射强度 \(I\) 类似,
 </p>
 
 <p>
-让 \(L\) 定义为位于 \(p\) 点上, 在 \(\omega\) 方向上每 \(d{\omega}\) 立体角每单位投影面积 \(dA^{\perp}\) 上受到/发射了多少辐射通量:
+让 \(L\) 定义为位于 \(p\) 点上, 面积为 \(dA\) 且面向 \(n\) 的平面在 \(\omega\) 光线方向上每 \(d{\omega}\) 立体角每单位投影面积 \(dA^{\perp}\) 上受到/发射了多少辐射通量:
 </p>
 
 <p>
@@ -1755,6 +1733,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 <blockquote>
 <p>
+<a id="orgc0c2821"></a>
 这里直接方向向量 \(\omega\) 的微元 \(d\omega\) 表示为立体角, 其背后的依据是把方向向量 \((x, y, z)\) 转换成以 \((x_{0}, y_{0}, z_{0})\) 为球心的球体坐标系后再计算微元:
 </p>
 
@@ -1767,7 +1746,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 
-<div id="org3d95074" class="figure">
+<div id="orgdbe3a72" class="figure">
 <p><img src="../../../files/differential-solid-angle.png" alt="differential-solid-angle.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 11: </span>微元立体角 \(d\omega\)</p>
@@ -1791,14 +1770,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org660fc47" class="figure">
+<div id="orga291d9e" class="figure">
 <p><img src="../../../files/radiance.png" alt="radiance.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>辐射投影关系</p>
 </div>
 
 <p>
-所以 \(E_{\omega} = \frac{\Phi}{A^{\perp}} = \frac{\Phi}{A \times \omega \cdot n} = \frac{\Phi}{A \times \cos\theta}\), 最终 \(L(p, \omega) = \frac{d}{d \omega}(\frac{d\Phi}{d(A \cos\theta)}) = \frac{d^{2}\Phi}{d{\omega}d(A \cos\theta)}\).
+所以 \(E_{\omega} = \frac{\Phi}{A^{\perp}} = \frac{\Phi}{A \times \omega \cdot n} = \frac{\Phi}{A \times \cos\theta}\), 最终 \(L(p, \omega) = \frac{d}{d \omega}(\frac{d\Phi}{d(A \cos\theta)}) = \frac{d^{2}\Phi}{d{\omega}d(A \cos\theta)} = \frac{d^{2}\Phi}{\cos\theta d{\omega}dA}\).
 </p>
 
 <blockquote>
@@ -1812,7 +1791,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-\(L = \frac{d^{2}\Phi}{d{\omega}d(\cos\theta)} = \frac{d^{2}\Phi}{d{\omega}d(\omega \cdot n)} \rightarrow L_{A} = L \times \cos\theta = L \times (\omega \cdot n)\).
+\(L = \frac{d^{2}\Phi}{d{\omega}d(\cos\theta)} = \frac{d^{2}\Phi}{d{\omega}d(\omega \cdot n)} \Rightarrow L_{A} = L \times \cos\theta = L \times (\omega \cdot n)\).
 </p>
 
 <p>
@@ -1826,7 +1805,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </li>
 </ul>
 </div>
-
 
 <div id="outline-container-orgcf6dad0" class="outline-4">
 <h4 id="orgcf6dad0">双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</h4>
@@ -1877,7 +1855,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 <p>
-<code>BRDF</code> 是一个以入射光方向 \(\omega_{i}\), 出射光方向 \(\omega_{o}\), 表面法线 \(n\) 以及表面粗糙度 \(a\) 为参数的函数, 计算出每个光线 \(\omega_{i}\) 在特定材质的不透明表面光上产生多少反射光.
+<code>BRDF</code> 是一个以入射光方向 \(\omega_{i}\), 出射光方向 \(\omega_{o}\), 宏表面法线 \(n\) 以及表面粗糙度 \(\alpha\) 为参数的函数, 计算出每个光线 \(\omega_{i}\) 在特定材质的不透明表面光上产生多少反射光.
 </p>
 
 <p>
@@ -1885,7 +1863,15 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-\(f_{r} = k_{\mathrm{diffuse}}f_{\mathrm{lambert}} + k_{\mathrm{specular}}f_{\mathrm{cook-torrance}}\)
+<code>BRDF</code> 并不是一个具体的函数, 可以有很多种选择, 最早的 <code>BRDF</code> 是由 <code>Fred Nicodemus</code> 在 <code>1965</code> 年提出: \(f_r(\omega_i, \omega_o) = \frac{d L_o (\omega_o)}{d E_i(\omega_i)} = \frac{d L_o(\omega_o)}{L_i(\omega_i) \cos\theta_i d\omega_i}\).
+</p>
+
+<p>
+这个公式之所以定义为辐射 \(L_o\) 和辐射度 \(E_i\) 之比, 而不是 \(L_o\) 和 \(L_i\) 或者 \(E_o\) 与 \(E_i\) 之比, 是因为在入射时需要考虑照射面积, 在反射时需要考虑每立体角的辐射通量, 反射角度以及投影面积.
+</p>
+
+<p>
+目前业界主流的 <code>PBR</code> 渲染管线所使用的 <code>BRDF</code> 是 <code>Cook-Torrance BRDF</code>: \(f_{r} = k_{\mathrm{diffuse}}f_{\mathrm{lambert}} + k_{\mathrm{specular}}f_{\mathrm{cook-torrance}}\).
 </p>
 
 <p>
@@ -1893,13 +1879,43 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-\(f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}\) 计算反射光, 其中 \(D\) 是法线分布函数, \(G\) 是几何函数, \(F\) 是菲涅尔方程. 接下来分别学习这 3 个部分.
+\(f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}\) 计算反射光, \(f_{\mathrm{cook-torrance}}\) 的定义离不开源于最早的 <code>BRDF</code>, 其中 \(D\) 是法线分布函数, \(G\) 是几何函数, \(F\) 是菲涅尔方程. 接下来分别学习这 3 个部分, 并在最后介绍 \(f_{\mathrm{cook-torrance}}\) 是怎么推导出来的.
 </p>
+
+<p>
+另外, 为了方便码字, 在解析 <code>BRDF</code> 这部分的内容里面会采用 \(v\) 代表 \(\omega_{o}\), \(l\) 代表 \(\omega_{i}\).
+</p>
+
+<blockquote>
+<p>
+还有这部分的参数比较多, 时间久了可能会忘记这些参数的含义, 为了方便之后快速查询, 这里给出它们的汇总:
+</p>
+
+<p>
+\(l\) 是入射光方向;
+</p>
+
+<p>
+\(v\) 是出射光方向;
+</p>
+
+<p>
+\(m\) 是微平面的法线向量, 使用 \(v\) 和 \(l\) 的半角向量 \(h\) 作为微平面的法线向量, 也就是 \(m = h\);
+</p>
+
+<p>
+\(n\) 是宏表面的法线向量;
+</p>
+
+<p>
+\(\alpha\) 是微平面的粗糙度
+</p>
+</blockquote>
 </div>
 
 <ul class="org-ul">
-<li><a id="orge4d5c62"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF)</b><br>
-<div class="outline-text-5" id="text-orge4d5c62">
+<li><a id="orgc4f6dc1"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF): \(D(m, n, \alpha)\)</b><br>
+<div class="outline-text-5" id="text-orgc4f6dc1">
 <blockquote>
 <p>
 这里有个关于翻译上的讨论, 正态分布函数的英文也叫 <code>Normal Distribution Function</code>.
@@ -1920,40 +1936,49 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <p>
 事实上, 不止法线分布, 表面很多其它方面的数学建模都是通过概率论来完成的.
 </p>
+
+<p>
+参考资料:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://zhuanlan.zhihu.com/p/69380665">毛星云:【基于物理的渲染（PBR）白皮书】（四）法线分布函数相关总结</a></li>
+<li><a href="https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf">Bruce Walter: Microfacet Models for Refraction through Rough Surfaces</a></li>
+</ul>
 </blockquote>
 
 <p>
-\(DFG\) 中的 \(D\) 就是一个 <code>NDF</code> ,  <code>NDF</code> 并不是一个具体的函数, 是一类函数的统称, 有很多种选择.
+\(DFG\) 中的 \(D\) 就是一个 <code>NDF</code>,  <code>NDF</code> 并不是一个具体的函数, 是一类函数的统称, 有很多种选择.
 </p>
 
 <p>
-它描述的是: 在以 \(m\) 为中心的立体角 \(d\omega_{m}\) 内, 找出所有朝向宏表面的<a href="#org7fda573">半角向量</a> \(h\) 方向的微平面(也就是微平面的法线向量 \(m = h\), 其中 \(h\) 和 \(m\) 都是单位向量), 并计算出它们的总面积 \(dS_{m=h}\), 统计出每立体角内 \(dS_{m=h}\) 与(立体角 \(d\omega_{m}\) 内的)微表面面积 \(dS\) 之间的比例为多少: \(D(m) = \frac{dS_{m=h}}{dS \times d\omega_{m}}\), 单位是 \(1 / \mathrm{steradians}\).
+它描述的是: 在以 \(m\) 为中心的立体角 \(d\omega_{m}\) 和无穷小宏表面区域 \(dA\) 内, 面向 \(m\) 的微平面面积 \(dA_m\) 的密度: \(D(m) = \frac{dA_m}{d\omega_m dA}\), 单位是 \(1 / \mathrm{steradians}\).
+</p>
+
+<p>
+简单点说, \(D(m)\) 越大, 面向 \(m\) 的微平面数量越多.
 </p>
 
 
-<div id="org3b1e52c" class="figure">
+<div id="orgf07b572" class="figure">
 <p><img src="../../../files/micro-macro-area-0.png" alt="micro-macro-area-0.png">
 </p>
-<p><span class="figure-number">Figure 13: </span>微平面在宏表面上的投影, \(dA_{h}\) 是微平面面积, \(dA\) 微平面在是宏表面上的投影</p>
+<p><span class="figure-number">Figure 13: </span>微平面在宏表面上的投影, \(dA_{m}\) 是微平面总面积, \(dA\) 微平面在是宏表面上的投影</p>
 </div>
 
 <p>
-统计 \(m\) 对齐 \(h\) 的理由是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 所以一般是把宏表面的半角向量 \(h\) 作为微平面的的法线向量来计算反射.
-</p>
-
-<p>
-(PS: 如果不理解的话请回忆一下半角向量是由入射光和视线共同决定的.)
+<code>BRDF</code> 把入射光 \(l\) 和视线 \(v\) 两者共同决定的<a href="#org7fda573">半角向量</a> \(h\) 定义为微平面的法线向量, 是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 而统计内容就是被看到的那部分.
 </p>
 
 
-<div id="orgd11f1a9" class="figure">
+<div id="orge07c234" class="figure">
 <p><img src="../../../files/micro-macro-area-1.png" alt="micro-macro-area-1.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>宏表面的半角向量作为微平面的法线向量</p>
 </div>
 
 
-<div id="org3ff5360" class="figure">
+<div id="orgb4faca3" class="figure">
 <p><img src="../../../files/real-time-rendering-4th-microfacet.png" alt="real-time-rendering-4th-microfacet.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 15: </span>所有符合 \(m = h\) 的微平面</p>
@@ -1964,7 +1989,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-根据投影关系: \(dA = (m \cdot n) \times dA_{m}\), 其中 \(0 \lt m \cdot n \le 1\) 可以得出微表面的总面积始终不小于宏表面总面积.
+根据上图的投影关系: \(dA = (m \cdot n) \times dA_{m}\), 其中 \(0 \lt m \cdot n \le 1\) 可以得出微表面的总面积始终不小于宏表面总面积.
 </p>
 
 <p>
@@ -1984,7 +2009,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org8104715" class="figure">
+<div id="orgf2c102a" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v.png" alt="micro-macro-projected-onto-plane-prep-to-v.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 16: </span>微表面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -2015,14 +2040,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org165ecd6" class="figure">
+<div id="orgffabd07" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v-visible.png" alt="micro-macro-projected-onto-plane-prep-to-v-visible.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 17: </span>可见微平面和宏表面在垂直于 \(v\) 的平面的投影</p>
 </div>
 
 <p>
-为此需要定义遮蔽函数(masking function) \(G_{1}\) 来描述所有沿着视线方向 \(v\) 的可见微平面的总面积 \(S_{m=v}\) (也就是红色部分) 与符合 \(m = h\) 的微平面的总面积 \(S_{m=h}\) 的比例: \(G_{1}(v, m) = \frac{S_{m=v}}{S_{m=h}}\).
+为此需要定义遮蔽函数(masking function) \(G_{1}\) 来描述所有沿着视线方向 \(v\) 的可见微平面的总面积 \(A_{m=v}\) (也就是红色部分) 与符合 \(m = h\) 的微平面的总面积 \(A_{m=h}\) 的比例: \(G_{1}(v, m) = \frac{A_{m=v}}{A_{m=h}}\).
 </p>
 
 <p>
@@ -2102,7 +2127,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgfc43ab0" class="figure">
+<div id="orgd7faf39" class="figure">
 <p><img src="../../../files/shape-invariance.png" alt="shape-invariance.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 18: </span>粗糙度变小, 微平面数量的变少, 但微平面的面积变大, 微表面更平滑</p>
@@ -2129,7 +2154,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgc423547" class="figure">
+<div id="orge3c0807" class="figure">
 <p><img src="../../../files/isotropic-to-anisotropic.png" alt="isotropic-to-anisotropic.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 19: </span>图片来自 [Heitz 2014]</p>
@@ -2142,7 +2167,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org803ea39" class="figure">
+<div id="org0fa3e5d" class="figure">
 <p><img src="../../../files/ggx-vs-beckmann.png" alt="ggx-vs-beckmann.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 20: </span>GGX VS Beckmann (图片来自 <a href="https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/">https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/</a>)</p>
@@ -2153,7 +2178,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org48bd351" class="figure">
+<div id="org1af0c7a" class="figure">
 <p><img src="../../../files/ndf_beckmann_trowbridge.jpg" alt="ndf_beckmann_trowbridge.jpg" width="504px">
 </p>
 <p><span class="figure-number">Figure 21: </span>更长的尾部一味着更明显的光晕</p>
@@ -2164,7 +2189,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-\(D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \sigma) = \frac{\sigma^{2} \chi^{+}(m \cdot n)}{\pi (m \cdot n)^{4} (\sigma^{2} - \frac{(m \cdot n)^{2} - 1}{(m \cdot n)^{2}})^{2}} = \frac{\sigma^{2}\chi^{+}(m \cdot n)}{\pi ((m \cdot n)^{2}(\sigma^{2} - 1) + 1)^{2}}\).
+\(D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \alpha) = \frac{\alpha^{2} \chi^{+}(m \cdot n)}{\pi (m \cdot n)^{4} (\alpha^{2} - \frac{(m \cdot n)^{2} - 1}{(m \cdot n)^{2}})^{2}} = \frac{\alpha^{2}\chi^{+}(m \cdot n)}{\pi ((m \cdot n)^{2}(\alpha^{2} - 1) + 1)^{2}}\).
+</p>
+
+<p>
+以下是它的 <code>GLSL Shader</code> 实现:
 </p>
 
 <div class="org-src-container">
@@ -2185,8 +2214,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </li>
 
-<li><a id="org3e59776"></a><b>几何函数 (<code>Geometry function</code>)</b><br>
-<div class="outline-text-5" id="text-org3e59776">
+<li><a id="orgfee9eba"></a><b>几何函数 (<code>Geometry Functions</code>): \(G(v, l, m)\)</b><br>
+<div class="outline-text-5" id="text-orgfee9eba">
+<blockquote>
+<p>
+参考资料: <a href="https://zhuanlan.zhihu.com/p/81708753">毛星云:【基于物理的渲染（PBR）白皮书】（五）几何函数相关总结</a>
+</p>
+</blockquote>
+
 <p>
 几何函数是对微表面轮廓的建模, 具体做法是描述微平面之间的阴影和遮蔽属性, 函数的结果表示所有符合 \(m=h\) 的微平面中, 在入射 \(L\) 和反射 \(V\) 方向上同时可见的微平面总面积比例.
 </p>
@@ -2200,11 +2235,15 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
+因此, \(G_1\) 的值是一个标量, 并且 \(0 \le G_1 \le 1\).
+</p>
+
+<p>
 在视线方向 \(V\) 上可见就叫做遮蔽函数(<code>masking function</code>), 在光线方向 \(L\) 上可见叫做阴影函数(<code>shadowing function</code>).
 </p>
 
 
-<div id="orgcb551a4" class="figure">
+<div id="orge7ed37b" class="figure">
 <p><img src="../../../files/shadowing-and-masking.png" alt="shadowing-and-masking.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 22: </span>阴影和遮蔽</p>
@@ -2223,10 +2262,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org0f04381" class="figure">
+<div id="orge896e7e" class="figure">
 <p><img src="../../../files/G1_vs_G2.png" alt="G1_vs_G2.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 23: </span>\(G_{2}\) 和 \(G_{1}\)</p>
+<p><span class="figure-number">Figure 23: </span>\(G_{2}\) 和 \(G_{1}\) 的关系</p>
 </div>
 
 <p>
@@ -2250,55 +2289,610 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgfd895be" class="figure">
+<div id="org8c5a70d" class="figure">
 <p><img src="../../../files/microsurface-profile.png" alt="microsurface-profile.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 24: </span>图片修改自 [Heitz 2014]: 相同的法线分布但不同的轮廓导致不同的 <code>BRDF</code></p>
 </div>
 
 <p>
-表面轮廓有好几种模型, <code>Heitz</code> 在 <code>[Heitz 2014]</code> 证明了只有两种模型基于物理: <b><code>Smith</code> 遮蔽函数 (<code>Smith masking function</code>)</b> 和 <b><code>V</code> 腔遮蔽函数 (<code>V-cavity masking function</code>)</b>.
+表面轮廓有好几种模型, <code>Heitz</code> 在 <code>[Heitz 2014]</code> 证明了只有两种模型基于物理: <b><code>Smith</code> 遮蔽函数 (<code>Smith masking function</code>)</b> 和 <b><code>V</code> 腔遮蔽函数 (<code>V-cavity masking function</code>)</b>, 也分别被称为 <code>Smith</code> 模型和 <code>V</code> 腔散射模型 (<code>V-cavity scattering mode</code>).
 </p>
+
+<p>
+首先是 <code>Smith</code> 遮蔽函数可以通过以下图片进行表达:
+</p>
+
+
+<div id="org285918a" class="figure">
+<p><img src="../../../files/smith-masking-function.png" alt="smith-masking-function.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 25: </span>现实表面轮廓(左)和 <code>Smith</code> 模型的表面轮廓(右) (图片来自[Heitz 2014])</p>
+</div>
+
+<p>
+左图为具备距离相关性的真实世界连续微表面; 右图则是不具备距离相关性的 <code>Smith</code> 微表面, 该模型的微平面之间甚至不连续.
+</p>
+
+<p>
+最后是 <code>V</code> 腔散射模型, 该模型并非对微表面的散射进行建模, 而是单独计算微表面上的散射并把计算结果进行混合.
+</p>
+
+
+<div id="org6460bb4" class="figure">
+<p><img src="../../../files/v-cavity-scattering-mode.png" alt="v-cavity-scattering-mode.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 26: </span><code>V</code> 腔散射模型 (图片来自[Heitz 2014])</p>
+</div>
+
+<p>
+微表面轮廓具备拉伸不变性 (<code>stretch invariance</code>): 拉伸微表面轮廓就像拉伸一张图片, 在一个维度上乘以常数因子, 并不会改变微表面轮廓的拓扑结构, 在拉伸后, 遮挡的光线仍会被遮挡, 未遮挡的光线仍未被遮挡.
+</p>
+
+<p>
+当微表面轮廓中所涉及的全部斜率(微平面斜率和出/入射方向相关的斜率)同时缩放时, 遮蔽概率是不会发生改变的,
+</p>
+
+<p>
+它们都是通过拉伸因子的倒数来缩放, 因此, 斜率分布的宽度也被反向拉伸因子拉伸.
+</p>
+
+
+<div id="orga9cb04c" class="figure">
+<p><img src="../../../files/stretch-invariance.png" alt="stretch-invariance.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 27: </span>对微表面在一个维度上拉伸 2 倍, 所有斜率都被缩小 1 倍 (图片来自[Heitz 2014])</p>
+</div>
+
+<p>
+<code>Heitz</code> 还证明了 <code>Smith</code> 遮蔽函数是唯一一个既遵守关系 \(\int_{m \in \Theta}G_{1}(v, m) D(m)(m \cdot v)^{+}d\omega_{m} = n \cdot v\), 又具备法线/遮蔽独立性的函数.
+</p>
+
+<blockquote>
+<p>
+这里法线/遮蔽独立性是指代表微平面斜率的随机变量和代表微平面高度的随机变量之间独立, 随机变量之间独立是概率论的概念.
+</p>
+
+<p>
+在后面 <a href="#orgf70339a">\(G_1\) 推导</a> 中可以再次看到这个概念, 届时相信你能够理解这个概念.
+</p>
+</blockquote>
+
+<p>
+并且 <code>Smith</code> 模型相比 <code>V</code> 腔散射模型更好地匹配真实世界的反射现象, 这就是业界更加青睐 <code>Smith</code> 模型的原因.
+</p>
+
+
+<div id="org6d51f45" class="figure">
+<p><img src="../../../files/v-cavity-smith-reference-brdf.png" alt="v-cavity-smith-reference-brdf.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 28: </span><code>V</code> 腔散射 <code>BRDF</code> <b><code>VS</code></b> <code>Smith BRDF</code> <b><code>VS</code></b> 参考现实效果的(Reference) <code>BRDF</code> (图片来自[Heitz 2014])</p>
+</div>
+
+<p>
+现在让我们专注于 <code>Smith</code> 模型, 首先 <code>Smith</code> 遮蔽函数 \(G_1\) 的形式为: \(G_1(v, m) = \chi^{+}(\frac{v \cdot m}{v \cdot n})\frac{1}{1 + \Lambda(v)}\), 其中:
+</p>
+
+<ul class="org-ul">
+<li>\(\begin{equation*}\chi^{+}(x) = \begin{cases} 1, &  x \gt 0 \\ 0, & x \le 0 \end{cases}\end{equation*}\),</li>
+
+<li><p>
+\(\Lambda(v) = \frac{1}{\mu} \int_{\mu}^{\infty}(q - \mu)P_{2}(q)dq\)
+</p>
+
+<p>
+\(\mu\) 是射线 \(v\) 的斜率, 其值为 \(\cot \theta_v\), \(\theta_v\) 是宏表面法线 \(n\) 与 \(v\) 之间的夹角;
+</p>
+
+<p>
+\(q\) 是微平面的斜率, 其值为斜率空间上的分量, 因为是各向同性, 所以 \(q = \widetilde{x}_{m} = \widetilde{y}_{m} = - \frac{x_{m}}{z_{m}} = - \frac{y_{m}}{z_{m}}\).
+</p>
+
+<p>
+所以该等式可以写成 \(\Lambda(v) = \frac{1}{\cot \theta_v} \int_{\cot\theta_v}^{\infty} (\widetilde{x}_{m} - \cot \theta_v)P_{2}(\widetilde{x}_{m})d\widetilde{x}_{m}\).
+</p>
+
+<p>
+\(P_2\) 则是由 \(P_{22}\) (斜率空间上的概率密度函数) 推导出来: \(P_2(\widetilde{x}_m) = \int_{-\infty}^{\infty}P_{22}(\widetilde{x}_m, \widetilde{y}_m) d\widetilde{y}_m\).
+</p>
+
+<p>
+因此, 完整形式为:
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} \Lambda(v) & = \frac{1}{\cot \theta_v} \int_{\cot\theta_v}^{\infty} (\widetilde{x}_{m} - \cot \theta_v) \left[ \int_{-\infty}^{\infty}P_{22}(\widetilde{x}_m, \widetilde{y}_m) d\widetilde{y}_m \right]  d\widetilde{x}_{m} \\ & = \frac{1}{\cot \theta_v} \int_{\cot\theta_v}^{\infty} (\widetilde{x}_{m} - \cot \theta_v) d\widetilde{x}_{m} \int_{-\infty}^{\infty}P_{22}(\widetilde{x}_m, \widetilde{y}_m) d\widetilde{y}_m \\ & = \frac{1}{\cot \theta_v} \left. (\frac{1}{2} \widetilde{x}_{m}^2 - \cot \theta_v \widetilde{x}_{m}) \right]_{\cot \theta_v}^{\infty} \int_{-\infty}^{\infty}P_{22}(\widetilde{x}_m, \widetilde{y}_m) d\widetilde{y}_m \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+如你所见, 在确定好 <code>NDF</code> 的斜率空间版本后, 如果该 <code>NDF</code> 具备形状不变性, 那么直接通过它导出 \(\Lambda(v)\), 从而确定 \(G_1\) 或 \(G_2\), 这取决于具体情况.
+</p></li>
+</ul>
+
+
+<p>
+<code>[Heitz 2014]</code> 中提出了使用 <code>Smith</code> 联合遮蔽阴影函数 (<code>Smith Joint Masking-Shadowing Function</code>) \(G_2(v, l, m)\) 来代替遮蔽函数 \(G_1(v, m)\), 其中 \(v\) 是反射光, \(l\) 是入射光.
+</p>
+
+<p>
+\(G_2\) 具备四种形式:
+</p>
+
+<ul class="org-ul">
+<li><p>
+分离的遮蔽阴影型 (<code>Separable Maskig and Shadowing</code>)
+</p>
+
+<p>
+\(G_2(v, l, m) = G_1(v, m)G_1(l, m) = \frac{\chi^{+}(v \cdot m)}{1 + \Lambda(v)} \frac{\chi^{+}(l \cdot m)}{1 + \Lambda(l)}\)
+</p>
+
+<p>
+这是最简单和最广泛使用的遮蔽阴影函数形式, 由 <code>[Walter 2007]</code> 提出, 该形式假设遮蔽和阴影之间独立.
+</p>
+
+<p>
+但遮蔽和阴影之间实际上是必定存在一定的关联性, 由于不模拟遮蔽和阴影之间的关联性, 所以必定会多估算阴影.
+</p></li>
+
+<li><p>
+高度相关的遮蔽阴影型 (<code>Height-Correlated Masking and Shadowing</code>)
+</p>
+
+<p>
+\(G_2(v, l, m) = \frac{\chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{1 + \Lambda(v) + \Lambda(l)}\)
+</p>
+
+<p>
+这种形式模拟了由于微表面高度引起的遮蔽和阴影之间的相关性. 通俗点说, 当微平面在微表面内升高得越多, 出射 \(v\) 未被遮蔽和入射 \(l\) 未被遮蔽的可见概率会同时增加.
+</p>
+
+<p>
+当 \(v\) 和 \(l\) 两者的方向彼此远离时, 这种形式是准确的, 但当 \(v\) 和 \(l\) 两者的方向接近时会估算出更多阴影.
+</p>
+
+<p>
+相比分离的遮蔽阴影型, 高度相关的遮蔽阴影型更精确且具备相同的计算复杂度.
+</p></li>
+
+<li><p>
+方向相关的遮蔽阴影型 (<code>Direction-Correlated Masking and Shadowing</code>)
+</p>
+
+<p>
+\(G_2(v, l, m) = \lambda(\phi) G_1(v, m) G_1(l, m) + (1 - \lambda(\phi)) \min (G_1(v, m), G_1(l, m))\)
+</p>
+
+<p>
+这里的 \(\lambda(\phi)\) 是一个类似于 <code>Ginneken</code> 等人提出的经验因子(后面会展示), 所谓经验因子就是通过实验或经验数据定义的函数, 没经过严格的数学证明.
+</p></li>
+
+<li><p>
+高度-方向相关遮蔽阴影型 (<code>Height-Direction-Correlated Masking and Shadowing</code>)
+</p>
+
+<p>
+\(G_2(v, l, m) = \frac{\chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{1 + \max(\Lambda(v), \Lambda(l)) + \lambda(v, l) \min(\Lambda(v), \Lambda(l))}\)
+</p>
+
+<p>
+当 \(v\) 和 \(l\) 方向平行且 \(\lambda = 0\) 时, 遮蔽和阴影完全相关.
+</p>
+
+<p>
+相关性随着方向之间的角度增加而减少, 并且随着 \(\lambda\) 增加到 1, 遮蔽和阴影不再是方向相关, 公式会返回高度相关的形式.
+</p>
+
+<p>
+\(\lambda(v, l)\) 是前面提到的由 <code>Ginneken</code> 等人提出的经验因子 \(\lambda(\phi) = \frac{4.41 \phi}{4.41 \phi + 1}\), 其中 \(\phi\) 是 \(v\) 和 \(l\) 之间的方位角: \(\phi = \arccos(\frac{l \cdot v}{|l||v|})\), 因此 \(\lambda\) 和表面粗糙度无关.
+</p></li>
+</ul>
+
+
+<p>
+在这四种形式中, 后面的三种形式都在往相关性靠近, 这也是以后的发展方向. 即便 \(G_2\) 能让 <code>BRDF</code> 能够考虑到遮蔽和阴影, 但依然没有考虑到平面之间的互反射 (<code>interreflection</code>), 或多表面反射. 这也是目前业界主流 <code>BRDF</code> 的共有限制.
+</p>
+
+
+<div id="orgd1e0c29" class="figure">
+<p><img src="../../../files/multiple-surface-bounce.png" alt="multiple-surface-bounce.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 29: </span>现有的几何函数未考虑蓝色部分的 <code>multiple surface bounce</code> 反射 (图片来自 [Naty Hoffman, Recent Advances in Physically Based Shading, SIGGRAPH 2016])</p>
+</div>
+
+<p>
+标准 <code>BRDF</code> 模型的最大问题是, 该模型在定义上能量守恒, 但不是真正意义上的能量守恒, 它虽不会凭空产生额外能量, 却不能在高粗糙度时维持能量.
+</p>
+
+<p>
+这恰恰是因为建模时没有考虑到多表面反射, 使得单散射在高粗糙度时有比较大的能量损失, 从而显得过暗, 较为简单的解决方法是在单散射的基础上添加一个能量补充项 (<code>energy compensation term</code>), 有兴趣自行检索.
+</p>
+
+<p>
+目前业界广泛使用的是 <code>GGX-Smith</code> 遮蔽函数, 也就是使用 <code>GGX NDF</code>, 在通过它来导出 \(\alpha\), 配合 <code>Smith</code> 遮蔽函数来确定 \(G_1\), 最后从上面提到的四种形式中选用一种来得到 \(G_2\).
+</p>
+
+<p>
+通过 <code>GGX NDF</code> 可导出 \(\Lambda(v) = \frac{-1 + \sqrt{1 + \frac{1}{a^2}}}{2}\), 其中 \(a = \frac{1}{\alpha \tan\theta_v} = \frac{\cot \theta_v}{\alpha}\), \(\alpha\) (<code>alpha</code>) 是微表面的粗糙度,
+</p>
+
+<p>
+因此, 有时候会看到它的其它形式:
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} \Lambda(v) &= \frac{-1 + \sqrt{1 + (\frac{\alpha}{\cot \theta_v})^2}}{2} \\ &= \frac{-1 + \sqrt{1 + (\alpha \tan\theta_v)^2}}{2} \\ &= \frac{-1 (n \cdot v) + \sqrt{(n \cdot v)^2 + \alpha (1 - \sin^2\theta_v)}}{2 (n \cdot v)} \\ &= \frac{-1 (n \cdot v) + \sqrt{(n \cdot v)^2 + \alpha (1 - (n \cdot v)^2)}}{2 (n \cdot v)} \\ &= \frac{-1 (n \cdot v) + \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot v)^2}}{2 (n \cdot v)}  \end{aligned} \end{equation*}\).
+</p>
+
+<blockquote>
+<p>
+<code>GGX NDF</code> 的 \(\Lambda(v)\) 的推导过程以后补充.
+</p>
+</blockquote>
+
+<p>
+游戏和电影工业对于 <code>GGX-Smith</code> 遮蔽阴影函数的选用方面可以总为两个主要阶段:
+</p>
+
+<p>
+<b>在 <code>SIGGRAP 2014</code> 之前</b>, <code>Smith</code> 分离的遮蔽阴影函数; <b>在 <code>SIGGRAP 2014</code> 之后</b>, <code>Smith</code> 相关的遮蔽阴影函数.
+</p>
+
+<p>
+接下来以 2014 年作为时间节点, 介绍业界的 <code>GGX-Smith</code> 遮蔽阴影函数的发展过程.
+</p>
+
+<p>
+<b>SIGGRAPH 2012: Disney</b>
+</p>
+
+<p>
+迪士尼 (<code>Disney</code>) 参考了 <code>[Walter 2007]</code> 的近似方法, 也就是根据 <code>GGX NDF</code> 导出 \(G_1\), 再采用分离型的 \(G_2\), 并将粗糙度 \(\alpha\) 进行重新映射: \(\alpha = (\frac{1 + roughness}{2})^2\), 使得 \(\alpha\) 从 \([0, 1]\) 重映射到 \([0.5, 1]\).
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} G_1(v, m) &= \chi^{+}(v \cdot m) \frac{1}{1 + \Lambda(v)} \\ &= \chi^{+}(v \cdot m) \frac{1}{1 + \frac{-1 + \sqrt{1 + (\alpha \tan\theta)^2}}{2}} \\ &= \chi^{+}(v \cdot m) \frac{2}{1 + \sqrt{1 + (\alpha \tan\theta_v)^2}} \\ &=  \chi^{+}(v \cdot m) \frac{2 (n \cdot v)}{(n \cdot v) + \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot v)^2 }} \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+\(G_2(v, l, m) = G_1(v, m)G_1(l, m)\)
+</p>
+
+<p>
+<b>SIGGRAPH 2013: UE4</b>
+</p>
+
+<p>
+<code>UE4</code> 在 <code>SIGGRAPH 2013</code> 上公布了基于 <code>Schlick</code> 近似的 \(G_1(v, m) \approx \frac{(n \cdot v)}{(n \cdot v)(1 - k) + k}\), 其中 \(k = \frac{\alpha}{2}\), \(\alpha\) 延续 <code>Disney</code> 的定义; 最后同样也是分离型的 \(G_2(v, l, m) = G_1(v, m)G_1(l, m)\).
+</p>
+
+<blockquote>
+<p>
+<code>Schlick</code> 近似是通过实验和拟合获得的, 所以不用纠结它的推导, 其目的是避免复杂运算同时逼近 <code>Smith</code> 函数.
+</p>
+
+<p>
+来源于 <code>Schlick, Christophe, “An Inexpensive BRDF Model for Physically-based Rendering”, Computer Graphics Forum, vol. 13, no. 3, Sept. 1994, pp. 149–162.</code>.
+</p>
+</blockquote>
+
+<p>
+<b>SIGGRAPH 2014</b>
+</p>
+
+<p>
+<code>Heitz</code> 在 <code>JCGT 2014</code> 发表了著名的 <code>paper: "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"</code> 并后续在 <code>SIGGRAPH 2014</code> 进行了同名演讲后,
+</p>
+
+<p>
+业界对遮蔽阴影函数的理解上升了一个新层次, 此后业界开始转向 <code>Smith Joint Masking-Shadowing Function</code> 的高度相关形式, 并且做了一些近似与优化.
+</p>
+
+<p>
+因此, 它们的 \(G_2\) 在形式上和效果上都是逼近这个形式:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} G_2(v, l, m) &= \frac{\chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{1 + \frac{-1 + \sqrt{1 + (\alpha \tan\theta_v)^2}}{2} + \frac{-1 + \sqrt{1 + (\alpha \tan\theta_l)^2}}{2}} \\ &= \frac{\chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{\frac{\sqrt{1 + (\alpha \tan \theta_v)^2} + \sqrt{1 + (\alpha \tan\theta_l)^2}}{2}} \\ &= \frac{2 \chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{\sqrt{1 + (\alpha \tan \theta_v)^2} + \sqrt{1 + (\alpha \tan\theta_l)^2}} \\ &= \frac{2 \chi^{+}(v \cdot m) \chi^{+}(l \cdot m) (n \cdot v)(n \cdot l)}{ (n \cdot v)(n \cdot l) \left[ \sqrt{1 + (\alpha \tan \theta_v)^2} + \sqrt{1 + (\alpha \tan\theta_l)^2} \right]} \\ &= \frac{2 \chi^{+}(v \cdot m) \chi^{+}(l \cdot m) (n \cdot v)(n \cdot l)}{(n \cdot l) \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot v)^2} + (n \cdot v) \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot l)^2}} \end{aligned} \end{equation*}\)
+</p>
+
+<ul class="org-ul">
+<li><p>
+<b>Frostbite 的 GGX-Smith Correlated Joint 近似方案</b>
+</p>
+
+<p>
+<code>Frostbite</code> 的 <code>Lagarde</code> 观察到 <code>GGX-Smith</code> 高度相关的 \(G_2\) 具有与 <code>BRDF</code> 的分母组合抵消的项, 所以把 \(G_2\) 简化成:
+</p>
+
+<p>
+\(\frac{G_2(v, l, m)}{4|n \cdot l||n \cdot v|} \Rightarrow \frac{0.5 \chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{(n \cdot l)^{+} \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot v)^2} + (n \cdot v)^{+} \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot l)^2}}\)
+</p></li>
+
+<li><p>
+<b>UE4 的 GGX-Smith Correlated Joint 近似方案</b>
+</p>
+
+<p>
+相比原本的 \(G_2\) 高度相关形, <code>UE4</code> 的改变就很大了.
+</p>
+
+<p>
+\(\alpha = roughness^2\)
+</p>
+
+<p>
+\(\Lambda(v) = (n \cdot l)((n \cdot v)(1 - \alpha) + \alpha)\)
+</p>
+
+<p>
+\(\Lambda(l) = (n \cdot v)((n \cdot l)(1 - \alpha) + \alpha)\)
+</p>
+
+<p>
+\(G_2(v, l, m) = \frac{0.5}{\Lambda(v) + \Lambda(l)}\)
+</p></li>
+
+<li><p>
+<b>Unity HDRP 的 GGX-Smith Correlated Joint 近似方案</b>
+</p>
+
+<p>
+\(\alpha = roughness\)
+</p>
+
+<p>
+\(\Lambda(v) = (n \cdot l)((n \cdot v)(1 - a) + a)\)
+</p>
+
+<p>
+\(\Lambda(l) = (n \cdot v) \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot l)^2}\)
+</p>
+
+<p>
+\(G_2(v, l, m) = \frac{0.5}{\Lambda(v) + \Lambda(l)}\)
+</p></li>
+</ul>
 </div>
 </li>
 
-
-
-
-
-<li><a id="orgbb1b962"></a>菲涅尔方程<br>
-<div class="outline-text-5" id="text-orgbb1b962">
+<li><a id="orgfc38693"></a><b>菲涅耳反射 (<code>Fresnel Reflection</code>): \(F(v, m, F_0)\)</b><br>
+<div class="outline-text-5" id="text-orgfc38693">
+<blockquote>
 <p>
-\(F\) 表示菲涅尔方程(<code>Fresnel equation</code>)
+参考资料: <a href="https://learnopengl.com/PBR/Theory">LearnOpenGL - PBR Theory</a>
+</p>
+</blockquote>
+
+<p>
+菲涅耳方程描述了被反射光与被折射光的比例, 入射光在照射到表面后会因为折射而损失部分能量, 因此, 被反射光和入射光的能量并不相等.
+</p>
+
+<p>
+这里的 \(F\) 则是用来计算反射率, 假设入射光的能量为 \(\Phi_i\), 那么被反射光的能量 \(\Phi_o = \Phi_i F(v, m, F_0)\).
+</p>
+
+<p>
+菲涅耳方程也是一个复杂的公式, 所以 <code>Schlick</code> 也找到了它的近似: \(F(v, m, F_0) = F_0 + (1 - F_0)(1 - (m \cdot v))^5\), 其中 \(F_0\) 表示垂直入射时的镜子面反射率.
+</p>
+
+<p>
+在物理上 \(F_0\) 取决于材质, 例如玻璃的 \(F_0 \approx 0.04\), 而金属的 \(F_0 \approx 1\).
+</p>
+
+<blockquote>
+<p>
+原版菲涅耳方程的资料很多, 因此这里就不列出了.
+</p>
+</blockquote>
+
+<p>
+它的 <code>GLSL Shader</code> 实现如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">vec3</span> <span style="color: #87cefa;">F_Schlick</span>(<span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">n_microfacet</span>, <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">n_light</span>, <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">F0</span>) {
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">cosTheta</span> = <span style="color: #b0c4de;">dot</span>(n_microfacet, n_light);
+  <span style="color: #00ffff;">return</span> F0 + (1.0 - F0) * <span style="color: #b0c4de;">pow</span>(1.0 - cosTheta, 5.0);
+}
+</pre>
+</div>
+</div>
+</li>
+
+<li><a id="orgfa4adcd"></a><b>\(f_{\mathrm{cook-torrance}}\) 的推导</b><br>
+<div class="outline-text-5" id="text-orgfa4adcd">
+<blockquote>
+<p>
+参考资料:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models#TheTorrancendashSparrowModel">PBR Book - Reflection Models - The Torrance-Sparrow Model</a></li>
+<li><a href="https://blog.csdn.net/haozi2008/article/details/111061303">PBR 三 光照模型的分类和BRDF概述</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/28059221">毛星云:【《Real-Time Rendering 3rd》 提炼总结】(六) 第七章 · 高级着色：BRDF及相关技术</a></li>
+</ul>
+</blockquote>
+
+<p>
+\(4(v \cdot n)(l \cdot n)\) 是源自于 <code>Microfacet Cook-Torrance BRDF</code> 模型推导的结果, 该模型还有另外一个名字: <code>Torrance-Sparrow Model</code>.
+</p>
+
+
+<div id="orgf284012" class="figure">
+<p><img src="../../../files/torrance-sparrow-model-m.png" alt="torrance-sparrow-model-m.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 30: </span>Torrance-Sparrow Model</p>
+</div>
+
+<p>
+首先第一步是计算面向 \(m\) 的微平面接收光线 \(l\) 的辐射, 根据 <code>NDF</code> 中 \(dA_{m} = D(m) d\omega_m dA\) 的关系和<a href="#radiance">辐射</a>的定义: \(L(p, l) = \frac{d^2\Phi}{d\omega_l dA_{m}^{\perp}}\).
+</p>
+
+<p>
+根据该关系求出 \(d^2 \Phi\):
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned}d^2\Phi &= L(p, l) d\omega_l dA_{m}^{\perp} \\ &= L(p, l)d\omega_l \cos\theta_l dA_m \\ &= L(p, l) d\omega_l (l \cdot m) dA_m \\ &= L(p, l) d\omega_l (l \cdot m) D(m) d\omega_m dA \\ \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+其中 \(\theta_l\) 是微平面的面法线 \(m\) 和光线 \(l\) 之间的夹角, \(\theta_l = \theta_m\).
+</p>
+
+<blockquote>
+<p>
+因为要模拟能量受到损失的过程, 所以是计算光线入射到微平面的辐射度量, 而不是宏表面受到的辐射度量.
+</p>
+</blockquote>
+
+<p>
+再根据菲涅耳反射可以求出反射光 \(v\) 的 \(d^2 \Phi_v\): \(d^2\Phi_v = F(v, m, F_0)d^2\Phi = F(l, m, F_0)d^2\Phi\).
+</p>
+
+<p>
+根据<a href="#orgc0c2821">极坐标的微元立体角</a>定义: \(\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m \times d\theta_m \times d\phi_m}{\sin\theta_i \times d\theta_i \times d\phi_i}\).
+</p>
+
+<blockquote>
+<p>
+这里是以向量的微元作为微元立体角.
+</p>
+</blockquote>
+
+<p>
+因为 \(\theta_i = 2\theta_m\), \(\phi_i = \phi_m\), 因此可以利用正弦二倍角公式: \(\sin2\theta = 2\sin\theta\cos\theta\), 可以得到 \(\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m d\theta_m}{2\sin\theta_m\cos\theta_m d\theta_m} = \frac{1}{4 \cos\theta_m} = \frac{1}{4 (l \cdot m)}\).
+</p>
+
+<p>
+然后求出反射光 \(v\) 的辐射:
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} L(p, v) &= \frac{d^2 \Phi_v}{d\omega_v \cos\theta_v dA} \\ &= \frac{F(l, m, F_0)d^2\Phi}{d\omega_v (v \cdot n) dA} \\ &= \frac{F(l, m, F_0) L(p, l) d\omega_l (l \cdot n) D(m) d\omega_m dA}{d\omega_v (v \cdot n) dA} \\ &= \frac{F(l, m, F_0)L(p, l) d\omega_l D(m)}{4 (v \cdot n)} \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+其中, \(\theta_v\) 是宏表面的法线 \(n\) 与视线 \(v\) 之间的夹角.
+</p>
+
+<blockquote>
+<p>
+正如公式所示, 反射光的辐射是宏表面的反射光辐射, 这是因为微平面的是用来模拟能量损失的过程, 现在目的实现了就没必要再次计算损失.
+</p>
+</blockquote>
+
+<p>
+根据 <code>Fred Nicodemus</code> 的 <code>BRDF</code> 定义: \(f_r(\omega_i, \omega_o) = \frac{d L_o (\omega_o)}{d E_i(\omega_i)} = \frac{d L_o(\omega_o)}{L_i(\omega_i) \cos\theta_i d\omega_i}\), 把前面的结果代入 \(\begin{equation*} \begin{cases} dL_o(\omega_o) = L(p, v) \\ L_i(\omega_i) = L(p, l) \\ \theta_i = \theta_l \\ d\omega_i = d\omega_l \end{cases} \end{equation*}\),
+</p>
+
+<p>
+得到 \(f_r(l, v) = \frac{F(l, m, F_0)L(p, l) d\omega_l D(m)}{4 (v \cdot n) L(p, l) \cos\theta_l d\omega_l} = \frac{F(l, m, F_0) D(m)}{4 (v \cdot n) (l \cdot n)}\).
+</p>
+
+<p>
+最后, 加入几何函数就得到 <code>Cook-Torrance BRDF</code> 中的 \(f_{\mathrm{cook-torrance}} = \frac{F(l, m, F_0) D(m) G(v, l, m)}{4 (v \cdot n) (l \cdot n)}\).
 </p>
 </div>
 </li>
 </ul>
 </div>
-</div>
-</div>
 
-
-<div id="outline-container-org203da69" class="outline-2">
-<h2 id="org203da69">阴影</h2>
-<div class="outline-text-2" id="text-org203da69">
-<ol class="org-ol">
-<li><p>
-通过光源进行投影, 计算出在光源"眼中所见"的顶点深度, 获得光源的 <code>depth buffer</code>.
+<div id="outline-container-org2c3aa99" class="outline-4">
+<h4 id="org2c3aa99">完整的反射率方程</h4>
+<div class="outline-text-4" id="text-org2c3aa99">
+<p>
+经过前面的推导后, 我们对反射率方程有了新的认识:
 </p>
 
 <p>
-光的变换: \(M_{\mathrm{project\_for\_light}}M_{\mathrm{view\_for\_light}}\)
-</p></li>
-
-<li><p>
-计算出顶点在经过光的变换后得出:
+\(L_o(p, \omega_o) = \int_{\Omega} (k_{\mathrm{diffuse}} \frac{c}{\pi} + k_{\mathrm{specular}} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)}) L_i(p, \omega_i) n \cdot \omega_i d\omega_i\), 其中 \(h = \frac{\omega_i + \omega_o}{|\omega_i + \omega_o|}\).
 </p>
 
 <p>
-\(P_{\mathrm{ndc\_for\_light}} = M_{\mathrm{project\_for\_light}}M_{\mathrm{view\_for\_light}}M_{model}P_{object}\)
+可以进一步变换, 把方程分成漫反射辐射度(<code>diffuse irradiance</code>)和镜面反射辐射度(<code>specular irradiance</code>):
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{diffuse}} \frac{c}{\pi} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + \int_{\Omega} k_{\mathrm{specular}} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \\ &= k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + k_{\mathrm{specular}} \int_{\Omega} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \end{aligned} \end{equation*}\)
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8e6b82b" class="outline-4">
+<h4 id="org8e6b82b">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</h4>
+<div class="outline-text-4" id="text-org8e6b82b">
+
+<div id="org0a4d81c" class="figure">
+<p><img src="../../../files/pbr-materials.png" alt="pbr-materials.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 31: </span>常见 PBR 贴图</p>
+</div>
+
+<p>
+在了解 <code>PBR</code> 的理论以后, 就可以描述美术人员如何为 <code>PBR</code> 方程创作制作表面的物理参数, 每个参数都可以通过纹理贴图来定义或建模, 并且纹理贴图能够以逐片元的精度(<code>per-fragment</code>)控制表面的物理属性.
+</p>
+
+<p>
+以下是 <code>PBR</code> 管线中常用的贴图类型:
+</p>
+
+<ul class="org-ul">
+<li><p>
+反照率贴图 (<code>Albedo texture</code>)
+</p>
+
+<p>
+反照率贴图为每个纹素(<code>texel</code>)指定表面的颜色, 如果纹素为金属材质则对应其基础反射率.
+</p>
+
+<p>
+作用基本上与中的漫反射贴图 (<code>diffuse texture</code>) 一致, 漫反射贴图通常包含了细微阴影或暗部凹陷, 这正是反照率贴图需要避免的部分, 只能包含表面颜色或者金属的基础反射率.
+</p>
+
+<p>
+反照率贴图是 \(f_{\mathrm{lambert}} = \frac{c}{\pi}\) 中的 \(c\) 的来源.
 </p></li>
-</ol>
+
+<li><p>
+法线贴图 (<code>Normal map</code>)
+</p>
+
+<p>
+法线贴图逐片元地指定宏表面的法线, 是 \(n\) 的来源, 用来模拟表面的凹凸效果.
+</p></li>
+
+<li><p>
+金属贴图 (<code>Metallic map</code>)
+</p>
+
+<p>
+金属贴图定义纹素是否金属, 具体定义取决于引擎的设置, 通常灰度值(<code>grayscale value</code>), 或直接使用非黑即白的二值化形式.
+</p></li>
+
+<li><p>
+粗糙度贴图 (<code>Roughness map</code>)
+</p>
+
+<p>
+粗糙度贴图以逐纹素的方式定义表面的粗糙度. 粗糙度影响表面微观几何的统计分布方向. 表面越粗糙, 反射越宽泛且模糊, 而越光滑, 反射越集中且清晰.
+</p>
+
+<p>
+部分引擎使用光滑度贴图 (<code>Smoothness map</code>) 而非粗糙度贴图, 因为一些美术人员认为光滑更直观, 可以通过 \(1.0 - smoothness\) 转换成粗糙度.
+</p></li>
+
+<li><p>
+环境光遮蔽贴图 (<code>Ambient occlusion map</code>, 简称 <code>AO map</code>)
+</p>
+
+<p>
+环境光遮蔽贴图为表面以及其周围几何体设置额外的阴影因子, 给反照率贴图补充阴影信息, 提高视觉效果.
+</p></li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 
@@ -2310,6 +2904,12 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <div id="outline-container-slope-space" class="outline-3">
 <h3 id="slope-space">斜率空间 (Slope Space)</h3>
 <div class="outline-text-3" id="text-slope-space">
+<blockquote>
+<p>
+参考资料: <a href="https://www.reedbeta.com/blog/slope-space-in-brdf-theory/">Nathan Reed: Slope Space in BRDF Theory</a>
+</p>
+</blockquote>
+
 <p>
 斜率空间实际上是基于平面上直线的斜率推广到三维空间.
 </p>
@@ -2338,7 +2938,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <div id="org19aafcf" class="figure">
 <p><img src="../../../files/normal-to-slope.png" alt="normal-to-slope.png">
 </p>
-<p><span class="figure-number">Figure 25: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
+<p><span class="figure-number">Figure 32: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
 </div>
 
 <p>
@@ -2360,10 +2960,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgdaebae9" class="figure">
+<div id="orgcde131f" class="figure">
 <p><img src="../../../files/normal-xz.png" alt="normal-xz.png">
 </p>
-<p><span class="figure-number">Figure 26: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
+<p><span class="figure-number">Figure 33: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
 </div>
 
 <p>
@@ -2375,10 +2975,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgc9107e7" class="figure">
+<div id="orgbd95bdd" class="figure">
 <p><img src="../../../files/normal-yz.png" alt="normal-yz.png">
 </p>
-<p><span class="figure-number">Figure 27: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
+<p><span class="figure-number">Figure 34: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
 </div>
 
 <p>
@@ -2398,10 +2998,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgcbd11cd" class="figure">
+<div id="org80a82eb" class="figure">
 <p><img src="../../../files/normal-in-slope-space.png" alt="normal-in-slope-space.png">
 </p>
-<p><span class="figure-number">Figure 28: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
+<p><span class="figure-number">Figure 35: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
 </div>
 
 <p>
@@ -2455,7 +3055,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-根据 <a href="#org19aafcf">25</a>, \(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
+根据 <a href="#org19aafcf">32</a>, \(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
 </p>
 
 <p>
@@ -2587,11 +3187,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-因为斜率空间是一个无边界的 <code>2D</code> 平面, 所以可以在上面引入一元或二元概率密度函数, 比如说引入正态分布函数. 有时候斜率空间上的概率密度函数被称为 \(P^{22}(\widetilde{n})\) 函数.
+因为斜率空间是一个无边界的 <code>2D</code> 平面, 所以可以在上面引入一元或二元概率密度函数, 比如说引入正态分布函数. 有时候斜率空间上的概率密度函数被称为 \(P_{22}(\widetilde{n})\) 函数.
 </p>
 
 <p>
-为了把 \(P^{22}(\widetilde{n})\) 变换到其它空间上得到概率密度函数 \(P(n)\), 就得找出 \(P^{22}(\widetilde{n})\) 和 \(P(n)\) 之间的关系.
+为了把 \(P_{22}(\widetilde{n})\) 变换到其它空间上得到概率密度函数 \(P(n)\), 就得找出 \(P_{22}(\widetilde{n})\) 和 \(P(n)\) 之间的关系.
 </p>
 
 <p>
@@ -2607,10 +3207,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgdcb55dc" class="figure">
+<div id="org800da2a" class="figure">
 <p><img src="../../../files/fx-pdf.png" alt="fx-pdf.png">
 </p>
-<p><span class="figure-number">Figure 29: </span>身高在 [60, 70] 英寸内的女性比例</p>
+<p><span class="figure-number">Figure 36: </span>身高在 [60, 70] 英寸内的女性比例</p>
 </div>
 
 <p>
@@ -2652,11 +3252,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-比如从 \(f(x)\) 变换到 \(g(x^{'})\) 上: \(f(x) dx = g(x^{'}) dx^{'} \rightarrow g(x^{'}) = \frac{dx}{dx^{'}} f(x)\), 其中 \(\frac{dx}{dx^{'}}\) 就是从 \(f(x)\) 到 \(g(x^{'})\) 的变换.
+比如从 \(f(x)\) 变换到 \(g(x^{'})\) 上: \(f(x) dx = g(x^{'}) dx^{'} \Rightarrow g(x^{'}) = \frac{dx}{dx^{'}} f(x)\), 其中 \(\frac{dx}{dx^{'}}\) 就是从 \(f(x)\) 到 \(g(x^{'})\) 的变换.
 </p>
 
 <p>
-同理, 回到 \(P^{22}\) 和 \(P\) 之间的转换, 可以得到这个变换关系 \(\begin{equation*} P^{22}(\widetilde{n}) d\widetilde{n} = P(n) dn \rightarrow \left\{ \begin{aligned} & P(n) = \frac{d\widetilde{n}}{dn} P^{22}(\widetilde{n}) \\ & P^{22}(\widetilde{n}) = \frac{dn}{d\widetilde{n}}P(n) \end{aligned} \right. \end{equation*}\).
+同理, 回到 \(P_{22}\) 和 \(P\) 之间的转换, 可以得到这个变换关系 \(\begin{equation*} P_{22}(\widetilde{n}) d\widetilde{n} = P(n) dn \Rightarrow \left\{ \begin{aligned} & P(n) = \frac{d\widetilde{n}}{dn} P_{22}(\widetilde{n}) \\ & P_{22}(\widetilde{n}) = \frac{dn}{d\widetilde{n}}P(n) \end{aligned} \right. \end{equation*}\).
 </p>
 
 <p>
@@ -2716,12 +3316,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 所以 <code>NDF</code> 的完整定义是: \(D(m = (\theta, \phi), \sigma) = \frac{\chi^{+}(\cos\theta)}{2 \pi \sigma^{2} \cos^{4}\theta} \times e^{-\frac{\tan^{2}\theta}{2 \sigma^{2}}}\), 其中 \(\begin{equation*}\chi^{+}(x) = \begin{cases} 1, &  x \gt 0 \\ 0, & x \le 0 \end{cases}\end{equation*}\).
 </p>
 
-<blockquote>
-<p>
-后面还会用到 \(\chi^{+}(x)\) 这个函数, 请记住它.
-</p>
-</blockquote>
-
 <p>
 通过观察可以看到 \(D(m, \alpha)\) 的定义和 \(m\) 的 \(\phi\) 没有任何关系, 而 \(\theta\) 又刚好是微平面面法线 \(m\) 和宏表面法线 \(n\) 的夹角, 所以 \(D(m, \alpha)\) 又有另外两种写法:
 </p>
@@ -2770,6 +3364,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 <li>\(D(m = (x_{0}, y_{0}, z_{0}), n = (x_{1}, y_{1}, z_{1}), \sigma) = \frac{\sigma^{2} \chi^{+}(m \cdot n)}{\pi (m \cdot n)^{4} (\sigma^{2} - \frac{(m \cdot n)^{2} - 1}{(m \cdot n)^{2}})^{2}} = \frac{\sigma^{2}\chi^{+}(m \cdot n)}{\pi ((m \cdot n)^{2}(\sigma^{2} - 1) + 1)^{2}}\)</li>
 </ul>
+
+
+<p>
+<a id="orgf70339a"></a>
+</p>
 </div>
 </div>
 </div>
@@ -2787,7 +3386,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <div id="org9b397a1" class="figure">
 <p><img src="../../../files/g1_deriving.png" alt="g1_deriving.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 30: </span>G1</p>
+<p><span class="figure-number">Figure 37: </span>G1</p>
 </div>
 
 <p>
@@ -2817,7 +3416,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 <p>
-\(S(\xi_{0}, \mu)\): 位于表面高度 \(\xi_{0}\) 的点在射线 \(v\) 上可见的概率, \(\mu\) 是射线 \(v\) 的斜率, \(\mu = |\tan(\frac{\pi}{2} - \theta_{v})| = |-\cot\theta_{v}| = |\frac{\cos\theta_{v}}{\sin\theta_{v}}| = |\frac{n \cdot v}{\sqrt{1 - n \cdot v}}|\);
+\(S(\xi_{0}, \mu)\): 位于表面高度 \(\xi_{0}\) 的点在射线 \(v\) 上可见的概率, \(\mu\) 是射线 \(v\) 的斜率, \(\mu = |\tan(\frac{\pi}{2} - \theta_{v})| = |-\cot\theta_{v}| = |\frac{\cos\theta_{v}}{\sin\theta_{v}}| = |\frac{n \cdot v}{\sqrt{1 - (n \cdot v)^2}}|\);
 </p>
 
 <p>
@@ -2857,7 +3456,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 <p>
-因此, \(g(\tau) = \frac{\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq}{\int_{-\infty}^{\xi_{0} + \mu\tau}P_{1}(\xi)d\xi}\), 回到 \(S(\xi_{0}, \mu)\) 的定义上 \(S(\xi_{0}, \mu) = e^{-\int_{0}^{\infty} g(\tau) d\tau} = e^{\int_{-\infty}^{0} g(\tau) d\tau} = e^{\Lambda(\mu) \ln f(\xi_{0})} = f(\xi_{0})^{\Lambda(\mu)}\).
+因此, \(g(\tau) = \frac{\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq}{\int_{-\infty}^{\xi_{0} + \mu\tau}P_{1}(\xi)d\xi}\), 回到 \(S(\xi_{0}, \mu)\) 的定义上 \(S(\xi_{0}, \mu) = e^{-\int_{0}^{\infty} g(\tau) d\tau} = e^{\Lambda(\mu) \ln f(\xi_{0})} = f(\xi_{0})^{\Lambda(\mu)}\),
+</p>
+
+<p>
+其中 \(f(\xi_0) = \int_{-\infty}^{\xi_0}P_1(\xi)d\xi\), 表示微平面高度小于等于 \(\xi_0\) 的概率.
 </p>
 
 <blockquote>
@@ -2934,7 +3537,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-又因为 \(f\) 是累积分布函数, 所以 \(f(\xi_0 + \mu \infty) = 1 \rightarrow \ln f(\xi_0 + \mu \infty) = 0\), 可得 \(\Lambda (\mu) \left. \ln f(z) \right]_{\xi_0}^{\xi_0 + \mu \infty} = - \Lambda(\mu) \ln f(\xi_0)\).
+又因为 \(f\) 是累积分布函数, 所以 \(f(\xi_0 + \mu \infty) = 1 \Rightarrow \ln f(\xi_0 + \mu \infty) = 0\), 可得 \(\Lambda (\mu) \left. \ln f(z) \right]_{\xi_0}^{\xi_0 + \mu \infty} = - \Lambda(\mu) \ln f(\xi_0)\).
 </p>
 
 <p>
@@ -2969,13 +3572,164 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-做法很简单, 设 \(m\) 和 \(n\) 分别为微平面和宏平面的法线, 射线为 \(v\), 只要 \(v \cdot m\) 和 \(v \cdot n\) 两者正负相同即可, 也就是 \(\frac{v \cdot m}{v \cdot n} \gt 0\) 即表示 \(v\) 在 \(m\) 和 \(n\) 的同一侧.
+做法很简单, 设 \(m\) 和 \(n\) 分别为微平面和宏平面的法线, 射线为 \(v\), 只要 \(v \cdot m\) 和 \(v \cdot n\) 两者正负相同即可, 也就是 \(\frac{v \cdot m}{v \cdot n} \gt 0\) 或 \((v \cdot m)(v \cdot n) \gt 0\) 即表示 \(v\) 在 \(m\) 和 \(n\) 的同一侧. 方向一致性也因此被称为同向可见性.
 </p>
 
 <p>
-经过方向一致性的约束就可以得到几何函数了: \(G_1(v, m) = \chi^{+}(\frac{v \cdot m}{v \cdot n})S_1(\mu) = \chi^{+}(\frac{v \cdot m}{v \cdot n})\frac{1}{1 + \Lambda(\mu)}\).
+经过方向一致性的约束就可以得到几何函数了: \(G_1(v, m) = \chi^{+}(\frac{v \cdot m}{v \cdot n})S_1(\mu) = \chi^{+}(\frac{v \cdot m}{v \cdot n})\frac{1}{1 + \Lambda(\mu)}\), 其中 \(\begin{equation*}\chi^{+}(x) = \begin{cases} 1, &  x \gt 0 \\ 0, & x \le 0 \end{cases}\end{equation*}\).
 </p>
 </div>
+</div>
+</div>
+
+<div id="outline-container-org0ebbc71" class="outline-2">
+<h2 id="org0ebbc71">完结心声</h2>
+<div class="outline-text-2" id="text-org0ebbc71">
+<blockquote>
+<p>
+这篇笔记完结于 <b>2025-02-18</b> 的凌晨, 这部分内容也是这时候写下的.
+</p>
+
+<p>
+完结是指内容在框架上已定型, 日后还会有不定期的小修补.
+</p>
+</blockquote>
+
+<p>
+我写了很多篇和图形相关的笔记, 只有这一篇写了完结心声, 因为这对于我来说是一个阶段性的胜利.
+</p>
+
+<p>
+<code>PBR</code> 是我在 <code>2021</code> 年就注意到的话题, 忘记具体几月份了, 大约是四月份左右, 是从 <a href="https://learnopengl.com/PBR/Theory">LearnOpenGL</a> 了解到的, 但没意识到它的重要性.
+</p>
+
+<p>
+在真的去接触工程后就发现 <code>Albedo</code>, <code>Metallic</code>, <code>Roughness</code>, <code>AO</code> 等等这都是些啥呀, 和 <code>Blinn-Phong</code> 差太远了吧.
+</p>
+
+<p>
+没错, 实际工程中都是采用 <code>PBR</code> 的, 不学的话怎么做游戏呢?
+</p>
+
+<p>
+如果你看过我其它的笔记, 会发现我都是尽可能地把公式的推导给还原出来的, 因为 <code>Shader</code> 中是要用到这些推导的.
+</p>
+
+<p>
+但 <code>PBR</code> 的公式推导需要相当的数学知识, 即便是阅读参考资料的也需要相当的数学知识, 加上当时刚换了一份比较忙的工作, 时间碎片化严重并且精力不足,
+</p>
+
+<p>
+而数学和图形学的内容又非常需要连续的长时间去投入精力学习, 所以就暂时搁置 <code>PBR</code> 的学习计划了.
+</p>
+
+<p>
+在 <code>2021</code> 年到 <code>2023</code> 年底这段时间里面, 我是想学又学不了, 想玩游戏但又自责在浪费学习时间, 那段时间我买了不少游戏但还没通关, 甚至是还没打开过, 这种思想上长期的分裂导致我精神和身体都出现了问题.
+</p>
+
+<p>
+不要以为我不喜欢玩游戏, 正是因为小时候玩游戏才想着长大后有属于自己的游戏, 才有现在的的学习游戏开发.
+</p>
+
+<p>
+在 <code>2024</code> 年处公司缩编裁员后, 我花了 8 个月时间折腾完一些事情, 然后就开始学习游戏开发技术了.
+</p>
+
+<p>
+做一个独立游戏开发者是我在 <code>2019</code> 年底就开始定下的目标, 但对于很多人来说自学数学都不是一项小工程, 其中也包括我, 怀疑自己到底可不可以完成次壮举?
+</p>
+
+<p>
+不过没关系, 人生这么长, 有机会让你实现一些壮举.
+</p>
+
+<p>
+后来自学线性代数的经历打消了我的疑虑, 再后来的写下自己 <code>OpenGL</code> 渲染管线笔记更是让我信心大增, 自此, 我坚定地开始了我的成为独立游戏开发者之旅.
+</p>
+
+<p>
+这就是为什么不学习会焦虑, 补充数学知识, 还要理解 <code>PBR</code> 里面的公式推导, 这是另外一个大工程, 这项工程的延期会让我卡在能开发游戏的前一步中.
+</p>
+
+<p>
+在 <code>2024</code> 年 <code>8</code> 月中, 我曾经尝试在不掌握这些知识的前提下去学习 <code>Godot</code> 引擎的使用, 想着边干边学,
+</p>
+
+<p>
+但同年 <code>10</code> 月学习 <code>Godot Shader</code> 中一个经历改变了我的想法:
+</p>
+
+<p>
+在通过 <code>depth buffer</code> 实现迷雾效果时, 发现相同的代码在视频中和我现实中的效果不一样, 经过一番检查和搜索后找到了问题,
+</p>
+
+<p>
+我的项目是使用 <code>OpenGL</code> 渲染的, 视频的是使用 <code>Vulkan</code>, 它们的 <code>depth buffer</code> 的生成方式是不一样的, 需要手动进行转换来解决问题,
+</p>
+
+<p>
+所以问题又变成了该如何把 <code>Vulkan</code> 中的 <code>depth buffer</code> 转换成 <code>OpenGL</code> 的那般, 解决方法来源于对 <code>OpenGL</code> 的渲染管线中透视投影的进一步推导,
+</p>
+
+<p>
+这一块恰好是之前落下的内容, 所以解决这个问题花了不少时间去推导, 花了大概三天吧, 开始时有一部分时间花在搜索现成答案上, 然而戏剧的部分要来了:
+</p>
+
+<p>
+在一开始的搜索中我就找到了答案, 但不知道它是我要的解决方法, 这是在推导完成后才发现.
+</p>
+
+<p>
+幸运的是这次的问题不算复杂, 所以只花了三天时间, 那么下一次呢? 不幸的是一开始就与解决方法擦肩而过.
+</p>
+
+<p>
+不管从哪个方面来说, 提前掌握需要的知识都可以加快问题的解决效率, 这里有足以可以反驳什么事情都可以边干边学的观点.
+</p>
+
+<p>
+只要是真心想做游戏, 那么这些知识是必定会用得上的, 早晚的问题而已, 所以暂停了 <code>Godot</code> 的学习去把 <code>PBR</code> 补上.
+</p>
+
+<p>
+<code>PBR</code> 的内容需要微积分和概率论作为前提, 这两者花了两个月左右, <code>PBR</code> 本身则是花了一个多月的时间.
+</p>
+
+<p>
+线性代数和渲染管线我虽不说学得好, 但到达看懂资料的程度也不过是前后花了一个多月, 而且还是每天下班后只花 <code>2</code> 到 <code>3</code> 个小时来学的,
+</p>
+
+<p>
+换作每天 <code>8</code> 小时的上班时间来说, 也只不过是上了半个月左右的班而已, 但学习微积分 / 概率论 / <code>PBR</code> 是实打实地上了三个月班, 而且每天还要熬夜加班, 换做每天花 <code>2</code> 到 <code>3</code> 个小时去学习, 则是要八个月.
+</p>
+
+<p>
+到了这一步再从 <code>LearnOpenGL</code> 的目录看去, 比较基础和难的内容就这一些了, 剩下的都是可以边干边学的知识, 也能够覆盖基本的游戏开发了, 所以该回去 <code>Godot</code> 上学习游戏开发了.
+</p>
+
+<p>
+从开始的恶补数学到现在的推导出大部分公式, 真正花费的其实半年都不到, 但整个学习过程因为其它事情横跨了 <code>4</code> 年多 (<code>2019</code> 年底 - <code>2025</code> 年初), 回头望去满是感慨: 不也能做得到吗?
+</p>
+
+<p>
+当然图形学是个无底洞, 之后会作为爱好去发展(特别是阅读 <code>SIGGRAPH</code> 论文); 数学作为解决问题的重要工具, 以后也会日常做两到题形成条件反射;
+</p>
+
+<p>
+最重要的是, 我的成为独立游戏开发者之旅结束了, 游戏开发之旅开始, 我现在是个 <code>Level one</code> 的游戏开发者, 那种熬夜去补知识的日子过去了, 也不用因为玩一会游戏而感到自责, 思想上的分裂不复存在.
+</p>
+
+<p>
+最后, 这里要特别感谢<a href="https://www.zhihu.com/people/mao-xing-yun">毛星云</a>前辈, 在我的成为独立游戏开发者之旅中, 前辈的 <code>"PBR 白皮书"</code> 系列给我提供了明确的学习方向, 这个系列早在 <code>2021</code> 年时就被我收藏了, 可惜前辈在 <code>2021</code> 年 <code>12</code> 月 <code>11</code> 日因抑郁跳楼结束自己生命.
+</p>
+
+<p>
+前辈的资料是我主要的参考资料, 没有毛星云前辈的整理, 我现在都不知道要读哪些论文/书籍, 不知道重点学习什么, 不知猴年马月才能完成这篇笔记.
+</p>
+
+<p>
+在此, <a href="https://www.bilibili.com/video/BV1Ge4y1d7YA?spm_id_from=333.788.player.player_end_recommend_autoplay&amp;vd_source=9fdcd332c2d3e867a2fe257ff4f28e30">缅怀毛星云前辈</a>, 感谢前辈帮助了千千万万个像我这样的追梦者.
+</p>
 </div>
 </div>
 </div>
