@@ -81,7 +81,7 @@
 * 数
   - [[file:2021/10/math-proofs.org][数学证明]]
 * 流
-  - [[file:2025/02/fluid-typography.org][流式排版]]
+  - [[file:2025/02/fluid-typography.org][流体排版]]
 * 理
   - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
   - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]

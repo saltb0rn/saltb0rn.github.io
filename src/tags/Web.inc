@@ -1,2 +1,2 @@
 - [[file:../posts/2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
-- [[file:../posts/2025/02/fluid-typography.org][流式排版]]
+- [[file:../posts/2025/02/fluid-typography.org][流体排版]]
