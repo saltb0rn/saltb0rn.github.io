@@ -693,6 +693,45 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 只有在掌握整个模式后, "不断阅读其他人的代码并从中吸收所涉及的数学概念以及应用方法" 才是有用的.
 
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/mix.xhtml][函数 - mix]]
+
+这个函数可能换个名字比较好理解一点: $lerp$, 全称 =linear interpolation=.
+
+没错, 这个函数就是计算出线性插值的.
+
+函数定义为 $mix(x, y, a) = x \times (1 - a) + y \times a$.
+
+#+caption: $mix(x, y, a)$
+[[../../../files/func-mix.png]]
+
+#+begin_quote
+这个函数的定义是这么来的,
+
+从 $x$ 到 $y$ 的 *变化率是固定的* (也就是线性的), 并且整个变化间隔只占了 1 个单位, 因此变化率是 $k = \frac{y - x}{1}$.
+
+现在想知道处于这个变化过程中的某一刻 $a$ ($0 <= a <= 1$) 时候的值是多少:
+
+$x + k \times a = x + a \times (y - x) = x + a \times y - a \times x = x \times (1 - a) + y \times a$.
+
+#+end_quote
+
+看到这图你可能会联想到前面同样有插值行为的函数 $smoothstep(edge0, edge1, x)$.
+
+它们之间有三点不同:
+
+1. $mix$ 是线性插值; $smoothstep$ 是埃尔米特(Hermite)插值, 属于非线性插值.
+2. $smoothstep(edge0, edge1, x)$ 的 $edge0$ 和 $edge1$ 要保证 $edge0 \lt edge1$ 的关系(, 甚至要求 $x$ 位于两者之间, 否则无法按预期插值).
+   $mix(x, y, a)$ 中的 $x$ 和 $y$ 没有这个要求, 可以 $x \gt y$ 也可以 $x \lt y$, 甚至可以 $x = y$, $a$ 也没有大小限制.
+3. $smoothstep(edge0, edge1, x)$ 的插值范围是 $[0, 1]$; $mix(x, y, a)$ 的插值范围是没有限制的.
+
+
+[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=mix(2,4,x)&v1=true&f2(x,t)=smoothstep(2,4,x)&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0,0,12]]
+
+如你所见, 在 $mix(2, 4, x)$ 的图像中, $x = 0$ 时 $y = 2$, $x = 1$ 时 $y = 4$,
+
+$mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x = 1$ 时 $y = r$.
+
+
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml][函数 - dFdx/dFdy]]
 
 要想理解 =dFdx/dFdy= 的作用, 得想知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
@@ -779,33 +818,6 @@ $dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
   }
 #+END_SRC
 
-# 添加使用迭代获得邻接片元的颜色例子
-# 如果只是想获取其它片元的颜色, 可以按照以下思路.
-#+begin_src c
-  vec2 uv = UV;
-  vec3 pixels[9];
-  for (int row = 0; row < 3; row++) {
-    for (int col = 0; col < 3; col++) {
-      // shift [row, col] from [0, 2] to [-1, 1]
-      vec2 uv = uv + vec2(
-                          float(col - 1) * emboss_width * 0.01,
-                          float(row - 1) * emboss_height * 0.01);
-
-      /* 计算当前片元的相邻片元的 uv
-      uv + vec2(-1 * 0.15 * 0.01) | uv + vec2(0, -1 * 0.15 * 0.01) | uv + vec2(1 * 0.15 * 0.01, -1 * 0.15 * 0.01)
-   uv + vec2(-1 * 0.15 * 0.01, 0) | uv + vec2(0) = uv              | uv + vec2(1 * 0.15 * 0.01, 0)
-   uv + vec2(-1 * 0.15 * 0.01, 1 * 0.15 * 0.01) | uv + vec2(0, 1 * 0.15 * 0.01) | uv + vec2(1 * 0.15 * 0.01)
-      ,*/
-
-      // 事实上, 片元之差是 TEXTURE_PIXEL_SIZE, 并非 (emboss_width * 0.01, emboss_height * 0.01)
-      // vec2 uv = uv + vec2(
-      //                     float(col - 1) * emboss_width * TEXTURE_PIXEL_SIZE.x,
-      //                     float(row - 1) * emboss_height * TEXTURE_PIXEL_SIZE.y);
-      pixels[row * 3 + col] = texture(TEXTURE, uv).rgb;
-    }
-  }
-#+end_src
-
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/fract.xhtml][函数 - fract]]
 
 #+begin_quote
@@ -845,44 +857,6 @@ $round(x)$ 就是"四舍五入", 当 $x$ 的小数部分大于或等于 $0.5$ �
 
 这个进 $1$ 是否就像正数那样给 $x$ 的整数部分加 $1$ 呢? 刚好相反, 对于负数而言进 $1$ 是减 $1$, 所以 $round(-1.5) = -2$, 而不是 $0$.
 #+end_quote
-
-*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/mix.xhtml][函数 - mix]]
-
-这个函数可能换个名字比较好理解一点: $lerp$, 全称 =linear interpolation=.
-
-没错, 这个函数就是计算出线性插值的.
-
-函数定义为 $mix(x, y, a) = x \times (1 - a) + y \times a$.
-
-#+caption: $mix(x, y, a)$
-[[../../../files/func-mix.png]]
-
-#+begin_quote
-这个函数的定义是这么来的,
-
-从 $x$ 到 $y$ 的 *变化率是固定的* (也就是线性的), 并且整个变化间隔只占了 1 个单位, 因此变化率是 $k = \frac{y - x}{1}$.
-
-现在想知道处于这个变化过程中的某一刻 $a$ ($0 <= a <= 1$) 时候的值是多少:
-
-$x + k \times a = x + a \times (y - x) = x + a \times y - a \times x = x \times (1 - a) + y \times a$.
-
-#+end_quote
-
-看到这图你可能会联想到前面同样有插值行为的函数 $smoothstep(edge0, edge1, x)$.
-
-它们之间有三点不同:
-
-1. $mix$ 是线性插值; $smoothstep$ 是埃尔米特(Hermite)插值, 属于非线性插值.
-2. $smoothstep(edge0, edge1, x)$ 的 $edge0$ 和 $edge1$ 要保证 $edge0 \lt edge1$ 的关系(, 甚至要求 $x$ 位于两者之间, 否则无法按预期插值).
-   $mix(x, y, a)$ 中的 $x$ 和 $y$ 没有这个要求, 可以 $x \gt y$ 也可以 $x \lt y$, 甚至可以 $x = y$, $a$ 也没有大小限制.
-3. $smoothstep(edge0, edge1, x)$ 的插值范围是 $[0, 1]$; $mix(x, y, a)$ 的插值范围是没有限制的.
-
-
-[[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=mix(2,4,x)&v1=true&f2(x,t)=smoothstep(2,4,x)&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0,0,12]]
-
-如你所见, 在 $mix(2, 4, x)$ 的图像中, $x = 0$ 时 $y = 2$, $x = 1$ 时 $y = 4$,
-
-$mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x = 1$ 时 $y = r$.
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/faceforward.xhtml][函数 - faceforward]]
 
@@ -1022,17 +996,80 @@ $modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(
   float i;
 
   f = modf(1.2, i);
-  /* d = 1, i = 0.2 */
+  /* i = 1, f = 0.2 */
 
   vec2 fs;
   vec2 is;
   fs = modf(vec2(1.2, -3.4), is);
-  /* fs = ivec2(1, -3), is = vec2(0.2, -0.4) */
+  /* fs = vec2(0.2, -0.4), is = ivec2(1, -3) */
 #+END_SRC
 
 *** 函数 - texture
 
 https://learnopengl.com/Getting-started/Textures
+
+$texture$ 函数从贴图 $tex$ 中获取指定纹理坐标 $texCoord$ 上的纹素(=texels=), 一般用法是 $texture(tex, texCoord)$.
+
+#+begin_quote
+贴图分 =1D=, =2D= 和 =3D= 贴图, 这里主要介绍 =2D= 贴图.
+#+end_quote
+
+现在有一个问题: 如果 $texCoord$ 的分量超出 $[0.0, 1.0]$ 的范围怎么办? 这就涉及贴图的一个属性 - 纹理环绕 (=texture wrapping=).
+
+纹理环绕是指纹理坐标 $texCoord$ 的分量超出范围 $[0.0, 1.0]$ 时该如何处理这些超出的坐标, =OpenGL= 里面有 =4= 种选项给开发者进行选择:
+
+1. =GL_REPEAT=: 默认模式, 使得贴图重复, 调用时效果如下:
+
+   #+BEGIN_SRC glsl
+     uniform sampler2D tex;
+     uniform vec2 texCoord;
+
+     // vec4 texel = texture(tex, texCoord); 等同以下
+     vec4 texel = texture(tex, fract(texCoord));
+   #+END_SRC
+
+2. =GL_MIRRORED_REPEAT=: 类似 =GL_REPEAT=, 只不过是镜像重复, 调用时效果如下:
+
+   #+BEGIN_SRC glsl
+     uniform sampler2D tex;
+     uniform vec2 texCoord;
+
+     // vec4 texel = texture(tex, texCoord); 等同以下
+     vec2 is;
+     vec2 fs = modf(texCoord, is);
+     float texCoordS = mod(is.x, 2) == 0 ? fs.s : 1 - fs.s;
+     float texCoordT = mod(is.y, 2) == 0 ? fs.t : 1 - fs.t;     
+     vec4 texel = texture(tex, vec2(texCoordS, texCoordT));
+   #+END_SRC
+
+   也就是 =texCoord= 分量的整数 $i$ 部分为偶数时, 分量就被会被它自己的小数部分 $f$ 取代; 如果分量的整数部分 $i$ 为奇数, 分量就会被 $1 - f$ 取代.
+
+3. =GL_CLAMP_TO_EDGE=: 把贴图坐标的分量限定在 $[0.0, 1.0]$ 的范围内, 调用效果如下:
+
+   #+BEGIN_SRC glsl
+     uniform sampler2D tex;
+     uniform vec2 texCoord;
+
+     // vec4 texel = texture(tex, texCoord); 等同以下
+     vec4 texel = texture(tex, clamp(texCoord, 0.0, 1.0));
+   #+END_SRC
+
+4. =GL_CLAMP_TO_BORDER=: 类似 =GL_CLAMP_TO_EDGE=, 但当根据超出范围的贴图坐标获取纹素时, 该纹素的颜色为用户指定颜色,
+
+   这个颜色要通过 =OpenGL= 的 =API= 去设置 =GL_TEXTURE_BORDER_COLOR= 这个贴图属性的值来进行指定, 调用效果如下:
+
+   #+BEGIN_SRC glsl
+     uniform sampler2D tex;
+     uniform vec2 texCoord;
+     uniform vec4 borderColor;       // 用户指定的颜色
+
+     // vec4 texel = texture(tex, texCoord); 等同以下
+     vec4 texel = (texCoord.s > 1 || texCoord.s < 0 || texCoord.t > 1 || texCoord.t < 0) ? borderColor : texture(tex, clamp(texCoord, 0.0, 1.0));
+   #+END_SRC   
+
+
+#+caption: 贴图环绕的 4 种选择
+[[../../../files/texture_wrapping.png]]
 
 ** 常用自定义函数
 *** remap 函数
@@ -1134,10 +1171,3 @@ https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the
 *** 图像边缘检测 (Edge detection)
 
 =Sobel=.
-
-
-$screen\_pixel\_width\_ratio = \frac{1}{screen\_pixel\_width}$
-
-$screen\_pixel\_uv\_x = \frac{x}{screen\_pixel\_width}$
-
-$\frac{screen\_pixel\_uv\_x}{screen\_pixel\_width\_ratio} = \frac{x}{screen\_pixel\_width} \times screen\_pixel\_width = x$
