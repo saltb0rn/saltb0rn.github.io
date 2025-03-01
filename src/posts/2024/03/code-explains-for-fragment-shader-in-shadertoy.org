@@ -996,17 +996,15 @@ $modf(x, out\ i)$ 把浮点数 $x$ 分开整数和小数两部分, 整数部分(
   float i;
 
   f = modf(1.2, i);
-  /* i = 1, f = 0.2 */
+  /* i = 1.0, f = 0.2 */
 
   vec2 fs;
   vec2 is;
   fs = modf(vec2(1.2, -3.4), is);
-  /* fs = vec2(0.2, -0.4), is = ivec2(1, -3) */
+  /* fs = vec2(0.2, -0.4), is = ivec2(1.0, -3.0) */
 #+END_SRC
 
-*** 函数 - texture
-
-https://learnopengl.com/Getting-started/Textures
+*** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/texture.xhtml][函数 - texture]]
 
 $texture$ 函数从贴图 $tex$ 中获取指定纹理坐标 $texCoord$ 上的纹素(=texels=), 一般用法是 $texture(tex, texCoord)$.
 
@@ -1038,7 +1036,7 @@ $texture$ 函数从贴图 $tex$ 中获取指定纹理坐标 $texCoord$ 上的纹
      vec2 is;
      vec2 fs = modf(texCoord, is);
      float texCoordS = mod(is.x, 2) == 0 ? fs.s : 1 - fs.s;
-     float texCoordT = mod(is.y, 2) == 0 ? fs.t : 1 - fs.t;     
+     float texCoordT = mod(is.y, 2) == 0 ? fs.t : 1 - fs.t;
      vec4 texel = texture(tex, vec2(texCoordS, texCoordT));
    #+END_SRC
 
@@ -1065,10 +1063,10 @@ $texture$ 函数从贴图 $tex$ 中获取指定纹理坐标 $texCoord$ 上的纹
 
      // vec4 texel = texture(tex, texCoord); 等同以下
      vec4 texel = (texCoord.s > 1 || texCoord.s < 0 || texCoord.t > 1 || texCoord.t < 0) ? borderColor : texture(tex, clamp(texCoord, 0.0, 1.0));
-   #+END_SRC   
+   #+END_SRC
 
 
-#+caption: 贴图环绕的 4 种选择
+#+caption: 贴图环绕的 4 种选择 (图片来自 LearnOpenGL)
 [[../../../files/texture_wrapping.png]]
 
 ** 常用自定义函数
@@ -1082,11 +1080,146 @@ $remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射
 
 因此, 函数的定义是: $low2 + \frac{value - low1}{high1 - low1} \times (high2 - low2)$.
 
-*** 随机函数/Hash函数
+*** 随机函数
 
 参考: https://thebookofshaders.com/10/
 
 https://iquilezles.org/articles/sfrand/
+
+#+begin_quote
+在讨论随机函数前先了解一下什么是随机, 人们口中的随机一般是指数学中定义的随机: 不可预测(=unpredictable=)和不可重现.
+
+可预测就意味着可以确定一个事件必定发生或不发生, 可重现意味着可以通过固定方法使得一个事件发生或不发生.
+
+而计算机中的代码是死板且可以预测的, 那又是如何产生随机数呢?
+
+对于计算机, 有两种随机, 分别如下:
+
+*确定性随机 (=deterministic random=)*
+
+用算法生成一个数列, 该数列的特性接近随机数列的特性, 然后根据参数从该数列获取一个数字作为随机数, 通过相同参数可以获得相同随机数,
+
+这种随机可以通过算法和参数来预测随机数, 因此也被称为伪随机 (=pseudo-random=).
+
+*非确定性随机 (=non-deterministic random=)*
+
+这种随机是不可预测和不可重现的, 可以被认为是真随机(=truely random=), 它的随机数不是通过算法来生成的, 而是来源于物理现象, 比如电子噪音, 量子效应, 大气噪音和用户输入等等.
+
+=Linux= 的 [[https://en.wikipedia.org/wiki//dev/random][/dev/random]] 就是从环境噪音获取随机数.
+
+若感兴趣, 可以看一下这个[[https://www.bilibili.com/video/BV1rA411Z7eP/?spm_id_from=333.337.search-card.all.click&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30][视频: 计算机如何生成(伪)随机]].
+#+end_quote
+
+=Shader= 里用的是确定性随机函数, 需要开发人员自己实现的, 通常是使用周期函数来实现, 比如 $\sin$, 并把它的值域限定在 $[0, 1]$ 上.
+
+#+begin_src glsl
+  float randNum = fract(sin(x));  // 限制在 [0, 1] 的范围内
+#+end_src
+
+#+attr_html: :width 504px
+[[../../../files/fract-sin.png]]
+
+你可能觉得这个随机数看作不够随机, 那就让它们看起来更加混乱吧.
+
+#+BEGIN_SRC glsl
+  float randNum = fract(sin(x) * 10000.0);
+#+END_SRC
+
+#+attr_html: :width 504px
+[[../../../files/fract-sin-100000.png]]
+
+即便它看着混乱, 但仍是确定性随机.
+
+#+begin_quote
+随机数的生成并不只有一种算法, 你可以充分使用自己的知识去创建随机函数.
+
+比如, [[https://iquilezles.org/][Iquilezles]] 提供了一个[[https://iquilezles.org/articles/sfrand/][更好的随机数方案]], 有兴趣的可以看一下.
+#+end_quote
+
+一般来说, 编程语言中提供的随机函数都是像这个 $randNum$ 一样服从均匀分布的.
+
+在实际开发中偶尔想让随机函数服从特定分布, 想要控制随机数的分布, 根据均匀分布的普遍性, 可以对服从均匀分布的随机数 $X$ 进行变换成服从其它分布的随机数 $Y$, 这需要掌握一定的概率论知识, 这里不详细展开了.
+
+另外, =Pixelero= 也发布了一片[[https://pixelero.wordpress.com/2008/04/24/various-functions-and-various-distributions-with-mathrandom/][文章]]来介绍服从一些分布的随机数函数.
+
+**** 高维随机函数
+
+在 =Shader= 开发中通常需要根据纹理坐标来生成随机数, 而上面介绍的 $randNum$ 是一个 =1D= 随机函数, 并不能很好地满足需求, 这需要 =2D= 随机函数.
+
+同理, 也存在 =3D= 和 =4D= 甚至更高维的随机函数.
+
+假设高维随机函数 $f$ 是一个以 $n$ 维向量 $v \in \mathbb{R}^n$ 作为输入, 以标量 $r$ 作为输出: $r = f(v)$.
+
+其实高维随机函数的实现思路其实和 =1D= 随机函数差不多, 只不过要对 $v$ 做计算, 其计算结果是一个标量 $i$ , 最后用 $i$ 作为 =1D= 随机函数 $g$ 的输入得出 $r = g(i)$.
+
+把向量转换成标量的话, 首先想到的是点积运算, 来看一个例子:
+
+#+BEGIN_SRC glsl
+  float random(vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+  }
+#+END_SRC
+
+**** 向量函数形式的随机函数
+
+这种随机函数是用来生成向量的, 在 =Shader= 开发中通常是用来根据坐标计算出对应片元的颜色, 这种函数既可以用标量, 也可以用向量作为输入, 最后以向量作为输出.
+
+比如下面这个例子, 以 =3D= 向量作为输入和输出:
+
+#+BEGIN_SRC glsl
+  vec3 random(vec3 v) {
+    vec3 p = vec3(dot(v, vec3(127.1, 311.7, 74.7)), dot(v, vec3(269.5, 183.3, 246.1)), dot(v, vec3(113.5, 271.9, 124.6)));
+    return fract(sin(p) * 43758.5453123)
+  }
+#+END_SRC
+
+**** $\mathrm{fract(sin(dot(x)))}$ 方法的缺陷
+
+在 =WebGL= 或 =OpenGL= 中, $\sin$ 的实现取决于机器, 这导致了同一段 =Shader= 代码在不同平台上的效果不一样.
+
+=Iquilezles= 后来总结了一些算法来规避这个问题:
+
+#+BEGIN_SRC glsl
+  // https://www.shadertoy.com/view/llGSzw
+  float hash11 ( uint n ) {
+    // integer hash copied from Hugo Elias
+    n = (n << 13U) ^ n;
+    n = n * (n * n * 15731U + 789221U) + 1376312589U;
+    return float( n & uint(0x7fffffffU))/float(0x7fffffff);
+  }
+
+  vec3 hash13( uint n )
+  {
+    // integer hash copied from Hugo Elias
+    n = (n << 13U) ^ n;
+    n = n * (n * n * 15731U + 789221U) + 1376312589U;
+    uvec3 k = n * uvec3(n,n*16807U,n*48271U);
+    return vec3( k & uvec3(0x7fffffffU))/float(0x7fffffff);
+  }
+
+  // https://www.shadertoy.com/view/4tXyWN
+  uint hash21( uvec2 p )
+  {
+    p *= uvec2(73333,7777);
+    p ^= (uvec2(3333777777)>>(p>>28));
+    uint n = p.x*p.y;
+    return float(n^(n>>15)) * (1.0 / float(0xffffffffU));
+  }
+
+  // https://www.shadertoy.com/view/XlXcW4
+  vec3 hash33( uvec3 p ) {
+    const uint k = 1103515245U;    // GLIB C
+    //const uint k = 134775813U;   // Delphi and Turbo Pascal
+    //const uint k = 20170906U;    // Today's date (use three days ago's dateif you want a prime)
+    //const uint k = 1664525U;     // Numerical Recipes
+    p = ((p>>8U)^p.yzx) * k;
+    p = ((p>>8U)^p.yzx) * k;
+    p = ((x>>8U)^p.yzx) * k;
+
+    return vec3(x) * (1.0 / float(0xffffffffU));
+  }
+#+END_SRC
+
 
 *** 噪音
 
@@ -1110,7 +1243,11 @@ https://iquilezles.org/articles/sfrand/
 
 *** Unreal Engine: rcp
 
-https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2
+#+begin_quote
+来源: https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2
+#+end_quote
+
+快速计算/近似 $x$ 的倒数: $rcp(x) = \frac{1}{x}$.
 
 ** 分形 (Fractal)
 
