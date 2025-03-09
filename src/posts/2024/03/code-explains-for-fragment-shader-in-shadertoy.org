@@ -722,7 +722,8 @@ $x + k \times a = x + a \times (y - x) = x + a \times y - a \times x = x \times 
 1. $mix$ 是线性插值; $smoothstep$ 是埃尔米特(Hermite)插值, 属于非线性插值.
 2. $smoothstep(edge0, edge1, x)$ 的 $edge0$ 和 $edge1$ 要保证 $edge0 \lt edge1$ 的关系(, 甚至要求 $x$ 位于两者之间, 否则无法按预期插值).
    $mix(x, y, a)$ 中的 $x$ 和 $y$ 没有这个要求, 可以 $x \gt y$ 也可以 $x \lt y$, 甚至可以 $x = y$, $a$ 也没有大小限制.
-3. $smoothstep(edge0, edge1, x)$ 的插值范围是 $[0, 1]$; $mix(x, y, a)$ 的插值范围是没有限制的.
+3. $smoothstep(edge0, edge1, x)$ 要求 $x \in [edge0, edge1]$; $mix(x, y, a)$ 则没有这个要求, 当 $a \in [x, y]$ 时叫做内插(=interpolation=), 当 $a$ 位于 $[x, y]$ 之外时叫做外插(=extrapolation=).
+   因此, $smoothstep(edge0, edge1, x) \in [0, 1]$, 而 $mix(x, y, a) \in \mathbb{R}$.
 
 
 [[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=mix(2,4,x)&v1=true&f2(x,t)=smoothstep(2,4,x)&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=0,0,12]]
@@ -1103,9 +1104,9 @@ https://iquilezles.org/articles/sfrand/
 
 *非确定性随机 (=non-deterministic random=)*
 
-这种随机是不可预测和不可重现的, 可以被认为是真随机(=truely random=), 它的随机数不是通过算法来生成的, 而是来源于物理现象, 比如电子噪音, 量子效应, 大气噪音和用户输入等等.
+这种随机是不可预测和不可重现的, 可以被认为是真随机(=truely random=), 它的随机数不是通过算法来生成的, 而是来源于物理现象, 比如电子噪声, 量子效应, 大气噪声和用户输入等等.
 
-=Linux= 的 [[https://en.wikipedia.org/wiki//dev/random][/dev/random]] 就是从环境噪音获取随机数.
+=Linux= 的 [[https://en.wikipedia.org/wiki//dev/random][/dev/random]] 就是从环境噪声获取随机数.
 
 若感兴趣, 可以看一下这个[[https://www.bilibili.com/video/BV1rA411Z7eP/?spm_id_from=333.337.search-card.all.click&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30][视频: 计算机如何生成(伪)随机]].
 #+end_quote
@@ -1113,7 +1114,7 @@ https://iquilezles.org/articles/sfrand/
 =Shader= 里用的是确定性随机函数, 需要开发人员自己实现的, 通常是使用周期函数来实现, 比如 $\sin$, 并把它的值域限定在 $[0, 1]$ 上.
 
 #+begin_src glsl
-  float randNum = fract(sin(x));  // 限制在 [0, 1] 的范围内
+  float rand = fract(sin(x));  // 限制在 [0, 1] 的范围内
 #+end_src
 
 #+attr_html: :width 504px
@@ -1122,7 +1123,7 @@ https://iquilezles.org/articles/sfrand/
 你可能觉得这个随机数看作不够随机, 那就让它们看起来更加混乱吧.
 
 #+BEGIN_SRC glsl
-  float randNum = fract(sin(x) * 10000.0);
+  float rand = fract(sin(x) * 10000.0);
 #+END_SRC
 
 #+attr_html: :width 504px
@@ -1136,7 +1137,7 @@ https://iquilezles.org/articles/sfrand/
 比如, [[https://iquilezles.org/][Iquilezles]] 提供了一个[[https://iquilezles.org/articles/sfrand/][更好的随机数方案]], 有兴趣的可以看一下.
 #+end_quote
 
-一般来说, 编程语言中提供的随机函数都是像这个 $randNum$ 一样服从均匀分布的.
+一般来说, 编程语言中提供的随机函数都是像这个 $rand$ 一样服从均匀分布的.
 
 在实际开发中偶尔想让随机函数服从特定分布, 想要控制随机数的分布, 根据均匀分布的普遍性, 可以对服从均匀分布的随机数 $X$ 进行变换成服从其它分布的随机数 $Y$, 这需要掌握一定的概率论知识, 这里不详细展开了.
 
@@ -1144,7 +1145,7 @@ https://iquilezles.org/articles/sfrand/
 
 **** 高维随机函数
 
-在 =Shader= 开发中通常需要根据纹理坐标来生成随机数, 而上面介绍的 $randNum$ 是一个 =1D= 随机函数, 并不能很好地满足需求, 这需要 =2D= 随机函数.
+在 =Shader= 开发中通常需要根据纹理坐标来生成随机数, 而上面介绍的 $rand$ 是一个 =1D= 随机函数, 并不能很好地满足需求, 这需要 =2D= 随机函数.
 
 同理, 也存在 =3D= 和 =4D= 甚至更高维的随机函数.
 
@@ -1155,7 +1156,7 @@ https://iquilezles.org/articles/sfrand/
 把向量转换成标量的话, 首先想到的是点积运算, 来看一个例子:
 
 #+BEGIN_SRC glsl
-  float random(vec2 st) {
+  float rand(vec2 st) {
     return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
   }
 #+END_SRC
@@ -1167,7 +1168,7 @@ https://iquilezles.org/articles/sfrand/
 比如下面这个例子, 以 =3D= 向量作为输入和输出:
 
 #+BEGIN_SRC glsl
-  vec3 random(vec3 v) {
+  vec3 rand(vec3 v) {
     vec3 p = vec3(dot(v, vec3(127.1, 311.7, 74.7)), dot(v, vec3(269.5, 183.3, 246.1)), dot(v, vec3(113.5, 271.9, 124.6)));
     return fract(sin(p) * 43758.5453123)
   }
@@ -1221,7 +1222,186 @@ https://iquilezles.org/articles/sfrand/
 #+END_SRC
 
 
-*** 噪音
+*** 噪声函数
+
+噪声 (=noise=) 也是一种随机, 但相比一般的随机, 噪声的过度显得更加平滑, 更自然, 适合用来生成丰富的视觉效果, 因此, 噪声也被成为平滑随机性 (=smooth randomness=).
+
+先来感受一下, 随机函数和噪音函数之间的区别, 以下是分别是随机函数 $rand1(x)$, $rand2(x)$ 和噪声函数 $noise(x)$ 的 =Maxima= 的实现以及对应的函数图像:
+
+#+BEGIN_SRC maxima
+  fract(x) := x - floor(x)$
+  mix(x, y, a) := x * (1 - a) + y * a$
+  smoothstep(l, u, x) := block(
+    t: min(max((x - l) / (u - l), 0.0), 1.0),
+    return (t * t * (3 - 2 * t))
+    )$
+
+  rand(x) := fract(sin(x))$
+
+  /* 随机算法以及它们的图像 */
+  rand1(x) := rand(floor(x))$
+  rand2(x) := mix(rand(floor(x)), rand(floor(x) + 1), fract(x))$
+  noise(x) := mix(rand(floor(x)), rand(floor(x) + 1), smoothstep(0, 1, fract(x)))$
+
+  plot2d([rand1(x), rand2(x), noise(x)], [x, -4, 4], [color, red, blue, green], [legend, "rand1", "rand2", "noise"])$
+#+END_SRC
+
+#+attr_html: :width 504px
+[[../../../files/noise-functions.png]]
+
+正如图片所示, 令 $z = floor(x)$, 从 $rand1$ 到 $rand2$, 为随机数 $rand1(z)$ 和 $rand1(z + 1.0)$ 之间引入了线性插值, 从 $rand2$ 到 $noise$, 为随机数 $rand1(z)$ 和 $rand1(z + 1.0)$ 之间引入了非线性插值, 函数图像变得越来越平滑.
+
+$noise$ 的算法可以看作是在一条线上的两个点之间进行插值, 这个点是根据参数 $x$ 来决定的, 以 $[floor(x), floor(x) + 1]$ 作为插值范围来保证变化间隔为 1, 以 $x$ 的小数部分 $fract(x)$ 作为插值参数, 从而得出噪声值.
+
+[[../../../files/value-noise-1d-lerp.png]]
+
+#+begin_quote
+在实际应用中, 可以根据自身需求替换插值方法, 比如想换函数 $g$ 来进行插值: $f(a, b, t) = (1 - g(t)) \cdot a - g(t) \cdot b$,
+
+而 $noise$ 函数里面的 $g(t) = smoothstep(0, 1, t)$;
+
+当 $g(t) = \frac{1 - \cos(\pi t)}{2}$ 时, $f$ 被叫做余弦插值 (=Cosine Interpolation=);
+
+另外一个比较有名的插值函数是五次插值曲线: $g(t) = 6t^5 - 15t^4 + 10t^3$, 是 $smoothstep$ 的改进替代.
+#+end_quote
+
+=GLSL= 也提供了内置的噪音函数: [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/noise.xhtml][noise]], 但对于创意工作而言, 这个内置函数并不能完全满足创作者的需求, 所以基本上都是自己实现噪声函数.
+
+柏林噪声算法 (=Perlin Noise Algorithm=) 作为常见的平滑随机函数, 已经被众多艺术创作者用于创意工作.
+
+**** 高维噪声
+
+如上面的 =1D= 噪声所示, 可以看作是一线条上 $2^1$ 个点对应的随机数之间的插值, 而 =2D= 噪声可以看作是一个矩形上 $2^2$ 个角对应的随机数之间的插值, 如此类推, =3D= 噪声可以看作立方体上 $2^3$ 个角对应的随机数之间的插值.
+
+这种对随机数进行插值得到噪声被称为值噪声 (=value noise=).
+
+#+begin_quote
+
+*双线性插值法 (=bilinear interpolation=)*
+
+根据平面的 4 个角进行插值的技巧需要参考双线性插值法, 这种技巧也可以解决贴图在缩放显示时出现的纹理不平滑问题,
+
+#+attr_html: :width 504px
+[[../../../files/bilinear-texture-weights.png]]
+
+如图所示, 想要计算出平面中 $C$ 的坐标, 可先从 $X$ 轴方向($TL \rightarrow TR$)进行插值,
+
+首先计算出 $CT = (1 - f_x) \cdot TL + f_x \cdot TR$,
+
+再计算出 $CB = (1 - f_x) \cdot BL + f_x \cdot BR$,
+
+最后从 $Y$ 轴方向进行插值计算出 $C = (1 - f_y) \cdot CT + f_y \cdot CB$.
+
+或者也可以先从 $Y$ 轴方向($TL \rightarrow BL$)进行插值, 最后再从 $X$ 轴方向进行插值, 结果都一样, 就不赘述了.
+
+其 =GLSL= 如下:
+
+#+begin_src glsl
+  float ct = mix(tl, tr, fx);
+  float cb = mix(bl, br, fx);
+  float c = mix(ct, cb, fy);
+
+  // 有时候你可能看到的插值实现可能是下面这样的
+  /*
+    ct = tl * (1 - fx) + tr * fx
+    cb = bl * (1 - fx) + br * fx
+    c = [tl * (1 - fx) + tr * fx] * (1 - fy) + [bl * (1 - fx) + br * fx] * fy
+      = [tl * (1 - fx) + tr * fx] - [tl * (1 - fx) + tr * fx] * fy + [bl * (1 - fx) + br * fx] * fy
+      = [tl * (1 - fx) + tr * fx] + [ bl * (1 - fx) + br * fx - tl * (1 - fx) - tr * fx ] * fy
+      = [tl * (1 - fx) + tr * fx] + [(bl - tl) * (1 - fx) + (br - tr) * fx] * fy
+      = mix(tl, tr, fx) + [(bl - tl) * (1 - fx) + (br - tr) * fx] * fy
+   ,*/
+#+end_src
+
+*三线性插值法 (=trilinear interpolation=)*
+
+根据立方体的 8 个角进行插值的技巧需要参考三线性插值法, 这种方法可以看作两个对立面的双线性插值随后加上一个线性插值.
+
+#+attr_html: :width 504px
+[[../../../files/trilinear-interpolation.png]]
+
+需要注意的是, 这张图的 $Y$ 轴方向是 $c000 \rightarrow c010$, 其三线性插值的 =GLSL= 实现如下:
+
+#+begin_src glsl
+  // 平面 c000 - c100 - c110 - c010 的双线性插值
+  float a = mix(c010, c110, tx);
+  float b = mix(c000, c110, tx);
+  float e = mix(b, a, ty);
+
+  // 平面 c001 - c101 - c111 - c011 的双线性插值
+  float c = mix(c001, c111, tx);
+  float d = mix(c001, c101, tx);
+  float f = mix(d, c, ty);
+
+  // 对 e 和 f 进行线性插值
+  float g = mix(e, f, tz);
+#+end_src
+#+end_quote
+
+以 =2D= 噪声为例, 首先, 根据纹理坐标 $st$ 来确定其所处网格的 4 个角的坐标:
+
+$(floor(st.x), floor(st.y))$
+
+$(floor(st.x) + 1.0, floor(st.y))$
+
+$(floor(st.x), floor(st.y) + 1.0)$
+
+$(floor(st.x) + 1.0, floor(st.y) + 1.0)$
+
+#+begin_quote
+另外, $(fract(st.x), fract(st.y))$ 就是 $st$ 相对于网格的坐标.
+#+end_quote
+
+然后, 以这 4 个坐标作为随机函数的参数得到 4 个随机值,
+
+最后, 根据这 4 个随机值进行双线性插值得到 $st$ 所对应的随机值.
+
+#+begin_src glsl
+  // 来自 https://thebookofshaders.com/11/
+  float rand(vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+  }
+
+  float noise (in vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+
+    // Four corners in 2D of a tile which is created according to st.
+    float a = rand(i);
+    float b = rand(i + vec2(1.0, 0.0));
+    float c = rand(i + vec2(0.0, 1.0));
+    float d = rand(i + vec2(1.0, 1.0));
+
+    // Smooth Interpolation
+
+    // Cubic Hermine Curve.  Same as SmoothStep()
+    vec2 u = f*f*(3.0-2.0*f);
+    // u = smoothstep(0.,1.,f);
+
+    // Mix 4 coorners percentages
+    return mix(a, b, u.x) +
+            (c - a)* u.y * (1.0 - u.x) +
+            (d - b) * u.x * u.y;
+  }
+
+  void main() {
+    vec2 st = gl_FragCoord.xy/u_resolution.xy;
+
+    // Scale the coordinate system to see
+    // some noise in action
+    vec2 pos = vec2(st * 5.0);
+
+    // Use the noise function
+    float n = noise(pos);
+
+    gl_FragColor = vec4(vec3(n), 1.0);
+  }
+#+end_src
+
+其效果如下:
+
+#+caption: 2D 值噪声的效果
+[[../../../files/2d-value-noise-stX5.png]]
 
 # https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 
@@ -1230,6 +1410,175 @@ https://iquilezles.org/articles/sfrand/
 # noise functions
 # https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 # hash11: https://www.shadertoy.com/view/llGSzw
+
+**** 梯度噪声
+
+一般来说, 值噪声的效果就如上图所示的那样, 看起来一块一块的, 为了消除块状效果, =Ken Perlin= 在 =1985= 年开发出了另外一种噪声算法, 得到噪声的叫梯度噪声 (=Gradient Noise=), 这个算法也就是人们熟知的柏林函数.
+
+和值噪声算法的区别在于, 梯度噪声的随机函数以方向(=vec2/vec3/vec4=)作为输出, 值噪声的随机函数以值(=float=)作为输出.
+
+和值噪声的生成类似, 以 =2D= 梯度噪声为例, 通过随机函数为 4 个角生成梯度向量(需要归一化), 再通过点积运算把它们转换成 4 个标量, 之后的过程就与值噪声的计算一样.
+
+在使用点积把梯度向量 $\nabla$ 转换成标量时, 还需要为每个角 $p$ 计算出它的角指向(也称为距离向量), 假设 $o$ 是网格内的坐标, 那么角指向为 $v = (o.x - p.x, o.y - p.y)$, 最后计算角指向和梯度向量之间的点积 $v \cdot \nabla$,
+
+这个点积就是角指向 $\vec{op}$ 在梯度向量 $\nabla$ 的投影, 也就是 $\vec{op}$ 在 $\nabla$ 方向上的贡献值.
+
+如下图所示, 绿色箭头为黄格字的梯度向量 $\nabla$, 黄点为 $o$, 蓝色箭头为角指向 $v$.
+
+#+attr_html: :width 504px
+[[../../../files/perlin-noise.png]]
+
+按照该思路, 下面为 =GLSL= 的实现:
+
+#+BEGIN_SRC glsl
+  // 2D 向量函数形式的随机函数
+  vec2 rand(vec2 st){
+      st = vec2(dot(st, vec2(127.1,311.7)),
+                dot(st, vec2(269.5,183.3)));
+      return -1.0 + 2.0 * fract(sin(st) * 43758.5453123);
+      // 归一化
+  }
+
+  // 类似前面 2D 噪声的生成, 但是 4 个角的随机值需要一番点积运算
+  float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    // vec2 u = f * f * (3.0 - 2.0 * f);
+    vec2 u = smoothstep(vec2(0.0), vec2(1.0), f);
+
+    vec2 a = rand(i);
+    vec2 va = f - vec2(0.0, 0.0);
+    vec2 b = rand(i + vec2(1.0, 0.0));
+    vec2 vb = f - vec2(1.0, 0.0);
+    vec2 c = rand(i + vec2(0.0, 1.0));
+    vec2 vc = f - vec2(0.0, 1.0);
+    vec2 d = rand(i + vec2(1.0, 1.0));
+    vec2 vd = f - vec2(1.0, 1.0);
+
+    float dotA = dot(a, va);
+    float dotB = dot(b, vb);
+    float dotC = dot(c, vc);
+    float dotD = dot(d, vd);
+
+    float ab = mix(dotA, dotB, u.x);
+    float cd = mix(dotC, dotD, u.x);
+
+    return mix(ab, cd, u.y);
+  }
+#+END_SRC
+
+#+begin_quote
+梯度的全称是梯度向量(=gradient vector=), 源于微积分中向量函数中的概念, 用来表示多元函数 $f$ 在各个分量上的变化率,
+
+这个变化率就是梯度向量, 以二维向量为例: $\nabla f(x, y) = (\frac{\partial f}{\partial x}, \frac{\partial f}{\partial y})$.
+
+梯度向量 $\nabla f(x, y)$ 表示在所有方向中使得 $f$ 的方向导数最大的那一个方向, 而 $|\nabla f(x, y)|$ 表示最大方向导数的变化率大小.
+
+方向导数 $D_u f(x, y)$ 表示 $f$ 在某点 $(x, y)$ 上往某方向 $u$ 的变化率:
+
+$D_u f(x, y) = \nabla f(x, y) \cdot u = |\nabla f(x, y)||u| \cos_{\theta}$, 其中 $\theta$ 为 $\nabla f(x, y)$ 和 $u$ 之间的夹角.
+
+当 $\theta = 0$ 时, 换而言之当 $\nabla f(x, y)$ 和 $u$ 方向相同时, $D_u f(x, y)$ 为最大.
+#+end_quote
+
+那么 =1D= 的梯度噪声呢? 一维空间是一条直线, 可以把直线上的点 $p$ (=p= 是标量)看作一个一维向量 $(p)$, 一维向量之间的点积就是标量之间的乘积,
+
+根据这些信息, 就可以实现 =1D= 梯度噪声了:
+
+#+begin_src glsl
+  float rand(float p) {
+    return fract(sin(p) * 43758.5453123);
+  }
+
+  float noise(float p) {
+    float i = floor(p);
+    float f = fract(p);
+    float u = smoothstep(0.0, 1.0, f);
+
+    // 这里的 rand(i) * 2.0 - 1.0 是要对梯度 rand(i) 进行归一化使其范围在 [-1, 1] 之间
+    float a = rand(i) * 2.0 - 1.0;
+    float va = f - 0.0;
+    float b = rand(i + 1.0) * 2.0 - 1.0;
+    float vb = f - 1.0;
+
+    float dotA = a * va;
+    float dotB = b * vb;
+
+    return 2.4 * mix(dotA, dotB, u);
+  }
+#+end_src
+
+这里给出 =1D= 梯度噪声的实现的目的是, 解释为什么梯度噪声可以消除块状, 具体解释可以参考 [[https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/perlin-noise-part-2/perlin-noise.html][ScratchAPixel - Perlin Noise]] 的 =Why Is Perlin/Gradient Noise Better Than Value Noise= 部分.
+
+首先要理解块状效果的成因, 这需要理解高频(=higher frequencies=)和低频(=lower frequencies=)的概念:
+
+我们把连续红点之间的变化作为对比, 变化相对大的叫做高频, 变化相对小的叫做低频.
+
+#+caption: 理想情况: 随机值关于 $x$ 轴良好地分布, 使得噪声函数的振荡在频率上是成规律的.
+[[../../../files/noise-value-vs-perlin1.png]]
+
+#+caption: 最坏情况: 一些随机值在 $x$ 轴的一定范围内连续出现多次, 也就是说噪声函数的频率分布是不成规律的.
+[[../../../files/noise-value-vs-perlin2.png]]
+
+理想的噪声函数是以高频为主, 所以它看起来随机且局部变化平滑, 但总体上呈现出相当均匀的外观(=homogeneous look=), 也就是由相似频率构成.
+
+值噪声则是由高频和低频构成, 也就是类似上面最坏情况, 低频部分就是方块效果的成因, 在低频区域内的噪声大小非常接近, 高频和低频的过度区域则把大小接近的噪声给分割开了, 导致了块状效果.
+
+在 =1D= 噪声函数中, 梯度噪声算法很好控制着 =1D= 噪声函数图像的形状, 并且让形状成规律.
+
+#+caption: 1D梯度噪声的函数图像, 梯度向量控制着噪声函数形状 (图片来源: Stefan Gustavson - Simplex noise demystified)
+[[../../../files/1d-perlin-noise-func-graph.png]]
+
+这里借助 =1D= 梯度函数的实现来介绍一下它是如何控制函数图像的,
+
+首先, $a$ 和 $b$ 分别是 $p$ 和 $p + 1$ 上的梯度: $\begin{equation*} \begin{cases} a = rand(floor(p)) \times 2 - 1 \\ b = rand(floor(p) + 1) \times 2 - 1 \end{cases} \end{equation*}$,
+
+$f = \frac{p - floor(p)}{floor(p) + 1 - floor(p)} = p - floor(p) = fract(p)$, $f \in [0, 1]$.
+
+从 $floor(p)$ 到 $p$ 的向量为 $f$, 从 $floor(p) + 1$ 到 $p$ 的向量为 $f - 1$,
+
+所以在 $floor(p)$ 上的噪声值为 $a \cdot f$, 在 $floor(p) + 1$ 上的噪声值为 $b \cdot (f - 1)$,
+
+以下是根据两个噪声值进行插值来得出 $p$ 上的噪声值的过程:
+
+$u = 3f^2 - 2f^3$, 由于 $f \in [0, 1]$, 所以 $u \in [0, 1]$,
+
+设 $P$ 是以 $f$ 为参数的噪声函数, 那么其定义为:
+
+$\begin{equation*}\begin{aligned} P(f) &= a \cdot f \cdot (1 - u) + b \cdot (f - 1) \cdot u \\ &= a \cdot f + [(b - a) \cdot f - b] \cdot u \\ &= a \cdot f + (b - a) \cdot (3 f^3 - 2 f^4) - b \cdot (3 f^2 - 2 f^3) \end{aligned}\end{equation*}$
+
+其一阶导数为: $P^{'}(f) = a + (b - a) \cdot (9 f^2 - 8 f^3) - b \cdot (6 f - 6 f^2)$.
+
+根据函数定义, 函数图像在整数点上的值是 $P(0) = P(1) = 0$.
+
+根据导数定义, 函数图像的整数点上的斜率就是它们对应的梯度: $P^{'}(0) = a$ 以及 $P^{'}(1) = b$.
+
+由于 $P$ 是一个一元四次函数且具备周期性, 因此函数图由多个抛物线组成, 使得梯度噪声相比值噪声减少低频, 消除了块状效果.
+
+#+begin_quote
+一元偶次函数的图像就是抛物线.
+#+end_quote
+
+**** 单形噪声
+
+在 =2001= 年, =Ken Perlin= 开发出了另一种名为单形噪声(=simplex noise=)的噪声算法, 相比前面的算法, 单形噪声算法有以下优点:
+
+- 拥有更低的计算复杂性和更少的乘法运算
+- 能以低计算成本拓展到更高维度的噪声
+- 没有明显方向性的人工痕迹
+- 拥有计算简单且明确的连续梯度
+- 在硬件上更容易实现
+
+
+
+
+[[../../../files/simplexnoise.pdf][Stefan Gustavson - Simplex noise demystified]]
+
+[[../../../files/efficient-computational-noise-in-GLSL.pdf][Ian McEwan, Stefan Gustavson - Efficient Computational Noise In GLSL, 2012]]
+
+[[../../../files/tiling-simplex-noise-and-flow-noise-in-two-and-three-dimensions.pdf][Ian McEwan, Stefan Gustavson  - Tiling Simplex Noise and Flow Noise in Two and Three Dimensions, 2022]]
+
+=Simplex noise=
 
 *** 调色板生成
 
