@@ -6,7 +6,7 @@
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=1bf94436306bcff6139963b2a4e2161c][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=2039fc37184a88fbddf14b2ea3c38d8b][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的,
@@ -32,7 +32,7 @@
 即便是已经解决出来了, 也不妨碍看别人的解决思路, 学习多样的解决思路, 找出不同思路之间的联系是数学的灵魂, 正如不同的数学分支之间的联系一样.
 
 	
-*** [[file:posts/2024/08/godot-learning-diary.html?hash=7ec28ba0f6e2fd40e63a8df906335ac2][Godot 4 学习日记]]
+*** [[file:posts/2024/08/godot-learning-diary.html?hash=29353beda05277c9128680aa38d2f541][Godot 4 学习日记]]
 这里记录了我学习 =Godot 4= 的轨迹, 以及对学习时的一些疑问进行解答.
 
 准确来说这篇文章是日记集, 熟悉 =Godot= 引擎的功能不是一两天的事情, 因此会分为 =Day 0=, =Day 1= 这样的章节,
@@ -83,7 +83,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=13806898128c9445978b5dd391c13394][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=7a44703af066862b835280a6d86fa7db][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -281,7 +281,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=b1f1ae07fe76b80f86a7b7b638f69a0f][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=5d8c599c0f712509cb2e841e730897de][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
@@ -290,7 +290,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 
 同样 $p$ 也跟着 $A$ 的旋转到达 $p^{'}$ 这个位置, $p^{'}$ 在 $B$ 上也是 $\left(x, y\right)$, 但是 $p^{'}$ 在 $A$ 的坐标呢?
 
-现在就是要求 $p^{'}$ 在 $A$ 上的坐标 $\left(x^{'}, y_{'}\right)$.
+现在就是要求 $p^{'}$ 在 $A$ 上的坐标 $\left(x^{'}, y^{'}\right)$.
 
 首先 $A$ 和 $B$ 分别是描述 $p$ 和 $p^{'}$ 自身的坐标系, $p$ 有 *可能* 会处于 $A$ 的原点位置, $p^{'}$ 和 $B$ 同理,
 
@@ -312,7 +312,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 所以它们虽然本质不一样,但是它们的计算都基本都是 $Ax = y$ 这种形式.
 
-回到主题,常见的几何变换包括对象的 *缩放,平移以及旋转*,这些都可以通过矩阵来进行描述.
+回到主题,常见的几何变换包括对象的 *伸缩 (scale),平移 (translation) 以及旋转 (rotation)*,这些都可以通过矩阵来进行描述.
 
 而矩阵的含义就是等同于"映射/变换",所以在了解之前需要先了解一些线性代数的知识,我也不是这方面的专家,就不分享自己微不足道的学习经验了.
 
@@ -326,7 +326,7 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 而 =insight= 的其中一个解释是 =a deep intuitive understanding of a person or thing=,
 
-所以这句话的意思是: 公式不是需要记忆的魔法咒语,我们要对公式有一个直观了解,包括公式是如何推导(reason)得到的,有什么意义,解决什么问题.
+所以这句话的意思是: 公式不是需要记忆的魔法咒语,我们要对公式有一个直观了解,包括公式是如何推导的,有什么意义,解决什么问题.
 
 	
 *** [[file:posts/2020/02/et-project-day-.html?hash=cb0123b7703c9bd0d13b552435a2a639][英语消灭计划-Day2]]

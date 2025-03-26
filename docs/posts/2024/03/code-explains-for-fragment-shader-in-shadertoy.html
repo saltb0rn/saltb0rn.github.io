@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-02-27 Thu 01:07 -->
+<!-- 2025-03-26 Wed 14:49 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ShaderToy常见代码解释 (收录中)</title>
@@ -270,14 +270,26 @@
 <li><a href="#org407522c">函数 - refract</a></li>
 <li><a href="#orga70f782">函数 - packUnorm 和 函数 - unpackUnorm</a></li>
 <li><a href="#org2bd0a75">函数 - modf</a></li>
-<li><a href="#orgee6f400">函数 - texture</a></li>
+<li><a href="#org55ed4f2">函数 - texture</a></li>
 </ul>
 </li>
 <li><a href="#org71c7f7b">常用自定义函数</a>
 <ul>
 <li><a href="#orgcfe532a">remap 函数</a></li>
-<li><a href="#orgc00b4a3">随机函数/Hash函数</a></li>
-<li><a href="#org68302c3">噪音</a></li>
+<li><a href="#orgeb5d13b">随机函数</a>
+<ul>
+<li><a href="#org491d238">高维随机函数</a></li>
+<li><a href="#org6bb7f07">向量函数形式的随机函数</a></li>
+<li><a href="#org5cd74e7">\(\mathrm{fract(sin(dot(x)))}\) 方法的缺陷</a></li>
+</ul>
+</li>
+<li><a href="#org8fa24ce">噪声函数</a>
+<ul>
+<li><a href="#org1db0250">值噪声</a></li>
+<li><a href="#orge8770ab">梯度噪声</a></li>
+<li><a href="#org4cc56e9">单形噪声</a></li>
+</ul>
+</li>
 <li><a href="#org8171fdf">调色板生成</a></li>
 </ul>
 </li>
@@ -302,7 +314,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org37b3f9b">
+<div class="abstract" id="org2db72c8">
 <p>
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 </p>
@@ -574,7 +586,7 @@
 </p>
 
 
-<div id="orga5d12b0" class="figure">
+<div id="orgb4c1371" class="figure">
 <p><img src="../../../files/uv-tiling.png" alt="uv-tiling.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>重复了 4 个 \([0, 1]\) 范围的 \(UV\) 坐标空间</p>
@@ -733,7 +745,7 @@
 </p>
 
 
-<div id="org04ac637" class="figure">
+<div id="org7e82a90" class="figure">
 <p><img src="../../../files/smoothstep-t.png" alt="smoothstep-t.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>x, edge0 以及 edge1 三者的关系</p>
@@ -1080,7 +1092,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="orga425bd4" class="figure">
+<div id="org3541cbd" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader.png" alt="how-to-think-of-fun-creation-in-shader.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>越往右下角方向越亮</p>
@@ -1102,7 +1114,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org8b6cb5b" class="figure">
+<div id="org353f511" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-2.png" alt="how-to-think-of-fun-creation-in-shader-2.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>越往下走越亮</p>
@@ -1124,7 +1136,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org82c35d2" class="figure">
+<div id="orgae923b9" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-3.png" alt="how-to-think-of-fun-creation-in-shader-3.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>越往右走越亮</p>
@@ -1147,7 +1159,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="orgdccac93" class="figure">
+<div id="orgcecbe5c" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-4.png" alt="how-to-think-of-fun-creation-in-shader-4.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>越往左下角走越亮</p>
@@ -1170,7 +1182,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org2b37489" class="figure">
+<div id="org8a1e40a" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-5.png" alt="how-to-think-of-fun-creation-in-shader-5.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>越往左下角走越亮</p>
@@ -1203,7 +1215,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org6122a0a" class="figure">
+<div id="orgfb76be9" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map-0.svg" alt="x2-y2-10-contour-map-0.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 8: </span><code>曲面图 + 等值线图</code></p>
@@ -1225,7 +1237,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org9d3736f" class="figure">
+<div id="org7fc20af" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map-1.svg" alt="x2-y2-10-contour-map-1.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 9: </span><code>曲面图 + 等值线图 + 灰阶</code></p>
@@ -1245,7 +1257,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="orgf8a281d" class="figure">
+<div id="org3d47fdb" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map-3.svg" alt="x2-y2-10-contour-map-3.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 10: </span><code>曲面图附加等值线 + 等值线图</code></p>
@@ -1264,7 +1276,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org57b4292" class="figure">
+<div id="orgdcfc1bb" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map.svg" alt="x2-y2-10-contour-map.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 11: </span><code>等值线图 + 灰阶</code></p>
@@ -1314,7 +1326,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org299ad6d" class="figure">
+<div id="orge0fe180" class="figure">
 <p><img src="../../../files/iteration-in-fragment-shader.png" alt="iteration-in-fragment-shader.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>输出结果</p>
@@ -1406,7 +1418,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 
-<div id="org35e3efd" class="figure">
+<div id="org70293b1" class="figure">
 <p><img src="../../../files/func-mix.png" alt="func-mix.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>\(mix(x, y, a)\)</p>
@@ -1442,7 +1454,8 @@ gl_FragColor = vec4(vec3(color), 1.0);
 <li>\(mix\) 是线性插值; \(smoothstep\) 是埃尔米特(Hermite)插值, 属于非线性插值.</li>
 <li>\(smoothstep(edge0, edge1, x)\) 的 \(edge0\) 和 \(edge1\) 要保证 \(edge0 \lt edge1\) 的关系(, 甚至要求 \(x\) 位于两者之间, 否则无法按预期插值).
 \(mix(x, y, a)\) 中的 \(x\) 和 \(y\) 没有这个要求, 可以 \(x \gt y\) 也可以 \(x \lt y\), 甚至可以 \(x = y\), \(a\) 也没有大小限制.</li>
-<li>\(smoothstep(edge0, edge1, x)\) 的插值范围是 \([0, 1]\); \(mix(x, y, a)\) 的插值范围是没有限制的.</li>
+<li>\(smoothstep(edge0, edge1, x)\) 要求 \(x \in [edge0, edge1]\); \(mix(x, y, a)\) 则没有这个要求, 当 \(a \in [x, y]\) 时叫做内插(<code>interpolation</code>), 当 \(a\) 位于 \([x, y]\) 之外时叫做外插/外推(<code>extrapolation</code>).
+因此, \(smoothstep(edge0, edge1, x) \in [0, 1]\), 而 \(mix(x, y, a) \in \mathbb{R}\).</li>
 </ol>
 
 
@@ -1503,7 +1516,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 
-<div id="org399af73" class="figure">
+<div id="org20b8db8" class="figure">
 <p><img src="../../../files/Shader-Derivatives-1.png" alt="Shader-Derivatives-1.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>dFdx/dFdy</p>
@@ -1690,7 +1703,7 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </div>
 
 
-<div id="org1837647" class="figure">
+<div id="org8dc8dce" class="figure">
 <p><img src="../../../files/func-faceforward.png" alt="func-faceforward.png">
 </p>
 <p><span class="figure-number">Figure 15: </span>faceforward</p>
@@ -1749,7 +1762,7 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 
-<div id="org19219d8" class="figure">
+<div id="orge494e36" class="figure">
 <p><img src="../../../files/refraction-and-snells-law-from-physics-ib.jpg" alt="refraction-and-snells-law-from-physics-ib.jpg" width="800px">
 </p>
 <p><span class="figure-number">Figure 16: </span><a href="https://www.youtube.com/watch?v=NcCSGtnUUpw&amp;ab_channel=AndyMasley%27sIBPhysicsLectures">折射 &amp; 斯涅尔定律(图来自 IB Physics)</a></p>
@@ -1778,7 +1791,7 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 
-<div id="orgc7e02a8" class="figure">
+<div id="org979ccea" class="figure">
 <p><img src="../../../files/calc-refraction-vector.png" alt="calc-refraction-vector.png">
 </p>
 <p><span class="figure-number">Figure 17: </span>折射向量推导</p>
@@ -1892,23 +1905,19 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">i</span>;
 
 f = <span style="color: #b0c4de;">modf</span>(1.2, i);
-<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">i = 1, f = 0.2</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">i = 1.0, f = 0.2</span><span style="color: #ff7f24;"> */</span>
 
 <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">fs</span>;
 <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">is</span>;
 fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec2</span>(1.2, -3.4), is);
-<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">fs = vec2(0.2, -0.4), is = ivec2(1, -3)</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">fs = vec2(0.2, -0.4), is = ivec2(1.0, -3.0)</span><span style="color: #ff7f24;"> */</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgee6f400" class="outline-3">
-<h3 id="orgee6f400">函数 - texture</h3>
-<div class="outline-text-3" id="text-orgee6f400">
-<p>
-<a href="https://learnopengl.com/Getting-started/Textures">https://learnopengl.com/Getting-started/Textures</a>
-</p>
-
+<div id="outline-container-org55ed4f2" class="outline-3">
+<h3 id="org55ed4f2"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/texture.xhtml">函数 - texture</a></h3>
+<div class="outline-text-3" id="text-org55ed4f2">
 <p>
 \(texture\) 函数从贴图 \(tex\) 中获取指定纹理坐标 \(texCoord\) 上的纹素(<code>texels</code>), 一般用法是 \(texture(tex, texCoord)\).
 </p>
@@ -1953,7 +1962,7 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">is</span>;
 <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">fs</span> = <span style="color: #b0c4de;">modf</span>(texCoord, is);
 <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">texCoordS</span> = <span style="color: #b0c4de;">mod</span>(is.x, 2) == 0 ? fs.s : 1 - fs.s;
-<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">texCoordT</span> = <span style="color: #b0c4de;">mod</span>(is.y, 2) == 0 ? fs.t : 1 - fs.t;     
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">texCoordT</span> = <span style="color: #b0c4de;">mod</span>(is.y, 2) == 0 ? fs.t : 1 - fs.t;
 <span style="color: #98fb98;">vec4</span> <span style="color: #eedd82;">texel</span> = <span style="color: #b0c4de;">texture</span>(tex, <span style="color: #98fb98;">vec2</span>(texCoordS, texCoordT));
 </pre>
 </div>
@@ -1996,10 +2005,10 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 
 
 
-<div id="org30fc890" class="figure">
+<div id="orgc47e864" class="figure">
 <p><img src="../../../files/texture_wrapping.png" alt="texture_wrapping.png">
 </p>
-<p><span class="figure-number">Figure 18: </span>贴图环绕的 4 种选择</p>
+<p><span class="figure-number">Figure 18: </span>贴图环绕的 4 种选择 (图片来自 LearnOpenGL)</p>
 </div>
 </div>
 </div>
@@ -2026,21 +2035,1611 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 </p>
 </div>
 </div>
-<div id="outline-container-orgc00b4a3" class="outline-3">
-<h3 id="orgc00b4a3">随机函数/Hash函数</h3>
-<div class="outline-text-3" id="text-orgc00b4a3">
+<div id="outline-container-orgeb5d13b" class="outline-3">
+<h3 id="orgeb5d13b">随机函数</h3>
+<div class="outline-text-3" id="text-orgeb5d13b">
+<blockquote>
 <p>
-参考: <a href="https://thebookofshaders.com/10/">https://thebookofshaders.com/10/</a>
+参考资料如下:
+</p>
+
+<p>
+<a href="https://thebookofshaders.com/10/">https://thebookofshaders.com/10/</a>
 </p>
 
 <p>
 <a href="https://iquilezles.org/articles/sfrand/">https://iquilezles.org/articles/sfrand/</a>
 </p>
+
+<p>
+在讨论随机函数前先了解一下什么是随机, 人们口中的随机一般是指数学中定义的随机: 不可预测(<code>unpredictable</code>)和不可重现.
+</p>
+
+<p>
+可预测就意味着可以确定一个事件必定发生或不发生, 可重现意味着可以通过固定方法使得一个事件发生或不发生.
+</p>
+
+<p>
+而计算机中的代码是死板且可以预测的, 那又是如何产生随机数呢?
+</p>
+
+<p>
+对于计算机, 有两种随机, 分别如下:
+</p>
+
+<p>
+<b>确定性随机 (<code>deterministic random</code>)</b>
+</p>
+
+<p>
+用算法生成一个数列, 该数列的特性接近随机数列的特性, 然后根据参数从该数列获取一个数字作为随机数, 通过相同参数可以获得相同随机数,
+</p>
+
+<p>
+这种随机可以通过算法和参数来预测随机数, 因此也被称为伪随机 (<code>pseudo-random</code>).
+</p>
+
+<p>
+<b>非确定性随机 (<code>non-deterministic random</code>)</b>
+</p>
+
+<p>
+这种随机是不可预测和不可重现的, 可以被认为是真随机(<code>truely random</code>), 它的随机数不是通过算法来生成的, 而是来源于物理现象, 比如电子噪声, 量子效应, 大气噪声和用户输入等等.
+</p>
+
+<p>
+<code>Linux</code> 的 <a href="https://en.wikipedia.org/wiki//dev/random">/dev/random</a> 就是从环境噪声获取随机数.
+</p>
+
+<p>
+若感兴趣, 可以看一下这个<a href="https://www.bilibili.com/video/BV1rA411Z7eP/?spm_id_from=333.337.search-card.all.click&amp;vd_source=9fdcd332c2d3e867a2fe257ff4f28e30">视频: 计算机如何生成(伪)随机</a>.
+</p>
+</blockquote>
+
+<p>
+<code>Shader</code> 里用的是确定性随机函数, 需要开发人员自己实现的, 通常是使用周期函数来实现, 比如 \(\sin\), 并把它的值域限定在 \([0, 1]\) 上.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">rand</span> = <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(x));  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38480;&#21046;&#22312; [0, 1] &#30340;&#33539;&#22260;&#20869;</span>
+</pre>
+</div>
+
+
+<div id="org3f27b6a" class="figure">
+<p><img src="../../../files/fract-sin.png" alt="fract-sin.png" width="504px">
+</p>
+</div>
+
+<p>
+你可能觉得这个随机数看作不够随机, 那就让它们看起来更加混乱吧.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">rand</span> = <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(x) * 10000.0);
+</pre>
+</div>
+
+
+<div id="org651f483" class="figure">
+<p><img src="../../../files/fract-sin-100000.png" alt="fract-sin-100000.png" width="504px">
+</p>
+</div>
+
+<p>
+即便它看着混乱, 但仍是确定性随机.
+</p>
+
+<blockquote>
+<p>
+随机数的生成并不只有一种算法, 你可以充分使用自己的知识去创建随机函数.
+</p>
+
+<p>
+比如, <a href="https://iquilezles.org/">Iquilezles</a> 提供了一个<a href="https://iquilezles.org/articles/sfrand/">更好的随机数方案</a>, 有兴趣的可以看一下.
+</p>
+</blockquote>
+
+<p>
+一般来说, 编程语言中提供的随机函数都是像这个 \(rand\) 一样服从均匀分布的.
+</p>
+
+<p>
+在实际开发中偶尔想让随机函数服从特定分布, 想要控制随机数的分布, 根据均匀分布的普遍性, 可以对服从均匀分布的随机数 \(X\) 进行变换成服从其它分布的随机数 \(Y\), 这需要掌握一定的概率论知识, 这里不详细展开了.
+</p>
+
+<p>
+另外, <code>Pixelero</code> 也发布了一片<a href="https://pixelero.wordpress.com/2008/04/24/various-functions-and-various-distributions-with-mathrandom/">文章</a>来介绍服从一些分布的随机数函数.
+</p>
+</div>
+<div id="outline-container-org491d238" class="outline-4">
+<h4 id="org491d238">高维随机函数</h4>
+<div class="outline-text-4" id="text-org491d238">
+<p>
+在 <code>Shader</code> 开发中通常需要根据纹理坐标来生成随机数, 而上面介绍的 \(rand\) 是一个 <code>1D</code> 随机函数, 并不能很好地满足需求, 这需要 <code>2D</code> 随机函数.
+</p>
+
+<p>
+同理, 也存在 <code>3D</code> 和 <code>4D</code> 甚至更高维的随机函数.
+</p>
+
+<p>
+假设高维随机函数 \(f\) 是一个以 \(n\) 维向量 \(v \in \mathbb{R}^n\) 作为输入, 以标量 \(r\) 作为输出: \(r = f(v)\).
+</p>
+
+<p>
+其实高维随机函数的实现思路其实和 <code>1D</code> 随机函数差不多, 只不过要对 \(v\) 做计算, 其计算结果是一个标量 \(i\) , 最后用 \(i\) 作为 <code>1D</code> 随机函数 \(g\) 的输入得出 \(r = g(i)\).
+</p>
+
+<p>
+把向量转换成标量的话, 首先想到的是点积运算, 来看一个例子:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> <span style="color: #87cefa;">rand</span>(<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>) {
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(<span style="color: #b0c4de;">dot</span>(st.xy, <span style="color: #98fb98;">vec2</span>(12.9898, 78.233))) * 43758.5453123);
+}
+</pre>
 </div>
 </div>
-<div id="outline-container-org68302c3" class="outline-3">
-<h3 id="org68302c3">噪音</h3>
-<div class="outline-text-3" id="text-org68302c3">
+</div>
+<div id="outline-container-org6bb7f07" class="outline-4">
+<h4 id="org6bb7f07">向量函数形式的随机函数</h4>
+<div class="outline-text-4" id="text-org6bb7f07">
+<p>
+这种随机函数是用来生成向量的, 在 <code>Shader</code> 开发中通常是用来根据坐标计算出对应片元的颜色, 这种函数既可以用标量, 也可以用向量作为输入, 最后以向量作为输出.
+</p>
+
+<p>
+比如下面这个例子, 以 <code>3D</code> 向量作为输入和输出:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">vec3</span> <span style="color: #87cefa;">rand</span>(<span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">v</span>) {
+  <span style="color: #98fb98;">vec3</span> <span style="color: #eedd82;">p</span> = <span style="color: #98fb98;">vec3</span>(<span style="color: #b0c4de;">dot</span>(v, <span style="color: #98fb98;">vec3</span>(127.1, 311.7, 74.7)), <span style="color: #b0c4de;">dot</span>(v, <span style="color: #98fb98;">vec3</span>(269.5, 183.3, 246.1)), <span style="color: #b0c4de;">dot</span>(v, <span style="color: #98fb98;">vec3</span>(113.5, 271.9, 124.6)));
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(p) * 43758.5453123)
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org5cd74e7" class="outline-4">
+<h4 id="org5cd74e7">\(\mathrm{fract(sin(dot(x)))}\) 方法的缺陷</h4>
+<div class="outline-text-4" id="text-org5cd74e7">
+<p>
+在 <code>WebGL</code> 或 <code>OpenGL</code> 中, \(\sin\) 的实现取决于机器, 这导致了同一段 <code>Shader</code> 代码在不同平台上的效果不一样.
+</p>
+
+<p>
+<code>Iquilezles</code> 后来总结了一些算法来规避这个问题:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://www.shadertoy.com/view/llGSzw</span>
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">hash11</span> ( <span style="color: #98fb98;">uint</span> <span style="color: #eedd82;">n</span> ) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">integer hash copied from Hugo Elias</span>
+  n = (n &lt;&lt; 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">float</span>( n &amp; <span style="color: #98fb98;">uint</span>(0x7fffffffU))/<span style="color: #98fb98;">float</span>(0x7fffffff);
+}
+
+<span style="color: #98fb98;">vec3</span> <span style="color: #87cefa;">hash13</span>( <span style="color: #98fb98;">uint</span> <span style="color: #eedd82;">n</span> )
+{
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">integer hash copied from Hugo Elias</span>
+  n = (n &lt;&lt; 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  <span style="color: #98fb98;">uvec3</span> <span style="color: #eedd82;">k</span> = n * <span style="color: #98fb98;">uvec3</span>(n,n*16807U,n*48271U);
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">vec3</span>( k &amp; <span style="color: #98fb98;">uvec3</span>(0x7fffffffU))/<span style="color: #98fb98;">float</span>(0x7fffffff);
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://www.shadertoy.com/view/4tXyWN</span>
+<span style="color: #98fb98;">uint</span> <span style="color: #87cefa;">hash21</span>( <span style="color: #98fb98;">uvec2</span> <span style="color: #eedd82;">p</span> )
+{
+  p *= <span style="color: #98fb98;">uvec2</span>(73333,7777);
+  p ^= (<span style="color: #98fb98;">uvec2</span>(3333777777)&gt;&gt;(p&gt;&gt;28));
+  <span style="color: #98fb98;">uint</span> <span style="color: #eedd82;">n</span> = p.x*p.y;
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">float</span>(n^(n&gt;&gt;15)) * (1.0 / <span style="color: #98fb98;">float</span>(0xffffffffU));
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://www.shadertoy.com/view/XlXcW4</span>
+<span style="color: #98fb98;">vec3</span> <span style="color: #87cefa;">hash33</span>( <span style="color: #98fb98;">uvec3</span> <span style="color: #eedd82;">p</span> ) {
+  <span style="color: #00ffff;">const</span> <span style="color: #98fb98;">uint</span> <span style="color: #eedd82;">k</span> = 1103515245U;    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">GLIB C</span>
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">const uint k = 134775813U;   // Delphi and Turbo Pascal</span>
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">const uint k = 20170906U;    // Today's date (use three days ago's dateif you want a prime)</span>
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">const uint k = 1664525U;     // Numerical Recipes</span>
+  p = ((p&gt;&gt;8U)^p.yzx) * k;
+  p = ((p&gt;&gt;8U)^p.yzx) * k;
+  p = ((x&gt;&gt;8U)^p.yzx) * k;
+
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">vec3</span>(x) * (1.0 / <span style="color: #98fb98;">float</span>(0xffffffffU));
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org8fa24ce" class="outline-3">
+<h3 id="org8fa24ce">噪声函数</h3>
+<div class="outline-text-3" id="text-org8fa24ce">
+<p>
+噪声 (<code>noise</code>) 也是一种随机, 但相比一般的随机, 噪声的过度显得更加平滑, 更自然, 适合用来生成丰富的视觉效果, 因此, 噪声也被成为平滑随机性 (<code>smooth randomness</code>).
+</p>
+
+<p>
+先来感受一下, 随机函数和噪音函数之间的区别, 以下是分别是随机函数 \(rand1(x)\), \(rand2(x)\) 和噪声函数 \(noise(x)\) 的 <code>Maxima</code> 的实现以及对应的函数图像:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima">fract(x) <span style="color: #00ffff;">:=</span> x <span style="color: #00ffff;">-</span> <span style="color: #b0c4de;">floor</span>(x)$
+mix(x, y, a) <span style="color: #00ffff;">:=</span> x <span style="color: #00ffff;">*</span> (<span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">-</span> a) <span style="color: #00ffff;">+</span> y <span style="color: #00ffff;">*</span> a$
+smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(
+  t<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">min</span>(<span style="color: #b0c4de;">max</span>((x <span style="color: #00ffff;">-</span> l) <span style="color: #00ffff;">/</span> (u <span style="color: #00ffff;">-</span> l), <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">0</span>), <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">0</span>),
+  <span style="color: #b0c4de;">return</span> (t <span style="color: #00ffff;">*</span> t <span style="color: #00ffff;">*</span> (<span style="color: #7fffd4;">3</span> <span style="color: #00ffff;">-</span> <span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">*</span> t))
+  )$
+
+r<span style="color: #00ffff;">and</span>(x) <span style="color: #00ffff;">:=</span> fract(<span style="color: #b0c4de;">sin</span>(x))$
+
+<span style="color: #00ffff;">/*</span> &#38543;&#26426;&#31639;&#27861;&#20197;&#21450;&#23427;&#20204;&#30340;&#22270;&#20687; <span style="color: #00ffff;">*/</span>
+r<span style="color: #00ffff;">and</span>1(x) <span style="color: #00ffff;">:=</span> r<span style="color: #00ffff;">and</span>(<span style="color: #b0c4de;">floor</span>(x))$
+r<span style="color: #00ffff;">and</span>2(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00ffff;">and</span>(<span style="color: #b0c4de;">floor</span>(x)), r<span style="color: #00ffff;">and</span>(<span style="color: #b0c4de;">floor</span>(x) <span style="color: #00ffff;">+</span> <span style="color: #7fffd4;">1</span>), fract(x))$
+noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00ffff;">and</span>(<span style="color: #b0c4de;">floor</span>(x)), r<span style="color: #00ffff;">and</span>(<span style="color: #b0c4de;">floor</span>(x) <span style="color: #00ffff;">+</span> <span style="color: #7fffd4;">1</span>), smoothstep(<span style="color: #7fffd4;">0</span>, <span style="color: #7fffd4;">1</span>, fract(x)))$
+
+<span style="color: #b0c4de;">plot2d</span>(<span style="color: #00ffff;">[</span>r<span style="color: #00ffff;">and</span>1(x), r<span style="color: #00ffff;">and</span>2(x), noise(x)<span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span>x, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span>col<span style="color: #00ffff;">or</span>, red, blue, green<span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span>legend, <span style="color: #ffa07a;">"rand1"</span>, <span style="color: #ffa07a;">"rand2"</span>, <span style="color: #ffa07a;">"noise"</span><span style="color: #00ffff;">]</span>)$
+</pre>
+</div>
+
+
+<div id="orgf69b49b" class="figure">
+<p><img src="../../../files/noise-functions.png" alt="noise-functions.png" width="504px">
+</p>
+</div>
+
+<p>
+正如图片所示, 令 \(z = floor(x)\), 从 \(rand1\) 到 \(rand2\), 为随机数 \(rand1(z)\) 和 \(rand1(z + 1.0)\) 之间引入了线性插值, 从 \(rand2\) 到 \(noise\), 为随机数 \(rand1(z)\) 和 \(rand1(z + 1.0)\) 之间引入了非线性插值, 函数图像变得越来越平滑.
+</p>
+
+<p>
+\(noise\) 的算法可以看作是在一条线上的两个点之间进行插值, 这个点是根据参数 \(x\) 来决定的, 以 \([floor(x), floor(x) + 1]\) 作为插值范围来保证变化间隔为 1, 以 \(x\) 的小数部分 \(fract(x)\) 作为插值参数, 从而得出噪声值.
+</p>
+
+
+<div id="org142d9d6" class="figure">
+<p><img src="../../../files/value-noise-1d-lerp.png" alt="value-noise-1d-lerp.png">
+</p>
+</div>
+
+<blockquote>
+<p>
+在实际应用中, 可以根据自身需求替换插值方法, 比如想换函数 \(g\) 来进行插值: \(f(a, b, t) = (1 - g(t)) \cdot a - g(t) \cdot b\),
+</p>
+
+<p>
+而 \(noise\) 函数里面的 \(g(t) = smoothstep(0, 1, t)\);
+</p>
+
+<p>
+当 \(g(t) = \frac{1 - \cos(\pi t)}{2}\) 时, \(f\) 被叫做余弦插值 (<code>Cosine Interpolation</code>);
+</p>
+
+<p>
+另外一个比较有名的插值函数是五次插值曲线: \(g(t) = 6t^5 - 15t^4 + 10t^3\), 是 \(smoothstep\) 的改进替代.
+</p>
+</blockquote>
+
+<p>
+<code>GLSL</code> 也提供了内置的噪音函数: <a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/noise.xhtml">noise</a>, 但对于创意工作而言, 这个内置函数并不能完全满足创作者的需求, 所以基本上都是自己实现噪声函数.
+</p>
+
+<p>
+噪声算法有很多, 很多艺术创作者会根据需求来选择合适的噪声算法来进行艺术创作, 比如柏林噪声算法(<code>Perlin Noise Algorithm</code>),
+</p>
+
+<p>
+接下来会介绍三种比较基础的噪声算法: 值噪声, 梯度噪声以及单行噪声.
+</p>
+</div>
+<div id="outline-container-org1db0250" class="outline-4">
+<h4 id="org1db0250">值噪声</h4>
+<div class="outline-text-4" id="text-org1db0250">
+<p>
+如上面的 <code>1D</code> 噪声所示, 可以看作是一线条上 \(2^1\) 个点对应的随机数之间的插值, 而 <code>2D</code> 噪声可以看作是一个矩形上 \(2^2\) 个角对应的随机数之间的插值, 如此类推, <code>3D</code> 噪声可以看作立方体上 \(2^3\) 个角对应的随机数之间的插值.
+</p>
+
+<p>
+这种对随机数进行插值得到噪声被称为值噪声 (<code>value noise</code>).
+</p>
+
+<blockquote>
+<p>
+
+</p>
+
+<p>
+<b>双线性插值法 (<code>bilinear interpolation</code>)</b>
+</p>
+
+<p>
+根据平面的 4 个角进行插值的技巧需要参考双线性插值法, 这种技巧也可以解决贴图在缩放显示时出现的纹理不平滑问题,
+</p>
+
+
+<div id="orgb0dfed4" class="figure">
+<p><img src="../../../files/bilinear-texture-weights.png" alt="bilinear-texture-weights.png" width="504px">
+</p>
+</div>
+
+<p>
+如图所示, 想要计算出平面中 \(C\) 的坐标, 可先从 \(X\) 轴方向(\(TL \rightarrow TR\))进行插值,
+</p>
+
+<p>
+首先计算出 \(CT = (1 - f_x) \cdot TL + f_x \cdot TR\),
+</p>
+
+<p>
+再计算出 \(CB = (1 - f_x) \cdot BL + f_x \cdot BR\),
+</p>
+
+<p>
+最后从 \(Y\) 轴方向进行插值计算出 \(C = (1 - f_y) \cdot CT + f_y \cdot CB\).
+</p>
+
+<p>
+或者也可以先从 \(Y\) 轴方向(\(TL \rightarrow BL\))进行插值, 最后再从 \(X\) 轴方向进行插值, 结果都一样, 就不赘述了.
+</p>
+
+<p>
+其 <code>GLSL</code> 如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">ct</span> = <span style="color: #b0c4de;">mix</span>(tl, tr, fx);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">cb</span> = <span style="color: #b0c4de;">mix</span>(bl, br, fx);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">c</span> = <span style="color: #b0c4de;">mix</span>(ct, cb, fy);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26377;&#26102;&#20505;&#20320;&#21487;&#33021;&#30475;&#21040;&#30340;&#25554;&#20540;&#23454;&#29616;&#21487;&#33021;&#26159;&#19979;&#38754;&#36825;&#26679;&#30340;</span>
+<span style="color: #ff7f24;">/*</span>
+<span style="color: #ff7f24;">  ct = tl * (1 - fx) + tr * fx</span>
+<span style="color: #ff7f24;">  cb = bl * (1 - fx) + br * fx</span>
+<span style="color: #ff7f24;">  c = [tl * (1 - fx) + tr * fx] * (1 - fy) + [bl * (1 - fx) + br * fx] * fy</span>
+<span style="color: #ff7f24;">    = [tl * (1 - fx) + tr * fx] - [tl * (1 - fx) + tr * fx] * fy + [bl * (1 - fx) + br * fx] * fy</span>
+<span style="color: #ff7f24;">    = [tl * (1 - fx) + tr * fx] + [ bl * (1 - fx) + br * fx - tl * (1 - fx) - tr * fx ] * fy</span>
+<span style="color: #ff7f24;">    = [tl * (1 - fx) + tr * fx] + [(bl - tl) * (1 - fx) + (br - tr) * fx] * fy</span>
+<span style="color: #ff7f24;">    = mix(tl, tr, fx) + [(bl - tl) * (1 - fx) + (br - tr) * fx] * fy</span>
+<span style="color: #ff7f24;"> */</span>
+</pre>
+</div>
+
+<p>
+<b>三线性插值法 (<code>trilinear interpolation</code>)</b>
+</p>
+
+<p>
+根据立方体的 8 个角进行插值的技巧需要参考三线性插值法, 这种方法可以看作两个对立面的双线性插值随后加上一个线性插值.
+</p>
+
+
+<div id="org0956c8c" class="figure">
+<p><img src="../../../files/trilinear-interpolation.png" alt="trilinear-interpolation.png" width="504px">
+</p>
+</div>
+
+<p>
+需要注意的是, 这张图的 \(Y\) 轴方向是 \(c000 \rightarrow c010\), 其三线性插值的 <code>GLSL</code> 实现如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24179;&#38754; c000 - c100 - c110 - c010 &#30340;&#21452;&#32447;&#24615;&#25554;&#20540;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">a</span> = <span style="color: #b0c4de;">mix</span>(c010, c110, tx);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">b</span> = <span style="color: #b0c4de;">mix</span>(c000, c110, tx);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">e</span> = <span style="color: #b0c4de;">mix</span>(b, a, ty);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24179;&#38754; c001 - c101 - c111 - c011 &#30340;&#21452;&#32447;&#24615;&#25554;&#20540;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">c</span> = <span style="color: #b0c4de;">mix</span>(c001, c111, tx);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">d</span> = <span style="color: #b0c4de;">mix</span>(c001, c101, tx);
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">f</span> = <span style="color: #b0c4de;">mix</span>(d, c, ty);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545; e &#21644; f &#36827;&#34892;&#32447;&#24615;&#25554;&#20540;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">g</span> = <span style="color: #b0c4de;">mix</span>(e, f, tz);
+</pre>
+</div>
+</blockquote>
+
+<p>
+以 <code>2D</code> 噪声为例, 首先, 根据纹理坐标 \(st\) 来确定其所处网格的 4 个角的坐标:
+</p>
+
+<p>
+\((floor(st.x), floor(st.y))\)
+</p>
+
+<p>
+\((floor(st.x) + 1.0, floor(st.y))\)
+</p>
+
+<p>
+\((floor(st.x), floor(st.y) + 1.0)\)
+</p>
+
+<p>
+\((floor(st.x) + 1.0, floor(st.y) + 1.0)\)
+</p>
+
+<blockquote>
+<p>
+另外, \((fract(st.x), fract(st.y))\) 就是 \(st\) 相对于网格的坐标.
+</p>
+</blockquote>
+
+<p>
+然后, 以这 4 个坐标作为随机函数的参数得到 4 个随机值,
+</p>
+
+<p>
+最后, 根据这 4 个随机值进行双线性插值得到 \(st\) 所对应的随机值.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26469;&#33258; https://thebookofshaders.com/11/</span>
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">rand</span>(<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>) {
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(<span style="color: #b0c4de;">dot</span>(st.xy, <span style="color: #98fb98;">vec2</span>(12.9898, 78.233))) * 43758.5453123);
+}
+
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">noise</span> (<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>) {
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">i</span> = <span style="color: #b0c4de;">floor</span>(st);
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">f</span> = <span style="color: #b0c4de;">fract</span>(st);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Four corners in 2D of a tile which is created according to st.</span>
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">a</span> = rand(i);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">b</span> = rand(i + <span style="color: #98fb98;">vec2</span>(1.0, 0.0));
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">c</span> = rand(i + <span style="color: #98fb98;">vec2</span>(0.0, 1.0));
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">d</span> = rand(i + <span style="color: #98fb98;">vec2</span>(1.0, 1.0));
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Smooth Interpolation</span>
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Cubic Hermine Curve.  Same as SmoothStep()</span>
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">u</span> = f*f*(3.0-2.0*f);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">u = smoothstep(0.,1.,f);</span>
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Mix 4 coorners percentages</span>
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">mix</span>(a, b, u.x) +
+          (c - a)* u.y * (1.0 - u.x) +
+          (d - b) * u.x * u.y;
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>() {
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = <span style="color: #eedd82; font-weight: bold;">gl_FragCoord</span>.xy/u_resolution.xy;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Scale the coordinate system to see</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">some noise in action</span>
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">pos</span> = <span style="color: #98fb98;">vec2</span>(st * 5.0);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Use the noise function</span>
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">n</span> = noise(pos);
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(<span style="color: #98fb98;">vec3</span>(<span style="color: #eedd82;">n</span>), 1.0);
+}
+</pre>
+</div>
+
+<p>
+其效果如下:
+</p>
+
+
+<div id="org379259f" class="figure">
+<p><img src="../../../files/2d-value-noise-stX5.png" alt="2d-value-noise-stX5.png">
+</p>
+<p><span class="figure-number">Figure 19: </span>2D 值噪声的效果</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orge8770ab" class="outline-4">
+<h4 id="orge8770ab">梯度噪声</h4>
+<div class="outline-text-4" id="text-orge8770ab">
+<p>
+一般来说, 值噪声的效果就如上图所示的那样, 看起来一块一块的, 为了消除块状效果, <code>Ken Perlin</code> 在 <code>1985</code> 年开发出了另外一种噪声算法, 得到噪声的叫梯度噪声 (<code>Gradient Noise</code>), 这个算法也就是人们熟知的柏林函数.
+</p>
+
+<p>
+和值噪声算法的区别在于, 梯度噪声的随机函数以方向(<code>vec2/vec3/vec4</code>)作为输出, 值噪声的随机函数以值(<code>float</code>)作为输出.
+</p>
+
+<p>
+和值噪声的生成类似, 以 <code>2D</code> 梯度噪声为例, 通过随机函数为 4 个角生成梯度向量(需要归一化), 再通过点积运算把它们转换成 4 个标量, 之后的过程就与值噪声的计算一样.
+</p>
+
+<p>
+在使用点积把梯度向量 \(\nabla\) 转换成标量时, 还需要为每个角 \(p\) 计算出它的角指向(也称为距离向量), 假设 \(o\) 是网格内的坐标, 那么角指向为 \(v = (o.x - p.x, o.y - p.y)\), 最后计算角指向和梯度向量之间的点积 \(v \cdot \nabla\),
+</p>
+
+<p>
+这个点积就是角指向 \(\vec{op}\) 在梯度向量 \(\nabla\) 的投影, 也就是 \(\vec{op}\) 在 \(\nabla\) 方向上的贡献值.
+</p>
+
+<p>
+如下图所示, 绿色箭头为黄格字的梯度向量 \(\nabla\), 黄点为 \(o\), 蓝色箭头为角指向 \(v\).
+</p>
+
+
+<div id="org5932844" class="figure">
+<p><img src="../../../files/perlin-noise.png" alt="perlin-noise.png" width="504px">
+</p>
+</div>
+
+<p>
+按照该思路, 下面为 <code>GLSL</code> 的实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">2D &#21521;&#37327;&#20989;&#25968;&#24418;&#24335;&#30340;&#38543;&#26426;&#20989;&#25968;</span>
+<span style="color: #98fb98;">vec2</span> <span style="color: #87cefa;">rand</span>(<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>){
+    st = <span style="color: #98fb98;">vec2</span>(<span style="color: #b0c4de;">dot</span>(st, <span style="color: #98fb98;">vec2</span>(127.1,311.7)),
+              <span style="color: #b0c4de;">dot</span>(st, <span style="color: #98fb98;">vec2</span>(269.5,183.3)));
+    <span style="color: #00ffff;">return</span> -1.0 + 2.0 * <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(st) * 43758.5453123);
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24402;&#19968;&#21270;</span>
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31867;&#20284;&#21069;&#38754; 2D &#22122;&#22768;&#30340;&#29983;&#25104;, &#20294;&#26159; 4 &#20010;&#35282;&#30340;&#38543;&#26426;&#20540;&#38656;&#35201;&#19968;&#30058;&#28857;&#31215;&#36816;&#31639;</span>
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">noise</span>(<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span>) {
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">i</span> = <span style="color: #b0c4de;">floor</span>(st);
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">f</span> = <span style="color: #b0c4de;">fract</span>(st);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vec2 u = f * f * (3.0 - 2.0 * f);</span>
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">u</span> = <span style="color: #b0c4de;">smoothstep</span>(<span style="color: #98fb98;">vec2</span>(0.0), <span style="color: #98fb98;">vec2</span>(1.0), f);
+
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">a</span> = rand(i);
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">va</span> = f - <span style="color: #98fb98;">vec2</span>(0.0, 0.0);
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">b</span> = rand(i + <span style="color: #98fb98;">vec2</span>(1.0, 0.0));
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">vb</span> = f - <span style="color: #98fb98;">vec2</span>(1.0, 0.0);
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">c</span> = rand(i + <span style="color: #98fb98;">vec2</span>(0.0, 1.0));
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">vc</span> = f - <span style="color: #98fb98;">vec2</span>(0.0, 1.0);
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">d</span> = rand(i + <span style="color: #98fb98;">vec2</span>(1.0, 1.0));
+  <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">vd</span> = f - <span style="color: #98fb98;">vec2</span>(1.0, 1.0);
+
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">dotA</span> = <span style="color: #b0c4de;">dot</span>(a, va);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">dotB</span> = <span style="color: #b0c4de;">dot</span>(b, vb);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">dotC</span> = <span style="color: #b0c4de;">dot</span>(c, vc);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">dotD</span> = <span style="color: #b0c4de;">dot</span>(d, vd);
+
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">ab</span> = <span style="color: #b0c4de;">mix</span>(dotA, dotB, u.x);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">cd</span> = <span style="color: #b0c4de;">mix</span>(dotC, dotD, u.x);
+
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">mix</span>(ab, cd, u.y);
+}
+</pre>
+</div>
+
+<blockquote>
+<p>
+梯度的全称是梯度向量(<code>gradient vector</code>), 源于微积分中向量函数中的概念, 用来表示多元函数 \(f\) 在各个分量上的变化率,
+</p>
+
+<p>
+这个变化率就是梯度向量, 以二维向量为例: \(\nabla f(x, y) = (\frac{\partial f}{\partial x}, \frac{\partial f}{\partial y})\).
+</p>
+
+<p>
+梯度向量 \(\nabla f(x, y)\) 表示在所有方向中使得 \(f\) 的方向导数最大的那一个方向, 而 \(|\nabla f(x, y)|\) 表示最大方向导数的变化率大小.
+</p>
+
+<p>
+方向导数 \(D_u f(x, y)\) 表示 \(f\) 在某点 \((x, y)\) 上往某方向 \(u\) 的变化率:
+</p>
+
+<p>
+\(D_u f(x, y) = \nabla f(x, y) \cdot u = |\nabla f(x, y)||u| \cos_{\theta}\), 其中 \(\theta\) 为 \(\nabla f(x, y)\) 和 \(u\) 之间的夹角.
+</p>
+
+<p>
+当 \(\theta = 0\) 时, 换而言之当 \(\nabla f(x, y)\) 和 \(u\) 方向相同时, \(D_u f(x, y)\) 为最大.
+</p>
+</blockquote>
+
+<p>
+那么 <code>1D</code> 的梯度噪声呢? 一维空间是一条直线, 可以把直线上的点 \(p\) (<code>p</code> 是标量)看作一个一维向量 \((p)\), 一维向量之间的点积就是标量之间的乘积,
+</p>
+
+<p>
+根据这些信息, 就可以实现 <code>1D</code> 梯度噪声了:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> <span style="color: #87cefa;">rand</span>(<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">p</span>) {
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">fract</span>(<span style="color: #b0c4de;">sin</span>(p) * 43758.5453123);
+}
+
+<span style="color: #98fb98;">float</span> <span style="color: #87cefa;">noise</span>(<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">p</span>) {
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">i</span> = <span style="color: #b0c4de;">floor</span>(p);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">f</span> = <span style="color: #b0c4de;">fract</span>(p);
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">u</span> = <span style="color: #b0c4de;">smoothstep</span>(0.0, 1.0, f);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#37324;&#30340; rand(i) * 2.0 - 1.0 &#26159;&#35201;&#23545;&#26799;&#24230; rand(i) &#36827;&#34892;&#24402;&#19968;&#21270;&#20351;&#20854;&#33539;&#22260;&#22312; [-1, 1] &#20043;&#38388;</span>
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">a</span> = rand(i) * 2.0 - 1.0;
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">va</span> = f - 0.0;
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">b</span> = rand(i + 1.0) * 2.0 - 1.0;
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">vb</span> = f - 1.0;
+
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">dotA</span> = a * va;
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">dotB</span> = b * vb;
+
+  <span style="color: #00ffff;">return</span> 2.4 * <span style="color: #b0c4de;">mix</span>(dotA, dotB, u);
+}
+</pre>
+</div>
+
+<p>
+这里给出 <code>1D</code> 梯度噪声的实现的目的是, 解释为什么梯度噪声可以消除块状, 具体解释可以参考 <a href="https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/perlin-noise-part-2/perlin-noise.html">ScratchAPixel - Perlin Noise</a> 的 <code>Why Is Perlin/Gradient Noise Better Than Value Noise</code> 部分.
+</p>
+
+<p>
+首先要理解块状效果的成因, 这需要理解高频(<code>higher frequencies</code>)和低频(<code>lower frequencies</code>)的概念:
+</p>
+
+<p>
+我们把连续红点之间的变化作为对比, 变化相对大的叫做高频, 变化相对小的叫做低频.
+</p>
+
+
+<div id="orgad93aa8" class="figure">
+<p><img src="../../../files/noise-value-vs-perlin1.png" alt="noise-value-vs-perlin1.png">
+</p>
+<p><span class="figure-number">Figure 20: </span>理想情况: 随机值关于 \(x\) 轴良好地分布, 使得噪声函数的振荡在频率上是成规律的.</p>
+</div>
+
+
+<div id="orgca18ec2" class="figure">
+<p><img src="../../../files/noise-value-vs-perlin2.png" alt="noise-value-vs-perlin2.png">
+</p>
+<p><span class="figure-number">Figure 21: </span>最坏情况: 一些随机值在 \(x\) 轴的一定范围内连续出现多次, 也就是说噪声函数的频率分布是不成规律的.</p>
+</div>
+
+<p>
+理想的噪声函数是以高频为主, 所以它看起来随机且局部变化平滑, 但总体上呈现出相当均匀的外观(<code>homogeneous look</code>), 也就是由相似频率构成.
+</p>
+
+<p>
+值噪声则是由高频和低频构成, 也就是类似上面最坏情况, 低频部分就是方块效果的成因, 在低频区域内的噪声大小非常接近, 高频和低频的过度区域则把大小接近的噪声给分割开了, 导致了块状效果.
+</p>
+
+<p>
+在 <code>1D</code> 噪声函数中, 梯度噪声算法很好控制着 <code>1D</code> 噪声函数图像的形状, 并且让形状成规律.
+</p>
+
+
+<div id="orgf313af9" class="figure">
+<p><img src="../../../files/1d-perlin-noise-func-graph.png" alt="1d-perlin-noise-func-graph.png">
+</p>
+<p><span class="figure-number">Figure 22: </span>1D梯度噪声的函数图像, 梯度向量控制着噪声函数形状 (图片来源: Stefan Gustavson - Simplex Noise Demystified)</p>
+</div>
+
+<p>
+这里借助 <code>1D</code> 梯度函数的实现来介绍一下它是如何控制函数图像的,
+</p>
+
+<p>
+首先, \(a\) 和 \(b\) 分别是 \(p\) 和 \(p + 1\) 上的梯度: \(\begin{equation*} \begin{cases} a = rand(floor(p)) \times 2 - 1 \\ b = rand(floor(p) + 1) \times 2 - 1 \end{cases} \end{equation*}\),
+</p>
+
+<p>
+\(f = \frac{p - floor(p)}{floor(p) + 1 - floor(p)} = p - floor(p) = fract(p)\), \(f \in [0, 1]\).
+</p>
+
+<p>
+从 \(floor(p)\) 到 \(p\) 的向量为 \(f\), 从 \(floor(p) + 1\) 到 \(p\) 的向量为 \(f - 1\),
+</p>
+
+<p>
+所以在 \(floor(p)\) 上的噪声值为 \(a \cdot f\), 在 \(floor(p) + 1\) 上的噪声值为 \(b \cdot (f - 1)\),
+</p>
+
+<p>
+以下是根据两个噪声值进行插值来得出 \(p\) 上的噪声值的过程:
+</p>
+
+<p>
+\(u = 3f^2 - 2f^3\), 由于 \(f \in [0, 1]\), 所以 \(u \in [0, 1]\),
+</p>
+
+<p>
+设 \(P\) 是以 \(f\) 为参数的噪声函数, 那么其定义为:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} P(f) &= a \cdot f \cdot (1 - u) + b \cdot (f - 1) \cdot u \\ &= a \cdot f + [(b - a) \cdot f - b] \cdot u \\ &= a \cdot f + (b - a) \cdot (3 f^3 - 2 f^4) - b \cdot (3 f^2 - 2 f^3) \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+其一阶导数为: \(P^{'}(f) = a + (b - a) \cdot (9 f^2 - 8 f^3) - b \cdot (6 f - 6 f^2)\).
+</p>
+
+<p>
+根据函数定义, 函数图像在整数点上的值是 \(P(0) = P(1) = 0\).
+</p>
+
+<p>
+根据导数定义, 函数图像的整数点上的斜率就是它们对应的梯度: \(P^{'}(0) = a\) 以及 \(P^{'}(1) = b\).
+</p>
+
+<p>
+由于 \(P\) 是一个一元四次函数且具备周期性, 因此函数图由多个抛物线组成, 使得梯度噪声相比值噪声减少低频, 消除了块状效果.
+</p>
+
+<blockquote>
+<p>
+一元偶次函数的图像就是抛物线.
+</p>
+</blockquote>
+</div>
+</div>
+<div id="outline-container-org4cc56e9" class="outline-4">
+<h4 id="org4cc56e9">单形噪声</h4>
+<div class="outline-text-4" id="text-org4cc56e9">
+<blockquote>
+<p>
+以下内容参考以下论文进行总结:
+</p>
+
+<p>
+<a href="../../../files/simplexnoise.pdf">Stefan Gustavson - Simplex Noise Demystified</a>
+</p>
+
+<p>
+<a href="../../../files/efficient-computational-noise-in-GLSL.pdf">Ian McEwan, Stefan Gustavson - Efficient Computational Noise In GLSL, 2012</a>
+</p>
+
+<p>
+<a href="../../../files/simplex_noise_skew_factor.pdf">Kristian Nielsen - Understanding skew factors in Simplex/Improved Perlin Noise, 2015</a>
+</p>
+
+<p>
+<a href="../../../files/tiling-simplex-noise-and-flow-noise-in-two-and-three-dimensions.pdf">Ian McEwan, Stefan Gustavson  - Tiling Simplex Noise and Flow Noise in Two and Three Dimensions, 2022</a>
+</p>
+</blockquote>
+
+<p>
+在 <code>2001</code> 年, <code>Ken Perlin</code> 开发出了另一种名为单形噪声(<code>simplex noise</code>)的噪声算法, 相比前面的算法, 单形噪声算法有以下优点:
+</p>
+
+<ul class="org-ul">
+<li>拥有更低的计算复杂性和更少的乘法运算</li>
+<li>能以低计算成本拓展到更高维度的噪声</li>
+<li>没有明显方向性的人工痕迹</li>
+<li>拥有计算简单且明确的连续梯度</li>
+<li>在硬件上更容易实现</li>
+</ul>
+</div>
+<ul class="org-ul">
+<li><a id="orgf15859e"></a>单形<br>
+<div class="outline-text-5" id="text-orgf15859e">
+<p>
+在可视化空间时, 会用选择一种几何图形来重复地对空间进行填充, 或说, 选择一种几何图形对空间进行细分(<code>tesselation</code>), 从而形成坐标网格.
+</p>
+
+<blockquote>
+<p>
+为了方便说明, 这里把正交空间上的网格叫做正交网格, 单形空间上的网格叫做单形网格.
+</p>
+</blockquote>
+
+<p>
+<b>在细分一些空间时, 几何图形的选择会有很多种, 而几何结构最简单的那一种选择就叫做单形(<code>simplex shape</code>), 也可以理解为空间的单位.</b>
+</p>
+
+<p>
+一维空间的单形是等长的线段(一维空间只有这种选择).
+</p>
+
+<p>
+对于二维空间, 通常会用正方形对它进行细分, 但正方形本身就能够划分成两个三角形.
+</p>
+
+<p>
+因此, 三角形才是二维空间的单形, 二维空间的最优单形是等边三角形, 这意味着要把正方形沿着主对角线 \(y = x\) 错切成菱形, 使得划分所得的三角形等边, 2 个等边三角形可以组合成一个菱形.
+</p>
+
+
+<div id="orga9a1baa" class="figure">
+<p><img src="../../../files/2d-simplex-shape.png" alt="2d-simplex-shape.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 23: </span>等边三角形作为单形, 填充二维空间</p>
+</div>
+
+<p>
+对于三维空间, 它的单形是四面体(<code>tetrahedron</code>), 正式来说应该是正四面体, 可通过把对立方体沿着主对角线 \(x = y = z\) 进行错切, 再根据对角线划分得到 6 个正四面体.
+</p>
+
+
+<div id="orgb68ee6f" class="figure">
+<p><img src="../../../files/3d-simplex-shape.png" alt="3d-simplex-shape.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 24: </span>正四面体作为单形, 填充三维空间</p>
+</div>
+
+<p>
+对于四维空间, 它的单形很难可视化, 不过它有 5 个角, 并且 24 个单形可以组合成一个错切的四维超立方体(<code>hypercube</code>).
+</p>
+
+<p>
+总的来说, \(N\) 维空间的单形有 \(N + 1\) 个角, \(N!\) 个单形可以填充完一个有着 \(2^{N}\) 个角的错切 \(N\) 维超立方体.
+</p>
+
+<p>
+在传统噪声算法中, 随着走向更高维度, 为每个角计算随机梯度是一个复杂度为 \(O(2^{N})\) 的问题,
+</p>
+
+<p>
+如果是对单形的每个角度计算随机梯度, 那么计算复杂度会变成 \(O(N^2)\), 这就是单形的好处.
+</p>
+</div>
+</li>
+<li><a id="orgfeb5a44"></a>用求和替代插值<br>
+<div class="outline-text-5" id="text-orgfeb5a44">
+<p>
+随着维度走高, 传统噪声函数除了计算复杂度变高外, 噪声函数的解析导数也会越来越难求解, 噪声函数的解析导数有很多用处:
+</p>
+
+<p>
+包括凹凸贴图(<code>bump mapping</code>), 位移贴图(<code>displacement mapping</code>), 解析抗锯齿(<code>analytical antialiasing</code>)以及使用旋度噪声(<code>curl nosie</code>)的粒子动画.
+</p>
+
+<p>
+为了解决这个问题, 单形噪声不再像柏林噪声那样根据两角的贡献值进行插值, 而是对每个角的贡献值进行求和作为噪声值.
+</p>
+
+
+<div id="org8ede029" class="figure">
+<p><img src="../../../files/2d-simplex-summation-2.png" alt="2d-simplex-summation-2.png" width="504px">
+</p>
+</div>
+
+<p>
+在单形噪声中, 角的贡献值的计算过程如下:
+</p>
+
+<p>
+\([\max(0, r^2 - |\vec{d}|^2)]^4 \times \vec{d} \cdot \vec{g}\), 其中 \(\vec{d}\) 是角指向, \(\vec{g}\) 是梯度值, \(\max(0, r^2 - |\vec{d}|^2)\) 是衰减函数, \(|\vec{d}|^2\) 是角指向的模长.
+</p>
+
+<p>
+衰减函数让贡献值随着点与角之间的距离增大而减少, 通常 \(r^2 = 0.5\), 也就是以角为圆心且半径为 \(\sqrt{0.5} \approx 0.7\) 的圆,
+</p>
+
+<p>
+一般来说不会让这个圆覆盖同一个单形里的其它单形角, 因此, 半径 \(r\) 应该设定为等边三角形的高, 而不是等边三角形的边长.
+</p>
+
+<p>
+在后面的实现二维单形噪声时会详细说明为什么是 \(r^2 = 0.5\).
+</p>
+
+
+<div id="org8ede178" class="figure">
+<p><img src="../../../files/2d-simplex-summation.png" alt="2d-simplex-summation.png" width="504px">
+</p>
+</div>
+</div>
+</li>
+<li><a id="orge7f569d"></a>决定点所处的单形, 并且决定角的遍历顺序<br>
+<div class="outline-text-5" id="text-orge7f569d">
+<p>
+在传统噪声算法中需要判断点处于哪个网格中, 在单形噪声算法中则需要判断点处于哪个单形中.
+</p>
+
+<p>
+二维空间的单行是由菱形划分的等边三角形, 分上三角形和下三角形, 判断点在那个单形也就是判断它在上三角形还是下三角形.
+</p>
+
+
+<div id="org4cb5541" class="figure">
+<p><img src="../../../files/2d-simplex-selecting-traversing-order.png" alt="2d-simplex-selecting-traversing-order.png" width="504px">
+</p>
+</div>
+
+<p>
+在二维空间上, 如果点 \((x ,y)\) 满足 \(x \gt y\), 那么点处在下三角形中; 反之, 点处在上三角形中.
+</p>
+
+<p>
+如果点处于下三角形中, 那么它的单形角的遍历顺序为 \((0, 0)\), \((1, 0)\) 和 \((1, 1)\).
+</p>
+
+<p>
+如果点处于上三角形中, 那么它的单形角的遍历顺序为 \((0, 0)\), \((0, 1)\) 和 \((1, 1)\).
+</p>
+
+<p>
+决定这个顺序很简单, 为了说明, 这里采用 \((i, j)\) 来作为单形的相对角坐标:
+</p>
+
+<p>
+要对点 \((x, y)\) 的分量进行从大到小排序, 这个顺序决定了角相对坐标分量加 1 的顺序.
+</p>
+
+<p>
+如果点的分量顺序是 \(x \gt y\), 那么是对上一个角相对坐标 \(a\) 的 \(i\) 分量先加 1, 得到角相对坐标 \(b\), 然后相对 \(b\) 的 \(j\) 分量加 1, 得到角相对坐标 \(c\):
+</p>
+
+<p>
+\(a = (i, j), b = (i + 1, j), c = (i + 1, j + 1)\).
+</p>
+
+<p>
+如果点的分量顺序是 \(y \gt z\), 那么是对上一个角相对坐标 \(a\) 的 \(j\) 分量先加 1, 得到角相对坐标 \(b\), 然后相对 \(b\) 的 \(i\) 分量加 1, 得到角相对坐标 \(c\):
+</p>
+
+<p>
+\(a = (i, j), b = (i, j + 1), c = (i + 1, j + 1)\).
+</p>
+
+<p>
+对于更高空间的点 \((x, y, \dots)\) 和角相对坐标 \((x, y, \dots)\) 同理.
+</p>
+
+<p>
+下图是三维空间中判断所处单形的方法.
+</p>
+
+
+<div id="org2818def" class="figure">
+<p><img src="../../../files/3d-simplex-selecting-traversing-order.png" alt="3d-simplex-selecting-traversing-order.png" width="504px">
+</p>
+</div>
+</div>
+</li>
+<li><a id="orgc27d788"></a>2D 单形噪声实现<br>
+<div class="outline-text-5" id="text-orgc27d788">
+<p>
+这里是解读 <code>Simplex Noise Demystified</code> 原文中 <code>2D Simplex Noise</code> 的实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">2D simplex noise</span>
+<span style="color: #00ffff;">public</span> <span style="color: #00ffff;">static</span> <span style="color: #98fb98;">double</span> <span style="color: #87cefa;">noise</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">xin</span>, <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">yin</span>) {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">n0</span>, <span style="color: #eedd82;">n1</span>, <span style="color: #eedd82;">n2</span>; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Noise contributions from the three corners</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Skew the input space to determine which simplex cell we're in</span>
+    <span style="color: #00ffff;">final</span> <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">F2</span> = 0.5*(Math.sqrt(3.0)-1.0);
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">s</span> = (xin+yin)*F2; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Hairy factor for 2D</span>
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = fastfloor(xin+s);
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">j</span> = fastfloor(yin+s);
+
+    <span style="color: #00ffff;">final</span> <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">G2</span> = (3.0-Math.sqrt(3.0))/6.0;
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t</span> = (i+j)*G2;
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">X0</span> = i-t; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Unskew the cell origin back to (x,y) space</span>
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">Y0</span> = j-t;
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x0</span> = xin-X0; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">The x,y distances from the cell origin</span>
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y0</span> = yin-Y0;
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">For the 2D case, the simplex shape is an equilateral triangle.</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Determine which simplex we are in.</span>
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i1</span>, <span style="color: #eedd82;">j1</span>; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Offsets for second (middle) corner of simplex in (i,j) coords</span>
+    <span style="color: #00ffff;">if</span>(x0&gt;y0) {i1=1; j1=0;} <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">lower triangle, XY order: (0,0)-&gt;(1,0)-&gt;(1,1)</span>
+    <span style="color: #00ffff;">else</span> {i1=0; j1=1;}
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">upper triangle, YX order: (0,0)-&gt;(0,1)-&gt;(1,1)</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">c = (3-sqrt(3))/6</span>
+
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x1</span> = x0 - i1 + G2; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Offsets for middle corner in (x,y) unskewed coords</span>
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y1</span> = y0 - j1 + G2;
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x2</span> = x0 - 1.0 + 2.0 * G2; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Offsets for last corner in (x,y) unskewed coords</span>
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y2</span> = y0 - 1.0 + 2.0 * G2;
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Work out the hashed gradient indices of the three simplex corners</span>
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">ii</span> = i &amp; 255;
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">jj</span> = j &amp; 255;
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">gi0</span> = perm[ii+perm[jj]] % 12;
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">gi1</span> = perm[ii+i1+perm[jj+j1]] % 12;
+    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">gi2</span> = perm[ii+1+perm[jj+1]] % 12;
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Calculate the contribution from the three corners</span>
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t0</span> = 0.5 - x0*x0-y0*y0;
+    <span style="color: #00ffff;">if</span>(t0&lt;0) n0 = 0.0;
+    <span style="color: #00ffff;">else</span> {
+        t0 *= t0;
+        n0 = t0 * t0 * dot(grad3[gi0], x0, y0); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">(x,y) of grad3 used for 2D gradient</span>
+    }
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t1</span> = 0.5 - x1*x1-y1*y1;
+    <span style="color: #00ffff;">if</span>(t1&lt;0) n1 = 0.0;
+    <span style="color: #00ffff;">else</span> {
+        t1 *= t1;
+        n1 = t1 * t1 * dot(grad3[gi1], x1, y1);
+    }<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t2</span> = 0.5 - x2*x2-y2*y2;
+    <span style="color: #00ffff;">if</span>(t2&lt;0) n2 = 0.0;
+    <span style="color: #00ffff;">else</span> {
+        t2 *= t2;
+        n2 = t2 * t2 * dot(grad3[gi2], x2, y2);
+    }
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Add contributions from each corner to get the final noise value.</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">The result is scaled to return values in the interval [-1,1].</span>
+    <span style="color: #00ffff;">return</span> 70.0 * (n0 + n1 + n2);
+}
+</pre>
+</div>
+
+<p>
+这段代码远没有作者口中的那么可读, 很多细节都没有说明, 不过确实如他所说的很方便的移植到其它语言上.
+</p>
+
+<p>
+不过也不能怪作者, 因为原本 <code>Ken Perlin</code> 的实现就很难理解了.
+</p>
+</div>
+<ul class="org-ul">
+<li><a id="org9cc9c8d"></a>把正交网格变换成单形网格<br>
+<div class="outline-text-6" id="text-org9cc9c8d">
+<p>
+在实现单形噪声时, 可以 <b>自由</b> 选择使用任何单形网格, 这里选择了 <code>Simplex Noise Demystified</code> 里的单形网格, 如下图:
+</p>
+
+
+<div id="org511b1f7" class="figure">
+<p><img src="../../../files/2d-simplex-grid-choice.png" alt="2d-simplex-grid-choice.png" width="504px">
+</p>
+</div>
+
+<p>
+这个单形网格是这么得到的:
+</p>
+
+<p>
+把 \(x\) 轴 \(\left( \begin{array}{c} 1 \\ 0 \end{array} \right)\) 往逆时针方向旋转 \(15^{\circ}\) 得到 \(u\) 轴, 再把 \(y\) 轴 \(\left( \begin{array}{c} 0 \\ 1 \end{array} \right)\) 往顺时针方向选择 \(15^{\circ}\) 得到 \(v\) 轴, 使得 \(u\) 和 \(v\) 两轴之间的夹角为 \(60^{\circ}\); 最后对 \(u\) 和 \(v\) 两轴进行统一伸缩.
+</p>
+
+<p>
+这个结论是通过 <code>Simplex Noise Demystified</code> 以下代码反推的, 原文没有明确说明如何得到的单形网格, 因此, 结论可能有误.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #00ffff;">final</span> <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">F2</span> = 0.5*(Math.sqrt(3.0)-1.0);
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">s</span> = (xin+yin)*F2; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Hairy factor for 2D</span>
+<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = fastfloor(xin+s);
+<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">j</span> = fastfloor(yin+s);
+
+<span style="color: #00ffff;">final</span> <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">G2</span> = (3.0-Math.sqrt(3.0))/6.0;
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t</span> = (i+j)*G2;
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">X0</span> = i-t; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Unskew the cell origin back to (x,y) space</span>
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">Y0</span> = j-t;
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x0</span> = xin-X0; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">The x,y distances from the cell origin</span>
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y0</span> = yin-Y0;
+</pre>
+</div>
+
+<p>
+为了方便讨论, 假设 \(\vec{u} = \left( \begin{array}{c} a \\ c \end{array} \right)\) 和 \(\vec{v} = \left( \begin{array}{c} b \\ d \end{array} \right)\) 就是旋转得到的 \(u\) 和 \(v\) 轴, 并且都是单位向量.
+</p>
+
+<p>
+接下来计算得出 \(u\) 和 \(v\) 的矩阵:
+</p>
+
+<p>
+\(\cos \frac{\pi}{12} = \cos(\frac{\pi}{4} - \frac{\pi}{6}) = \cos\frac{\pi}{4} \cos\frac{\pi}{6} + \sin\frac{\pi}{4} \sin\frac{\pi}{6} = \frac{\sqrt{3}}{2 \sqrt{2}} + \frac{1}{2 \sqrt{2}} = \frac{1}{2 \sqrt{2}}(\sqrt{3} + 1)\)
+</p>
+
+<p>
+\(\cos (-\frac{\pi}{12}) = \cos(\frac{\pi}{6} - \frac{\pi}{4}) = \cos\frac{\pi}{6}\cos\frac{\pi}{4} + \sin\frac{\pi}{6}\sin\frac{\pi}{4} = \frac{\sqrt{3}}{2 \sqrt{2}} + \frac{1}{2 \sqrt{2}} = \frac{1}{2 \sqrt{2}}(\sqrt{3} + 1)\)
+</p>
+
+<p>
+\(\sin \frac{\pi}{12} = \sin(\frac{\pi}{4} - \frac{\pi}{6}) = \sin\frac{\pi}{4} \cos\frac{\pi}{6} - \cos\frac{\pi}{4} \sin\frac{\pi}{6} = \frac{\sqrt{3}}{2 \sqrt{2}} - \frac{1}{2 \sqrt{2}} = \frac{1}{2 \sqrt{2}}(\sqrt{3} - 1)\)
+</p>
+
+<p>
+\(\sin (-\frac{\pi}{12}) = \sin(\frac{\pi}{6} - \frac{\pi}{4}) = \sin\frac{\pi}{6} \cos\frac{\pi}{4} - \cos\frac{\pi}{6} \sin\frac{\pi}{4} = \frac{1}{2 \sqrt{2}} - \frac{\sqrt{3}}{2 \sqrt{2}} = \frac{1}{2 \sqrt{2}}(1 - \sqrt{3})\)
+</p>
+
+<p>
+\(R(\frac{\pi}{12}) = \left( \begin{array}{c} \cos(\frac{\pi}{12}) & -\sin(\frac{\pi}{12}) \\ \sin(\frac{\pi}{12}) & \cos(\frac{\pi}{12}) \end{array} \right) = \frac{1}{2 \sqrt{2}} \left( \begin{array}{c} \sqrt{3} + 1 & 1 - \sqrt{3} \\ \sqrt{3} - 1 & \sqrt{3} + 1 \end{array} \right)\)
+</p>
+
+<p>
+\(R(-\frac{\pi}{12}) = R(\frac{\pi}{12})^{-1} = R(\frac{\pi}{12})^{T}\)
+</p>
+
+<p>
+\(\vec{x}\) 轴变换得到 \(\vec{u}\) 轴: \(\vec{u} = R(\frac{\pi}{12}) \left( \begin{array}{c} 1 \\ 0 \end{array} \right) = \frac{1}{2\sqrt{2}}\left( \begin{array}{c} \sqrt{3} + 1 \\ \sqrt{3} - 1 \end{array} \right)\).
+</p>
+
+<p>
+\(\vec{y}\) 轴变换得到 \(\vec{v}\) 轴: \(\vec{v} = R(-\frac{\pi}{12}) \left( \begin{array}{c} 0 \\ 1 \end{array} \right) = \frac{1}{2\sqrt{2}} \left(\begin{array}{c} \sqrt{3} - 1 \\ \sqrt{3} + 1 \end{array} \right)\).
+</p>
+
+<p>
+所以, 可以得出 \(\begin{equation*} \begin{cases} a = d = \frac{1}{2\sqrt{2}}(\sqrt{3} + 1) \\ b = c = \frac{1}{2\sqrt{2}}(\sqrt{3} - 1) \\ \end{cases} \end{equation*}\), 这个变换可以用矩阵 \(M_{r} = \frac{1}{2\sqrt{2}} \left( \begin{array}{c} \sqrt{3} + 1 & \sqrt{3} - 1 \\ \sqrt{3} - 1 & \sqrt{3} + 1 \end{array} \right)\) 表示.
+</p>
+
+<p>
+仅凭这些是没办法看出与代码有什么关系, 这是因为文中代码做了性能优化, 非常感谢 <code>Kristian Nielse</code> 的贡献, 不然破头也想不出来.
+</p>
+
+<p>
+先来看一下从 \(xy\) 到 \(uv\) 之间变换: \(\begin{equation*} \begin{cases} u = ax + by \\ v = cx + dy \end{cases} \end{equation*}\), 因为 \(a = d\) 并且 \(b = c\), 所以该关系可以写成 \(\begin{equation*} \begin{cases} u = ax + by \\ v = bx + ay \end{cases} \end{equation*}\).
+</p>
+
+<p>
+整个变换需要 4 次乘法, 文中引入 "Fancy version of zero" 对变换进行重组得到: \(\begin{equation*} \begin{cases} u = ax - bx + bx  + by = (a - b)x + b(x + y) \\ v = bx - by + by + ay = (a - b)y + b(x + y) \end{cases} \end{equation*}\),
+</p>
+
+<p>
+其中 \(b(x + y)\) 是重复运算, 可以减少 1 次乘法运算, 再使得 \(a - b = 1\), 则可以再去掉 2 次乘法运算, 那么整个变换只需要 1 次乘法运算.
+</p>
+
+<p>
+因为 \(a - b = \frac{\sqrt{2}}{2}\), 所以只要让 \(a\) 和 \(b\) 同时除以 \(\frac{\sqrt{2}}{2}\) 或乘以 \(\sqrt{2}\) 即可, 对应了开头说的统一缩放变换,
+</p>
+
+<p>
+可以用矩阵 \(M_{s} = \sqrt{2} \left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right)\) 表示.
+</p>
+
+<p>
+同时说明了最终的单形网格空间的基底向量并非单位向量: \(\begin{equation*} \begin{cases} \sqrt{2} \times \frac{1}{2\sqrt{2}} = \frac{1}{2} \\ a_{1} = d_{1} = \frac{1}{2}(\sqrt{3} + 1) \\ b_{1} = c_{1} = \frac{1}{2}(\sqrt{3} - 1) \end{cases} \end{equation*}\).
+</p>
+
+<p>
+再回过头来对比整个变换过程 \(M = M_{s}M_{r}\) 和上面的代码, 其中 \(b_{1}(x + y)\) 对应 \(\mathrm{(xin + yin) * F2}\), 并且 \(b_{1} = \mathrm{F2} = \frac{\sqrt{3} - 1}{2}\).
+</p>
+
+<p>
+把单形网格空间上的点还原到正交网格上, 就是求 \(M\) 的逆矩阵 \(M^{-1} = M_{r}^{-1}M_{s}^{-1} = \left( \begin{array}{c} a_2 & b_2 \\ c_2 & d_2 \end{array} \right)\),
+</p>
+
+<p>
+该变换也可以像上面那样写成: \(\begin{equation*} \begin{cases} x = a_{2}u - b_{2}u + b_{2}u  + b_{2}v = (a_{2} - b_{2})u + b_{2}(u + v) \\ y = b_{2}u - b_{2}v + b_{2}v + a_{2}v = (a_{2} - b_{2})v + b_{2}(u + v) \end{cases} \end{equation*}\).
+</p>
+
+<p>
+\(M_{s}^{-1} = \frac{\sqrt{2}}{2} \left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right)\)
+</p>
+
+<p>
+\(M_{r}^{-1} = \frac{1}{ad - bc} \left( \begin{array}{c} d & -c \\ -b & a \end{array} \right) = \frac{1}{\sqrt{6}} \left( \begin{array}{c} \sqrt{3} + 1 & 1 - \sqrt{3} \\ 1 - \sqrt{3} & \sqrt{3} + 1 \end{array} \right)\)
+</p>
+
+<p>
+\(M^{-1} = M_{r}^{-1}M_{s}^{-1} = \frac{\sqrt{2}}{2} \times \frac{1}{\sqrt{6}} \left( \begin{array}{c} \sqrt{3} + 1 & 1 - \sqrt{3} \\ 1 - \sqrt{3} & \sqrt{3} + 1 \end{array} \right) = \frac{1}{2\sqrt{3}} \left( \begin{array}{c} \sqrt{3} + 1 & 1 - \sqrt{3} \\ 1 - \sqrt{3} & \sqrt{3} + 1 \end{array} \right)\)
+</p>
+
+<p>
+所以, 得出 \(\begin{equation*} \begin{cases} a_{2} = d_{2} = \frac{\sqrt{3} + 1}{2\sqrt{3}} = \frac{3 + \sqrt{3}}{6} \\ b_{2} = c_{2} = \frac{1 - \sqrt{3}}{2 \sqrt{3}} = \frac{\sqrt{3} - 3}{6} \end{cases} \end{equation*}\), 对比代码中的 \(\mathrm{(i + j) * G2}\) 可发现 \(-b_2 = \mathrm{G2} = \frac{3 - \sqrt{3}}{6}\),
+</p>
+
+<p>
+为什么是转负, 因为代码的上下文是这样的:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t</span> = (i + j) * G2;
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">X0</span> = i - t;
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">Y0</span> = j - t;
+</pre>
+</div>
+
+<p>
+\(i\) 和 \(j\) 是单形中第一个被遍历到的角相对坐标 \((0, 0)\) 的分量, \((\mathrm{X0}, \mathrm{Y0})\) 是该单形角对应的正交网格空间坐标, \((\mathrm{x0}, \mathrm{y0})\) 是单形角正交网格空间中上的角指向, 同时是点在单形中的相对坐标.
+</p>
+
+<p>
+到了这里就开始进入下一个环节了: 遍历单形角.
+</p>
+
+<blockquote>
+<p>
+<code>Ian McEwan</code> 和 <code>Stefan Gustavson</code> 后来又写了 <code>Tiling Simplex Noise and Flow Noise in Two and Three Dimensons</code>, 里面采用了另一种方便计算的二维单形网格, 不过它的单形并非等边的等腰三角形:
+</p>
+
+
+<div id="orgdc5f0df" class="figure">
+<p><img src="../../../files/2d-simplex-grid-efficient-choice.png" alt="2d-simplex-grid-efficient-choice.png" width="504px">
+</p>
+</div>
+
+<p>
+这个单形也提高了后续遍历单形角的计算效率.
+</p>
+</blockquote>
+</div>
+</li>
+<li><a id="org8a0a9a7"></a>遍历单形角并求和贡献值<br>
+<div class="outline-text-6" id="text-org8a0a9a7">
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">For the 2D case, the simplex shape is an equilateral triangle.</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Determine which simplex we are in.</span>
+<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i1</span>, <span style="color: #eedd82;">j1</span>; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Offsets for second (middle) corner of simplex in (i,j) coords</span>
+<span style="color: #00ffff;">if</span>(x0&gt;y0) {i1=1; j1=0;} <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">lower triangle, XY order: (0,0)-&gt;(1,0)-&gt;(1,1)</span>
+<span style="color: #00ffff;">else</span> {i1=0; j1=1;}
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">upper triangle, YX order: (0,0)-&gt;(0,1)-&gt;(1,1)</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">c = (3-sqrt(3))/6</span>
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x1</span> = x0 - i1 + G2; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Offsets for middle corner in (x,y) unskewed coords</span>
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y1</span> = y0 - j1 + G2;
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x2</span> = x0 - 1.0 + 2.0 * G2; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Offsets for last corner in (x,y) unskewed coords</span>
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y2</span> = y0 - 1.0 + 2.0 * G2;
+</pre>
+</div>
+
+<p>
+首先是判断点位于哪个单形中, 这里通过点 \(\mathrm{(x0, y0)}\) 在正交网格空间的分量进行判断,
+</p>
+
+<p>
+如果 \(\mathrm{x0} \gt \mathrm{y0}\) 就是菱形的下三角形, 否则就是上三角形.
+</p>
+
+<p>
+因为第二个单形角的相对坐标是 \((0, 1)\) 或 \((1, 0)\), 代码中的 \(\mathrm{x1 = x0 - i1 + G2}\) 完整写法是 \(\mathrm{x0 - [i1 - (1 + 0) \times G2]}\),
+</p>
+
+<p>
+表示第二个单形角在正交网格空间上的角指向 \(x\) 分量, 同理, \(\mathrm{y1}\) 表示对应的 \(y\) 分量.
+</p>
+
+<p>
+因此, \((\mathrm{x1}, \mathrm{y1})\) 是第二个单形角在正交网格空间上的角指向.
+</p>
+
+<p>
+第三个单形角的相对坐标是 \((1, 1)\) 代码中的 \(\mathrm{x2 = x0 - 1 + 2 \times G2}\) 完整写法是 \(\mathrm{x2 = x0 - [1 - (1 + 1) \times G2]}\),
+</p>
+
+<p>
+其中 \(\mathrm{1 - (1 + 1) \times G2}\) 是该单形角的 \(x\) 分量, 所以 \(\mathrm{x2}\) 表示第三个单形角在正交网格空间上的角指向 \(x\) 分量; 同理, \(\mathrm{y2}\) 是对应的 \(y\) 分量.
+</p>
+
+<p>
+因此, \((\mathrm{x2}, \mathrm{y2})\) 是第三个单形角在正交网格空间上的角指向.
+</p>
+
+<p>
+在计算出所有角指向后, 可以开始计算每个角的贡献值了, 下面是原文中的参考代码:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Calculate the contribution from the three corners</span>
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t0</span> = 0.5 - x0*x0-y0*y0;
+<span style="color: #00ffff;">if</span>(t0&lt;0) n0 = 0.0;
+<span style="color: #00ffff;">else</span> {
+    t0 *= t0;
+    n0 = t0 * t0 * dot(grad3[gi0], x0, y0); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">(x,y) of grad3 used for 2D gradient</span>
+}
+
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t1</span> = 0.5 - x1*x1-y1*y1;
+<span style="color: #00ffff;">if</span>(t1&lt;0) n1 = 0.0;
+<span style="color: #00ffff;">else</span> {
+    t1 *= t1;
+    n1 = t1 * t1 * dot(grad3[gi1], x1, y1);
+}
+
+<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">t2</span> = 0.5 - x2*x2-y2*y2;
+<span style="color: #00ffff;">if</span>(t2&lt;0) n2 = 0.0;
+<span style="color: #00ffff;">else</span> {
+    t2 *= t2;
+    n2 = t2 * t2 * dot(grad3[gi2], x2, y2);
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Add contributions from each corner to get the final noise value.</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">The result is scaled to return values in the interval [-1,1].</span>
+<span style="color: #00ffff;">return</span> 70.0 * (n0 + n1 + n2);
+</pre>
+</div>
+
+<p>
+这里的 \(\mathrm{n0}\) 正式第一个单形角的贡献值, \(\mathrm{t0}\) 的 4 次方是衰减系数.
+</p>
+
+<p>
+这个衰减系数是用在正交网格空间上的, 正如之前所说的, 衰减函数也代表着一个圆, 它半径为 \(r = \sqrt{0.5}\).
+</p>
+
+<p>
+这个值是如何得到的呢?
+</p>
+
+<p>
+首先在单形网格上求得第一个单形角到它对面边的垂直线, 由于单形是等边三角形, 所以垂直线与对面边的交点正好是对面边的中点, 这样可以确定该边上中点的相对坐标为 \((1, \frac{1}{2})\) 或 \((\frac{1}{2}, 1)\).
+</p>
+
+<blockquote>
+<p>
+以下三角形为例, 从第一个单形角开始, 往 \(\vec{u}\) 方向增加一个单位, 往 \(\vec{v}\) 方向增加 \(\frac{1}{2}\) 个单位, 最终到达的角相对坐标为 \((1, \frac{1}{2})\).
+</p>
+
+<p>
+如果是上三角形, 最终到达的角相对坐标为 \((\frac{1}{2}, 1)\). 不管哪种情况, 都不影响后续的计算.
+</p>
+
+<p>
+这里以第一个单形角对面边的中点作为例子, 是因为第一个单形角的相对坐标为 \((0, 0)\), 该边中点 \(m_{uv}\) 等于垂直线的向量 \(\vec{m_{uv}} = m_{uv} - (0, 0)\), 垂直线的长度等于 \(|m_{uv}|\).
+</p>
+</blockquote>
+
+<p>
+这里以下三角形为例, 中点为 \(m_{uv} = (1, \frac{1}{2})\), 接下来把他转换到正交网格空间上, 得到点 \(m_{xy}\):
+</p>
+
+<p>
+\((1 + \frac{1}{2}) \times \mathrm{G2} = \frac{3}{2} \times \frac{3 - \sqrt{3}}{6} = \frac{3 - \sqrt{3}}{4}\)
+</p>
+
+<p>
+\(m_{xy} = (1 - \frac{3 - \sqrt{3}}{4}, \frac{1}{2} - \frac{3 - \sqrt{3}}{4}) = (\frac{1 + \sqrt{3}}{4}, \frac{\sqrt{3} - 1}{4})\)
+</p>
+
+<p>
+最后得到它模长的平方: \(|m_{xy}|^2 = (\frac{1}{4})^2 [(\sqrt{3} + 1)^2 + (\sqrt{3} - 1)^2] = \frac{1}{2}\), 正好就是 \(r^2 = 0.5 = \frac{1}{2}\).
+</p>
+
+<p>
+所以, \(r^2 = 0.5\) 就是单形网格上等边三角形的高在正交网格空间上的长度的平方.
+</p>
+
+<p>
+\(\mathrm{grad3[gi0]}\) 是从预计算好的梯度表格中获取梯度:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">grad3</span>[][] = {{1,1,0},{-1,1,0},{1,-1,0},{-1,-1,0},
+                 {1,0,1},{-1,0,1},{1,0,-1},{-1,0,-1},
+                 {0,1,1},{0,-1,1},{0,1,-1},{0,-1,-1}};
+</pre>
+</div>
+
+<p>
+原文中的二维单形噪声的梯度是三维向量, 而我们在实现时可以完全参考柏林噪声中的梯度计算生成二维梯度向量:
+</p>
+
+<p>
+\(\mathrm{dot(grad3[gi0], x0, y0)}\) 就是梯度的 \(xy\) 分量和角指向之间的点积, \(\mathrm{n1}\) 和 \(\mathrm{n2}\) 的贡献值计算同理.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-java"><span style="color: #00ffff;">private</span> <span style="color: #00ffff;">static</span> <span style="color: #98fb98;">double</span> <span style="color: #87cefa;">dot</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">g</span>[], <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x</span>, <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">y</span>) {
+    <span style="color: #00ffff;">return</span> g[0]*x + g[1]*y;
+}
+</pre>
+</div>
+
+<p>
+代码中 \(\mathrm{70 \times (n0 + n1 + n2)}\) 就是单形噪声值, 正如代码的注释所示, \(70\) 是用来把结果归一化成 \([-1, 1]\) 的.
+</p>
+
+<p>
+为什么是 \(70\), 这需要讨论 \(\mathrm{n0 + n1 + n2}\) 的最大值是多少.
+</p>
+
+<p>
+\(\sum\limits_{i=0}^{2} (0.5 - |\vec{d_{i}}|^2)^4 \vec{g_{i}}\vec{d_{i}} = \sum\limits_{i=0}^{2} (0.5 - |\vec{d_{i}}|^2)^4 |\vec{g_{i}}||\vec{d_{i}}|\cos\theta\)
+</p>
+
+<p>
+想让 \(\vec{g_{i}} \cdot \vec{d_{i}}\) 最大, 要满足两个条件:
+</p>
+
+<ol class="org-ol">
+<li>\(\vec{g_{i}}\) 和 \(\vec{d_{i}}\) 之间的夹角 \(\theta\) 为 0, 换而言之满足这样的关系: \(\vec{g_{i}} = \lambda \vec{d_{i}}\), 其中 \(\lambda \gt 0\);</li>
+<li>两者的模长达到各自的最大值. 由于梯度向量 \(\vec{g}\) 是预设的, 所以可以确定它的最大模长为 \(\sqrt{2}\).</li>
+</ol>
+
+
+<p>
+假设同时满足这两个条件, 上面的等式可以写成 \(\sqrt{2} \sum\limits_{i=0}^{2} (0.5 - |\vec{d_{i}}|^2)^4 |\vec{d_{i}}|\).
+</p>
+
+<p>
+分别讨论三种情况: 输入点位于任意单形角, 位于等边三角形中心以及位于任意边中点.
+</p>
+
+<blockquote>
+<p>
+这个问题没法直接用费马点(<code>Fermat point</code>)来解决.
+</p>
+
+<p>
+所谓费马点是位于三角形内的一个点, 这个点到三个顶点的距离之和比从其它点算起都要小, 每个三角形只有一个费马点.
+</p>
+
+<p>
+假设三角形的三个顶点分别为 \(A, B, C\), 费马点为 \(P\), 那么距离之和为 \(|\vec{PA}| + |\vec{PB}| + |\vec{PC}|\).
+</p>
+
+<p>
+因为 \(f(x) = (0.5 - x^2)^4 x\) 不是线性关系, 所以 \(\sqrt{2}[f(|\vec{PA}|) + f(|\vec{PB}|) + f(|\vec{PC}|)] \ne \sqrt{2}f(|\vec{PA}| + |\vec{PB}| + |\vec{PC}|)\).
+</p>
+</blockquote>
+
+
+<div id="org7f79ed2" class="figure">
+<p><img src="../../../files/2d-simplex-summation.png" alt="2d-simplex-summation.png" width="504px">
+</p>
+</div>
+
+<p>
+从图中可得知:
+</p>
+
+<p>
+当点处于其中一个角上, 点与对应角的距离为 0, 其贡献值为 \(\sqrt{2} (0.5 - 0)^4 \times 0 = 0\) 其它两个角的贡献值也同样为 0,
+</p>
+
+<p>
+所以 \(\mathrm{n0 + n1 + n2} = 0\);
+</p>
+
+<p>
+当点处于等边三角形的中心, 点到每个角的距离都相等, 中点正好是其高的三等分点, 点到角的距离为 \(\frac{2}{3} \sqrt{\frac{1}{2}} = \frac{\sqrt{2}}{3}\),
+</p>
+
+<p>
+所以 \(\mathrm{n0 + n1 + n2 = 3 \times \sqrt{2}(0.5 - (\frac{\sqrt{2}}{3})^2)^4 \frac{\sqrt{2}}{3}} = 2 (\frac{5}{18})^4 = \frac{625}{52488} \approx \frac{1}{84}\);
+</p>
+
+<p>
+当点处于任意边的中点, 点距离每个角的距离分别为 \(\sqrt{\frac{1}{2}}\), \(\sqrt{\frac{1}{6}}\) 以及 \(\sqrt{\frac{1}{6}}\),
+</p>
+
+<p>
+所以 \(\mathrm{n0 + n1 + n2} = \sqrt{2} [(0.5 - \frac{1}{2})^4 \sqrt{\frac{1}{2}} + (0.5 - \frac{1}{6})^4 \sqrt{\frac{1}{6}} + (0.5 - \frac{1}{6})^4 \sqrt{\frac{1}{6}}] = 2 \sqrt{2} \times \frac{1}{3}^4 \sqrt{\frac{1}{6}} = \frac{2}{81}\sqrt{\frac{1}{3}} \approx \frac{1}{70}\).
+</p>
+
+<blockquote>
+<p>
+这三个距离中, \(\sqrt{\frac{1}{2}}\) 已经在求 \(m_{xy}\) 时得到了, 另外两个可以根据等边三角形和三角函数得到,
+</p>
+
+<p>
+又或者通过单形网格空间上 \((1, 0)\) 或 \((0, 1)\) 变换到正交网格空间上再进行求模长得出单形的边长, 再除以 2 得到, 这里就不详细说了.
+</p>
+</blockquote>
+
+<p>
+在对比之下发现, 点处于等边三角形边的中心时贡献值最大.
+</p>
+
+<p>
+然而, 该归一化系数 \(70\) 并不严谨, 目前没找到关于"点处于等边三角形边的中心时贡献值最大"的数学证明, 该结论是通过实验得到的, 后面会提到这个问题.
+</p>
+</div>
+</li>
+</ul>
+</li>
+<li><a id="org35067d2"></a>更高维度的单形噪声<br>
+<div class="outline-text-5" id="text-org35067d2">
+<p>
+从 <code>2D</code> 单噪声的实现中可以看到里面涉及了大量复杂的推导, 那么对于更高维度的单形噪声是不是也要这样呢?
+</p>
+
+<p>
+可以不用, 因为上面推导结果基本上可以在<a href="https://polytope.miraheze.org/wiki/Simplex">正单形(regular simplex)性质</a>找到.
+</p>
+
+<p>
+这里只讨论几个东西: \(\mathrm{F2}\) 的高维版本 \(F_N\), \(\mathrm{G2}\) 的高维版本 \(G_N\), 正单形的边长 \(L\), 正单形的高 \(H\), 以及更高维度的归一化系数 \(NF\) 如何得到.
+</p>
+
+<p>
+在 \(N\) 维空间上:
+</p>
+
+<p>
+\(F_N = \frac{\sqrt{N + 1} - 1}{N}\)
+</p>
+
+<p>
+\(G_N = \frac{(N + 1) - \sqrt{N+1}}{N^2 + N} = \frac{1 - \frac{1}{\sqrt{N + 1}}}{N}\);
+</p>
+
+<p>
+\(L = \frac{N}{\sqrt{N^2 + N}} = \sqrt{\frac{N}{N + 1}}\);
+</p>
+
+<blockquote>
+<p>
+这个公式是从 <a href="../../../files/constructing-a-regular-n-simplex.pdf">Constructing a regular n-simplex</a> 里面得到的.
+</p>
+</blockquote>
+
+<p>
+\(H = \sqrt{\frac{N + 1}{2N}} \cdot L = \sqrt{\frac{N + 1}{2N}} \cdot \sqrt{\frac{N}{N + 1}} = \frac{\sqrt{2}}{2}\);
+</p>
+
+<p>
+\(NF(d, r, m, n) = \frac{1}{2m(r^2 - d^2)^n}\), 其中:
+</p>
+
+<p>
+\(d\) 是角指向的模;
+</p>
+
+<p>
+\(r\) 是衰减函数里的半径, 通常是单形角到对边/面的垂直距离;
+</p>
+
+<p>
+\(m\) 是梯度向量的最大模, 为 \(\sqrt{N}\);
+</p>
+
+<p>
+\(n\) 是衰减函数的幂.
+</p>
+
+<p>
+这里的归一化系数的计算方式是基于这个结论得到的: 当点处于单形中的一条边上的中点时, 贡献值达到最大.
+</p>
+
+<p>
+目前我没有找到该支撑该结论的数学证明, 该结论是<a href="http://briansharpe.wordpress.com/2012/01/13/simplex-noise/#comment-36">Sharpe 通过实验得到的 (在评论区里面)</a>得到的.
+</p>
+
+<p>
+需要注意是, <code>Sharpe</code> 计算方式和这里的有些出入, 这里的考虑上了梯度向量的模长不为 1.
+</p>
+
+<p>
+还有, 不管用 <code>Sharpe</code> 的还是说这里的计算方式, 高维 \(NF\) 的计算结果与 <code>Simplex Noise Demystified</code> 的有出入, 考虑到原文中就有不少错误, 因此这里我决定相信 <code>Sharpe</code>.
+</p>
+
+<p>
+这里附上 \(S_N\) 的 <code>Maxima</code> 实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima">NF(x, r, m, n) <span style="color: #00ffff;">:=</span> <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">/</span> ((r<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span> <span style="color: #00ffff;">-</span> x<span style="color: #00ffff;">^</span><span style="color: #7fffd4;">2</span>)<span style="color: #00ffff;">^</span>n <span style="color: #00ffff;">*</span> x <span style="color: #00ffff;">*</span> m <span style="color: #00ffff;">*</span> <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">0</span>);
+</pre>
+</div>
+
+<p>
+另外, 为了防止链接失效, 这里还是备份一下评论的内容:
+</p>
+
+<blockquote>
+<p>
+The way to work out the normalization factor is to think of what the maximum possible value would be generated if given the right conditions. So this would be by taking some sample within the simplex triangle, while having all gradient vectors pointing at that sample. To generate the maximum value it turns out that this sample is halfway along any one of the triangle edges. ( so this means the equal combination of two surflets )
+</p>
+
+<p>
+In 2D, half the edge length of a simplex triangle is…
+</p>
+
+<p>
+x = ( sqrt( 0.5 )/sqrt( 0.75 ) ) * 0.5
+</p>
+
+<p>
+So our 2D normalization factor becomes…
+</p>
+
+<p>
+2DNF = 1.0 / ( x * ( ( 0.5 – x*x ) ^ 4 ) * 2.0 ) = ~99.2043345….
+</p>
+
+<p>
+In 3D, half the edge length of a simplex tetrahedron is…
+</p>
+
+<p>
+x = sqrt( 0.75 ) * 0.5
+</p>
+
+<p>
+So our 3D normalization factor becomes…
+</p>
+
+<p>
+3DNF = 1.0 / ( x * ( ( 0.5 – x*x ) ^ 3 ) * 2.0 ) = ~37.8372272…..
+</p>
+
+<p>
+Something to note: 2D simplex triangles ( as generated by perlins skew/unskew method ) are equilateral. But the 3D simplex tetrahedrons are NOT. They’re slightly skewed…. So the 3D math I’m using here starts to deviate ever so slightly from the actual results. But because it is so minor and to keep math simplicity+sanity, I’ve chosen to ignore this issue.
+</p>
+</blockquote>
+
+<p>
+(PS: 归一化系数应该是单形噪声中最不严谨的部分了, 在网上找了好几天的相关解释, 发现每个实现的 \(NF\) 都不一样, 着实心累, 考虑到实现中用上近似了, 就不太纠结准确性了.)
+</p>
+</div>
+</li>
+</ul>
 </div>
 </div>
 <div id="outline-container-org8171fdf" class="outline-3">
@@ -2066,8 +3665,14 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 <div id="outline-container-orgf82c3b3" class="outline-3">
 <h3 id="orgf82c3b3">Unreal Engine: rcp</h3>
 <div class="outline-text-3" id="text-orgf82c3b3">
+<blockquote>
 <p>
-<a href="https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2">https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2</a>
+来源: <a href="https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2">https://forums.unrealengine.com/t/q-what-is-does-the-rcp-function-perform-in-the-shader-code/28068/2</a>
+</p>
+</blockquote>
+
+<p>
+快速计算/近似 \(x\) 的倒数: \(rcp(x) = \frac{1}{x}\).
 </p>
 </div>
 </div>
