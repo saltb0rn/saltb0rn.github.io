@@ -281,7 +281,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=5d8c599c0f712509cb2e841e730897de][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=2f394d76464750e5b6628a7408465b8b][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
