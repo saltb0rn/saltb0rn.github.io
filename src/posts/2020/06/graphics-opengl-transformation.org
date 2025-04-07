@@ -832,7 +832,36 @@ $fov$ 还可以用来实现视觉上的缩放, $fov$ 缩小表示视野变小,�
 
 其它同理,最终关系为 $\begin{equation*} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{p} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{p} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{p} - \frac{f+n}{f-n} \end{aligned} \right. \end{equation*}$, 所以 $M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & -\frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
 
-观察该矩阵可以发现 $x_{n}$ 和 $y_{n}$ 的计算过程不涉及 $n$, 因此, 正交投影不会有近大远小的视觉效果.
+观察该矩阵可以发现 $x_{n}$ 和 $y_{n}$ 的计算过程不涉及 $n$ 和 $z_{p}$, 因此, 正交投影不会有近大远小的视觉效果.
+
+因为这个特性, 正交投影非常适合在 =3D= 游戏中用于绘制 =2D UI=, =3D= 的内容用透视投影成像, =2D UI= 用正交投影成像,
+
+取消深度测试, 把 =2D UI= 覆盖在 =3D= 内容上, 在这个过程中, =3D= 与 =2D= 两者最终的成像比例是一致, 可以想象成把两张图片叠在一起,
+
+以 =three.js= 为例,
+
+#+BEGIN_SRC js
+  const width = 16
+  const height = 9
+  const near = 1
+  const far = 100
+  const aspect = width / height
+  // 3D 成像的比例, 第一个重点
+  const persCam = new THREE.PerspectiveCamera(75, aspect, near, far)
+
+  const top = 2.5
+  const bottom = -2.5
+  const orthoFrustumHeight = top - bottom
+  // 正交视椎体高度, 第二个重点
+  const left = orthoFrustumHeight * aspect / -2
+  const right = orthoFrustumHeight * aspect / 2
+  // 根据 aspect 计算 left 和 right, 使得最终成像的比例和 3D 成像的比例一致, 第三个重点
+  const top = orthoFrustumHeight / 2
+  const bottom = -orthoFrustumHeight / 2
+  const orthoCam = new THREE.OrthographicCamera(left, right, top, bottom, near, far)
+#+END_SRC
+
+其中 =left/right= 是 =2D UI= 画布在水平方向的范围, =top/bottom= 则是在垂直方向上的范围, 在绘制 =UI= 元素时需要根据这个坐标系来对元素进行定位.
 
 ** 接下来
 
