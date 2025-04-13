@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-04-14 Mon 00:05 -->
+<!-- 2025-04-14 Mon 00:16 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -282,7 +282,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org048a742">
+<div class="abstract" id="org29dd5c4">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -316,7 +316,7 @@
 </p>
 
 
-<div id="org9f4a121" class="figure">
+<div id="org559723a" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg">
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -427,7 +427,7 @@
 </p>
 
 
-<div id="org87a18be" class="figure">
+<div id="org9513638" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png">
 </p>
 </div>
@@ -526,7 +526,7 @@
 <h2 id="orgab96d0e">OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-orgab96d0e">
 
-<div id="orgdfe6103" class="figure">
+<div id="orgaae07ee" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -722,7 +722,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org2fd8357" class="figure">
+<div id="org4d28551" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif">
 </p>
 <p><span class="figure-number">Figure 3: </span>相机看小黄鸭的顶部</p>
@@ -733,7 +733,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org9d92b16" class="figure">
+<div id="orge076a04" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif">
 </p>
 <p><span class="figure-number">Figure 4: </span>相机看小黄鸭的正前方</p>
@@ -825,7 +825,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgf3e8d3e" class="figure">
+<div id="orga0d843e" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png">
 </p>
 </div>
@@ -839,7 +839,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgfe4b79a" class="figure">
+<div id="orgddbd0f0" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png">
 </p>
 </div>
@@ -873,7 +873,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgbe8227a" class="figure">
+<div id="orgd573bbc" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png">
 </p>
 </div>
@@ -956,15 +956,19 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-最后再提醒一下, 在固定管线的时期, <code>OpenGL</code> 的 \(M_{modelview}\) 是不能分开成 \(M_{model}\) 和 \(M_{view}\) 的, 所以那个时期的法线变换只能是 \((M_{modelview}^{-1})^{T}\), 并且用于计算光照的光源是在视点坐标系上的.
+最后再提醒一下, 在固定管线的时期, <code>OpenGL</code> 的 \(M_{modelview}\) 是不能分开成 \(M_{model}\) 和 \(M_{view}\) 的, 所以那个时期的法线变换只能是 \((M_{modelview}^{-1})^{T}\), 并且用于计算光照的光源是也是在视点坐标系上的.
 </p>
 
 <p>
-后来可以对 \(M_{modelview}\) 进行拆分, 光源以及法线变换可以发生在世界坐标系上了, 这个时候的法线变换为 \((M_{model}^{-1})^{T}\),
+后来可以对 \(M_{modelview}\) 进行拆分, 光源以及法线变换的发生都可以在世界坐标系上, 这个时候的法线变换为 \((M_{model}^{-1})^{T}\).
 </p>
 
 <p>
-如果 \(M_{model}\) 只包含了等比缩放和旋转, 并且只考虑法线变换后的方向, 那么可以通过该计算得出法线方向: \(M_{model} \left(\begin{array}{c} n_x \\ n_y \\ n_z \\ n_w \end{array} \right)\),
+如果要在世界坐标系上进行计算法线的变换, 并且只考虑法线的方向, 那么可以使用以下方法进行计算:
+</p>
+
+<p>
+如果 \(M_{model}\) 只包含了等比缩放和旋转, 那么可以通过该计算得出法线方向: \(M_{model} \left(\begin{array}{c} n_x \\ n_y \\ n_z \\ n_w \end{array} \right)\),
 </p>
 
 <p>
@@ -1085,7 +1089,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org184fc5f" class="figure">
+<div id="org2e84cdc" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1379,14 +1383,14 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgbe9f207" class="figure">
+<div id="org1a4c865" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="org4d17a96" class="figure">
+<div id="org72d1255" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>正交投影(正交相机看到的内容)</p>
@@ -1434,7 +1438,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </ol>
 
 
-<div id="orgbcbf591" class="figure">
+<div id="org7ad007f" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>透视投影2</p>
@@ -1473,7 +1477,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org0ee0c11" class="figure">
+<div id="org7e3441e" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png">
 </p>
 </div>
@@ -1515,7 +1519,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org07f1c65" class="figure">
+<div id="org1d817ef" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1542,7 +1546,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org10711f0" class="figure">
+<div id="org04384cd" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1609,7 +1613,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org00b9241" class="figure">
+<div id="orgcd84ca2" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>比较不同深度下的精确度</p>
@@ -1835,7 +1839,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <h4 id="org5261904">正交投影</h4>
 <div class="outline-text-4" id="text-org5261904">
 
-<div id="org0bb6e3c" class="figure">
+<div id="org06f3682" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>正交投影2</p>
