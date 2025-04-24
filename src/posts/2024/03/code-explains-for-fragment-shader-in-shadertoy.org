@@ -75,9 +75,9 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 把新的纹理坐标空间的范围拓展到 $[-1.0, 1.0]$,
 
 #+BEGIN_SRC glsl
-  vec2 uv = 2 * ((gl_FragCoord.xy / iResolution.xy) - 0.5); // [-1.0, 1.0]
+  vec2 uv = 2.0 * ((gl_FragCoord.xy / iResolution.xy) - 0.5); // [-1.0, 1.0]
   // 可简化成
-  vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
+  vec2 uv = 2.0 * (gl_FragCoord.xy / iResolution.xy) - 1.0;
 #+END_SRC
 
 到目前为止, 我们的 =UV= 计算都是针对屏幕分辨率比例是一比一的情况.
@@ -101,7 +101,7 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 #+end_quote
 
 #+BEGIN_SRC glsl
-  vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1; // [-1.0, 1.0]
+  vec2 uv = 2.0 * (gl_FragCoord.xy / iResolution.xy) - 1.0; // [-1.0, 1.0]
   if (iResolution.x > iResolution.y) {
     // 如果屏幕的 X 轴比 Y 轴长
     uv.x *= iResolution.x / iResolution.y;
@@ -116,17 +116,17 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
 现在来逐个分析,
 
 #+BEGIN_SRC glsl
-  vec2 uv = 2 * (gl_FragCoord.xy / iResolution.xy) - 1;
+  vec2 uv = 2.0 * (gl_FragCoord.xy / iResolution.xy) - 1.0;
   /*
     等同于
 
-    uv = (2 * gl_FragCoord.xy) / iResolution.xy - iResolution.xy / iResolution.xy
-    uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.xy
+    uv = (2.0 * gl_FragCoord.xy) / iResolution.xy - iResolution.xy / iResolution.xy
+    uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / iResolution.xy
 
     同时可以拆开来看
 
-    uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.x
-    uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.y
+    uv.x = (2.0 * gl_FragCoord.x - iResolution.x) / iResolution.x
+    uv.y = (2.0 * gl_FragCoord.y - iResolution.y) / iResolution.y
   ,*/
 
   if (iResolution.x > iResolution.y) {
@@ -134,34 +134,34 @@ $[-0.5, 0.5]$ 分别在 $u$ 和 $v$ 两个方向上分为 $[-0.5, 0]$ 和 $[0, 0
     uv.x *= iResolution.x / iResolution.y;
     /*
       等同于
-      uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.x * iResolution.x / iResolution.y
-      uv.x = (2 * gl_FragCoord.x - iResolution.x) / iResolution.y
+      uv.x = (2.0 * gl_FragCoord.x - iResolution.x) / iResolution.x * iResolution.x / iResolution.y
+      uv.x = (2.0 * gl_FragCoord.x - iResolution.x) / iResolution.y
 
       如果和 y 分量合并一起计算, 那么就是
-      uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.y
+      uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / iResolution.y
      ,*/
   } else {
     // 如果屏幕的 Y 轴比 X 轴长, 或两者相等
     uv.y *= iResolution.y / iResolution.x;
     /*
       等同于
-      uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.y * iResolution.y / iResolution.x
-      uv.y = (2 * gl_FragCoord.y - iResolution.y) / iResolution.x
+      uv.y = (2.0 * gl_FragCoord.y - iResolution.y) / iResolution.y * iResolution.y / iResolution.x
+      uv.y = (2.0 * gl_FragCoord.y - iResolution.y) / iResolution.x
 
       如果和 x 分量合并一起计算, 那么就是
-      uv = (2 * gl_FragCoord.xy - iResolution.xy) / iResolution.x
+      uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / iResolution.x
      ,*/
   }
   /*
     综合两种情况来看就是
-    uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y)
+    uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y)
    ,*/
 #+END_SRC
 
 所以, =ShaderToy= 上有不少例子都是有这一句(或类似的).
 
 #+BEGIN_SRC glsl
-vec2 uv = (2 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
 #+END_SRC
 
 在大部分的 =ShaderToy= 例子中, =UV= 计算是基础且重要的东西, 这个小节所介绍的 =UV= 计算其实是 =UV= 补偿, 解决画面拉伸的问题.
@@ -323,6 +323,9 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 #+end_quote
 
 **** [[https://thebookofshaders.com/glossary/?search=smoothstep][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]]
+:PROPERTIES:
+:ID: smoothstep-draw
+:END:
 
 #+BEGIN_SRC glsl
   #ifdef GL_ES
@@ -357,7 +360,7 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 
 这段 =shader= 的算法做的事情很简单: 绘制出 $smoothstep(0.1, 0.9, x)$ 的函数图.
 
-做法很简单: 首先计算出 $st.x$ 经过 $smoothstep(0.1, 0.9, x)$ 映射后的值 $y$, 但这样的话所有 $x$ 分量相同的片元在经过映射后拥有相同的 $y$, 我们需要判断片元是否处于函数上.
+实现很简单: 首先计算出 $st.x$ 经过 $smoothstep(0.1, 0.9, x)$ 映射后的值 $y$, 但这样的话所有 $x$ 分量相同的片元在经过映射后拥有相同的 $y$, 我们需要判断片元是否处于函数上.
 
 $plot$ 函数就是判断片元是否在函数上的.
 
@@ -393,9 +396,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 在 $[ptc-0.02, pct+0.02]$ 区间的某一个位置上, 两个图像 *在垂直方向上* 相差的距离的变化规律是先增后减少, $0.02$ 决定着变化率, 越大变化越小, 线条越粗.
 
-#+begin_quote
-如果稍微了解过微积分的话, 你应该能感觉到 =plot= 函数像是一个求导函数, 事实上它就是.
-#+end_quote
+如果稍微了解过微积分的话, 应该能感觉相差距离的变化正好符合 $smoothstep$ 导数的行为, 事实上 =plot= 就是一个蕴含了求近似导数的步骤.
 
 [[iframe:width: 520px; height: 1060px; border: none; | https://graphtoy.com/?f1(x,t)=smoothstep(0.1,0.9,x)&v1=true&f2(x,t)=smoothstep(0.1-0.5,0.9,x)&v2=true&f3(x,t)=smoothstep(0.1,0.9+0.5,x)&v3=true&f4(x,t)=smoothstep(0.1-0.5,0.9,x)-smoothstep(0.1,0.9+0.5,x)&v4=true&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=1&coords=-0.07768258978845546,0.5049807710072313,4.205926793776948]]
 
@@ -731,7 +732,6 @@ $x + k \times a = x + a \times (y - x) = x + a \times y - a \times x = x \times 
 如你所见, 在 $mix(2, 4, x)$ 的图像中, $x = 0$ 时 $y = 2$, $x = 1$ 时 $y = 4$,
 
 $mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x = 1$ 时 $y = r$.
-
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml][函数 - dFdx/dFdy]]
 
@@ -1102,7 +1102,7 @@ https://iquilezles.org/articles/sfrand/
 
 用算法生成一个数列, 该数列的特性接近随机数列的特性, 然后根据参数从该数列获取一个数字作为随机数, 通过相同参数可以获得相同随机数,
 
-这种随机可以通过算法和参数来预测随机数, 因此也被称为伪随机 (=pseudo-random=).
+这种随机可以通过算法和参数来预测随机数, 因此也被称为伪随机 (=pseudo-random=). 数据结构中的哈希函数 (=hash=) 就属于伪随机函数.
 
 *非确定性随机 (=non-deterministic random=)*
 
@@ -1482,6 +1482,8 @@ $(floor(st.x) + 1.0, floor(st.y) + 1.0)$
 $D_u f(x, y) = \nabla f(x, y) \cdot u = |\nabla f(x, y)||u| \cos_{\theta}$, 其中 $\theta$ 为 $\nabla f(x, y)$ 和 $u$ 之间的夹角.
 
 当 $\theta = 0$ 时, 换而言之当 $\nabla f(x, y)$ 和 $u$ 方向相同时, $D_u f(x, y)$ 为最大.
+
+把 $D_{u}f(x, y)$ 看作是一个以方向 $u$ 为参数的函数 $g(u)$, 那么 $\nabla f(x, y)$ 就是 $g$ 关于 $u$ 导数: $\nabla \frac{\mathrm{d}g}{\mathrm{d}u}$.
 #+end_quote
 
 那么 =1D= 的梯度噪声呢? 一维空间是一条直线, 可以把直线上的点 $p$ (=p= 是标量)看作一个一维向量 $(p)$, 一维向量之间的点积就是标量之间的乘积,
@@ -2099,6 +2101,10 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 
 ** SDF
 
+#+begin_quote
+施工中
+#+end_quote
+
 全称 =Signed Distance Function= 或 =Signed Distance Field=, 这里用函数 $f$ 表示.
 
 $f$ 用来计算点 $p$ 到几何体 $G$ 的正交距离(=orthogonal distance=), 也就是找到点到几何体的垂线,
@@ -2119,24 +2125,659 @@ $G$ 的 =SDF= 的定义为 $f(p) = \begin{cases} d(p, \partial G) & \text{if } p
 
 https://en.wikipedia.org/wiki/Perpendicular_distance
 
-https://iquilezles.org/articles/distance/
+*** 估算点与几何解析式的距离
 
-**** 点与点
+#+begin_quote
+这部分内容是对 =Inigo Quilez= 的 [[https://iquilezles.org/articles/distance/][Approximating the distance to implicits]] 的文章进行总结和补充, 原文有些地方对于我来说过于简洁了.
 
-**** 点与直线
+其实 =Inigo Quilez= 很多文章都要求读者有着扎实的数学基础的, 特别是微积分, 线性代数和概率论, 满足条件了的话, 他的文章就是一个优秀的图形学学习资源.
+#+end_quote
 
-**** 点与曲线
+试想一下, 现在想计算点 $p$ 和 $s = g(P = (x, y, \dots))$ 的距离, 具体应该怎么求呢?
 
-**** 点与平面
+通常判断一个点是否在一个函数上都会通过该函数的隐函数的值来进行判断的,
 
-**** 点与曲面
+比如这里可以把 $g$ 改写成隐函数 $f(P, s) = g(P) - s$, 如果 $p$ 在函数 $g$ 上, 那么 $f(p, s=g(p)) = 0$,
+
+为了方便说明, 这假设 $s$ 是一个固定值来得到一个确定的曲线/表面, 因此, 接下来看到的 $f(P)$ 就等同于 $f(P, s)$.
+
+那么是不是可以用 $f(p)$ 来表示 $p$ 和 $g$ 之间的距离呢? 答案是不能.
+
+从几何角度来看, 点到函数 $g$ 的距离是从 $g$ 上找出距离 $p$ 最短的点 $p_0$, 那么 $|p_0 - p|$ 就是 $p$ 和函数 $g$ 的距离.
+
+最短意味着 $\vec{\varepsilon} = p_0 - p$ 与点 $p$ 上的切线/切平面垂直,
+
+点上的梯度向量正好也与该点上的切线/切平面垂直, 可以看作是切线/切平面上的法线.
+
+在实际运算中不可能找出 $p_0$ 的, 因为通常来说函数 $g$ 都是连续且可微的, 在该函数上有无数种取点可能, 所以穷举法取点是无法处理的.
+
+可以转换一下角度, 把问题转化成求两个等值表面/等值线之间的距离, 这就是为什么我们需要隐函数了.
+
+来观察一下点与表面的关系:
+
+$p_0$ 在等值表面/等值线 $f(P) = 0$ 上: $f(p_0) = f(p + \vec{\varepsilon}) = 0$, $p$ 则是在某一个等值表面/等值线 $f(P) = c$ 上, 其中 $c$ 为常数.
+
+$f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以在线性逼近(或一阶泰勒展开)的结果中找到,
+
+对 $f(p_0) = f(p + \vec{\varepsilon})$ 进行线性逼近得到 $f(p + \vec{\varepsilon}) \approx f(p) + \nabla f(p) \cdot \vec{\varepsilon}$, 其中 $c = \nabla f(p) \cdot \vec{\varepsilon}$, 也就是 $\vec{\varepsilon}$ 在梯度向量方向上的投影.
+
+#+begin_quote
+因为这里只进行了一阶泰勒展开, 所以最终所得的距离是不准确的, 这也是为什么标题是估算是而不是计算.
+
+后面会给出一个例子来更好地印证这个事实.
+#+end_quote
+
+#+caption: 等值线之间的距离
+[[../../../files/isocurve-distance.png]]
+
+但 $c$ 并非我们想要的, 我们的是 $p$ 和 $p_0$ 之间的距离: $|\vec{\varepsilon}|$, 为此需要找到求解 $\vec{\varepsilon}$ 的方法.
+
+#+begin_quote
+三角不等式(=triangle inequality=): $|a + b| \le |a| + |b|$.
+
+如果 $a$ 和 $b$ 满足 $\frac{a}{b} \gt 0$ (同时为正或同时为负) 或者 $a = b = 0$, 那么 $|a + b| = |a| + |b|$;
+
+如果满足 $\frac{a}{b} \lt 0$, 那么 $|a + b| \lt |a| + |b|$.
+#+end_quote
+
+根据三角不等式 $|a + b| = |a| + |b|$, $a$ 和 $b$ 可以是任何实数, 为了方便找到 $\vec{\varepsilon}$ 的范围,
+
+这里假设 $\begin{cases} a = s + t \\ b = -t \\ a + b = s \end{cases}$, 可以推导出该不等式: $\begin{equation*} \begin{aligned} |s| \le |s + t| + |t| \Rightarrow |s| - |t| \le |s + t| \end{aligned} \end{equation*}$,
+
+接下来分两种假设: $\begin{cases} s = f(p) \\ t = \nabla f(p) \cdot \vec{\varepsilon} \end{cases}$ 和 $\begin{cases} s = \nabla f(p) \cdot \vec{\varepsilon} \\ t = f(p) \end{cases}$.
+
+*在第一种假设下,* 可以得到 $|f(p)| - |\nabla f(p) \cdot \vec{\varepsilon}| \le |f(p) + \nabla f(p) \cdot \vec{\varepsilon}|$,
+
+因为 $|f(p) + \nabla f(p) \cdot \vec{\varepsilon}| = 0$, 所以 $|f(p)| \le |\nabla f(p) \cdot \vec{\varepsilon}|$,
+
+根据点积的定义 $\vec{u} \vec{v} = |\vec{u}||\vec{v}| \cos\theta_{uv}$, 其中夹角 $\theta_{uv} \in [0, \pi]$, 所以 $\cos\theta_{uv} \in [-1, 1]$, 可得出 $|\nabla f(p) \cdot \vec{\varepsilon}| \le |\nabla f(p)||\vec{\varepsilon}|$,
+
+所以 $|f(p)| \le |\nabla f(p)||\vec{\varepsilon}| \Rightarrow \frac{|f(p)|}{|\nabla f(p)|} \le |\vec{\varepsilon}|$.
+
+*在第二种假设下,* 可以得到 $|\nabla f(p) \cdot \vec{\varepsilon}| - |f(p)| \le |f(p) + \nabla f(p) \cdot \vec{\varepsilon}|$;
+
+因为 $|f(p) + \nabla f(p) \cdot \vec{\varepsilon}| = 0$, 所以 $|\nabla f(p) \cdot \vec{\varepsilon}| \le |f(p)|$,
+
+根据点积的定义, 可得出 $|\vec{\varepsilon}| \le \frac{|f(p)|}{|\nabla f(p)|}$.
+
+第一种假设只能讨论得到 $|\vec{\varepsilon}|$ 的下界, 第二种假设则只能讨论得到 $|\vec{\varepsilon}|$ 的上界,
+
+不管是哪种假设, 现在可以得到估算 $\vec{\varepsilon}$ 的方法: $|\vec{\varepsilon}| = \frac{|f(p)|}{|\nabla f(p)|}$.
+
+另外一种求导数(梯度向量)近似值方法叫做中心差商法(=central difference method=), 这种方法不需要我们求出函数的导数解析式.
+
+它来源于导数的定义: $f^{'}(x) = \lim\limits_{h \to 0} \frac{f(x + h) - f(x)}{h} \rightarrow \lim\limits_{h \to 0} \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$, 对 $h$ 任取一个很小的值即可: $f^{'}(x) \approx \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$,
+
+所以使用中心差商法计算梯度向量的方法如下:
+
+$\begin{equation*} \begin{aligned} & \nabla f(x, y, \dots) \\ = & (\frac{f(x + \frac{h}{2}, y) - f(x - \frac{h}{2}, y)}{h}, \frac{f(x, y + \frac{h}{2}) - f(x, y - \frac{h}{2})}{h}, \dots) \\ = & \frac{1}{h} (f(x + \frac{h}{2}, y) - f(x - \frac{h}{2}, y), f(x, y + \frac{h}{2}) - f(x, y - \frac{h}{2}), \dots) \end{aligned} \end{equation*}$
+
+其实在 [[#smoothstep-draw][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]] 就已经运用到中心差商法了, 只不过并没有直接把导数算出来而已.
+
+**** 案例一: 估算点与曲线之间的距离
+
+$f(r, a) = r - 1 + \frac{\sin(3a + 2r^2)}{2}$, 其中 $\begin{cases} r = \sqrt{x^2 + y^2} \\ a = \mathrm{atan}(\frac{y}{x}) \end{cases}$.
+
+$\nabla f(r, a) = (\frac{\partial f(r, a)}{\partial r}, \frac{\partial f(r, a)}{\partial a})$, 其中 $\begin{cases} \frac{\partial f(r, a)}{\partial r} = 1 + 2r \cdot \cos(3a + 2r^2) \\ \frac{\partial f(r, a)}{\partial a} = \frac{3}{2} \cdot \cos(3a + 2r^2)\end{cases}$.
+
+在 $\nabla f(r, a)$ 的基础上, 使用多元函数的链式法则可以求出 $\nabla f(x, y) = (\frac{\partial f(x, y)}{\partial x}, \frac{\partial f(x, y)}{\partial y})$.
+
+先分别求出 $r$ 和 $a$ 的偏导数:
+
+$\begin{cases} \frac{\partial r}{\partial x} = x(x^2 + y^2)^{-\frac{1}{2}} = \frac{x}{r} \\ \frac{\partial r}{\partial y} = y(x^2 + y^2)^{-\frac{1}{2}} = \frac{y}{r} \\ \frac{\partial a}{\partial x} = -\frac{y}{x^2 + y^2} = -\frac{y}{r^2} \\ \frac{\partial a}{\partial y} = \frac{x}{x^2 + y^2} = \frac{x}{r^2} \end{cases}$
+
+最后使用链式法则:
+
+$\begin{cases} \frac{\partial f(x, y)}{\partial x} = \frac{\partial f(r, a)}{\partial r} \frac{\partial r}{\partial x} + \frac{\partial f(r, a)}{\partial a} \frac{\partial a}{\partial x} = \nabla f(r, a) \cdot (\frac{\partial r}{\partial x}, \frac{\partial a}{\partial x}) = \frac{x}{r} + 2x \cdot \cos(3a + 2r^2) - \frac{3}{2} \cdot \frac{y}{r^2} \cdot \cos(3a + 2r^2) \\ \frac{\partial f(x, y)}{\partial y} = \frac{\partial f(r, a)}{\partial r} \frac{\partial r}{\partial y} + \frac{\partial f(r, a)}{\partial a} \frac{\partial a}{\partial y} = \nabla f(r, a) \cdot (\frac{\partial r}{\partial y}, \frac{\partial a}{\partial y}) = \frac{y}{r} + 2y \cdot \cos(3a + 2r^2) + \frac{3}{2} \cdot \frac{x}{r^2} \cdot \cos(3a + 2r^2) \end{cases}$
+
+#+begin_src glsl
+  float f( vec2 x ) {
+      float r = length(x);
+      float a = atan(x.y, x.x);
+      return r - 1.0 + 0.5 * sin(3.0 * a + 2.0 * r * r);
+  }
+
+  vec2 grad( vec2 x ) {
+      float r = length(x);
+      float a = atan(x.y, x.x);
+      vec2 da = vec2(-x.y, x.x) / (r * r);
+      /* 原文是: vec2 da = vec2(x.y, -x.x) / (r * r), 估计是使用了旋转 90 度的坐标系.
+       ,*/
+      return (x / r) + (1.5 * da + 2.0 * x) * cos(3.0 * a + 2.0 * r * r);
+  }
+
+  void main() {
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    uv *= 2.0;
+    float v = f(uv);
+    vec2 g = grad(uv);
+    float de = abs(v) / length(g);
+    // float de = v / length(g); v 的符号可以用来判断点在图形内还是图形外, 去掉 abs 可以得到一个实心图形
+    float lw = 1.0 / 32.0;        // 线粗, 准确来说是线粗占分辨率的百分比, 如果想确定到像素: float lw = 1.0 / iResolution.x;
+    float c = smoothstep(0.0, lw, de);
+    gl_FragColor = vec4(vec3(c), 1.0);
+  }
+#+end_src
+
+接下来估算点与圆之间的距离, 这个例子是为了更好地说明: 这种方法对于计算点与曲线/曲面之间的距离是不准确的.
+
+假设现在一个半径为 0.5 的圆的隐函数: $g(x, y) = x^2 + y^2 - (0.5)^2$.
+
+它的梯度向量为 $\nabla g(x, y) = (\frac{\partial g(x, y)}{\partial x}, \frac{\partial g(x, y)}{\partial y}) = (2x, 2y)$.
+
+现在想估算点 $(0, 0.6)$ 到该圆的距离, 这个距离其实一眼就能看出来是 0.1, 最后估算出来的距离为 $\frac{|g(0, 0.6)|}{|\nabla g(0, 0.6)|} = 0.25$.
+
+遇到这种典型的几何解析式, 请根据它们特有的性质来计算距离.
+
+比如这里的圆, 计算 $(0, 0.6)$ 到圆心的距离 $d$ , 再用 $d$ 减去圆的半径 $0.5$ 得到点到圆的距离.
+
+#+BEGIN_SRC glsl
+  float f( vec2 x ) {
+      return dot(x, x) - 0.25;
+  }
+
+  vec2 grad( vec2 x ) {
+    return 2.0 * x;
+  }
+
+  void main() {
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    float v = f(uv);
+    vec2 g = grad(uv);
+    float de = abs(v) / length(g);
+    float lw = 1.0 / 32.0;        // 线粗
+    float c = smoothstep(0.0, lw, de);
+    gl_FragColor = vec4(vec3(c), 1.0);
+  }
+#+END_SRC
+
+**** 案例二: 估算点与直线之间的距离
+
+假设现在有一条直线的隐函数: $g(x, y) = 3x + 0.1 - y$, 它的梯度向量为 $\nabla g(x, y) = (\frac{\partial g(x, y)}{\partial x}, \frac{\partial g(x, y)}{\partial y}) = (1, 3)$.
+
+对于任意线性函数 $f(x) = kx + b$, 它的梯度向量为 $(1, f^{'}(x))$.
+
+根据线性函数的特性: $f(a) + f(b) = f(a + b)$, 估算的结果必定是准确的.
+
+#+BEGIN_SRC glsl
+  float f( vec2 x ) {
+    return 3.0 * x.x + 0.1 - x.y;
+  }
+
+  void main() {
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    float v = f(uv);
+    vec2 g = vec2(1.0, 3.0);
+    float de = abs(v) / length(g);
+    float lw = 1.0 / 32.0;        // 线粗
+    float c = smoothstep(0.0, lw, de);
+    gl_FragColor = vec4(vec3(c), 1.0);
+  }
+#+END_SRC
+
+
+*** 2D SDF
+
+前面估算点与隐函数距离的方法, 除了结果不太准确以外, 只要能找到想绘制的几何的隐函数, 基本上都可以用这种方法定义出 =SDF=,
+
+最终得到的图形除了大小与想象中的有些误差意外, 形状是没有问题的, 比如上面案例一里面的圆形.
+
+当然如果想精确计算一些典型几何的距离, 那么还是得特殊情况特殊处理.
+
+下面的内容是对 =Inigo Quilez= 的 [[https://iquilezles.org/articles/distfunctions2d/][2D SDFs]] 的代码进行理解,
+
+里面的代码很多都是几个步骤合成一句的, 光看代码很难理解其中的思路, 所以才写笔记对其中的思路进行整理.
+
+**** 计算点与线段之间的距离
+:PROPERTIES:
+:ID: distance-between-point-and-segment
+:END:
+
+计算点 $p$ 与端点为 $a$ 和 $b$ 的线段之间的距离.
+
+有两种情况:
+
+如果 $\vec{ap}$ 的投影 $\vec{ao}$ 不在在线段 $ab$ 上, 那么 $p$ 和 $ab$ 之间的距离是 $|\vec{ap}|$;
+
+[[../../../files/segment-sdf.png]]
+
+如果 $\vec{ap}$ 的投影 $\vec{ao}$ 正好在线段 $ab$ 上, 那么 $p$ 和 $ab$ 之间的距离是 $|\vec{op}|$.
+
+[[../../../files/segment-sdf-2.png]]
+
+我们可以通过 $\vec{ap} \cdot \vec{ab} = |\vec{ap}||\vec{ab}|\cos\theta$ 来判断, 两个向量之间的夹角 $\theta$ 范围是 $[0, 180^{\circ}]$,
+
+当 $90^{\circ} \lt \theta \le 180^{\circ}$ 时, 投影不在线段上, 所以 $\vec{ap}$ 在线段 $ab$ 上的投影长度为 0;
+
+当 $0 \le \theta \lt 90^{\circ}$ 时, 投影 $\vec{ao}$ 处于线段上, 并且 $\vec{ao}$ 的长度最多为 $ab$ 的长度, 不能超过 $ab$.
+
+#+begin_quote
+当 $\theta = 90^{\circ}$ 时, $\vec{ap}$ 在 $\vec{ab}$ 上的投影长度为 0.
+#+end_quote
+
+换句话说, 如果 $\vec{ao}$ 在线段 $ab$ 上, 那么 $\frac{|\vec{ao}|}{|\vec{ab}|} \gt 0$, 否则 $\frac{|\vec{ao}|}{|\vec{ab}|} \lt 0$.
+
+不管 $\theta$ 在什么范围, 我们都要先计算出 $|\vec{ao}|$ 以及 $\frac{|\vec{ao}|}{|\vec{ab}|}$.
+
+根据三角函数: $\cos\theta = \frac{|\vec{ao}|}{|\vec{ap}|}$, 所以 $|\vec{ao}| = |\vec{ap}|\cos\theta$.
+
+根据已知条件, 计算出 $\frac{|\vec{ao}|}{|\vec{ab}|}$ 的最简单方法是 $\frac{|\vec{ao}|}{|\vec{ab}|} = \frac{\vec{ap} \cdot \vec{ab}}{\vec{ab} \cdot \vec{ab}} = \frac{|\vec{ap}||\vec{ab}|\cos\theta}{|\vec{ab}||\vec{ab}|}$.
+
+而 $\vec{ao}$ 和 $\vec{op}$ 是 $\vec{ap}$ 的分量, 所以 $\vec{op} = \vec{ap} - \vec{ao}$, 其中 $\vec{ao} = \frac{\vec{ab}}{|\vec{ab}|}(|\vec{ab}| \times \frac{|\vec{ao}|}{|\vec{ab}|}) = \vec{ab} \frac{|\vec{ao}|}{|\vec{ab}|}$.
+
+$\vec{op} = \vec{ap} - \vec{ab} \frac{|\vec{ao}|}{|\vec{ab}|}$, 别忘记了当 $\theta \gt 90^{\circ}$ 时, $\vec{ap}$ 在线段 $ab$ 上的投影为 0, 所以 $\frac{|\vec{ao}|}{|\vec{ab}|} = 0$.
+
+这时正好 $\vec{op} = \vec{ap} \rightarrow |\vec{op}| = |\vec{ap}|$.
+
+#+BEGIN_SRC glsl
+  float sdfSegment(vec2 p, vec2 a, vec2 b) {
+    vec2 ap = p - a;
+    vec2 ab = b - a;
+    float ratio = clamp(dot(ap, ab) / dot(ab, ab), 0.0, 1.0);
+    return length(ap - ab * ratio);
+  }
+
+  void main() {
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    float c = sdfSegment(uv, vec2(0.3, -0.1), vec2(-0.4, 0.2));
+    float l = smoothstep(0.0, 1.0 / iResolution.x, c); // 1px 线粗
+    gl_FragColor = vec4(vec3(l), 1.0);
+  }
+#+END_SRC
+
+根据图形的特点, 分区域来讨论点与图形的距离, 这就是定义 =SDF= 的总体思路.
+
+而圆的 =SDF= 是最为简单的, 因为在任意区域上, 点到圆的距离都是一个算法, 无需分区域讨论.
+
+**** 计算点与矩形之间的距离
+
+#+caption: 中心位于原点且尺寸为 $W \times H$ 的矩形与点之间的距离 (图片来源于 [[https://numbersmithy.com/signed-distance-function-to-oriented-2d-boxes/#org958ce36][Number-Smithy]])
+[[../../../files/sdf_box.png]]
+
+从图中可以看到, 对其中一个象限而言, 一个点 $(x, y)$ 所处的位置可以分为 4 类:
+
+- $P_1$: $x \gt y$, $x \gt \frac{W}{2}$ 并且 $y \le \frac{H}{2}$
+
+  点在矩形外, 距离为 $\sqrt{(x - \frac{W}{2})^2 + (y - y)^2} = x - \frac{W}{2}$.
+
+- $P_2$: $x \lt y$, $y \gt \frac{H}{2}$ 并且 $x \le \frac{W}{2}$
+
+  点在矩形外, 距离为 $\sqrt{(x - x)^2 + (y - \frac{H}{2})^2} = y - \frac{H}{2}$.
+
+- $P_3$: $x \gt \frac{W}{2}$ 并且 $y \gt \frac{H}{2}$
+
+  点在矩形外, 距离为 $\sqrt{(x - \frac{W}{2})^2 + (y - \frac{H}{2})^2}$.
+
+- $P_4$: $x \le \frac{W}{2}$ 并且 $y \le \frac{H}{2}$
+
+  在矩形内或矩形边上.
+
+  如果 $x = \frac{W}{2}$ 并且 $y \le \frac{H}{2}$, 又或 $y = \frac{H}{2}$ 并且 $x \le \frac{W}{2}$, 那么点在矩形边上, 点到矩形的距离为 0.
+
+  如果 $x \lt \frac{W}{2}$ 并且 $y \lt \frac{H}{2}$, 那么点在矩形内, 点到矩形的距离为 $\max(x - \frac{W}{2}, y - \frac{H}{2})$.
+
+  其实点在边上的距离也可以用 $\max(x - \frac{W}{2}, y - \frac{H}{2})$ 来进行计算.
+
+
+对于 $P_1$, $P_2$ 和 $P_3$, 点与矩形的距离计算可以统一成 $\sqrt{\max(x - \frac{W}{2}, 0)^2 + \max(y - \frac{H}{2}, 0)^2}$.
+
+仔细观察的话, 可以发现矩形外和矩形里的距离计算可以结合在一起:
+
+$\sqrt{\max(x - \frac{W}{2}, 0)^2 + \max(y - \frac{H}{2}, 0)^2} + \min(\max(x - \frac{W}{2}, y - \frac{H}{2}), 0)$.
+
+当点在矩形内时, $\sqrt{\max(x - \frac{W}{2}, 0)^2 + \max(y - \frac{H}{2}, 0)^2} = 0$, 此时,距离为 $\min(\max(x - \frac{W}{2}, y - \frac{H}{2}), 0)$;
+
+当点在矩形外时, $\min(\max(x - \frac{W}{2}, y - \frac{H}{2}), 0) = 0$, 此时, 距离为 $\sqrt{\max(x - \frac{W}{2}, 0)^2 + \max(y - \frac{H}{2}, 0)^2}$.
+
+对于其他象限, 可以通过绝对值把点映射到第一象限上, 所以最终的距离计算公式为:
+
+$\sqrt{\max(|x| - \frac{W}{2}, 0)^2 + \max(|y| - \frac{H}{2}, 0)^2} + \min(\max(|x| - \frac{W}{2}, |y| - \frac{H}{2}), 0)$.
+
+#+BEGIN_SRC glsl
+  float sdfBox(vec2 p, vec2 size) {
+    vec2 d = abs(p) - size;
+    return length(max(d, 0.0) + min(max(d.x, d.y), 0.0));
+  }
+
+  void main() {
+    #define PI 3.14
+    #define ANGLE (PI / 3.0)
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    // 这里对图形旋转 60 度
+    mat2 rotation = mat2(cos(ANGLE), -sin(ANGLE),
+                         sin(ANGLE), cos(ANGLE));
+    uv = rotation * uv;
+    float c = sdfBox(uv, vec2(0.3, 0.1));
+    float l = smoothstep(0.0, 1.0 / iResolution.x, c);
+    gl_FragColor = vec4(vec3(l), 1.0);
+  }
+#+END_SRC
+
+绝对值是常用的对称操作, $|x|$ 是让点关于 $y$ 轴对称, $|y|$ 是让点关于 $x$ 轴对称, $(|x|, |y|)$ 是让点关于原点对称.
+
+**** 计算点与不规则多边形之间的距离
+
+点与不规则多边形之间距离的计算方法可以总结如下:
+
+1. 先计算点与每条边之间的距离, 这个可以参考前面的[[#distance-between-point-and-segment][计算点与线段之间的距离]]
+2. 在所有的点边距离中选取最短的一个作为点与不规则多边形之间的距离
+3. 判断点在多边形的里还是在外
+
+
+这套算法的重点在于如何判断点在多边形里面还是外面, 这是一个比计算几何中较常见的话题: [[https://en.m.wikipedia.org/wiki/Point_in_polygon][Point In Polygon]], 简称 =PIP=.
+
+总体上来说, 目前常用的判断方法是: 射线投影算法 (=Ray-Casting Algorithm=) 和 回转数算法 (=Winding Number Algorithm=).
+
+射线投影算法是从判定点在任意方向上发出一条射线, 统计射线穿过多边形边的次数, 如果次数为偶数, 那么判定点就在多边形的外面, 单数则表明判定点在多边形里面.
+
+所以这个算法也叫交叉数算法 (=crossing number algorithm=) 或奇偶规则算法 (=even-odd rule algorithmn=).
+
+比如下图, 射线与多边形有两个交点, 因此, 点在多边形外面.
+
+#+caption: 空心的自交多变形
+[[../../../files/self-intersecting-polygon-with-holes.png]]
+
+但是射线投影算法对于这种自交多边形 (=self-intersecting polygon=) 的判断可能会出现问题, 所谓自交多边形是指多边形的边之间存在相交的情况.
+
+想象一下, 这个多边形的自交边所形成的区域为实心, 那么点就是在多边形里, 然而射线和多边形相交的点数依然是偶数, 这显然和射线投影算法矛盾.
+
+#+caption: 实心的自交多边形
+[[../../../files/self-intersecting-polygon-without-holes.png]]
+
+而环绕数算法是计算判定点对于多边形的环绕数, 如果环绕数不为 0, 那么判定点就在多边形内, 所以环绕数算法也被称做非零规则算法(=nonzero-rule algorithm=).
+
+所谓环绕数是指平面上的闭合曲线/多边形绕过判定点的总次数, 如果一个闭合曲线/多边形往逆时针方向绕过判定点 $n$ 次, 那么判定点的环绕数为 $n$, 如果是往顺时针方向旋转 $n$ 次, 那么环绕数是 $-n$.
+
+#+caption: 环绕数为 2
+[[../../../files/Winding_Number_Animation_Small.gif]]
+
+[[../../../files/winding-number.png]]
+
+因此, 环绕数 $\omega$ 的计算方式大概是沿着闭合曲线/多边形围绕着判定点走过的角度和 $\varphi$ 除以 $2 \pi$: $\omega = \frac{\varphi}{2 \pi}$.
+
+现在问题就变成如何求解角度和 $\omega$, 先假设闭合曲线的参数方程为 $C(t) = (x(t), y(t))$, $t \in [a, b]$, $C(a) = C(b)$,
+
+当沿着曲线移动到点 $C(t)$ 上时, 想知道该点到判定点 $R = (x_0, y_0)$ 的角度, 可以通过 $\varphi(t) = \mathrm{atan} (\frac{y(t) - y_0}{x(t) - x_0})$ 求得.
+
+#+caption: $R$ 是判定点, $C(t)$ 是曲线上的点
+[[../../../files/subtended-angle.png]]
+
+计算角度和 $\varphi$ 就是一个连续问题, 因此需要用到积分, 为了让公式看起来简洁, 这里假设判定点 $R$ 在 $(0, 0)$ 上,
+
+首先需要求出 $\frac{d}{d t}(\varphi(t))$, 然后运用积分 $\varphi(t) = \int_{a}^{b} \frac{d}{d t} (\varphi(t)) dt$.
+
+令 $g(t) = \frac{y(t)}{x(t)}$, 分别计算出 $\frac{d}{d t} (g(t))$ 和 $\frac{d}{d t} (\mathrm{atan}(g))$, 再使用链式法则求的 $\frac{d}{dt} (\varphi(t))$:
+
+$\begin{cases} \frac{d}{d t}(g(t)) = \frac{d}{d t} (\frac{y(t)}{x(t)}) = \frac{y^{'}(t) \cdot x(t) - y(t) \cdot x^{'}(t)}{[x(t)]^2} \\ \frac{d}{d g}(\mathrm{atan}(g)) = \frac{1}{1 + g^2} = \frac{1}{1 + \frac{y(t)}{x(t)}^2} = \frac{[x(t)]^2}{[x(t)]^2 + [y(t)]^2} \\ \frac{d}{d t}(\varphi(t)) = \frac{d}{d t}(\mathrm{atan}(\frac{y(t)}{x(t)})) = \frac{d}{dg} (\mathrm{atan}(g)) \cdot \frac{d}{d t}(g(t)) = \frac{y^{'}(t) \cdot x(t) - y(t) \cdot x^{'}(t)}{[x(t)]^2 + [y(t)]^2} \end{cases}$
+
+因此, 对于曲线 $C$ 对于判定点 $R = (0, 0)$ 的环绕数计算为: $\omega(R = (0, 0), C = (x(t), y(t))) = \frac{1}{2 \pi} \int_{a}^{b} \frac{y^{'}(t) \cdot x(t) - y(t) \cdot x^{'}(t)}{[x(t)]^2 + [y(t)]^2} dt$.
+
+#+begin_quote
+对于 $R = (x_0 \ne 0, y_0 \ne 0)$ 的情况, $\omega(R = (x_0, y_0), C = (x(t), y(t))) = \frac{1}{2 \pi} \int_{a}^{b} \frac{y^{'}(t) \cdot (x(t) - x_0) - (y(t) - y_0) \cdot x^{'}(t)}{(x(t) - x_0)^2 + (y(t) - y_0)^2} dt$.
+#+end_quote
+
+那么对于多边形该如何计算呢?
+
+我们定义多边形 $P$ 为一个点数组: $P_0, P_1, \dots, P_{n - 1}, P_n = P_0$, 可以把多边形看做分段线性曲线(也就是线段), 由 $P_i$ 到 $P_{i + 1}$ 作为端点的边:
+
+$L_{P_i P_{i+1}}(t) = (x_{i}(t - i), y_{i}(t - i))$, $t \in [i, i + 1]$, 在边 $L_{P_i P_{i+1}}$ 上点的计算为 $(x_{i}(t), y_{i}(t)) = t P_{i + 1} + (1 - t) P_i$.
+
+[[../../../files/signed-angle-for-polygons.png]]
+
+$\omega(R, P) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{R P_i} \cdot \vec{P_{i+1} R}}{|\vec{R P_i}| |\vec{R P_{i+1}}|} \mathrm{sign}(\vec{R P_{i}} \times \vec{R P_{i+1}}) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \varphi_{i}$, 其中 $\mathrm{sign}(x) = \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{if } x = 0 \\ -1 & \text{if } x < 0 \end{cases}$.
+
+#+begin_quote
+多边形的环绕数公式可以从直觉上看出来, 但这样不够严谨, 它的证明过程来自 [[../../../files/The-point-in-polygon-problem-for-arbitrary-polygons.pdf][参考资料]], 这里进行一些总结和补充.
+
+下面这个三角形由判断点 $R$ 和多边形的其中一条边 $PQ$ 的两个端点组成, 边的生成方向是从 $P$ 到 $Q$, $\alpha$ 就是想求的环绕角度.
+
+[[../../../files/triangle-RPQ.png]]
+
+目前知道的下条件有:
+
+$R = (0, 0)$
+
+$\begin{cases} \vec{RP} = (x_p, y_p) \\ \vec{RQ} = (x_q, y_q) \\ \vec{RP} \cdot \vec{RQ} = x_p x_q + y_p y_q \\ \cos \alpha = \frac{\vec{RP} \cdot \vec{RQ}}{|\vec{RP}| |\vec{RQ}|} \end{cases}$
+
+$\begin{cases} \vec{QP} = (x_{p} - x_{q}, y_{p} - y_{q}) \\ \vec{RP} = (x_{p}, y_{p}) \\ \vec{QP} \times \vec{RP} = (x_{p} - x_{q})y_{p} - (y_{p} - y_{q})x_{p} = x_{p}y_{p} - x_{q}y_{p} - y_{p}x_{p} + y_{q}x_{p} = x_{p}y_{q} - x_{q}y_{p} \\ \cot \beta = \frac{\vec{QP} \cdot \vec{RP}}{|\vec{QP} \times \vec{RP}|} = \frac{|\vec{QP}| |\vec{RP}| \cos \beta}{|\vec{QP}| |\vec{RP}| \sin \beta} \end{cases}$
+
+$\begin{cases} \vec{PQ} = (x_{q} - x_{p}, y_{q} - y_{p}) \\ \vec{RQ} = (x_{q}, y_{q}) \\ \vec{PQ} \times \vec{RQ} = (x_{q} - x_{p})y_{q} - (y_{q} - y_{p})x_{q} = x_{q}y_{q} - x_{p}y_{q} - x_{q}y_{q} + x_{q}y_{p} = -(x_{p}y_{q} - x_{q}y_{p}) \\ \vec{RQ} \times \vec{PQ} = x_p y_q - x_q y_p \\ \cot \gamma = \frac{\vec{PQ} \cdot \vec{RQ}}{|\vec{PQ} \times \vec{RQ}|} = \frac{|\vec{PQ}||\vec{RQ}|\cos \gamma}{|\vec{PQ}||\vec{RQ}|\sin \gamma} \end{cases}$
+
+可以发现 $|\vec{QP} \times \vec{RP}| = |\vec{PQ} \times \vec{RQ}| = |x_{p}y_{q} - x_{q}y_{p}|$.
+
+令 $D = x_{p}y_{q} - x_{q}y_{p}$,
+
+在整个环绕数计算中, 会运用大量的 =2D= 向量叉积运算,
+
+比如 $\vec{RP} \times \vec{RQ}$ 的结果可以用来判断 $\vec{RP}$ 围绕点 $R$ 往哪个方向旋转最小的角度可以到达 $\vec{RQ}$ 上:
+
+如果 $\vec{RP} \times \vec{RQ} \gt 0$, 那么 $\vec{RP}$ 需要往逆时针方向旋转;
+
+如果 $\vec{RP} \times \vec{RQ} \lt 0$, 那么 $\vec{RP}$ 需要往顺时针方向旋转;
+
+如果 $\vec{RP} \times \vec{RQ} = 0$, 那么 $\vec{RP}$ 和 $\vec{RQ}$ 对齐.
+
+对于线性曲线 $PQ = (x(t), y(t)) = t Q + (1 - t)P$, $t \in [0, 1]$,
+
+$\begin{equation*} \begin{aligned} & tQ + (1 - t)P \\ = & tQ + P - tP \\ = & t(Q - P) + P \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \cdot (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \\ = & [t(x_q - x_p) + x_p]^2 + [t(y_q - y_p) + y_p]^2 \\ = & t^2 (x_q - x_p)^2 + 2t (x_q - x_p) x_p + x_p^2 + t^2 (y_q - y_p)^2 + 2t(y_q - y_p)y_p + y_p^2 \\ = & t^2 [(x_q - x_p)^2 - (y_q - y_p)^2] + 2t [(x_q - x_p)x_p + (y_q - y_p)y_p] + x_p^2 + y_p^2 \end{aligned} \end{equation*}$
+
+$\begin{equation*} \begin{aligned} & [x(t)]^2 + [y(t)]^2 \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) - y_p) \cdot (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \\ = & [t(x_q - x_p) + x_p]^2 + [t(y_q - y_p) + y_p]^2 \\ = & t^2 (x_q - x_p)^2 + 2t (x_q - x_p) x_p + x_p^2 + t^2 (y_q - y_p)^2 + 2t(y_q - y_p)y_p + y_p^2 \\ = & t^2 [(x_q - x_p)^2 - (y_q - y_p)^2] + 2t [(x_q - x_p)x_p + (y_q - y_p)y_p] + x_p^2 + y_p^2 \end{aligned} \end{equation*}$
+
+令 $\vec{PQ} = Q - P = (x_q - x_p, y_q - y_p)$, 对上面的等式进行化简:
+
+$\begin{equation*} \begin{aligned} & t^2 (\vec{PQ} \cdot \vec{PQ}) + 2t (\vec{PQ} \cdot \vec{RP}) + \vec{RP} \cdot \vec{RP} \\ = & t^2 [(Q - P) \cdot (Q - P)] + 2t [(Q - P) \cdot (P - R)] + [(P - R) \cdot (P - R)] \\ = & t^2 |Q - P|^2 + 2t [(Q - P) \cdot P] + |P|^2 \end{aligned} \end{equation*}$
+
+求 $(x(t), y(t)) = t Q + (1 - t) P$ 的梯度向量: $\begin{cases} x(t) = t x_q + (1 - t) x_p \\ y(t) = t y_q + (1 - t) y_p \end{cases} \xrightarrow [\text{derivate}] t \begin{cases} x^{'}(t) = x_q - x_p \\ y^{'}(t) = y_q - y_p \end{cases}$,
+
+可以发现正好 $\vec{PQ} = (x^{'}(t), y^{'}(t)) = (x_q - x_p, y_q - y_p)$, 而 $\vec{RQ} = (x(t), y(t))$, 所以 $D = \vec{RQ} \times \vec{PQ}$.
+
+$\begin{equation*} \begin{aligned} & \int_{0}^{1} \frac{y^{'}(t) x(t) - y(t)x^{'}(t)}{x(t)^2 + y(t)^2} dt \\ = & \int_{0}^{1} \frac{D}{t^2 \langle Q - P | Q - P \rangle + 2t \langle Q - P | P \rangle + \langle P | P \rangle} dt \\ = & D \int_{0}^{1} \frac{1}{t^2 \langle Q - P | Q - P \rangle + 2t \langle Q - P | P \rangle + \langle P | P \rangle} dt \end{aligned} \end{equation*}$
+
+由于括号太多导致看起来有点眼花, 为了方便阅读, 这里用 $\langle \vec{a} | \vec{b} \rangle$ 来表示 $\vec{a} \cdot \vec{b}$, 这种表示方法在其它地方也会经常见到.
+
+在前面我们已经知道 $\frac{y^{'}(t) x(t) - y(t)x^{'}(t)}{x(t)^2 + y(t)^2}$ 是 $\mathrm{atan}(\frac{y(t)}{x(t)})$ 关于 $t$ 的导数, 所以这个积分的解析式必然是 $\mathrm{atan}$ 或 $\tan^{-1}$ 函数,
+
+通过查表可知有一个类似的公式: $\int \frac{1}{x^2 + a^2} dx = \frac{1}{a} \tan^{-1}(\frac{x}{a}) + C$,
+
+因此, 想要求出 $t^2 \langle Q - P | Q - P \rangle + 2t \langle Q - P | P \rangle + \langle P | P \rangle$ 的反导数就得把它转换成平方和的形式: $u^2 + v^2$.
+
+这里令 $\begin{cases} a = \langle Q - P | Q - P \rangle \\ b = \langle Q - P | P \rangle \\ c = \langle P | P \rangle \end{cases}$, 令 $f(t) = at^2 + 2bt + c = a(t^2 + \frac{2b}{a} t) + c$,
+
+$t^2 + \frac{2b}{a} t$ 转换成 $t$ 和 $\frac{b}{a}$ 为主的完全平方和: $t^2 + \frac{2b}{a} t + (\frac{b}{a})^2 - (\frac{b}{a})^2 = (t + \frac{b}{a})^2 - (\frac{b}{a})^2$.
+
+$f(t) = a(t + \frac{b}{a})^2 - \frac{b^2}{a} + c = a(t + \frac{b}{a})^2 + \frac{ac - b^2}{a} = a[(t + \frac{b}{a})^2 + \frac{ac - b^2}{a^2}]$,
+
+令 $u^2 = (t + \frac{b}{a})^2$ 以及 $v^2 = \frac{ac - b^2}{a^2} \rightarrow \frac{1}{f(t)} = \frac{1}{a} \frac{1}{u^2 + v^2}$,
+
+对 $\int \frac{1}{f(x)} dt$ 使用换元法, 令 $u(t) = t + \frac{b}{a}$, $du = u^{'}(t) \cdot dt = dt$, 所以:
+
+$\begin{equation*} \begin{aligned} & \int \frac{1}{f(x)} dt \\ = & \frac{1}{a} \int \frac{1}{u^2 + v^2} du \\ = & \frac{1}{a v} \tan^{-1}(\frac{u}{v}) + C \\ = & \frac{1}{\sqrt{ac - b^2}} \tan^{-1} (\frac{at + b}{\sqrt{ac - b^2}}) + C \end{aligned} \end{equation*}$
+
+再把 $a$, $b$ 和 $c$ 代入回去, 得到 $ac - b^2 = (x_p y_q - x_q y_p)^2 = D^2$.
+
+由于手动计算太繁琐且容易出错, 所以这条关系是通过 =Maxima= 求解得到:
+
+#+begin_src maxima
+  Q: matrix([xq], [yq])$
+
+  P: matrix([xp], [yp])$
+
+  PQ: Q - P$
+
+  a: PQ . PQ$
+
+  b: PQ . P$
+
+  c: P . P$
+
+  factor(a * c - b * b);
+#+end_src
+
+$\begin{equation*} \begin{aligned} & D \int_{0}^{1} \frac{1}{t^2 \langle Q - P | Q - P \rangle + 2t \langle Q - P | P \rangle + \langle P | P \rangle} dt \\ = & \left. D (\frac{1}{\sqrt{ac - b^2}} \tan^{-1}(\frac{at + b}{\sqrt{ac - b^2}}) + C) \right]_0^1 \\ = & \left. D (\frac{1}{D} \tan^{-1}(\frac{at + b}{D}) + C) \right]_0^1 \\ = & \tan^{-1}(\frac{a + b}{D}) - \tan^{-1}(\frac{b}{D}) \end{aligned} \end{equation*}$
+
+其中 $a + b = \langle Q - P | Q - P \rangle + \langle Q - P | P \rangle = \langle Q - P | (Q - P + P) \rangle = \langle Q - P | Q \rangle$,
+
+$\begin{equation*}\begin{aligned} & \tan^{-1} \frac{a + b}{D} - \tan^{-1} \frac{b}{D} \\ = & \tan^{-1} \frac{\langle Q - P|Q \rangle}{D} - \tan^{-1} \frac{\langle Q - P | P \rangle}{D} \\ = & \tan^{-1} \frac{\langle Q - P|Q \rangle}{D} + \tan^{-1} \frac{\langle P - Q | P \rangle}{D} \\ = & \mathrm{sign}(D) (\tan^{-1}\cot \gamma + \tan^{-1}\cot \beta) \end{aligned} \end{equation*}$
+
+根据三角函数的关系: $\tan(\frac{\pi}{2} - \phi) = \cot \phi$, 可以得到:
+
+$\begin{equation*} \begin{aligned} & \mathrm{sign}(D)(\tan^{-1} \cot \gamma + \tan^{-1} \cot \beta) \\ = & \mathrm{sign}(D)(\pi - \gamma - \beta) \\ = & \mathrm{sign}(D) \alpha \end{aligned} \end{equation*}$
+
+其中, $\alpha = \mathrm{acos} \frac{\vec{RP} \cdot \vec{RQ}}{|\vec{RP}||\vec{RQ}|}$, 所以 $\int_0^1 \frac{y^{'}(t) \cdot x(t) - y(t) \cdot x^{'}(t)}{x(t)^2 + y(t)^2} dt = \mathrm{sign}(\vec{RP} \times \vec{RQ}) \mathrm{acos} \frac{\vec{RP} \cdot \vec{RQ}}{|\vec{RP}||\vec{RQ}|}$.
+
+最后, 对多边形的每条边关于判定点的环绕角度进行统计, 并得出环绕数:
+
+$\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP_i} \cdot \vec{RQ}}{|\vec{RP_i}||\vec{RQ}|} \mathrm{sign}(\vec{RP_i} \times \vec{RQ})$, 其中 $Q = P_{i + 1}$.
+#+end_quote
+
+但是, 使用环绕角来计算环绕数的算法存在一些性能缺陷, 因为需要用到三角函数以及算一整圈的角度.
+
+后来由 =Dan Sunday= 提出了另外一种方法来替代计算环绕角度: 从判定点发射出一条水平射线, 当这条射线与多边形的边相交时,
+
+如果相交边关于判定点的环绕角方向逆时针方向, 或说相交边往上走, 那么环绕数增加;
+
+如果相交边关于判定点的环绕角方向是顺时针方向, 或说相交边往下走, 那么环绕数减少.
+
+#+attr_html: :width 504px
+[[../../../files/Winding_number_algorithm_example.svg.png]]
+
+以上图的点 $R$ 为例子, 以它为起点的水平射线与线段 $P_iP_{i+1}$ 发生了一次相交, 于是计算 $\vec{P_{i}P_{i+1}} \times \vec{P_{i}R}$,
+
+这里令 $\vec{P_i P_{i+1}} = (x_1, y_1)$, $\vec{P_{i} R} = (x_2, y_2)$, 所以 $\vec{P_{i}P_{i+1}} \times \vec{P_{i}R} = x_1 y_2 - x_2 y_1$,
+
+如果计算结果为负数, 那么环绕数减一; 如果计算结果为正数, 那么环绕数加一; 如果计算结果是零, 那么环绕数不变.
+
+显然, $R$ 点的环绕数为 $-1$, 因为 $\vec{P_{i}P_{i+1}}$ 要往顺时针方向旋转到 $\vec{P_{i}R}$.
+
+#+BEGIN_SRC glsl
+  #define N 5
+
+  float sdfPoly(vec2 p, vec2[N] vs) {
+    const int num = vs.length();
+    // 初始化最短距离的平方
+    float d = dot(p - vs[0], p - vs[0]);
+    float s = 1.0;
+    for (int i = 0, j = num - 1; i < num; j=i, i++) {
+      vec2 ab = vs[j] - vs[i];
+      vec2 ap = p - vs[i];
+      float ratio = clamp(dot(ap, ab) / dot(ab, ab), 0.0, 1.0);
+      vec2 ao = ap - ab * ratio;
+
+      // 记录最短的距离的平方
+      d = min(d, dot(ao, ao));
+
+      bvec3 cond = bvec3( p.y >= vs[i].y, p.y < vs[j].y, ab.x * ap.y > ab.y * ap.x );
+      /*
+        当 min(vs[i].y, vs[j].y) <= p.y < max(vs[i].y, vs[j].y), 那么射线才和线段 vs[i]vs[j] 相交.
+
+        但是原文并没有这么判断相交, 这是因为还结合了其它条件来判断.
+
+        如果边是往上走的, 那么射线想与边相交, 那么必须满足 vs[i].y < vs[j].y 以及 p.y >= vs[i].y 和 p.y < vs[j].y 同时为 true,
+
+        如果还想要对环绕数进行变化, 那么这时候只能让 ab \times ap > 0, 因为边往上走;
+
+        如果边是往下走, 还想对环绕数进行变化, 那么所有判断必须为 false.
+      ,*/
+      if ( all(cond) || all(not(cond)) ) s *= -1.0;
+    }
+    return s * sqrt(d);
+  }
+
+  void main () {
+    vec2 uv = (2.0 * gl_FragCoord.xy - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+
+    vec2 v0 = 0.8*cos( 0.40 * u_time + vec2(0.0,2.00) + 0.0 );
+    vec2 v1 = 0.8*cos( 0.45 * u_time + vec2(0.0,1.50) + 1.0 );
+    vec2 v2 = 0.8*cos( 0.50 * u_time + vec2(0.0,3.00) + 2.0 );
+    vec2 v3 = 0.8*cos( 0.55 * u_time + vec2(0.0,2.00) + 4.0 );
+    vec2 v4 = 0.8*cos( 0.60 * u_time + vec2(0.0,1.00) + 5.0 );
+
+    vec2[] polygon = vec2[](v0, v1, v2, v3, v4);
+
+    float d = sdfPoly(uv, polygon); // [-0.5, 0.5]
+
+    // 分别多边形内外设定颜色
+    vec3 col = (d > 0.0) ? vec3(0.9,0.6,0.3) : vec3(0.65,0.85,1.0);
+
+    // 根据距离计算出渐变色的起点色
+    col *= 1.0 - exp(-6.0 * abs(d)); // [0.0, 1.0)
+    col *= 0.8 + 0.2 * cos(140.0 * d);
+
+    // 进行颜色渐变
+    col = mix(col, vec3(1.0), 1.0 - smoothstep(0.0, 0.015, abs(d)));
+
+    gl_FragColor = vec4(vec3(col), 1.0);
+
+    // float l = smoothstep(0.0, 1.0 / u_resolution.x, abs(d));
+    // gl_FragColor = vec4(vec3(l), 1.0);
+  }
+#+END_SRC
+
+最后来点题外话, 射线投影算法以及环绕数算法都是正确的, 当然这取决于想绘制的多边形是否带孔,
+
+如果带孔, 那么就使用射线投影算法; 如果不带孔就使用环绕数算法.
+
+在 =SVG= 里面, 一些元素拥有 [[https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-rule][fill-rule]] 属性, 这个属性的值是 =evenodd= 和 =nonzero= 两者的其中之一, 用来控制自交多边形是否带孔.
+
+*** 3D SDF
+
+**** Ray Marching
+
+对比各种成像方案:
+
+=Ray Casting=
+
+=Ray Tracing=
+
+# https://www.gabrielgambetta.com/computer-graphics-from-scratch/02-basic-raytracing.html
+
+=Ray Marching=
+
+# https://blog.csdn.net/qw8704149/article/details/121867120?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ECtr-1-121867120-blog-105440620.235%5Ev43%5Epc_blog_bottom_relevance_base9&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ECtr-1-121867120-blog-105440620.235%5Ev43%5Epc_blog_bottom_relevance_base9&utm_relevant_index=1
+
+https://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/
 
 ** 分形 (Fractal)
 
-分形也是一种噪声.
+#+begin_quote
+施工中
+#+end_quote
 
-*** 谢尔宾斯基三角形 (Sierpiński Triangle)
+https://davis.wpi.edu/~matt/courses/fractals/intro.html#Definition
+
+https://github.com/pedrotrschneider/shader-fractals
+
+自相似性(=self similarity=): 一个几何体的部分与整体在形状上一致, 或者说这个几何体可以划分成多个等份更小的自己.
+
+(=self affine=)
+
+整体与部分之间的比例为 $R$, 构成新几何体需要用到 $N$ 个部分, 那么这个分形的维度 $D = \log_{R}{N}$.
+
 *** 分形布朗运动 (Fractal Brownian Motion)
+
+这一次从物理层面上去看待噪声: 波(=waves=), 是随着时间发生波动的某种物理量.
+
+比如声波(=audio waves=)是空气压力(=air pressure=)的波动, 电磁波(=electromagnetical waves=)是电磁场(=electrical and magnetic fields=)的波动.
+
+振幅(=amplitude=)和频率(=frequency=)是波的两个重要特性.
+
+以最简单的噪声 - 正弦波(=sine wave=)为例: $f(x) = \mathrm{amplitude} \times \sin(\mathrm{frequency} \times (x + h)) + v$, 其中 $h$ 是在水平方向上的偏移, 水平方向上的偏移大小和时间有关, $v$ 是在垂直方向上的偏移.
+
+其它噪声波的数学表达式同理: $f(x) = \mathrm{amplitude} \times \mathrm{noise}(\mathrm{frequency} \times (x + h)) + v$.
+
+波的另外一个重要特性是波叠加(=superposition=), 也就是把多个波进行相加, 最终得到的波会因为振幅/频率/偏移的不同产生不同的结果,
+
+如果对这一个话题感兴趣, 可以去搜索 =superposition principle=, 相关的资料很多, 这里给出一个详略得当的[[https://www.acs.psu.edu/drussell/Demos/superposition/superposition.html][资料地址]].
+
+在乐理中, 每个音符(=note=)都有一个特定的频率, 这些音符的频率遵守一种名为音阶(=scale=)的模式进行排列, 其中频率的加倍或减半对应一个八度(=octave=)的跳跃.
+
+对噪声进行波叠加, 每次叠加增加固定大小的频率并减少固定大小的振幅, 可以获得更精细的噪声粒度以及更丰富的噪声细节, 这项技巧叫做分形布朗运动, 简称 =fBM=, 或者分形噪声(=fractal noise=).
+
+每次增加固定频率大小叫做间隙度(=lacunarity=), 而每次减少的固定振幅大小叫做振幅增益(=gain=).
+
+$\mathrm{fBM}(x, y, z) = \sum\limits_{i=1}^{n} \mathrm{amplitude}^{i} \cdot \mathrm{noise}(\mathrm{frequency}^{i}x, \mathrm{frequency}^{i}y, \mathrm{frequency}^{i}z)$
+
+[[../../../files/fractional-Brownian-motion.pdf]]
 
 概念参考资料: https://thebookofshaders.com/13/
 
@@ -2165,9 +2806,9 @@ https://iquilezles.org/articles/distance/
 
   有三种方法:
 
-  1. 相位一致性: 确保 $frequency$ 和 $offset$ 保持一致.
+  1. 相位一致性: 确保 $\mathrm{frequency}$ 和 $\mathrm{offset}$ 保持一致.
 
-  2. 频率匹配: 确保 $frequency$ 保持一致, $offset$ 之差不能超过 $PI$.
+  2. 频率匹配: 确保 $\mathrm{frequency}$ 保持一致, $\mathrm{offset}$ 之差不能超过 $\mathrm{PI}$.
 
   3. 多波叠加: 使用多种波形的组合, 比如方波, 不过这超出我们的讨论范围了.
 
@@ -2184,10 +2825,52 @@ https://iquilezles.org/articles/distance/
   线条的振幅明显扩大.
 #+end_quote
 
+**** 噪声的导数解析式
+
+参考: https://iquilezles.org/articles/morenoise/
+
+以下是对链接中的 =3D= 值噪声导数解析式的求解过程进行详细补充.
+
+这里先用 =Maxima= 得出未转换的结果, =Maxima= 代码如下:
+
+#+BEGIN_SRC maxima
+  // 等同于 mix(a, b, t)
+  lerp(t, a, b) := a + (b - a) * t;
+  n(u, v, w) := lerp(w,
+    lerp(v, lerp(u, a, b), lerp(u, c, d)),
+    lerp(v, lerp(u, e, f), lerp(u, g, h)));
+  n(u, v, w);
+#+END_SRC
+
+这是运行得出的结果:
+
+$\{[(h - g) u - (f - e) u + g - e] v - [(d - c) u - (b - a) u + c - a] v + (f - e) u - (b - a) u + e - a\} w + [(d - c) u - (b - a) u + c - a] v + (b - a) u + a$
+
+以下是对结果进行简化的过程:
+
+令 $E_1 = [(h - g) u - (f - e) u + g - e] v = (h - g - f + e)uv + (g - e)v$
+
+令 $E_2 = [(d - c) u - (b - a) u + c - a] v = (d - c - b + a)uv + (c - a)v$
+
+$E_1 - E_2 = (h - g - f + e - d + c + b - a)uv + (g - e - c + a)v$
+
+令 $E_3 = (f - e) u - (b - a) u + e - a = (f - e - b + a)u + e - a$
+
+$(E_1 - E_2 + E_3) w = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - b + a)uw + (e - a)w$
+
+最后, 把等式剩下的部分补上就可以得到链接中的 =3D= 值噪声展开式:
+
+$n(u, v, w) = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - b + a)uw + (e - a)w + (d - c - b + a)uv + (c - a)v + (b - a)u + a$
+
+*** 谢尔宾斯基三角形 (Sierpiński Triangle)
 *** madelbrot set
 *** voronoi diagram
 
 ** 图像处理
+
+#+begin_quote
+施工中
+#+end_quote
 
 *** 图像边缘检测 (Edge detection)
 
