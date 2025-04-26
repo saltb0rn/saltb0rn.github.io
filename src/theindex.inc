@@ -6,7 +6,7 @@
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=ef40aa8a8c08fce868974ae5ff4f1b4d][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=bc155e75add62b3cc92e4d33156983a5][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的,
@@ -83,37 +83,44 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=b3c570da316a8b19a2fe56f3cd0992e1][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=f386e3c86236e56e3739f9cdca7a2be5][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
 
 对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去 *抄明白* 他们的代码, 大胆承认抄别人的代码.
 
-#+begin_quote
+想做到 *抄明白* 得了解代码使用了哪些知识, 这些知识就像是积木一样, 我们要做的利用这些积木搭出自己想要的东西,
+
+这篇笔记的内容就是介绍这些常用的积木, 它们基本上是数学知识, 属于线性代数, 微积分以及概率论的范畴,
+
+不过本文并不是要成为数学的入门课, 而是学习如何用它们解决图形上的一些问题,
+
+本文会在一些地方尽量说明引用了什么数学定理, 方便读者(包括我本人)遇到不会的数学知识可以自行去搜索学习.
+
+这里有很多内容来自于 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完), 以及 [[https://iquilezles.org/articles/][Inigo Quilez 的文章]],
+
+不过 =Inigo Quilez= 的文章要求读者有前面提到的数学基础, 所以读不懂不要气馁, 等掌握了基础再来读即可.
+
+另外, 有很多时候需要作图以及计算等式, 所以个人建议最后学一两个这方面的工具, 简单作图的话推荐 [[https://graphtoy.com][GraphToy]], 想要作一些复杂的图以及公式计算则推荐 [[https://maxima.sourceforge.io/][Maxima]].
+
+个人认为学数学应 *尽可能* 地对给出定理刨根问底, 具体做法是:
+
+理解定理 $P$ 的证明思路, 知道每一个证明步骤是以哪些定理/公理作为根据, 所以在这个过程中可能也会遇到一些陌生的定理 $L$,
+
+如果定理 $L$ 的定义影响到你对定理 $P$ 证明的理解, 那么以同样做法去理解定理 $L$ 的证明思路, 再回过头来接着理解定理 $P$ 的证明;
+
+否则就默认定理 $L$ 是正确的, 继续理解定理 $P$ 的证明.
+
+简单来说, 学数学是一个递归过程, 这就会为什么数学里的公理是不可证明的, 不可能一直刨根问底的.
+
+最后就是对于知识的运用: 要知道哪些知识可以解决什么问题, 想要运用自如就需要经常做题练习, 等到运用自如这一步, 看问题就很容易联想到这些学过的知识了, 这就是俗称的灵感,
+
+正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子. 拿着各种工具看到的景象就不一样了.
+
+所以说, 数学依靠的是方法和努力. 对于抄代码也一样, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改.
+
 抄的时候要明白代码的每一部分的含义: 对这部分代码修改会产生什么影响, 了解影响是怎么变化的, 以此建立起直观的理解.
-#+end_quote
-
-并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
-
-这篇笔记就是用来记录"明白"这一过程.
-
-另外, 这里建议有两点建议:
-
-1. 参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完);
-
-2. 如果在阅读其它人的代码时看到一些自己不理解的函数(=shader= 的函数基本上就是数学函数的翻译), 使用绘图工具绘制其函数图像来了解其行为.
-
-   这里推荐 [[https://graphtoy.com][GraphToy]] 和 [[https://maxima.sourceforge.io/][Maxima]] (=Maxima= 是开源免费的, 有钱人可以选择像 =Mathematica= 或者 =MATLAB= 之类的商业软件).
-
-   =GraphToy= 提供了 =GLSL= 内置函数定义, 专门用于 =Shader= 的编写辅助.
-
-    和 =GraphToy= 不一样, =Maxima= 并不提供 =GLSL= 的内置函数定义, 它是一个代数计算系统, 专门解决数学计算问题, 也包括画图功能,
-
-    想要在 =Maxima= 使用 =GLSL= 的内置函数需要自己定义(, =GLSL= 的内置函数的定义都很简单), 能够自定义函数则是推荐它的理由, 用来
-
-    弥补 =GraphToy= 的不足. 这篇笔记会提供一些函数的 =Maxima= 定义.
-
 
 	
 *** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]

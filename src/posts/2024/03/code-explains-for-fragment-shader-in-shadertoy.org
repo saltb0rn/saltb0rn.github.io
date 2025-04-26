@@ -9,30 +9,37 @@
 
 对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去 *抄明白* 他们的代码, 大胆承认抄别人的代码.
 
-#+begin_quote
+想做到 *抄明白* 得了解代码使用了哪些知识, 这些知识就像是积木一样, 我们要做的利用这些积木搭出自己想要的东西,
+
+这篇笔记的内容就是介绍这些常用的积木, 它们基本上是数学知识, 属于线性代数, 微积分以及概率论的范畴,
+
+不过本文并不是要成为数学的入门课, 而是学习如何用它们解决图形上的一些问题,
+
+本文会在一些地方尽量说明引用了什么数学定理, 方便读者(包括我本人)遇到不会的数学知识可以自行去搜索学习.
+
+这里有很多内容来自于 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完), 以及 [[https://iquilezles.org/articles/][Inigo Quilez 的文章]],
+
+不过 =Inigo Quilez= 的文章要求读者有前面提到的数学基础, 所以读不懂不要气馁, 等掌握了基础再来读即可.
+
+另外, 有很多时候需要作图以及计算等式, 所以个人建议最后学一两个这方面的工具, 简单作图的话推荐 [[https://graphtoy.com][GraphToy]], 想要作一些复杂的图以及公式计算则推荐 [[https://maxima.sourceforge.io/][Maxima]].
+
+个人认为学数学应 *尽可能* 地对给出定理刨根问底, 具体做法是:
+
+理解定理 $P$ 的证明思路, 知道每一个证明步骤是以哪些定理/公理作为根据, 所以在这个过程中可能也会遇到一些陌生的定理 $L$,
+
+如果定理 $L$ 的定义影响到你对定理 $P$ 证明的理解, 那么以同样做法去理解定理 $L$ 的证明思路, 再回过头来接着理解定理 $P$ 的证明;
+
+否则就默认定理 $L$ 是正确的, 继续理解定理 $P$ 的证明.
+
+简单来说, 学数学是一个递归过程, 这就会为什么数学里的公理是不可证明的, 不可能一直刨根问底的.
+
+最后就是对于知识的运用: 要知道哪些知识可以解决什么问题, 想要运用自如就需要经常做题练习, 等到运用自如这一步, 看问题就很容易联想到这些学过的知识了, 这就是俗称的灵感,
+
+正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子. 拿着各种工具看到的景象就不一样了.
+
+所以说, 数学依靠的是方法和努力. 对于抄代码也一样, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改.
+
 抄的时候要明白代码的每一部分的含义: 对这部分代码修改会产生什么影响, 了解影响是怎么变化的, 以此建立起直观的理解.
-#+end_quote
-
-并且要多抄, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改, 到了这种地步就说明知识已经被内化了.
-
-这篇笔记就是用来记录"明白"这一过程.
-
-另外, 这里建议有两点建议:
-
-1. 参考一下 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完);
-
-2. 如果在阅读其它人的代码时看到一些自己不理解的函数(=shader= 的函数基本上就是数学函数的翻译), 使用绘图工具绘制其函数图像来了解其行为.
-
-   这里推荐 [[https://graphtoy.com][GraphToy]] 和 [[https://maxima.sourceforge.io/][Maxima]] (=Maxima= 是开源免费的, 有钱人可以选择像 =Mathematica= 或者 =MATLAB= 之类的商业软件).
-
-   =GraphToy= 提供了 =GLSL= 内置函数定义, 专门用于 =Shader= 的编写辅助.
-
-    和 =GraphToy= 不一样, =Maxima= 并不提供 =GLSL= 的内置函数定义, 它是一个代数计算系统, 专门解决数学计算问题, 也包括画图功能,
-
-    想要在 =Maxima= 使用 =GLSL= 的内置函数需要自己定义(, =GLSL= 的内置函数的定义都很简单), 能够自定义函数则是推荐它的理由, 用来
-
-    弥补 =GraphToy= 的不足. 这篇笔记会提供一些函数的 =Maxima= 定义.
-
 #+end_abstract
 
 # https://clauswilke.com/art/post/shaders
@@ -334,17 +341,13 @@ $smoothstep$ 的返回值 $f(t) = 3t^{2} - 2t^{3}$ 是一个最高次项为 3 �
 
   #define PI 3.14159265359
 
-  uniform vec2 u_resolution;
-  uniform vec2 u_mouse;
-  uniform float u_time;
-
   float plot(vec2 st, float pct) {
     return smoothstep(pct-0.02, pct, st.y) -
            smoothstep(pct, pct+0.02, st.y);
   }
 
   void main() {
-    vec2 st = gl_FragCoord.xy / u_resolution;
+    vec2 st = gl_FragCoord.xy / iResolution;
 
     // smooth interpolation between 0.1 and 0.9
     float y = smoothstep(0.1, 0.9, st.x);
@@ -439,7 +442,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
 
 1. 确定好 =UV= 坐标系: 原点在哪, 范围在哪.
 
-2. *时刻记住* 片元原本的 =UV= 坐标 $st_{0}$ 坐标是 =gl_FragCoord.xy / u_resolution=;
+2. *时刻记住* 片元原本的 =UV= 坐标 $st_{0}$ 坐标是 =gl_FragCoord.xy / iResolution=;
 
    *代码中的变量 $st$ 可以看作是片元的一个新属性*, 其初始值为 $st_{0}$ 的值, 但是 $st$ 可能会在经过计算后发生变化.
 
@@ -482,7 +485,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
       *例子一*: 往 $y$ 方向增加, 颜色越亮, 往 $x$ 方向增加, 颜色越亮.
 
       #+begin_src c
-        vec2 st = gl_FragCoord.xy / u_resolution;
+        vec2 st = gl_FragCoord.xy / iResolution;
 
         // f(st) = st.x + st.y
         // y 增加, color 增加
@@ -498,7 +501,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
       *例子二*: 往 $y$ 方向增加, 颜色越亮.
 
       #+begin_src c
-        vec2 st = gl_FragCoord.xy / u_resolution;
+        vec2 st = gl_FragCoord.xy / iResolution;
 
         // f(st) = st.y
         // y 增加, color 增加
@@ -513,7 +516,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
       *例子三*: 往 $x$ 方向增加, 颜色越亮.
 
       #+begin_src c
-        vec2 st = gl_FragCoord.xy / u_resolution;
+        vec2 st = gl_FragCoord.xy / iResolution;
 
         // f(st) = st.x
         // x 增加, color 增加
@@ -528,7 +531,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
       *例子四*: 往 $y$ 方向增加, 颜色越亮; 往 $x$ 方向增加, 颜色越暗.
 
       #+begin_src c
-        vec2 st = gl_FragCoord.xy / u_resolution;
+        vec2 st = gl_FragCoord.xy / iResolution;
 
         // f(st) = st.y + (1.0 - st.x)
         // y 增加, color 增加
@@ -544,7 +547,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
       *例子五*: 往 $y$ 方向增加, 颜色越亮; 往 $x$ 方向增加, 颜色越暗, 比上一个例子更明显.
 
       #+begin_src c
-        vec2 st = gl_FragCoord.xy / u_resolution;
+        vec2 st = gl_FragCoord.xy / iResolution;
         // f(st) = (st.x + st.y) + (st.y - 2 * st.x) = 2 * st.y - st.x
         // y 增加, color 增加
         // x 增加, color 减小
@@ -644,7 +647,7 @@ $smoothstep(pct-0.02, pct, st.y)$ 的函数图像是 $smoothstep(0.02, pct+0.02,
    既然只是针对一个片元, 为什么像下面的例子会绘制出 4 条直线而不是 1 条直线呢?
 
    #+begin_src c
-     vec2 st = gl_FragCoord.xy / u_resolution;
+     vec2 st = gl_FragCoord.xy / iResolution;
 
      float color = 0.0;
      int iterations = 4;
@@ -1388,7 +1391,7 @@ $(floor(st.x) + 1.0, floor(st.y) + 1.0)$
   }
 
   void main() {
-    vec2 st = gl_FragCoord.xy/u_resolution.xy;
+    vec2 st = gl_FragCoord.xy/iResolution.xy;
 
     // Scale the coordinate system to see
     // some noise in action
@@ -2091,7 +2094,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 施工中
 #+end_quote
 
-全称 =Signed Distance Function= 或 =Signed Distance Field=, 这里用函数 $f$ 表示.
+全称符号距离函数(=Signed Distance Function=) 或符号距离场合(=Signed Distance Field=), 这里用函数 $f$ 表示.
 
 $f$ 用来计算点 $p$ 到几何体 $G$ 的正交距离(=orthogonal distance=), 也就是找到点到几何体的垂线,
 
@@ -2188,7 +2191,7 @@ $f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以
 
 不管是哪种假设, 现在可以得到估算 $\vec{\varepsilon}$ 的方法: $|\vec{\varepsilon}| = \frac{|f(p)|}{|\nabla f(p)|}$.
 
-另外一种求导数(梯度向量)近似值方法叫做中心差商法(=central difference method=), 这种方法不需要我们求出函数的导数解析式.
+另外一种求导数(梯度向量)近似值方法叫做<<central-diff-application>>中心差商法(=central difference method=), 这种方法不需要我们求出函数的导数解析式.
 
 它来源于导数的定义: $f^{'}(x) = \lim\limits_{h \to 0} \frac{f(x + h) - f(x)}{h} \rightarrow \lim\limits_{h \to 0} \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$, 对 $h$ 任取一个很小的值即可: $f^{'}(x) \approx \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$,
 
@@ -2196,7 +2199,26 @@ $f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以
 
 $\begin{equation*} \begin{aligned} & \nabla f(x, y, \dots) \\ = & (\frac{f(x + \frac{h}{2}, y) - f(x - \frac{h}{2}, y)}{h}, \frac{f(x, y + \frac{h}{2}) - f(x, y - \frac{h}{2})}{h}, \dots) \\ = & \frac{1}{h} (f(x + \frac{h}{2}, y) - f(x - \frac{h}{2}, y), f(x, y + \frac{h}{2}) - f(x, y - \frac{h}{2}), \dots) \end{aligned} \end{equation*}$
 
-其实在 [[#smoothstep-draw][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]] 就已经运用到中心差商法了, 只不过并没有直接把导数算出来而已.
+以下是它的 =GLSL= 实现:
+
+#+begin_src glsl
+  vec2 grad( vec2 x ) {
+    vec2 h = vec2( 0.01, 0.0 );
+    return vec2( f(x+h.xy) - f(x-h.xy), f(x+h.yx) - f(x-h.yx) ) / (2.0*h.x);
+  }
+#+end_src
+
+其实在 [[#smoothstep-draw][The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析]] 就已经运用到中心差商法了, 只不过并没有除以 $h$ 把导数算出来, 直接用的 $df(x)$.
+
+此外, 中心差商法还有另一个用处: 快速估算几何解析式 $f$ 在点 $x$ 上的法线向量, 以下是其 =GLSL= 实现:
+
+#+begin_src glsl
+  vec2 calcNormal( vec2 x ) {
+    vec2 h = vec2( 0.01, 0.0 );
+    vec2 n = vec2( f(x+h.xy) - f(x-h.xy), f(x+h.yx) - f(x-h.yx) );
+    return normalize(n);
+  }
+#+end_src
 
 **** 案例一: 估算点与曲线之间的距离
 
@@ -2668,13 +2690,13 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 
   void main () {
-    vec2 uv = (2.0 * gl_FragCoord.xy - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
 
-    vec2 v0 = 0.8*cos( 0.40 * u_time + vec2(0.0,2.00) + 0.0 );
-    vec2 v1 = 0.8*cos( 0.45 * u_time + vec2(0.0,1.50) + 1.0 );
-    vec2 v2 = 0.8*cos( 0.50 * u_time + vec2(0.0,3.00) + 2.0 );
-    vec2 v3 = 0.8*cos( 0.55 * u_time + vec2(0.0,2.00) + 4.0 );
-    vec2 v4 = 0.8*cos( 0.60 * u_time + vec2(0.0,1.00) + 5.0 );
+    vec2 v0 = 0.8*cos( 0.40 * iTime + vec2(0.0,2.00) + 0.0 );
+    vec2 v1 = 0.8*cos( 0.45 * iTime + vec2(0.0,1.50) + 1.0 );
+    vec2 v2 = 0.8*cos( 0.50 * iTime + vec2(0.0,3.00) + 2.0 );
+    vec2 v3 = 0.8*cos( 0.55 * iTime + vec2(0.0,2.00) + 4.0 );
+    vec2 v4 = 0.8*cos( 0.60 * iTime + vec2(0.0,1.00) + 5.0 );
 
     vec2[] polygon = vec2[](v0, v1, v2, v3, v4);
 
@@ -2692,7 +2714,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
     gl_FragColor = vec4(vec3(col), 1.0);
 
-    // float l = smoothstep(0.0, 1.0 / u_resolution.x, abs(d));
+    // float l = smoothstep(0.0, 1.0 / iResolution.x, abs(d));
     // gl_FragColor = vec4(vec3(l), 1.0);
   }
 #+END_SRC
@@ -2703,23 +2725,93 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 在 =SVG= 里面, 一些元素拥有 [[https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-rule][fill-rule]] 属性, 这个属性的值是 =evenodd= 和 =nonzero= 两者的其中之一, 用来控制自交多边形是否带孔.
 
+
 *** 3D SDF
 
 **** Ray Marching
 
-对比各种成像方案:
+光线步进(=Ray Marching=)是一种渲染成像的方案, 类似渲染成像方案的还有光线投射(=Ray Casting=)和光线追踪(=Ray Tracing=).
 
-=Ray Casting=
+这三种方案在成像原理的层面上基本上是一样的, 但它们在实现手段上和实现细节上会有所区别, 最后导致实现效果也有所差别, 它们的成像原理可以通过以下图片来概括.
 
-=Ray Tracing=
+#+attr_html: :width 504px
+[[../../../files/ray-tracing.jpg]]
 
-# https://www.gabrielgambetta.com/computer-graphics-from-scratch/02-basic-raytracing.html
+从相机 $O$ 发出数条视觉射线(=view ray=), 假设其中一条视觉射线穿过投影平面(也就是最终成像的图像)上位于位置 $P$ 的像素, 所以射线的方向为 $P - O = \vec{OP}$, 判断该视觉射线是否和物体相交, 如果存在多个交点 $i_0, i_1$, 便从物体在离相机最近的相交点上获取颜色来作为位于 $P$ 点像素的颜色; 如果不存在交点, 那么 $P$ 上的像素将不设置任何颜色或设置默认色.
 
-=Ray Marching=
+接着是阴影的形成, 原理类似, 从光源 $L$ 发出数条阴影射线, 当视觉射线与物体的最近相交点为 $S$, 便以 $L - S = \vec{SL}$ 作为其中一条阴影射线的方向, 再找出这条阴影射线上离光源最近的交点 $J$, 如果 $|J - L| \lt |S - L|$, 那么 $S$ 就处于阴影之中, 在视觉射线所对应的像素上设置阴影色; 否则 $|J - L| = |S - L| \rightarrow J = S$, 点 $S$ 不处于阴影之中, 无需为对应像素设置阴影色.
 
-# https://blog.csdn.net/qw8704149/article/details/121867120?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ECtr-1-121867120-blog-105440620.235%5Ev43%5Epc_blog_bottom_relevance_base9&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ECtr-1-121867120-blog-105440620.235%5Ev43%5Epc_blog_bottom_relevance_base9&utm_relevant_index=1
+#+begin_quote
+上面介绍内容只是比较简单的成像实现, 比如没有考虑物体投影和光线反射的情况, 但本文专注于基本的成像原理,
 
-https://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/
+对额外内容有兴趣的话可以看一下相关书籍, 比如, [[https://www.gabrielgambetta.com/computer-graphics-from-scratch/02-basic-raytracing.html][Computer Graphics From Scratch]] 的前五章是关于光线追踪的内容.
+#+end_quote
+
+从原理上来讲, 整个成像过程的大部分内容在于计算射线与物体的交点, 这也是这三种成像方案之间的最大不同:
+
+光线追踪是通过解方程来算出射线与物体之间的交点;
+
+光线投射是沿着视觉射线方向, 以固定步长不停地前进, 直到射线超出距离或与物体相交;
+
+光线步进也是沿着视觉射线方向不停前进, 直到射线超出距离或与物体相交, 和光线投射的区别在于: 前进的步长 $d$ 不是固定的,
+
+每次光线前进 $d$ 时, 需要保证在当前位置上沿着各个方向前进 $d$ 后不会进入任何物体体内, 只是与物体表面接触.
+
+#+caption: 光线步进
+[[../../../files/08_displacement_05.png]]
+
+假设要判断位于 $p_0$ 的相机在方向 $\vec{rd}$ (是单位向量) 上发射出的一条视角射线是否与物体相交, 先在 $p_0$ 上找到距离步长 $d_1$ 并前进到 $p_1$, 只有这个步长可以保证所有从 $p_1$ 出发的任意方向射线不会进入物体内部, 比如步长 $e_1$ 会让某些方向的射线进入物体内, $d_1$ 的特点是所有可选步长中最短, 后续 $d_2$, $d_3$ 和 $d_4$ 都是这么来的. 前进后的坐标计算为 $p_n = p_0 + \sum\limits_{i=0}^{n} d_i \cdot \vec{rd}$, 其中 $d_0 = 0$.
+
+由于光线在前进时不断形成球体检查交点, 所以光线步进也被称为球体追踪(=sphere tracing=).
+
+因为 $\sum\limits_{i=0}^{n} d_i$ 是相机与场景交点的正交距离, 所以可以使用光线步进来计算 =3D= 场景的 =SDF=: 相机到场景的正交距离场.
+
+接下来实现一个 =RayMarching= 渲染器来计算符号距离场,
+
+#+BEGIN_SRC glsl
+  #define MAX_STEPS 100
+  #define MAX_DIST 100.0
+  #define SURF_DIST 0.01
+
+  float sphereRadius = 1.0;
+  vec3 sphereCenter = vec3(0.0, 1.0, 6.0);
+
+  float SceneSDF(vec3 p) {
+    float sphereDist = length(p - sphereCenter) - sphereRadius;
+    float groundDist = p.y;
+
+    float d = min(sphereDist, groundDist);
+    return d;
+  }
+
+  float RayMarch(vec3 p0, vec3 rd) {
+    float dist = 0;
+
+    for (int i = 0; i < MAX_STEPS; i++) {
+      vec3 p = p0 + dist * rd;
+      float d = SceneSDF(p);
+      dist += d;
+      if (dist > MAX_DIST || d < SURF_DIST) break;
+    }
+
+    return dist;
+  }
+
+  void main() {
+    vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    vec3 cameraPos = vec3(0.0, 1.0, 0.0);
+    vec3 rd = normalize(vec3(uv, 1.0));
+    float d = RayMarch(cameraPos, rd);
+    d /= 6.0;                     // 避免 d 过大导致画面全白
+    gl_FragColor = vec4(vec3(d), 1.0);
+  }
+#+END_SRC
+
+#+attr_html: :width 504px
+#+caption: 效果
+[[../../../files/3d-sdf-example.png]]
+
+[[central-diff-application][法线向量估算]]
 
 ** 分形 (Fractal)
 
@@ -2811,6 +2903,10 @@ $\mathrm{fBM}(x, y, z) = \sum\limits_{i=1}^{n} \mathrm{amplitude}^{i} \cdot \mat
 
 **** 噪声的导数解析式
 
+#+begin_quote
+施工中
+#+end_quote
+
 参考: https://iquilezles.org/articles/morenoise/
 
 以下是对链接中的 =3D= 值噪声导数解析式的求解过程进行详细补充.
@@ -2826,6 +2922,8 @@ $\mathrm{fBM}(x, y, z) = \sum\limits_{i=1}^{n} \mathrm{amplitude}^{i} \cdot \mat
   n(u, v, w);
 #+END_SRC
 
+$n(u, v, w) = smoothstep(vec3(0.0), vec3(1.0), fract(vec3(x, y, z)))$
+
 这是运行得出的结果:
 
 $\{[(h - g) u - (f - e) u + g - e] v - [(d - c) u - (b - a) u + c - a] v + (f - e) u - (b - a) u + e - a\} w + [(d - c) u - (b - a) u + c - a] v + (b - a) u + a$
@@ -2836,15 +2934,19 @@ $\{[(h - g) u - (f - e) u + g - e] v - [(d - c) u - (b - a) u + c - a] v + (f - 
 
 令 $E_2 = [(d - c) u - (b - a) u + c - a] v = (d - c - b + a)uv + (c - a)v$
 
-$E_1 - E_2 = (h - g - f + e - d + c + b - a)uv + (g - e - c + a)v$
-
 令 $E_3 = (f - e) u - (b - a) u + e - a = (f - e - b + a)u + e - a$
+
+$E_1 - E_2 = (h - g - f + e - d + c + b - a)uv + (g - e - c + a)v$
 
 $(E_1 - E_2 + E_3) w = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - b + a)uw + (e - a)w$
 
 最后, 把等式剩下的部分补上就可以得到链接中的 =3D= 值噪声展开式:
 
 $n(u, v, w) = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - b + a)uw + (e - a)w + (d - c - b + a)uv + (c - a)v + (b - a)u + a$
+
+令 $\begin{cases} k_0 = a \\ k_1 = b - a \\ k_2 = c - a \\ k_3 = e - a \\ k_4 = d - c - b + a \\ k_5 = g - e - c + a \\ k_6 = f - e - b + a \\ k_7 = h - g - f + e - d + c + b - a \end{cases} \rightarrow n(u, v, w) = k_0 + k_1 u + k_2 v + k_3 w + k_4 uv + k_5 vw + k_6 uw + k_7 uvw$
+
+现在计算 $n(n, v, w)$ 的梯度向量/导数就很简单了: $\begin{cases} \frac{\partial n(u, v, w)}{\partial u} = k_1 + k_4 v + k_6 w + k_7 vw \\ \frac{\partial n(u, v, w)}{\partial v} = k_2 + k_4 u + k_5 w + k_7 uw \\ \frac{\partial n(u, v, w)}{\partial w} = k_3 + k_5 v + k_6 u + k_7 uv \end{cases}$.
 
 *** 谢尔宾斯基三角形 (Sierpiński Triangle)
 *** madelbrot set
