@@ -83,7 +83,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=f386e3c86236e56e3739f9cdca7a2be5][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=ca792629fc84f3710f14bcc2c7878e62][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -96,15 +96,19 @@
 
 不过本文并不是要成为数学的入门课, 而是学习如何用它们解决图形上的一些问题,
 
-本文会在一些地方尽量说明引用了什么数学定理, 方便读者(包括我本人)遇到不会的数学知识可以自行去搜索学习.
+本文会在一些地方尽量说明引用了什么数学定理, 方便读者(包括我本人)遇到不会的数学知识可以自行去搜索学习, 尽可能地给初学者提供一个系统的入门指南.
 
-这里有很多内容来自于 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完), 以及 [[https://iquilezles.org/articles/][Inigo Quilez 的文章]],
+这里有很多内容来自于 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完), 以及 [[https://iquilezles.org/articles/][Inigo Quilez 的文章]], 少部分参考了 [[https://shadertoyunofficial.wordpress.com/2019/01/02/programming-tricks-in-shadertoy-glsl/][Programming Tricks in ShaderToy / GLSL]].
 
-不过 =Inigo Quilez= 的文章要求读者有前面提到的数学基础, 所以读不懂不要气馁, 等掌握了基础再来读即可.
+=Inigo Quilez= 的文章要求读者有前面提到的数学基础, 所以读不懂不要气馁, 等掌握了基础再来读即可.
 
-另外, 有很多时候需要作图以及计算等式, 所以个人建议最后学一两个这方面的工具, 简单作图的话推荐 [[https://graphtoy.com][GraphToy]], 想要作一些复杂的图以及公式计算则推荐 [[https://maxima.sourceforge.io/][Maxima]].
+有很多时候需要作图以及计算等式, 所以个人建议最后学一两个这方面的工具, 简单作图的话推荐 [[https://graphtoy.com][GraphToy]], 想要作一些复杂的图以及公式计算则推荐 [[https://maxima.sourceforge.io/][Maxima]].
 
-个人认为学数学应 *尽可能* 地对给出定理刨根问底, 具体做法是:
+另外, 如果你不喜欢在 =ShaderToy= 上编码而是喜欢本地上实验, 那么推荐使用 [[https://github.com/patriciogonzalezvivo/glslViewer][glslViewer]], 和 =glslViewer= 的差别基本在于内置 =Uniforms= 名字不太一样,
+
+并且比其 =ShaderToy= 还支持更高版本的 =GLSL=, 你想更加全面得接触 =GLSL= 那么 =glslViewer= 更好.
+
+推荐完工具后就是个人的数学学习心得了 (仅供参考, 不作标准), 个人认为学数学应 *尽可能* 地对给出定理刨根问底, 具体做法是:
 
 理解定理 $P$ 的证明思路, 知道每一个证明步骤是以哪些定理/公理作为根据, 所以在这个过程中可能也会遇到一些陌生的定理 $L$,
 
@@ -114,9 +118,9 @@
 
 简单来说, 学数学是一个递归过程, 这就会为什么数学里的公理是不可证明的, 不可能一直刨根问底的.
 
-最后就是对于知识的运用: 要知道哪些知识可以解决什么问题, 想要运用自如就需要经常做题练习, 等到运用自如这一步, 看问题就很容易联想到这些学过的知识了, 这就是俗称的灵感,
+最后就是对于知识的运用, 当到了知道哪些知识可以解决什么问题, 以及看到问题可以联想到用哪些知识解决, 就说明到达运用自如的地步了, 而这种程度的联想就是俗称的灵感.
 
-正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子. 拿着各种工具看到的景象就不一样了.
+想要到达运用自如的境界需要经常做题练习, 正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子, 当拿的工具多了, 看到的景象就不一样了.
 
 所以说, 数学依靠的是方法和努力. 对于抄代码也一样, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改.
 
@@ -262,7 +266,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=e8eae4a14aa014d31beb53f93e0f2bb4][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=657979444e6b7fae9d74345fb53cc81f][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-02-21 Fri 00:24 -->
+<!-- 2025-04-27 Sun 17:33 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-光和材质</title>
 <meta name="author" content="saltb0rn" />
 <meta name="generator" content="Org Mode" />
-<style>
+<style type="text/css">
   #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
@@ -251,27 +251,27 @@
 <li><a href="#org7e08260">现实与计算机中颜色</a></li>
 <li><a href="#org33a770e">光照模型</a>
 <ul>
-<li><a href="#orgbce2ecb">最基础的光照模型 - Phong lighting model</a>
+<li><a href="#org321af37">最基础的光照模型 - Phong lighting model</a>
 <ul>
 <li><a href="#org0ad6c0e">光源</a></li>
 <li><a href="#orge139dd9">材质</a></li>
 <li><a href="#org38779ff">光照计算</a></li>
 </ul>
 </li>
-<li><a href="#org701df6a">OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
+<li><a href="#orge4be280">OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
 <ul>
-<li><a href="#orgfee3e2d">光在 OpenGL 中的定义</a></li>
-<li><a href="#orgf689112">材质在 OpenGL 中的定义</a></li>
+<li><a href="#org509652d">光在 OpenGL 中的定义</a></li>
+<li><a href="#org097da98">材质在 OpenGL 中的定义</a></li>
 <li><a href="#org251a99a">光线计算</a></li>
 </ul>
 </li>
-<li><a href="#org4816ece">基于物理的渲染 - PBR (Physically Based Rendering)</a>
+<li><a href="#orgb8a2bd5">基于物理的渲染 - PBR (Physically Based Rendering)</a>
 <ul>
-<li><a href="#org1ee4f35">微表面和宏表面 (Micro and Macro Surface)</a></li>
-<li><a href="#org17d527a">辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</a></li>
-<li><a href="#orgcf6dad0">双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</a></li>
+<li><a href="#orgba60288">微表面和宏表面 (Micro and Macro Surface)</a></li>
+<li><a href="#org1aa4c68">辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</a></li>
+<li><a href="#org2a9f578">双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</a></li>
 <li><a href="#org2c3aa99">完整的反射率方程</a></li>
-<li><a href="#org8e6b82b">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</a></li>
+<li><a href="#org7e0ea3d">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</a></li>
 </ul>
 </li>
 </ul>
@@ -294,7 +294,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgef6ea73">
+<div class="abstract" id="orgf08505a">
 <p>
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 </p>
@@ -318,8 +318,6 @@
 </ol>
 
 </div>
-
-
 <div id="outline-container-org7e08260" class="outline-2">
 <h2 id="org7e08260">现实与计算机中颜色</h2>
 <div class="outline-text-2" id="text-org7e08260">
@@ -340,7 +338,7 @@
 </p>
 
 
-<div id="orgfffa478" class="figure">
+<div id="org4dd4c70" class="figure">
 <p><img src="../../../files/wave.jpeg" alt="wave.jpeg">
 </p>
 </div>
@@ -383,7 +381,7 @@
 </p>
 
 
-<div id="orge308edd" class="figure">
+<div id="org2fd987a" class="figure">
 <p><img src="../../../files/cone-response.jpg" alt="cone-response.jpg">
 </p>
 </div>
@@ -450,8 +448,6 @@
 </p>
 </div>
 </div>
-
-
 <div id="outline-container-org33a770e" class="outline-2">
 <h2 id="org33a770e">光照模型</h2>
 <div class="outline-text-2" id="text-org33a770e">
@@ -463,15 +459,13 @@
 计算机的光照模型基本上就是对现实光照的抽象,虽然说不同的图形系统的光照系统都一样,不过都差不多, <code>OpenGL</code> 和 <code>Direct3D</code> 就基本相同,所以在介绍完现实的光照后会通过 <code>OpenGL</code> 的光照模型进行了解.
 </p>
 </div>
-
-<div id="outline-container-orgbce2ecb" class="outline-3">
-<h3 id="orgbce2ecb">最基础的光照模型 - Phong lighting model</h3>
-<div class="outline-text-3" id="text-orgbce2ecb">
+<div id="outline-container-org321af37" class="outline-3">
+<h3 id="org321af37">最基础的光照模型 - Phong lighting model</h3>
+<div class="outline-text-3" id="text-org321af37">
 <p>
 这一部分通过介绍最基础的光照模型来入门光照计算.
 </p>
 </div>
-
 <div id="outline-container-org0ad6c0e" class="outline-4">
 <h4 id="org0ad6c0e">光源</h4>
 <div class="outline-text-4" id="text-org0ad6c0e">
@@ -480,7 +474,7 @@
 </p>
 
 
-<div id="org8d57a36" class="figure">
+<div id="org75c5929" class="figure">
 <p><img src="../../../files/diffuse-vs-specular.png" alt="diffuse-vs-specular.png">
 </p>
 </div>
@@ -495,7 +489,7 @@
 </p>
 
 
-<div id="org2ddf700" class="figure">
+<div id="org405591c" class="figure">
 <p><img src="../../../files/reflection-cone.png" alt="reflection-cone.png">
 </p>
 </div>
@@ -505,7 +499,7 @@
 </p>
 
 
-<div id="orgd514a7b" class="figure">
+<div id="orge47915f" class="figure">
 <p><img src="../../../files/specular_hilites.png" alt="specular_hilites.png">
 </p>
 </div>
@@ -571,8 +565,6 @@
 </p>
 </div>
 </div>
-
-
 <div id="outline-container-orge139dd9" class="outline-4">
 <h4 id="orge139dd9">材质</h4>
 <div class="outline-text-4" id="text-orge139dd9">
@@ -615,8 +607,6 @@
 </blockquote>
 </div>
 </div>
-
-
 <div id="outline-container-org38779ff" class="outline-4">
 <h4 id="org38779ff">光照计算</h4>
 <div class="outline-text-4" id="text-org38779ff">
@@ -641,7 +631,7 @@
 </p>
 
 
-<div id="org31f2821" class="figure">
+<div id="orgbaa3490" class="figure">
 <p><img src="../../../files/basic_lighting_phong.png" alt="basic_lighting_phong.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>(图片来源于网络)</p>
@@ -673,10 +663,9 @@
 </p>
 </blockquote>
 </div>
-
 <ul class="org-ul">
-<li><a id="orga9711ab"></a>ambient<br>
-<div class="outline-text-5" id="text-orga9711ab">
+<li><a id="orgb3783a4"></a>ambient<br>
+<div class="outline-text-5" id="text-orgb3783a4">
 <p>
 假设光源产生了 \(\mathrm{ambient\_strength}\) 比例的 \(\mathrm{ambient}\), 那么 \(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color}\).
 </p>
@@ -698,16 +687,14 @@
 </p>
 </div>
 </li>
-
-
-<li><a id="org2ffe208"></a>diffuse<br>
-<div class="outline-text-5" id="text-org2ffe208">
+<li><a id="phong-lighting-model-diffuse"></a>diffuse<br>
+<div class="outline-text-5" id="text-phong-lighting-model-diffuse">
 <p>
 而 \(\mathrm{diffuse}\) 需要根据 <b>照射点到光的方向</b> \(L\) 以及 <b>物体表面方向</b> \(N\) 来确定结果,
 </p>
 
 
-<div id="orgccf14d5" class="figure">
+<div id="org5368bdd" class="figure">
 <p><img src="../../../files/diffuse_light.png" alt="diffuse_light.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>漫反射(图片来源于网络)</p>
@@ -734,8 +721,6 @@
 </p>
 </div>
 </li>
-
-
 <li><a id="specular"></a>specular<br>
 <div class="outline-text-5" id="text-specular">
 <p>
@@ -743,7 +728,7 @@
 </p>
 
 
-<div id="org684332e" class="figure">
+<div id="orgc2bf55a" class="figure">
 <p><img src="../../../files/basic_lighting_specular_theory.png" alt="basic_lighting_specular_theory.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>镜面反射(图片来源于网络)</p>
@@ -803,10 +788,8 @@
 </p>
 </div>
 </li>
-
-
-<li><a id="orgddbc04b"></a>result<br>
-<div class="outline-text-5" id="text-orgddbc04b">
+<li><a id="orgbf585be"></a>result<br>
+<div class="outline-text-5" id="text-orgbf585be">
 <p>
 最后就是我们眼中的结果,也就是经过物体反射的光: \(\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times \mathrm{object\_color}\).
 </p>
@@ -845,10 +828,9 @@
 </ul>
 </div>
 </div>
-
-<div id="outline-container-org701df6a" class="outline-3">
-<h3 id="org701df6a">OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
-<div class="outline-text-3" id="text-org701df6a">
+<div id="outline-container-orge4be280" class="outline-3">
+<h3 id="orge4be280">OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
+<div class="outline-text-3" id="text-orge4be280">
 <p>
 <code>Blinn-Phong shading model</code> 是基于 <code>Phong lighting model</code> 改进的,主要改进了镜面反射光的计算.
 </p>
@@ -891,10 +873,9 @@
 </p>
 </blockquote>
 </div>
-
-<div id="outline-container-orgfee3e2d" class="outline-4">
-<h4 id="orgfee3e2d">光在 OpenGL 中的定义</h4>
-<div class="outline-text-4" id="text-orgfee3e2d">
+<div id="outline-container-org509652d" class="outline-4">
+<h4 id="org509652d">光在 OpenGL 中的定义</h4>
+<div class="outline-text-4" id="text-org509652d">
 <p>
 当光照射到物体表面时,物体材质的颜色就意味着是对光的反射率.
 </p>
@@ -1092,11 +1073,9 @@
 </table>
 </div>
 </div>
-
-
-<div id="outline-container-orgf689112" class="outline-4">
-<h4 id="orgf689112">材质在 OpenGL 中的定义</h4>
-<div class="outline-text-4" id="text-orgf689112">
+<div id="outline-container-org097da98" class="outline-4">
+<h4 id="org097da98">材质在 OpenGL 中的定义</h4>
+<div class="outline-text-4" id="text-org097da98">
 <p>
 直接从 <code>glMaterial*(face, pname, param)</code> 切入主题,下面是它能够设置的材质属性参数 <code>pname</code> 说明:
 </p>
@@ -1176,7 +1155,6 @@
 </blockquote>
 </div>
 </div>
-
 <div id="outline-container-org251a99a" class="outline-4">
 <h4 id="org251a99a">光线计算</h4>
 <div class="outline-text-4" id="text-org251a99a">
@@ -1434,7 +1412,7 @@
 </p>
 
 
-<div id="org67521eb" class="figure">
+<div id="org9156e21" class="figure">
 <p><img src="../../../files/advanced_lighting_over_90.png" alt="advanced_lighting_over_90.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>镜面反射2(图片来源于网络)</p>
@@ -1445,11 +1423,11 @@
 </p>
 
 <p>
-<code>James F. Blinn</code> 在 1977 年提出了一个 \(\mathrm{specular}\) 计算方法: 不依赖反射向量,利用半角向量 <a id="org7fda573"></a>\(H\) (halfway vector)进行角度的计算,半角向量就是 \(L\) 和 \(V\) 夹角的 \(\frac{1}{2}\) 的那个方向,
+<code>James F. Blinn</code> 在 1977 年提出了一个 \(\mathrm{specular}\) 计算方法: 不依赖反射向量,利用半角向量 <a id="orge387996"></a>\(H\) (halfway vector)进行角度的计算,半角向量就是 \(L\) 和 \(V\) 夹角的 \(\frac{1}{2}\) 的那个方向,
 </p>
 
 
-<div id="org6fa4d75" class="figure">
+<div id="orgadd9ea3" class="figure">
 <p><img src="../../../files/advanced_lighting_halfway_vector.png" alt="advanced_lighting_halfway_vector.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>半角向量(图片来源于网络)</p>
@@ -1470,11 +1448,9 @@
 </div>
 </div>
 </div>
-
-
-<div id="outline-container-org4816ece" class="outline-3">
-<h3 id="org4816ece">基于物理的渲染 - PBR (Physically Based Rendering)</h3>
-<div class="outline-text-3" id="text-org4816ece">
+<div id="outline-container-orgb8a2bd5" class="outline-3">
+<h3 id="orgb8a2bd5">基于物理的渲染 - PBR (Physically Based Rendering)</h3>
+<div class="outline-text-3" id="text-orgb8a2bd5">
 <p>
 这个章节大部分内容涉及到了微积分和概率论的知识, 理解难度比之前的内容大一点.
 </p>
@@ -1483,10 +1459,9 @@
 原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质, 因此会把一些推导会整理在附录中.
 </p>
 </div>
-
-<div id="outline-container-org1ee4f35" class="outline-4">
-<h4 id="org1ee4f35">微表面和宏表面 (Micro and Macro Surface)</h4>
-<div class="outline-text-4" id="text-org1ee4f35">
+<div id="outline-container-orgba60288" class="outline-4">
+<h4 id="orgba60288">微表面和宏表面 (Micro and Macro Surface)</h4>
+<div class="outline-text-4" id="text-orgba60288">
 <p>
 在 <code>3D</code> 建模中, 宏表面是实际存在的, 由顶点构成, 宏表面的法线由顶点法线决定;
 </p>
@@ -1496,7 +1471,7 @@
 </p>
 
 
-<div id="orgdc2e257" class="figure">
+<div id="org3c86e25" class="figure">
 <p><img src="../../../files/micro-vs-macro-surface.png" alt="micro-vs-macro-surface.png" width="400px">
 </p>
 <p><span class="figure-number">Figure 6: </span>微表面和宏表面, \(n\) 是宏表面的法线, \(m\) 是微表面的法线</p>
@@ -1533,7 +1508,7 @@
 </p>
 
 
-<div id="orgded3d3c" class="figure">
+<div id="orgb856141" class="figure">
 <p><img src="../../../files/subpixel.png" alt="subpixel.png" width="400px">
 </p>
 <p><span class="figure-number">Figure 7: </span>亚像素</p>
@@ -1553,14 +1528,13 @@
 </p>
 </div>
 </div>
-
-<div id="outline-container-org17d527a" class="outline-4">
-<h4 id="org17d527a">辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</h4>
-<div class="outline-text-4" id="text-org17d527a">
+<div id="outline-container-org1aa4c68" class="outline-4">
+<h4 id="org1aa4c68">辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</h4>
+<div class="outline-text-4" id="text-org1aa4c68">
 </div>
 <ul class="org-ul">
-<li><a id="orgcf62557"></a>能量 (energy)<br>
-<div class="outline-text-5" id="text-orgcf62557">
+<li><a id="org690386d"></a>能量 (energy)<br>
+<div class="outline-text-5" id="text-org690386d">
 <p>
 光源发射出光子, 光子的能量(焦耳, joules): \(Q = \frac{hc}{\lambda}\),
 </p>
@@ -1582,9 +1556,8 @@
 </p>
 </div>
 </li>
-
-<li><a id="org21cdc73"></a>通量 (flux)<br>
-<div class="outline-text-5" id="text-org21cdc73">
+<li><a id="orgbd084f4"></a>通量 (flux)<br>
+<div class="outline-text-5" id="text-orgbd084f4">
 <p>
 能量测量可以发生在一段时间内, 比如说计算一个物体在接受光照一段时间后所受到的所有能量是多少.
 </p>
@@ -1610,9 +1583,8 @@
 </p>
 </div>
 </li>
-
-<li><a id="org0177b94"></a>辐射度 (Irradiance)<br>
-<div class="outline-text-5" id="text-org0177b94">
+<li><a id="org07dbd7d"></a>辐射度 (Irradiance)<br>
+<div class="outline-text-5" id="text-org07dbd7d">
 <p>
 也称辐射通量密度, 是指单位面积 \(A\) 内接受的功率是多少: \(E = \frac{\Phi}{A}\).
 </p>
@@ -1645,7 +1617,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 
-<div id="org0998f8e" class="figure">
+<div id="orgfa7563b" class="figure">
 <p><img src="../../../files/Kugelkoord-lokb-e.svg" alt="Kugelkoord-lokb-e.svg" class="org-svg" width="504px">
 </p>
 <p><span class="figure-number">Figure 8: </span>球体坐标系</p>
@@ -1660,7 +1632,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orga95ed55" class="figure">
+<div id="org8422914" class="figure">
 <p><img src="../../../files/lamberts-law.png" alt="lamberts-law.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 9: </span>平面 N 和 平面 M 之间的投影关系</p>
@@ -1679,9 +1651,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </li>
-
-<li><a id="orga4aa017"></a>辐射强度(Intensity)<br>
-<div class="outline-text-5" id="text-orga4aa017">
+<li><a id="org85b4cd7"></a>辐射强度(Intensity)<br>
+<div class="outline-text-5" id="text-org85b4cd7">
 <p>
 辐射强度是描述每一个立体角(<code>solid angle</code>)受到的辐射通量 \(\Phi\) 是多少, 单位是 \(\mathrm{W/sr}\), 用 \(I\) 表示: \(I(\omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta \phi}{\Delta \omega} = \frac{d\phi}{d\omega}\).
 </p>
@@ -1696,7 +1667,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org424cd41" class="figure">
+<div id="orgd556283" class="figure">
 <p><img src="../../../files/480px-Solid_Angle,_1_Steradian.svg.png" alt="480px-Solid_Angle,_1_Steradian.svg.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 10: </span>\(1\ \mathrm{sr}\)</p>
@@ -1716,7 +1687,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </li>
-
 <li><a id="radiance"></a>辐射 (Radiance)<br>
 <div class="outline-text-5" id="text-radiance">
 <p>
@@ -1733,7 +1703,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 <blockquote>
 <p>
-<a id="orgc0c2821"></a>
+<a id="org8b13cab"></a>
 这里直接方向向量 \(\omega\) 的微元 \(d\omega\) 表示为立体角, 其背后的依据是把方向向量 \((x, y, z)\) 转换成以 \((x_{0}, y_{0}, z_{0})\) 为球心的球体坐标系后再计算微元:
 </p>
 
@@ -1746,7 +1716,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 
-<div id="org1402f09" class="figure">
+<div id="orgd8c9cd5" class="figure">
 <p><img src="../../../files/differential-solid-angle.png" alt="differential-solid-angle.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 11: </span>微元立体角 \(d\omega\)</p>
@@ -1770,7 +1740,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgc9c4a1e" class="figure">
+<div id="org41a63dc" class="figure">
 <p><img src="../../../files/radiance.png" alt="radiance.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>辐射投影关系</p>
@@ -1805,10 +1775,9 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </li>
 </ul>
 </div>
-
-<div id="outline-container-orgcf6dad0" class="outline-4">
-<h4 id="orgcf6dad0">双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</h4>
-<div class="outline-text-4" id="text-orgcf6dad0">
+<div id="outline-container-org2a9f578" class="outline-4">
+<h4 id="org2a9f578">双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</h4>
+<div class="outline-text-4" id="text-org2a9f578">
 <p>
 能量守恒(Energy Conservation): 出射光的能量不能超过入射光的能量, 排除自发光的表面光.
 </p>
@@ -1912,10 +1881,9 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </blockquote>
 </div>
-
 <ul class="org-ul">
-<li><a id="orgc4f6dc1"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF): \(D(m, n, \alpha)\)</b><br>
-<div class="outline-text-5" id="text-orgc4f6dc1">
+<li><a id="org4676f55"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF): \(D(m, n, \alpha)\)</b><br>
+<div class="outline-text-5" id="text-org4676f55">
 <blockquote>
 <p>
 这里有个关于翻译上的讨论, 正态分布函数的英文也叫 <code>Normal Distribution Function</code>.
@@ -1960,25 +1928,25 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgf5b4db6" class="figure">
+<div id="orge25910e" class="figure">
 <p><img src="../../../files/micro-macro-area-0.png" alt="micro-macro-area-0.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>微平面在宏表面上的投影, \(dA_{m}\) 是微平面总面积, \(dA\) 微平面在是宏表面上的投影</p>
 </div>
 
 <p>
-<code>BRDF</code> 把入射光 \(l\) 和视线 \(v\) 两者共同决定的<a href="#org7fda573">半角向量</a> \(h\) 定义为微平面的法线向量, 是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 而统计内容就是被看到的那部分.
+<code>BRDF</code> 把入射光 \(l\) 和视线 \(v\) 两者共同决定的<a href="#orge387996">半角向量</a> \(h\) 定义为微平面的法线向量, 是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 而统计内容就是被看到的那部分.
 </p>
 
 
-<div id="org5847a1c" class="figure">
+<div id="org9de5c3b" class="figure">
 <p><img src="../../../files/micro-macro-area-1.png" alt="micro-macro-area-1.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>宏表面的半角向量作为微平面的法线向量</p>
 </div>
 
 
-<div id="org198faf1" class="figure">
+<div id="org10bc066" class="figure">
 <p><img src="../../../files/real-time-rendering-4th-microfacet.png" alt="real-time-rendering-4th-microfacet.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 15: </span>所有符合 \(m = h\) 的微平面</p>
@@ -2009,7 +1977,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgb8ad2c6" class="figure">
+<div id="org8d8c1b3" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v.png" alt="micro-macro-projected-onto-plane-prep-to-v.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 16: </span>微表面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -2040,7 +2008,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org603e2fa" class="figure">
+<div id="org1d83db8" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v-visible.png" alt="micro-macro-projected-onto-plane-prep-to-v-visible.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 17: </span>可见微平面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -2127,7 +2095,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgd0cb3c1" class="figure">
+<div id="orgf39526f" class="figure">
 <p><img src="../../../files/shape-invariance.png" alt="shape-invariance.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 18: </span>粗糙度变小, 微平面数量的变少, 但微平面的面积变大, 微表面更平滑</p>
@@ -2154,7 +2122,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgb9b056b" class="figure">
+<div id="org956c767" class="figure">
 <p><img src="../../../files/isotropic-to-anisotropic.png" alt="isotropic-to-anisotropic.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 19: </span>图片来自 [Heitz 2014]</p>
@@ -2167,7 +2135,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org4362d0e" class="figure">
+<div id="org50d0257" class="figure">
 <p><img src="../../../files/ggx-vs-beckmann.png" alt="ggx-vs-beckmann.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 20: </span>GGX VS Beckmann (图片来自 <a href="https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/">https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/</a>)</p>
@@ -2178,7 +2146,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org31ab906" class="figure">
+<div id="orgcd8891c" class="figure">
 <p><img src="../../../files/ndf_beckmann_trowbridge.jpg" alt="ndf_beckmann_trowbridge.jpg" width="504px">
 </p>
 <p><span class="figure-number">Figure 21: </span>更长的尾部一味着更明显的光晕</p>
@@ -2213,9 +2181,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </li>
-
-<li><a id="orgfee9eba"></a><b>几何函数 (<code>Geometry Functions</code>): \(G(v, l, m)\)</b><br>
-<div class="outline-text-5" id="text-orgfee9eba">
+<li><a id="orgfce3c89"></a><b>几何函数 (<code>Geometry Functions</code>): \(G(v, l, m)\)</b><br>
+<div class="outline-text-5" id="text-orgfce3c89">
 <blockquote>
 <p>
 参考资料: <a href="https://zhuanlan.zhihu.com/p/81708753">毛星云:【基于物理的渲染（PBR）白皮书】（五）几何函数相关总结</a>
@@ -2243,7 +2210,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org5facebb" class="figure">
+<div id="org4fcad6e" class="figure">
 <p><img src="../../../files/shadowing-and-masking.png" alt="shadowing-and-masking.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 22: </span>阴影和遮蔽</p>
@@ -2262,7 +2229,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org082c1ea" class="figure">
+<div id="org08fe4a6" class="figure">
 <p><img src="../../../files/G1_vs_G2.png" alt="G1_vs_G2.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 23: </span>\(G_{2}\) 和 \(G_{1}\) 的关系</p>
@@ -2289,7 +2256,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgd30a14f" class="figure">
+<div id="org6a36623" class="figure">
 <p><img src="../../../files/microsurface-profile.png" alt="microsurface-profile.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 24: </span>图片修改自 [Heitz 2014]: 相同的法线分布但不同的轮廓导致不同的 <code>BRDF</code></p>
@@ -2304,7 +2271,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgbab2f61" class="figure">
+<div id="org3da2d3e" class="figure">
 <p><img src="../../../files/smith-masking-function.png" alt="smith-masking-function.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 25: </span>现实表面轮廓(左)和 <code>Smith</code> 模型的表面轮廓(右) (图片来自[Heitz 2014])</p>
@@ -2319,7 +2286,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgd13ae85" class="figure">
+<div id="org2e1a7df" class="figure">
 <p><img src="../../../files/v-cavity-scattering-mode.png" alt="v-cavity-scattering-mode.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 26: </span><code>V</code> 腔散射模型 (图片来自[Heitz 2014])</p>
@@ -2338,7 +2305,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgcdc7757" class="figure">
+<div id="org225e578" class="figure">
 <p><img src="../../../files/stretch-invariance.png" alt="stretch-invariance.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 27: </span>对微表面在一个维度上拉伸 2 倍, 所有斜率都被缩小 1 倍 (图片来自[Heitz 2014])</p>
@@ -2354,7 +2321,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-在后面 <a href="#orgf70339a">\(G_1\) 推导</a> 中可以再次看到这个概念, 届时相信你能够理解这个概念.
+在后面 <a href="#orgbd5ed01">\(G_1\) 推导</a> 中可以再次看到这个概念, 届时相信你能够理解这个概念.
 </p>
 </blockquote>
 
@@ -2363,7 +2330,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgf8dad04" class="figure">
+<div id="org6241e44" class="figure">
 <p><img src="../../../files/v-cavity-smith-reference-brdf.png" alt="v-cavity-smith-reference-brdf.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 28: </span><code>V</code> 腔散射 <code>BRDF</code> <b><code>VS</code></b> <code>Smith BRDF</code> <b><code>VS</code></b> 参考现实效果的(Reference) <code>BRDF</code> (图片来自[Heitz 2014])</p>
@@ -2494,7 +2461,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org3ca2ca3" class="figure">
+<div id="orgbe2e7f0" class="figure">
 <p><img src="../../../files/multiple-surface-bounce.png" alt="multiple-surface-bounce.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 29: </span>现有的几何函数未考虑蓝色部分的 <code>multiple surface bounce</code> 反射 (图片来自 [Naty Hoffman, Recent Advances in Physically Based Shading, SIGGRAPH 2016])</p>
@@ -2655,9 +2622,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ul>
 </div>
 </li>
-
-<li><a id="orgfc38693"></a><b>菲涅耳反射 (<code>Fresnel Reflection</code>): \(F(v, m, F_0)\)</b><br>
-<div class="outline-text-5" id="text-orgfc38693">
+<li><a id="orge1d996a"></a><b>菲涅耳反射 (<code>Fresnel Reflection</code>): \(F(v, m, F_0)\)</b><br>
+<div class="outline-text-5" id="text-orge1d996a">
 <blockquote>
 <p>
 参考资料: <a href="https://learnopengl.com/PBR/Theory">LearnOpenGL - PBR Theory</a>
@@ -2699,9 +2665,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 </li>
-
-<li><a id="orgfa4adcd"></a><b>\(f_{\mathrm{cook-torrance}}\) 的推导</b><br>
-<div class="outline-text-5" id="text-orgfa4adcd">
+<li><a id="org9e78ea5"></a><b>\(f_{\mathrm{cook-torrance}}\) 的推导</b><br>
+<div class="outline-text-5" id="text-org9e78ea5">
 <blockquote>
 <p>
 参考资料:
@@ -2719,7 +2684,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orged8a915" class="figure">
+<div id="orgf53bde0" class="figure">
 <p><img src="../../../files/torrance-sparrow-model-m.png" alt="torrance-sparrow-model-m.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 30: </span>Torrance-Sparrow Model</p>
@@ -2752,7 +2717,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-根据<a href="#orgc0c2821">极坐标的微元立体角</a>定义: \(\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m \times d\theta_m \times d\phi_m}{\sin\theta_i \times d\theta_i \times d\phi_i}\).
+根据<a href="#org8b13cab">极坐标的微元立体角</a>定义: \(\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m \times d\theta_m \times d\phi_m}{\sin\theta_i \times d\theta_i \times d\phi_i}\).
 </p>
 
 <blockquote>
@@ -2798,7 +2763,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </li>
 </ul>
 </div>
-
 <div id="outline-container-org2c3aa99" class="outline-4">
 <h4 id="org2c3aa99">完整的反射率方程</h4>
 <div class="outline-text-4" id="text-org2c3aa99">
@@ -2819,12 +2783,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </div>
+<div id="outline-container-org7e0ea3d" class="outline-4">
+<h4 id="org7e0ea3d">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</h4>
+<div class="outline-text-4" id="text-org7e0ea3d">
 
-<div id="outline-container-org8e6b82b" class="outline-4">
-<h4 id="org8e6b82b">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</h4>
-<div class="outline-text-4" id="text-org8e6b82b">
-
-<div id="org540cebd" class="figure">
+<div id="orgacab45a" class="figure">
 <p><img src="../../../files/pbr-materials.png" alt="pbr-materials.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 31: </span>常见 PBR 贴图</p>
@@ -2895,8 +2858,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 </div>
-
-
 <div id="outline-container-org3f4b4d7" class="outline-2">
 <h2 id="org3f4b4d7">附录</h2>
 <div class="outline-text-2" id="text-org3f4b4d7">
@@ -2960,7 +2921,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org788d990" class="figure">
+<div id="org1b535ce" class="figure">
 <p><img src="../../../files/normal-xz.png" alt="normal-xz.png">
 </p>
 <p><span class="figure-number">Figure 33: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
@@ -2975,7 +2936,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orge2e614b" class="figure">
+<div id="org47cd812" class="figure">
 <p><img src="../../../files/normal-yz.png" alt="normal-yz.png">
 </p>
 <p><span class="figure-number">Figure 34: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
@@ -2998,7 +2959,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org9364e8c" class="figure">
+<div id="org4cc6d5c" class="figure">
 <p><img src="../../../files/normal-in-slope-space.png" alt="normal-in-slope-space.png">
 </p>
 <p><span class="figure-number">Figure 35: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
@@ -3028,7 +2989,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 根据以上关系可以得出 \(\frac{(-\widetilde{x}, -\widetilde{y}, 1)}{\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2} + 1}} = \frac{(-(-\frac{x}{z}), -(-\frac{y}{z}), 1)}{\frac{1}{z}} = (x, y, z) = n\).
 </p>
 </div>
-
 <div id="outline-container-org2e31081" class="outline-4">
 <h4 id="org2e31081">斜率空间和极坐标之间的转换</h4>
 <div class="outline-text-4" id="text-org2e31081">
@@ -3067,7 +3027,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </div>
-
 <div id="outline-container-why-slope-space" class="outline-4">
 <h4 id="why-slope-space">为什么需要斜率空间</h4>
 <div class="outline-text-4" id="text-why-slope-space">
@@ -3178,7 +3137,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ol>
 </div>
 </div>
-
 <div id="outline-container-org342be10" class="outline-4">
 <h4 id="org342be10">斜率空间上的分布函数</h4>
 <div class="outline-text-4" id="text-org342be10">
@@ -3207,7 +3165,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org4f1fa19" class="figure">
+<div id="orgbf33f42" class="figure">
 <p><img src="../../../files/fx-pdf.png" alt="fx-pdf.png">
 </p>
 <p><span class="figure-number">Figure 36: </span>身高在 [60, 70] 英寸内的女性比例</p>
@@ -3284,7 +3242,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </div>
-
 <div id="outline-container-orga3a9b47" class="outline-4">
 <h4 id="orga3a9b47">从斜率空间上的正态分布函数到 <code>NDF</code></h4>
 <div class="outline-text-4" id="text-orga3a9b47">
@@ -3327,7 +3284,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ul>
 </div>
 </div>
-
 <div id="outline-container-t-distribution-in-slope-space" class="outline-4">
 <h4 id="t-distribution-in-slope-space">从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></h4>
 <div class="outline-text-4" id="text-t-distribution-in-slope-space">
@@ -3367,12 +3323,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 <p>
-<a id="orgf70339a"></a>
+<a id="orgbd5ed01"></a>
 </p>
 </div>
 </div>
 </div>
-
 <div id="outline-container-org1c3e85a" class="outline-3">
 <h3 id="org1c3e85a">各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</h3>
 <div class="outline-text-3" id="text-org1c3e85a">
@@ -3581,7 +3536,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 </div>
-
 <div id="outline-container-org0ebbc71" class="outline-2">
 <h2 id="org0ebbc71">完结心声</h2>
 <div class="outline-text-2" id="text-org0ebbc71">
@@ -3754,7 +3708,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2020-08-17</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 29.4 (<a href="https://orgmode.org">Org</a> mode 9.6.15)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.1 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
