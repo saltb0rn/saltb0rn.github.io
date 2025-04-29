@@ -83,7 +83,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=ca792629fc84f3710f14bcc2c7878e62][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=546675c4ca515b959df7e556019934c2][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -118,13 +118,19 @@
 
 简单来说, 学数学是一个递归过程, 这就会为什么数学里的公理是不可证明的, 不可能一直刨根问底的.
 
+理解定理的证明思路, 是为了理解定理诞生的动机及思想, 只有这样避免死记硬背, 为后面的运用自如打下基础.
+
+复杂理论背后的往往是简单想法, 不过想找到这个简单想法可不简单.
+
 最后就是对于知识的运用, 当到了知道哪些知识可以解决什么问题, 以及看到问题可以联想到用哪些知识解决, 就说明到达运用自如的地步了, 而这种程度的联想就是俗称的灵感.
 
 想要到达运用自如的境界需要经常做题练习, 正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子, 当拿的工具多了, 看到的景象就不一样了.
 
-所以说, 数学依靠的是方法和努力. 对于抄代码也一样, 抄到不用看就能随手写出来, 知道每一处代码的作用能按照自己的意愿进行修改.
+所以, 学数学依靠的是耐心和理解.
 
-抄的时候要明白代码的每一部分的含义: 对这部分代码修改会产生什么影响, 了解影响是怎么变化的, 以此建立起直观的理解.
+对于抄代码也一样, 先找出这段代码背后是哪些知识原理, 解决什么类型的问题, 然后抄到形成条件反射随手就能写出来的程度,
+
+不是默出来啊, 严谨死记硬背, 抄到即便别人写法不太一样但也能马上看出来是抄过的代码, 抄到明白每一个参数变量的作用, 可以按照自己的意愿对代码进行调整.
 
 	
 *** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]
@@ -134,7 +140,7 @@
 # 记录开发一个Javascript库的过程
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=02eb73fd181b1c6e71c76b809b43f955][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=0daa098d6dac0c07fb8aa35cec7fd9b6][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -143,11 +149,11 @@
 
 另外搁置搁置还有一个原因, 那就是当时在学习贴图映射时所在的参考书有点不太易懂,
 
-所以需要找一本更易读的书, 我找到了 [[https://gabrielgambetta.com/computer-graphics-from-scratch/][Computer Graphics from Scratch]], 当这本书当前还没完成编写, 因此决定等它出版了再继续学.
+所以需要找一本更易读的书, 我找到了 [[https://gabrielgambetta.com/computer-graphics-from-scratch/][Computer Graphics from Scratch]], 但这本书当前还没完成编写 (其实 21 年就写完了), 因此决定等它出版了再继续学.
 
 -----
 
-PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这本书, 期间使用 =C= 语言按照书上的伪代码实践了一遍.
+PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写完了, 于是平时抽空一点一点地读了半年, 终于读完这本书, 期间使用 =C= 语言按照书上的伪代码实践了一遍.
 
 个人感觉等待这本书的完成是一个正确的选择, 它指导了我编写两个完整的渲染器, 简单易懂地解释了图形学里面一些较为复杂的算法.
 
@@ -280,7 +286,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 2. [[../../2022/02/webgl-buffer-objects.html][Shader 编程自救指南]]: 需要插值是如何进行.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=691c4720d5e70ca6648a1ea74b90ecdf][图形学-OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=116b558d18758342d212a8a8fcce6230][图形学-OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
@@ -292,7 +298,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=a6c12f2918de7dd337c8b776e148adde][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=dce7dbc1b1f6d782d67eae5ad262b5ab][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.

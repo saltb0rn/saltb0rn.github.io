@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-04-14 Mon 00:00 -->
+<!-- 2025-04-29 Tue 13:56 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -233,41 +233,41 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgf980a5c">1. 几个该清楚的概念</a>
+<li><a href="#org0e45d7d">1. 几个该清楚的概念</a>
 <ul>
-<li><a href="#org2e0c607">1.1. 齐次空间</a></li>
-<li><a href="#org13f3be7">1.2. 平面方程</a></li>
+<li><a href="#org3b6e6e0">1.1. 齐次空间</a></li>
+<li><a href="#org885a814">1.2. 平面方程</a></li>
 </ul>
 </li>
-<li><a href="#org3191ee6">2. OpenGL 中对象的变换历程</a>
+<li><a href="#org73f5b1f">2. OpenGL 中对象的变换历程</a>
 <ul>
-<li><a href="#orgbea9d90">2.1. 对象坐标系</a></li>
-<li><a href="#org8f2e71a">2.2. 世界坐标系</a></li>
-<li><a href="#org6c80864">2.3. 从对象坐标系到世界坐标系的变换</a></li>
-<li><a href="#org3236839">2.4. 视点坐标系</a></li>
-<li><a href="#org1bc888f">2.5. 从世界坐标系到视点坐标系的变换</a>
+<li><a href="#orge1e82f6">2.1. 对象坐标系</a></li>
+<li><a href="#org7dd5ddc">2.2. 世界坐标系</a></li>
+<li><a href="#org56ea64f">2.3. 从对象坐标系到世界坐标系的变换</a></li>
+<li><a href="#org3a1ee78">2.4. 视点坐标系</a></li>
+<li><a href="#from-world-to-view">2.5. 从世界坐标系到视点坐标系的变换</a>
 <ul>
-<li><a href="#org378fa67">2.5.1. 法线向量变换</a></li>
-<li><a href="#org9f4b1b5">2.5.2. 法线贴图 (Normal Texture)</a></li>
-<li><a href="#org14fb5da">2.5.3. 视差贴图 (Parallax Map)</a></li>
+<li><a href="#org9531478">2.5.1. 法线向量变换</a></li>
+<li><a href="#org3a0c698">2.5.2. 法线贴图 (Normal Texture)</a></li>
+<li><a href="#org940ece8">2.5.3. 视差贴图 (Parallax Map)</a></li>
 </ul>
 </li>
-<li><a href="#orgcb75867">2.6. 3D转化成2D图像</a>
+<li><a href="#org9007ff6">2.6. 3D转化成2D图像</a>
 <ul>
-<li><a href="#org102d729">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
-<li><a href="#org7833280">2.6.2. 透视投影</a></li>
+<li><a href="#org40c5c86">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
+<li><a href="#orge0e4e2e">2.6.2. 透视投影</a></li>
 <li><a href="#depth-buffer">2.6.3. 透视投影 - Depth Buffer</a></li>
-<li><a href="#org823e0fa">2.6.4. 透视投影 - FOV (Field of View)</a></li>
-<li><a href="#org1cfc9b3">2.6.5. 正交投影</a></li>
+<li><a href="#org30d6ad2">2.6.4. 透视投影 - FOV (Field of View)</a></li>
+<li><a href="#org3132f33">2.6.5. 正交投影</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orge37fc40">3. 接下来</a></li>
+<li><a href="#orgcf5871e">3. 接下来</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org277c5e6">
+<div class="abstract" id="orge0b97a2">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -289,19 +289,19 @@
 </p>
 
 </div>
-<div id="outline-container-orgf980a5c" class="outline-2">
-<h2 id="orgf980a5c"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
+<div id="outline-container-org0e45d7d" class="outline-2">
+<h2 id="org0e45d7d"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
 <div class="outline-text-2" id="text-1">
 </div>
-<div id="outline-container-org2e0c607" class="outline-3">
-<h3 id="org2e0c607"><span class="section-number-3">1.1.</span> 齐次空间</h3>
+<div id="outline-container-org3b6e6e0" class="outline-3">
+<h3 id="org3b6e6e0"><span class="section-number-3">1.1.</span> 齐次空间</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 </p>
 
 
-<div id="org39c929a" class="figure">
+<div id="org60e24b4" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -392,8 +392,8 @@
 </ol>
 </div>
 </div>
-<div id="outline-container-org13f3be7" class="outline-3">
-<h3 id="org13f3be7"><span class="section-number-3">1.2.</span> 平面方程</h3>
+<div id="outline-container-org885a814" class="outline-3">
+<h3 id="org885a814"><span class="section-number-3">1.2.</span> 平面方程</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 这里先约定一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
@@ -412,7 +412,7 @@
 </p>
 
 
-<div id="orgeabe57e" class="figure">
+<div id="orgaab9535" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png" />
 </p>
 </div>
@@ -501,17 +501,17 @@
 </p>
 
 <p>
-而通常来说, 人们会用 \(w\) 不为零来表示 \(p^{'}\) 是点坐标, 而不是向量. 当 \(w = 1\) 时, \(d\) 就变得非常好处理.
+而通常来说, 人们会用 \(w\) 不为零来表示 \(p^{'}\) 是点坐标, 而不是向量. 当 \(w = 1\) 时, \(d\) 平移变换才有意义, 因此, 有时候人们会把坐标的 \(w\) 分量变为 0 后再应用矩阵, 从而消除矩阵中的平移变换.
 </p>
 </blockquote>
 </div>
 </div>
 </div>
-<div id="outline-container-org3191ee6" class="outline-2">
-<h2 id="org3191ee6"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
+<div id="outline-container-org73f5b1f" class="outline-2">
+<h2 id="org73f5b1f"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-2">
 
-<div id="orgc811c6a" class="figure">
+<div id="org277b860" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -537,8 +537,8 @@
 如果这些都不理解的话,很容易会因为用错坐标系得到错误的计算结果,比如在以后的光照计算中.
 </p>
 </div>
-<div id="outline-container-orgbea9d90" class="outline-3">
-<h3 id="orgbea9d90"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
+<div id="outline-container-orge1e82f6" class="outline-3">
+<h3 id="orge1e82f6"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
@@ -571,8 +571,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org8f2e71a" class="outline-3">
-<h3 id="org8f2e71a"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
+<div id="outline-container-org7dd5ddc" class="outline-3">
+<h3 id="org7dd5ddc"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 在 <code>OpenGL</code> 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
@@ -601,8 +601,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org6c80864" class="outline-3">
-<h3 id="org6c80864"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
+<div id="outline-container-org56ea64f" class="outline-3">
+<h3 id="org56ea64f"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 上面中, \(A\) 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, \(B\) 过程是对象经历了从对象坐标系到世界坐标系的变换,
@@ -647,8 +647,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org3236839" class="outline-3">
-<h3 id="org3236839"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
+<div id="outline-container-org3a1ee78" class="outline-3">
+<h3 id="org3a1ee78"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 <code>OpenGL</code> 中也有类似的存在,叫做 <code>viewer</code>,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinate system).
@@ -667,9 +667,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org1bc888f" class="outline-3">
-<h3 id="org1bc888f"><span class="section-number-3">2.5.</span> 从世界坐标系到视点坐标系的变换</h3>
-<div class="outline-text-3" id="text-2-5">
+<div id="outline-container-from-world-to-view" class="outline-3">
+<h3 id="from-world-to-view"><span class="section-number-3">2.5.</span> 从世界坐标系到视点坐标系的变换</h3>
+<div class="outline-text-3" id="text-from-world-to-view">
 <p>
 一旦模型变换完成后,就可以开始进行到视点坐标系的变换了,这个叫做视点变换(viewing transformation).
 </p>
@@ -707,7 +707,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org43a0031" class="figure">
+<div id="orgd49fe73" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif" />
 </p>
 <p><span class="figure-number">Figure 3: </span>相机看小黄鸭的顶部</p>
@@ -718,7 +718,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org5e03a08" class="figure">
+<div id="org3186fa1" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif" />
 </p>
 <p><span class="figure-number">Figure 4: </span>相机看小黄鸭的正前方</p>
@@ -737,7 +737,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-假设相机在作为场景对象时的变换矩阵是 \(M_{r} = \left(\begin{array}{c} l_{x} & u_{x} & f_{x} & 0 \\ l_{y} & u_{y} & f_{y} & 0 \\ l_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\), 那么 \(M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} l_{x} & l_{y} & l_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)\).
+假设相机在作为场景对象时的变换矩阵是 \(M_{r} = \left(\begin{array}{c} r_{x} & u_{x} & f_{x} & 0 \\ r_{y} & u_{y} & f_{y} & 0 \\ r_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)\), 那么 \(M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} r_{x} & r_{y} & r_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)\).
 </p>
 
 <p>
@@ -749,20 +749,20 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-我们很容易得到 \(\left(f_{x}, f_{y}, f_{z}\right)\),也就是从看的目标的位置到相机的方向: \(forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{c}, y_{c}, z_{c}\right)\),然后求出 \(forward\) 的单位向量 \(\hat{f}\);
+我们很容易得到 \(\left(f_{x}, f_{y}, f_{z}\right)\),也就是从看的目标的位置到相机的方向: \(forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{c}, y_{c}, z_{c}\right)\),然后求出 \(forward\) 的单位向量 \(\hat{f} = (f_x, f_y, f_z)\);
 </p>
 
 <p>
-然后把给出的(<b>如果没给出就用 \(\left(0, 1, 0\right)\)</b>)向上方向的向量 \(up\) 与 \(\hat{f}\) 进行叉积乘法求出同时垂直于它们的向量 \(left\), 并且求出其单位向量 \(\hat{l}\);
+然后把给出的(<b>如果没给出就用 \(\left(0, 1, 0\right)\)</b>)向上方向的向量 \(up\) 与 \(\hat{f}\) 进行叉积乘法求出同时垂直于它们的向量 \(right\), 并且求出其单位向量 \(\hat{r} = (r_x, r_y, r_z)\);
 </p>
 
 <p>
-最后对 \(\hat{f}\) 和 \(\hat{l}\) 进行叉积乘法求出同时垂直于它们的向量, 并求出其单位向量 \(\hat{u}\), 这样三个基底变量就解出了.
+最后对 \(\hat{f}\) 和 \(\hat{r}\) 进行叉积乘法求出同时垂直于它们的向量, 并求出其单位向量 \(\hat{u} = (u_x, u_y, u_z)\), 这样三个基底变量就解出了.
 </p>
 
 <blockquote>
 <p>
-问什么要用 \(up\) 和 \(\hat{f}\) 求出 \(\hat{l}\) 后还得反过来让 \(\hat{f}\) 和 \(\hat{l}\) 进行叉积求出 \(\hat{u}\), 而不是直接对 \(up\) 进行规范化得到 \(\hat{u}\) 呢?
+问什么要用 \(up\) 和 \(\hat{f}\) 求出 \(\hat{r}\) 后还得反过来让 \(\hat{f}\) 和 \(\hat{r}\) 进行叉积求出 \(\hat{u}\), 而不是直接对 \(up\) 进行规范化得到 \(\hat{u}\) 呢?
 </p>
 
 <p>
@@ -782,8 +782,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 最后会得到一个新的坐标点 \(p_{e} = M_{view}p_{m} = \left(x_{e}, y_{e}, z_{e}\right)\).
 </p>
 </div>
-<div id="outline-container-org378fa67" class="outline-4">
-<h4 id="org378fa67"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
+<div id="outline-container-org9531478" class="outline-4">
+<h4 id="org9531478"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
 <div class="outline-text-4" id="text-2-5-1">
 <p>
 别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的,目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案,这个方案用到法线向量.
@@ -810,7 +810,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org17f51b8" class="figure">
+<div id="orge6c8d9a" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png" />
 </p>
 </div>
@@ -824,7 +824,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org733b696" class="figure">
+<div id="org29d5d18" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png" />
 </p>
 </div>
@@ -858,7 +858,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org8e0318d" class="figure">
+<div id="org4ab071c" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png" />
 </p>
 </div>
@@ -941,15 +941,19 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-最后再提醒一下, 在固定管线的时期, <code>OpenGL</code> 的 \(M_{modelview}\) 是不能分开成 \(M_{model}\) 和 \(M_{view}\) 的, 所以那个时期的法线变换只能是 \((M_{modelview}^{-1})^{T}\), 并且用于计算光照的光源是在视点坐标系上的.
+最后再提醒一下, 在固定管线的时期, <code>OpenGL</code> 的 \(M_{modelview}\) 是不能分开成 \(M_{model}\) 和 \(M_{view}\) 的, 所以那个时期的法线变换只能是 \((M_{modelview}^{-1})^{T}\), 并且用于计算光照的光源是也是在视点坐标系上的.
 </p>
 
 <p>
-后来可以对 \(M_{modelview}\) 进行拆分, 光源以及法线变换可以发生在世界坐标系上了, 这个时候的法线变换为 \((M_{model}^{-1})^{T}\),
+后来可以对 \(M_{modelview}\) 进行拆分, 光源以及法线变换的发生都可以在世界坐标系上, 这个时候的法线变换为 \((M_{model}^{-1})^{T}\).
 </p>
 
 <p>
-如果 \(M_{model}\) 只包含了等比缩放和旋转, 并且只考虑法线变换后的方向, 那么可以通过该计算得出法线方向: \(M_{model} \left(\begin{array}{c} n_x \\ n_y \\ n_z \\ n_w \end{array} \right)\),
+如果要在世界坐标系上进行计算法线的变换, 并且只考虑法线的方向, 那么可以使用以下方法进行计算:
+</p>
+
+<p>
+如果 \(M_{model}\) 只包含了等比缩放和旋转, 那么可以通过该计算得出法线方向: \(M_{model} \left(\begin{array}{c} n_x \\ n_y \\ n_z \\ n_w \end{array} \right)\),
 </p>
 
 <p>
@@ -962,8 +966,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org9f4b1b5" class="outline-4">
-<h4 id="org9f4b1b5"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
+<div id="outline-container-org3a0c698" class="outline-4">
+<h4 id="org3a0c698"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
 <div class="outline-text-4" id="text-2-5-2">
 <blockquote>
 <p>
@@ -1038,11 +1042,11 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-但切线空间和对象坐标系有一些相似性, 对象坐标系上的点构成 <code>3D</code> 物体, 切线空间上的向量则是描述那些组合成 <code>3D</code> 物体的三角面的方向, 一切都是为了 <code>3D</code> 物体.
+但切线空间和对象坐标系有一些相似性, 对象坐标系上的点构成 <code>3D</code> 物体, 切线空间上的向量则是描述那些组合成 <code>3D</code> 物体的三角面的方向, 两者相关.
 </p>
 
 <p>
-没错, 切线空间是一个描述平面上某个点的法线向量的局部坐标系, 和对象坐标系一样, 切线空间上的对象的都变换到世界坐标系上.
+没错, 切线空间是一个描述平面上某个点的法线向量的局部坐标系, 和对象坐标系一样, 切线空间上的对象之后也是变换到世界坐标系上.
 </p>
 
 <p>
@@ -1070,7 +1074,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orge5ece60" class="figure">
+<div id="orge53387f" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1249,12 +1253,12 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org14fb5da" class="outline-4">
-<h4 id="org14fb5da"><span class="section-number-4">2.5.3.</span> 视差贴图 (Parallax Map)</h4>
+<div id="outline-container-org940ece8" class="outline-4">
+<h4 id="org940ece8"><span class="section-number-4">2.5.3.</span> 视差贴图 (Parallax Map)</h4>
 </div>
 </div>
-<div id="outline-container-orgcb75867" class="outline-3">
-<h3 id="orgcb75867"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
+<div id="outline-container-org9007ff6" class="outline-3">
+<h3 id="org9007ff6"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
 <div class="outline-text-3" id="text-2-6">
 <p>
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上成为一张 2D 图片.
@@ -1356,22 +1360,22 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <b>到了这一步,其实整个 <code>Primitive Assembly</code> 环节就完成了</b>.
 </p>
 </div>
-<div id="outline-container-org102d729" class="outline-4">
-<h4 id="org102d729"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
+<div id="outline-container-org40c5c86" class="outline-4">
+<h4 id="org40c5c86"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
 <div class="outline-text-4" id="text-2-6-1">
 <p>
 先看一下如何选择相机看到的内容,有两种选择方案,如下,
 </p>
 
 
-<div id="org68a3305" class="figure">
+<div id="orga21eea6" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="org4732541" class="figure">
+<div id="org8972304" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png" />
 </p>
 <p><span class="figure-number">Figure 7: </span>正交投影(正交相机看到的内容)</p>
@@ -1398,8 +1402,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-org7833280" class="outline-4">
-<h4 id="org7833280"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
+<div id="outline-container-orge0e4e2e" class="outline-4">
+<h4 id="orge0e4e2e"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
 <div class="outline-text-4" id="text-2-6-2">
 <p>
 这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
@@ -1419,7 +1423,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </ol>
 
 
-<div id="orge6e6783" class="figure">
+<div id="org4d4eb50" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png" />
 </p>
 <p><span class="figure-number">Figure 8: </span>透视投影2</p>
@@ -1458,7 +1462,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org2ef5e02" class="figure">
+<div id="org2f15ac1" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png" />
 </p>
 </div>
@@ -1500,7 +1504,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orge921603" class="figure">
+<div id="org3f3a2f3" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1527,7 +1531,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgd9e14bd" class="figure">
+<div id="orgf09b943" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png" />
 </p>
 <p><span class="figure-number">Figure 10: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1594,7 +1598,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgc497282" class="figure">
+<div id="org0ee1f22" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png" />
 </p>
 <p><span class="figure-number">Figure 11: </span>比较不同深度下的精确度</p>
@@ -1780,8 +1784,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-org823e0fa" class="outline-4">
-<h4 id="org823e0fa"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
+<div id="outline-container-org30d6ad2" class="outline-4">
+<h4 id="org30d6ad2"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
 <div class="outline-text-4" id="text-2-6-4">
 <p>
 很多图形库的设定投影相机的函数需要视场角(fov), 裁剪平面的宽高比(aspect)以及近裁剪平面(n)以及远裁剪平面(f)作为输入参数.
@@ -1816,11 +1820,11 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-org1cfc9b3" class="outline-4">
-<h4 id="org1cfc9b3"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
+<div id="outline-container-org3132f33" class="outline-4">
+<h4 id="org3132f33"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
 <div class="outline-text-4" id="text-2-6-5">
 
-<div id="org979ba5c" class="figure">
+<div id="org343392f" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png" />
 </p>
 <p><span class="figure-number">Figure 12: </span>正交投影2</p>
@@ -1903,8 +1907,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </div>
 </div>
 </div>
-<div id="outline-container-orge37fc40" class="outline-2">
-<h2 id="orge37fc40"><span class="section-number-2">3.</span> 接下来</h2>
+<div id="outline-container-orgcf5871e" class="outline-2">
+<h2 id="orgcf5871e"><span class="section-number-2">3.</span> 接下来</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 这篇笔记涵盖了大部分 <code>OpenGL</code> 中所发生变基式变换以及如何构建它们所对应的 <code>change-of-basis matrix</code>,
@@ -1995,7 +1999,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <div id="postamble" class="status">
 <p class="date">Date: 2020-06-19</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-04-14 Mon 00:00</p>
+<p class="date">Created: 2025-04-29 Tue 13:56</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

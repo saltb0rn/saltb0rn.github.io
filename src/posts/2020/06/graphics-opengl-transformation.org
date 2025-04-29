@@ -122,7 +122,7 @@ $ax + by + cz - \left(ax_{1} + by_{1} + cz_{1}\right) = 0$.
 
 其中 $d = \frac{-\left(\vec{n} \cdot p\right)}{w}$, 而 $w$ 是 $p$ 点的齐次坐标版本 $p^{'} = \left(\begin{array}{c|c}p | w\end{array}\right)$ 的 $w$ 分量.
 
-而通常来说, 人们会用 $w$ 不为零来表示 $p^{'}$ 是点坐标, 而不是向量. 当 $w = 1$ 时, $d$ 就变得非常好处理.
+而通常来说, 人们会用 $w$ 不为零来表示 $p^{'}$ 是点坐标, 而不是向量. 当 $w = 1$ 时, $d$ 平移变换才有意义, 因此, 有时候人们会把坐标的 $w$ 分量变为 0 后再应用矩阵, 从而消除矩阵中的平移变换.
 #+END_QUOTE
 
 
@@ -210,6 +210,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 也就是说 =OpenGL= 的相机是虚拟的.
 
 *** 从世界坐标系到视点坐标系的变换
+:properties:
+:custom_id: from-world-to-view
+:end:
 
 一旦模型变换完成后,就可以开始进行到视点坐标系的变换了,这个叫做视点变换(viewing transformation).
 
@@ -243,20 +246,20 @@ $M_{view} = M_{R}M_{T} = \left(\begin{array}{c} r_{1} & r_{4} & r_{7} & 0 \\ r_{
 
 这么理解,先把相机看做场景中的一个对象,整个场景旋转,这个时候相机看到的内容还是一样的;然后单独把相机还原到场景旋转前的位置上,这个还原的变换也就是世界坐标旋转的逆矩阵了.
 
-假设相机在作为场景对象时的变换矩阵是 $M_{r} = \left(\begin{array}{c} l_{x} & u_{x} & f_{x} & 0 \\ l_{y} & u_{y} & f_{y} & 0 \\ l_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)$, 那么 $M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} l_{x} & l_{y} & l_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)$.
+假设相机在作为场景对象时的变换矩阵是 $M_{r} = \left(\begin{array}{c} r_{x} & u_{x} & f_{x} & 0 \\ r_{y} & u_{y} & f_{y} & 0 \\ r_{z} & u_{z} & f_{z} & 0 \\ 0 & 0 & 0 & 1 \end{array}\right)$, 那么 $M_{R} = M_{r}^{-1} = M_{r}^{T} = \left(\begin{array}{c} r_{x} & r_{y} & r_{z} & 0 \\ u_{x} & u_{y} & u_{z} & 0 \\ f_{x} & f_{y} & f_{z} & 0 \\ 0 & 0 & 0 & 1\end{array}\right)$.
 
 (由于 $M_{r}$ 是一个旋转矩阵, 而旋转矩阵是[[https://en.wikipedia.org/wiki/Orthogonal_matrix][正交矩阵]], 正交矩阵的逆矩阵就是它的转置矩阵).
 
 相机现在是位于 $\left(x_{c}, y_{c}, z_{c}\right)$ 看着 $\left(x_{t}, y_{t}, z_{t}\right)$ 的,以相机作为原点建立一个正交坐标系,只要求出该坐标系的三个基底变量就可以解得该矩阵.
 
-我们很容易得到 $\left(f_{x}, f_{y}, f_{z}\right)$,也就是从看的目标的位置到相机的方向: $forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{c}, y_{c}, z_{c}\right)$,然后求出 $forward$ 的单位向量 $\hat{f}$;
+我们很容易得到 $\left(f_{x}, f_{y}, f_{z}\right)$,也就是从看的目标的位置到相机的方向: $forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{c}, y_{c}, z_{c}\right)$,然后求出 $forward$ 的单位向量 $\hat{f} = (f_x, f_y, f_z)$;
 
-然后把给出的(*如果没给出就用 $\left(0, 1, 0\right)$*)向上方向的向量 $up$ 与 $\hat{f}$ 进行叉积乘法求出同时垂直于它们的向量 $left$, 并且求出其单位向量 $\hat{l}$;
+然后把给出的(*如果没给出就用 $\left(0, 1, 0\right)$*)向上方向的向量 $up$ 与 $\hat{f}$ 进行叉积乘法求出同时垂直于它们的向量 $right$, 并且求出其单位向量 $\hat{r} = (r_x, r_y, r_z)$;
 
-最后对 $\hat{f}$ 和 $\hat{l}$ 进行叉积乘法求出同时垂直于它们的向量, 并求出其单位向量 $\hat{u}$, 这样三个基底变量就解出了.
+最后对 $\hat{f}$ 和 $\hat{r}$ 进行叉积乘法求出同时垂直于它们的向量, 并求出其单位向量 $\hat{u} = (u_x, u_y, u_z)$, 这样三个基底变量就解出了.
 
 #+BEGIN_QUOTE
-问什么要用 $up$ 和 $\hat{f}$ 求出 $\hat{l}$ 后还得反过来让 $\hat{f}$ 和 $\hat{l}$ 进行叉积求出 $\hat{u}$, 而不是直接对 $up$ 进行规范化得到 $\hat{u}$ 呢?
+问什么要用 $up$ 和 $\hat{f}$ 求出 $\hat{r}$ 后还得反过来让 $\hat{f}$ 和 $\hat{r}$ 进行叉积求出 $\hat{u}$, 而不是直接对 $up$ 进行规范化得到 $\hat{u}$ 呢?
 
 这是因为我们建立的矩阵 $M_{r}$ 是正交坐标系, 也就是 $\hat{l}/\hat{u}/\hat{f}$ 三者是相互垂直的, 然而 $up$ 和 $\hat{f}$ 只是可以构成一个平面, 但不一定垂直.
 #+END_QUOTE
