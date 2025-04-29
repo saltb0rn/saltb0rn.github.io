@@ -60,7 +60,7 @@
 
 默认情况下, =GLSL= 使用列优先储存矩阵. 但在定义 $n \times n$ 的矩阵变量时, 很容易不知道矩阵元素数组前面 $n$ 个是第一行还是第一列,
 
-假设这是一个列优先的矩阵: $\left( \begin{array}{c} a & b \\ c & d \end{array}{c} \right)$,
+假设这是一个列优先的矩阵: $\left( \begin{array}{c} a & b \\ c & d \end{array} \right)$,
 
 #+begin_quote
 $a, b, c, d$ 的顺序代表了书写的顺序, 有这样的顺序是因为很多情况下矩阵是从方程组转换过来的: $\begin{cases} f(x, y) = ax + by \\ g(x, y) = cx + dy \end{cases}$,
@@ -2360,6 +2360,95 @@ $\begin{cases} \frac{\partial f(x, y)}{\partial x} = \frac{\partial f(r, a)}{\pa
   }
 #+END_SRC
 
+**** 初识 SDF
+
+我们可以把解析式封装成一个返回正交距离的函数, 这个函数就是 =SDF=.
+
+以下是解析式的 =SDF= 的基本形式.
+
+=2D SDF=:
+
+#+BEGIN_SRC glsl
+  float f2D (vec2 x) { /* ... */ }             // 解析式原函数
+
+  vec2 grad2D (vec2 x) { /* ... */ }           // 解析式的导数
+
+  float sdf2D (vec2 p) {                       // SDF
+    float v = f2D(x);
+    float g = grad2D(x);
+    return abs(v) / length(g);
+  }
+#+END_SRC
+
+=3D SDF=:
+
+#+BEGIN_SRC glsl
+  float f3D (vec3 x) { /* ... */ }             // 解析式原函数
+
+  vec3 grad3D (vec3 x) { /* ... */ }           // 解析式的导数
+
+  float sdf3D (vec3 p) {                       // SDF
+    float v = f3D(x);
+    float g = grad3D(x);
+    return abs(v) / length(g);
+  }
+#+END_SRC
+
+**** <<sdf-transformation>> 对 SDF 描述的图形进行变换
+
+在定义 =SDF= 时应该默认图形是基于原点进行定义的, 这样做的好处是:
+
+一是可在无记忆负担的情况下保证所有的 =SDF= 在坐标系上的一致, 这也是很多图形软件的做法;
+
+二是可在不触碰 =SDF= 定义的情况下对图形进行变换, 只需在传入参数时对点 $p$ 进行变换即可.
+
+就像下面的代码:
+
+#+BEGIN_SRC glsl
+
+  void main() {
+    // ...
+    vec2 p = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
+    mat3 trans = mat3(1.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0,
+                      -0.3, -0.3, 1.0);
+    float v = trans * vec3(vec2(p), 1.0);
+    float d = sdf2D(v.xy);
+    // ...
+  }
+
+#+END_SRC
+
+这里面把 =sdf2D= 所描述的图形往右平移 $0.3$ 个单位, 往上平移 $0.3$ 个单位.
+
+关于变换相关的内容, 可以参考我的另外一篇笔记: [[../../2020/06/graphics-geometric-transformation.html][图形学 - 几何变换]].
+
+但看过笔记后你会发现上面的 =trans= 实际上是一个相反的平移, 所以直接把笔记中的变换应用到 =SDF= 上会产生相反的效果.
+
+这因为上面代码的不是对线段的端点进行变换, 而是对 $p$ 点进行平移, 所以你可能认为图像的平移为 $(-0.3, -0.3)$, 实际上是 $(0.3, 0.3)$.
+
+$p$ 点往左边平移 $0.3$ 个单位, 往下平移 $0.3$ 个单位才显得 =SDF= 往反方向平移. 这个问题可以这么思考:
+
+把所有图像看作是在三维空间上的一个平面, 比如 $xy$ 平面, 而图像的上方有一个位于 $O = (0, 0, 0)$ 的 "相机"(我们的双眼)往方向 $(0, 0, 1)$ 观察着图像,
+
+$p - O$ 是"相机"发出的视线射线, 所以 $p - O$ 是视点坐标系上的, 对 $p$ 进行变换相当于对"相机"进行变换, 而对"相机"进行变换与物体变换是相反的,
+
+这个规律在我的 [[../../2020/06/graphics-opengl-transformation.html#from-world-to-view][图形学-OpenGL坐标变换]] 有提到, 在后面的 =3D SDF= 中的 [[#ray-marching][Ray Marching]] 可以更好地体会到这一点.
+
+比如说, 想让镜头中的物体就往右偏, 那么"相机"得往左移; 如果想让镜头中的物体就往右转, 那么"相机"应该往左转.
+
+所以, 在对 =SDF= 的变换时, 先根据物体变换写下矩阵 $M = M_1 \times M_0$, 再对 $M$ 求逆 $M^{-1} = M_0^{-1} \times M_1^{-1}$ 并 $M^{-1}$ 应用到点 $p$ 上: $M^{-1}p$.
+
+**** 图形组合 - 布尔操作符 (boolean operators)
+
+***** 并集 (Union)
+***** 交集 (Intersection)
+***** 差集 (Subtraction)
+***** 异或 (XOR)
+***** 平滑并集 (Smooth Union)
+***** 平滑交集 (Smooth Intersection)
+***** 平滑差集 (Smooth Subtraction)
+
 
 *** 2D SDF
 
@@ -2392,17 +2481,17 @@ $\begin{cases} \frac{\partial f(x, y)}{\partial x} = \frac{\partial f(r, a)}{\pa
 
 我们可以通过 $\vec{ap} \cdot \vec{ab} = |\vec{ap}||\vec{ab}|\cos\theta$ 来判断, 两个向量之间的夹角 $\theta$ 范围是 $[0, 180^{\circ}]$,
 
-当 $90^{\circ} \lt \theta \le 180^{\circ}$ 时, 投影不在线段上, 所以 $\vec{ap}$ 在线段 $ab$ 上的投影长度为 0;
+当 $90^{\circ} \lt \theta \le 180^{\circ}$ 时, 投影 $\vec{ao}$ 不在线段上, 所以 $\vec{ap}$ 在线段 $ab$ 上的投影长度为 0;
 
 当 $0 \le \theta \lt 90^{\circ}$ 时, 投影 $\vec{ao}$ 处于线段上, 并且 $\vec{ao}$ 的长度最多为 $ab$ 的长度, 不能超过 $ab$.
 
-#+begin_quote
-当 $\theta = 90^{\circ}$ 时, $\vec{ap}$ 在 $\vec{ab}$ 上的投影长度为 0.
-#+end_quote
+当 $\theta = 90^{\circ}$ 时, $\vec{ap}$ 在 $\vec{ab}$ 上的投影长度为 0, 所以在线段上不占任何长度.
 
-换句话说, 如果 $\vec{ao}$ 在线段 $ab$ 上, 那么 $\frac{|\vec{ao}|}{|\vec{ab}|} \gt 0$, 否则 $\frac{|\vec{ao}|}{|\vec{ab}|} \lt 0$.
+*从这里会把投影 $|\vec{ao}|$ 定义为在线段 $ab$ 上的长度*, 也就是 $|\vec{ao}(\theta)| = \begin{cases} \frac{|\vec{ao}|}{|\vec{ab}|} & \text{ if } 0 \le \theta \lt 90^{\circ} \\ 0 & \text{ if } 90^{\circ} \le \theta \le 180^{\circ} \end{cases}$,
 
-不管 $\theta$ 在什么范围, 我们都要先计算出 $|\vec{ao}|$ 以及 $\frac{|\vec{ao}|}{|\vec{ab}|}$.
+为此不要把它看作是直线上的投影, 直线和线段是两种概念.
+
+不管 $\theta$ 在什么范围, 都要先计算出 $|\vec{ao}|$ 以及 $\frac{|\vec{ao}|}{|\vec{ab}|}$ 才能计算出 $\vec{op}$.
 
 根据三角函数: $\cos\theta = \frac{|\vec{ao}|}{|\vec{ap}|}$, 所以 $|\vec{ao}| = |\vec{ap}|\cos\theta$.
 
@@ -2410,7 +2499,7 @@ $\begin{cases} \frac{\partial f(x, y)}{\partial x} = \frac{\partial f(r, a)}{\pa
 
 而 $\vec{ao}$ 和 $\vec{op}$ 是 $\vec{ap}$ 的分量, 所以 $\vec{op} = \vec{ap} - \vec{ao}$, 其中 $\vec{ao} = \frac{\vec{ab}}{|\vec{ab}|}(|\vec{ab}| \times \frac{|\vec{ao}|}{|\vec{ab}|}) = \vec{ab} \frac{|\vec{ao}|}{|\vec{ab}|}$.
 
-$\vec{op} = \vec{ap} - \vec{ab} \frac{|\vec{ao}|}{|\vec{ab}|}$, 别忘记了当 $\theta \gt 90^{\circ}$ 时, $\vec{ap}$ 在线段 $ab$ 上的投影为 0, 所以 $\frac{|\vec{ao}|}{|\vec{ab}|} = 0$.
+$\vec{op} = \vec{ap} - \vec{ab} \frac{|\vec{ao}|}{|\vec{ab}|}$, 别忘记了当 $\theta \ge 90^{\circ}$ 时, $\vec{ap}$ 在线段 $ab$ 上的投影为 0, 所以 $\frac{|\vec{ao}|}{|\vec{ab}|} = 0$.
 
 这时正好 $\vec{op} = \vec{ap} \rightarrow |\vec{op}| = |\vec{ap}|$.
 
@@ -2433,47 +2522,6 @@ $\vec{op} = \vec{ap} - \vec{ab} \frac{|\vec{ao}|}{|\vec{ab}|}$, 别忘记了当 
 根据图形的特点, 分区域来讨论点与图形的距离, 这就是定义 =SDF= 的总体思路.
 
 而圆的 =SDF= 是最为简单的, 因为在任意区域上, 点到圆的距离都是一个算法, 无需分区域讨论.
-
-*对 SDF 描述的图形进行变换* <<sdf-transformation>>
-
-在定义 =SDF= 时应该默认图形是基于原点进行定义的, 这样做的好处是:
-
-一是可在无记忆负担的情况下保证所有的 =SDF= 在坐标系上的一致, 这也是很多图形软件的做法;
-
-二是可在不触碰 =SDF= 定义的情况下对图形进行变换, 只需在传入参数时对点 $p$ 进行变换即可, 比如对该线段进行平移,
-
-#+BEGIN_SRC glsl
-
-  void main() {
-    // ...
-    mat3 trans = mat3(1.0, 0.0, 0.0,
-                      0.0, 1.0, 0.0,
-                      -0.3, -0.3, 1.0);
-    float v = trans * vec3(vec2(uv), 1.0);
-    float c = sdfSegment(v.xy, vec2(0.3, -0.1), vec2(-0.4, 0.2));
-    // ...
-  }
-
-#+END_SRC
-
-关于变换相关的内容, 可以参考我的另外一篇笔记: [[../../2020/06/graphics-geometric-transformation.html][图形学 - 几何变换]].
-
-但需要注意是, 上面的 =trans2D= 实际上是一个相反的平移, 所以直接把笔记中的变换应用到 =SDF= 上会产生相反的效果,
-
-因为上面代码的不是对线段的端点进行变换, 而是对 $p$ 点进行平移, 所以你可能认为图像的平移为 $(-0.3, -0.3)$, 实际上是 $(0.3, 0.3)$.
-
-可以把所有 =2D= 图像看作是在三维空间上的一个平面, 比如 $xy$ 平面, 而图像的上方有一个位于 $O = (0, 0, 0)$ 的 "相机"(我们的眼睛)往方向 $(0, 0, 1)$ 观察着图像,
-
-$p - O$ "相机"发出的视线射线, 所以 $p - O$ 是视点坐标系上的, 对 $p$ 进行变换相当于对"相机"进行变换, 而对"相机"进行变换与物体变换是相反的,
-
-这个规律在我的 [[../../2020/06/graphics-opengl-transformation.html#from-world-to-view][图形学-OpenGL坐标变换]] 有提到, 在后面的 [[#ray-marching][Ray Marching]] 更好地体会到这一点.
-
-比如说, 想让镜头中的物体就往右偏, 那么"相机"得往左移; 如果想让镜头中的物体就往右转, 那么 "相机" 应该往左转.
-
-所以, 在对 =SDF= 的变换时, 先根据物体变换写下矩阵 $M = M_1 \times M_0$, 再对 $M$ 求逆 $M^{-1} = M_0^{-1} \times M_1^{-1}$ 并 $M^{-1}$ 应用到点 $p$ 上: $M^{-1}p$.
-
-*布尔操作 (boolean operation)*
-
 
 
 **** 计算点与矩形之间的距离
@@ -2540,7 +2588,7 @@ $\sqrt{\max(|x| - \frac{W}{2}, 0)^2 + \max(|y| - \frac{H}{2}, 0)^2} + \min(\max(
   }
 #+END_SRC
 
-绝对值是常用的对称操作, $|x|$ 是让点关于 $y$ 轴对称, $|y|$ 是让点关于 $x$ 轴对称, $(|x|, |y|)$ 是让点关于原点对称.
+绝对值是常用的对称操作, $|x|$ 是让点关于 $y$ 轴对称, $|y|$ 是让点关于 $x$ 轴对称, $(|x|, |y|)$ 是让其它象限全部映射到第一象限上.
 
 **** 计算点与不规则多边形之间的距离
 
@@ -3162,6 +3210,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
     gl_FragColor = vec4(col, 1.0);
   }
 #+END_SRC
+
 ***** 代码结构优化
 
 一旦场景复杂起来, 描述场景的函数 =sdfScene= 就会难以阅读, 为了让 =sdfScene= 的结构清晰, 可把物体给封装起来,
@@ -3234,7 +3283,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
     }
     col /= count;
     // AA ends here
-    
+
     col = pow(col, vec3(.4545));  // [0, 1]^3 to [0, 1]^3
     gl_FragColor = vec4(col, 1.0);
   }
@@ -3249,20 +3298,20 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 要对物体实现 $M = M_0 \times M_1$ 变换, 那么对 $p$ 点应该实现 $M^{-1} = M_{1}^{-1} \times M_{0}^{-1}$ 的变换: $M^{-1} p$.
 
-这里特别"点名"缩放变换造成的异常, 用前面的 =sdfScene= 函数为例子, 对场景里面的球体进行非均匀缩放，
+这里特别"点名"缩放变换造成的异常, 用前面的 =sdfScene= 函数为例子, 对场景里面的球体进行缩小,
 
 #+BEGIN_SRC glsl
   float sdfScene(vec3 p) {
     vec3 sp = vec3(1.0, 3.0, 5.0) * p; // 在 y 轴方向上对球体进行缩小
     float sphereDist = sdfSphere(sp - sphereCenter, sphereRadius); // 距离场 sphereDist 被拉伸了
     float groundDist = sdfGround(p);
-    
+
     float d = min(sphereDist, groundDist);
-    /* 
+    /*
        因为变换对象不是物体本身, 而是射线, 使得距离场被拉伸,
 
-       距离场被拉伸会导致 RayMarch 以过长的步长进行步进, 从而进入物体内部甚至是穿过物体,
-       
+       距离场被拉伸会导致 RayMarch 以过大的步长步进, 从而进入物体内部甚至是穿过物体,
+
        所以在某些角度观看球体会发现一些问题.
      ,*/
     return d;
@@ -3272,16 +3321,20 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+attr_html: :width 504px
 [[../../../files/invalid-sdf-sphere.png]]
 
-解决方法是对距离场合进行等倍的反向缩放, 让距离场除以原缩放系数当中最大的一个来缩小步长.
+解决方法是对距离场进行等倍缩小, 让距离场除以原缩放系数当中最大的一个来缩小步长.
 
 缩小步长可以保证射线绝对不会找错交点, 因此除以更大系数也无所大碍, 但是这导致了需要更多的步进次数, 从而减低性能.
+
+对球体进行放大不存在这个问题, 因为它的距离场被缩小了, 不会出现步长过大的情况.
+
+不过如果是均匀放大, 可以为了性能适当拉伸一下距离场: 让距离场合除以缩小系数.
 
 #+BEGIN_SRC glsl
   float sdfScene(vec3 p) {
     vec3 sp = vec3(1.0, 3.0, 5.0) * p; // 在 y 轴方向上对球体进行缩小
     float sphereDist = sdfSphere(sp - sphereCenter, sphereRadius) / 5.0; // 原本缩放的最大分量是 5.0, 所以这里要处以 5.0
     float groundDist = sdfGround(p);
-    
+
     float d = min(sphereDist, groundDist);
     return d;
   }

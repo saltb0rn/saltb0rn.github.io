@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-04-29 Tue 16:08 -->
+<!-- 2025-04-30 Wed 01:20 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -282,7 +282,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org3bb0335">
+<div class="abstract" id="orgd893580">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -316,7 +316,7 @@
 </p>
 
 
-<div id="orgef79a04" class="figure">
+<div id="org165e6da" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg">
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -427,7 +427,7 @@
 </p>
 
 
-<div id="org20f4d24" class="figure">
+<div id="orgdf5e999" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png">
 </p>
 </div>
@@ -526,7 +526,7 @@
 <h2 id="orgab96d0e">OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-orgab96d0e">
 
-<div id="org9e58b00" class="figure">
+<div id="org26f7498" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -690,7 +690,21 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-<code>OpenGL</code> 有一个叫做 \(lookAt\) 的变换,就是用来对相机进行变换的.之前也说了, <code>OpenGL</code> 的相机是虚拟的,它是根据参考的相对性对场景进行逆向变换来达到"变换相机"的效果.
+<code>OpenGL</code> 有一个叫做 \(lookAt\) 的变换,就是用来对相机进行变换的.
+</p>
+
+<p>
+它是由同名函数构建的, 这个函数参数是三个世界坐标系上的向量:
+</p>
+
+<ul class="org-ul">
+<li>\(eye\) - 指定相机的位置</li>
+<li>\(center\) - 相机看向的位置</li>
+<li>\(up\) - 指定相机向上的方向</li>
+</ul>
+
+<p>
+之前也说了, <code>OpenGL</code> 的相机是虚拟的,它是根据参考的相对性对场景进行逆向变换来达到"变换相机"的效果.
 </p>
 
 <p>
@@ -702,11 +716,11 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-\(lookAt\) 就是相机从位于原点上看着 \(z\) 的负方向, 到 \(\left(x_{c}, y_{c}, z_{c}\right)\) 的位置上看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的变换, 这些坐标都是定义在世界坐标系上.
+\(lookAt\) 变换就是相机从位于原点上看着(右手坐标系的) \(z\) 的负方向, 到 \(eye\) 的位置上看着 \(center\).
 </p>
 
 <p>
-\(lookAt\) 变换由两个变换构成: 逆向地从视点坐标到原点平移整个场景,用 \(M_{T}\) 表示;逆向的旋转整个场景,用 \(M_{R}\) 表示.
+\(lookAt\) 变换由两个变换构成: 逆向地从视点坐标到原点平移整个场景,用 \(M_{T}\) 表示; 逆向的旋转整个场景,用 \(M_{R}\) 表示.
 </p>
 
 <p>
@@ -714,7 +728,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-首先是平移,因为是场景的反向平移,所以 \(M_{T} = \left(\begin{array}{c} 1 & 0 & 0 & -x_{e} \\ 0 & 1 & 0 & -y_{e} \\ 0 & 0 & 1 & -z_{e} \\ 0 & 0 & 0 & 1\end{array}\right)\).
+首先是平移,因为是场景的反向平移,所以 \(M_{T} = \left(\begin{array}{c} 1 & 0 & 0 & -x_{t} \\ 0 & 1 & 0 & -y_{t} \\ 0 & 0 & 1 & -z_{t} \\ 0 & 0 & 0 & 1\end{array}\right)\).
 </p>
 
 <p>
@@ -722,7 +736,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org381d093" class="figure">
+<div id="org417bfb4" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif">
 </p>
 <p><span class="figure-number">Figure 3: </span>相机看小黄鸭的顶部</p>
@@ -733,7 +747,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgfe12ac7" class="figure">
+<div id="org51124cf" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif">
 </p>
 <p><span class="figure-number">Figure 4: </span>相机看小黄鸭的正前方</p>
@@ -760,19 +774,23 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-相机现在是位于 \(\left(x_{c}, y_{c}, z_{c}\right)\) 看着 \(\left(x_{t}, y_{t}, z_{t}\right)\) 的,以相机作为原点建立一个正交坐标系,只要求出该坐标系的三个基底变量就可以解得该矩阵.
+以相机作为原点建立一个正交坐标系,只要求出该坐标系的三个基底变量就可以解得该矩阵.
 </p>
 
 <p>
-我们很容易得到 \(\left(f_{x}, f_{y}, f_{z}\right)\),也就是从看的目标的位置到相机的方向: \(forward = \left(x_{t}, y_{t}, z_{t}\right) - \left(x_{c}, y_{c}, z_{c}\right)\),然后求出 \(forward\) 的单位向量 \(\hat{f} = (f_x, f_y, f_z)\);
+首先, 得到相机的面向 \(forward = center - eye\), 并求出 \(forward\) 的单位向量 \(\hat{f} = (f_x, f_y, f_z)\);
 </p>
 
 <p>
-然后把给出的(<b>如果没给出就用 \(\left(0, 1, 0\right)\)</b>)向上方向的向量 \(up\) 与 \(\hat{f}\) 进行叉积乘法求出同时垂直于它们的向量 \(right\), 并且求出其单位向量 \(\hat{r} = (r_x, r_y, r_z)\);
+然后, 用 \(\hat{f}\) 或者 \(forward\) 与向量 \(up\) 进行叉积, 求出同时垂直于它们的向量 \(right = \hat{f} \times up\), 从而得出其单位向量 \(\hat{r} = (r_x, r_y, r_z)\);
 </p>
 
 <p>
-最后对 \(\hat{f}\) 和 \(\hat{r}\) 进行叉积乘法求出同时垂直于它们的向量, 并求出其单位向量 \(\hat{u} = (u_x, u_y, u_z)\), 这样三个基底变量就解出了.
+最后, 对 \(\hat{f}\) 和 \(\hat{r}\) 进行叉积求出同时垂直于它们的向量 \(\hat{u} = \hat{f} \times \hat{r} = (u_x, u_y, u_z)\).
+</p>
+
+<p>
+至此, 三个基底变量就求出来了.
 </p>
 
 <blockquote>
@@ -781,7 +799,19 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-这是因为我们建立的矩阵 \(M_{r}\) 是正交坐标系, 也就是 \(\hat{l}/\hat{u}/\hat{f}\) 三者是相互垂直的, 然而 \(up\) 和 \(\hat{f}\) 只是可以构成一个平面, 但不一定垂直.
+这是因为我们建立的矩阵 \(M_{r}\) 是正交坐标系, 也就是 \(\hat{r}/\hat{u}/\hat{f}\) 三者是相互垂直的,
+</p>
+
+<p>
+然而 \(up\) 和 \(\hat{f}\) 只是可以构成一个平面, 但不一定垂直.
+</p>
+
+<p>
+另外, 由于 \(\hat{f}\) 和 \(\hat{r}\) 都是单位向量, \(\hat{u} = \hat{f} \times \hat{r}\) 可以看作 \(\hat{f}\) 围绕 \(\hat{r}\) 往逆时针方向旋转 \(90^{\circ}\) 到达方向 \(\hat{u}\).
+</p>
+
+<p>
+因此, 不需要对 \(\hat{f} \times \hat{r}\) 求单位向量.
 </p>
 </blockquote>
 
@@ -825,7 +855,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org343ff45" class="figure">
+<div id="orgfa8de9b" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png">
 </p>
 </div>
@@ -839,7 +869,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org8fd8eac" class="figure">
+<div id="orgc2bf12a" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png">
 </p>
 </div>
@@ -873,7 +903,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org0ca96d7" class="figure">
+<div id="orgff49bb7" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png">
 </p>
 </div>
@@ -1089,7 +1119,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org4c5ad0a" class="figure">
+<div id="org1521cfe" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1383,14 +1413,14 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orga6469f9" class="figure">
+<div id="orga557c27" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="org35d841d" class="figure">
+<div id="orgf97c046" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>正交投影(正交相机看到的内容)</p>
@@ -1438,7 +1468,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </ol>
 
 
-<div id="orgf81b2e1" class="figure">
+<div id="org3cca1e6" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>透视投影2</p>
@@ -1477,7 +1507,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org1c3ad8d" class="figure">
+<div id="orgfa509bb" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png">
 </p>
 </div>
@@ -1519,7 +1549,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org5be8355" class="figure">
+<div id="orgfb1c5c9" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1546,7 +1576,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org00507fd" class="figure">
+<div id="orgbf016d0" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1613,8 +1643,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgab99d11" class="figure">
-<p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png">
+<div id="orgb0ebf90" class="figure">
+<p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 11: </span>比较不同深度下的精确度</p>
 </div>
@@ -1839,7 +1869,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <h4 id="org5261904">正交投影</h4>
 <div class="outline-text-4" id="text-org5261904">
 
-<div id="org523a2e0" class="figure">
+<div id="orge811893" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>正交投影2</p>
