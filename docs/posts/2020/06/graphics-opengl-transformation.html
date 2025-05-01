@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-04-30 Wed 17:17 -->
+<!-- 2025-05-01 Thu 14:27 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -282,7 +282,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org93267bb">
+<div class="abstract" id="orgfb5607d">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -316,7 +316,7 @@
 </p>
 
 
-<div id="org3cf86b6" class="figure">
+<div id="org8d7b366" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg">
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -427,7 +427,7 @@
 </p>
 
 
-<div id="orga9080a2" class="figure">
+<div id="org26a9145" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png">
 </p>
 </div>
@@ -526,7 +526,7 @@
 <h2 id="orgab96d0e">OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-orgab96d0e">
 
-<div id="org3702cc6" class="figure">
+<div id="orgd6fdca9" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png" width="700px">
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -680,6 +680,12 @@ B. 把对象放到场景(scene)/世界(world)中.
 <p>
 也就是说 <code>OpenGL</code> 的相机是虚拟的.
 </p>
+
+<blockquote>
+<p>
+视点坐标系并非一定是左手坐标系, 有些渲染引擎使用右手坐标系作为视点坐标系.
+</p>
+</blockquote>
 </div>
 </div>
 <div id="outline-container-from-world-to-view" class="outline-3">
@@ -710,21 +716,21 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgda12476" class="figure">
+<div id="org937b210" class="figure">
 <p><img src="../../../files/camera-opposite-to-object.png" alt="camera-opposite-to-object.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 3: </span>物体平移上在视觉上的相反: 当相机往原点平移时, 物体在视觉上也是往原点平移, 双方平移的方向相反.</p>
 </div>
 
 
-<div id="orgb0522c6" class="figure">
+<div id="orgd300b64" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif">
 </p>
 <p><span class="figure-number">Figure 4: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(x\) 轴往逆时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(x\) 轴往顺时针方向旋转.</p>
 </div>
 
 
-<div id="org995515b" class="figure">
+<div id="orge97403c" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif">
 </p>
 <p><span class="figure-number">Figure 5: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(y\) 轴往顺时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(y\) 轴往逆时针方向旋转.</p>
@@ -735,7 +741,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-总上所属, 如果相机的模型变换为: \(M_{camera} = M_{T}M_{R}\), \(M_{T}\) 是相机的平移, \(M_{R}\) 是相机的旋转,
+综上所属, 假设 \(M_{camera} = M_{T}M_{R}\) 是相机的模型变换, 其中 \(M_{T}\) 是相机的平移, \(M_{R}\) 是相机的旋转,
 </p>
 
 <p>
@@ -761,11 +767,19 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-而 \(M_{R}^{-1}\) 就不太好看出来了, 因为仅凭这三个参数不足以解析相机是围绕哪根轴往什么方向旋转了多少度, 所以通过旋转矩阵来构建 \(M_{R}^{-1}\) 不现实.
+而 \(M_{R}^{-1}\) 就不太好看出来了, 因为仅凭这三个参数不足以解析相机是围绕哪根轴往什么方向旋转了多少度,
 </p>
 
 <p>
-但我们知道视点坐标系是一个左手正交坐标系, 它的 \(z\) 轴正方向和右手坐标系上的相反, 并且能通过参数 \(eye\) 和 \(center\) 计算出左手坐标系上的 \(z\) 轴,
+所以通过旋转矩阵来构建 \(M_{R}^{-1}\) 不现实.
+</p>
+
+<p>
+但我们知道视点坐标系是一个左手正交坐标系, 它的 \(z\) 轴正方向和右手坐标系上的相反,
+</p>
+
+<p>
+并且能通过参数 \(eye\) 和 \(center\) 计算出左手坐标系上的 \(z\) 轴,
 </p>
 
 <p>
@@ -773,7 +787,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-目前 \(M_{R}^{-1}\) 的构建有好几种思路, 不过大方向是一样的, 其中 <code>OpenGL</code> 上的构建思路比较直接, 也是效率最高的:
+<b>虽然视点坐标系是左手坐标系, 但在构建它的全程都使用右手坐标系, 直到最后才变换成左手坐标系.</b>
 </p>
 
 <p>
@@ -805,28 +819,24 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-令 \(\hat{r}_{\text{right-hand}} = \left( \begin{array}{c} x_r \\ y_r \\ z_r \end{array} \right)\), \(\hat{u}_{\text{right-hand}} = \left( \begin{array}{c} x_u \\ y_u \\ z_u \end{array} \right)\), \(\hat{f}_{\text{right-hand}} = \left( \begin{array}{c} x_f \\ y_f \\ z_f \end{array} \right)\), 把它们组合成一个右手坐标系可以得出 \(M_{R} = \left( \begin{array}{c} x_r & x_u & - x_f & 0 \\ y_r & y_u & - y_f & 0 \\ z_r & z_u & - z_f & 0 \\ 0 & 0 & 0 & 1 \end{array} \right)\).
+令 \(\hat{r}_{\text{right-hand}} = \left( \begin{array}{c} x_r \\ y_r \\ z_r \end{array} \right)\), \(\hat{u}_{\text{right-hand}} = \left( \begin{array}{c} x_u \\ y_u \\ z_u \end{array} \right)\), \(\hat{f}_{\text{right-hand}} = \left( \begin{array}{c} x_f \\ y_f \\ z_f \end{array} \right)\), 把它们组合成得到 \(M_{R} = \left( \begin{array}{c} x_r & x_u & x_f & 0 \\ y_r & y_u & y_f & 0 \\ z_r & z_u & z_f & 0 \\ 0 & 0 & 0 & 1 \end{array} \right)\),
 </p>
 
 <p>
-由于 \(M_{R}\) 是一个旋转矩阵, 而旋转矩阵是<a href="https://en.wikipedia.org/wiki/Orthogonal_matrix">正交矩阵</a>, 正交矩阵的逆矩阵就是它的转置矩阵, 所以 \(M_{R} = \left( \begin{array}{c} x_r & y_r & z_r & 0 \\ x_u & y_u & z_u & 0 \\ - x_f & - y_f & - z_f & 0 \\ 0 & 0 & 0 & 1 \end{array} \right)\).
+目前 \(M_{R}\) 是右手坐标系, 而 \(\hat{f}_{\text{right-hand}}\) 是按照左手坐标系的 \(z\) 轴正方向进行构建, 和右手坐标系的 \(z\) 轴正方向相反,
+</p>
+
+<p>
+所以左手坐标系的 \(M_{R} = \left( \begin{array}{c} x_r & x_u & -x_f & 0 \\ y_r & y_u & -y_f & 0 \\ z_r & z_u & -z_f & 0 \\ 0 & 0 & 0 & 1 \end{array} \right)\).
+</p>
+
+<p>
+由于 \(M_{R}\) 是一个旋转矩阵, 而旋转矩阵是<a href="https://en.wikipedia.org/wiki/Orthogonal_matrix">正交矩阵</a>, 正交矩阵的逆矩阵就是它的转置矩阵, 所以 \(M_{R}^{-1} = \left( \begin{array}{c} x_r & y_r & z_r & 0 \\ x_u & y_u & z_u & 0 \\ - x_f & - y_f & - z_f & 0 \\ 0 & 0 & 0 & 1 \end{array} \right)\).
 </p>
 
 <blockquote>
 <p>
-事实上, 这只是其中一种构建方式, 主要区别在于 \(forward\) 的计算, 它们的是 \(forward = eye - center\).
-</p>
-
-<p>
-这导致了后面对于 \(\hat{r}_{\text{right-hand}}\) 以及 \(\hat{u}_{\text{right-hand}}\) 的计算也发生了改变:
-</p>
-
-<p>
-\(\begin{cases} right = up \times \hat{f}_{\text{right-hand}} \rightarrow \hat{r}_{\text{right-hand}} \\ \hat{u}_{\text{right-hand}} = \hat{f}_{\text{right-hand}} \times \hat{r}_{\text{right-hand}} \end{cases}\)
-</p>
-
-<p>
-当然, 最后的矩阵是一样的. 另外, 这里参考了以下内容:
+这并非唯一的构建方案, 只是 <code>OpenGL</code> 里面的方案, 参考资料如下:
 </p>
 
 <p>
@@ -882,7 +892,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org88eea07" class="figure">
+<div id="org23f9fbd" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png">
 </p>
 </div>
@@ -896,7 +906,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org5398494" class="figure">
+<div id="org6d212d6" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png">
 </p>
 </div>
@@ -930,7 +940,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org10c62f8" class="figure">
+<div id="org57c887a" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png">
 </p>
 </div>
@@ -1146,7 +1156,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgc42b00b" class="figure">
+<div id="orgf887daa" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1440,14 +1450,14 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgada36f6" class="figure">
+<div id="orgba22421" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="org655f993" class="figure">
+<div id="orgab756ac" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png">
 </p>
 <p><span class="figure-number">Figure 8: </span>正交投影(正交相机看到的内容)</p>
@@ -1495,7 +1505,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </ol>
 
 
-<div id="org542b421" class="figure">
+<div id="org0621913" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>透视投影2</p>
@@ -1534,7 +1544,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgc9dde18" class="figure">
+<div id="org4d24235" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png">
 </p>
 </div>
@@ -1576,7 +1586,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org3141eac" class="figure">
+<div id="orgbf89d7a" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1603,7 +1613,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgab63dea" class="figure">
+<div id="org4d33742" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1670,7 +1680,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org9b2fbaf" class="figure">
+<div id="org8b3cf7e" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 12: </span>比较不同深度下的精确度</p>
@@ -1896,7 +1906,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <h4 id="org5261904">正交投影</h4>
 <div class="outline-text-4" id="text-org5261904">
 
-<div id="org287f28f" class="figure">
+<div id="org381b02a" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>正交投影2</p>

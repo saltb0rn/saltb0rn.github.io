@@ -58,18 +58,7 @@
 
 *** GLSL 矩阵储存方式
 
-默认情况下, =GLSL= 使用列优先储存矩阵. 但在定义 $n \times n$ 的矩阵变量时, 很容易不知道矩阵元素数组前面 $n$ 个是第一行还是第一列,
-
-假设这是一个列优先的矩阵: $\left( \begin{array}{c} a & b \\ c & d \end{array} \right)$,
-
-#+begin_quote
-$a, b, c, d$ 的顺序代表了书写的顺序, 有这样的顺序是因为很多情况下矩阵是从方程组转换过来的: $\begin{cases} f(x, y) = ax + by \\ g(x, y) = cx + dy \end{cases}$,
-
-$a, c, b, d$ 的书写顺序大部分情况下是根据坐标系统基向量顺序得来的, 因为一个基向量是一列, 所以第一个基向量是 $(a, c)$, 第二个基向量是 $(b, d)$, 组合起来就是上面的矩阵.
-
-#+attr_html: :width 504px
-[[../../../files/Row_and_column_major_order.svg.png]]
-#+end_quote
+默认情况下, =GLSL= 使用列优先储存矩阵. 假设这是一个用于左乘的矩阵: $\left( \begin{array}{c} a & b \\ c & d \end{array} \right)$,
 
 那么在 =GLSL= 里应该这么定义:
 
@@ -77,10 +66,6 @@ $a, c, b, d$ 的书写顺序大部分情况下是根据坐标系统基向量顺�
   mat2(a, c,
        b, d);
 #+END_SRC
-
-在数学上的书写和代码中的定义看上去相反, 这就是很多新手困惑的地方.
-
-在编码时只要记得储存顺序约定等于书写顺序就不会迷糊, 由于 =GLSL= 默认是列优先, 所以默认情况下, 书写顺序就是逐列输入.
 
 ** 常见的 UV 计算
 *** UV - 计算片元在屏幕上所对应的 UV 坐标
@@ -3122,7 +3107,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   // 原代码来至: https://www.shadertoy.com/view/3ssGWj
   // 这里对原代码进行了一些翻译
   vec3 GetRayDirection(vec2 uv, vec3 cameraPos, vec3 lookAtPos, float near) {
-    // 构建相机的坐标系, 是左手坐标系
+    // 构建视点坐标系, 是左手坐标系
     vec3 up = vec3(0, 1, 0),
       forward = lookAtPos - cameraPos,
       f = normalize(forward),
@@ -3294,9 +3279,9 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 在 =2D SDF= 时就介绍过对 =SDF= 进行变换的[[sdf-transformation][方法]]了, 具体就不赘述了.
 
-但还是要再提醒一点, 射线上点的 $p$ 是视点空间上的坐标, 因此,
+但还是要再提醒一点, 在我们的渲染器中, 射线上点的 $p$ 是视点空间上的坐标, 基本上一切坐标都是视点空间上, 包括相机位置.
 
-要对物体实现 $M = M_0 \times M_1$ 变换, 那么对 $p$ 点应该实现 $M^{-1} = M_{1}^{-1} \times M_{0}^{-1}$ 的变换: $M^{-1} p$.
+因此, 要对物体实现 $M = M_0 \times M_1$ 变换, 那么对 $p$ 点应该实现 $M^{-1} = M_{1}^{-1} \times M_{0}^{-1}$ 的变换: $M^{-1} p$.
 
 这里特别"点名"缩放变换造成的异常, 用前面的 =sdfScene= 函数为例子, 对场景里面的球体进行缩小,
 

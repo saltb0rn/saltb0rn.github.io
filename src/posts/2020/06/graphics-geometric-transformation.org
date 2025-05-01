@@ -90,12 +90,13 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 
 任何形如 $v^{'} = M \cdot v + b$ 的变换都属于仿射变换(Affine Transformation).
 
-另外, 这篇笔记里的全部矩阵都是列优先(column first/column-major order)的顺序, 也就是说如果用 $\left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right)$ 表示平面正交坐标系($y$ 轴向上, $x$ 轴往右), 那么第一列 $\left( \begin{array}{c} 1 \\ 0 \end{array} \right)$ 表示 $x$ 轴, $\left( \begin{array}{c} 0 \\ 1 \end{array} \right)$ 表示 $y$ 轴.
+另外, 这篇笔记里的全部矩阵都是默认用于左乘, 也就是说如果用 $\left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right)$ 表示平面正交坐标系($y$ 轴向上, $x$ 轴往右), 那么第一列 $\left( \begin{array}{c} 1 \\ 0 \end{array} \right)$ 表示 $x$ 轴, $\left( \begin{array}{c} 0 \\ 1 \end{array} \right)$ 表示 $y$ 轴.
 
-有的文章喜欢用行优先(row first/row-major order), 这两者之间的区别会反应在矩阵 $M$ 和向量 $V$ 之间的乘法上, 矩阵和向量之间的乘法要求 $M$ 和 $V$ 两者必须是同样的顺序进行储存:
+有的文章喜欢用右乘矩阵, 这两者之间的区别会反应在矩阵 $M$ 和向量 $V$ 之间的乘法上,
 
-如果是列优先, 那么是 $M \cdot V$; 如果是行优先, 那么是 $V \cdot M$.
+如果 $M$ 用于左乘, 那么 $M \cdot V$ 并且 $V$ 是列向量; 如果用于右乘, 那么 $V \cdot M$ 并且 $V$ 是行向量.
 
+当然这是可以转换的: $M \cdot V = V^{T} \cdot M^{T}$, $T$ 表示转置, $V^{T}$ 表示从列向量变成行向量, $M^{T}$ 表示 $M$ 的第 $i$ 行变成第 $i$ 行.
 
 **** 向量模, 向量之间的夹角以及向量积
 
@@ -221,21 +222,27 @@ $\vec{r}$ 在 $\vec{s}$ 上的投影其实就是 $\vec{r}$ 在 $\vec{s}$ 的方�
 
 正如前面所说的, 物体的变换相当于改变了物体参照的坐标系. 应该如何找到这个变换呢?
 
-接下来会用矩阵来表示变换以及坐标系, 比如 $\left(\begin{array}{c} 1 & 0 \\ 0 & 1 \end{array}\right)$ 表示平面的笛卡尔坐标系, 同时也表示一个不改变任何东西的变换,
+接下来会用矩阵来表示变换以及坐标系, 比如单位矩阵 $\left(\begin{array}{c} 1 & 0 \\ 0 & 1 \end{array}\right)$ 表示平面的笛卡尔坐标系, 同时也表示一个不改变任何东西的变换,
 
 每一列都是一个基向量, 比如第一列表示坐标系中的 $x$ 轴, 第二列表示坐标系中的 $y$ 轴.
 
-#+begin_quote
-再次声明, 这里的矩阵都是列优先.
-#+end_quote
-
 找出变换就是找出原本坐标系的基向量和新坐标系的基向量之间的数学关系,
 
-比如原本 $x$ 轴与 $x$ 轴之间的数学关系为 $A$, 原本 $y$ 轴与新 $y$ 轴之间的数学关系为 $B$,
+比如原本 $x$ 轴与新 $x$ 轴之间的数学关系为 $A$, 原本 $y$ 轴与新 $y$ 轴之间的数学关系为 $B$,
 
 $A$ 和 $B$ 都可以用向量来表示, 把它们组成一个矩阵 $\left(\begin{array}{c} A|B \end{array}\right)$, 这个矩阵就是我们想找的变换了.
 
-由于我们通常都从笛卡尔坐标系开始找出变换的, 所以找到的变换都可以作为新坐标系的矩阵, 当然只限与从笛卡尔坐标系开始推导的变换.
+由于通常都从单位矩阵开始找出变换的, 所以找到的变换都可以作为新坐标系的矩阵,
+
+比如: $\left( \begin{array}{c} A | B \end{array} \right) \left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right) = \left( \begin{array}{c} A | B \end{array} \right)$, 可以看到代表新坐标系的矩阵和变换是同一个矩阵.
+
+当然只限于从单位矩阵开始推导的变换, 比如这个例子就不行: $\left( \begin{array}{c} A | B \end{array} \right)^{-1} \left( \begin{array}{c} A | B \end{array} \right) = \left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right)$.
+
+从坐标系 $\alpha$ 变换到 $\beta$, 再从 $\beta$ 变换到 $\gamma$, 其中变换分别是 $M_1$ 和 $M_2$,
+
+$M_1$ 既可以从 $\alpha$ 和 $\beta$ 之间找出来, 也可以从单位矩阵开始推导出来, $M_2$ 同理.
+
+在一系列的变换中, 单位矩阵推导让我们只关注变换本身, 而不是特定的坐标系, 比如 $\gamma = M_2 M_1 \alpha$, 就无需考虑 $\beta$.
 
 *** 2D变换
 
