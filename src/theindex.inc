@@ -1,5 +1,9 @@
-*** [[file:posts/2025/02/fluid-typography.html?hash=58deb158dace60737d797fe6149f16b8][流体排版]]
-这篇笔记是 =2022= 年学习响应式布局时写的, 今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
+*** [[file:posts/2025/02/fluid-typography.html?hash=2f185e0e5e23c67bc51ca5d7b099bbfd][流体排版]]
+这篇笔记是 =2022= 年学习响应式布局时起笔的, 然而因为一些事情而中断了,
+
+今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
+
+同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
 *** [[file:posts/2024/11/introduction-to-probability.html?hash=1b5c5c8340563c82e04d173e06472780][Introduction To Probability 的阅读草稿纸]]

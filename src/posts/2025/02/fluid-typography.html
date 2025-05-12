@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-05-12 Mon 17:10 -->
+<!-- 2025-05-12 Mon 19:59 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>流体排版</title>
@@ -233,23 +233,31 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org82b91a1">1. 流体字体计算的公式推导</a></li>
-<li><a href="#org28e6237">2. 相对单位的使用</a></li>
-<li><a href="#org153f41d">3. 对于流式字体和响应式布局的一些误解</a></li>
-<li><a href="#orgd0e60d9">4. <code>CSS</code> 的一些限制</a></li>
-<li><a href="#org7e00649">5. 字体大小的选择</a></li>
-<li><a href="#orgd4c159a">6. 参考</a></li>
+<li><a href="#org0bbf467">1. 流体字体计算的公式推导</a></li>
+<li><a href="#orgc58c55d">2. 相对单位的使用</a></li>
+<li><a href="#org6bba784">3. 对于流式字体和响应式布局的一些误解</a></li>
+<li><a href="#orgc025653">4. <code>CSS</code> 的一些限制</a></li>
+<li><a href="#orgcff96d4">5. 字体大小的选择</a></li>
+<li><a href="#org21e481f">6. 参考</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgc2a0eb7">
+<div class="abstract" id="orgc7ab6d5">
 <p>
-这篇笔记是 <code>2022</code> 年学习响应式布局时写的, 今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
+这篇笔记是 <code>2022</code> 年学习响应式布局时起笔的, 然而因为一些事情而中断了,
+</p>
+
+<p>
+今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
+</p>
+
+<p>
+同时也算是感慨一下当年热衷于写文章的自己, 
 </p>
 
 </div>
-<div id="outline-container-org82b91a1" class="outline-2">
-<h2 id="org82b91a1"><span class="section-number-2">1.</span> 流体字体计算的公式推导</h2>
+<div id="outline-container-org0bbf467" class="outline-2">
+<h2 id="org0bbf467"><span class="section-number-2">1.</span> 流体字体计算的公式推导</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 流体字体排版(<code>fluid typography</code>)是指排版值(<code>typographic values</code>, 包括字体大小, 行高, 字符间距等等)随着视口大小(通常是视口宽度)变化而发生线性变化.
@@ -260,16 +268,20 @@
 </p>
 
 <p>
-当然这种"技术"也能用在字体以外的地方上, 不过它们已经有更好的解决方案来实现同样的效果, 所以只关注字体就好.
+当然这种"技术"也能用在字体以外的地方上, 但这些地方已经有更好的方案实现同样的效果, 唯独字体是没有受到浏览器的"重视", 所以现在只关注字体就好.
 </p>
 
 <p>
-在响应式布局中, 字体的响应式工作应该是最为复杂的, 因为需要很多注意的地方实在太多, 这篇笔记会尽量把这一切都说清楚.
+在响应式布局的所有工作中, 字体的响应大概是最为复杂的, 复杂性体现在理解和 <code>WEB</code> 标准的细节上.
+</p>
+
+<p>
+如果你是学习响应式布局的新人, 那么我相信这篇笔记应该能够作为一篇不错的补充材料.
 </p>
 
 <blockquote>
 <p>
-由于和视口大小有着密不可分的关系, 因此, 请确保开发时在页面写入了以下 <code>meta-tag</code> 把视口宽度调成设备屏幕的逻辑像素宽度:
+为了保证在不同屏幕上有着一致的效果, 请确保开发时在页面写入了以下 <code>meta-tag</code> 把视口宽度调成设备屏幕的逻辑像素宽度:
 </p>
 
 <div class="org-src-container">
@@ -278,16 +290,20 @@
 </div>
 
 <p>
-比如说, 有一个物理像素为 <code>750px</code> 宽的高清屏, 它的设备像素比(device pixels ratio, dpr)为 2, 那么此时 <code>device-width</code> 就为 <code>375px</code>.
+比如说, 有一个物理像素为 <code>750px</code> 宽的高清屏, 它的设备像素比(device pixels ratio, DPR)为 2, 那么此时 <code>device-width</code> 就为 <code>375px</code>.
 </p>
 
 <p>
-另外, 在与设计师沟通时, 要确认设计稿是否为高清屏所设计, 如果是的话清把设计稿的尺寸除以屏幕的设备像素比来得到逻辑像素, 并以逻辑像素作为计算对象.
+在实际上开发中, 在与设计师沟通时, 要确认设计稿是否为高清屏所设计,
+</p>
+
+<p>
+如果是, 那么请先把设计稿的尺寸除以屏幕的设备像素比来得到逻辑像素, 并以逻辑像素作为计算对象.
 </p>
 </blockquote>
 
 <p>
-这是最为简单的流体字体排版计算的模板(移动端优先):
+这是最为简单的流体字体排版计算的模板(移动端优先: 从小尺寸的设备作为布局的开始, 逐渐给为大尺寸设备进行布局):
 </p>
 
 <div class="org-src-container">
@@ -318,7 +334,7 @@
 
 <blockquote>
 <p>
-需要注意的是, 由于 <code>calc</code> 不支持纲量(带单位的量)之间的乘法以及除法,
+需要注意的是, 由于 <code>calc</code> 不支持带单位数量之间的乘法和除法运算,
 </p>
 
 <p>
@@ -372,7 +388,7 @@
 </p>
 
 
-<div id="org41fc401" class="figure">
+<div id="org2038cf1" class="figure">
 <p><img src="../../../files/differentiable-at-b-or-not.svg" alt="differentiable-at-b-or-not.svg" class="org-svg" width="100%" />
 </p>
 <p><span class="figure-number">Figure 1: </span>b 可微以及不可微</p>
@@ -501,8 +517,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org28e6237" class="outline-2">
-<h2 id="org28e6237"><span class="section-number-2">2.</span> 相对单位的使用</h2>
+<div id="outline-container-orgc58c55d" class="outline-2">
+<h2 id="orgc58c55d"><span class="section-number-2">2.</span> 相对单位的使用</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 现实中为了可访问性, 一般开发人员都会使用相对单位设定大小, 媒体查询的条件自然也不例外, 其中 <code>rem</code> 用的比较多.
@@ -538,8 +554,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org153f41d" class="outline-2">
-<h2 id="org153f41d"><span class="section-number-2">3.</span> 对于流式字体和响应式布局的一些误解</h2>
+<div id="outline-container-org6bba784" class="outline-2">
+<h2 id="org6bba784"><span class="section-number-2">3.</span> 对于流式字体和响应式布局的一些误解</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 在视口单位 <code>vw</code> 普及以前, 大家都喜欢使用 <code>rem</code> 响应式布局的方案来实现页面的响应式.
@@ -549,8 +565,18 @@
 <code>rem</code> 响应式的原理是把视口大小 \(w\) (单位 <code>px</code>)划分成 \(n\) 等份, 再把这个大小 \(\frac{w}{n}\) 作为根元素的 <code>font-size</code>;
 </p>
 
+<blockquote>
 <p>
-在布局时使用 <code>rem</code> 单位, 这样不管视口大小 \(w\) 如何改变, 只要能够及时更新根元素的 <code>font-size</code>, 那么元素和视口之间就总是能够保持同一个比例进行缩放.
+记住, 请先确实设计稿是否为针对高清屏的设计稿, 如果是的话请把设计稿尺寸除以 <code>DPR</code> 得出逻辑像素大小, 再使用逻辑像素进行布局.
+</p>
+</blockquote>
+
+<p>
+在布局时使用 <code>rem</code> 单位, 这样不管视口大小 \(w\) 如何改变, 只要能够及时更新根元素的 <code>font-size</code>,
+</p>
+
+<p>
+那么元素和视口之间就能够总是保持一个固定比例进行缩放, 在移动端开始兴起的时候, 阿里巴巴的前端开源过一个 <a href="https://github.com/amfe/lib-flexible/tree/master">lib-flexible</a> 的项目, 它就是基于这个原理而实现的.
 </p>
 
 <p>
@@ -628,8 +654,8 @@
 </ul>
 </div>
 </div>
-<div id="outline-container-orgd0e60d9" class="outline-2">
-<h2 id="orgd0e60d9"><span class="section-number-2">4.</span> <code>CSS</code> 的一些限制</h2>
+<div id="outline-container-orgc025653" class="outline-2">
+<h2 id="orgc025653"><span class="section-number-2">4.</span> <code>CSS</code> 的一些限制</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 <code>CSS</code> 的 <code>calc</code> 函数绝对是流体排版的核心之一, 它虽支持四则运算, 但乘法和除法有一个限制: 只能有单位与无单位或者无单位与无单位的值才能进行运算, 这导致着 <code>calc</code> 不能把有单位的值转换成无单位的值, 比如说 \(calc((100vw - 375px) / 1px)\) 是不可行的.
@@ -660,8 +686,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org7e00649" class="outline-2">
-<h2 id="org7e00649"><span class="section-number-2">5.</span> 字体大小的选择</h2>
+<div id="outline-container-orgcff96d4" class="outline-2">
+<h2 id="orgcff96d4"><span class="section-number-2">5.</span> 字体大小的选择</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 很多人, 包括我, 经常都是从设计师上接过设计稿进行页面开发的, 大部分开发者很少思考如何选择字体大小.
@@ -731,8 +757,8 @@
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orgd4c159a" class="outline-2">
-<h2 id="orgd4c159a"><span class="section-number-2">6.</span> 参考</h2>
+<div id="outline-container-org21e481f" class="outline-2">
+<h2 id="org21e481f"><span class="section-number-2">6.</span> 参考</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 <a href="https://www.smashingmagazine.com/2016/05/fluid-typography/">https://www.smashingmagazine.com/2016/05/fluid-typography/</a>
@@ -747,7 +773,7 @@
 <div id="postamble" class="status">
 <p class="date">Date: 2025-02-20</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-05-12 Mon 17:10</p>
+<p class="date">Created: 2025-05-12 Mon 19:59</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
