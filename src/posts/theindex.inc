@@ -23,7 +23,6 @@
   - [[file:2024/08/godot-learning-diary.org][Godot 4 学习日记]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
-  - [[file:2025/05/how-to-read-and-do-proofs-notes.org][How to Read and Do Proofs 6th Edition 阅读笔记]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
 * I
   - [[file:2024/11/introduction-to-probability.org][Introduction To Probability 的阅读草稿纸]]
