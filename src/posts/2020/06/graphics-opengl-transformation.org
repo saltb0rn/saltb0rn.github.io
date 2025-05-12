@@ -859,9 +859,51 @@ $r-l$ 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 
 
 这样就可以得出 $l(eft)$, $r(ight)$, $t(op)$ 以及 $b(ottom)$ 4个参数了(需要保证满足关系 $\begin{equation*}\left\{\begin{aligned}r > l \\ t > b\end{aligned}\right.\end{equation*}$),加上一开始给出的 $n(ear)$ 和 $f(ar)$ 就凑齐了6个参数来构建截头锥体.
 
-$fov$ 还可以用来实现视觉上的缩放, $fov$ 缩小表示视野变小,看到的内容就少,可是窗口尺寸是不会因为 $fov$ 而变的,于是内容就被拉伸铺滿窗口,形成画面放大/拉近的效果;反之就是缩小/拉远.
+$fov$ 还可以用来实现视觉上的缩放, 根据关系: $r - l = 2n \tan \frac{\theta}{2}$, 当 $fov$($\theta$) 缩小, $n$ 不变, 那么 $r - l$ 变小,
+
+所以视觉内容就变少, 同时画面输出的大小不变, 造成内容"密度"降低, 形成画面放大的效果; 同理, 反过来就是缩小.
+
+$fov$ 的改变还可以用来实现希区柯克镜头(=Hitchcock shot/Dolly Zoom=): 移动相机来拉近/拉远与拍摄对象的距离, 同时对镜头进行变焦, 来保持拍摄对象在视野中的大小.
+
+简单来说就是 $r - l$ 的大小固定, 对 $n$ 和 $\theta$ 进行变化.
+
+#+begin_quote
+现实中, 镜头的焦距越长(也就是 $n$ 越大), $fov$ 就越小; 焦距越短, $fov$ 越大.
+
+在实际拍摄电影中, 手动调整焦距和相机与拍摄对象之间的距离, 是很难保证拍摄对象在视觉上保持固定大小的.
+
+因为手动调整是不可能有计算机的精确度的, 所以如果要模拟现实中的效果,
+
+可以适当模拟一下"偏差", 也就是 $r - l$ 可以产生允许范围内的变化.
+#+end_quote
+
+#+BEGIN_SRC javascript
+  /**
+   ,* Dolly zoom
+
+   from https://medium.com/@gianluca.lomarco/from-perspective-to-orthographic-camera-in-three-js-with-dolly-zoom-vertigo-effect-96de89c3a07b
+   ,*/
+  const finalFOV = 0.5
+  const initialPos = camera.position.clone()
+  const fovTan = Math.tan(MathUtils.degToRad(fov / 2))
+  const RATIO = initialPos.length() * fovTan
+
+  function updateCamera(progress) {
+   const newFOV = MathUtils.lerp(fov, finalFOV, progress)
+   const newFovTan = Math.tan(MathUtils.degToRad(newFOV / 2))
+   const d = RATIO / newFovTan
+
+   camera.fov = newFOV
+
+   camera.position.normalize().multiplyScalar(d)
+   camera.updateProjectionMatrix()
+  }
+#+END_SRC
 
 **** 正交投影
+:properties:
+:custom_id: orthographic-projection
+:end:
 
 #+CAPTION: 正交投影2
 [[../../../files/gl_projectionmatrix02.png]]
@@ -896,22 +938,25 @@ $fov$ 还可以用来实现视觉上的缩放, $fov$ 缩小表示视野变小,�
   const near = 1
   const far = 100
   const aspect = width / height
-  // 3D 成像的比例, 第一个重点
+  // 获得 3D 成像的比例, 第一个重点
   const persCam = new THREE.PerspectiveCamera(75, aspect, near, far)
 
-  const top = 2.5
-  const bottom = -2.5
-  const orthoFrustumHeight = top - bottom
-  // 正交视椎体高度, 第二个重点
+  const orthoFrustumHeight = 5
+  // 随便指定正交视椎体高度, 但要为整数 第二个重点
+
   const left = orthoFrustumHeight * aspect / -2
   const right = orthoFrustumHeight * aspect / 2
-  // 根据 aspect 计算 left 和 right, 使得最终成像的比例和 3D 成像的比例一致, 第三个重点
   const top = orthoFrustumHeight / 2
   const bottom = -orthoFrustumHeight / 2
+  // 根据 aspect 计算 left / right / top / bottom, 使得最终成像的比例和 3D 成像的比例一致, 第三个重点
   const orthoCam = new THREE.OrthographicCamera(left, right, top, bottom, near, far)
 #+END_SRC
 
-其中 =left/right= 是 =2D UI= 画布在水平方向的范围, =top/bottom= 则是在垂直方向上的范围, 在绘制 =UI= 元素时需要根据这个坐标系来对元素进行定位.
+其中 =left/right= 是 =2D UI= 画布在水平方向的范围, =top/bottom= 则是在垂直方向上的范围,
+
+这个时候可以把正交相机看作一个画板, 它的坐标系是水平范围在 =[left, right]=, 垂直范围在 =[bottom, top]=, 原点在正中心.
+
+在绘制 =UI= 元素时需要根据这个坐标系来对元素进行定位.
 
 ** 接下来
 

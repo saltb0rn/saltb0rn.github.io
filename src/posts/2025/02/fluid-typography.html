@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-02-24 Mon 13:38 -->
+<!-- 2025-05-12 Mon 17:10 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>流体排版</title>
@@ -233,42 +233,61 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org5d8d226">1. 流体字体计算的公式推导</a></li>
-<li><a href="#orgf89d93c">2. <code>CSS</code> 的一些限制</a></li>
-<li><a href="#org190d6f5">3. 参考</a></li>
+<li><a href="#org82b91a1">1. 流体字体计算的公式推导</a></li>
+<li><a href="#org28e6237">2. 相对单位的使用</a></li>
+<li><a href="#org153f41d">3. 对于流式字体和响应式布局的一些误解</a></li>
+<li><a href="#orgd0e60d9">4. <code>CSS</code> 的一些限制</a></li>
+<li><a href="#org7e00649">5. 字体大小的选择</a></li>
+<li><a href="#orgd4c159a">6. 参考</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org5fd2533">
+<div class="abstract" id="orgc2a0eb7">
 <p>
 这篇笔记是 <code>2022</code> 年学习响应式布局时写的, 今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
 </p>
 
 </div>
-<div id="outline-container-org5d8d226" class="outline-2">
-<h2 id="org5d8d226"><span class="section-number-2">1.</span> 流体字体计算的公式推导</h2>
+<div id="outline-container-org82b91a1" class="outline-2">
+<h2 id="org82b91a1"><span class="section-number-2">1.</span> 流体字体计算的公式推导</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 流体字体排版(<code>fluid typography</code>)是指排版值(<code>typographic values</code>, 包括字体大小, 行高, 字符间距等等)随着视口大小(通常是视口宽度)变化而发生线性变化.
 </p>
 
 <p>
-它可以让网页看上去更加"响应式", 而不是像阶梯函数(<code>step function</code>)那样跳跃式变化.
+它可以让字体看上去更加"响应式", 而不是像阶梯函数(<code>step function</code>)那样跳跃式变化,
+</p>
+
+<p>
+当然这种"技术"也能用在字体以外的地方上, 不过它们已经有更好的解决方案来实现同样的效果, 所以只关注字体就好.
+</p>
+
+<p>
+在响应式布局中, 字体的响应式工作应该是最为复杂的, 因为需要很多注意的地方实在太多, 这篇笔记会尽量把这一切都说清楚.
 </p>
 
 <blockquote>
 <p>
-由于和视口大小有着密不可分的关系, 因此, 请确保开发时在页面写入了以下 <code>meta-tag</code> 把视口宽度调成设备宽度:
+由于和视口大小有着密不可分的关系, 因此, 请确保开发时在页面写入了以下 <code>meta-tag</code> 把视口宽度调成设备屏幕的逻辑像素宽度:
 </p>
 
 <div class="org-src-container">
 <pre class="src src-html">&lt;<span style="color: #87cefa;">meta</span> <span style="color: #eedd82;">name</span>=<span style="color: #ffa07a;">"viewport"</span> <span style="color: #eedd82;">content</span>=<span style="color: #ffa07a;">"width=device-width, initial-scale=1.0"</span>&gt;
 </pre>
 </div>
+
+<p>
+比如说, 有一个物理像素为 <code>750px</code> 宽的高清屏, 它的设备像素比(device pixels ratio, dpr)为 2, 那么此时 <code>device-width</code> 就为 <code>375px</code>.
+</p>
+
+<p>
+另外, 在与设计师沟通时, 要确认设计稿是否为高清屏所设计, 如果是的话清把设计稿的尺寸除以屏幕的设备像素比来得到逻辑像素, 并以逻辑像素作为计算对象.
+</p>
 </blockquote>
 
 <p>
-这是最为简单的流体字体排版计算的模板:
+这是最为简单的流体字体排版计算的模板(移动端优先):
 </p>
 
 <div class="org-src-container">
@@ -296,6 +315,16 @@
 <p>
 该计算过程是通过代入线性插值公式 \(y = y_{a} + \frac{(x - x_{a}) (y_{b} - y_{a})}{x_{b} - x_{a}}\) 得出来的.
 </p>
+
+<blockquote>
+<p>
+需要注意的是, 由于 <code>calc</code> 不支持纲量(带单位的量)之间的乘法以及除法,
+</p>
+
+<p>
+所以 <code>(([yb] - [ya]) / ([xb] - [xa]))</code> 这一段需要去掉它们的单位, 具体可以参考后面的例子.
+</p>
+</blockquote>
 
 <p>
 其中 \(y\) 是在当前的视口宽度下的字体大小;
@@ -343,7 +372,7 @@
 </p>
 
 
-<div id="org9015ffe" class="figure">
+<div id="org41fc401" class="figure">
 <p><img src="../../../files/differentiable-at-b-or-not.svg" alt="differentiable-at-b-or-not.svg" class="org-svg" width="100%" />
 </p>
 <p><span class="figure-number">Figure 1: </span>b 可微以及不可微</p>
@@ -351,7 +380,7 @@
 </blockquote>
 
 <p>
-另外, 有的开发者是通过斜截式 \(y = kx + c\) 进行得出字体大小的计算过程, 看上去与线性插值的显得不一样, 但两者实则相等的.
+另外, 有的开发者是通过斜截式 \(y = kx + c\) 得出字体大小的计算过程, 看上去与线性插值的显得不一样, 但两者实则相等的.
 </p>
 
 <p>
@@ -359,7 +388,7 @@
 </p>
 
 <p>
-也可以说斜截式就是插值式简化后的结果, 下面这个例子可以很好的支持该观点,
+换而言之, 斜截式就是对插值式简化后的结果, 下面这个例子可以很好的支持该观点,
 </p>
 
 <div class="org-src-container">
@@ -472,9 +501,136 @@
 </p>
 </div>
 </div>
-<div id="outline-container-orgf89d93c" class="outline-2">
-<h2 id="orgf89d93c"><span class="section-number-2">2.</span> <code>CSS</code> 的一些限制</h2>
+<div id="outline-container-org28e6237" class="outline-2">
+<h2 id="org28e6237"><span class="section-number-2">2.</span> 相对单位的使用</h2>
 <div class="outline-text-2" id="text-2">
+<p>
+现实中为了可访问性, 一般开发人员都会使用相对单位设定大小, 媒体查询的条件自然也不例外, 其中 <code>rem</code> 用的比较多.
+</p>
+
+<p>
+这样就延伸出一个问题: 如果在媒体查询里面又设置了 <code>html</code> 的 <code>font-size</code>, 那么媒体查询条件中的大小应该如何计算?
+</p>
+
+<div class="org-src-container">
+<pre class="src src-css"><span style="color: #87cefa;">html</span> {
+    <span style="color: #00ffff;">font-size</span>: 0.875rem;
+}
+
+<span style="color: #b0c4de;">@media</span> (min-width: 23.4375rem) {
+    <span style="color: #87cefa;">html</span> {
+        <span style="color: #00ffff;">font-size</span>: 1.125rem;
+    }
+}
+</pre>
+</div>
+
+<p>
+根据 <a href="https://www.w3.org/TR/mediaqueries-3/#units">W3C</a> 文档, 媒体查询的条件里面使用相对单位, 那是一定按初始 <code>font-size</code> 进行计算.
+</p>
+
+<p>
+初始的 <code>font-size</code> 就是默认的 <code>font-size</code>, 假设为 <code>16px</code>, 那么 <code>23.4375rem</code> 等于 <code>23.4375 * 16px = 375px</code>.
+</p>
+
+<p>
+在根元素 <code>html</code> 使用相对单位设置 <code>font-size</code> 时也遵守同样<a href="https://developer.mozilla.org/en-US/docs/Web/CSS/length#rem">规则</a>, 所以 <code>0.875rem</code> 等于 <code>0.875 * 16px = 14px</code> 以及 <code>1.125rem * 16px = 18px</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org153f41d" class="outline-2">
+<h2 id="org153f41d"><span class="section-number-2">3.</span> 对于流式字体和响应式布局的一些误解</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+在视口单位 <code>vw</code> 普及以前, 大家都喜欢使用 <code>rem</code> 响应式布局的方案来实现页面的响应式.
+</p>
+
+<p>
+<code>rem</code> 响应式的原理是把视口大小 \(w\) (单位 <code>px</code>)划分成 \(n\) 等份, 再把这个大小 \(\frac{w}{n}\) 作为根元素的 <code>font-size</code>;
+</p>
+
+<p>
+在布局时使用 <code>rem</code> 单位, 这样不管视口大小 \(w\) 如何改变, 只要能够及时更新根元素的 <code>font-size</code>, 那么元素和视口之间就总是能够保持同一个比例进行缩放.
+</p>
+
+<p>
+比如说, 拿到了宽度为 \(x_d\) (单位 <code>px</code>) 的设计稿, 有个元素的宽度为 \(x_e\) (单位 <code>px</code>), 把设计稿划分成 \(n\) 等份: \(\frac{x_d}{n}\), 并作为根元素的字体大小,
+</p>
+
+<p>
+以 <code>rem</code> 单位进行布局就是以根元素字体大小作为计算单位, 那么这个元素的宽度就为: \(x_e \div \frac{x_d}{n}\) (单位 <code>rem</code> ), 元素的高度,字体大小等也是以同样方法进行计算.
+</p>
+
+<p>
+如果 \(n = 100\), 那么 <code>1rem</code> 就相当于 <code>1vw</code>, 也就是为什么 <code>vw</code> 出来后 <code>rem</code> 响应式布局方案基本上就是作为兼容方案了.
+</p>
+
+<p>
+这里提及 <code>rem</code> 响应式布局, 是因为身边有相当一部分人把它和流式字体排版搞混, 认为可以利用流式字体实现 <code>rem</code> 响应式布局.
+</p>
+
+<p>
+因为有时候流式字体也会设置根元素的 <code>font-size</code>, 所以两者看上去好像是一样的, 但细看的话很快会发现不同.
+</p>
+
+<p>
+<code>rem</code> 响应式布局的目的是 <b>让元素和视口之间始终保持一个固定比例</b>, 实现该目的的重点是要有一个始终能和视口形成固定比例的参考,
+</p>
+
+<p>
+这个参考就是根元素 <code>font-size</code>, <code>font-size</code> 和视口大小之间的比例永远是 \(\frac{w}{n} \div w = \frac{1}{n}\).
+</p>
+
+<p>
+流式字体排版是为了让字体在切换断点时变化不突兀, 在流式字体排版的使用场合中, 字体和视口之间通常是不需要保持一定比例的, 因此这种字体的大小不能作为根元素的字体大小.
+</p>
+
+<p>
+这里其实还有一个误会: 响应式布局就是对页面进行等比缩放. 相当多的前端开发人员都有这个误会.
+</p>
+
+<p>
+这可能是因为网络上响应式布局本身就众说纷纭, 没有一个统一标准, 加之网上的很多文章都不会形成一个系统的教程, 所以很多人都是盲人摸象地学习响应式布局.
+</p>
+
+<p>
+正确的理解应该是对不同屏幕尺寸进行不同的排版. 比如说, 网页在手机上显示一列, 在平板上显示两列, 在桌面端上显示三列甚至更多列.
+</p>
+
+<p>
+其实谷歌有为初学者和中级前端开发人员出过两个教程:
+</p>
+
+<ul class="org-ul">
+<li><p>
+<a href="https://web.dev/articles/responsive-web-design-basics">Responsive web design basics</a>
+</p>
+
+<p>
+这个教程比较简短, 需要注意这个教程的标题中文翻译有点 <code>bug</code>: 把响应式布局翻译自适应布局.
+</p>
+
+<p>
+自适应布局(<code>Adaptive layout</code>)和响应式布局(<code>Responsive layout</code>)是两种不同东西.
+</p></li>
+
+<li><p>
+<a href="https://web.dev/learn/design/welcome">Learn responsive design</a>
+</p>
+
+<p>
+这个教程比较长, 比上面的教程更加深入.
+</p>
+
+<p>
+如果想学习一些响应式网站设计的基础内容, 那么这篇教程可谓是非常适合前端开发人员.
+</p></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgd0e60d9" class="outline-2">
+<h2 id="orgd0e60d9"><span class="section-number-2">4.</span> <code>CSS</code> 的一些限制</h2>
+<div class="outline-text-2" id="text-4">
 <p>
 <code>CSS</code> 的 <code>calc</code> 函数绝对是流体排版的核心之一, 它虽支持四则运算, 但乘法和除法有一个限制: 只能有单位与无单位或者无单位与无单位的值才能进行运算, 这导致着 <code>calc</code> 不能把有单位的值转换成无单位的值, 比如说 \(calc((100vw - 375px) / 1px)\) 是不可行的.
 </p>
@@ -496,13 +652,88 @@
 </div>
 
 <p>
-<code>SASS</code> 预编译器可以获得无单位值, 所以考虑用 <code>SASS</code> 实现这一类插值.
+<code>SASS</code> 预编译器可以获得无单位值, 所以可考虑用 <code>SASS</code> 实现这一类插值.
+</p>
+
+<p>
+除了预编译器, 还可以使用 <code>JavaScript</code> 去实现, 这里就不说了.
 </p>
 </div>
 </div>
-<div id="outline-container-org190d6f5" class="outline-2">
-<h2 id="org190d6f5"><span class="section-number-2">3.</span> 参考</h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-org7e00649" class="outline-2">
+<h2 id="org7e00649"><span class="section-number-2">5.</span> 字体大小的选择</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+很多人, 包括我, 经常都是从设计师上接过设计稿进行页面开发的, 大部分开发者很少思考如何选择字体大小.
+</p>
+
+<p>
+不过即便是谷歌的教程 <a href="https://web.dev/learn/design/typography">Learn responsive design - Typography</a> 也没有说如何选择字体大小.
+</p>
+
+<p>
+这里倒是有一个不错的字体选择参考: <a href="https://www.learnui.design/blog/mobile-desktop-website-font-size-guidelines.html#as-few-font-sizes-as-possible">The Responsive Website Font Size Guidelines </a><a href="../../../files/Font-Size-Guidelines-for-Responsive-Websites-2024-updated.pdf">(备份)</a>, 以下是它的字体大小表格:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">页面元素</td>
+<td class="org-left">移动端</td>
+<td class="org-left">桌面端</td>
+</tr>
+
+<tr>
+<td class="org-left">标题</td>
+<td class="org-left">28px - 40px</td>
+<td class="org-left">35px - 50px</td>
+</tr>
+
+<tr>
+<td class="org-left">默认/正文</td>
+<td class="org-left">重文本的页面: 16px - 20px; 重交互的页面: 16px - 18px</td>
+<td class="org-left">重文本的页面: 18px - 24px; 重交互的页面: 14px - 20px</td>
+</tr>
+
+<tr>
+<td class="org-left">次要文本/说明文字</td>
+<td class="org-left">比默认/正文小 2px</td>
+<td class="org-left">比默认/正文小 2px</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+<p>
+还有一个平板设备, 通常来说把它看作桌面端.
+</p>
+
+<p>
+另外, 这里还有一篇<a href="https://medium.com/design-bootcamp/font-size-usage-in-ui-ux-design-web-mobile-tablet-52a9e17c16ce">参考</a>, 里面涉及了一些其他元素的字体大小选择, 和前面表格给出字体大小有些出入,
+</p>
+
+<p>
+这也是由于每个人的设计思路不一样, 这些都是很主观的东西, 没有一个标准.
+</p>
+
+<p>
+它的重点不在于字体大小, 而是在于提出了一个有用的提议: 不同大小的元素的字体大小之间应该形成一个固定比例.
+</p>
+</blockquote>
+</div>
+</div>
+<div id="outline-container-orgd4c159a" class="outline-2">
+<h2 id="orgd4c159a"><span class="section-number-2">6.</span> 参考</h2>
+<div class="outline-text-2" id="text-6">
 <p>
 <a href="https://www.smashingmagazine.com/2016/05/fluid-typography/">https://www.smashingmagazine.com/2016/05/fluid-typography/</a>
 </p>
@@ -516,7 +747,7 @@
 <div id="postamble" class="status">
 <p class="date">Date: 2025-02-20</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-02-24 Mon 13:38</p>
+<p class="date">Created: 2025-05-12 Mon 17:10</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

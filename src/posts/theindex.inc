@@ -23,6 +23,7 @@
   - [[file:2024/08/godot-learning-diary.org][Godot 4 学习日记]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
+  - [[file:2025/05/how-to-read-and-do-proofs-notes.org][How to Read and Do Proofs 6th Edition 阅读笔记]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
 * I
   - [[file:2024/11/introduction-to-probability.org][Introduction To Probability 的阅读草稿纸]]
@@ -81,7 +82,7 @@
 * 数
   - [[file:2021/10/math-proofs.org][数学证明]]
 * 流
-  - [[file:2025/02/fluid-typography.org][流式排版]]
+  - [[file:2025/02/fluid-typography.org][流体排版]]
 * 理
   - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
   - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]
