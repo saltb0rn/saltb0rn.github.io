@@ -1,4 +1,4 @@
-*** [[file:posts/2025/02/fluid-typography.html?hash=2f185e0e5e23c67bc51ca5d7b099bbfd][流体排版]]
+*** [[file:posts/2025/02/fluid-typography.html?hash=f640e9f7092675fd0fc65d1f28008fc4][流体排版]]
 这篇笔记是 =2022= 年学习响应式布局时起笔的, 然而因为一些事情而中断了,
 
 今天清理老电脑的硬盘时翻到了, 看着完整度挺高, 于是修补一下发布出来了.
@@ -6,7 +6,7 @@
 同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
-*** [[file:posts/2024/11/introduction-to-probability.html?hash=1b5c5c8340563c82e04d173e06472780][Introduction To Probability 的阅读草稿纸]]
+*** [[file:posts/2024/11/introduction-to-probability.html?hash=b1480d420da4f98eaf852a1c10dee13a][Introduction To Probability 的阅读草稿纸]]
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
@@ -87,30 +87,36 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=5a4fa6a8a0a90158a44dc32750a4b65d][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=6143dc0ceadf8c3abca29983c2e7af0f][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
 
 对于 =ShaderToy= 也是一样的, 你想像那些前辈一样实现酷炫的效果, 就得脸皮厚一点去 *抄明白* 他们的代码, 大胆承认抄别人的代码.
 
-想做到 *抄明白* 得了解代码使用了哪些知识, 这些知识就像是积木一样, 我们要做的利用这些积木搭出自己想要的东西,
+想做到 *抄明白*, 得了解代码使用了哪些知识, 这些知识就像是积木一样, 我们要做的利用这些积木搭出自己想要的东西,
 
-这篇笔记的内容就是介绍这些常用的积木, 它们基本上是数学知识, 属于线性代数, 微积分以及概率论的范畴,
+这里就是专门介绍这些常用的积木, 它们基本上是数学知识, 主要是线性代数, 微积分以及概率论的这三个方面, 当然数值分析也很重要.
 
-不过本文并不是要成为数学的入门课, 而是学习如何用它们解决图形上的一些问题,
+但是本文并不是要成为数学的入门课, 而是学习如何用它们解决图形上的一些问题, 同时尽量会说明引用了什么数学定理,
 
-本文会在一些地方尽量说明引用了什么数学定理, 方便读者(包括我本人)遇到不会的数学知识可以自行去搜索学习, 尽可能地给初学者提供一个系统的入门指南.
+方便读者(包括我本人)遇到不会的数学知识可以自行去搜索学习, 尽可能地给初学者提供一个系统的入门指南.
 
-这里有很多内容来自于 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完), 以及 [[https://iquilezles.org/articles/][Inigo Quilez 的文章]], 相当一部分来自于 [[https://www.youtube.com/@TheArtofCodeIsCool/featured][The Art of Code 频道]], 少部分参考了 [[https://shadertoyunofficial.wordpress.com/2019/01/02/programming-tricks-in-shadertoy-glsl/][Programming Tricks in ShaderToy / GLSL]].
+这里有很多内容来自于 [[https://thebookofshaders.com/][The Book of Shaders]] 这本书(截止目前为止还没写完), 以及 [[https://iquilezles.org/articles/][Inigo Quilez 的文章]],
+
+相当一部分来自于 [[https://www.youtube.com/@TheArtofCodeIsCool/featured][The Art of Code 频道]], 少部分参考了 [[https://shadertoyunofficial.wordpress.com/2019/01/02/programming-tricks-in-shadertoy-glsl/][Programming Tricks in ShaderToy / GLSL]].
 
 =Inigo Quilez= 的文章要求读者有前面提到的数学基础, 所以读不懂不要气馁, 等掌握了基础再来读即可.
 
-有很多时候需要作图以及计算等式, 所以个人建议最后学一两个这方面的工具, 简单作图的话推荐 [[https://graphtoy.com][GraphToy]], 想要作一些复杂的图以及公式计算则推荐 [[https://maxima.sourceforge.io/][Maxima]].
+有很多时候需要作图以及计算等式, 所以个人建议最后学一两个这方面的工具,
 
-另外, 如果你不喜欢在 =ShaderToy= 上编码而是喜欢本地上实验, 那么推荐使用 [[https://github.com/patriciogonzalezvivo/glslViewer][glslViewer]], 和 =glslViewer= 的差别基本在于内置 =Uniforms= 名字不太一样,
+简单作图的话推荐 [[https://graphtoy.com][GraphToy]], 想要作一些复杂的图以及公式计算则推荐 [[https://maxima.sourceforge.io/][Maxima]].
 
-并且比其 =ShaderToy= 还支持更高版本的 =GLSL=, 你想更加全面得接触 =GLSL= 那么 =glslViewer= 更好.
+另外, 如果你不喜欢在 =ShaderToy= 上编码而是喜欢本地进行实验, 那么推荐使用 [[https://github.com/patriciogonzalezvivo/glslViewer][glslViewer]],
+
+和 =glslViewer= 的差别基本在于内置 =Uniforms= 名字不太一样, 并且比其 =ShaderToy= 还支持更高版本的 =GLSL=,
+
+你想更加全面得接触 =GLSL= 那么 =glslViewer= 更好.
 
 推荐完工具后就是个人的数学学习心得了 (仅供参考, 不作标准), 个人认为学数学应 *尽可能* 地对给出定理刨根问底, 具体做法是:
 
@@ -120,21 +126,29 @@
 
 否则就默认定理 $L$ 是正确的, 继续理解定理 $P$ 的证明.
 
-简单来说, 学数学是一个递归过程, 这就会为什么数学里的公理是不可证明的, 不可能一直刨根问底的.
+简单来说, 学数学是一个递归过程, 这就会为什么数学里存在公理且公理是不可证明的, 因为不可能一直刨根问底的.
 
 理解定理的证明思路, 是为了理解定理诞生的动机及思想, 只有这样避免死记硬背, 为后面的运用自如打下基础.
 
 复杂理论背后的往往是简单想法, 不过想找到这个简单想法可不简单.
 
-最后就是对于知识的运用, 当到了知道哪些知识可以解决什么问题, 以及看到问题可以联想到用哪些知识解决, 就说明到达运用自如的地步了, 而这种程度的联想就是俗称的灵感.
+最后就是对于知识的运用, 当到了知道哪些知识可以解决什么问题, 以及看到问题可以联想到用哪些知识解决,
 
-想要到达运用自如的境界需要经常做题练习, 正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子, 当拿的工具多了, 看到的景象就不一样了.
+就说明到达运用自如的地步了, 而这种程度的联想就是俗称的灵感.
 
-所以, 学数学依靠的是耐心和理解.
+想要到达运用自如的境界需要经常做题练习, 正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子,
+
+当手头上的工具多了, 看到的景象就不一样了. 所以, 学数学依靠的是耐心和理解.
+
+#+begin_quote
+你可能会有异议, 天赋就不重要了吗?
+
+我的理由是: 每个人对天赋的定义是不统一的, 也就是天赋缺乏良定义, 学习的一个重要原则是不能使用有歧义的概念去描述问题.
+#+end_quote
 
 对于抄代码也一样, 先找出这段代码背后是哪些知识原理, 解决什么类型的问题, 然后抄到形成条件反射随手就能写出来的程度,
 
-不是默出来啊, 严谨死记硬背, 抄到即便别人写法不太一样但也能马上看出来是抄过的代码, 抄到明白每一个参数变量的作用, 可以按照自己的意愿对代码进行调整.
+但严谨死记硬背, 抄到即便别人写法不太一样但也能马上看出来是抄过的代码, 抄到明白每一个参数变量的作用, 可以按照自己的意愿对代码进行调整.
 
 	
 *** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]
@@ -276,7 +290,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=657979444e6b7fae9d74345fb53cc81f][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=cf167a2151564f9be5d2abc5db63a6b4][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
