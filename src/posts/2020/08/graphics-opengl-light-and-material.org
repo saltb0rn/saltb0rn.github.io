@@ -1416,13 +1416,13 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 以下是 =PBR= 管线中常用的贴图类型:
 
-- 反照率贴图 (=Albedo texture=)
+- 反射贴图 (=Albedo texture=)
 
-  反照率贴图为每个纹素(=texel=)指定表面的颜色, 如果纹素为金属材质则对应其基础反射率.
+  反射贴图为每个纹素(=texel=)指定表面的颜色, 如果纹素为金属材质则对应其基础反射率.
 
-  作用基本上与中的漫反射贴图 (=diffuse texture=) 一致, 漫反射贴图通常包含了细微阴影或暗部凹陷, 这正是反照率贴图需要避免的部分, 只能包含表面颜色或者金属的基础反射率.
+  作用基本上与中的漫反射贴图 (=diffuse texture=) 一致, 漫反射贴图通常包含了细微阴影或暗部凹陷, 这正是反射贴图需要避免的部分, 只能包含表面颜色或者金属的基础反射率.
 
-  反照率贴图是 $f_{\mathrm{lambert}} = \frac{c}{\pi}$ 中的 $c$ 的来源.
+  反射贴图是 $f_{\mathrm{lambert}} = \frac{c}{\pi}$ 中的 $c$ 的来源.
 
 - 法线贴图 (=Normal map=)
 
@@ -1430,17 +1430,45 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 - 金属贴图 (=Metallic map=)
 
-  金属贴图定义纹素是否金属, 具体定义取决于引擎的设置, 通常灰度值(=grayscale value=), 或直接使用非黑即白的二值化形式.
+  金属贴图定义纹素是否金属, 从金属贴图取得的值被称为金属度,
+
+  通常为灰度值(=grayscale value=), 或直接使用非黑即白的二值化形式.
+
+  如果金属度不为 1, 那么材质就被认为是非金属材质, 通常渲染引擎会采用一个表示非金属材质的值作为默认值.
+
+  金属度影响的是 =PBR= 菲涅耳反射 $F$ 中的镜面反射率 $F_0$ 的计算, 以及漫反射系数 $k_{\mathrm{diffuse}}$ 的计算.
+
+  严格来说, $F_0$ 是由反射率 $c$ 和金属度 $m$ 共同影响的: $F_0 = c_0 + (c - c_0) \times m$.
+
+  其中 $c_0$ 为默认反射率, 这个值通常表示是 $(0.03, 0.03, 0.03)$, $c$ 和 $c_0$ 均为向量.
+
+  #+begin_quote
+  这条公式实际上是近似计算, 在原本的计算中, 需要讨论材质是金属才是非金属,
+
+  如果是金属材质, 那么认为表面不存在漫反射, 镜面反射为最大, 也就是直接以 $c$ 作为镜面反射率: $F_0 = c$;
+
+  如果是非金属材质, 那么 $F_0 = \frac{(n_1 - n_2)^2}{(n_1 + n_2)^2}$, $n_1$ 和 $n_2$ 分别是两种介质的折射率(=index of refraction=),
+
+  通常 $n_1$ 是空气的折射率 1, $n_2$ 为非金属表面的折射率,  $F_0$ 意味着从空气射入到表面中时的镜面反射率.
+
+  要找出特定非金属材质的金属度, 先在 [[https://pixelandpoly.com/ior.html][IOR LIST]] 找到该材质的折射率 $n_2$ 算出 $F_0$, 最后计算出金属度 $m = \frac{F_0 - s}{c - s}$.
+
+  # https://gamedev.net/forums/topic/669443-pbr-g-buffer-parameters-metalness/
+  #+end_quote
+
+  $k_{\mathrm{diffuse}}$ 也存在类似关系, 如果金属度为 1, 那么就认为漫反射为 0: $k_{\mathrm{diffuse}} = c + ((0, 0, 0) - c) \times m$.
 
 - 粗糙度贴图 (=Roughness map=)
 
-  粗糙度贴图以逐纹素的方式定义表面的粗糙度. 粗糙度影响表面微观几何的统计分布方向. 表面越粗糙, 反射越宽泛且模糊, 而越光滑, 反射越集中且清晰.
+  粗糙度贴图以逐纹素的方式定义表面的粗糙度. 粗糙度影响表面微观几何的统计分布方向.
 
-  部分引擎使用光滑度贴图 (=Smoothness map=) 而非粗糙度贴图, 因为一些美术人员认为光滑更直观, 可以通过 $1.0 - smoothness$ 转换成粗糙度.
+  表面越粗糙, 反射越宽泛且模糊, 而越光滑, 反射越集中且清晰, 简单点说就是影响高亮光圈的大小以及亮度.
+
+  部分引擎使用光滑度贴图 (=Smoothness map=) 而非粗糙度贴图, 可以通过 $1.0 - smoothness$ 转换成粗糙度.
 
 - 环境光遮蔽贴图 (=Ambient occlusion map=, 简称 =AO map=)
 
-  环境光遮蔽贴图为表面以及其周围几何体设置额外的阴影因子, 给反照率贴图补充阴影信息, 提高视觉效果.
+  环境光遮蔽贴图为表面以及其周围几何体设置额外的阴影因子, 给反射贴图补充阴影信息, 提高视觉效果.
 
 
 # **** IBL
@@ -1512,7 +1540,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
    #+BEGIN_SRC glsl
      // vertex shader
-     
+
    #+END_SRC
 
    #+BEGIN_SRC glsl
@@ -1841,13 +1869,17 @@ $D(m, \sigma)$ 同样和 $m$ 的 $\phi$ 没有任何关系, 所以类似前面�
 #+name: fig:G1Deriving
 [[../../../files/g1_deriving.png]]
 
+这张图片直观地展示了射线, 法线, 和表面之间的几何关系, 看懂这种图是理解推导的关键.
+
 几何函数的定义是依赖于 =NDF= 的, 所以需要从 =NDF= 下手, 特别是要把 =NDF= 变换到斜率空间上 $P_{22}$.
+
+以下是对图片内容的一些补充.
 
 $P_{22}(\widetilde{m} = (\widetilde{x}, \widetilde{y}))$, 令 $p = \widetilde{x}$ 和 $q = \widetilde{y}$.
 
-$P_{1}(\xi)$: 微表面的高度为 $\xi$ 的概率.
+$P_{1}(\xi)$: 微平面高度为 $\xi$ 时的概率密度.
 
-$P_{2}(q)$: 微平面的斜率为 $q$ 的概率, 其定义为 $P_{2}(q) = \int_{-\infty}^{\infty}P_{22}(p, q)dp$, 是边缘分布.
+$P_{2}(q)$: 微平面斜率为 $q$ 时的概率密度, 其定义为 $P_{2}(q) = \int_{-\infty}^{\infty}P_{22}(p, q)dp$, 是边缘分布.
 
 #+begin_quote
 因为 $P_{22}(p, q)$ 是由各向同性 =NDF= 变换来的, 所以 $P_{2}(q) = P_{2}(p) = \int_{-\infty}^{\infty}P_{22}(p, q)dq$.
@@ -1855,9 +1887,15 @@ $P_{2}(q)$: 微平面的斜率为 $q$ 的概率, 其定义为 $P_{2}(q) = \int_{
 在讨论微平面斜率的分布时, 只选其中之一即可.
 #+end_quote
 
+$\xi$ 和 $q$: 分别是表面在 $\tau$ 处的高度和斜率;
+
 $S(\xi_{0}, \mu)$: 位于表面高度 $\xi_{0}$ 的点在射线 $v$ 上可见的概率, $\mu$ 是射线 $v$ 的斜率, $\mu = |\tan(\frac{\pi}{2} - \theta_{v})| = |-\cot\theta_{v}| = |\frac{\cos\theta_{v}}{\sin\theta_{v}}| = |\frac{n \cdot v}{\sqrt{1 - (n \cdot v)^2}}|$;
 
-光线在距离 $\tau$ 的位置的高度为 $\xi_{0} + \mu \tau$, $g(\tau)\Delta \tau$ 为射线 $v$ 第一次于平面相交的射线部分, 也就是射线 $v$ 在 $[\tau, \tau + \Delta \tau]$ 处被阻挡;
+$\xi_{0} + \mu \tau$: 射线 $v$ 在 $\tau$ 上的高度;
+
+$g(\tau)\Delta \tau$: 当射线 $v$ 在区间 $[\tau, \tau + \Delta \tau]$ 上与平面发生第一次相交时, 位于表面下的射线长度,
+
+这里先把 $g(\tau) \Delta \tau$ 看作一个整体, 稍后会对 $g(\tau)$ 进行解释.
 
 最终 $S(\xi_{0}, \mu)$ 的定义为 $S(\xi_{0}, \mu) = e^{-\int_{0}^{\infty}g(\tau)d\tau}$, 其中 $g(\tau)d\tau$ 作为衰减系数.
 
@@ -1867,11 +1905,9 @@ $S(\xi_{0}, \mu)$: 位于表面高度 $\xi_{0}$ 的点在射线 $v$ 上可见的
 
 为了定义 $g$, 要先假设表面斜率分布和高度两者是不相关的(法线/遮蔽独立, =normal/masking independence=), $g$ 的行为概括为:
 
-在开始时位于表面上方的射线中，有多少比例在结束时(相交时)位于表面下方.
+当射线与表面相交时, 有多少比例的射线位于表面的下方.
 
-观察[[fig:G1Deriving][推导图]], $\xi$ 和 $q$ 分别是在表面 $\tau$ 处的高度和斜率, 如果在 $\tau$ 处 $\xi_{0} + \mu\tau \gt \xi$, 那么射线在表面之上;
-
-如果在 $\tau + \Delta \tau$ 处 $(q - \mu)\Delta \tau \gt (\xi_{0} + \mu\tau) - \xi$, 那么射线在表面之下.
+观察[[fig:G1Deriving][推导图]], 在 $\tau$ 处 $\xi_{0} + \mu\tau \gt \xi$, 射线并未与表面相交; 在 $\tau + \Delta \tau$ 处 $(q - \mu)\Delta \tau \gt (\xi_{0} + \mu\tau) - \xi$, 射线与表面发生相交.
 
 #+begin_quote
 把射线在表面之下的条件改成这样更易理解: $\xi + q\Delta \tau \gt \xi_{0} + \mu\tau + \mu\Delta\tau$.
@@ -1932,9 +1968,9 @@ $\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq = P_{1}(\xi_{0} 
 #+begin_quote
 前面得知 $S(\xi_0, \mu) = f(\xi_0)^{\Lambda (\mu)}$, 其中 $P_{1}(\xi_0)$ 是 $f(\xi_0)$ 关于 $\xi_0$ 的导数: $f^{'}(\xi_0) = P_1(\xi_0)$,
 
-采用换元法令 $g = f(\xi_0)$, $dg = P_{1}(\xi_0) d\xi_0 = df(\xi_0)$, 可得 $S_{1}(\mu) = \int_{f(-\infty)}^{f(\infty)} f(\xi_0)^{\Lambda(\mu)} df(\xi_0) = \int_{f(-\infty)}^{f(\infty)} g^{\Lambda (\mu)} dg$.
+采用换元法令 $t = f(\xi_0)$, $dt = P_{1}(\xi_0) d\xi_0 = df(\xi_0)$, 可得 $S_{1}(\mu) = \int_{f(-\infty)}^{f(\infty)} f(\xi_0)^{\Lambda(\mu)} df(\xi_0) = \int_{f(-\infty)}^{f(\infty)} t^{\Lambda (\mu)} dt$.
 
-根据微积分基本定理可以得出 $S_{1}(\mu) = \left. \frac{1}{1 + \Lambda(\mu)} g^{1 + \Lambda(\mu)} \right]_{f(-\infty)}^{f(\infty)} = \frac{1}{1 + \Lambda(\mu)} ( f(\infty)^{1 + \Lambda(\mu)} - f(-\infty)^{1 + \Lambda(\mu)})$.
+根据微积分基本定理可以得出 $S_{1}(\mu) = \left. \frac{1}{1 + \Lambda(\mu)} t^{1 + \Lambda(\mu)} \right]_{f(-\infty)}^{f(\infty)} = \frac{1}{1 + \Lambda(\mu)} ( f(\infty)^{1 + \Lambda(\mu)} - f(-\infty)^{1 + \Lambda(\mu)})$.
 
 因为函数 $f$ 是累积分布函数, 所以 $\begin{equation*} \left\{ \begin{aligned} & f(\infty)^{1 + \Lambda(\mu)} = 1 \\ & f(-\infty)^{1 + \Lambda(\mu)} = 0 \end{aligned} \right. \end{equation*}$, 最终 $S_{1}(\mu) = \frac{1}{1 + \Lambda(\mu)}$.
 #+end_quote
@@ -1979,7 +2015,7 @@ $\int_{\mu}^{\infty}(q - \mu)P_{1}(\xi_{0} + \mu\tau)P_{2}(q)dq = P_{1}(\xi_{0} 
 
 在 =2021= 年到 =2023= 年底这段时间里面, 我是想学又学不了, 想玩游戏但又自责在浪费学习时间, 那段时间我买了不少游戏但还没通关, 甚至是还没打开过, 这种思想上长期的分裂导致我精神和身体都出现了问题.
 
-不要以为我不喜欢玩游戏, 正是因为小时候玩游戏才想着长大后有属于自己的游戏, 才有现在的的学习游戏开发.
+别以为我不喜欢玩游戏, 正是因为小时候玩游戏才想着长大后有属于自己的游戏, 才有现在的的学习游戏开发.
 
 在 =2024= 年处公司缩编裁员后, 我花了 8 个月时间折腾完一些事情, 然后就开始学习游戏开发技术了.
 
