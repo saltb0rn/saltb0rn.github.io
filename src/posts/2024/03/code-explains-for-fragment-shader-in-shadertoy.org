@@ -3062,7 +3062,12 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 :END:
 
 # https://typhomnt.github.io/teaching/ray_tracing/raymarching_intro/
+# https://blog.maximeheckel.com/posts/painting-with-math-a-gentle-study-of-raymarching/
 # PBR Ray Marching: https://www.shadertoy.com/view/XlKSDR
+# https://github.com/electricsquare/raymarching-workshop?tab=readme-ov-file
+# InteriorMapping: https://www.proun-game.com/Oogst3D/CODING/InteriorMapping/InteriorMapping.pdf
+# https://halisavakis.com/my-take-on-shaders-interior-mapping/
+# https://github.com/jensmcatanho/interior-mapping/tree/master/resources
 
 光线步进(=Ray Marching=)是一种渲染成像的方案, 类似渲染成像方案的还有光线投射(=Ray Casting=)和光线追踪(=Ray Tracing=).
 
@@ -3102,7 +3107,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 接下来会实现一个简单的 =RayMarching= 渲染器, 并逐步添加特性.
 
-***** 基础 =RayMarching=: 计算相机到场景的符号距离场
+***** 基础 RayMarching: 计算相机到场景的符号距离场
 
 #+BEGIN_SRC glsl
   #define MAX_STEPS 100
@@ -3524,7 +3529,247 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 #+END_SRC
 
-***** 贴图映射 (Texture Mapping)
+***** 无 UV 贴图映射 (Texture Mapping without UVs)
+
+=RayMarching= 渲染器中不存在顶点数据, 也不存在与顶点关联的纹理坐标.
+
+即便是光栅渲染器, 也有存在顶点数据当不存在纹理坐标的情况, 需要根据顶点数据计算出纹理坐标.
+
+如何计算顶点数据取决于具体的几何体以及如何映射,
+
+教材 [[https://www.amazon.com/Fundamentals-Computer-Graphics-Steve-Marschner/dp/1482229390][Fundamentals Of Computer Graphics, 4th, 11.2.1 Geometrically Determined Coordinates]] 中提供了简单几何体的贴图映射算法.
+
+最简单贴图映射算法莫过于平面映射(=Planar Mapping=): 直接让贴图往几何体的一个侧面进行正交投影.
+
+[[../../../files/planar-mapping.png]]
+
+如果从右侧($X$ 轴方向)进行投影, 以顶点的 $yz$ 分量作为 $uv$;
+
+如果从顶部($Y$ 轴方向)进行投影, 以顶点坐标的 $xz$ 分量作为 $uv$;
+
+如果从正面($Z$ 轴方向)进行投影, 以顶点的 $xy$ 分量计算 $uv$.
+
+这种映射算法适用于只展示几何体单面的情况, 几何体的其它面会有严重的拉伸和形变.
+
+教材上没有提到三平面映射(=Triplanar Mapping=)这种算法, 它是平面映射的高阶版本:
+
+对几何体的顶点 $(x, y, z)$ 分别在 $XYZ$ 三轴进行正交投影, 分别读取对应的纹理: $tex_{x}$, $tex_{y}$ 和 $tex_{z}$, 以某种权重进行求和, 求和结果就作为该顶点的纹理.
+
+#+caption: 三平面映射, 图片来源: https://docs.otoy.com
+[[../../../files/TriplanarMapping.png]]
+
+最简单的权重分配就是求平均值: $(tex_{x} + tex_{y} + tex_{z}) / 3$.
+
+显然平均值不太准确, 最正式做法应该是根据顶点的法线向量进行权重分配, 正好法线向量本质上是梯度向量, 梯度向量由每个坐标轴上的偏导数(变化率)构成.
+
+具体做法:
+
+1. 把三个纹理组合成矩阵 $M = \left( \begin{array}{c} tex_{x} \\ tex_{y} \\ tex_{z} \end{array} \right)$,
+2. 以法线向量 $n$ 的绝对值 $abs(n)$ 作为权重, 计算 $M \cdot abs(n)$, 计算结果作为顶点的纹理.
+
+
+以下是具体代码:
+
+#+BEGIN_SRC glsl
+vec3 TriplanarMap(vec3 p, vec3 normal, sampler2D tex) {
+  mat3 triMapSamples = mat3(texture(tex, p.yz).rgb,
+                            texture(tex, p.xz).rgb,
+                            texture(tex, p.xy).rgb);
+  return triMapSamples * abs(normal);
+}
+#+END_SRC
+
+接下来会为球体进行贴图, 还需要形成一套为每个不同对象赋予不同贴图的逻辑,
+
+比如说, 在判断到射线与物体发生相交后, 除了获得相交距离, 还需要知道物体对应哪个贴图.
+
+为了实现这套逻辑, 整个程序需要进行大幅度的调整, 所以这里贴出整个程序的代码:
+
+#+BEGIN_SRC glsl
+  #define MAX_STEPS 100
+  #define MAX_DIST 100.0
+  #define SURF_DIST 0.01
+  // 调整1: 定义空材质ID
+  #define MATERIAL_NULL 0
+
+  #ifndef PLATFORM_WEBGL
+  uniform vec2 u_resolution;
+  uniform float u_time;
+  uniform vec2 u_mouse;
+  uniform sampler2D u_tex0;       // 用于球体的贴图
+
+  #define iResolution u_resolution
+  #define iTime u_time
+  #define iMouse u_mouse
+  #define iChannel0 u_tex0
+  #endif
+
+  // 调整2: 定义结构体以记录交点信息
+  struct Intersection {
+    float dist;                   // signed distance
+    int matID;                    // 材质 ID
+  };
+
+  float sphereRadius = 1.0;
+  vec3 sphereCenter = vec3(0.0, 1.0, 6.0);
+
+  float sdfRoundCone( vec3 p, float r1, float r2, float h )
+  {
+    // sampling independent computations (only depend on shape)
+    float b = (r1-r2)/h;
+    float a = sqrt(1.0-b*b);
+
+    // sampling dependant computations
+    vec2 q = vec2( length(p.xz), p.y );
+    float k = dot(q,vec2(-b,a));
+    if( k<0.0 ) return length(q) - r1;
+    if( k>a*h ) return length(q-vec2(0.0,h)) - r2;
+    return dot(q, vec2(a,b) ) - r1;
+  }
+
+  float sdfSphere (vec3 p, float radius) {
+    return length(p) - radius;
+  }
+
+  float sdfGround (vec3 p) {
+    return p.y;
+  }
+
+  // 调整3: 定义并集运算符, 以方便返回 Intersection 类型
+  Intersection opU(Intersection a, Intersection b) {
+    return a.dist < b.dist ? a: b;
+  }
+
+  Intersection sdfScene(vec3 p) {
+    vec3 sp = vec3(0.6, 0.6, 0.6) * p;
+    Intersection sphere = Intersection(sdfSphere(sp - sphereCenter, sphereRadius), 1);
+    Intersection ground = Intersection(sdfGround(p), 2);
+    return opU(sphere, ground);
+  }
+
+  // 调整4: 修改返回值类型
+  Intersection RayMarch(vec3 p0, vec3 rd) {
+    Intersection result = Intersection(0.0, MATERIAL_NULL);
+
+    for (int i = 0; i < MAX_STEPS; i++) {
+      vec3 p = p0 + result.dist * rd;
+      // 调整5: 更新交点记录
+      Intersection d = sdfScene(p);
+      result.dist += d.dist;
+      result.matID = d.matID;
+      // 调整6: 读取 dist 字段
+      if (result.dist > MAX_DIST || d.dist < SURF_DIST) break;
+    }
+
+    return result;
+  }
+
+  vec3 GetNormal(vec3 p) {
+    vec2 e = vec2(0.01, 0.0);
+    // 调整7: 修改返回值类型
+    Intersection d = sdfScene(p);
+    // 调整8: 读取 dist 字段
+    vec3 n = d.dist - vec3(sdfScene(p - e.xyy).dist,
+                           sdfScene(p - e.yxy).dist,
+                           sdfScene(p - e.yyx).dist);
+    return normalize(n);
+  }
+
+  float GetLight(vec3 p) {
+    mat3 rotateY = mat3(cos(iTime), 0.0, sin(iTime),
+                        0.0, 1.0, 0.0,
+                        -sin(iTime), 0.0, cos(iTime));
+    vec3 lightPos = rotateY * vec3(0.0, 5.0, 6.0);
+
+    vec3 l = normalize(lightPos - p);
+    vec3 n = GetNormal(p);
+
+    float diffuse = clamp(dot(l, n), 0.0, 1.0);
+
+    // 调整9: 修改返回值类型
+    Intersection d = RayMarch(p + n * SURF_DIST * 2.0, l);
+    // 调整10: 读取 dist 字段
+    if (d.dist < length(p - lightPos)) {
+      diffuse *= 0.1;
+    }
+
+    return diffuse;
+  }
+
+  vec3 GetRayDirection(vec2 uv, vec3 cameraPos, vec3 lookAtPos, float near) {
+    // 构建视点坐标系, 是左手坐标系
+    vec3 up = vec3(0, 1, 0),
+      forward = lookAtPos - cameraPos,
+      f = normalize(forward),
+      right = cross(up, forward),
+      r = normalize(right),
+      u = cross(f, r);
+    /* 因为 f 和 r 都是单位向量且相互垂直,
+       f 旋转到 r 时是围绕 Y+ 以顺时针方向旋转 90 度到达的,
+       所以 u 无需再 normalize */
+    vec3 nearPlaneCenter = cameraPos + f * near; // 近裁剪平面的中心位置
+    // uv 是该平面上的 NDC 坐标, 需要转换到 3D 空间上的坐标
+    vec3 p = nearPlaneCenter + uv.x * r + uv.y * u;
+    vec3 rd = normalize(p - cameraPos);
+    return rd;
+  }
+
+  vec3 TriplanarMap(vec3 p, vec3 normal, sampler2D tex) {
+    mat3 triMapSamples = mat3(texture(tex, p.yz).rgb,
+                              texture(tex, p.xz).rgb,
+                              texture(tex, p.xy).rgb);
+    return triMapSamples * abs(normal);
+  }
+
+  void main() {
+
+    vec3 cameraPos = vec3(0., 1.0, 5.);
+
+    vec2 m = iMouse.xy / iResolution.xy;
+    float sX = sin(m.y - .5);
+    float cX = cos(m.y - .5);
+    mat3 rotateX = mat3(1.0, 0.0, 0.0,
+                        0.0, cX, sX,
+                        0.0, -sX, cX);
+
+    float sY = sin(m.x * 6.2831);
+    float cY = cos(m.x * 6.2831);
+    mat3 rotateY = mat3(cY, 0.0, -sY,
+                        0.0, 1.0, 0.0,
+                        sY, 0.0, cY);
+
+    cameraPos = rotateY * rotateX * cameraPos;
+    vec3 col = vec3(0.0);
+
+    float AA_size = 3.0;
+    int count = 0;
+    for (int aaY = -1; aaY <= 1; aaY++) {
+      for (int aaX = -1; aaX <= 1; aaX++) {
+        vec2 coord = gl_FragCoord.xy + vec2(aaX, aaY) / AA_size;
+        vec2 uv = (2.0 * coord - iResolution.xy) / min(iResolution.x, iResolution.y);
+        vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 0.0, 1.0), 0.5);
+        // 调整11: 修改返回值类型
+        Intersection d = RayMarch(cameraPos, rd);
+        if (d.dist < MAX_DIST) {
+          // 调整12: 读取 dist 字段
+          vec3 p = cameraPos + d.dist * rd;
+          vec3 n = GetNormal(p);
+          vec3 tex = vec3(1.0);
+          // 调整13: 通过 matID 字段判断射线相交的对象, 为对应对象进行贴图映射
+          if (1 == d.matID) {
+            tex = TriplanarMap(p, n, iChannel0);
+          }
+          float diffuse = GetLight(p);
+          col += vec3(tex * diffuse);
+        }
+        count++;
+      }
+    }
+    col /= count;
+    col = pow(col, vec3(.4545));  // [0, 1]^3 to [0, 1]^3
+    gl_FragColor = vec4(col, 1.0);
+  }
+#+END_SRC
 
 ***** 环境光遮蔽 (Ambient Occlusion)
 
