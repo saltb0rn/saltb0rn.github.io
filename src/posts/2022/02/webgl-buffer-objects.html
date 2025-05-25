@@ -3,13 +3,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-10-08 Tue 15:17 -->
+<!-- 2025-05-23 Fri 20:02 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Shader 编程自救指南</title>
 <meta name="author" content="saltb0rn" />
 <meta name="generator" content="Org Mode" />
-<style>
+<style type="text/css">
   #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
@@ -235,32 +235,39 @@
 <ul>
 <li><a href="#how-gl-works">1. Shader 是如何工作的</a>
 <ul>
-<li><a href="#org0a4f1d7">1.1. Vertex Shader</a></li>
-<li><a href="#org593e6f4">1.2. Vertex Shader 之后, Fragment Shader 之前</a></li>
-<li><a href="#orge1d3fe3">1.3. Fragment Shader</a></li>
-<li><a href="#orgdd4a496">1.4. Fragment Shader 之后 - Per-Sample Processing</a></li>
+<li><a href="#org0a2659b">1.1. Vertex Shader</a></li>
+<li><a href="#org10a7263">1.2. Vertex Shader 之后, Fragment Shader 之前</a></li>
+<li><a href="#org7c23b3a">1.3. Fragment Shader</a></li>
+<li><a href="#org632df33">1.4. Fragment Shader 之后 - Per-Sample Processing</a></li>
 </ul>
 </li>
-<li><a href="#org81252da">2. 细节补充</a>
+<li><a href="#orgf2a86c7">2. 一个简单而完整的 Shader 程序</a>
 <ul>
 <li><a href="#how-cpu-upload-data">2.1. CPU 如何上传数据给 GPU</a></li>
-<li><a href="#how-gl-use-data">2.2. GPU 如何从缓冲区读取数据</a></li>
-<li><a href="#orgd896112">2.3. 如何使用缓冲区的数据进行绘制</a></li>
+<li><a href="#how-gl-use-data">2.2. GPU 如何从缓冲读取数据</a></li>
+<li><a href="#orgc919c68">2.3. 如何使用缓冲的数据进行绘制</a></li>
 <li><a href="#glsl-type-qualifier-overview">2.4. GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</a>
 <ul>
-<li><a href="#org6584799">2.4.1. attribute</a></li>
-<li><a href="#org08f588f">2.4.2. uniform</a></li>
+<li><a href="#org57fd521">2.4.1. attribute</a></li>
+<li><a href="#org39c7418">2.4.2. uniform</a></li>
 </ul>
 </li>
-<li><a href="#orgc9412bd">2.5. GLSL 内置变量</a></li>
-<li><a href="#orgf6ef214">2.6. 其它常见问题</a></li>
+<li><a href="#org1e98d48">2.5. GLSL 内置变量</a></li>
+<li><a href="#org1c92914">2.6. 其它常见问题</a></li>
 </ul>
 </li>
-<li><a href="#org7e64195">3. 搭建自己的 Shadertoy</a></li>
+<li><a href="#orgc5bd5cb">3. WebGL 的 API 概览</a>
+<ul>
+<li><a href="#org2c8930d">3.1. 缓冲 (Buffer)</a></li>
+<li><a href="#org5eda2e8">3.2. 贴图 (Texture)</a></li>
+<li><a href="#org3e4975d">3.3. 帧缓冲 (FrameBuffer)</a></li>
+</ul>
+</li>
+<li><a href="#org5b018ce">4. 搭建自己的 Shadertoy</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org11ba9b7">
+<div class="abstract" id="orgbe58055">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -278,13 +285,21 @@
 </p>
 
 <p>
-所以需要找一本更易读的书, 我找到了 <a href="https://gabrielgambetta.com/computer-graphics-from-scratch/">Computer Graphics from Scratch</a>, 当这本书当前还没完成编写, 因此决定等它出版了再继续学.
+所以需要找一本更易读的书, 我找到了 <a href="https://gabrielgambetta.com/computer-graphics-from-scratch/">Computer Graphics from Scratch</a>, 但这本书当前还没完成编写 (其实 21 年就写完了), 因此决定等它出版了再继续学.
+</p>
+
+<p>
+虽然这篇文章名字叫做 <code>Shader</code> 编程自救指南, 但主要是介绍 <code>Shader</code> 程序是如何工作的, 主要涉及渲染管线的一些细节以及 <code>OpenGL/WebGL</code> 的概念和 <code>API</code>.
+</p>
+
+<p>
+与 <code>Shader</code> 编程本身没有太大的关系, 有点类似与学习编程语言和学习编程之间的区别, <code>Shader</code> 编程的重点是图形学内容和数学技巧, 之后会单独写一片文章来介绍这一块.
 </p>
 
 <hr />
 
 <p>
-PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这本书, 期间使用 <code>C</code> 语言按照书上的伪代码实践了一遍.
+PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写完了, 于是平时抽空一点一点地读了半年, 终于读完这本书, 期间使用 <code>C</code> 语言按照书上的伪代码实践了一遍.
 </p>
 
 <p>
@@ -308,7 +323,6 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 </div>
-
 <div id="outline-container-how-gl-works" class="outline-2">
 <h2 id="how-gl-works"><span class="section-number-2">1.</span> Shader 是如何工作的</h2>
 <div class="outline-text-2" id="text-how-gl-works">
@@ -353,11 +367,11 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-回过头去看官方的 <a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流程概览</a>, 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 解下来就是个人理解了.
+回过头去看官方的 <a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview">渲染流程概览</a>, 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 接下来就是个人理解了.
 </p>
 
 <p>
-在这之前要了解一件事情, 随着 <code>OpenGL</code> 版本的变化, 渲染流程时会发生变化的, WebGL 也是一样.
+在这之前要了解一件事情, 随着 <code>OpenGL</code> 版本的变化, 渲染流程时会发生变化的, <code>WebGL</code> 也是一样.
 </p>
 
 <p>
@@ -378,12 +392,11 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 接下来着重介绍 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 及其前后的几个阶段.
 </p>
 </div>
-
-<div id="outline-container-org0a4f1d7" class="outline-3">
-<h3 id="org0a4f1d7"><span class="section-number-3">1.1.</span> Vertex Shader</h3>
+<div id="outline-container-org0a2659b" class="outline-3">
+<h3 id="org0a2659b"><span class="section-number-3">1.1.</span> Vertex Shader</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
-<code>Vertex Shader</code> 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标,
+<code>Vertex Shader</code> 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标, 也就是投影坐标.
 </p>
 
 <p>
@@ -395,7 +408,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="orgf3d897c" class="figure">
+<div id="org55f1dc2" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif" />
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
@@ -406,25 +419,21 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-在后面的过程中会根据计算所得的坐标来进一步计算出其它可选数据(<b>可能</b> 包括色值, 法线, 贴图坐标等等)并进行渲染, 这些数据的计算过程是 <code>OpenGL</code> 内部完成的, 开发人员不可干涉.
+一个顶点数据并非只有一个顶点坐标, 还可能有顶点颜色, 顶点法线以及顶点贴图坐标等等.
 </p>
 
 <p>
-可选数据实际上是由开发人员自定义的, 可以作任何用途, 如果想让 <code>OpenGL</code> 计算出可选数据, 那么开发人员必定给出一个 "种子" 提供给 <code>OpenGL</code>.
+<code>Vertex Shader</code> 要做的事情只有两件:
 </p>
 
-<p>
-裁剪空间的顶点坐标必须被设置为 <code>gl_Position</code> 的值, 而可选数据的 "种子" 则是需要通过 <code>varying</code> 类型变量来提供.
-</p>
-
-<p>
-可选数据的计算过程虽然是  <code>OpenGL</code> 包揽的, 但想掌握 <code>Shader</code> 编程就必须要了解它.
-</p>
+<ol class="org-ol">
+<li>把 <code>gl_Position</code> 的值设置为裁剪坐标, 以次把裁剪坐标传递到后面的流程中</li>
+<li>定义 <code>varying</code> 类型变量, 给 <code>varying</code> 变量的值设置为可选数据, 以此把可选数据传递到后面的流程中</li>
+</ol>
 </div>
 </div>
-
-<div id="outline-container-org593e6f4" class="outline-3">
-<h3 id="org593e6f4"><span class="section-number-3">1.2.</span> Vertex Shader 之后, Fragment Shader 之前</h3>
+<div id="outline-container-org10a7263" class="outline-3">
+<h3 id="org10a7263"><span class="section-number-3">1.2.</span> Vertex Shader 之后, Fragment Shader 之前</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 在 <code>Vertex Shader</code> 之后并非马上就到 <code>Fragment Shader</code> 了, 这期间会发生一切其他事情.
@@ -444,7 +453,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 
 <blockquote>
 <p>
-当然 <code>OpenGL</code> 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(<code>basic primitive</code>), 包括点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
+当然 <code>OpenGL/WebGL</code> 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(<code>basic primitive</code>), 包括点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
 </p>
 </blockquote>
 
@@ -453,7 +462,11 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-<code>OpenGL</code> 会把超出视野的图元或图元部分进行裁剪, 就像人一样, 看不了视野以外的东西.
+<code>OpenGL/WebGL</code> 会把超出视野的图元或图元部分进行裁剪, 就像人一样, 看不了视野以外的东西.
+</p>
+
+<p>
+这一步会对裁剪坐标进行透视除法得到 <code>NDC</code> 坐标, 再对 <code>NDC</code> 坐标进行视口变换得到屏幕空间(<code>screen space</code>)上的坐标.
 </p>
 
 <p>
@@ -461,7 +474,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-<code>OpenGL</code> 可以检测得到图元面向是正面还是背面观察者(viewer)的, 就如我们生活中看到的物体一样,
+<code>OpenGL/WebGL</code> 可以检测得到图元面向是正面还是背面观察者(viewer)的, 就如我们生活中看到的物体一样,
 </p>
 
 <p>
@@ -469,7 +482,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-<code>OpenGL</code> 可以让开发者决定是否取消对物体背面的渲染.
+<code>OpenGL/WebGL</code> 可以让开发者决定是否取消对物体背面的渲染.
 </p>
 
 <p>
@@ -477,7 +490,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-之后就到光栅化阶段, 该阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 片元就是一种类像素数据(<code>pixel-like data</code>),
+在阶段会把一个图元拆分成若干个片元(<code>fragments</code>), 所谓片元就是一种类像素数据(<code>pixel-like data</code>),
 </p>
 
 <p>
@@ -485,11 +498,15 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-片元可以记录小方块在画面上的位置以及颜色, 也可能和有一些可选数据与之关联, 部分可选数据是根据 <code>Vertex Shader</code> 定义的可选数据计算而来的.
+片元可以记录小方块在画面上的位置以及颜色, 也可能和有一些与之关联的可选数据,
+</p>
+
+<p>
+这些可选数据是根据 <code>Vertex Shader</code> 定义的 <code>varying</code> 变量所传递的可选数据计算得来.
 </p>
 
 
-<div id="org85d51e0" class="figure">
+<div id="orgfa6a530" class="figure">
 <p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif" />
 </p>
 </div>
@@ -513,11 +530,11 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </blockquote>
 
 <p>
-然而, <code>OpenGL</code> 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
+然而, <code>OpenGL/WebGL</code> 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
 </p>
 
 <p>
-首先, 会根据 <code>Vertex Shader</code> 得出的裁剪空间坐标计算出屏幕坐标(screen space), 也就是计算出顶点对应的片元坐标;
+首先, 在前面的裁剪步骤中已经根据顶点的裁剪坐标计算出屏幕坐标了, 也就是顶点对应的片元坐标;
 </p>
 
 <p>
@@ -525,7 +542,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="org37e08a1" class="figure">
+<div id="orgaecd2d6" class="figure">
 <p><img src="../../../files/trianglerast_f1_joshbeam.png" alt="trianglerast_f1_joshbeam.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>三个顶点所对应的片元坐标</p>
@@ -540,7 +557,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-第二种表述方换句话说就是找出 \((x_{0}, y_{0})\) 和 \((x_{1}, y_{1})\) 两点线段上的一个点 \((x, y)\), 这符合我们要找出缺失片元的要求.
+再换句话说就是找出 \((x_{0}, y_{0})\) 和 \((x_{1}, y_{1})\) 两点线段上的一个点 \((x, y)\), 这个点就是缺失片元的坐标.
 </p>
 
 <p>
@@ -579,7 +596,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </div>
 
 <p>
-我们可以选择两个点的 \(x\) 分量来作为 \(i0\) 和 \(i1\), 让 \(y\) 分量作为 \(d0\) 和 \(d1\);
+在传参时, 可以选择两个点的 \(x\) 分量来作为 \(i0\) 和 \(i1\), 让 \(y\) 分量作为 \(d0\) 和 \(d1\);
 </p>
 
 <p>
@@ -591,11 +608,15 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 <p>
-观察代码, 如果 \(\left|i1 - i0\right|\) 比 \(\left|d1 - d0\right|\) 要小, 那么 \(\left|a\right|\) 就要大于 1, 这和相邻片元相差一个单位并不相符,
+观察代码, 如果 \(\left|i1 - i0\right|\) 比 \(\left|d1 - d0\right|\) 要小, 那么 \(\left|a\right|\) 就要大于 1,
 </p>
 
 <p>
-在插值过程中会出现片元不相邻的情况, 比如以 \(x\) 分量作为 \(i0\) 和 \(i1\), 并且 \(a = 2\), 那么 \((10, 20)\) 的下一个插值坐标是 \((11, 22)\);
+因为函数 <code>interprolate</code> 的参数是坐标分量, 所以 \(\left|a\right|\) 大于 1 表示这坐标之间相差两个单位, 与相邻片元相差一个单位矛盾.
+</p>
+
+<p>
+比如, 以 \(x\) 分量作为 \(i0\) 和 \(i1\), 并且 \(a = 2\), 那么 \((10, 20)\) 的下一个插值坐标是 \((11, 22)\);
 </p>
 
 <p>
@@ -650,14 +671,14 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </div>
 
 
-<div id="org16d60a1" class="figure">
+<div id="orgf1b3f83" class="figure">
 <p><img src="../../../files/trianglerast_f2_joshbeam.png" alt="trianglerast_f2_joshbeam.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>三角形线框</p>
 </div>
 
 <p>
-绘制填充三角形则复杂一点, 不过很好理解, 它 <code>OpenGL</code> 绘制图形的重点.
+绘制填充三角形则复杂一点, 不过很好理解, 它 <code>OpenGL/WebGL</code> 绘制图形的重点.
 </p>
 
 <p>
@@ -669,7 +690,7 @@ PS: 现在是 2023 年 12 月, 我从今年的 6 月份开始就抽空读完这�
 </p>
 
 
-<div id="orgea858ed" class="figure">
+<div id="org08d49d7" class="figure">
 <p><img src="../../../files/trianglerast_f3_joshbeam_aux.png" alt="trianglerast_f3_joshbeam_aux.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>实心三角形</p>
@@ -729,7 +750,7 @@ x01.pop(); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;"
 </div>
 
 <p>
-以上就是 <code>OpenGL</code> 绘制实心三角形的大致原理.
+以上就是 <code>OpenGL/WebGL</code> 绘制实心三角形的大致原理.
 </p>
 
 <p>
@@ -774,12 +795,11 @@ h01.pop();
     putPixel(x | 0, y | 0);
   }
 }
-
 </pre>
 </div>
 
 <p>
-到目前位置, 光栅化基本完成, <code>OpenGL</code> 会把这些片元逐个给到下一个阶段 <b>Fragment Shader</b>.
+到止, 光栅化基本完成, <code>OpenGL/WebGL</code> 会把片元逐个输出到下一个阶段 <b>Fragment Shader</b>.
 </p>
 
 <blockquote>
@@ -793,7 +813,7 @@ h01.pop();
 </blockquote>
 
 <p>
-<code>OpenGL</code> 会使用一些变量来传递片元数据, 比如 <code>gl_FragCoord</code> 会把片元对应的 \(x\) 和 \(y\) 分量一并传回;
+<code>OpenGL/WebGL</code> 会使用一些变量来传递片元数据, 比如 <code>gl_FragCoord</code> 会把片元对应的 \(x\) 和 \(y\) 分量一并传回;
 </p>
 
 <p>
@@ -801,15 +821,60 @@ h01.pop();
 </p>
 
 <p>
-\(z\) 是根据顶点插值得到的 \(z\) 分量(, 上面的代码没有针对 \(z\) 分量进行插值, 它和 \(x\) 和 \(y\) 分量的插值略微不一样),
+上面的代码没有针对 \(z\) 分量进行插值, 因为它和 \(x\) 和 \(y\) 分量的插值略微不一样, 顶点之间的 \(z\) 分量并不存在线性关系, 无法直接插值,
 </p>
+
+<p>
+反而是 \(\frac{1}{z}\) 之间成线性关系, 所以根据两个顶点的 \(z\) 分量的倒数 \(\frac{1}{z}\) 进行插值, 最后再倒回去:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#31446;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz01</span> = interpolate(p0.y | 0, 1 / p0.z, p1.y | 0, 1 / p1.z);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz12</span> = interpolate(p1.y | 0, 1 / p1.z, p2.y | 0, 1 / p2.z);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz02</span> = interpolate(p0.y | 0, 1 / p0.z, p2.y | 0, 1 / p2.z);
+iz01.pop();
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz012</span> = iz01.concat(iz12);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">iz_left</span>, <span style="color: #eedd82;">iz_right</span>;
+<span style="color: #00ffff;">if</span> (x02[m]  &lt; x012[m]) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+  iz_left = iz02;
+  iz_right = iz012;
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+  iz_left = iz012;
+  iz_right = iz02;
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
+<span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xl</span> = x_left[(y - p0.y) | 0];
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xr</span> = x_right[(y - p0.y) | 0];
+
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izl</span> = iz_left[(y - p0.y) | 0];
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izr</span> = iz_right[(y - p0.y) | 0];
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#27178;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izs</span> = interpolate(xl, izl, xr, izr);
+
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = xl; x &lt;= xr; x++) {
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz</span> = izs[x - xl];
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">z</span> = 1 / iz;
+    putPixel(x | 0, y | 0);
+  }
+}
+</pre>
+</div>
 
 <p>
 同理, \(1/w\) 是根据顶点插值得到的 \(w\) 分量的倒数.
 </p>
 
 <p>
-<code>gl_FragCoord</code> 这种是 <code>OpenGL</code> 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 <code>Shader</code> 程序中用得上.
+<code>gl_FragCoord</code> 这种是 <code>OpenGL/WebGL</code> 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 <code>Shader</code> 程序中用得上.
 </p>
 
 <p>
@@ -817,16 +882,15 @@ h01.pop();
 </p>
 </div>
 </div>
-
-<div id="outline-container-orge1d3fe3" class="outline-3">
-<h3 id="orge1d3fe3"><span class="section-number-3">1.3.</span> Fragment Shader</h3>
+<div id="outline-container-org7c23b3a" class="outline-3">
+<h3 id="org7c23b3a"><span class="section-number-3">1.3.</span> Fragment Shader</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
-在得到片元后, <code>OpenGL</code> 就开始对它们进行处理, 这就是 <code>Fragment Shader</code> <b>主要</b> 要做的事情了:
+在得到片元后, <code>OpenGL/WebGL</code> 就开始对它们进行处理, 这就是 <code>Fragment Shader</code> <b>主要</b> 要做的事情了:
 </p>
 
 <p>
-每次接受一个片元作为输入, 为片元设置颜色(设置 <code>gl_FragColor</code>), 并输出处理后的片元到下一个阶段中.
+每次接受一个片元作为输入, 为片元设置颜色(设置 <code>gl_FragColor</code>), 以此把处理后的片元输出到下一个阶段中.
 </p>
 
 <p>
@@ -847,15 +911,19 @@ h01.pop();
 </p>
 
 <p>
-在光栅化的过程中 <code>OpenGL</code> 会根据 <code>Vertex Shader</code> 传递过来的 <code>gl_Position</code> 进行插值, 得到片元坐标以及相关可选数据.
+在光栅化的过程中 <code>OpenGL/WebGL</code> 会根据 <code>Vertex Shader</code> 传递过来的 <code>gl_Position</code> 以及可选数据 <code>vColor</code> 进行插值, 得到片元坐标以及与之相关的可选数据.
 </p>
 
 <p>
-片元的坐标会被保存在 <code>gl_FragCoord</code> 中; 对于可选数据, <code>OpenGL</code> 会在对 <code>gl_Position</code> 插值时同时对 <code>Vertex Shader</code> 传递过来的 <code>vColor</code> 进行插值,
+片元的坐标会被保存在 <code>gl_FragCoord</code> 中; 对于可选数据 <code>vColor</code>, 会被保存到 <code>Fragment Shader</code> 的同名同类型的 <code>vColor</code> 变量上.
 </p>
 
 <p>
-并把插值结果传递在 <code>Fragment Shader</code> 的 <code>vColor</code> 上.
+再次强调, 虽然在 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 上都有 <code>vColor</code>, 但是它们附属的对象是不一样的,
+</p>
+
+<p>
+<code>Vertex Shader</code> 的 <code>vColor</code> 是属于顶点的, <code>Fragment Shader</code> 的 <code>vColor</code> 是属于片元的.
 </p>
 
 <p>
@@ -876,7 +944,7 @@ h01.pop();
 </p>
 
 <p>
-相比于像素而言, 片元除了有 <code>RGBA</code> 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息.
+相比于像素而言, 片元除了有 <code>RGBA</code> 格式的色值以外, 还有模板值(stencil value)和<a href="https://blog.darksalt.me/docs/posts/2020/06/graphics-opengl-transformation.html#text-depth-buffer">深度值</a>(depth value)这些信息.
 </p>
 
 <p>
@@ -884,9 +952,8 @@ h01.pop();
 </p>
 </div>
 </div>
-
-<div id="outline-container-orgdd4a496" class="outline-3">
-<h3 id="orgdd4a496"><span class="section-number-3">1.4.</span> Fragment Shader 之后 - Per-Sample Processing</h3>
+<div id="outline-container-org632df33" class="outline-3">
+<h3 id="org632df33"><span class="section-number-3">1.4.</span> Fragment Shader 之后 - Per-Sample Processing</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 该阶段会使用上片元的这些额外值来进行<a href="https://www.khronos.org/opengl/wiki/Per-Sample_Processing">一系列的测试</a>, 来决定是否把该片元的色值输出到屏幕上成为像素,
@@ -901,22 +968,22 @@ h01.pop();
 </p>
 
 <p>
-而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲区(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
+而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
 </p>
 
 <p>
-为了更直观地理解, 我直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
+为了更直观地理解, 我直接从 <a href="https://learnopengl.com/Advanced-OpenGL/Stencil-testing">LearnOpenGL</a> 上把图给扒下来, 来看看模板测试以及模板缓冲是怎么样的:
 </p>
 
 
-<div id="orgc27e097" class="figure">
+<div id="org29d0458" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>模板测试</p>
 </div>
 
 <p>
-可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
+可以看到上模板缓冲就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
 </p>
 
 <p>
@@ -928,14 +995,13 @@ h01.pop();
 </p>
 
 <p>
-最后 <code>OpenGL</code> 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
+最后 <code>OpenGL/WebGL</code> 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
 </p>
 </div>
 </div>
 </div>
-
-<div id="outline-container-org81252da" class="outline-2">
-<h2 id="org81252da"><span class="section-number-2">2.</span> 细节补充</h2>
+<div id="outline-container-orgf2a86c7" class="outline-2">
+<h2 id="orgf2a86c7"><span class="section-number-2">2.</span> 一个简单而完整的 Shader 程序</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 我们约定 <code>Shader</code> 代码是运行在 <code>CPU</code> 上的, 而调用 <code>OpenGL/WebGL API</code> 的代码则是运行在 <code>CPU</code> 上的;
@@ -965,12 +1031,11 @@ h01.pop();
 需要注意的是, 这个例子是基于 <code>WebGL 1.0/GLSL 1.20</code> 的.
 </p>
 </div>
-
 <div id="outline-container-how-cpu-upload-data" class="outline-3">
 <h3 id="how-cpu-upload-data"><span class="section-number-3">2.1.</span> CPU 如何上传数据给 GPU</h3>
 <div class="outline-text-3" id="text-how-cpu-upload-data">
 <p>
-首先,  <code>GPU</code> 会等 <code>CPU</code> 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
+首先,  <code>GPU</code> 会等 <code>CPU</code> 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲(buffers)上.
 </p>
 
 <p>
@@ -978,13 +1043,13 @@ h01.pop();
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;&#21306;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
 <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">buffer</span> = gl.createBuffer();
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;&#21306;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#21306;&#36827;&#34892;&#25805;&#20316;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#36827;&#34892;&#25805;&#20316;</span>
 gl.bindBuffer(target, buffer);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#21306;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
 gl.bufferData(target, data, usage);
 </pre>
 </div>
@@ -994,7 +1059,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-由于数据的用途的不同, 缓冲区可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 <code>target</code> 变量.
+由于数据的用途的不同, 缓冲可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 <code>target</code> 变量.
 </p>
 
 <p>
@@ -1042,7 +1107,15 @@ gl.bufferData(target, data, usage);
 </blockquote>
 
 <p>
-在 <code>OpenGL/WebGL</code> 里面, 这些用来作为物体顶点信息的缓冲区叫做 <code>Vertex Buffer Object (VBO)</code>.
+在 <code>OpenGL/WebGL</code> 里面, 这些用来作为物体顶点信息的缓冲叫做 <code>Vertex Buffer Object (VBO)</code>,
+</p>
+
+<p>
+因为 <code>OpenGL/WebGL</code> 里面有不止一种类型的缓冲, 所以个人更喜欢把储存顶点信息的缓冲叫做 <code>VBO</code>,
+</p>
+
+<p>
+所以在下文提到 <code>VBO</code> 时应该立刻想起 <code>VBO</code> 是通过 <code>gl.createBuffer</code> 方法创建的.
 </p>
 
 <p>
@@ -1050,24 +1123,19 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-人们一般喜欢把这些顶点数据称为几何数据(Geometry Data).
+<code>VBO</code> 并非只能存顶点数据, 也可以包含一些其它与顶点相关的数据, 我们一般把顶点数据以其关联数据统称为集合数据(<code>Geometry Data</code>).
 </p>
 
 <p>
-缓冲区并非只能存几何数据, 也可以包含一些其它与几何数据相关的数据;
-</p>
-
-<p>
-另外, <code>OpenGL</code> 也不规定 <code>CPU</code> 上传的数据只能存到缓冲区里, 后面会介绍它们.
+另外, <code>OpenGL/WebGL</code> 也不规定 <code>CPU</code> 上传的数据只能存到缓冲里, 后面会介绍它们.
 </p>
 </div>
 </div>
-
 <div id="outline-container-how-gl-use-data" class="outline-3">
-<h3 id="how-gl-use-data"><span class="section-number-3">2.2.</span> GPU 如何从缓冲区读取数据</h3>
+<h3 id="how-gl-use-data"><span class="section-number-3">2.2.</span> GPU 如何从缓冲读取数据</h3>
 <div class="outline-text-3" id="text-how-gl-use-data">
 <p>
-首先需要提及的一点是, <code>GPU</code> 并非直接使用缓冲区来进行渲染, 在说明这点之前, 我们先来明白一个概念.
+首先需要提及的一点是, <code>GPU</code> 并非直接使用缓冲来进行渲染, 在说明这点之前, 我们先来明白一个概念.
 </p>
 
 <p>
@@ -1118,7 +1186,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-<b>VAO 可以控制如何从 VBO 里面读取数据, 并把数据绑定给变量</b> (讲道理, <code>VAO</code> 的全称很难能让人理解它的作用).
+<b>VAO 决定了如何从 VBO 里面读取数据, 并把读取到的数据绑定给变量</b>.
 </p>
 
 <p>
@@ -1126,7 +1194,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 
-<div id="org4392411" class="figure">
+<div id="org49c90de" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>vertexAttribPointer</p>
@@ -1141,7 +1209,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 <code>gl.vertexAttribPointer()</code> 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
+这样做的好处是, 顶点的所有相关数据都储存在一个缓冲里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 <code>gl.vertexAttribPointer()</code> 来新建一个指针来读取即可, 不需要重新创建一个缓冲来专门储存颜色数据.
 </p>
 
 <p>
@@ -1149,7 +1217,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-<code>attribute</code> 类型变量是 <code>shader</code> 程序里面定义的变量, 用来传递缓冲区里面某种数据给 <code>Vertex Shader</code> 中, 后面会讲到.
+<code>attribute</code> 类型变量是 <code>shader</code> 程序里面定义的变量, 用来传递缓冲里面某种数据给 <code>Vertex Shader</code> 中, 后面会讲到.
 </p>
 
 <blockquote>
@@ -1171,7 +1239,7 @@ gl.bufferData(target, data, usage);
 </blockquote>
 
 <p>
-在 <code>gl.bindBuffer(target, buffer)</code> 之后调用 <code>gl.vertexAttribPointer</code> 就可以把缓冲区里的数据填充到指定的 <code>attribute</code> 变量里面.
+在 <code>gl.bindBuffer(target, buffer)</code> 之后调用 <code>gl.vertexAttribPointer</code> 就可以把缓冲里的数据填充到指定的 <code>attribute</code> 变量里面.
 </p>
 
 <p>
@@ -1195,12 +1263,11 @@ gl.bufferData(target, data, usage);
 </p>
 </div>
 </div>
-
-<div id="outline-container-orgd896112" class="outline-3">
-<h3 id="orgd896112"><span class="section-number-3">2.3.</span> 如何使用缓冲区的数据进行绘制</h3>
+<div id="outline-container-orgc919c68" class="outline-3">
+<h3 id="orgc919c68"><span class="section-number-3">2.3.</span> 如何使用缓冲的数据进行绘制</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
-当给缓冲区填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
+当给缓冲填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
 </p>
 
 <p>
@@ -1228,7 +1295,6 @@ gl.bufferData(target, data, usage);
 </p>
 </div>
 </div>
-
 <div id="outline-container-glsl-type-qualifier-overview" class="outline-3">
 <h3 id="glsl-type-qualifier-overview"><span class="section-number-3">2.4.</span> GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</h3>
 <div class="outline-text-3" id="text-glsl-type-qualifier-overview">
@@ -1260,9 +1326,8 @@ gl.bufferData(target, data, usage);
 一个 <code>shader</code> 变量可以使用多种限定符的组合进行声明, 但要注意遵守<a href="https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Qualifier_order">顺序</a>.
 </p>
 </div>
-
-<div id="outline-container-org6584799" class="outline-4">
-<h4 id="org6584799"><span class="section-number-4">2.4.1.</span> attribute</h4>
+<div id="outline-container-org57fd521" class="outline-4">
+<h4 id="org57fd521"><span class="section-number-4">2.4.1.</span> attribute</h4>
 <div class="outline-text-4" id="text-2-4-1">
 <p>
 它在这篇文章里面第一个被介绍的修饰符, 它属于存储修饰符, 被它修饰后的变量可以简单理解为 <code>Vertex Shader</code> 的输入,
@@ -1273,16 +1338,15 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-作为 <code>Vertex Shader</code> 的输入, 也就是说 <code>attribute</code> 变量接收的数据是从缓冲区里面读取的.
+作为 <code>Vertex Shader</code> 的输入, 也就是说 <code>attribute</code> 变量接收的数据是从缓冲里面读取的.
 </p>
 </div>
 </div>
-
-<div id="outline-container-org08f588f" class="outline-4">
-<h4 id="org08f588f"><span class="section-number-4">2.4.2.</span> uniform</h4>
+<div id="outline-container-org39c7418" class="outline-4">
+<h4 id="org39c7418"><span class="section-number-4">2.4.2.</span> uniform</h4>
 <div class="outline-text-4" id="text-2-4-2">
 <p>
-例子里面传入了两个 <code>uniform</code> 变量, 这种变量是全局的, 它可以在整个图元(<code>primitive</code>)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
+例子里面传入了两个 <code>uniform</code> 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到,
 </p>
 
 <p>
@@ -1290,14 +1354,26 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-<code>uniform</code> 是我们前面提到的存到缓冲区以外的数据.
+<code>uniform</code> 是我们前面提到的存到缓冲以外的数据.
 </p>
-</div>
-</div>
-</div>
 
-<div id="outline-container-orgc9412bd" class="outline-3">
-<h3 id="orgc9412bd"><span class="section-number-3">2.5.</span> GLSL 内置变量</h3>
+<p>
+在 <code>GLSL 1.10</code> 中, 当 <code>Shader</code> 程序成功编译链接后, 所有的 <code>uniform</code> 变量都会被赋予 0 作为默认值.
+</p>
+
+<p>
+在 <code>GLSL 1.20</code> 中, 除了 <code>sampler2D/samplerCube</code> 外的所有 <code>uniform</code> 变量都支持使用初始化器:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> color = <span style="color: #98fb98;">vec3</span>(0.7, 0.7, 0.2);
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org1e98d48" class="outline-3">
+<h3 id="org1e98d48"><span class="section-number-3">2.5.</span> GLSL 内置变量</h3>
 <div class="outline-text-3" id="text-2-5">
 <p>
 这里着重介绍几个稍微重要一点的并且不能被 <code>Shader</code> 修改的内置数据.
@@ -1354,10 +1430,8 @@ gl.bufferData(target, data, usage);
 </ul>
 </div>
 </div>
-
-
-<div id="outline-container-orgf6ef214" class="outline-3">
-<h3 id="orgf6ef214"><span class="section-number-3">2.6.</span> 其它常见问题</h3>
+<div id="outline-container-org1c92914" class="outline-3">
+<h3 id="org1c92914"><span class="section-number-3">2.6.</span> 其它常见问题</h3>
 <div class="outline-text-3" id="text-2-6">
 <ul class="org-ul">
 <li><p>
@@ -1387,10 +1461,284 @@ gl.bufferData(target, data, usage);
 </div>
 </div>
 </div>
-
-<div id="outline-container-org7e64195" class="outline-2">
-<h2 id="org7e64195"><span class="section-number-2">3.</span> 搭建自己的 Shadertoy</h2>
+<div id="outline-container-orgc5bd5cb" class="outline-2">
+<h2 id="orgc5bd5cb"><span class="section-number-2">3.</span> WebGL 的 API 概览</h2>
 <div class="outline-text-2" id="text-3">
+<p>
+<code>WebGL</code> 的很多 <code>API</code> 名字都看着差不多且令人迷惑, 比如: <code>gl.createBuffer</code>, <code>gl.createFramebuffer</code>, <code>gl.createRemderbuffer</code>.
+</p>
+
+<p>
+令人迷惑主要是源于它们背后所对应的概念. 比如什么是 <code>Buffer</code>, 什么是 <code>Framebuffer</code> 以及什么是 <code>Renderbuffer</code>, 以及他们之间有什么区别.
+</p>
+
+<p>
+所以这一章节主要是借着介绍 <code>API</code> 的机会学习这些概念.
+</p>
+</div>
+<div id="outline-container-org2c8930d" class="outline-3">
+<h3 id="org2c8930d"><span class="section-number-3">3.1.</span> 缓冲 (Buffer)</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<code>Buffer</code> 就是专门用来储存几何数据的缓冲, 使用 <code>gl.createBuffer</code> 进行创建.
+</p>
+
+<p>
+<code>Buffer</code> 这个词语的字面含义过于普遍了: 任何种类的缓冲都是缓冲.
+</p>
+
+<p>
+但是在 <code>OpenGL/WebGL</code> 中 <code>buffer</code> 这个对象并不能指代所有缓冲, 所以个人偏向使用 <code>Vertex Buffer Objects</code> 或 <code>VBO</code> 来指代它.
+</p>
+
+<p>
+<code>VBO</code> 的使用在前面就介绍过了, 这里就不再赘述.
+</p>
+</div>
+</div>
+<div id="outline-container-org5eda2e8" class="outline-3">
+<h3 id="org5eda2e8"><span class="section-number-3">3.2.</span> 贴图 (Texture)</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+贴图本质上就是一个图片对象, 为顶点/片元提供可选数据, 同时贴图也提供了一些针对图片的基本操作.
+</p>
+
+<p>
+在 <code>OpenGL/WebGL</code> 中使用贴图需要理解一些前置知识.
+</p>
+
+<p>
+<code>OpenGL/WebGL</code> 至少有 8 个贴图插槽, 每个插槽可以绑定一个贴图对象, 最后可以往贴图对象写入图片数据.
+</p>
+
+<p>
+在绑定贴图之前需要说明操作哪个插槽, 这个可以通过 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/activeTexture">gl.activeTexture(texture)</a> 方法来完成,
+</p>
+
+<p>
+参数 <code>texture</code> 是一个枚举变量: \(\mathrm{gl.TEXTUREI} \in \{ \mathrm{gl.TEXTURE0}, \mathrm{gl.TEXTURE1}, \mathrm{gl.TEXTURE2}, ... \mathrm{gl.TEXTURE7}, ... \}\).
+</p>
+
+<p>
+指定插槽后需要说明插槽绑定的贴图类型以及贴图对象, 这则是通过 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindTexture">gl.bindTexture(target, texture)</a> 方法来完成,
+</p>
+
+<p>
+<code>target</code> 是贴图类型, 可选值为 <code>gl.TEXTURE_2D</code> 和 <code>gl.TEXTURE_CUBE_MAP</code>;
+</p>
+
+<p>
+<code>texture</code> 是贴图对象的 <code>ID</code>, 这个 <code>ID</code> 是由 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/createTexture">gl.createTexture()</a> 方法返回的.
+</p>
+
+<p>
+<code>gl.createTexture()</code> 方法的作用是初始化一个贴图对象, 在绑定绑定贴图后, 后续的一系列贴图操作都是在绑定贴图上发生,
+</p>
+
+<p>
+比如使用 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/pixelStorei">gl.pixelStorei(pname, param)</a> 指定贴图的图片数据的字节如何对齐,
+</p>
+
+<p>
+使用 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texParameter">gl.texParameter[fi](target, pname, param)</a> 指定贴图的一些参数,
+</p>
+
+<p>
+使用 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D">gl.texImage2D</a> 往贴图对象里面填充贴图数据.
+</p>
+
+<p>
+这些函数都不要求传入贴图对象的 <code>ID</code> 作为参数来说明对哪个贴图对象进行操作,
+</p>
+
+<p>
+因为之前的 <code>gl.activeTexture</code> 已经在内部设置好了状态: 指定了操作的贴图插槽,
+</p>
+
+<p>
+<code>OpenGL/WebGL</code> 本质上就是一个状态机, 后续的一切贴图操作都是基于这个状态进行.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">WebGL &#40664;&#35748;&#25351;&#23450; gl.TEXTURE0 &#20026;&#24403;&#21069;&#25554;&#27133;, &#26377;&#20123;&#31243;&#24207;&#21482;&#20351;&#29992;&#19968;&#20010;&#25554;&#27133;, &#36825;&#31181;&#24773;&#20917;&#19979;&#36825;&#19968;&#21477;&#22522;&#26412;&#20250;&#34987;&#24573;&#30053;&#25481;</span>
+gl.activeTexture(gl.TEXTURE0);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21019;&#24314;&#36148;&#22270;&#23545;&#35937;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">texture</span> = gl.createTexture();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#36148;&#22270;&#32465;&#23450;&#21040;&#25554;&#27133;&#19978;</span>
+gl.bindTexture(gl.TEXTURE_2D, texture);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#23450;&#36148;&#22270;&#25968;&#25454;&#30340;&#20648;&#23384;</span>
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#36148;&#22270;&#35774;&#23450;&#21442;&#25968;</span>
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#36148;&#22270;&#20998;&#37197;&#31354;&#38388;, &#21442;&#25968; pixels &#20026; null, &#24847;&#21619;&#30528;&#19981;&#25552;&#20379;&#25968;&#25454;, &#36825;&#31181;&#31354;&#30333;&#36148;&#22270;&#19968;&#33324;&#26377;&#29305;&#27530;&#29992;&#36884;</span>
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, <span style="color: #7fffd4;">null</span>);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#30452;&#25509; img &#20803;&#32032;&#20316;&#20026;&#36148;&#22270;&#30340;&#25968;&#25454;&#26469;&#28304;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">image</span> = document.getElementById(<span style="color: #ffa07a;">'image-element'</span>);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">isPowerOf2</span> = (value) =&gt; value &amp; (value - 1) === 0;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26816;&#26597;&#22270;&#29255;&#30340;&#23610;&#23544;&#26159;&#21542;&#20026; 2 &#30340;&#24130;&#27425;&#26041;</span>
+<span style="color: #00ffff;">if</span> (isPowerOf2(image.width) &amp;&amp; isPowerOf2(image.height)) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22810;&#32423;&#32441;&#29702;</span>
+  gl.generateMipmap(gl.TEXTURE_2D);
+} <span style="color: #00ffff;">else</span> {
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#19981;&#26159; 2 &#30340;&#24130;&#27425;&#26041;, &#36890;&#36807;&#35774;&#32622; gl.TEXTURE_MIN_FILTER &#20026; gl.LINEAR &#25110; gl.NEARST &#26469;&#20851;&#38381;&#22810;&#32423;&#32441;&#29702;&#29983;&#25104;,</span>
+
+<span style="color: #ff7f24;">     &#30001;&#20110;&#20851;&#38381;&#22810;&#32423;&#32441;&#29702;&#21518;, &#36828;&#36317;&#31163;&#30340;&#32441;&#29702;&#21487;&#33021;&#22240;&#20026;&#32553;&#23567;&#32780;&#20986;&#29616;&#38191;&#40831;, &#25152;&#20197;&#20351;&#29992; gl.LINEAR &#26368;&#22909;.</span>
+
+<span style="color: #ff7f24;">     &#22810;&#32423;&#32441;&#29702;&#19981;&#24433;&#21709;&#25918;&#22823;, &#25152;&#20197; gl.TEXTURE_MAG_FILTER &#21487;&#20197;&#19981;&#29992;&#35774;&#32622;.</span>
+<span style="color: #ff7f24;">   */</span>
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#36148;&#22270;&#30340;&#29615;&#32469;&#27169;&#24335;&#35774;&#32622;&#20026; gl.CLAMP_TO_EDGE</span>
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36890;&#36807; uniform &#21464;&#37327;&#20026; Shader &#25552;&#20379;&#36148;&#22270;&#25968;&#25454;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">textureLocation</span> = gl.getUniformLocation(shaderProgram, <span style="color: #ffa07a;">"u_texture"</span>);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">0 &#34920;&#31034;&#20351;&#29992; gl.TEXTURE0 &#25554;&#27133;&#19978;&#30340;&#36148;&#22270;, &#22914;&#27492;&#31867;&#25512;, 1 &#34920;&#31034;&#20351;&#29992; gl.TEXTURE1 &#19978;&#30340;&#36148;&#22270;</span>
+gl.uniform1i(textureLocation, 0);
+</pre>
+</div>
+
+<p>
+想在 <code>Shader</code> 程序中使用贴图, 那么需要使用 <code>sampler2D</code> 类型的 <code>uniform</code> 变量传递数据:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> u_texture;
+</pre>
+</div>
+
+<p>
+如果贴图类型是 <code>gl.TEXTURE_CUBE_MAP</code>, 那么应该使用 <code>samplerCube</code> 类型的 <code>uniform</code> 变量.
+</p>
+
+<p>
+更多贴图相关的内容可以阅读 <a href="https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html">WebGL Textures</a>.
+</p>
+
+<blockquote>
+<p>
+如果有对比 <code>VBO</code> 的使用模式, 你会发现他们的 <code>API</code> 的设计十分类似.
+</p>
+
+<p>
+基本上都是先调用 <code>gl.create*</code> 方法创建对象, 再调用 <code>gl.bind*</code> 方法绑定操作对象, 最后根据对象提供的 <code>API</code> 对绑定的对象进行操作.
+</p>
+</blockquote>
+</div>
+</div>
+<div id="outline-container-org3e4975d" class="outline-3">
+<h3 id="org3e4975d"><span class="section-number-3">3.3.</span> 帧缓冲 (FrameBuffer)</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer">gl.bindFramebuffer(target, framebuffer)</a> 用来指定渲染结果输出 <code>framebuffer</code> 上, 如果 <code>framebuffer</code> 是 <code>null</code>, 那么渲染结果输出到画布上.
+</p>
+
+<p>
+帧缓冲是一个缓冲集合, 该集合包含若干个渲染数据, 所谓渲染数据就是渲染结果的拆分:
+</p>
+
+<p>
+颜色缓冲(<code>color buffer</code>), 深度缓冲(<code>depth buffer</code>) 以及模板缓冲(<code>stencil buffer</code>).
+</p>
+
+<p>
+新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(<code>attachments</code>)上, 没关联一个附件, 集合里面就多出一元素,
+</p>
+
+<p>
+在调用 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawArrays">gl.drawArrays(mode, first, count)</a> 或 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements">gl.drawElements(mode, count, type, offset)</a> 时, <code>OpenGL/WebGL</code> 会把渲染结果输出到帧缓冲上,
+</p>
+
+<p>
+然而只有当 <code>OpenGL/WebGL</code> 发现渲染数据被关联了附件时, 输出的渲染数据才能被"接住".
+</p>
+
+<p>
+在帧缓冲里面, 渲染管线的任意一个步骤都不会被遗漏, 如果帧缓冲里面有储存深度缓冲和模板缓冲的附件, 那么深度测试和模板测试依然会进行.
+</p>
+
+<blockquote>
+<p>
+<a href="https://webglfundamentals.org/webgl/lessons/webgl-framebuffers.html">WebGLFundamentals - FrameBuffers</a> 里面用伪代码的形式把这个过程解释得非常清楚, 推荐阅读.
+</p>
+</blockquote>
+
+<p>
+储存缓冲数据的附件可以是贴图, 也可以是渲染缓冲(<code>RenderBuffer</code>), 这两者在用法上存在一些区别.
+</p>
+
+<p>
+贴图前面已经有介绍了, 它可以给 <code>Shader</code> 程序提供数据从而输出到画面上,
+</p>
+
+<p>
+而 <code>OpenGL/WebGL</code> 并没有提供任何 <code>API</code> 来读取渲染缓冲上的数据, 因此也无法把它的数据输出到画面上.
+</p>
+
+<p>
+如果需要把渲染数据用在 <code>Shader</code> 程序中或者用在成像画面上, 那么应该选择贴图作为附件,
+</p>
+
+<p>
+渲染缓冲适合用与储存深度缓冲和模板缓冲, 进行深度测试和模板测试.
+</p>
+
+<p>
+以下代码片段演示了帧缓冲的最基本用法:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js">gl.enable(gl.DEPTH_TEST);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#25226;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040; fbo &#19978;&#20043;&#21069;&#35774;&#32622;&#28210;&#26579;&#23610;&#23544;</span>
+gl.viewport(0, 0, textureWidth, textureHeight);
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">fbo</span> = gl.createFramebuffer();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040; fbo &#19978;</span>
+gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#39068;&#33394;&#32531;&#20914;&#36755;&#20986;&#21040;&#36148;&#22270;&#20013;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">texture</span> = gl.createTexture();
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">level</span> = 0;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#36148;&#22270;&#20316;&#20026;&#38468;&#20214;&#20648;&#23384;&#39068;&#33394;&#32531;&#20914;, &#24182;&#28155;&#21152;&#21040;&#24103;&#32531;&#20914;&#20013;</span>
+gl.activeTexture(gl.TEXTURE0);
+gl.bindTexture(gl.TEXTURE_2D, texture);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, level);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#39068;&#33394;&#32531;&#20914;&#36755;&#20986;&#21040;&#36148;&#22270;&#20013;: end</span>
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#21040; renderbuffer &#20013;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">rbo</span> = gl.createRenderbuffer();
+gl.bindRenderbuffer(gl.FRAMEBUFFER, rbo);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35753;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#30340;&#23610;&#23544;&#21644;&#36148;&#22270;&#30340;&#19968;&#26679;</span>
+gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, textureWidth, textureHeight);
+gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#21040; renderbuffer &#20013;: end</span>
+
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#19968;&#20010;&#35843;&#29992;&#20102; gl.drawArrays/gl.drawEelements &#26041;&#27861;&#30340;&#20989;&#25968;</span>
+renderScene();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#30446;&#21069;&#20026;&#27490;, &#33719;&#24471;&#20102;&#19968;&#20010;&#32463;&#36807;&#28145;&#24230;&#27979;&#35797;&#30340;&#36148;&#22270; texture, &#21487;&#29992;&#22312; Shader &#31243;&#24207;&#20013;</span>
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#21518;&#32493;&#30340;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#22238;&#30011;&#24067;&#19978;</span>
+gl.bindFramebuffer(gl.FRAMEBUFFER, <span style="color: #7fffd4;">null</span>);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#22238;&#30011;&#24067;&#30340;&#28210;&#26579;&#23610;&#23544;</span>
+gl.viewport(0, 0, canvasWidt, canvasHeight);
+renderScene();
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org5b018ce" class="outline-2">
+<h2 id="org5b018ce"><span class="section-number-2">4.</span> 搭建自己的 Shadertoy</h2>
+<div class="outline-text-2" id="text-4">
 <p>
 如果想在编写 <code>shader</code> 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 <code>shader</code> 并从中学习, 自己还要动手实践.
 </p>
@@ -1606,23 +1954,23 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-从热度上来看, <code>Shadertoy</code> 比 <code>Vertex Shader</code> 更高, 这是不是意味着 <code>Vertex Shader</code> 不重要呢?
+从热度上来看, <code>Shadertoy</code> 比 <code>VertexShaderArt</code> 更高, 这是不是意味着 <code>Vertex Shader</code> 不重要呢?
 </p>
 
 <p>
-我个人认为这取决于开发者想用 <code>Shader</code> 来做什么事情, 可能在艺术开发者的眼中 <code>Fragment Shader</code> 的可玩性更高, 艺术成分更高,
+不管是 <code>Vertex Shader</code> 还是 <code>Fragment Shader</code>, 都需要开发者掌握名为数学的画笔工具, 并且都是一样的数学知识点, 讨论谁重要毫无意义.
 </p>
 
 <p>
-这些开发者有点类似像素艺术者, 可以控制每个像素的颜色, 从画出自己心中的像素画, 只是他们的画笔叫做数学;
+<code>Shadertoy</code> 热度高纯粹是因为大部分情况下只需操作像素就能绘制一幅画, 所以使用 <code>Fragment Shader</code> 便足以.
 </p>
 
 <p>
-而 <code>Vertex Shader</code> 是不能直接控制像素的, 它更倾向于用来控制几何物体的形状, 最典型的例子就是 <a href="https://developer.nvidia.com/gpugems/gpugems/contributors">GPU Gems</a> 中的第一章用 <a href="https://developer.nvidia.com/gpugems/gpugems/contributors">物理模型进行高效的对模拟</a>, BabylonJS 官方也演示了<a href="https://www.youtube.com/watch?v=JqMxTZ2q4Nw&amp;list=PLsaE__vWcRam5eDcUlGHvylTaATXCAQnC">这一块</a>.
+而 <code>Vertex Shader</code> 是不能直接控制像素的, 它更倾向于用来控制几何物体的形状, 最典型的例子就是 <a href="https://developer.nvidia.com/gpugems/gpugems/contributors">GPU Gems</a> 中第一章的 <a href="https://developer.nvidia.com/gpugems/gpugems/contributors">波浪模拟</a>, BabylonJS 官方也演示了<a href="https://www.youtube.com/watch?v=JqMxTZ2q4Nw&amp;list=PLsaE__vWcRam5eDcUlGHvylTaATXCAQnC">这一块</a>.
 </p>
 
 <p>
-如果纵眼望去 <code>ShaderToy</code> 和 <code>VertexShaderArt</code> 上的例子, 可以发现 <code>Vertex Shader</code> 比起 <code>Fragment Shader</code> 更加容易触及到线性代数的内容(比如这个<a href="https://www.vertexshaderart.com/art/R2FYLbHWTcCWh5PiE">例子</a>, 满满都是矩阵), 两者都涉及微积分的内容.
+如果纵眼望去 <code>ShaderToy</code> 和 <code>VertexShaderArt</code> 上的例子, 可以发现 <code>Vertex Shader</code> 比起 <code>Fragment Shader</code> 更加偏向线性代数(比如这个<a href="https://www.vertexshaderart.com/art/R2FYLbHWTcCWh5PiE">例子</a>, 满满都是矩阵), 两者都涉及微积分的内容.
 </p>
 
 <p>
@@ -1631,15 +1979,15 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 
 <blockquote>
 <p>
-你可能会听到有人说 <code>ShaderToy</code> 的例子有点太过"邪道", 它的例子对游戏开发来说用处不大, 只是个可选项.
+你可能会听到有人说 <code>ShaderToy</code> 的例子有点太过"邪道", 对游戏开发来说用处不大.
 </p>
 
 <p>
-但个人认为 <code>ShaderToy</code> 的例子之所以吸引人不是它的效果多吸睛, 而是这些例子演示了如何融合数学和艺术, 这才是他们的价值.
+但我想说的是 "放屁", 就我见过的一些游戏 <code>Demo</code>, 有好几个用了 <code>SDF</code> 替代粒子系统从而大大地节省了画面上的开销.
 </p>
 
 <p>
-我相信 "使用数学这支画笔绘出自己心中的画" 这项能力对于大部分人来说都是极具吸引力的, 现在它就埋藏在 <code>ShaderToy</code> 里面.
+再说难道游戏里面用到的噪声算法在 <code>ShaderToy</code> 里面看不到吗? 退一步讲, 难道里面的各种数学知识用不上?
 </p>
 </blockquote>
 </div>
@@ -1648,7 +1996,7 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 <div id="postamble" class="status">
 <p class="date">Date: 2022-02-11</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2024-10-08 Tue 15:17</p>
+<p class="date">Created: 2025-05-23 Fri 20:02</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
