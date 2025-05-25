@@ -13,6 +13,10 @@
 
 所以需要找一本更易读的书, 我找到了 [[https://gabrielgambetta.com/computer-graphics-from-scratch/][Computer Graphics from Scratch]], 但这本书当前还没完成编写 (其实 21 年就写完了), 因此决定等它出版了再继续学.
 
+虽然这篇文章名字叫做 =Shader= 编程自救指南, 但主要是介绍 =Shader= 程序是如何工作的, 主要涉及渲染管线的一些细节以及 =OpenGL/WebGL= 的概念和 =API=.
+
+与 =Shader= 编程本身没有太大的关系, 有点类似与学习编程语言和学习编程之间的区别, =Shader= 编程的重点是图形学内容和数学技巧, 之后会单独写一片文章来介绍这一块.
+
 -----
 
 PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写完了, 于是平时抽空一点一点地读了半年, 终于读完这本书, 期间使用 =C= 语言按照书上的伪代码实践了一遍.
@@ -58,11 +62,11 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的, 特别是 =Fragment Shader=, 看别人的 =Shader= 还是一头雾水.
 
-回过头去看官方的 [[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流程概览]], 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 解下来就是个人理解了.
+回过头去看官方的 [[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流程概览]], 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 接下来就是个人理解了.
 
 # https://iquilezles.org/articles/
 
-在这之前要了解一件事情, 随着 =OpenGL= 版本的变化, 渲染流程时会发生变化的, WebGL 也是一样.
+在这之前要了解一件事情, 随着 =OpenGL= 版本的变化, 渲染流程时会发生变化的, =WebGL= 也是一样.
 
 因此, 这篇文章里面的例子只关注特定版本的 =WebGL=: =WebGL 1.0=, 它对应的 =GLSL= 版本是 [[https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.20.pdf][1.20]].
 
@@ -76,7 +80,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 **** Vertex Shader
 
-=Vertex Shader= 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标,
+=Vertex Shader= 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标, 也就是投影坐标.
 
 所谓的几何数据就是指顶点数据, 这些数据来自于 =CPU= 程序的上传(后面会详细介绍), 每当接收一个几何数据, =Vertex Shader= 就运行一遍,
 
@@ -87,13 +91,18 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 由于 =Vertex Shader= 可以自定义, 所以该计算过程不是固定的.
 
-在后面的过程中会根据计算所得的坐标来进一步计算出其它可选数据(*可能* 包括色值, 法线, 贴图坐标等等)并进行渲染, 这些数据的计算过程是 =OpenGL= 内部完成的, 开发人员不可干涉.
+一个顶点数据并非只有一个顶点坐标, 还可能有顶点颜色, 顶点法线以及顶点贴图坐标等等.
 
-可选数据实际上是由开发人员自定义的, 可以作任何用途, 如果想让 =OpenGL= 计算出可选数据, 那么开发人员必定给出一个 "种子" 提供给 =OpenGL=.
+=Vertex Shader= 要做的事情只有两件:
 
-裁剪空间的顶点坐标必须被设置为 =gl_Position= 的值, 而可选数据的 "种子" 则是需要通过 =varying= 类型变量来提供.
+1. 把 =gl_Position= 的值设置为裁剪坐标, 以次把裁剪坐标传递到后面的流程中
+2. 定义 =varying= 类型变量, 给 =varying= 变量的值设置为可选数据, 以此把可选数据传递到后面的流程中
 
-可选数据的计算过程虽然是  =OpenGL= 包揽的, 但想掌握 =Shader= 编程就必须要了解它.
+# 如果想让 =OpenGL= 计算出可选数据, 那么开发人员必定给出一个 "种子" 提供给 =OpenGL=.
+
+# 裁剪空间的顶点坐标必须被设置为 =gl_Position= 的值, 而可选数据的 "种子" 则是需要通过 =varying= 类型变量来提供.
+
+# 可选数据的计算过程虽然是  =OpenGL= 包揽的, 但想掌握 =Shader= 编程就必须要了解它.
 
 **** Vertex Shader 之后, Fragment Shader 之前
 
@@ -106,28 +115,32 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 在计算机中, =3D= 物体就是由多个面(或者说图元)组成的.
 
 #+BEGIN_QUOTE
-当然 =OpenGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
+当然 =OpenGL/WebGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
 #+END_QUOTE
 
 *裁剪 (Cliping)*
 
-=OpenGL= 会把超出视野的图元或图元部分进行裁剪, 就像人一样, 看不了视野以外的东西.
+=OpenGL/WebGL= 会把超出视野的图元或图元部分进行裁剪, 就像人一样, 看不了视野以外的东西.
+
+这一步会对裁剪坐标进行透视除法得到 =NDC= 坐标, 再对 =NDC= 坐标进行视口变换得到屏幕空间(=screen space=)上的坐标.
 
 *面剔除 (Face Culling)*
 
-=OpenGL= 可以检测得到图元面向是正面还是背面观察者(viewer)的, 就如我们生活中看到的物体一样,
+=OpenGL/WebGL= 可以检测得到图元面向是正面还是背面观察者(viewer)的, 就如我们生活中看到的物体一样,
 
 一个时间点内只能在一个角度看到它, 看得到就是正面, 看不到的就是背面, 那么背面也是在视野之外的.
 
-=OpenGL= 可以让开发者决定是否取消对物体背面的渲染.
+=OpenGL/WebGL= 可以让开发者决定是否取消对物体背面的渲染.
 
 *光栅化 (Rasterization)*
 
-之后就到光栅化阶段, 该阶段会把一个图元拆分成若干个片元(=fragments=), 片元就是一种类像素数据(=pixel-like data=),
+在阶段会把一个图元拆分成若干个片元(=fragments=), 所谓片元就是一种类像素数据(=pixel-like data=),
 
 我们可以先把像素(pixel)定义为显示在屏幕上的一个小方块, 该小方块可以显示某个颜色.
 
-片元可以记录小方块在画面上的位置以及颜色, 也可能和有一些可选数据与之关联, 部分可选数据是根据 =Vertex Shader= 定义的可选数据计算而来的.
+片元可以记录小方块在画面上的位置以及颜色, 也可能和有一些与之关联的可选数据,
+
+这些可选数据是根据 =Vertex Shader= 定义的 =varying= 变量所传递的可选数据计算得来.
 
 [[../../../files/opengl-rasterization.gif]]
 
@@ -141,9 +154,9 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 这就是数学里面微分的思想.
 #+END_QUOTE
 
-然而, =OpenGL= 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
+然而, =OpenGL/WebGL= 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
 
-首先, 会根据 =Vertex Shader= 得出的裁剪空间坐标计算出屏幕坐标(screen space), 也就是计算出顶点对应的片元坐标;
+首先, 在前面的裁剪步骤中已经根据顶点的裁剪坐标计算出屏幕坐标了, 也就是顶点对应的片元坐标;
 
 再根据这些片元坐标通过线性插值(interpolation)来补充缺失的片元, 从而构造出由方块组成的近似三角形.
 
@@ -154,7 +167,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 也可以这么表述: $y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times (x - x_{0}),\ \mathrm{where}\ \min(x_{0}, x_{1}) \le x \le\ \max(x_{0}, x_{1})$.
 
-第二种表述方换句话说就是找出 $(x_{0}, y_{0})$ 和 $(x_{1}, y_{1})$ 两点线段上的一个点 $(x, y)$, 这符合我们要找出缺失片元的要求.
+再换句话说就是找出 $(x_{0}, y_{0})$ 和 $(x_{1}, y_{1})$ 两点线段上的一个点 $(x, y)$, 这个点就是缺失片元的坐标.
 
 由于片元是一格一格的, 因此两个相邻的片元必定在 $x$ 轴/$y$ 轴/同时在 $x$ 和 $y$ 轴方向上相差一个单位.
 
@@ -186,15 +199,17 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   }
 #+END_SRC
 
-我们可以选择两个点的 $x$ 分量来作为 $i0$ 和 $i1$, 让 $y$ 分量作为 $d0$ 和 $d1$;
+在传参时, 可以选择两个点的 $x$ 分量来作为 $i0$ 和 $i1$, 让 $y$ 分量作为 $d0$ 和 $d1$;
 
 也可以选择 $y$ 分量作为 $i0$ 和 $i1$, 让 $x$ 分量作为 $d0$ 和 $d1$.
 
 这取决于 $\left|x1 - x0\right|$ 和 $\left|y1 - y0\right|$ 两者之间哪个大.
 
-观察代码, 如果 $\left|i1 - i0\right|$ 比 $\left|d1 - d0\right|$ 要小, 那么 $\left|a\right|$ 就要大于 1, 这和相邻片元相差一个单位并不相符,
+观察代码, 如果 $\left|i1 - i0\right|$ 比 $\left|d1 - d0\right|$ 要小, 那么 $\left|a\right|$ 就要大于 1,
 
-在插值过程中会出现片元不相邻的情况, 比如以 $x$ 分量作为 $i0$ 和 $i1$, 并且 $a = 2$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, 22)$;
+因为函数 =interprolate= 的参数是坐标分量, 所以 $\left|a\right|$ 大于 1 表示这坐标之间相差两个单位, 与相邻片元相差一个单位矛盾.
+
+比如, 以 $x$ 分量作为 $i0$ 和 $i1$, 并且 $a = 2$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, 22)$;
 
 但如果以 $y$ 作为 $i0$ 和 $i1$, 那么 $a = \frac{1}{2}$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, \lfloor 20.5 \rfloor)$, 这种情况片元就是相邻的.
 
@@ -245,7 +260,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 #+CAPTION: 三角形线框
 [[file:../../../files/trianglerast_f2_joshbeam.png]]
 
-绘制填充三角形则复杂一点, 不过很好理解, 它 =OpenGL= 绘制图形的重点.
+绘制填充三角形则复杂一点, 不过很好理解, 它 =OpenGL/WebGL= 绘制图形的重点.
 
 可以把一个三角形看作一个由多层横线组成的的图形, 每一层的高度为一个像素;
 
@@ -306,7 +321,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   }
 #+END_SRC
 
-以上就是 =OpenGL= 绘制实心三角形的大致原理.
+以上就是 =OpenGL/WebGL= 绘制实心三角形的大致原理.
 
 基于该过程, 还可以插值出之前说的可选数据, 只要在计算 =x01/x12/x02= 时进行类似插值就可以:
 
@@ -348,10 +363,9 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
       putPixel(x | 0, y | 0);
     }
   }
-
 #+END_SRC
 
-到目前位置, 光栅化基本完成, =OpenGL= 会把这些片元逐个给到下一个阶段 *Fragment Shader*.
+到止, 光栅化基本完成, =OpenGL/WebGL= 会把片元逐个输出到下一个阶段 *Fragment Shader*.
 
 #+BEGIN_QUOTE
 实际上 =GPU= 是并行计算架构, 并非逐个片元这样传递, 我们这里只是为了方便理解才这么说是 *逐个传递* 的.
@@ -359,23 +373,65 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 实情是每次以 $2 \times 2$ 的片元作为单位进行传递的, 也就是一次要同时调用 4 个 =Fragment Shaders=.
 #+END_QUOTE
 
-=OpenGL= 会使用一些变量来传递片元数据, 比如 =gl_FragCoord= 会把片元对应的 $x$ 和 $y$ 分量一并传回;
+=OpenGL/WebGL= 会使用一些变量来传递片元数据, 比如 =gl_FragCoord= 会把片元对应的 $x$ 和 $y$ 分量一并传回;
 
 =gl_FragCoord= 的类型是 =vec4=, 值是 $\left(x, y, z, 1/w\right)$, 其中 $x$ 和 $y$ 就是片元对应的 $x$ 和 $y$ 分量,
 
-$z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 分量进行插值, 它和 $x$ 和 $y$ 分量的插值略微不一样),
+上面的代码没有针对 $z$ 分量进行插值, 因为它和 $x$ 和 $y$ 分量的插值略微不一样, 顶点之间的 $z$ 分量并不存在线性关系, 无法直接插值,
+
+反而是 $\frac{1}{z}$ 之间成线性关系, 所以根据两个顶点的 $z$ 分量的倒数 $\frac{1}{z}$ 进行插值, 最后再倒回去:
+
+#+BEGIN_SRC js
+  // ...
+  // 对可选数据按照竖向进行插值
+  const iz01 = interpolate(p0.y | 0, 1 / p0.z, p1.y | 0, 1 / p1.z);
+  const iz12 = interpolate(p1.y | 0, 1 / p1.z, p2.y | 0, 1 / p2.z);
+  const iz02 = interpolate(p0.y | 0, 1 / p0.z, p2.y | 0, 1 / p2.z);
+  iz01.pop();
+  const iz012 = iz01.concat(iz12);
+
+  // ...
+  let iz_left, iz_right;
+  if (x02[m]  < x012[m]) {
+    // ...
+    iz_left = iz02;
+    iz_right = iz012;
+  } else {
+    // ...
+    iz_left = iz012;
+    iz_right = iz02;
+  }
+
+  // ...
+  for (let y = p0.y; y <= p2.y; y++) {
+    const xl = x_left[(y - p0.y) | 0];
+    const xr = x_right[(y - p0.y) | 0];
+
+    const izl = iz_left[(y - p0.y) | 0];
+    const izr = iz_right[(y - p0.y) | 0];
+
+    // 对可选数据按照横向进行插值
+    const izs = interpolate(xl, izl, xr, izr);
+
+    for (let x = xl; x <= xr; x++) {
+      const iz = izs[x - xl];
+      const z = 1 / iz;
+      putPixel(x | 0, y | 0);
+    }
+  }
+#+END_SRC
 
 同理, $1/w$ 是根据顶点插值得到的 $w$ 分量的倒数.
 
-=gl_FragCoord= 这种是 =OpenGL= 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 =Shader= 程序中用得上.
+=gl_FragCoord= 这种是 =OpenGL/WebGL= 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 =Shader= 程序中用得上.
 
 而可选数据 $h$ 则需要开发人员自定义 =varying= 类型或 =out= 类型变量进行传递, 我们马上就知道具体该怎么做.
 
 **** Fragment Shader
 
-在得到片元后, =OpenGL= 就开始对它们进行处理, 这就是 =Fragment Shader= *主要* 要做的事情了:
+在得到片元后, =OpenGL/WebGL= 就开始对它们进行处理, 这就是 =Fragment Shader= *主要* 要做的事情了:
 
-每次接受一个片元作为输入, 为片元设置颜色(设置 =gl_FragColor=), 并输出处理后的片元到下一个阶段中.
+每次接受一个片元作为输入, 为片元设置颜色(设置 =gl_FragColor=), 以此把处理后的片元输出到下一个阶段中.
 
 如果该片元最终能够呈现在屏幕上, 那么该颜色就作为像素的颜色.
 
@@ -386,11 +442,13 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 =Vertex Shader= 中的 =vColor= 则是作为与 =gl_Position= 关联的可选数据.
 
-在光栅化的过程中 =OpenGL= 会根据 =Vertex Shader= 传递过来的 =gl_Position= 进行插值, 得到片元坐标以及相关可选数据.
+在光栅化的过程中 =OpenGL/WebGL= 会根据 =Vertex Shader= 传递过来的 =gl_Position= 以及可选数据 =vColor= 进行插值, 得到片元坐标以及与之相关的可选数据.
 
-片元的坐标会被保存在 =gl_FragCoord= 中; 对于可选数据, =OpenGL= 会在对 =gl_Position= 插值时同时对 =Vertex Shader= 传递过来的 =vColor= 进行插值,
+片元的坐标会被保存在 =gl_FragCoord= 中; 对于可选数据 =vColor=, 会被保存到 =Fragment Shader= 的同名同类型的 =vColor= 变量上.
 
-并把插值结果传递在 =Fragment Shader= 的 =vColor= 上.
+再次强调, 虽然在 =Vertex Shader= 和 =Fragment Shader= 上都有 =vColor=, 但是它们附属的对象是不一样的,
+
+=Vertex Shader= 的 =vColor= 是属于顶点的, =Fragment Shader= 的 =vColor= 是属于片元的.
 
 这样 =Fragment Shader= 就接受了一个片元以及其相关的可选数据, 根据开发人员的自身要求设置 =gl_FragColor=.
 
@@ -401,7 +459,7 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 =Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
 
-相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和深度值(depth value)这些信息.
+相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和[[https://blog.darksalt.me/docs/posts/2020/06/graphics-opengl-transformation.html#text-depth-buffer][深度值]](depth value)这些信息.
 
 需要知道这些数据的含义, 或者说理解片元, 那么得先了解 =Fragment Shader= 后面的 =Per-Sample Processing= 阶段做了什么.
 
@@ -413,22 +471,22 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元;
 
-而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲区(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
+而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
 
-为了更直观地理解, 我直接从 [[https://learnopengl.com/Advanced-OpenGL/Stencil-testing][LearnOpenGL]] 上把图给扒下来, 来看看模板测试以及模板缓冲区是怎么样的:
+为了更直观地理解, 我直接从 [[https://learnopengl.com/Advanced-OpenGL/Stencil-testing][LearnOpenGL]] 上把图给扒下来, 来看看模板测试以及模板缓冲是怎么样的:
 
 #+CAPTION: 模板测试
 [[../../../files/stencil_test.png]]
 
-可以看到上模板缓冲区就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
+可以看到上模板缓冲就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
 
 模板测试就是比较对应位置上的像素数值和片元模板值, 比如像上面图那样, 只有模板值等于 1 的片元才能被保留下来.
 
 当然判断方法也有可能是大于等于 1, 判断方法不是唯一的, 其他方法可以看[[https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test][官方文档]].
 
-最后 =OpenGL= 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
+最后 =OpenGL/WebGL= 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
 
-*** 细节补充
+*** 一个简单而完整的 Shader 程序
 
 我们约定 =Shader= 代码是运行在 =CPU= 上的, 而调用 =OpenGL/WebGL API= 的代码则是运行在 =CPU= 上的;
 
@@ -449,24 +507,24 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 :CUSTOM_ID: how-cpu-upload-data
 :END:
 
-首先,  =GPU= 会等 =CPU= 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲区(buffers)上.
+首先,  =GPU= 会等 =CPU= 把数据传送过来, 在接收到数据后, 数据会被储存在缓冲(buffers)上.
 
 我们以 =WebGL= 为例子 (=OpenGL= 其实也差不了太多), 设现有一个名为 =gl= 的 =WebGL= 上下文实例, 要完成上述过程需要进行以下操作:
 
 #+BEGIN_SRC javascript
-  // 告诉 GPU 创建好缓冲区,用于后续储存 CPU 发过来的数据
+  // 告诉 GPU 创建好缓冲,用于后续储存 CPU 发过来的数据
   let buffer = gl.createBuffer();
 
-  // 设定当前可操作缓冲区,因为 GPU 可以有不止一个缓冲区,所以需要告诉 GPU 接下来要对哪个缓冲区进行操作
+  // 设定当前可操作缓冲,因为 GPU 可以有不止一个缓冲,所以需要告诉 GPU 接下来要对哪个缓冲进行操作
   gl.bindBuffer(target, buffer);
 
-  // 往当前可操作缓冲区里面填充数据,这一步换句话说就是储存 CPU 发过来的数据 data 了.
+  // 往当前可操作缓冲里面填充数据,这一步换句话说就是储存 CPU 发过来的数据 data 了.
   gl.bufferData(target, data, usage);
 #+END_SRC
 
 这里对应例子的[[https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L92][这一部分(80-92行)]].
 
-由于数据的用途的不同, 缓冲区可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 =target= 变量.
+由于数据的用途的不同, 缓冲可以分为很多种类型, 在绑定的时候就需要指定了, 也就是上面代码里面的 =target= 变量.
 
 想要知道 =target= 的值能够是什么, 可以参考[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindBuffer][这里]], 这些方法的参考说明都可以在[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext][这里]]找到.
 
@@ -494,22 +552,24 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 但 =usage= 并不一定要匹配实际的使用模式, 比如说可以对 =STATIC_DRAW= 用途的数据进行多次修改, 并不约束数据的实际使用模式.
 #+END_QUOTE
 
-在 =OpenGL/WebGL= 里面, 这些用来作为物体顶点信息的缓冲区叫做 =Vertex Buffer Object (VBO)=.
+在 =OpenGL/WebGL= 里面, 这些用来作为物体顶点信息的缓冲叫做 =Vertex Buffer Object (VBO)=,
+
+因为 =OpenGL/WebGL= 里面有不止一种类型的缓冲, 所以个人更喜欢把储存顶点信息的缓冲叫做 =VBO=,
+
+所以在下文提到 =VBO= 时应该立刻想起 =VBO= 是通过 =gl.createBuffer= 方法创建的.
 
 一旦有了数据源, 就可以让 =GPU= 根据利用这些数据来渲染了.
 
-人们一般喜欢把这些顶点数据称为几何数据(Geometry Data).
+=VBO= 并非只能存顶点数据, 也可以包含一些其它与顶点相关的数据, 我们一般把顶点数据以其关联数据统称为集合数据(=Geometry Data=).
 
-缓冲区并非只能存几何数据, 也可以包含一些其它与几何数据相关的数据;
+另外, =OpenGL/WebGL= 也不规定 =CPU= 上传的数据只能存到缓冲里, 后面会介绍它们.
 
-另外, =OpenGL= 也不规定 =CPU= 上传的数据只能存到缓冲区里, 后面会介绍它们.
-
-**** GPU 如何从缓冲区读取数据
+**** GPU 如何从缓冲读取数据
 :PROPERTIES:
 :CUSTOM_ID: how-gl-use-data
 :END:
 
-首先需要提及的一点是, =GPU= 并非直接使用缓冲区来进行渲染, 在说明这点之前, 我们先来明白一个概念.
+首先需要提及的一点是, =GPU= 并非直接使用缓冲来进行渲染, 在说明这点之前, 我们先来明白一个概念.
 
 =VBO= 里面的数据格式不是固定的, 比如渲染一个三角形, 它的顶点数据格式可能是这样的:
 
@@ -539,7 +599,7 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 这需要开发人员告诉 =GPU= 如何读取数据, 调用 =gl.vertexAttribPointer(index, size, type, normalized, stride, offset)= 这个 API 来生成一个 =Vertex Array Object (VAO)=,
 
-*VAO 可以控制如何从 VBO 里面读取数据, 并把数据绑定给变量* (讲道理, =VAO= 的全称很难能让人理解它的作用).
+*VAO 决定了如何从 VBO 里面读取数据, 并把读取到的数据绑定给变量*.
 
 它控制读取数据的方式其实很简单, 假设下面这里有另外一种数据格式:
 
@@ -550,11 +610,11 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 正如前面说所说的, 顶点的信息不是固定的, 实际上还能会存在别的数据, 比如说法线向量, 又或者属性之间的排序不同于上图.
 
-这样做的好处是, 顶点的所有相关数据都储存在一个缓冲区里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 =gl.vertexAttribPointer()= 来新建一个指针来读取即可, 不需要重新创建一个缓冲区来专门储存颜色数据.
+这样做的好处是, 顶点的所有相关数据都储存在一个缓冲里面, 只读取其某个属性的话(比如顶点颜色)只需要调用 =gl.vertexAttribPointer()= 来新建一个指针来读取即可, 不需要重新创建一个缓冲来专门储存颜色数据.
 
 =gl.vertexAttribPointer= 的 =index= 参数是 =Shader= 程序(shader program)里面 =attribute= 类型变量的索引值, 可以手动指定, 也可以通过 =gl.getAttribLocation(shaderProgram, attribName)= 来获取.
 
-=attribute= 类型变量是 =shader= 程序里面定义的变量, 用来传递缓冲区里面某种数据给 =Vertex Shader= 中, 后面会讲到.
+=attribute= 类型变量是 =shader= 程序里面定义的变量, 用来传递缓冲里面某种数据给 =Vertex Shader= 中, 后面会讲到.
 
 #+BEGIN_QUOTE
 =gl.vertexAttribPointer= 其它参数:
@@ -570,7 +630,7 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 - =offset=: 顶点数据的属性偏移, 就比如图中顶点数据的每种属性的偏移分别为: =POSITION= 为 0 个字节; =COLOR= 为 12 个字节; =TEXTURE= 为 24 个字节.
 #+END_QUOTE
 
-在 =gl.bindBuffer(target, buffer)= 之后调用 =gl.vertexAttribPointer= 就可以把缓冲区里的数据填充到指定的 =attribute= 变量里面.
+在 =gl.bindBuffer(target, buffer)= 之后调用 =gl.vertexAttribPointer= 就可以把缓冲里的数据填充到指定的 =attribute= 变量里面.
 
 在填充到 =attribute= 变量后不要忘记通过 =gl.enableVertexAttribArray( RET-VAL-OF-vertexAttribPointer )= 启用指针.
 
@@ -582,9 +642,9 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 =Shader= 程序并非只有 =attribute= 变量, 接下来会对 =GLSL= 变量修饰符进行介绍, 掌握了这一块才能算是真正的掌握 =GLSL=.
 
-**** 如何使用缓冲区的数据进行绘制
+**** 如何使用缓冲的数据进行绘制
 
-当给缓冲区填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
+当给缓冲填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
 
 =WebGL= 有两个基础绘制命令: =gl.drawArrays(mode, first, count)= 以及 =gl.drawElements(mode, count, type, offset)=.
 
@@ -623,19 +683,25 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
 
 这种变量不能在 =Vertex Shader= 以外的阶段被使用, 同样也不能用在接口块([[https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)][interface block]])里面, 并且这种变量是只读的(read-only).
 
-作为 =Vertex Shader= 的输入, 也就是说 =attribute= 变量接收的数据是从缓冲区里面读取的.
+作为 =Vertex Shader= 的输入, 也就是说 =attribute= 变量接收的数据是从缓冲里面读取的.
 
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttrib
 
 ***** uniform
 
-例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元(=primitive=)(一个图元就是一个构成点线面的几何顶点组合)处理过程中被访问到,
+例子里面传入了两个 =uniform= 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到,
 
 可以在 =Vertex Shader= 以及 =Fragment Shader= 访问这些变量, 同样也不能在接口块里面使用. 这种变量是只读的(read-only).
 
-=uniform= 是我们前面提到的存到缓冲区以外的数据.
+=uniform= 是我们前面提到的存到缓冲以外的数据.
 
-# https://github.com/saltb0rn/saltb0rn.github.io/blob/master/src/examples/learn-webgl-how-to-read-data/index.js?#L80-L116
+在 =GLSL 1.10= 中, 当 =Shader= 程序成功编译链接后, 所有的 =uniform= 变量都会被赋予 0 作为默认值.
+
+在 =GLSL 1.20= 中, 除了 =sampler2D/samplerCube= 外的所有 =uniform= 变量都支持使用初始化器:
+
+#+BEGIN_SRC glsl
+  uniform vec3 color = vec3(0.7, 0.7, 0.2);
+#+END_SRC
 
 **** GLSL 内置变量
 
@@ -679,6 +745,195 @@ $z$ 是根据顶点插值得到的 $z$ 分量(, 上面的代码没有针对 $z$ 
   如果分量用来表示颜色, 那么就建议用 =rgba=; 如果表示位置坐标, 那么建议用 =xyzw=; 如果表示纹理坐标, 那么建议用 =stpq=;
 
   但是不能混着用, 比如 =xgba= 这样.
+
+
+*** WebGL 的 API 概览
+
+=WebGL= 的很多 =API= 名字都看着差不多且令人迷惑, 比如: =gl.createBuffer=, =gl.createFramebuffer=, =gl.createRemderbuffer=.
+
+令人迷惑主要是源于它们背后所对应的概念. 比如什么是 =Buffer=, 什么是 =Framebuffer= 以及什么是 =Renderbuffer=, 以及他们之间有什么区别.
+
+所以这一章节主要是借着介绍 =API= 的机会学习这些概念.
+
+**** 缓冲 (Buffer)
+
+=Buffer= 就是专门用来储存几何数据的缓冲, 使用 =gl.createBuffer= 进行创建.
+
+=Buffer= 这个词语的字面含义过于普遍了: 任何种类的缓冲都是缓冲.
+
+但是在 =OpenGL/WebGL= 中 =buffer= 这个对象并不能指代所有缓冲, 所以个人偏向使用 =Vertex Buffer Objects= 或 =VBO= 来指代它.
+
+=VBO= 的使用在前面就介绍过了, 这里就不再赘述.
+
+**** 贴图 (Texture)
+
+贴图本质上就是一个图片对象, 为顶点/片元提供可选数据, 同时贴图也提供了一些针对图片的基本操作.
+
+在 =OpenGL/WebGL= 中使用贴图需要理解一些前置知识.
+
+=OpenGL/WebGL= 至少有 8 个贴图插槽, 每个插槽可以绑定一个贴图对象, 最后可以往贴图对象写入图片数据.
+
+在绑定贴图之前需要说明操作哪个插槽, 这个可以通过 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/activeTexture][gl.activeTexture(texture)]] 方法来完成,
+
+参数 =texture= 是一个枚举变量: $\mathrm{gl.TEXTUREI} \in \{ \mathrm{gl.TEXTURE0}, \mathrm{gl.TEXTURE1}, \mathrm{gl.TEXTURE2}, ... \mathrm{gl.TEXTURE7}, ... \}$.
+
+指定插槽后需要说明插槽绑定的贴图类型以及贴图对象, 这则是通过 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindTexture][gl.bindTexture(target, texture)]] 方法来完成,
+
+=target= 是贴图类型, 可选值为 =gl.TEXTURE_2D= 和 =gl.TEXTURE_CUBE_MAP=;
+
+=texture= 是贴图对象的 =ID=, 这个 =ID= 是由 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/createTexture][gl.createTexture()]] 方法返回的.
+
+=gl.createTexture()= 方法的作用是初始化一个贴图对象, 在绑定绑定贴图后, 后续的一系列贴图操作都是在绑定贴图上发生,
+
+比如使用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/pixelStorei][gl.pixelStorei(pname, param)]] 指定贴图的图片数据的字节如何对齐,
+
+使用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texParameter][gl.texParameter[fi](target, pname, param)]] 指定贴图的一些参数,
+
+使用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D][gl.texImage2D]] 往贴图对象里面填充贴图数据.
+
+这些函数都不要求传入贴图对象的 =ID= 作为参数来说明对哪个贴图对象进行操作,
+
+因为之前的 =gl.activeTexture= 已经在内部设置好了状态: 指定了操作的贴图插槽,
+
+=OpenGL/WebGL= 本质上就是一个状态机, 后续的一切贴图操作都是基于这个状态进行.
+
+#+BEGIN_SRC javascript
+  // WebGL 默认指定 gl.TEXTURE0 为当前插槽, 有些程序只使用一个插槽, 这种情况下这一句基本会被忽略掉
+  gl.activeTexture(gl.TEXTURE0);
+  // 创建贴图对象
+  const texture = gl.createTexture();
+  // 把贴图绑定到插槽上
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  // 指定贴图数据的储存
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  // 为贴图设定参数
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  // 为贴图分配空间, 参数 pixels 为 null, 意味着不提供数据, 这种空白贴图一般有特殊用途
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+  // 直接 img 元素作为贴图的数据来源
+  const image = document.getElementById('image-element');
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+  const isPowerOf2 = (value) => value & (value - 1) === 0;
+
+  // 检查图片的尺寸是否为 2 的幂次方
+  if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+    // 生成多级纹理
+    gl.generateMipmap(gl.TEXTURE_2D);
+  } else {
+    /* 不是 2 的幂次方, 通过设置 gl.TEXTURE_MIN_FILTER 为 gl.LINEAR 或 gl.NEARST 来关闭多级纹理生成,
+
+       由于关闭多级纹理后, 远距离的纹理可能因为缩小而出现锯齿, 所以使用 gl.LINEAR 最好.
+
+       多级纹理不影响放大, 所以 gl.TEXTURE_MAG_FILTER 可以不用设置.
+     ,*/
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    // 把贴图的环绕模式设置为 gl.CLAMP_TO_EDGE
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  // 通过 uniform 变量为 Shader 提供贴图数据
+  const textureLocation = gl.getUniformLocation(shaderProgram, "u_texture");
+  // 0 表示使用 gl.TEXTURE0 插槽上的贴图, 如此类推, 1 表示使用 gl.TEXTURE1 上的贴图
+  gl.uniform1i(textureLocation, 0);
+#+END_SRC
+
+想在 =Shader= 程序中使用贴图, 那么需要使用 =sampler2D= 类型的 =uniform= 变量传递数据:
+
+#+BEGIN_SRC glsl
+  uniform sampler2D u_texture;
+#+END_SRC
+
+如果贴图类型是 =gl.TEXTURE_CUBE_MAP=, 那么应该使用 =samplerCube= 类型的 =uniform= 变量.
+
+更多贴图相关的内容可以阅读 [[https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html][WebGL Textures]].
+
+#+begin_quote
+如果有对比 =VBO= 的使用模式, 你会发现他们的 =API= 的设计十分类似.
+
+基本上都是先调用 =gl.create*= 方法创建对象, 再调用 =gl.bind*= 方法绑定操作对象, 最后根据对象提供的 =API= 对绑定的对象进行操作.
+#+end_quote
+
+**** 帧缓冲 (FrameBuffer)
+
+[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer][gl.bindFramebuffer(target, framebuffer)]] 用来指定渲染结果输出 =framebuffer= 上, 如果 =framebuffer= 是 =null=, 那么渲染结果输出到画布上.
+
+帧缓冲是一个缓冲集合, 该集合包含若干个渲染数据, 所谓渲染数据就是渲染结果的拆分:
+
+颜色缓冲(=color buffer=), 深度缓冲(=depth buffer=) 以及模板缓冲(=stencil buffer=).
+
+新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(=attachments=)上, 没关联一个附件, 集合里面就多出一元素,
+
+在调用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawArrays][gl.drawArrays(mode, first, count)]] 或 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements][gl.drawElements(mode, count, type, offset)]] 时, =OpenGL/WebGL= 会把渲染结果输出到帧缓冲上,
+
+然而只有当 =OpenGL/WebGL= 发现渲染数据被关联了附件时, 输出的渲染数据才能被"接住".
+
+在帧缓冲里面, 渲染管线的任意一个步骤都不会被遗漏, 如果帧缓冲里面有储存深度缓冲和模板缓冲的附件, 那么深度测试和模板测试依然会进行.
+
+#+begin_quote
+[[https://webglfundamentals.org/webgl/lessons/webgl-framebuffers.html][WebGLFundamentals - FrameBuffers]] 里面用伪代码的形式把这个过程解释得非常清楚, 推荐阅读.
+#+end_quote
+
+储存缓冲数据的附件可以是贴图, 也可以是渲染缓冲(=RenderBuffer=), 这两者在用法上存在一些区别.
+
+贴图前面已经有介绍了, 它可以给 =Shader= 程序提供数据从而输出到画面上,
+
+而 =OpenGL/WebGL= 并没有提供任何 =API= 来读取渲染缓冲上的数据, 因此也无法把它的数据输出到画面上.
+
+如果需要把渲染数据用在 =Shader= 程序中或者用在成像画面上, 那么应该选择贴图作为附件,
+
+渲染缓冲适合用与储存深度缓冲和模板缓冲, 进行深度测试和模板测试.
+
+以下代码片段演示了帧缓冲的最基本用法:
+
+#+BEGIN_SRC js
+  gl.enable(gl.DEPTH_TEST);
+  // 在把渲染结果输出到 fbo 上之前设置渲染尺寸
+  gl.viewport(0, 0, textureWidth, textureHeight);
+  const fbo = gl.createFramebuffer();
+  // 渲染结果输出到 fbo 上
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+  // 把颜色缓冲输出到贴图中
+  const texture = gl.createTexture();
+  const level = 0;
+  // 使用贴图作为附件储存颜色缓冲, 并添加到帧缓冲中
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, level);
+  // 把颜色缓冲输出到贴图中: end
+
+  // 把深度缓冲输出到 renderbuffer 中
+  const rbo = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.FRAMEBUFFER, rbo);
+  // 让深度缓冲输出的尺寸和贴图的一样
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, textureWidth, textureHeight);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo);
+  // 把深度缓冲输出到 renderbuffer 中: end
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // 一个调用了 gl.drawArrays/gl.drawEelements 方法的函数
+  renderScene();
+  // 目前为止, 获得了一个经过深度测试的贴图 texture, 可用在 Shader 程序中
+
+  // 可以用在把贴图上的数据读取出来, 在 Shader 程序以外的地方使用
+  const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+  /* 每次往 framebuffer 中写入数据, gl.drawingBufferWidth 都会被设置为 textureWidth,
+     gl.drawingBufferHeight 则被设置为 textureHeight */
+  gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+  // 把后续的渲染结果输出回画布上
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  // 设置回画布的渲染尺寸
+  gl.viewport(0, 0, canvasWidt, canvasHeight);
+  renderScene();
+#+END_SRC
 
 *** 搭建自己的 Shadertoy
 
@@ -794,15 +1049,15 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 
 \\
 
-从热度上来看, =Shadertoy= 比 =Vertex Shader= 更高, 这是不是意味着 =Vertex Shader= 不重要呢?
+从热度上来看, =Shadertoy= 比 =VertexShaderArt= 更高, 这是不是意味着 =Vertex Shader= 不重要呢?
 
-我个人认为这取决于开发者想用 =Shader= 来做什么事情, 可能在艺术开发者的眼中 =Fragment Shader= 的可玩性更高, 艺术成分更高,
+不管是 =Vertex Shader= 还是 =Fragment Shader=, 都需要开发者掌握名为数学的画笔工具, 并且都是一样的数学知识点, 讨论谁重要毫无意义.
 
-这些开发者有点类似像素艺术者, 可以控制每个像素的颜色, 从画出自己心中的像素画, 只是他们的画笔叫做数学;
+=Shadertoy= 热度高纯粹是因为大部分情况下只需操作像素就能绘制一幅画, 所以使用 =Fragment Shader= 便足以.
 
-而 =Vertex Shader= 是不能直接控制像素的, 它更倾向于用来控制几何物体的形状, 最典型的例子就是 [[https://developer.nvidia.com/gpugems/gpugems/contributors][GPU Gems]] 中的第一章用 [[https://developer.nvidia.com/gpugems/gpugems/contributors][物理模型进行高效的对模拟]], BabylonJS 官方也演示了[[https://www.youtube.com/watch?v=JqMxTZ2q4Nw&list=PLsaE__vWcRam5eDcUlGHvylTaATXCAQnC][这一块]].
+而 =Vertex Shader= 是不能直接控制像素的, 它更倾向于用来控制几何物体的形状, 最典型的例子就是 [[https://developer.nvidia.com/gpugems/gpugems/contributors][GPU Gems]] 中第一章的 [[https://developer.nvidia.com/gpugems/gpugems/contributors][波浪模拟]], BabylonJS 官方也演示了[[https://www.youtube.com/watch?v=JqMxTZ2q4Nw&list=PLsaE__vWcRam5eDcUlGHvylTaATXCAQnC][这一块]].
 
-如果纵眼望去 =ShaderToy= 和 =VertexShaderArt= 上的例子, 可以发现 =Vertex Shader= 比起 =Fragment Shader= 更加容易触及到线性代数的内容(比如这个[[https://www.vertexshaderart.com/art/R2FYLbHWTcCWh5PiE][例子]], 满满都是矩阵), 两者都涉及微积分的内容.
+如果纵眼望去 =ShaderToy= 和 =VertexShaderArt= 上的例子, 可以发现 =Vertex Shader= 比起 =Fragment Shader= 更加偏向线性代数(比如这个[[https://www.vertexshaderart.com/art/R2FYLbHWTcCWh5PiE][例子]], 满满都是矩阵), 两者都涉及微积分的内容.
 
 不管怎么说, 如果想要在游戏视觉特效的开发上得心应手, 那么它们两者都很重要.
 

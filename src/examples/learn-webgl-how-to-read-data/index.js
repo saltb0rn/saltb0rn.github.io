@@ -9,7 +9,7 @@ function main() {
 
     const gl = canvas.getContext('webgl');
 
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); // 告诉 WebGL 执行 NDC 坐标到屏幕坐标的变换
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 

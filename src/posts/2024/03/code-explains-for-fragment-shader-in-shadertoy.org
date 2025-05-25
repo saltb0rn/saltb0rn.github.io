@@ -787,7 +787,7 @@ $mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x 
 
 $dFdx(attr)$ 其实就是在求在当前片元的 $x$ 轴方向上的某个属性的 $attr$ 的偏导数(=partial derivative=),
 
-虽然在直觉上上挺相似的, 但它并非人们所知的微积分中的偏导数, 其定义为:
+虽然在直觉上挺相似的, 但它并非人们所知的微积分中的偏导数, 其定义为:
 
 $dFdx(attr) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr$.
 
@@ -1117,6 +1117,7 @@ $texture$ 函数从贴图 $tex$ 中获取指定纹理坐标 $texCoord$ 上的纹
 [[../../../files/texture_wrapping.png]]
 
 ** 常用自定义函数
+
 *** remap 函数
 
 #+begin_quote
@@ -1130,6 +1131,182 @@ $remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射
 *** 调色板生成
 
 参考资料: https://offscreencanvas.com/issues/generative-shader-color-palettes/
+
+
+** 创意用的数学函数
+
+*** 选择正确的函数
+
+*** 衰减函数
+
+# https://iquilezles.org/articles/functions/
+
+# 衰减函数: https://chat.deepseek.com/a/chat/s/16130bb5-f13a-4c4d-9d1b-d89908095161
+
+# https://www.desmos.com/calculator/txs3jsi0c4?lang=zh-CN
+
+# 在图形学和物理模拟中，除了高斯衰减函数，还有多种常用的衰减函数，每种函数都有其独特的特性和适用场景。以下是常见的衰减函数及其数学表达式、特点和应用对比：
+
+# ---
+
+# ### **1. 线性衰减（Linear Falloff）**
+# **公式**：
+# \[
+# f(d) = 1.0 - \text{saturate}(d)
+# \]
+# **特点**：
+# - 从中心到边缘线性递减，计算简单。
+# - 在边界处（\( d = 1 \)）可能不连续（硬截断）。
+# **应用**：
+# - 基础遮罩（如圆形遮罩）。
+# - 快速原型开发。
+
+# **示例代码**：
+# ```glsl
+# float falloff = 1.0 - smoothstep(0.0, radius, distance(coord, center));
+# ```
+
+# ---
+
+# ### **2. 指数衰减（Exponential Falloff）**
+# **公式**：
+# \[
+# f(d) = e^{-k \cdot d}
+# \]
+# **特点**：
+# - 平滑衰减，但衰减速率单一。
+# - 参数 \( k \) 控制衰减速度（\( k \) 越大，衰减越快）。
+# **应用**：
+# - 光照衰减（点光源、聚光灯）。
+# - 粒子透明度衰减。
+
+# **示例代码**：
+# ```glsl
+# float falloff = exp(-2.0 * distance(coord, center));
+# ```
+
+# ---
+
+# ### **3. 多项式衰减（Polynomial Falloff）**
+# **公式**：
+# \[
+# f(d) = (1.0 - d^2)^n \quad \text{或} \quad (1.0 - d)^n
+# \]
+# **特点**：
+# - 通过幂次 \( n \) 控制衰减曲线形状。
+# - 比线性衰减更灵活，可调整陡峭度。
+# **应用**：
+# - 风格化效果（如卡通边缘光）。
+# - 物理模拟中的软约束。
+
+# **示例代码**：
+# ```glsl
+# float falloff = pow(1.0 - min(distance(coord, center), 1.0), 3.0);
+# ```
+
+# ---
+
+# ### **4. 平滑步进衰减（Smoothstep Falloff）**
+# **公式**：
+# \[
+# f(d) = 1.0 - \text{smoothstep}(a, b, d)
+# \]
+# **特点**：
+# - 在范围 \([a, b]\) 内提供平滑过渡。
+# - 避免线性衰减的硬边界。
+# **应用**：
+# - 抗锯齿边缘处理。
+# - 渐变遮罩（如软阴影）。
+
+# **示例代码**：
+# ```glsl
+# float falloff = 1.0 - smoothstep(0.3, 0.7, distance(coord, center));
+# ```
+
+# ---
+
+# ### **5. 反平方衰减（Inverse Square Falloff）**
+# **公式**：
+# \[
+# f(d) = \frac{1}{1 + k \cdot d^2}
+# \]
+# **特点**：
+# - 模拟真实物理光照衰减（类似平方反比定律）。
+# - 衰减速度先快后慢。
+# **应用**：
+# - 物理正确的光照计算。
+# - 引力场或粒子力场模拟。
+
+# **示例代码**：
+# ```glsl
+# float falloff = 1.0 / (1.0 + 5.0 * pow(distance(coord, center), 2.0));
+# ```
+
+# ---
+
+# ### **6. 分段衰减（Custom Piecewise Falloff）**
+# **公式**：自定义分段函数，例如：
+# \[
+# f(d) = \begin{cases}
+# 1.0 - d^2 & \text{if } d \leq 0.5, \\
+# 0.25 \cdot (1.0 - d) & \text{otherwise}.
+# \end{cases}
+# \]
+# **特点**：
+# - 完全自定义衰减曲线。
+# - 灵活性高，但需手动调参。
+# **应用**：
+# - 特殊艺术效果（如非均匀模糊）。
+# - 游戏技能范围控制。
+
+# **示例代码**：
+# ```glsl
+# float d = distance(coord, center);
+# float falloff = (d < 0.5) ? (1.0 - d * d) : (0.25 * (1.0 - d));
+# ```
+
+# ---
+
+# ### **7. 余弦衰减（Cosine Falloff）**
+# **公式**：
+# \[
+# f(d) = 0.5 + 0.5 \cdot \cos(\pi \cdot d)
+# \]
+# **特点**：
+# - 基于余弦函数的平滑过渡。
+# - 衰减对称且连续。
+# **应用**：
+# - 自然光照过渡（如天空渐变）。
+# - 波浪形遮罩。
+
+# **示例代码**：
+# ```glsl
+# float falloff = 0.5 + 0.5 * cos(PI * min(distance(coord, center), 1.0));
+# ```
+
+# ---
+
+# ### **对比总结**
+# | 衰减类型          | 优点                  | 缺点                  | 典型应用场景               |
+# |-------------------|-----------------------|-----------------------|--------------------------|
+# | **线性**          | 计算简单              | 边界不连续            | 基础遮罩                  |
+# | **指数**          | 平滑                  | 衰减速率单一          | 光照、粒子                |
+# | **多项式**        | 可调陡峭度            | 需手动选择幂次        | 风格化效果                |
+# | **平滑步进**      | 抗锯齿                | 需定义过渡范围        | 软阴影、UI 效果           |
+# | **反平方**        | 物理真实              | 计算稍复杂            | 光照、引力场              |
+# | **分段**          | 高度灵活              | 调参复杂              | 艺术特效                  |
+# | **余弦**          | 自然平滑              | 中心衰减较慢          | 渐变天空、波浪效果        |
+# | **高斯**          | 中心锐利，边缘平滑    | 计算成本较高          | 物理模拟、模糊            |
+
+# ---
+
+# ### **如何选择衰减函数？**
+# 1. **性能优先**：线性或多项式衰减。
+# 2. **物理准确性**：反平方或高斯衰减。
+# 3. **艺术控制**：分段或平滑步进衰减。
+# 4. **平滑过渡**：余弦或指数衰减。
+
+# 根据具体需求（如实时性、视觉效果、物理合理性）选择合适的函数，并通过参数微调达到目标效果。
 
 ** 基础噪声
 
@@ -2885,6 +3062,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 :END:
 
 # https://typhomnt.github.io/teaching/ray_tracing/raymarching_intro/
+# PBR Ray Marching: https://www.shadertoy.com/view/XlKSDR
 
 光线步进(=Ray Marching=)是一种渲染成像的方案, 类似渲染成像方案的还有光线投射(=Ray Casting=)和光线追踪(=Ray Tracing=).
 
@@ -2931,6 +3109,12 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   #define MAX_DIST 100.0
   #define SURF_DIST 0.01
 
+  // 兼容 glslViewer 和 ShaderToy
+  #ifndef PLATFORM_WEBGL
+  uniform vec2 u_resolution;
+  #define iResolution u_resolution
+  #endif
+
   float sphereRadius = 1.0;
   vec3 sphereCenter = vec3(0.0, 1.0, 6.0);
 
@@ -2943,7 +3127,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 
   float RayMarch(vec3 p0, vec3 rd) {
-    float dist = 0;
+    float dist = 0.0;
 
     for (int i = 0; i < MAX_STEPS; i++) {
       vec3 p = p0 + dist * rd;
@@ -2969,6 +3153,10 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+caption: 3D SDF 效果
 [[../../../files/3d-sdf-example.png]]
 
+值得注意的是, 整个场景都是通过视点坐标去描述的, 为左手坐标系: $x$ 轴往右为正, $y$ 轴往上为正, $z$ 轴往里为正.
+
+可以通过改变 =sphereCenter= 以及 =cameraPos= 进行观察来得到该结论.
+
 ***** 简单光线
 
 在实现阴影前需要先实现一个简单光线效果: =Phong lighting model= 的 =diffuse= 光计算, 具体参考我的[[../../2020/08/graphics-opengl-light-and-material.html#phong-lighting-model-diffuse][另一篇笔记]].
@@ -2977,6 +3165,14 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   #define MAX_STEPS 100
   #define MAX_DIST 100.0
   #define SURF_DIST 0.01
+
+  #ifndef PLATFORM_WEBGL
+  uniform vec2 u_resolution;
+  uniform float u_time;
+
+  #define iResolution u_resolution
+  #define iTime u_time
+  #endif
 
   float sphereRadius = 1.0;
   vec3 sphereCenter = vec3(0.0, 1.0, 6.0);
@@ -2990,7 +3186,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 
   float RayMarch(vec3 p0, vec3 rd) {
-    float dist = 0;
+    float dist = 0.0;
 
     for (int i = 0; i < MAX_STEPS; i++) {
       vec3 p = p0 + dist * rd;
@@ -3055,6 +3251,14 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   #define MAX_DIST 100.0
   #define SURF_DIST 0.01
 
+  #ifndef PLATFORM_WEBGL
+  uniform vec2 u_resolution;
+  uniform float u_time;
+
+  #define iResolution u_resolution
+  #define iTime u_time
+  #endif
+
   float sphereRadius = 1.0;
   vec3 sphereCenter = vec3(0.0, 1.0, 6.0);
 
@@ -3067,7 +3271,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 
   float RayMarch(vec3 p0, vec3 rd) {
-    float dist = 0;
+    float dist = 0.0;
 
     for (int i = 0; i < MAX_STEPS; i++) {
       vec3 p = p0 + dist * rd;
@@ -3105,7 +3309,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
       本应该是这样的, 但根据 RayMarch 函数的实现, p 本来就是交点了, 所以循环的第一轮就因为 d < SURF_DIST 被终止了,
 
       所以我们需要一个相对 p 点稍微偏移一点的点避免这种情况, 只要偏移的地方不是进入物体内, 那么往任意方向偏都可以
-     ,*/
+    ,*/
     //
     float d = RayMarch(p + n * SURF_DIST * 2.0, l);
     if (d < length(p - lightPos)) {
@@ -3136,16 +3340,23 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 ***** 对相机更多的控制
 
-目前的相机只能看着右手坐标系的 $(0, 0, -1)$ 方向, 所以实现一个函数来控制相机的观察方向,
+目前相机的位置以及观察方向都是固定的, 观察方向是 $(0, 0, 1)$.
 
-具体原理参考 [[../../2020/06/graphics-opengl-transformation.html#from-world-to-view][从世界坐标系到视点坐标系的变换]] 里面矩阵 $M_{view}$ 的构建过程.
+并且是在视点空间上的, 可以通过修改 =cameraPos= 来得到这个结论.
+
+为了实现相机的控制, 需要先定义函数来构建变换, 实时计算得出视觉射线.
+
+构建方式类似于 [[../../2020/06/graphics-opengl-transformation.html#from-world-to-view][从世界坐标系到视点坐标系的变换]] 里面矩阵 $M_{view}$ 的构建过程.
+
+差别在于, 上述参考是从世界空间到视点空间的变换构建出来的, 这里是直接从视点空间进行构建.
 
 #+BEGIN_SRC glsl
-  // 原代码来至: https://www.shadertoy.com/view/3ssGWj
-  // 这里对原代码进行了一些翻译
+  // 原代码来自: https://www.shadertoy.com/view/3ssGWj
+  // 这里对原代码进行了一些调整来提高可读性
   vec3 GetRayDirection(vec2 uv, vec3 cameraPos, vec3 lookAtPos, float near) {
     /* 构建视点坐标系, 这里和上面的参考有一些区别,
-       在于 GetRayDirection 的参数都是视点坐标系, 所以在构建时用左手坐标系来构建
+
+       在于 GetRayDirection 的参数都是视点坐标系, 所以在构建时用左手坐标系来构建.
     ,*/
     vec3 up = vec3(0, 1, 0),
       forward = lookAtPos - cameraPos,
@@ -3156,7 +3367,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
     /* 因为 f 和 r 都是单位向量且相互垂直,
        u 可以看作是 f 围绕 r 或 r 围绕 f 旋转 90 度到达的方向,
        所以 u 无需再 normalize */
-    vec3 nearPlaneCenter = cameraPos + forward * near; // 近裁剪平面的中心位置
+    vec3 nearPlaneCenter = cameraPos + f * near; // 近裁剪平面的中心位置
     // uv 是该平面上的 NDC 坐标, 需要转换到视觉坐标系空间上
     vec3 p = nearPlaneCenter + uv.x * r + uv.y * u;
     vec3 rd = normalize(p - cameraPos);
@@ -3165,8 +3376,8 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
   void main() {
     vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
-    vec3 cameraPos = vec3(0.0, 4.0, -5.0); // 重新设置了相机位置
-    vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 3.0, 0.0), 0.5);
+    vec3 cameraPos = vec3(0.0, 1.0, 0.0);
+    vec3 rd = GetRayDirection(uv, cameraPos, cameraPos + vec3(0.0, 0.0, 1.0), 0.5);
     float d = RayMarch(cameraPos, rd);
     vec3 col = vec3(0.0);
 
@@ -3220,7 +3431,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
     cameraPos = rotateY * rotateX * cameraPos;
     // 相机变换是物体变换
 
-    vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 3.0, 0.0), 0.5);
+    vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 3.0, 0.0), 0.5); // 重新设置了 lookAtPos
     float d = RayMarch(cameraPos, rd);
     vec3 col = vec3(0.0);
 
@@ -3262,7 +3473,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 ***** 抗锯齿 (Anti-Aliasing)
 
-使用 [[https://en.wikipedia.org/wiki/Box_blur][盒装模糊]] 实现抗锯齿.
+使用 [[https://en.wikipedia.org/wiki/Box_blur][盒状模糊]] 实现抗锯齿.
 
 #+BEGIN_SRC glsl
   void main() {
@@ -3313,12 +3524,15 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 #+END_SRC
 
+***** 贴图映射 (Texture Mapping)
+
+***** 环境光遮蔽 (Ambient Occlusion)
 
 **** 3D SDF 变换的注意事项
 
 在 =2D SDF= 时就介绍过对 =SDF= 进行变换的[[sdf-transformation][方法]]了, 具体就不赘述了.
 
-但还是要再提醒一点, 在我们的渲染器中, 射线上点的 $p$ 是视点空间上的坐标, 基本上一切坐标都是视点空间上, 包括相机位置, 并且是左手坐标系.
+但还是要再提醒一点, 在我们的渲染器中, 射线上点的 $p$ 是视点空间上的坐标, 基本上一切坐标都是视点坐标, 包括相机位置, 并且是左手坐标系.
 
 因此, 要对物体实现 $M = M_0 \times M_1$ 变换, 那么对 $p$ 点应该实现 $M^{-1} = M_{1}^{-1} \times M_{0}^{-1}$ 的变换: $M^{-1} p$.
 
@@ -3508,6 +3722,8 @@ $n(u, v, w) = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - 
 #+begin_quote
 施工中
 #+end_quote
+
+# https://kyndinfo.notion.site/Convolution-ad2fd129ccfa4d358c9683a20e383ad5
 
 *** 图像边缘检测 (Edge detection)
 
