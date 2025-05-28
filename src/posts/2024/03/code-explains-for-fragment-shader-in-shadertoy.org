@@ -1139,7 +1139,7 @@ $remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射
 参考资料: https://offscreencanvas.com/issues/generative-shader-color-palettes/
 
 
-** 创意用的数学函数
+** COMMENT 创意用的数学函数
 
 *** 选择正确的函数
 
@@ -1313,6 +1313,7 @@ $remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射
 # 4. **平滑过渡**：余弦或指数衰减。
 
 # 根据具体需求（如实时性、视觉效果、物理合理性）选择合适的函数，并通过参数微调达到目标效果。
+
 
 ** 基础噪声
 
@@ -2338,7 +2339,7 @@ https://www.shadertoy.com/view/llsGWl
 施工中
 #+end_quote
 
-全称符号距离函数(=Signed Distance Function=) 或符号距离场合(=Signed Distance Field=), 这里用函数 $f$ 表示.
+全称符号距离函数(=Signed Distance Function=) 或符号距离场(=Signed Distance Field=), 这里用函数 $f$ 表示.
 
 $f$ 用来计算点 $p$ 到几何体 $G$ 的正交距离(=orthogonal distance=), 也就是找到点到几何体的垂线,
 
@@ -3070,10 +3071,17 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 # https://typhomnt.github.io/teaching/ray_tracing/raymarching_intro/
 # https://blog.maximeheckel.com/posts/painting-with-math-a-gentle-study-of-raymarching/
 # PBR Ray Marching: https://www.shadertoy.com/view/XlKSDR
-# https://github.com/electricsquare/raymarching-workshop?tab=readme-ov-file
 # InteriorMapping: https://www.proun-game.com/Oogst3D/CODING/InteriorMapping/InteriorMapping.pdf
 # https://halisavakis.com/my-take-on-shaders-interior-mapping/
 # https://github.com/jensmcatanho/interior-mapping/tree/master/resources
+
+#+begin_quote
+参考资料:
+
+1. [[https://www.youtube.com/watch?v=PGtv-dBi2wE&list=PLGmrMu-IwbgtMxMiV3x4IrHPlPmg7FD-P&index=2][The Art of Code - Ray Marching for Dummies]]
+2. [[https://github.com/electricsquare/raymarching-workshop?tab=readme-ov-file][Ray Marching Workshop]]
+
+#+end_quote
 
 光线步进(=Ray Marching=)是一种渲染成像的方案, 类似渲染成像方案的还有光线投射(=Ray Casting=)和光线追踪(=Ray Tracing=).
 
@@ -3105,9 +3113,9 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+caption: 光线步进
 [[../../../files/08_displacement_05.png]]
 
-假设要判断位于 $p_0$ 的相机在方向 $\vec{rd}$ (是单位向量) 上发射出的一条视角射线是否与物体相交, 先在 $p_0$ 上找到距离步长 $d_1$ 并前进到 $p_1$, 只有这个步长可以保证所有从 $p_1$ 出发的任意方向射线不会进入物体内部, 比如步长 $e_1$ 会让某些方向的射线进入物体内, $d_1$ 的特点是所有可选步长中最短, 后续 $d_2$, $d_3$ 和 $d_4$ 都是这么来的. 前进后的坐标计算为 $p_n = p_0 + \vec{rd} \cdot \sum\limits_{i=0}^{n} d_i$, 其中 $d_0 = 0$.
+假设要判断位于 $p_0$ 的相机在方向 $\vec{rd}$ (是单位向量) 上发射出的一条视角射线是否与物体相交, 先在 $p_0$ 上找到距离步长 $d_1$ 并沿着方向 $\vec{rd}$ 前进到 $p_1$, 只有这个步长可以保证所有从 $p_0$ 沿着任意方向发出的射线不会进入物体内部, 比如步长 $e_1$ 会让某些方向的射线进入物体内, $d_1$ 的特点是所有可选步长中最短, 后续 $d_2$, $d_3$ 和 $d_4$ 的计算同理. 前进后的坐标计算为 $p_n = p_0 + \vec{rd} \cdot \sum\limits_{i=0}^{n} d_i$, 其中 $d_0 = 0$.
 
-由于光线在前进时不断形成球体检查交点, 所以光线步进也被称为球体追踪(=sphere tracing=).
+由于光线在前进时不断形成球体检查相交情况, 所以光线步进也被称为球体追踪(=sphere tracing=).
 
 因为 $\sum\limits_{i=0}^{n} d_i$ 是相机与场景交点的正交距离, 所以可以使用光线步进来计算 =3D= 场景的 =SDF=: 相机与场景之间的正交距离场.
 
@@ -3562,6 +3570,8 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
   }
 #+END_SRC
 
+当然, 抗锯齿会严重影响渲染效率, 效率和效果一直都要进行取舍.
+
 ***** 无 UV 贴图映射 (Texture Mapping without UVs)
 
 =RayMarching= 渲染器中不存在顶点数据, 也不存在与顶点关联的纹理坐标.
@@ -3870,7 +3880,7 @@ vec3 TriplanarMap(vec3 p, vec3 normal, sampler2D tex) {
 雾体效果的实现方式并不固定, 每个人都可以自行建立雾体的模型, 对于初学者而言, 可以参考 [[https://registry.khronos.org/OpenGL-Refpages/gl2.1/xhtml/glFog.xml][glFog]] 里面的 =GL_EXP= 模式的雾体.
 
 #+begin_quote
-需要注意, 文档里面的公式有一些错误, 这里会对公式进行一些调整.
+需要注意, 文档里面的公式排版有一些错误, 因此对公式进行了一些调整.
 #+end_quote
 
 首先是雾体指数的计算: $f = e^{-\mathrm{density} \cdot d}$,
@@ -3948,7 +3958,7 @@ $C_{r} \times (1 - F) + F \times C_{f} = C_{r} \times f + (1 - f) \times C_{f}$.
   }
 #+END_SRC
 
-
+例子中球体在原本的位置受雾体的影响不是很大, 可以把球体设置得远一点观察效果.
 
 ***** 环境光遮蔽 (Ambient Occlusion)
 
@@ -3968,21 +3978,21 @@ $Q$ 是射线从 $P$ 点出发移动距离 $d$ 后所到达的点: $Q = P + d \c
 
 左图只有地面, 右图有地面和物体 $O$.
 
-在左图中, $Q$ 在场景中的 =SDF= ($\mathrm{sdfScene}(P + d \cdot N)$) 远远大于 0;
+在左图中, $Q$ 在场景中的距离场 ($\mathrm{sdfScene}(P + d \cdot N)$) 远远大于 0;
 
-在右图中, $Q$ 在场景中的 =SDF= 非常接近 0.
+在右图中, $Q$ 在场景中的距离场非常接近 0.
 
 换而言之, 在 $Q$ 沿着交点 $P$ 的法线方向 $N$ 移动距离 $d$ 时,
 
-如果 $Q$ 的 =SDF= 接近于 0 且 $d$ 非常小, 那么可以断言 $P$ 被遮蔽了.
+如果 $Q$ 的距离场接近于 0 且 $d$ 非常小, 那么可以断言 $P$ 被遮蔽了.
 
 在拥有判断是否遮蔽的方法后, 就得思考如何确定遮蔽的程度.
 
 再仔细思考可以发现以下规律:
 
-在没有遮蔽️物的情况下, $Q$ 的 =SDF= 就等于 $d$: $d - \mathrm{sdfScene}(P + d \ cdot N) = 0$.
+在没有遮蔽️物的情况下, $Q$ 的距离场就等于 $d$: $d - \mathrm{sdfScene}(P + d \cdot N) = 0$.
 
-在有遮蔽物的情况下, $Q$ 的 =SDF= 就小于 $d$: $d - \mathrm{sdfScene}(P + d \cdot N) \gt 0$.
+在有遮蔽物的情况下, $Q$ 的距离场就小于 $d$: $d - \mathrm{sdfScene}(P + d \cdot N) \gt 0$.
 
 正好可以利用 $d$ 与 $\mathrm{sdfScene}(P + d \cdot N)$ 的差值作为遮蔽程度.
 
@@ -4090,17 +4100,115 @@ $\mathrm{occlusion} = \sum \limits_{i=0}^{n}(d_{i} - \mathrm{sdfScene}(P + d_{i}
 
 遮蔽程度的计算并非固定不变的, 对比 =Alex Evans= 的文章和 =Inigo Quilez= 的实现后会发现两者在核心原理上保持一致, 但遮蔽计算有差别.
 
+***** COMMENT 球体追踪优化
+
+https://erleuchtet.org/~cupe/permanent/enhanced_sphere_tracing.pdf
+
+***** COMMENT 反射/折射
+
+https://www.shadertoy.com/view/Mtd3DB
+
+***** 包围体层次结构 (Bounding Volume Hierarchy, BVH)
+
+当场景越来越复杂时, 渲染器的渲染效率会大幅度下降, 当然这是无法避免的, 但可以进行一定程度的优化.
+
+渲染效率下降是由于 =sdfScene= 的复杂度增加, 比如增加多两个球体:
+
+#+BEGIN_SRC glsl
+  Intersection sdfScene(vec3 p) {
+    Intersection sphere1 = Intersection(sdfSphere(p - sphereCenter, sphereRadius), 1);
+    Intersection sphere2 = Intersection(sdfSphere(p - (sphereCenter + vec3(0, 2.1, 0)), sphereRadius), 1);
+
+    // 新增球体
+    vec3 transCenter = sphereCenter + vec3(10.0, 0.0, 0.0);
+    Intersection sphere3 = Intersection(sdfSphere(p - transCenter, sphereRadius), 1);
+    Intersection sphere4 = Intersection(sdfSphere(p - (transCenter + vec3(0, 2.1, 0)), sphereRadius), 1);
+
+    Intersection ground = Intersection(sdfGround(p), 2);
+
+    Intersection result = opU(sphere1, sphere2);
+    result = opU(result, sphere3);
+    result = opU(result, sphere4);
+    result = opU(result, ground);
+    return result;
+  }
+#+END_SRC
+
+#+attr_html: :width 504px
+[[../../../files/more-complicated-scene.png]]
+
+目前场景还不算太复杂, 然而性能也下降不少了.
+
+在计算其中两个球体的距离场时, 另两个球体的距离场计算是没有必要的, 因为两组球体之间的距离相差比较远, 无意义的计算就是渲染效率下降的原因.
+
+解决这个问题的有效方法就是按照物体之间的距离把场景划分成若干个区域, 接近的物体会被划分在一个区域,
+
+区域也可能会以同样方法划分成更多小区域, 整个场景结果最终形成一个树状结构, 比如下图:
+
+#+attr_html: :width 504px
+[[../../../files/Primitives-and-hierarchy.svg]]
+
+这个就是 =BVH=. 那么问题来了, =BVH= 是如何提高渲染效率呢?
+
+其实非常简单, 当射线进入某个区域时, 就只针对这个区域里的物体进行距离场计算, 这样一来就可以避免无意义的距离场计算.
+
+在实现中可以手动对物体进行划分, 还是以 =sdfScene= 为例, 可以把球体按照距离进行两两划分.
+
+#+BEGIN_SRC glsl
+  // 确定区域的工具
+  float sdfBox( vec3 p, vec3 b ) {
+    // b = (0.5 * w, 0.5 * h, 0.5 * d)
+    vec3 d = abs(p) - b;
+    return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
+  }
+
+  Intersection sdfScene(vec3 p) {
+    Intersection result = Intersection(sdfGround(p), 2);
+    vec3 transCenter = sphereCenter + vec3(10.0, 0.0, 0.0);
+
+    /* sdfBox(p - vec3(sphereCenter.x, sphereCenter.y, 2.1), vec3(2.1, 2.1, 4.2)) 是一个盒子,
+
+       盒子在位置上与第一个和第二个球体重叠, 在大小上包含了两个球体
+    ,*/
+
+    if (sdfBox(p - vec3(sphereCenter.x, 2.1, sphereCenter.z), vec3(1.05, 2.1, 1.05)) < result.dist) {
+      Intersection sphere1 = Intersection(sdfSphere(p - sphereCenter, sphereRadius), 1);
+      Intersection sphere2 = Intersection(sdfSphere(p - (sphereCenter + vec3(0, 2.1, 0)), sphereRadius), 1);
+      result = opU(result, sphere1);
+      result = opU(result, sphere2);
+    }
+
+    if (sdfBox(p - vec3(transCenter.x, 2.1, sphereCenter.z), vec3(1.05, 2.1, 1.05)) < result.dist) {
+      Intersection sphere3 = Intersection(sdfSphere(p - transCenter, sphereRadius), 2);
+      Intersection sphere4 = Intersection(sdfSphere(p - (transCenter + vec3(0, 2.1, 0)), sphereRadius), 2);
+      result = opU(result, sphere3);
+      result = opU(result, sphere4);
+    }
+    return result;
+  }
+#+END_SRC
+
+这段代码使用了 =sdfBox= 对物体进行"包裹", 渲染器首先和这些盒子进行相交判断, 在确定盒子相交后再进一步与里面的物体进行相交判断.
+
+也并非一定要用盒子对物体进行包裹, 也可以使用其它与被包裹的物体形状相近的物体进行包裹.
+
 **** 3D SDF 变换的注意事项
 
 在 =2D SDF= 时就介绍过对 =SDF= 进行变换的[[sdf-transformation][方法]]了, 具体就不赘述了.
 
 但还是要再提醒一点, 在我们的渲染器中, 一切坐标都是视点坐标, 左手坐标系.
 
-射线上点的 $p$, 相机位置, 物体的位置都是视点坐标.
+射线上点的 $p$, 相机位置以及物体位置都是视点坐标.
 
 因此, 要对物体实现 $M = M_0 \times M_1$ 变换, 那么对 $p$ 点应该实现 $M^{-1} = M_{1}^{-1} \times M_{0}^{-1}$ 的变换: $M^{-1} p$.
 
-这里特别"点名"缩放变换造成的异常, 用前面的 =sdfScene= 函数为例子, 对场景里面的球体进行缩小,
+在实际的光栅渲染器中, 缩放变换并不被包含在视点变换中, 被认为是无意义的.
+
+因此, 相对于平移和旋转变换, 缩放变换对于依赖视点变换的 =RayMarching= 渲染器来说同样称得上为"异类".
+
+它也的确带来了一些问题. 用前面的 =sdfScene= 函数为例子,
+
+对场景里面的球体进行缩小, 导致在某些视觉角度上看到球体出现一些异常.
 
 #+BEGIN_SRC glsl
   float sdfScene(vec3 p) {
@@ -4125,11 +4233,11 @@ $\mathrm{occlusion} = \sum \limits_{i=0}^{n}(d_{i} - \mathrm{sdfScene}(P + d_{i}
 
 解决方法是对距离场进行等倍缩小, 让距离场除以原缩放系数当中最大的一个来缩小步长.
 
-缩小步长可以保证射线绝对不会找错交点, 因此除以更大系数也无所大碍, 但是这导致了需要更多的步进次数, 从而减低性能.
+缩小步长可以保证射线绝对不会找错交点, 因此除以更大系数也无所大碍, 但是这导致了需要更多的步进次数, 从而降低渲染效率.
 
 对球体进行放大不存在这个问题, 因为它的距离场被缩小了, 不会出现步长过大的情况.
 
-不过如果是均匀放大, 可以为了性能适当拉伸一下距离场: 让距离场合除以缩小系数.
+不过如果是均匀放大, 可以为了性能适当拉伸一下距离场: 让距离场除以缩小系数.
 
 #+BEGIN_SRC glsl
   float sdfScene(vec3 p) {
