@@ -11,7 +11,9 @@
 
 想做到 *抄明白*, 得了解代码使用了哪些知识, 这些知识就像是积木一样, 我们要做的利用这些积木搭出自己想要的东西,
 
-这里就是专门介绍这些常用的积木, 它们基本上是数学知识, 主要是线性代数, 微积分以及概率论的这三个方面, 当然数值分析也很重要.
+这里就是专门介绍这些常用的积木, 它们基本上是数学知识, 主要是线性代数, 微积分以及概率论的这三个方面,
+
+当然, 使用代码实现数学内容少不了数值分析这一门学问, 另外还包含一些数字信号处理和图像处理的的知识.
 
 但是本文并不是要成为数学的入门课, 而是学习如何用它们解决图形上的一些问题, 同时尽量会说明引用了什么数学定理,
 
@@ -45,15 +47,17 @@
 
 理解定理的证明思路, 是为了理解定理诞生的动机及思想, 只有这样避免死记硬背, 为后面的运用自如打下基础.
 
-复杂理论背后的往往是简单想法, 不过想找到这个简单想法可不简单.
+*复杂理论最初必定是源自一个简单的想法*, 不过想找到这个简单想法可不简单.
 
-最后就是对于知识的运用, 当到了知道哪些知识可以解决什么问题, 以及看到问题可以联想到用哪些知识解决,
+最后就是对于知识的运用, 当到了知道哪些知识可以解决什么问题, 以及看到问题可以联想到用哪些知识解决, 就说明到达运用自如的地步了,
 
-就说明到达运用自如的地步了, 而这种程度的联想就是俗称的灵感.
+而在遇到一些从未见过的新问题时, 也能联想到使用哪些知识进行分析和解决, 到了这一个地步就极有可能发掘出知识的新用法,
 
-想要到达运用自如的境界需要经常做题练习, 正如马斯洛锤子定理: 拿着锤子的人看什么都像钉子,
+而这种程度的联想就是人们口中的灵感，也是人们口中天才的特质.
 
-当手头上的工具多了, 看到的景象就不一样了. 所以, 学数学依靠的是耐心和理解.
+想要到达运用自如的境界需要经常练习, 以及找出知识与知识之间的联系, 就比如梯度向量与导数与法线向量三者之间的联系.
+
+所以说, 学数学依靠的是耐心和理解.
 
 #+begin_quote
 你可能会有异议, 天赋就不重要了吗?
@@ -64,6 +68,8 @@
 对于抄代码也一样, 先找出这段代码背后是哪些知识原理, 解决什么类型的问题, 然后抄到形成条件反射随手就能写出来的程度,
 
 但严谨死记硬背, 抄到即便别人写法不太一样但也能马上看出来是抄过的代码, 抄到明白每一个参数变量的作用, 可以按照自己的意愿对代码进行调整.
+
+当基础知识足够扎实时, 应该就有能力实现 [[https://advances.realtimerendering.com/][Advances in Real-Time Rendering in 3D Graphics and Games]] 里面的技术了.
 #+end_abstract
 
 # https://clauswilke.com/art/post/shaders
@@ -3343,7 +3349,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+caption: 3D SDF 阴影
 [[../../../files/3d-sdf-example-shadow.png]]
 
-***** 对相机更多的控制
+***** 动态计算射线方向以及伽马校正
 
 目前相机的位置以及观察方向都是固定的, 观察方向是 $(0, 0, 1)$.
 
@@ -3392,10 +3398,33 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
       col = vec3(diffuse);
     }
 
-    col = pow(col, vec3(.4545)); // [0, 1]^3 to [0, 1]^3
+    col = pow(col, vec3(.4545)); // Gamma correction: [0, 1]^3 to [0, 1]^3
     gl_FragColor = vec4(col, 1.0);
   }
 #+END_SRC
+
+参数 $near$ 对应着镜头的焦距, 焦距越长, $fov$ 越小; 反之, 焦距越短, $fov$ 越大.
+
+换而言之, $near$ 可以间接控制 $fov$.
+
+另外, 在最后的颜色输出阶段进行了调整, 这项调整被称为伽马校正(=gamma correction=). 伽马校正是最容易被人忽视的环节.
+
+被发送到显示器的像素值是处于伽马空间(=gamma space=)的, 该空间并非线性, 使用更少的位(=bits=)来储存人类敏感度不高的颜色, 最大化地提高储存效率和精确度.
+
+不同显示器之间有着不同的伽马曲线(=gamma curve=), 人们都以 $\gamma_{\text{monitor}} = 2.2$ 作为基准的显示器伽马,
+
+其对应的伽马曲线为 $y = x^{2.2}$, 其中 $x$ 是图像原本的色彩, $x^{2.2}$ 则是在显示器上的色彩.
+
+以 $\gamma_{\text{ideal}} = 1$ 作为色彩处理效果的理想状态: $y = x^{1}$, 也就是以图像真正的色彩进行输出.
+
+为了达到理想状态, 需要根据显示器伽马输出的颜色 $x^{2.2}$ 进行校正: $(x^{\gamma_{\text{correction}}})^{\gamma_{\text{monitor}}} = x^{\gamma_{\text{ideal}}}$,
+
+计算得出校正值为 $\gamma_{\text{correction}} = \frac{1}{2.2}$.
+
+#+attr_html: :width 504px
+[[../../../files/1-gamma.svg]]
+
+代码中的 =.4545= 就是 $\frac{1}{2.2}$.
 
 ***** 使用鼠标控制相机
 
@@ -3436,7 +3465,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
     cameraPos = rotateY * rotateX * cameraPos;
     // 相机变换是物体变换
 
-    vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 3.0, 0.0), 0.5); // 重新设置了 lookAtPos
+    vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 3.0, 0.0), 2.0); // 重新设置了 lookAtPos, 以及 near
     float d = RayMarch(cameraPos, rd);
     vec3 col = vec3(0.0);
 
@@ -3446,7 +3475,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
       col = vec3(diffuse);
     }
 
-    col = pow(col, vec3(.4545)); // [0, 1]^3 to [0, 1]^3
+    col = pow(col, vec3(.4545)); // Gamma correction: [0, 1]^3 to [0, 1]^3
     gl_FragColor = vec4(col, 1.0);
   }
 #+END_SRC
@@ -3478,7 +3507,11 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 ***** 抗锯齿 (Anti-Aliasing)
 
-使用 [[https://en.wikipedia.org/wiki/Box_blur][盒状模糊]] 实现抗锯齿.
+锯齿的本质就是像素之间的变化缺乏连续性, 把连续对象转换成离散对象是造成连续性缺失的原因.
+
+比如一个像素的颜色为红色, 相邻像素的颜色为蓝色, 两者之间没有一个过渡, 导致看起来很突兀.
+
+下面使用 [[https://en.wikipedia.org/wiki/Box_blur][盒状模糊]] 对像素的颜色进行重新计算, 让像素之间的变换更加平滑, 从而实现抗锯齿:
 
 #+BEGIN_SRC glsl
   void main() {
@@ -3524,7 +3557,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
     col /= count;
     // AA ends here
 
-    col = pow(col, vec3(.4545));  // [0, 1]^3 to [0, 1]^3
+    col = pow(col, vec3(.4545)); // Gamma correction: [0, 1]^3 to [0, 1]^3
     gl_FragColor = vec4(col, 1.0);
   }
 #+END_SRC
@@ -3535,7 +3568,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 即便是光栅渲染器, 也有存在顶点数据当不存在纹理坐标的情况, 需要根据顶点数据计算出纹理坐标.
 
-如何计算顶点数据取决于具体的几何体以及如何映射,
+如何计算顶点数据取决于具体的几何体以及想要如何映射.
 
 教材 [[https://www.amazon.com/Fundamentals-Computer-Graphics-Steve-Marschner/dp/1482229390][Fundamentals Of Computer Graphics, 4th, 11.2.1 Geometrically Determined Coordinates]] 中提供了简单几何体的贴图映射算法.
 
@@ -3543,15 +3576,19 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 [[../../../files/planar-mapping.png]]
 
-如果从右侧($X$ 轴方向)进行投影, 以顶点的 $yz$ 分量作为 $uv$;
+如果从右侧($X$ 轴方向)进行投影, 以顶点坐标的 $yz$ 分量作为 $uv$;
 
 如果从顶部($Y$ 轴方向)进行投影, 以顶点坐标的 $xz$ 分量作为 $uv$;
 
-如果从正面($Z$ 轴方向)进行投影, 以顶点的 $xy$ 分量计算 $uv$.
+如果从正面($Z$ 轴方向)进行投影, 以顶点坐标的 $xy$ 分量计算 $uv$.
 
 这种映射算法适用于只展示几何体单面的情况, 几何体的其它面会有严重的拉伸和形变.
 
-教材上没有提到三平面映射(=Triplanar Mapping=)这种算法, 它是平面映射的高阶版本:
+想要解决其它面的拉伸和形变问题, 有很多种方案, 比如很多人第一个想到的就是 =3D= 贴图,
+
+=3D= 贴图也无需 =UV= 映射, 直接根据顶点坐标进行采样, 不过会占用更高的内存.
+
+因此, 人们想到了一种比 =3D= 贴图更低消耗的映射方法: 三平面映射(=Triplanar Mapping=)这种算法, 它是平面映射的高阶版本:
 
 对几何体的顶点 $(x, y, z)$ 分别在 $XYZ$ 三轴进行正交投影, 分别读取对应的纹理: $tex_{x}$, $tex_{y}$ 和 $tex_{z}$, 以某种权重进行求和, 求和结果就作为该顶点的纹理.
 
@@ -3641,8 +3678,7 @@ vec3 TriplanarMap(vec3 p, vec3 normal, sampler2D tex) {
   }
 
   Intersection sdfScene(vec3 p) {
-    vec3 sp = vec3(0.6, 0.6, 0.6) * p;
-    Intersection sphere = Intersection(sdfSphere(sp - sphereCenter, sphereRadius), 1);
+    Intersection sphere = Intersection(sdfSphere(p - sphereCenter, sphereRadius), 1);
     Intersection ground = Intersection(sdfGround(p), 2);
     return opU(sphere, ground);
   }
@@ -3747,7 +3783,7 @@ vec3 TriplanarMap(vec3 p, vec3 normal, sampler2D tex) {
       for (int aaX = -1; aaX <= 1; aaX++) {
         vec2 coord = gl_FragCoord.xy + vec2(aaX, aaY) / AA_size;
         vec2 uv = (2.0 * coord - iResolution.xy) / min(iResolution.x, iResolution.y);
-        vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 0.0, 1.0), 0.5);
+        vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 0.0, 1.0), 2.0);
         // 调整11: 修改返回值类型
         Intersection d = RayMarch(cameraPos, rd);
         if (d.dist < MAX_DIST) {
@@ -3766,18 +3802,301 @@ vec3 TriplanarMap(vec3 p, vec3 normal, sampler2D tex) {
       }
     }
     col /= count;
+    col = pow(col, vec3(.4545));  // Gamma correction: [0, 1]^3 to [0, 1]^3
+    gl_FragColor = vec4(col, 1.0);
+  }
+#+END_SRC
+
+#+attr_html: :width 504px
+[[../../../files/raymarching-tirplanar-mapping.png]]
+
+***** 天空盒 (Skybox)
+
+没有与任何物体相交的地方就是天空.
+
+#+BEGIN_SRC glsl
+  void main() {
+
+    vec3 cameraPos = vec3(0., 1.0, 5.);
+
+    vec2 m = iMouse.xy / iResolution.xy;
+    float sX = sin(m.y - .5);
+    float cX = cos(m.y - .5);
+    mat3 rotateX = mat3(1.0, 0.0, 0.0,
+                        0.0, cX, sX,
+                        0.0, -sX, cX);
+
+    float sY = sin(m.x * 6.2831);
+    float cY = cos(m.x * 6.2831);
+    mat3 rotateY = mat3(cY, 0.0, -sY,
+                        0.0, 1.0, 0.0,
+                        sY, 0.0, cY);
+
+    cameraPos = rotateY * rotateX * cameraPos;
+    vec3 col = vec3(0.0);
+
+    float AA_size = 3.0;
+    int count = 0;
+    for (int aaY = -1; aaY <= 1; aaY++) {
+      for (int aaX = -1; aaX <= 1; aaX++) {
+        vec2 coord = gl_FragCoord.xy + vec2(aaX, aaY) / AA_size;
+        vec2 uv = (2.0 * coord - iResolution.xy) / min(iResolution.x, iResolution.y);
+        vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 0.0, 1.0), 2.0);
+        Intersection d = RayMarch(cameraPos, rd);
+        if (d.dist < MAX_DIST) {
+          vec3 p = cameraPos + d.dist * rd;
+          vec3 n = GetNormal(p);
+          vec3 tex = vec3(1.0);
+          if (1 == d.matID) {
+            tex = TriplanarMap(p, n, iChannel0);
+          }
+          float diffuse = GetLight(p);
+          col += vec3(tex * diffuse);
+        } else {
+          // 天空盒就是没有与射线命中的情况
+          col = vec3(0.3, 0.36, 0.6) - (rd.y * 0.4);
+        }
+        count++;
+      }
+    }
+    col /= count;
+    col = pow(col, vec3(.4545)); // Gamma correction: [0, 1]^3 to [0, 1]^3
+    gl_FragColor = vec4(col, 1.0);
+  }
+#+END_SRC
+
+***** 雾体 (Fog)
+
+雾体效果的实现方式并不固定, 每个人都可以自行建立雾体的模型, 对于初学者而言, 可以参考 [[https://registry.khronos.org/OpenGL-Refpages/gl2.1/xhtml/glFog.xml][glFog]] 里面的 =GL_EXP= 模式的雾体.
+
+#+begin_quote
+需要注意, 文档里面的公式有一些错误, 这里会对公式进行一些调整.
+#+end_quote
+
+首先是雾体指数的计算: $f = e^{-\mathrm{density} \cdot d}$,
+
+其中 $d$ 是顶点的视点坐标的 $z$ 分量, 换句话就是视野距离; $\mathrm{density}$ 是雾的密度;
+
+使用 $C_{f}$ 表示雾体颜色, $C_{r}$ 表示当前片元颜色, 再根据雾体指数对 $C_{f}$ 和 $C_{r}$ 进行混合,
+
+视野距离越大, 就越接近雾体颜色, $f$ 是一个随着 $d$ 增加而减少的函数, 对它"取反": $F(d) = 1 - f(d)$.
+
+$C_{r} \times (1 - F) + F \times C_{f} = C_{r} \times f + (1 - f) \times C_{f}$.
+
+具体实现如下:
+
+#+BEGIN_SRC glsl
+  vec3 applyFog(vec3 fragColor, vec3 fogColor, float d, float start, float density) {
+    float fogExp = exp(-(d - start) * density);
+    vec3 col = mix(fogColor, fragColor, fogExp);
+
+    // 或者
+    // float fogExp = 1.0 - exp(-d * density);
+    // vec3 col = mix(fragColor, fogColor, fogExp);
+    return col;
+  }
+
+  void main() {
+
+    vec3 cameraPos = vec3(0., 4.0, 3.0);
+
+    vec2 m = iMouse.xy / iResolution.xy;
+    float sX = sin(m.y - .5);
+    float cX = cos(m.y - .5);
+    mat3 rotateX = mat3(1.0, 0.0, 0.0,
+                        0.0, cX, sX,
+                        0.0, -sX, cX);
+
+    float sY = sin(m.x * 6.2831);
+    float cY = cos(m.x * 6.2831);
+    mat3 rotateY = mat3(cY, 0.0, -sY,
+                        0.0, 1.0, 0.0,
+                        sY, 0.0, cY);
+
+    cameraPos = rotateY * rotateX * cameraPos;
+    vec3 col = vec3(0.0);
+
+    float AA_size = 3.0;
+    int count = 0;
+    for (int aaY = -1; aaY <= 1; aaY++) {
+      for (int aaX = -1; aaX <= 1; aaX++) {
+        vec2 coord = gl_FragCoord.xy + vec2(aaX, aaY) / AA_size;
+        vec2 uv = (2.0 * coord - iResolution.xy) / min(iResolution.x, iResolution.y);
+        vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 4.0, 0.0), 2.0);
+        // 调整1: 把交点计算拿出来
+        Intersection d = RayMarch(cameraPos, rd);
+        vec3 p = cameraPos + d.dist * rd;
+        if (d.dist < MAX_DIST) {
+          vec3 n = GetNormal(p);
+          vec3 tex = vec3(1.0);
+          if (1 == d.matID) {
+            tex = TriplanarMap(p, n, iChannel0);
+          }
+          float diffuse = GetLight(p);
+          col += vec3(tex * diffuse);
+        } else {
+          col = vec3(0.3, 0.36, 0.6) - (rd.y * 0.4);
+        }
+        // 调整2: 进行雾体计算
+        col = applyFog(col, vec3(1., 1., 1.), p.z, 8.0, 1.0 / 80.0);
+        count++;
+      }
+    }
+    col /= count;
     col = pow(col, vec3(.4545));  // [0, 1]^3 to [0, 1]^3
     gl_FragColor = vec4(col, 1.0);
   }
 #+END_SRC
 
+
+
 ***** 环境光遮蔽 (Ambient Occlusion)
+
+环境光遮蔽用来光线在物体之间相互遮挡产生的阴影效果, 简称 =AO=.
+
+在 =RayMarching= 渲染器中, 通常采用 [[https://advances.realtimerendering.com/s2006/Chapter9-Fast_Approximations_for_Global_Illumination_on_Dynamic_Scenes.pdf][Alex Evans]] 的算法来实现 =AO=.
+
+为了理解这套算法, 需要了解在 =RayMarching= 渲染器中如何判断物体自身或物体之间是否存在遮蔽.
+
+原理很简单, 主要是利用了 =RayMarching= 渲染器的设计. 观察下图,
+
+[[../../../files/calc-occlusion.png]]
+
+其中 $P$ 点为视觉射线与地面的交点, $N$ 为地面在 $P$ 点上的法线向量,
+
+$Q$ 是射线从 $P$ 点出发移动距离 $d$ 后所到达的点: $Q = P + d \cdot N$.
+
+左图只有地面, 右图有地面和物体 $O$.
+
+在左图中, $Q$ 在场景中的 =SDF= ($\mathrm{sdfScene}(P + d \cdot N)$) 远远大于 0;
+
+在右图中, $Q$ 在场景中的 =SDF= 非常接近 0.
+
+换而言之, 在 $Q$ 沿着交点 $P$ 的法线方向 $N$ 移动距离 $d$ 时,
+
+如果 $Q$ 的 =SDF= 接近于 0 且 $d$ 非常小, 那么可以断言 $P$ 被遮蔽了.
+
+在拥有判断是否遮蔽的方法后, 就得思考如何确定遮蔽的程度.
+
+再仔细思考可以发现以下规律:
+
+在没有遮蔽️物的情况下, $Q$ 的 =SDF= 就等于 $d$: $d - \mathrm{sdfScene}(P + d \ cdot N) = 0$.
+
+在有遮蔽物的情况下, $Q$ 的 =SDF= 就小于 $d$: $d - \mathrm{sdfScene}(P + d \cdot N) \gt 0$.
+
+正好可以利用 $d$ 与 $\mathrm{sdfScene}(P + d \cdot N)$ 的差值作为遮蔽程度.
+
+在没有遮蔽物的情况下 $d$ 与 $\mathrm{sdfScene}(P + d \cdot N )$ 的差值为 0;
+
+遮蔽程度越高, $d$ 与 $\mathrm{sdfScene}(P + d \cdot N)$ 之间的差值越大.
+
+在具体实现中, 会沿着 $P$ 点的法线方向以固定步长移动 $n$ 次, 对每一次的遮蔽程度进行求和, 以此求出 $P$ 点的遮蔽程度:
+
+$\mathrm{occlusion} = \sum \limits_{i=0}^{n}(d_{i} - \mathrm{sdfScene}(P + d_{i} \cdot N))$
+
+这里参考 [[https://www.shadertoy.com/view/Xds3zN][Inigo Quilez 的实现]]:
+
+#+BEGIN_SRC glsl
+  /* 由于参数类型的不同, 这里对原代码进行了一些调整,
+     提高了可读性, 但损失了一些性能 */
+  float calcAO( in vec3 pos, in vec3 normal, in int sampleCnt )
+  {
+    float occlusion = 0.0;
+    float scale = 1.0;
+
+    /* 在实际开发中, 采用数量 sampleCnt 一般是固定的,
+       所以会手动计算出 maxOcclusion 然后硬编码 */
+    float maxOcclusion = 0.0;
+    for (int i=0; i<sampleCnt; i++) {
+      maxOcclusion += 0.01 + 0.12 * float(i) / 4.0;
+    }
+    float iMaxOcclusion = 1.0 / maxOcclusion;
+
+    for( int i=0; i<sampleCnt; i++ ) {
+      float di = 0.01 + 0.12 * float(i) / 4.0;
+      float sdf = sdfScene( pos + di * normal ).dist;
+      occlusion += (di - sdf) * scale;
+      scale *= 0.95;
+      if( occlusion > maxOcclusion ) break;
+    }
+    // 返回结果是"开放"程度
+    return clamp( 1.0 - iMaxOcclusion * occlusion, 0.0, 1.0 );
+  }
+
+  // 为了展示 AO 效果, 在场景里面添加多一个球体, 使得球体之间的位置接近
+  Intersection sdfScene(vec3 p) {
+    Intersection sphere1 = Intersection(sdfSphere(p - sphereCenter, sphereRadius), 1);
+    Intersection sphere2 = Intersection(sdfSphere(p - (sphereCenter + vec3(0, 2.1, 0)), sphereRadius), 1);
+    Intersection ground = Intersection(sdfGround(p), 2);
+    Intersection result = opU(sphere1, sphere2);
+    result = opU(result, ground);
+    return result;
+  }
+
+  void main() {
+
+    vec3 cameraPos = vec3(0., 4.0, 3.0);
+
+    vec2 m = iMouse.xy / iResolution.xy;
+    float sX = sin(m.y - .5);
+    float cX = cos(m.y - .5);
+    mat3 rotateX = mat3(1.0, 0.0, 0.0,
+                        0.0, cX, sX,
+                        0.0, -sX, cX);
+
+    float sY = sin(m.x * 6.2831);
+    float cY = cos(m.x * 6.2831);
+    mat3 rotateY = mat3(cY, 0.0, -sY,
+                        0.0, 1.0, 0.0,
+                        sY, 0.0, cY);
+
+    cameraPos = rotateY * rotateX * cameraPos;
+    vec3 col = vec3(0.0);
+
+    float AA_size = 3.0;
+    int count = 0;
+    for (int aaY = -1; aaY <= 1; aaY++) {
+      for (int aaX = -1; aaX <= 1; aaX++) {
+        vec2 coord = gl_FragCoord.xy + vec2(aaX, aaY) / AA_size;
+        vec2 uv = (2.0 * coord - iResolution.xy) / min(iResolution.x, iResolution.y);
+        vec3 rd = GetRayDirection(uv, cameraPos, vec3(0.0, 4.0, 0.0), 2.0);
+        Intersection d = RayMarch(cameraPos, rd);
+        vec3 p = cameraPos + d.dist * rd;
+        vec3 n = GetNormal(p);    // 把法线计算拿出来
+        float occ = calcAO(p, n, 5); // 计算开放程度, 或称遮蔽修正系数
+
+        if (d.dist < MAX_DIST) {
+          vec3 tex = vec3(1.0);
+          if (1 == d.matID) {
+            tex = TriplanarMap(p, n, iChannel0);
+          }
+          float diffuse = GetLight(p);
+          col += vec3(tex * diffuse);
+        } else {
+          col = vec3(0.3, 0.36, 0.6) - (rd.y * 0.4);
+        }
+        col = applyFog(col, vec3(1., 1., 1.), p.z, 8.0, 1.0 / 80.0) * occ;  // occ 修正
+        count++;
+      }
+    }
+    col /= count;
+    col = pow(col, vec3(.4545));  // [0, 1]^3 to [0, 1]^3
+    gl_FragColor = vec4(col, 1.0);
+  }
+#+END_SRC
+
+#+attr_html: :width 504px
+[[../../../files/raymarching-ao-example.png]]
+
+遮蔽程度的计算并非固定不变的, 对比 =Alex Evans= 的文章和 =Inigo Quilez= 的实现后会发现两者在核心原理上保持一致, 但遮蔽计算有差别.
 
 **** 3D SDF 变换的注意事项
 
 在 =2D SDF= 时就介绍过对 =SDF= 进行变换的[[sdf-transformation][方法]]了, 具体就不赘述了.
 
-但还是要再提醒一点, 在我们的渲染器中, 射线上点的 $p$ 是视点空间上的坐标, 基本上一切坐标都是视点坐标, 包括相机位置, 并且是左手坐标系.
+但还是要再提醒一点, 在我们的渲染器中, 一切坐标都是视点坐标, 左手坐标系.
+
+射线上点的 $p$, 相机位置, 物体的位置都是视点坐标.
 
 因此, 要对物体实现 $M = M_0 \times M_1$ 变换, 那么对 $p$ 点应该实现 $M^{-1} = M_{1}^{-1} \times M_{0}^{-1}$ 的变换: $M^{-1} p$.
 
