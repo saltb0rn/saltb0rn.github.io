@@ -98,7 +98,11 @@
 
 在 =ShaderToy= 中, 人们把整个画面看作是一张大贴图, 片元就是该大贴图上面的一个纹理像素(texel).
 
-片元理所当然地有一个 =UV= 坐标, 可以通过片元坐标 $gl\_fragCoord$ 和屏幕分辨率 $iResolution$ 计算出来.
+片元理所当然地有一个 =UV= 坐标, 可以通过片元坐标 $gl\_FragCoord$ 和屏幕分辨率 $iResolution$ 计算出来.
+
+#+begin_quote
+默认情况下, $gl\_FragCoord$ 假设左下角为屏幕坐标系的原点, 以及以像素的中心为像素原点.
+#+end_quote
 
 #+BEGIN_SRC glsl
   vec2 uv = gl_FragCoord.xy / iResolution.xy; // [0.0, 1.0]
@@ -791,18 +795,22 @@ $mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x 
 
 而在 $y$ 轴方向上的下一个相邻片元的属性值则是为 $attr_{y+1} = p(x, y + 1)$.
 
-$dFdx(attr)$ 其实就是在求在当前片元的 $x$ 轴方向上的某个属性的 $attr$ 的偏导数(=partial derivative=),
+$dFdx(attr)$ 其实就是在求在当前片元的 $x$ 轴方向上的某个属性的 $attr$ 的微分(=differentation=).
 
-虽然在直觉上挺相似的, 但它并非人们所知的微积分中的偏导数, 其定义为:
+不过在片元这个上下文中, 它非常接近偏导数(=partial derivative=)的定义:
 
-$dFdx(attr) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr$.
+$dFdx(attr) = p(x + 1, y) - p(x, y) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr$.
 
-$dFdy(attr)$ 同理, 只不过是在 $y$ 轴方向上的偏导数, 定义如下:
+因此可以使用 $dFdx(attr)$ 求 $x$ 轴方向的导数近似.
 
-$dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
+$dFdy(attr)$ 同理, 其定义如下:
+
+$dFdy(attr) = p(x, y + 1) - p(x, y) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr$.
 
 #+CAPTION: dFdx/dFdy
 [[../../../files/Shader-Derivatives-1.png]]
+
+在 =Shader= 编程中, 近似导数是求出片元法线的常用手段.
 
 比如下面这个例子在 =Fragment Shader= 中使用 $dFdx$ 和 $dFdy$ 根据片元的视点空间(view space)坐标计算出面法线.
 
@@ -3261,6 +3269,101 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+caption: 3D SDF 光照
 [[../../../files/3d-sdf-example-diffuse.png]]
 
+***** COMMENT PBR
+
+日后修改适用于 =RayMarching= 渲染器
+
+#+BEGIN_SRC glsl
+#version 100
+precision highp float;
+
+uniform vec2  iResolution;
+
+uniform vec3  albedo;     // value=1,0,0
+uniform float metallic;   // value=0, min=0, max=1, step=0.001
+uniform float roughness;  // value=0.2, min=0, max=1, step=0.001
+
+varying vec2 vScreen;
+const float PI = 3.14159265359;
+
+float distributionGGX (vec3 N, vec3 H, float roughness){
+    float a2    = roughness * roughness * roughness * roughness;
+    float NdotH = max (dot (N, H), 0.0);
+    float denom = (NdotH * NdotH * (a2 - 1.0) + 1.0);
+    return a2 / (PI * denom * denom);
+}
+
+float geometrySchlickGGX (float NdotV, float roughness){
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+    return NdotV / (NdotV * (1.0 - k) + k);
+}
+
+float geometrySmith (vec3 N, vec3 V, vec3 L, float roughness){
+    return geometrySchlickGGX (max (dot (N, L), 0.0), roughness) * 
+           geometrySchlickGGX (max (dot (N, V), 0.0), roughness);
+}
+
+vec3 fresnelSchlick (float cosTheta, vec3 F0){
+    return F0 + (1.0 - F0) * pow (1.0 - cosTheta, 5.0);
+}
+
+// https://www.shadertoy.com/view/4d2XWV by Inigo Quilez
+float sphereIntersect(vec3 ro, vec3 rd, vec4 sph) {
+	vec3 oc = ro - sph.xyz;
+	float b = dot( oc, rd );
+	float c = dot( oc, oc ) - sph.w*sph.w;
+	float h = b*b - c;
+	if( h<0.0 ) return -1.0;
+	return -b - sqrt( h );
+}
+
+void main (){
+    vec3 lightPos   = vec3(1.25, 1.0, -2);
+    vec3 lightColor = vec3(1.0);
+    vec3 totColor = vec3(0.0);
+    
+    vec3 ro = vec3(0.0, 0.0, -2.0);
+
+    for (float x = 0.0; x <= 1.0; x += 1.) {
+        for (float y = 0.0; y <= 1.0; y += 1.) {
+            
+            vec3 rd = normalize(vec3(vScreen + vec2(x, y) / iResolution.y, 1.2));
+            float d = sphereIntersect(ro, rd, vec4(0,0,0,1));
+            
+            if (d > 0.) {
+                vec3 worldPos = ro + d * rd;
+                vec3 N = normalize (worldPos);
+                vec3 V = -rd;
+                vec3 L = normalize (lightPos - worldPos);
+                vec3 H = normalize (V + L);
+                
+                // Cook-Torrance BRDF
+                vec3  F0 = mix (vec3 (0.04), pow(albedo, vec3 (2.2)), metallic);
+                float NDF = distributionGGX(N, H, roughness);
+                float G   = geometrySmith(N, V, L, roughness);
+                vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);        
+                vec3  kD  = vec3(1.0) - F;
+                kD *= 1.0 - metallic;	  
+                
+                vec3  numerator   = NDF * G * F;
+                float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+                vec3  specular    = numerator / max(denominator, 0.001);  
+                    
+                float NdotL = max(dot(N, L), 0.0);                
+                vec3  color = lightColor * (kD * pow(albedo, vec3 (2.2)) / PI + specular) * 
+                              (NdotL / dot(lightPos - worldPos, lightPos - worldPos));
+                
+                totColor += color;
+            }
+        }
+    }
+    
+    // HDR tonemapping gamma correct
+    gl_FragColor = vec4(pow(totColor/(totColor + 1.0), vec3 (1.0/2.2)), 1.0);
+}
+#+END_SRC
+
 ***** 阴影实现
 
 有了光线位置就可以计算阴影了,
@@ -3590,7 +3693,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 如果从顶部($Y$ 轴方向)进行投影, 以顶点坐标的 $xz$ 分量作为 $uv$;
 
-如果从正面($Z$ 轴方向)进行投影, 以顶点坐标的 $xy$ 分量计算 $uv$.
+如果从正面($Z$ 轴方向)进行投影, 以顶点坐标的 $xy$ 分量作为 $uv$.
 
 这种映射算法适用于只展示几何体单面的情况, 几何体的其它面会有严重的拉伸和形变.
 
@@ -3598,7 +3701,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 
 =3D= 贴图也无需 =UV= 映射, 直接根据顶点坐标进行采样, 不过会占用更高的内存.
 
-因此, 人们想到了一种比 =3D= 贴图更低消耗的映射方法: 三平面映射(=Triplanar Mapping=)这种算法, 它是平面映射的高阶版本:
+因此, 人们想到了一种比 =3D= 贴图更低消耗的映射方法: 三平面映射(=Triplanar Mapping=), 它是平面映射的高阶版本:
 
 对几何体的顶点 $(x, y, z)$ 分别在 $XYZ$ 三轴进行正交投影, 分别读取对应的纹理: $tex_{x}$, $tex_{y}$ 和 $tex_{z}$, 以某种权重进行求和, 求和结果就作为该顶点的纹理.
 
@@ -4397,9 +4500,224 @@ $n(u, v, w) = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - 
 
 # https://kyndinfo.notion.site/Convolution-ad2fd129ccfa4d358c9683a20e383ad5
 
-*** 图像边缘检测 (Edge detection)
+*** 卷积 (Convolution)
 
-=Sobel=.
+卷积在图像处理中发挥着非常重要的作用. 卷积是一种数学运算, 适用于处理连续对象和离散对象.
+
+以连续版本的卷积运算为例, 其定义为: $(f * g)(t) = \int_{-\infty}^{\infty} f(\tau) g(-\tau + t) d\tau$.
+
+#+caption: 连续卷积
+#+attr_html: :width 504px
+[[../../../files/Convolution_of_spiky_function_with_box2.gif]]
+
+整个计算过程可以这么描述:
+
+先对函数 $g$ 进行变换, 围绕 $y$ 轴进行翻转, 并往 $x$ 轴正方向平移 $t$ 单位作为起点;
+
+再让经过变换后的 $g$ 移动, 在移动期间计算 $f$ 和 $g$ 之间的乘积, 对乘积进行积分得出结果.
+
+这里的函数 $f$ 称为核(=kernel=)或滤波核(=filter kernel=), $g$ 是输入的数据, 核对会输入的数据进行处理.
+
+为了保证 $f$ 能够按照数据顺序来处理数据, 所以才对 $g$ 进行翻转, 而翻转这个动作就叫做"卷".
+
+这里的处理内容就是 *计算核与数据之间的相似程度, 并根据相似程度突出两者差异*.
+
+在上面动画中, 黄色区域就代表着核与数据在当前时刻相似程度.
+
+因此, 核与输入数据之间的乘积(其实还要乘以 $d\tau$)可作为两者相似程度的量化, 卷积的含义就是相似度之和.
+
+#+begin_quote
+不要混淆 $(f * g)(t)$ 和 $(fg)$, $(fg)(t)$ 是复合函数, 它的完整定义是 $f(g(t))$.
+
+这里 $*$ 是卷积运算符, 并非乘法.
+#+end_quote
+
+在图像处理中, 使用的是(二维)离散卷积运算, 因为图片数据是离散对象, 像素间隔固定为 1.
+
+图像处理更能体现 "计算相似程度, 突出两者差异" 这个说法.
+
+#+caption: 2D 离散卷积, 使用 $3 \times 3$ 的核来处理 $5 \times 5$ 的数据, 为了保证卷积进行在外层填充 0
+#+attr_html: :width 504px
+[[../../../files/11148cnn_convolve_with_padding.gif]]
+
+该动画所使用的核是一个 $3 \times 3$ 的矩阵, 而不是一样函数, 这个矩阵是在二元连续函数采样的结果.
+
+比如这个连续函数是 $z = f(x, y)$, 要生成一个 $N \times N$ 的核,
+
+要先选定一个有限的定义域范围: $x, y \in [- \lfloor \frac{N}{2} \rfloor, \lfloor \frac{N}{2} \rfloor]$;
+
+再根据像素间隔对定义域范围进行离散化: $x, y \in \{ - \lfloor \frac{N}{2} \rfloor,  - \lfloor \frac{N}{2} \rfloor + 1, \dots, -1, 0, 1, \dots, \lfloor \frac{N}{2} \rfloor - 1, \lfloor \frac{N}{2} \rfloor \}$;
+
+在离散化的定义域内计算出全部的函数值, 最后得到的矩阵就是一个 $N \times N$ 的核.
+
+#+begin_quote
+一元连续函数离散化之后得到的核是一个向量.
+#+end_quote
+
+在获得核后, 每次需要读取一个 $N \times N$ 局部图像数据矩阵, 让核与数据矩阵的对应行向量进行点积, 最后对点积求和作为对应像素的值.
+
+计算过程如下:
+
+假设核为 $F = \left( \begin{array}{c} w_1 & w_2 & w_3 \\ w_4 & w_5 & w_6 \\ w_7 & w_8 & w_9 \end{array} \right)$, 选取像素 $d_5$ 以及它的 8 个相邻像素的作为数据 $G = \left( \begin{array}{c} d_1 & d_2 & d_3 \\ d_4 & d_5 & d_6 \\ d_7 & d_8 & d_9 \end{array} \right)$,
+
+$A = \left(\begin{array}{c} w_1 & w_2 & w_3 \end{array}\right) \cdot \left(\begin{array}{c} d_1 & d_2 & d_3 \end{array}\right) = w_1 d_1 + w_2 d_2 + w_3 d_3$
+
+$B = \left(\begin{array}{c} w_4 & w_5 & w_6 \end{array}\right) \cdot \left(\begin{array}{c} d_4 & d_5 & d_6 \end{array}\right) = w_4 d_4 + w_5 d_5 + w_6 d_6$
+
+$C = \left(\begin{array}{c} w_7 & w_8 & w_9 \end{array}\right) \cdot \left(\begin{array}{c} d_7 & d_8 & d_9 \end{array}\right) = w_7 d_7 + w_8 d_8 + w_9 d_9$
+
+最终, 像素 $d_5$ 新的像素值为 $F * G = A + B + C$.
+
+点积可以用来表示两个向量之间的相似程度: $\vec{A} \cdot \vec{B} = |\vec{A}||\vec{B}|\cos\theta$, $\cos\theta$ 越大, 两向量之间的相似程度越高.
+
+并且 $A$ 还能作为模式(=pattern=)来提取出 $B$ 的分量, 考虑以下运算: $A \cdot B = \left( \begin{array}{c} w_x & w_y & w_z \end{array} \right) \cdot \left( \begin{array}{c} x & y & z \end{array} \right)$,
+
+比如想要提取 $B$ 的 $y$ 分量, 那么可以令 $A = \left( \begin{array}{c} w_x = 0 & w_y = 1 & w_z = 0 \end{array} \right)$,
+
+令 $w_y \gt 1$ 还可以对 $y$ 分量进行放大; 令 $0 \lt w_y \lt 1$ 对 $y$ 分量进行缩小; 令 $w_y \lt 0$ 对 $y$ 分量进行翻转.
+
+因此, 核的本质上就是一个模式与权重分布的结合体, 提取与模式匹配的部分数据,
+
+根据权重分布对匹配的数据进行变换, 从而突出数据与模式之间的差异.
+
+这也是为什么是每次要取一片区域的像素而不是一个像素作为处理数据, 因为单凭一个像素无法形成模式.
+
+根据卷积的运算特性: 运算结果作为中间数据的新值, 我们可以使用核来实现像素偏移.
+
+比如 $\left( \begin{array}{c} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 0 & 0 \end{array} \right)$ 可以让数据往左偏移 1 个单位, 相当于把右边的像素复制过来一样.
+
+而偏移的距离和会受到核尺寸的限制, 比如 $\left( \begin{array}{c} 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \end{array} \right)$ 可以让数据往左偏移 2 个单位.
+
+*** 高斯模糊核
+
+二维高斯函数: $G(x, y) = (\frac{1}{2 \pi \sigma^2})^{e^{-\frac{x^2 + y^2}{2 \sigma^2}}}$
+
+离散化步骤:
+
+1. 确定采样网格范围
+
+   高斯函数理论上无限延伸，但实际需截断到有限范围 (通常取 $[−3 \sigma, 3 \sigma ]$, 覆盖约 =99.7%= 的分布).
+
+   例如, $\sigma = 1$, 那么采样范围就是 $[-3, 3] \times [-3, 3]$
+
+2. 选择离散网格范围, 网格间距为 1, 对应像素间距
+
+   如果核的大小为 $5 \times 5$, 那么 $x, y \in \{-2, -1, 0, 1, 2\}$
+
+3. 计算每个网格点的函数值
+
+
+*** Sobel 核
+
+=Sobel= 核用于图像边缘检测(Edge detection), =Sobel= 核的想法是计算出当前像素在所有方向上的导数, 以这些导数作为权重分布进行计算.
+
+#+caption: 相邻元素的距离
+#+attr_html: :width 504px
+[[../../../files/sobel_neighborhood_cell_distances.png]]
+
+$a, b, c, d, e, f, g, h, i$ 分别是对应位置上片元的颜色.
+
+求出中心点在 8 个方向上的方向导数.
+
+在 $X^{+}$ 方向上的方向导数: $D_{(1, 0)} = \frac{(f - e) \vec{i}}{1} = (f - e) \vec{i}$
+
+在 $X^{-}$ 方向上的方向导数: $D_{(-1, 0)} = \frac{-(d - e) \vec{i}}{1} = (e - d) \vec{i}$
+
+在 $Y^{+}$ 方向上的方向导数: $D_{(0, 1)} = \frac{(b - e) \vec{j}}{1} = (b - e) \vec{j}$
+
+在 $Y^{-}$ 方向上的方向导数: $D_{(0, -1)} = \frac{-(h - e) \vec{j}}{1} = (e - h) \vec{j}$
+
+在与轴对齐的方向上, 片元之间的距离为 1, 但在对角线上, 根据勾股定理, 片元之间的距离为 $\sqrt{2}$. 所以:
+
+在对角线 $(1, 1)$ 方向上的方向导数: $D_{(1, 1)} = \frac{(c - e) (\cos\frac{\pi}{4} \vec{i} + \sin\frac{\pi}{4} \vec{j})}{\sqrt{2}} = \frac{1}{2}(c - e)(\vec{i} + \vec{j})$
+
+#+begin_quote
+这里使用 $\cos\frac{\pi}{4} \vec{i} + \sin\frac{\pi}{4}$ 是对向量 $\vec{i} + \vec{j}$ 进行单位化.
+#+end_quote
+
+在对角线 $(-1, -1)$ 方向上的方向导数: $D_{(-1, -1)} = \frac{(g - e) (- \cos\frac{\pi}{4}\vec{i} - \sin\frac{\pi}{4}\vec{j})}{\sqrt{2}} = \frac{1}{2}(e - g)(\vec{i} + \vec{j})$
+
+在对角线 $(-1, 1)$ 方向上的方向导数: $D_{(-1, 1)} = \frac{(a - e) (- \cos\frac{\pi}{4} \vec{i} +  \sin\frac{\pi}{4} \vec{j})}{\sqrt{2}} = \frac{1}{2}(e - a)(\vec{i} - \vec{j})$
+
+在对角线 $(1, -1)$ 方向上的方向导数: $D_{(1, -1)} = \frac{(i - e) (\cos\frac{\pi}{4} \vec{i} - \sin\frac{\pi}{4} \vec{j})}{\sqrt{2}} = \frac{1}{2} (i - e)(\vec{i} - \vec{j})$
+
+对这个方向导数进行求和得到:
+
+$\begin{equation*}\begin{aligned} & D_{(1, 0)} + D_{(-1, 0)} + D_{(0, 1)} + D_{(0, -1)} + D_{(1, 1)} + D_{(-1, -1)} + D_{(-1, 1)} + D_{(1, -1)} \\ = & (f - d)\vec{i} + (b - h)\vec{j} + \frac{1}{2} [(c - g)(\vec{i} + \vec{j}) + (i - a)(\vec{i} - \vec{j})] \\ = & \frac{1}{2}[ 2 (f - d)\vec{i} + 2 (b - h)\vec{j} + (c - g)\vec{i} + (c - g)\vec{j} + (i - a)\vec{i} - (i - a)\vec{j}] \\ = & \frac{1}{2}[2(f - d) + (c - g) + (i - a)]\vec{i} + \frac{1}{2}[2(b - h) + (c - g) - (i - a)]\vec{j} \\ = & \frac{1}{2} [-a + c -2d + 2f - g + i]\vec{i} + \frac{1}{2} [a + 2b + c - g - 2h - i]\vec{j}\end{aligned} \end{equation*}$
+
+把 $\vec{i}$ 相关的系数整理出来得到在水平方向上的 =kernel=,
+
+把 $\vec{j}$ 相关的系数整理出来得到在垂直方向上的 =kernel=.
+
+最后像素的的值为 $\sqrt{(F_x * G)^2 + (F_y * G)^2}$, 其中 $G$ 是 $3 \times 3$ 的图像数据矩阵.
+
+#+attr_html: :width 400px
+[[../../../files/sobel_G_half.png]]
+
+根据[[https://www.researchgate.net/publication/239398674_An_Isotropic_3x3_Image_Gradient_Operator][原本的论文]], 由于有 8 个方向, 所以需要乘以 $\frac{1}{8}$ 进行平均, 使得最终系数是 $\frac{1}{16} = \frac{1}{2} \times \frac{1}{8}$,
+
+但在实际中通常会忽略该参数, 除非想要降低亮度.
+
+#+begin_quote
+如果是 $5 \times 5$ 的核, 那么就是 16 个方向了.
+#+end_quote
+
+为了使结果更准确, 使用 =Sobel= 算子之前通常会先对图片进行灰阶处理, 以及使用平滑处理(盒状模糊/高斯模糊)进行降噪.
+
+以下是一个结合灰阶处理的 =Sobel= 算子例子:
+
+#+BEGIN_SRC glsl
+  #version 130
+
+  // run: glslViewer dip-sobel.frag textures/2999645.jpg
+
+  #ifndef PLATFORM_WEBGL
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex0;
+
+  #define iResolution u_resolution
+  #define iChannel0 u_tex0
+  #endif
+
+  vec4 convolution(vec2 uv, float[9] kernel, vec4[9] pixels) {
+    vec4 conv = vec4(0.0);
+    for (int i = 0; i <= 2; i++) {
+      for (int j = 0; j <= 2; j++) {
+        int index = j * 3 + i;
+        conv += pixels[index] * kernel[index];
+      }
+    }
+    return conv;
+  }
+
+  void main () {
+    vec2 uv = gl_FragCoord.xy / iResolution.xy;
+    vec2 steps = 1.0 / iResolution.xy;
+    // Pixel Sampling
+    vec4 pixels[9];
+    for (int i = -1; i <= 1; i++) { // [-1, 1] => [0, 2]
+      for (int j = 1; j >= -1; j--) { // [1, -1] => [0, 2]
+        int index = (-j + 1) * 3 + (i + 1);
+        vec4 c = texture(iChannel0, uv + vec2(float(i) * steps.x, float(j) * steps.y));
+        pixels[index] = c;
+      }
+    }
+
+    // GrayScale
+    for (int i = 0; i < pixels.length(); i++) {
+      float gray = dot(pixels[i].rgb, vec3(0.299, 0.587, 0.114));
+      pixels[i] = vec4(vec3(gray), pixels[i].a);
+    }
+
+    // Sobel
+    float kernel_x[9] = float[9](-1, 0, 1, -2, 0, 2, -1, 0, 1);
+    float kernel_y[9] = float[9](1, 2, 1, 0, 0, 0, -1, -2, -1);
+    vec4 conv_x = convolution(uv, kernel_x, pixels);
+    vec4 conv_y = convolution(uv, kernel_y, pixels);
+    vec4 g = sqrt(conv_x * conv_x + conv_y * conv_y);
+    gl_FragColor = vec4(1. - g.rgb, 1.0);
+  }
+#+END_SRC
 
 # $f(r) = \frac{1}{\sqrt{r}} = r^{-\frac{1}{2}}$
 
@@ -4415,3 +4733,72 @@ $n(u, v, w) = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - 
 
 # 雨天效果 SDF
 # https://www.shadertoy.com/view/XsX3DB
+
+
+*** 拉普拉斯核 (Laplacian 核)
+
+# https://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
+
+拉普拉斯核的作用是对图像的二阶导数进行二维各向同性(=isotropic=, 在各个方向上性质相同)度量, 突出边缘以及突变区域.
+
+因此, 拉普拉斯核也能用在边缘检查上. 与 =Sobel= 核不同的地方在于, =Sobel= 核实际上使用了两个核,
+
+而拉普拉斯核只用了一个核, 这导致运算效率会更高一点, 但由于拉普拉斯核测量的是二阶导数, 也导致了处理结果对图片的噪声非常敏感.
+
+# 补充上对计算依据
+
+可以根据泰勒展开式, 来分别求出在 $x$ 和 $y$ 轴两个正交方向上的二阶导数:
+
+$\frac{\partial G(x, y)}{\partial x^2} = G(x + 1, y) + G(x - 1, y) - 2 G(x, y)$
+
+$\frac{\partial G(x, y)}{\partial y^2} = G(x, y + 1) + G(x, y - 1) - 2 G(x, y)$
+
+其中, $G(x, y)$ 是位于 $(x, y)$ 的像素的值.
+
+对这两个二阶导数进行求和就能得出拉普拉斯核了: $G(x + 1, y) + G(x - 1, y) + G(x, y + 1) + G(x, y - 1) - 4 G(x, y)$,
+
+把系数按照位置整理成矩阵形: $\left( \begin{array}{c} 0 & 1 & 0 \\ 1 & -4 & 1 \\ 0 & 1 & 0 \end{array} \right)$.
+
+#+BEGIN_SRC glsl
+  #version 130
+
+  // run: glslViewer dip-sobel.frag textures/2999645.jpg
+
+  #ifndef PLATFORM_WEBGL
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex0;
+
+  #define iResolution u_resolution
+  #define iChannel0 u_tex0
+  #endif
+
+  vec4 convolution(vec2 uv, float[9] kernel, vec4[9] pixels) {
+    vec4 conv = vec4(0.0);
+    for (int i = 0; i <= 2; i++) {
+      for (int j = 0; j <= 2; j++) {
+        int index = j * 3 + i;
+        conv += pixels[index] * kernel[index];
+      }
+    }
+    return conv;
+  }
+
+  void main () {
+    vec2 uv = gl_FragCoord.xy / iResolution.xy;
+    vec2 steps = 1.0 / iResolution.xy;
+    // Pixel Sampling
+    vec4 pixels[9];
+    for (int i = -1; i <= 1; i++) { // [-1, 1] => [0, 2]
+      for (int j = 1; j >= -1; j--) { // [1, -1] => [0, 2]
+        int index = (-j + 1) * 3 + (i + 1);
+        vec4 c = texture(iChannel0, uv + vec2(float(i) * steps.x, float(j) * steps.y));
+        pixels[index] = c;
+      }
+    }
+
+    // Laplacian
+    float kernel[9] = float[9](0, 1, 0, 1, -4, 1, 0, 1, 0);
+    vec4 conv = convolution(uv, kernel, pixels);
+    gl_FragColor = vec4(1. - conv.rgb, 1.0);
+  }
+#+END_SRC
