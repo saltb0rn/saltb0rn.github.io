@@ -1,0 +1,247 @@
+#+title: SVG 变换解惑
+#+date: 2025-06-09
+#+index: SVG 变换解惑
+#+tags: SVG
+#+begin_abstract
+在很久之前在学习 =SVG= 时就想着写一篇笔记, 但 =SVG= 元素和属性的用法在网上就有一大堆,
+
+秉承不重复造轮子的想法, 最后在好不容易找到了两个方向进行二选一: 如何使用贝塞尔曲线进行连续地拼接, 以及 =SVG= 的变换.
+
+前者内容需要读者有一定的微积分基础, 这个方向本质上就是在介绍 =CAGD= (=Computer Aided Geometric Design=) 的内容,
+
+基本上就是了解参数连续和几何连续这两个概念, 和 =SVG= 本身的关系就不大, 与其这样不如推荐读者去阅读相关书籍, 而且内容也不多.
+
+因此, 第一个方向排除. 接下来就是 =SVG= 的变换了, 相信对于接触过一点图形学的开发者来说, =SVG= 的变换可谓是非常迷惑的,
+
+毕竟同样是旋转和缩放, 为什么效果不一样, 而这方面的内容在网上记载较少且只有残片, 甚至有的资料已经失去时效了,
+
+导致大部分有效内容只能从 =SVG= 标准的[[https://www.w3.org/TR/SVG2/coords.html][第 8 章]]进行获取, 但即便如此, 文档也没有给出实际的变换计算公式,
+
+因此, 以公式作为一个角度去介绍 =SVG= 的变换, 而不是把文档的内容抄下来, 这非常有编写的价值,
+
+最后就是阅读要求, 读者要有一定的线性代数和几何变换基础.
+#+end_abstract
+
+
+*** =viewBox= 属性: 设置画布的坐标系
+
+变换离不开坐标系, 因此, 在深入主题之前先了解 =SVG= 的坐标系是如何确定的.
+
+=viewBox= 属性可以用来设置画布的坐标系范围, 它可以设置四个值: $x_{min}, y_{min}, width, height$,
+
+不要把 =viewBox= 属性值的 $width$ 和 $height$ 与 =<svg>= 标签的尺寸属性 =width= 以及 =height= 进行混淆, 这里为了区分使用了两种不同字体.
+
+$[x_{min}, x_{min} + width]$ 代表着 $x$ 轴的范围, $[y_{min}, y_{min} + height]$ 代表着 $y$ 轴的范围.
+
+这个坐标系的范围就是整个 =SVG= 的可视范围, 在对元素设置位置时应该参考这个范围, 而不是 =SVG= 画布的 =width= 和 =height= 属性.
+
+比如说, 如果 =<svg>= 标签的 =width= 和 =height= 均为 =200px=, 而 =viewBox= 为 $0, 0, 100, 100$,
+
+想保证某个元素出现在画布上, 那么元素属性位置的 =x= 以及 =y= 分量范围只能是 $[0, 100]$, 而不是 $[0, 200]$.
+
+因此, 给元素设置位置应参考关注坐标系范围, 而不是画布尺寸.
+
+#+begin_quote
+只设置画布的 =width= 和 =height= 属性, 不设置 =viewBox= 属性会默认产生一个 $0, 0, width, height$ 的坐标系.
+#+end_quote
+
+*** 自身以外的变换参考点: 混乱的源头
+
+=SVG= 的变换和 =DOM= 元素的变换有比较大的差别, 它并不像 =DOM= 元素那样以自身中心作为变换原点进行变换,
+
+所以, 如果你是从 =DOM= 或 =OpenGL= 开发切换到 =SVG= 开发上, 那么很有可能会被 =SVG= 的变换迷惑,
+
+甚至怀疑起之前所学变换的正确性, 这篇笔记的目的正是为这样的你解惑.
+
+默认情况下, =<svg>= 会以自身的 $(50\text{%}, 50\text{%})$ (也就是中心) 作为变换原点;
+
+其它元素则是以父级元素的 $(0, 0)$ 作为变换原点进行变换, 值得注意的是, $(0, 0)$ 并不等同于父级元素的左上角位置.
+
+当父级元素的标签是 =<svg>/<marker>/<pattern>/<symbol>/<view>= 其中之一时, $(0, 0)$ 的位置就取决于父级元素的 =viewBox= 属性.
+
+如果 =viewBox= 为 $0, 0, width, height$, 那么 $(0, 0)$ 就代表着父级元素的左上角;
+
+如果 =viewBox= 为 $-W, -H, 2W, 2H$, 那么 $(0, 0)$ 就代表着父级元素的中心.
+
+这只是默认的情况, 变换原点是可以设置的 (后面会介绍), 这使得 =SVG= 里面的变换十分复杂,
+
+每次对元素进行变换时首先要考虑其父级元素的坐标系, 并且每个坐标系都不太一样.
+
+#+begin_quote
+这里需要提一嘴 =<g>= 标签, =<g>= 标签没有位置属性, 它会建立一个与其父级元素相同的坐标系.
+#+end_quote
+
+接下来, 会以父级元素的 $(o_x, o_y)$ 作为变换原点, 介绍 =SVG= 的变换计算.
+
+在此之前, 我们需要知道任何可以显示的 =SVG= 元素, 它们的边框([[https://www.w3.org/TR/SVG2/coords.html#BoundingBoxes][bounding box]])都是一个矩形, 元素的定位就是基于这个边框进行的.
+
+除了圆和椭圆使用边框的中心进行定位外, 其他图形都是通过边框的左上角进行定位的,
+
+如果不给图形设置位置, 那么全部默认定位在父级元素的 $(0, 0)$ 上.
+
+现在正式进入正题.
+
+先说结论, 在以父级元素的点作为变换的参考点的那一刻起, =SVG= 里的所有变换就全都是仿射变换, 也就是默认就带了平移变换.
+
+这个结论最容易通过旋转变换来得到, 因为在 =OpenGL= 和 =DOM= 里面, 默认情况下旋转都是围绕物体的中心进行的.
+
+**** 旋转变换
+
+这里先假设物体是定位在父级元素的 $(0, 0)$ 上, 那么物体边框的任意一个点 $(x, y)$ 的经过旋转后的位置是这么计算的:
+
+先计算向量 $(x - x_o, y - y_o)$, 再对该向量旋转 $\pi$ 弧度, 这个时候向量是围绕 $(x_o, y_o)$ 旋转的,
+
+所以只要把计算结果加上 $(x_o, y_o)$ 得出旋转后点的位置, 整个过程可以用以下矩阵来表示:
+
+$M_{rot\_svg} = \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} \cos \pi & -\sin \pi & 0 \\ \sin \pi & \cos \pi & 0 \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right)$
+
+$M_{rot\_svg} \left(\begin{array}{c} x \\ y \\ 1\end{array}\right) \rightarrow \begin{equation*} \begin{cases} x_{rotated} = \cos \pi \times (x - x_o) - \sin \pi \times (y - y_o) + x_o \\ y_{rotated} = \sin \pi \times (x - x_o) + \cos \pi \times (y - y_o) + y_o \end{cases} \end{equation*}$
+
+#+begin_quote
+这里需要说明一点, 凡是支持 =x= 和 =y= 属性的物体, 它们的 =x= 和 =y= 属性都是参与进了变换计算中的了:
+
+$\left(\begin{array}{c} x_{attr\_new} \\ y_{attr\_new} \\ 1 \end{array}\right) = \left( \begin{array}{c} 1 & 0 & x_{attr} \\ 0 & 1 & y_{attr} \\ 0 & 0 & 1 \end{array} \right) M_{rot\_svg} \left( \begin{array}{c} 1 & 0 & -x_{attr} \\ 1 & 0 & -y_{attr} \\ 0 & 0 & 1 \end{array} \right)$
+
+=x= 和 =y= 属性是发生在计算过程的最初和最后阶段的, 那么为什么 $M_{rot\_svg}$ 不包含这一对变换呢?
+
+原因有三个:
+
+1. 实现 =DOM= 那样旋转变换是基于 $M_{rot\_svg}$ 进行拓展推导的, 包含这两个变换导致不方便拓展;
+
+2. 它们并没有什么可操作空间, 意思是它们并不会与 $M_{rot\_svg}$ 里面的矩阵进行抵消从而产生影响,
+
+   也不影响开发人员在编码时设置 =transform= 属性的思考过程;
+
+3. 会导致整个公式长上加长, 难以阅读;
+
+
+后面也不会提及这对变换, 但是开发者需要知道它们的存在.
+#+end_quote
+
+想要实现 =DOM= 那样的围绕物体中心旋转, 需要把物体的中心平移对齐到 $(x_o, y_o)$ 再进行旋转, 最后平移回去, 完整的矩阵是这样的:
+
+$M_{rot\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{2} \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right) M_{rot\_svg} \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -\frac{w}{2} \\ 0 & 1 & -\frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)$, 其中 $w$ 和 $h$ 是物体的宽和高.
+
+正好 $\left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right) M_{rot\_svg} \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right)$ 有两对平移可以抵消掉: $\left( \begin{array}{c} \cos \pi & -\sin \pi & 0 \\ \sin \pi & \cos \pi & 0 \\ 0 & 0 & 1 \end{array} \right)$,
+
+所以 $M_{rot\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)\left( \begin{array}{c} \cos \pi & -\sin \pi & 0 \\ \sin \pi & \cos \pi & 0 \\ 0 & 0 & 1 \end{array} \right)\left( \begin{array}{c} 1 & 0 & -\frac{w}{2} \\ 0 & 1 & -\frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)$.
+
+别看这个矩阵很长, 实际上在 =SVG= 里面很简单:
+
+#+BEGIN_SRC css
+  .svgElm {
+      --xo: 200px;
+      --yo: 200px;
+      --w-div-2: 50px;
+      --h-div-2: 50px;
+      --angle: 60deg;
+      transform: translate(calc(var(--w-div-2) - var(--xo)), calc(var(--h-div-2) - var(--yo)))
+                 rotate(var(--angle))
+                 translate(calc(var(--xo) - var(--w-div-2)), calc(var(--yo) - var(--h-div-2)));
+  }
+#+END_SRC
+
+看到上面的公式可以发现: =DOM= 里面的旋转和 =OpenGL= 里面的旋转也是有差别.
+
+因为 =DOM= 里面的元素也是以其边框的左上角进行定位的, 所以内部必定是先根据元素的位置计算出中心点后再围绕中心点进行旋转的, 最后再平移回去,
+
+而 =OpenGL= 是根据物体的中心点进行变换的, 不需要平移.
+
+**** 缩放变换
+
+缩放变换(=transform= 的 =scale= 函数)也是类似思路, 物体边框的任意一个点 $(x, y)$ 的经过缩放后的位置是这么计算的:
+
+先计算向量 $(x - x_o, y - y_o)$, 再对该向量缩放, 最后把计算结果加上 $(x_o, y_o)$ 得到缩放后的点位置, 整个过程可用以下矩阵表示:
+
+$M_{scale\_svg} = \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} s_x & 0 & 0 \\ 0 & s_y & 0 \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right)$
+
+$M_{scale\_svg} \left(\begin{array}{c} x \\ y \\ 1\end{array}\right) \rightarrow \begin{equation*} \begin{cases} x_{scaled} = x_o + s_x \times (x - x_o) \\ y_{scaled} = y_o + s_y \times (y - y_o) \end{cases} \end{equation*}$
+
+想要实现 =DOM= 那样参考物体中心进行缩放, 也是先把物体的中心对齐 $(x_o, y_o)$ 进行缩放, 最后平移回去, 矩阵如下:
+
+$M_{scale\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{2} \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right) M_{scale\_svg} \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -\frac{w}{2} \\ 0 & 1 & -\frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)$, 其中 $w$ 和 $h$ 是物体的宽和高.
+
+#+begin_src css
+  .svgElm {
+      --xo: 200px;
+      --yo: 200px;
+      --w-div-2: 50px;
+      --h-div-2: 50px;
+      --scale-factor: 0.2;
+      transform: translate(calc(var(--w-div-2) - var(--xo)), calc(var(--h-div-2) - var(--yo)))
+                 scale(var(--scale-factor))
+                 translate(calc(var(--xo) - var(--w-div-2)), calc(var(--yo) - var(--h-div-2)));
+  }
+#+end_src
+
+**** 平移变换
+
+平移变换(=transform= 的 =translate= 函数)比前两个变换特殊一点, 前两个变换本质上就是基于 =OpenGL= 变换的拓展,
+
+碰巧的拓展部分全都是平移变换, 换而言之整个计算就是加减法, 而只有加减法的情况下, 这几个矩阵可以随意调整顺序,
+
+正好拓展的平移变换可以抵消:
+
+$M_{tl\_svg} = \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & t_x \\ 0 & 1 & t_y \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right) = \left( \begin{array}{c} 1 & 0 & t_x \\ 0 & 1 & t_y \\ 0 & 0 & 1 \end{array} \right)$
+
+这与 =DOM= 的平移是一致的: $M_{tl\_dom} = M_{tl\_svg}$.
+
+*** 重新设定变换的参考
+
+似乎标准定制者也发现了 =SVG= 默认的变换参考所带来的问题, 所以他们为开发者提供了调整参考系的能力.
+
+早些时候 =SVG= 的标准定制者给 =SVG= 元素提供了 =transform-origin= 属性来设置变换原点;
+
+后来 =CSS= 的标准定制者在 =CSS= 上提供了 =transform-box= 属性来选择变换的参考对象(可作用于 =SVG= 元素), 主要有两个值:
+
+- =view-box=, 在父级元素上选取变换原点
+
+- =fill-box=, 在元素自身上选取变换原点
+
+
+现在只需要设置两个属性就可以实现 =DOM= 那样的变换了.
+
+具体可以参考以下例子, 用新旧方法使的尺寸 $100\text{px} \times 100\text{px}$ 的图片围绕自身中心旋转 $30$ 度, 再平移 $(-100px, -200px)$, 就像 =DOM= 的变换那样:
+
+#+BEGIN_SRC html
+  <svg viewBox="-500 -500 1000 1000" width="800" height="800">
+    <image id="old" width="100" height="100" href="/url/to/image.svg" />
+    <image id="new" width="100" height="100" href="/url/to/image.svg" />
+  </svg>
+#+END_SRC
+
+#+BEGIN_SRC css
+  /* 实现效果: 图片围绕自身中心旋转 30 度, 再平移 (-100px, -200px) */
+
+  /* 老方法 */
+  #old {
+      transform-box: view-box;    /* 默认就是 view-box */
+      transform: translate(-100px, -200px) translate(50px, 50px) rotate(30deg) translate(-50px, -50px);
+      /* (50px, 50px) 是图片尺寸的一半 */
+  }
+
+  /* 新方法 */
+  #new {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      transform: translate(-100px, -200px) rotate(30deg);
+  }
+
+  /* 新旧方法实现的效果一致, 所以 #old 和 #new 会重合在一起 */
+#+END_SRC
+
+# 需要注意一下 =transform-origin: 50% 50%;= 且 =transform-box: view-box= 时, 计算所得的坐标为 $(0.5 \times \text{width}_{viewBox}, 0.5 \times \text{height}_{viewBox})$,
+
+# 所以, 如果 =<svg>= 的 =viewBox= 为 =-400, -400, 800, 800=, 那么 =transform-origin: 50% 50%;= 等同于坐标 $(400, 400)$.
+
+只有一点挺让人遗憾的, 如果所有物体能够像圆形那样以中心进行定位就好了, 希望以后支持这样的选项.
+
+*** 结语
+
+到目前位置, =SVG= 元素变换的重点已经介绍完了, 事实上 =SVG= 还支持 =skew= 变换,
+
+但由于它的推导过程与旋转和缩放的推导没什么区别, 就不写了.
+
+整篇笔记介绍了三种基础变换在 =SVG= 中是如何计算的, 还介绍了如何使用 =transform-origin= 和 =transform-box= 实现 =DOM= 那样的变换.
+
+但要注意, 在浏览器上 =transform-box= 目前还只有 =CSS= 支持, 而使用 =CSS= 属性调整 =SVG= 是没有效果统一保证的, 所以依然要掌握老方法的计算方式.

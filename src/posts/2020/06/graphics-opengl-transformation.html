@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-05-01 Thu 12:45 -->
+<!-- 2025-06-03 Tue 02:53 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -233,41 +233,41 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgdcac000">1. 几个该清楚的概念</a>
+<li><a href="#org36092a5">1. 几个该清楚的概念</a>
 <ul>
-<li><a href="#org7e6884a">1.1. 齐次空间</a></li>
-<li><a href="#org964821c">1.2. 平面方程</a></li>
+<li><a href="#org2cff768">1.1. 齐次空间</a></li>
+<li><a href="#org99f12d5">1.2. 平面方程</a></li>
 </ul>
 </li>
-<li><a href="#org5f40d05">2. OpenGL 中对象的变换历程</a>
+<li><a href="#orgadffbca">2. OpenGL 中对象的变换历程</a>
 <ul>
-<li><a href="#orgd65cea1">2.1. 对象坐标系</a></li>
-<li><a href="#orgd21cf49">2.2. 世界坐标系</a></li>
-<li><a href="#org665b064">2.3. 从对象坐标系到世界坐标系的变换</a></li>
-<li><a href="#org3fcced0">2.4. 视点坐标系</a></li>
+<li><a href="#org2a61c65">2.1. 对象坐标系</a></li>
+<li><a href="#orgc684f99">2.2. 世界坐标系</a></li>
+<li><a href="#org161b75a">2.3. 从对象坐标系到世界坐标系的变换</a></li>
+<li><a href="#org91948f7">2.4. 视点坐标系</a></li>
 <li><a href="#from-world-to-view">2.5. 从世界坐标系到视点坐标系的变换</a>
 <ul>
-<li><a href="#orged89dec">2.5.1. 法线向量变换</a></li>
-<li><a href="#org58cf430">2.5.2. 法线贴图 (Normal Texture)</a></li>
-<li><a href="#org3d1ec43">2.5.3. 视差贴图 (Parallax Map)</a></li>
+<li><a href="#org2345ee4">2.5.1. 法线向量变换</a></li>
+<li><a href="#org724d9dc">2.5.2. 法线贴图 (Normal Texture)</a></li>
+<li><a href="#orgdc7dc49">2.5.3. 视差贴图 (Parallax Map)</a></li>
 </ul>
 </li>
-<li><a href="#orgc4fa132">2.6. 3D转化成2D图像</a>
+<li><a href="#orgef15283">2.6. 3D转化成2D图像</a>
 <ul>
-<li><a href="#org459ee6e">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
-<li><a href="#orgdffb7c2">2.6.2. 透视投影</a></li>
+<li><a href="#org7e8c7d3">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
+<li><a href="#org86ed7d8">2.6.2. 透视投影</a></li>
 <li><a href="#depth-buffer">2.6.3. 透视投影 - Depth Buffer</a></li>
-<li><a href="#org75a26f6">2.6.4. 透视投影 - FOV (Field of View)</a></li>
-<li><a href="#org8ddce22">2.6.5. 正交投影</a></li>
+<li><a href="#org7ff4e2a">2.6.4. 透视投影 - FOV (Field of View)</a></li>
+<li><a href="#orthographic-projection">2.6.5. 正交投影</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org2a4b39b">3. 接下来</a></li>
+<li><a href="#org9d6cccd">3. 接下来</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org550967b">
+<div class="abstract" id="org921472e">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -289,19 +289,19 @@
 </p>
 
 </div>
-<div id="outline-container-orgdcac000" class="outline-2">
-<h2 id="orgdcac000"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
+<div id="outline-container-org36092a5" class="outline-2">
+<h2 id="org36092a5"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
 <div class="outline-text-2" id="text-1">
 </div>
-<div id="outline-container-org7e6884a" class="outline-3">
-<h3 id="org7e6884a"><span class="section-number-3">1.1.</span> 齐次空间</h3>
+<div id="outline-container-org2cff768" class="outline-3">
+<h3 id="org2cff768"><span class="section-number-3">1.1.</span> 齐次空间</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 </p>
 
 
-<div id="org96d1f51" class="figure">
+<div id="org0ba7787" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -392,8 +392,8 @@
 </ol>
 </div>
 </div>
-<div id="outline-container-org964821c" class="outline-3">
-<h3 id="org964821c"><span class="section-number-3">1.2.</span> 平面方程</h3>
+<div id="outline-container-org99f12d5" class="outline-3">
+<h3 id="org99f12d5"><span class="section-number-3">1.2.</span> 平面方程</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 这里先约定一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
@@ -412,7 +412,7 @@
 </p>
 
 
-<div id="org4ebb5ff" class="figure">
+<div id="org051910d" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png" />
 </p>
 </div>
@@ -507,11 +507,11 @@
 </div>
 </div>
 </div>
-<div id="outline-container-org5f40d05" class="outline-2">
-<h2 id="org5f40d05"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
+<div id="outline-container-orgadffbca" class="outline-2">
+<h2 id="orgadffbca"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-2">
 
-<div id="orgea9260f" class="figure">
+<div id="orgfcec531" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png" width="700px" />
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -537,8 +537,8 @@
 如果这些都不理解的话,很容易会因为用错坐标系得到错误的计算结果,比如在以后的光照计算中.
 </p>
 </div>
-<div id="outline-container-orgd65cea1" class="outline-3">
-<h3 id="orgd65cea1"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
+<div id="outline-container-org2a61c65" class="outline-3">
+<h3 id="org2a61c65"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
@@ -571,8 +571,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-orgd21cf49" class="outline-3">
-<h3 id="orgd21cf49"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
+<div id="outline-container-orgc684f99" class="outline-3">
+<h3 id="orgc684f99"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 在 <code>OpenGL</code> 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
@@ -601,8 +601,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org665b064" class="outline-3">
-<h3 id="org665b064"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
+<div id="outline-container-org161b75a" class="outline-3">
+<h3 id="org161b75a"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 上面中, \(A\) 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, \(B\) 过程是对象经历了从对象坐标系到世界坐标系的变换,
@@ -647,8 +647,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org3fcced0" class="outline-3">
-<h3 id="org3fcced0"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
+<div id="outline-container-org91948f7" class="outline-3">
+<h3 id="org91948f7"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 <code>OpenGL</code> 中也有类似的存在,叫做 <code>viewer</code>,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinate system).
@@ -665,6 +665,12 @@ B. 把对象放到场景(scene)/世界(world)中.
 <p>
 也就是说 <code>OpenGL</code> 的相机是虚拟的.
 </p>
+
+<blockquote>
+<p>
+视点坐标系并非一定是左手坐标系, 有些渲染引擎使用右手坐标系作为视点坐标系.
+</p>
+</blockquote>
 </div>
 </div>
 <div id="outline-container-from-world-to-view" class="outline-3">
@@ -695,21 +701,21 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org8e2744c" class="figure">
+<div id="orgeb8870c" class="figure">
 <p><img src="../../../files/camera-opposite-to-object.png" alt="camera-opposite-to-object.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 3: </span>物体平移上在视觉上的相反: 当相机往原点平移时, 物体在视觉上也是往原点平移, 双方平移的方向相反.</p>
 </div>
 
 
-<div id="orgbc64a90" class="figure">
+<div id="orgad12c6f" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif" />
 </p>
 <p><span class="figure-number">Figure 4: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(x\) 轴往逆时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(x\) 轴往顺时针方向旋转.</p>
 </div>
 
 
-<div id="org0b37eab" class="figure">
+<div id="orgf9dfc42" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif" />
 </p>
 <p><span class="figure-number">Figure 5: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(y\) 轴往顺时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(y\) 轴往逆时针方向旋转.</p>
@@ -766,7 +772,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-虽然视点坐标系是左手坐标系, 但是在构建这个坐标系的过程中我们全程使用右手坐标系.
+<b>虽然视点坐标系是左手坐标系, 但由于 \(lookAt\) 的参数都是世界坐标系的坐标, 因此, 在构建视点坐标系的全程都得使用右手坐标系, 直到最后才变换成左手坐标系.</b>
 </p>
 
 <p>
@@ -815,19 +821,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 
 <blockquote>
 <p>
-事实上, 这只是其中一种构建方式, 主要区别在于 \(forward\) 的计算, 它们的是 \(forward = eye - center\).
-</p>
-
-<p>
-这导致了后面对于 \(\hat{r}_{\text{right-hand}}\) 以及 \(\hat{u}_{\text{right-hand}}\) 的计算也发生了改变:
-</p>
-
-<p>
-\(\begin{cases} right = up \times \hat{f}_{\text{right-hand}} \rightarrow \hat{r}_{\text{right-hand}} \\ \hat{u}_{\text{right-hand}} = \hat{f}_{\text{right-hand}} \times \hat{r}_{\text{right-hand}} \end{cases}\)
-</p>
-
-<p>
-当然, 最后的矩阵是一样的. 另外, 这里参考了以下内容:
+这并非唯一的构建方案, 只是 <code>OpenGL</code> 里面的方案, 参考资料如下:
 </p>
 
 <p>
@@ -855,8 +849,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 最后会得到一个新的坐标点 \(p_{e} = M_{view}p_{m} = \left(x_{e}, y_{e}, z_{e}\right)\).
 </p>
 </div>
-<div id="outline-container-orged89dec" class="outline-4">
-<h4 id="orged89dec"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
+<div id="outline-container-org2345ee4" class="outline-4">
+<h4 id="org2345ee4"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
 <div class="outline-text-4" id="text-2-5-1">
 <p>
 别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的,目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案,这个方案用到法线向量.
@@ -883,7 +877,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org5509646" class="figure">
+<div id="org511e8bd" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png" />
 </p>
 </div>
@@ -897,7 +891,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgb3f2398" class="figure">
+<div id="orgaa92f68" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png" />
 </p>
 </div>
@@ -931,7 +925,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org367fadc" class="figure">
+<div id="org0c82316" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png" />
 </p>
 </div>
@@ -1039,8 +1033,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org58cf430" class="outline-4">
-<h4 id="org58cf430"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
+<div id="outline-container-org724d9dc" class="outline-4">
+<h4 id="org724d9dc"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
 <div class="outline-text-4" id="text-2-5-2">
 <blockquote>
 <p>
@@ -1147,7 +1141,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org6fb42db" class="figure">
+<div id="orgcff18ca" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1326,12 +1320,12 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org3d1ec43" class="outline-4">
-<h4 id="org3d1ec43"><span class="section-number-4">2.5.3.</span> 视差贴图 (Parallax Map)</h4>
+<div id="outline-container-orgdc7dc49" class="outline-4">
+<h4 id="orgdc7dc49"><span class="section-number-4">2.5.3.</span> 视差贴图 (Parallax Map)</h4>
 </div>
 </div>
-<div id="outline-container-orgc4fa132" class="outline-3">
-<h3 id="orgc4fa132"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
+<div id="outline-container-orgef15283" class="outline-3">
+<h3 id="orgef15283"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
 <div class="outline-text-3" id="text-2-6">
 <p>
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上成为一张 2D 图片.
@@ -1433,22 +1427,22 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <b>到了这一步,其实整个 <code>Primitive Assembly</code> 环节就完成了</b>.
 </p>
 </div>
-<div id="outline-container-org459ee6e" class="outline-4">
-<h4 id="org459ee6e"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
+<div id="outline-container-org7e8c7d3" class="outline-4">
+<h4 id="org7e8c7d3"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
 <div class="outline-text-4" id="text-2-6-1">
 <p>
 先看一下如何选择相机看到的内容,有两种选择方案,如下,
 </p>
 
 
-<div id="org0c9051c" class="figure">
+<div id="orgf2dbeba" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png" />
 </p>
 <p><span class="figure-number">Figure 7: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="orgffd78f6" class="figure">
+<div id="orgeebf1cb" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png" />
 </p>
 <p><span class="figure-number">Figure 8: </span>正交投影(正交相机看到的内容)</p>
@@ -1475,8 +1469,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-orgdffb7c2" class="outline-4">
-<h4 id="orgdffb7c2"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
+<div id="outline-container-org86ed7d8" class="outline-4">
+<h4 id="org86ed7d8"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
 <div class="outline-text-4" id="text-2-6-2">
 <p>
 这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
@@ -1496,7 +1490,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </ol>
 
 
-<div id="org44a5d92" class="figure">
+<div id="org5ac8c9b" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>透视投影2</p>
@@ -1535,7 +1529,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org6b485b4" class="figure">
+<div id="org0c967b3" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png" />
 </p>
 </div>
@@ -1577,7 +1571,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgf9b4fe2" class="figure">
+<div id="orge6d278a" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png" />
 </p>
 <p><span class="figure-number">Figure 10: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1604,7 +1598,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orgc7f40be" class="figure">
+<div id="org5cff2a1" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png" />
 </p>
 <p><span class="figure-number">Figure 11: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1671,7 +1665,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org550b297" class="figure">
+<div id="org41ebed3" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 12: </span>比较不同深度下的精确度</p>
@@ -1857,8 +1851,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-org75a26f6" class="outline-4">
-<h4 id="org75a26f6"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
+<div id="outline-container-org7ff4e2a" class="outline-4">
+<h4 id="org7ff4e2a"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
 <div class="outline-text-4" id="text-2-6-4">
 <p>
 很多图形库的设定投影相机的函数需要视场角(fov), 裁剪平面的宽高比(aspect)以及近裁剪平面(n)以及远裁剪平面(f)作为输入参数.
@@ -1889,15 +1883,69 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 <p>
-\(fov\) 还可以用来实现视觉上的缩放, \(fov\) 缩小表示视野变小,看到的内容就少,可是窗口尺寸是不会因为 \(fov\) 而变的,于是内容就被拉伸铺滿窗口,形成画面放大/拉近的效果;反之就是缩小/拉远.
+\(fov\) 还可以用来实现视觉上的缩放, 根据关系: \(r - l = 2n \tan \frac{\theta}{2}\), 当 \(fov\)(\(\theta\)) 缩小, \(n\) 不变, 那么 \(r - l\) 变小,
 </p>
-</div>
-</div>
-<div id="outline-container-org8ddce22" class="outline-4">
-<h4 id="org8ddce22"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
-<div class="outline-text-4" id="text-2-6-5">
 
-<div id="org00028c5" class="figure">
+<p>
+所以视觉内容就变少, 同时画面输出的大小不变, 造成内容"密度"降低, 形成画面放大的效果; 同理, 反过来就是缩小.
+</p>
+
+<p>
+\(fov\) 的改变还可以用来实现希区柯克镜头(<code>Hitchcock shot/Dolly Zoom</code>): 移动相机来拉近/拉远与拍摄对象的距离, 同时对镜头进行变焦, 来保持拍摄对象在视野中的大小.
+</p>
+
+<p>
+简单来说就是 \(r - l\) 的大小固定, 对 \(n\) 和 \(\theta\) 进行变化.
+</p>
+
+<blockquote>
+<p>
+现实中, 镜头的焦距越长(也就是 \(n\) 越大), \(fov\) 就越小; 焦距越短, \(fov\) 越大.
+</p>
+
+<p>
+在实际拍摄电影中, 手动调整焦距和相机与拍摄对象之间的距离, 是很难保证拍摄对象在视觉上保持固定大小的.
+</p>
+
+<p>
+因为手动调整是不可能有计算机的精确度的, 所以如果要模拟现实中的效果,
+</p>
+
+<p>
+可以适当模拟一下"偏差", 也就是 \(r - l\) 可以产生允许范围内的变化.
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ffa07a;">/**</span>
+<span style="color: #ffa07a;"> * Dolly zoom</span>
+
+<span style="color: #ffa07a;"> from https://medium.com/@gianluca.lomarco/from-perspective-to-orthographic-camera-in-three-js-with-dolly-zoom-vertigo-effect-96de89c3a07b</span>
+<span style="color: #ffa07a;"> */</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">finalFOV</span> = 0.5
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">initialPos</span> = camera.position.clone()
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">fovTan</span> = Math.tan(MathUtils.degToRad(fov / 2))
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">RATIO</span> = initialPos.length() * fovTan
+
+<span style="color: #00ffff;">function</span> <span style="color: #87cefa;">updateCamera</span>(<span style="color: #eedd82;">progress</span>) {
+ <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">newFOV</span> = MathUtils.lerp(fov, finalFOV, progress)
+ <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">newFovTan</span> = Math.tan(MathUtils.degToRad(newFOV / 2))
+ <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">d</span> = RATIO / newFovTan
+
+ camera.fov = newFOV
+
+ camera.position.normalize().multiplyScalar(d)
+ camera.updateProjectionMatrix()
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orthographic-projection" class="outline-4">
+<h4 id="orthographic-projection"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
+<div class="outline-text-4" id="text-orthographic-projection">
+
+<div id="orgd4b3eba" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png" />
 </p>
 <p><span class="figure-number">Figure 13: </span>正交投影2</p>
@@ -1957,31 +2005,38 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">near</span> = 1
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">far</span> = 100
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">aspect</span> = width / height
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">3D &#25104;&#20687;&#30340;&#27604;&#20363;, &#31532;&#19968;&#20010;&#37325;&#28857;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#24471; 3D &#25104;&#20687;&#30340;&#27604;&#20363;, &#31532;&#19968;&#20010;&#37325;&#28857;</span>
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">persCam</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.PerspectiveCamera</span>(75, aspect, near, far)
 
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">top</span> = 2.5
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">bottom</span> = -2.5
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">orthoFrustumHeight</span> = top - bottom
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27491;&#20132;&#35270;&#26894;&#20307;&#39640;&#24230;, &#31532;&#20108;&#20010;&#37325;&#28857;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">orthoFrustumHeight</span> = 5
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38543;&#20415;&#25351;&#23450;&#27491;&#20132;&#35270;&#26894;&#20307;&#39640;&#24230;, &#20294;&#35201;&#20026;&#25972;&#25968; &#31532;&#20108;&#20010;&#37325;&#28857;</span>
+
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">left</span> = orthoFrustumHeight * aspect / -2
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">right</span> = orthoFrustumHeight * aspect / 2
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454; aspect &#35745;&#31639; left &#21644; right, &#20351;&#24471;&#26368;&#32456;&#25104;&#20687;&#30340;&#27604;&#20363;&#21644; 3D &#25104;&#20687;&#30340;&#27604;&#20363;&#19968;&#33268;, &#31532;&#19977;&#20010;&#37325;&#28857;</span>
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">top</span> = orthoFrustumHeight / 2
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">bottom</span> = -orthoFrustumHeight / 2
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454; aspect &#35745;&#31639; left / right / top / bottom, &#20351;&#24471;&#26368;&#32456;&#25104;&#20687;&#30340;&#27604;&#20363;&#21644; 3D &#25104;&#20687;&#30340;&#27604;&#20363;&#19968;&#33268;, &#31532;&#19977;&#20010;&#37325;&#28857;</span>
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">orthoCam</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.OrthographicCamera</span>(left, right, top, bottom, near, far)
 </pre>
 </div>
 
 <p>
-其中 <code>left/right</code> 是 <code>2D UI</code> 画布在水平方向的范围, <code>top/bottom</code> 则是在垂直方向上的范围, 在绘制 <code>UI</code> 元素时需要根据这个坐标系来对元素进行定位.
+其中 <code>left/right</code> 是 <code>2D UI</code> 画布在水平方向的范围, <code>top/bottom</code> 则是在垂直方向上的范围,
+</p>
+
+<p>
+这个时候可以把正交相机看作一个画板, 它的坐标系是水平范围在 <code>[left, right]</code>, 垂直范围在 <code>[bottom, top]</code>, 原点在正中心.
+</p>
+
+<p>
+在绘制 <code>UI</code> 元素时需要根据这个坐标系来对元素进行定位.
 </p>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-org2a4b39b" class="outline-2">
-<h2 id="org2a4b39b"><span class="section-number-2">3.</span> 接下来</h2>
+<div id="outline-container-org9d6cccd" class="outline-2">
+<h2 id="org9d6cccd"><span class="section-number-2">3.</span> 接下来</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 这篇笔记涵盖了大部分 <code>OpenGL</code> 中所发生变基式变换以及如何构建它们所对应的 <code>change-of-basis matrix</code>,
@@ -2072,7 +2127,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <div id="postamble" class="status">
 <p class="date">Date: 2020-06-19</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-05-01 Thu 12:45</p>
+<p class="date">Created: 2025-06-03 Tue 02:53</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

@@ -1,3 +1,23 @@
+*** [[file:posts/2025/06/svg-transform.html?hash=56dd1a725be82a9d2204bb41eff8e889][SVG 变换解惑]]
+在很久之前在学习 =SVG= 时就想着写一篇笔记, 但 =SVG= 元素和属性的用法在网上就有一大堆,
+
+秉承不重复造轮子的想法, 最后在好不容易找到了两个方向进行二选一: 如何使用贝塞尔曲线进行连续地拼接, 以及 =SVG= 的变换.
+
+前者内容需要读者有一定的微积分基础, 这个方向本质上就是在介绍 =CAGD= (=Computer Aided Geometric Design=) 的内容,
+
+基本上就是了解参数连续和几何连续这两个概念, 和 =SVG= 本身的关系就不大, 与其这样不如推荐读者去阅读相关书籍, 而且内容也不多.
+
+因此, 第一个方向排除. 接下来就是 =SVG= 的变换了, 相信对于接触过一点图形学的开发者来说, =SVG= 的变换可谓是非常迷惑的,
+
+毕竟同样是旋转和缩放, 为什么效果不一样, 而这方面的内容在网上记载较少且只有残片, 甚至有的资料已经失去时效了,
+
+导致大部分有效内容只能从 =SVG= 标准的[[https://www.w3.org/TR/SVG2/coords.html][第 8 章]]进行获取, 但即便如此, 文档也没有给出实际的变换计算公式,
+
+因此, 以公式作为一个角度去介绍 =SVG= 的变换, 而不是把文档的内容抄下来, 这非常有编写的价值,
+
+最后就是阅读要求, 读者要有一定的线性代数和几何变换基础.
+
+	
 *** [[file:posts/2025/02/fluid-typography.html?hash=f640e9f7092675fd0fc65d1f28008fc4][流体排版]]
 这篇笔记是 =2022= 年学习响应式布局时起笔的, 然而因为一些事情而中断了,
 
@@ -6,11 +26,11 @@
 同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
-*** [[file:posts/2024/11/introduction-to-probability.html?hash=b1480d420da4f98eaf852a1c10dee13a][Introduction To Probability 的阅读草稿纸]]
+*** [[file:posts/2024/11/introduction-to-probability.html?hash=049e0b0c6257b7a9b13edde3d5a8ffd7][Introduction To Probability 的阅读草稿纸]]
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=7935298abd34a7dc4fbc6c69e571f986][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=73f6a61f7df6dc8a18f0244e539486a8][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的,
@@ -87,7 +107,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=0f9365a4a7c0515db0bf5ac4a34a57ba][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=4d9c7d8ce3d361bc36a4b0caf37df844][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -155,13 +175,6 @@
 但严谨死记硬背, 抄到即便别人写法不太一样但也能马上看出来是抄过的代码, 抄到明白每一个参数变量的作用, 可以按照自己的意愿对代码进行调整.
 
 当基础知识足够扎实时, 应该就有能力实现 [[https://advances.realtimerendering.com/][Advances in Real-Time Rendering in 3D Graphics and Games]] 里面的技术了.
-
-	
-*** [[file:posts/2022/03/dev-js-library-tutorial.html?hash=15536b0157a28f6b8c894959aa4c851d][JS库开发指南 (WIP)]]
-最近公司给我分配了一个任务: 需要开发一个 3D 拓扑图的库.
-
-以前一直都是写应用的, 没有写 JS 库的经验, 现在正好来了一个学习的机会.
-# 记录开发一个Javascript库的过程
 
 	
 *** [[file:posts/2022/02/webgl-buffer-objects.html?hash=a46dc5af43414a15e0f02c2b045ed2e0][Shader 编程自救指南]]
@@ -300,7 +313,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=6940b29f0916743e0471cefc3be8a2fb][图形学-光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=3ca16e10941724bd02282ed44e4cab47][图形学-光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).

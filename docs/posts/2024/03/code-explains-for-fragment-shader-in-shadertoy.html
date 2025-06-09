@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-05-28 Wed 22:47 -->
+<!-- 2025-06-09 Mon 15:16 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ShaderToy常见代码解释 (收录中)</title>
@@ -342,13 +342,16 @@
 </li>
 <li><a href="#org3c22e8c">图像处理</a>
 <ul>
-<li><a href="#org2380997">图像边缘检测 (Edge detection)</a></li>
+<li><a href="#orgaeb22ab">卷积 (Convolution)</a></li>
+<li><a href="#orgf0f83e2">高斯模糊核</a></li>
+<li><a href="#org781d7b5">Sobel 核</a></li>
+<li><a href="#org9e96012">拉普拉斯核 (Laplacian 核)</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org28fe9cd">
+<div class="abstract" id="orgcf85c7a">
 <p>
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 </p>
@@ -529,8 +532,14 @@
 </p>
 
 <p>
-片元理所当然地有一个 <code>UV</code> 坐标, 可以通过片元坐标 \(gl\_fragCoord\) 和屏幕分辨率 \(iResolution\) 计算出来.
+片元理所当然地有一个 <code>UV</code> 坐标, 可以通过片元坐标 \(gl\_FragCoord\) 和屏幕分辨率 \(iResolution\) 计算出来.
 </p>
+
+<blockquote>
+<p>
+默认情况下, \(gl\_FragCoord\) 假设左下角为屏幕坐标系的原点, 以及以像素的中心为像素原点.
+</p>
+</blockquote>
 
 <div class="org-src-container">
 <pre class="src src-glsl"><span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / iResolution.xy; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[0.0, 1.0]</span>
@@ -719,7 +728,7 @@
 </p>
 
 
-<div id="org574dd11" class="figure">
+<div id="org87bc0dc" class="figure">
 <p><img src="../../../files/uv-tiling.png" alt="uv-tiling.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>重复了 4 个 \([0, 1]\) 范围的 \(UV\) 坐标空间</p>
@@ -878,7 +887,7 @@ genType <span style="color: #b0c4de;">smoothstep</span>(genType edge0, genType e
 </p>
 
 
-<div id="orge5afc14" class="figure">
+<div id="orgf68f8e3" class="figure">
 <p><img src="../../../files/smoothstep-t.png" alt="smoothstep-t.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>x, edge0 以及 edge1 三者的关系</p>
@@ -1219,7 +1228,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org190b1f8" class="figure">
+<div id="orgdb1b369" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader.png" alt="how-to-think-of-fun-creation-in-shader.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>越往右上角方向越亮</p>
@@ -1241,7 +1250,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="orgc851a92" class="figure">
+<div id="orgff50267" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-2.png" alt="how-to-think-of-fun-creation-in-shader-2.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>越往上走越亮</p>
@@ -1263,7 +1272,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="orgede0a4a" class="figure">
+<div id="orgf9d599b" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-3.png" alt="how-to-think-of-fun-creation-in-shader-3.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>越往右走越亮</p>
@@ -1286,7 +1295,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org9bc42d7" class="figure">
+<div id="org5a71c12" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-4.png" alt="how-to-think-of-fun-creation-in-shader-4.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>越往左上角走越亮</p>
@@ -1309,7 +1318,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org951d458" class="figure">
+<div id="org6d8a18e" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader-5.png" alt="how-to-think-of-fun-creation-in-shader-5.png">
 </p>
 <p><span class="figure-number">Figure 7: </span>越往左上角走越亮</p>
@@ -1342,7 +1351,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="orgeb0cf1d" class="figure">
+<div id="orgd37ac5a" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map-0.svg" alt="x2-y2-10-contour-map-0.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 8: </span><code>曲面图 + 等值线图</code></p>
@@ -1364,7 +1373,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org74774d6" class="figure">
+<div id="org5fa56fa" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map-1.svg" alt="x2-y2-10-contour-map-1.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 9: </span><code>曲面图 + 等值线图 + 灰阶</code></p>
@@ -1384,7 +1393,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org6a9a612" class="figure">
+<div id="orgb7a3389" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map-3.svg" alt="x2-y2-10-contour-map-3.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 10: </span><code>曲面图附加等值线 + 等值线图</code></p>
@@ -1403,7 +1412,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="orgdb92947" class="figure">
+<div id="orgd26e7ff" class="figure">
 <p><img src="../../../files/x2-y2-10-contour-map.svg" alt="x2-y2-10-contour-map.svg" class="org-svg" width="800px">
 </p>
 <p><span class="figure-number">Figure 11: </span><code>等值线图 + 灰阶</code></p>
@@ -1453,7 +1462,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="orgb93eb13" class="figure">
+<div id="org38c9103" class="figure">
 <p><img src="../../../files/iteration-in-fragment-shader.png" alt="iteration-in-fragment-shader.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>输出结果</p>
@@ -1545,7 +1554,7 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 
-<div id="org0005ae9" class="figure">
+<div id="org647b727" class="figure">
 <p><img src="../../../files/func-mix.png" alt="func-mix.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>\(mix(x, y, a)\)</p>
@@ -1623,31 +1632,39 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 <p>
-\(dFdx(attr)\) 其实就是在求在当前片元的 \(x\) 轴方向上的某个属性的 \(attr\) 的偏导数(<code>partial derivative</code>),
+\(dFdx(attr)\) 其实就是在求在当前片元的 \(x\) 轴方向上的某个属性的 \(attr\) 的微分(<code>differentation</code>).
 </p>
 
 <p>
-虽然在直觉上挺相似的, 但它并非人们所知的微积分中的偏导数, 其定义为:
+不过在片元这个上下文中, 它非常接近偏导数(<code>partial derivative</code>)的定义:
 </p>
 
 <p>
-\(dFdx(attr) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr\).
+\(dFdx(attr) = p(x + 1, y) - p(x, y) = \frac{p(x + 1, y) - p(x, y)}{(x + 1) - x} = attr_{x+1} - attr\).
 </p>
 
 <p>
-\(dFdy(attr)\) 同理, 只不过是在 \(y\) 轴方向上的偏导数, 定义如下:
+因此可以使用 \(dFdx(attr)\) 求 \(x\) 轴方向的导数近似.
 </p>
 
 <p>
-\(dFdy(attr) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr\).
+\(dFdy(attr)\) 同理, 其定义如下:
+</p>
+
+<p>
+\(dFdy(attr) = p(x, y + 1) - p(x, y) = \frac{p(x, y + 1) - p(x, y)}{(y + 1) - y} = attr_{y+1} - attr\).
 </p>
 
 
-<div id="orga84f369" class="figure">
+<div id="orgac54958" class="figure">
 <p><img src="../../../files/Shader-Derivatives-1.png" alt="Shader-Derivatives-1.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>dFdx/dFdy</p>
 </div>
+
+<p>
+在 <code>Shader</code> 编程中, 近似导数是求出片元法线的常用手段.
+</p>
 
 <p>
 比如下面这个例子在 <code>Fragment Shader</code> 中使用 \(dFdx\) 和 \(dFdy\) 根据片元的视点空间(view space)坐标计算出面法线.
@@ -1830,7 +1847,7 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </div>
 
 
-<div id="orgfc0e6a5" class="figure">
+<div id="org33277c6" class="figure">
 <p><img src="../../../files/func-faceforward.png" alt="func-faceforward.png">
 </p>
 <p><span class="figure-number">Figure 15: </span>faceforward</p>
@@ -1889,7 +1906,7 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 
-<div id="orgff8ebc9" class="figure">
+<div id="orgb290c67" class="figure">
 <p><img src="../../../files/refraction-and-snells-law-from-physics-ib.jpg" alt="refraction-and-snells-law-from-physics-ib.jpg" width="800px">
 </p>
 <p><span class="figure-number">Figure 16: </span><a href="https://www.youtube.com/watch?v=NcCSGtnUUpw&amp;ab_channel=AndyMasley%27sIBPhysicsLectures">折射 &amp; 斯涅尔定律(图来自 IB Physics)</a></p>
@@ -1918,7 +1935,7 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 
-<div id="org3dd9cf9" class="figure">
+<div id="org320057b" class="figure">
 <p><img src="../../../files/calc-refraction-vector.png" alt="calc-refraction-vector.png">
 </p>
 <p><span class="figure-number">Figure 17: </span>折射向量推导</p>
@@ -2144,7 +2161,7 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 
 
 
-<div id="orgd14cc01" class="figure">
+<div id="org7ab9d3e" class="figure">
 <p><img src="../../../files/texture_wrapping.png" alt="texture_wrapping.png">
 </p>
 <p><span class="figure-number">Figure 18: </span>贴图环绕的 4 种选择 (图片来自 LearnOpenGL)</p>
@@ -2261,7 +2278,7 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 </div>
 
 
-<div id="org6248cce" class="figure">
+<div id="orgee7520f" class="figure">
 <p><img src="../../../files/fract-sin.png" alt="fract-sin.png" width="500px">
 </p>
 </div>
@@ -2276,7 +2293,7 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 </div>
 
 
-<div id="org0d51ae4" class="figure">
+<div id="orgd8e0b9b" class="figure">
 <p><img src="../../../files/fract-sin-100000.png" alt="fract-sin-100000.png" width="504px">
 </p>
 </div>
@@ -2444,7 +2461,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </div>
 
 
-<div id="org0c6e0df" class="figure">
+<div id="org823a305" class="figure">
 <p><img src="../../../files/noise-functions.png" alt="noise-functions.png" width="504px">
 </p>
 </div>
@@ -2458,7 +2475,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org2c0a452" class="figure">
+<div id="org2fc14d5" class="figure">
 <p><img src="../../../files/value-noise-1d-lerp.png" alt="value-noise-1d-lerp.png">
 </p>
 </div>
@@ -2518,7 +2535,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org8b0d1d4" class="figure">
+<div id="orgb950027" class="figure">
 <p><img src="../../../files/bilinear-texture-weights.png" alt="bilinear-texture-weights.png" width="504px">
 </p>
 </div>
@@ -2574,7 +2591,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgea053d5" class="figure">
+<div id="org5e2219d" class="figure">
 <p><img src="../../../files/trilinear-interpolation.png" alt="trilinear-interpolation.png" width="504px">
 </p>
 </div>
@@ -2682,7 +2699,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org406d5ba" class="figure">
+<div id="org86a5986" class="figure">
 <p><img src="../../../files/2d-value-noise-stX5.png" alt="2d-value-noise-stX5.png">
 </p>
 <p><span class="figure-number">Figure 19: </span>2D 值噪声的效果</p>
@@ -2717,7 +2734,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org23f0df5" class="figure">
+<div id="org0cff4e3" class="figure">
 <p><img src="../../../files/perlin-noise.png" alt="perlin-noise.png" width="504px">
 </p>
 </div>
@@ -2839,14 +2856,14 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgdae7ee1" class="figure">
+<div id="org0cf45e0" class="figure">
 <p><img src="../../../files/noise-value-vs-perlin1.png" alt="noise-value-vs-perlin1.png">
 </p>
 <p><span class="figure-number">Figure 20: </span>理想情况: 随机值关于 \(x\) 轴良好地分布, 使得噪声函数的振荡在频率上是成规律的.</p>
 </div>
 
 
-<div id="org23eded5" class="figure">
+<div id="org1695266" class="figure">
 <p><img src="../../../files/noise-value-vs-perlin2.png" alt="noise-value-vs-perlin2.png">
 </p>
 <p><span class="figure-number">Figure 21: </span>最坏情况: 一些随机值在 \(x\) 轴的一定范围内连续出现多次, 也就是说噪声函数的频率分布是不成规律的.</p>
@@ -2865,7 +2882,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgf39183f" class="figure">
+<div id="orgd49201b" class="figure">
 <p><img src="../../../files/1d-perlin-noise-func-graph.png" alt="1d-perlin-noise-func-graph.png">
 </p>
 <p><span class="figure-number">Figure 22: </span>1D梯度噪声的函数图像, 梯度向量控制着噪声函数形状 (图片来源: Stefan Gustavson - Simplex Noise Demystified)</p>
@@ -2997,7 +3014,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org6eb0184" class="figure">
+<div id="org60e33b9" class="figure">
 <p><img src="../../../files/2d-simplex-shape.png" alt="2d-simplex-shape.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 23: </span>等边三角形作为单形, 填充二维空间</p>
@@ -3008,7 +3025,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgeecb857" class="figure">
+<div id="orgd136567" class="figure">
 <p><img src="../../../files/3d-simplex-shape.png" alt="3d-simplex-shape.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 24: </span>正四面体作为单形, 填充三维空间</p>
@@ -3046,7 +3063,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org100f0bc" class="figure">
+<div id="org747e20f" class="figure">
 <p><img src="../../../files/2d-simplex-summation-2.png" alt="2d-simplex-summation-2.png" width="504px">
 </p>
 </div>
@@ -3072,7 +3089,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org57c928a" class="figure">
+<div id="org35838d8" class="figure">
 <p><img src="../../../files/2d-simplex-summation.png" alt="2d-simplex-summation.png" width="504px">
 </p>
 </div>
@@ -3089,7 +3106,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orge9e2d62" class="figure">
+<div id="org9104f84" class="figure">
 <p><img src="../../../files/2d-simplex-selecting-traversing-order.png" alt="2d-simplex-selecting-traversing-order.png" width="504px">
 </p>
 </div>
@@ -3139,7 +3156,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgf349d8e" class="figure">
+<div id="org5e56b0c" class="figure">
 <p><img src="../../../files/3d-simplex-selecting-traversing-order.png" alt="3d-simplex-selecting-traversing-order.png" width="504px">
 </p>
 </div>
@@ -3231,7 +3248,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org054ed80" class="figure">
+<div id="org4551acd" class="figure">
 <p><img src="../../../files/2d-simplex-grid-choice.png" alt="2d-simplex-grid-choice.png" width="504px">
 </p>
 </div>
@@ -3388,7 +3405,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orge9f9b01" class="figure">
+<div id="org690839e" class="figure">
 <p><img src="../../../files/2d-simplex-grid-efficient-choice.png" alt="2d-simplex-grid-efficient-choice.png" width="504px">
 </p>
 </div>
@@ -3608,7 +3625,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </blockquote>
 
 
-<div id="org4b3fb59" class="figure">
+<div id="org76540a6" class="figure">
 <p><img src="../../../files/2d-simplex-summation.png" alt="2d-simplex-summation.png" width="504px">
 </p>
 </div>
@@ -3949,7 +3966,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </blockquote>
 
 
-<div id="orgd378db2" class="figure">
+<div id="org52ef7a2" class="figure">
 <p><img src="../../../files/isocurve-distance.png" alt="isocurve-distance.png">
 </p>
 <p><span class="figure-number">Figure 25: </span>等值线之间的距离</p>
@@ -4382,7 +4399,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org4667ca3" class="figure">
+<div id="org447aeec" class="figure">
 <p><img src="../../../files/segment-sdf.png" alt="segment-sdf.png">
 </p>
 </div>
@@ -4392,7 +4409,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="orga22f421" class="figure">
+<div id="org941b436" class="figure">
 <p><img src="../../../files/segment-sdf-2.png" alt="segment-sdf-2.png">
 </p>
 </div>
@@ -4475,7 +4492,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 <h4 id="org28ae747">计算点与矩形之间的距离</h4>
 <div class="outline-text-4" id="text-org28ae747">
 
-<div id="org752da2e" class="figure">
+<div id="orgaff50b9" class="figure">
 <p><img src="../../../files/sdf_box.png" alt="sdf_box.png">
 </p>
 <p><span class="figure-number">Figure 26: </span>中心位于原点且尺寸为 \(W \times H\) 的矩形与点之间的距离 (图片来源于 <a href="https://numbersmithy.com/signed-distance-function-to-oriented-2d-boxes/#org958ce36">Number-Smithy</a>)</p>
@@ -4621,7 +4638,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org5f88223" class="figure">
+<div id="org47a35be" class="figure">
 <p><img src="../../../files/self-intersecting-polygon-with-holes.png" alt="self-intersecting-polygon-with-holes.png">
 </p>
 <p><span class="figure-number">Figure 27: </span>空心的自交多变形</p>
@@ -4636,7 +4653,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org9e97316" class="figure">
+<div id="orgba03e85" class="figure">
 <p><img src="../../../files/self-intersecting-polygon-without-holes.png" alt="self-intersecting-polygon-without-holes.png">
 </p>
 <p><span class="figure-number">Figure 28: </span>实心的自交多边形</p>
@@ -4651,14 +4668,14 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org2f6ebac" class="figure">
+<div id="org40669f2" class="figure">
 <p><img src="../../../files/Winding_Number_Animation_Small.gif" alt="Winding_Number_Animation_Small.gif">
 </p>
 <p><span class="figure-number">Figure 29: </span>环绕数为 2</p>
 </div>
 
 
-<div id="org3d4cd26" class="figure">
+<div id="org7adf111" class="figure">
 <p><img src="../../../files/winding-number.png" alt="winding-number.png">
 </p>
 </div>
@@ -4676,7 +4693,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="orgcff8adb" class="figure">
+<div id="org5bd4675" class="figure">
 <p><img src="../../../files/subtended-angle.png" alt="subtended-angle.png">
 </p>
 <p><span class="figure-number">Figure 30: </span>\(R\) 是判定点, \(C(t)\) 是曲线上的点</p>
@@ -4721,7 +4738,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="orgf30be80" class="figure">
+<div id="org2b1fc33" class="figure">
 <p><img src="../../../files/signed-angle-for-polygons.png" alt="signed-angle-for-polygons.png">
 </p>
 </div>
@@ -4740,7 +4757,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="orge239706" class="figure">
+<div id="org17e0bcd" class="figure">
 <p><img src="../../../files/triangle-RPQ.png" alt="triangle-RPQ.png">
 </p>
 </div>
@@ -4940,7 +4957,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org1754e02" class="figure">
+<div id="orga74b778" class="figure">
 <p><img src="../../../files/Winding_number_algorithm_example.svg.png" alt="Winding_number_algorithm_example.svg.png" width="504px">
 </p>
 </div>
@@ -5067,7 +5084,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org2eff564" class="figure">
+<div id="org5dcf949" class="figure">
 <p><img src="../../../files/ray-tracing.jpg" alt="ray-tracing.jpg" width="504px">
 </p>
 </div>
@@ -5111,7 +5128,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org7f8f979" class="figure">
+<div id="org742b1f1" class="figure">
 <p><img src="../../../files/08_displacement_05.png" alt="08_displacement_05.png">
 </p>
 <p><span class="figure-number">Figure 31: </span>光线步进</p>
@@ -5183,7 +5200,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </div>
 
 
-<div id="org3deb7fc" class="figure">
+<div id="orgf177def" class="figure">
 <p><img src="../../../files/3d-sdf-example.png" alt="3d-sdf-example.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 32: </span>3D SDF 效果</p>
@@ -5283,7 +5300,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </div>
 
 
-<div id="org35dbb8d" class="figure">
+<div id="orgef75e0b" class="figure">
 <p><img src="../../../files/3d-sdf-example-diffuse.png" alt="3d-sdf-example-diffuse.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 33: </span>3D SDF 光照</p>
@@ -5386,7 +5403,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </div>
 
 
-<div id="orge8d3549" class="figure">
+<div id="org33cc488" class="figure">
 <p><img src="../../../files/3d-sdf-example-shadow.png" alt="3d-sdf-example-shadow.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 34: </span>3D SDF 阴影</p>
@@ -5495,7 +5512,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org1d4bcf5" class="figure">
+<div id="orgbf67c84" class="figure">
 <p><img src="../../../files/1-gamma.svg" alt="1-gamma.svg" class="org-svg" width="504px">
 </p>
 </div>
@@ -5682,7 +5699,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org079d622" class="figure">
+<div id="orgedb69dc" class="figure">
 <p><img src="../../../files/planar-mapping.png" alt="planar-mapping.png">
 </p>
 </div>
@@ -5696,7 +5713,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 <p>
-如果从正面(\(Z\) 轴方向)进行投影, 以顶点坐标的 \(xy\) 分量计算 \(uv\).
+如果从正面(\(Z\) 轴方向)进行投影, 以顶点坐标的 \(xy\) 分量作为 \(uv\).
 </p>
 
 <p>
@@ -5712,7 +5729,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 <p>
-因此, 人们想到了一种比 <code>3D</code> 贴图更低消耗的映射方法: 三平面映射(<code>Triplanar Mapping</code>)这种算法, 它是平面映射的高阶版本:
+因此, 人们想到了一种比 <code>3D</code> 贴图更低消耗的映射方法: 三平面映射(<code>Triplanar Mapping</code>), 它是平面映射的高阶版本:
 </p>
 
 <p>
@@ -5720,7 +5737,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org10e56f5" class="figure">
+<div id="org2e509ca" class="figure">
 <p><img src="../../../files/TriplanarMapping.png" alt="TriplanarMapping.png">
 </p>
 <p><span class="figure-number">Figure 35: </span>三平面映射, 图片来源: <a href="https://docs.otoy.com">https://docs.otoy.com</a></p>
@@ -5957,7 +5974,7 @@ Intersection RayMarch(<span style="color: #98fb98;">vec3</span> p0, <span style=
 </div>
 
 
-<div id="orgd9050f9" class="figure">
+<div id="org4087a0f" class="figure">
 <p><img src="../../../files/raymarching-tirplanar-mapping.png" alt="raymarching-tirplanar-mapping.png" width="504px">
 </p>
 </div>
@@ -6146,7 +6163,7 @@ Intersection RayMarch(<span style="color: #98fb98;">vec3</span> p0, <span style=
 </p>
 
 
-<div id="orgc504b76" class="figure">
+<div id="org285d5be" class="figure">
 <p><img src="../../../files/calc-occlusion.png" alt="calc-occlusion.png">
 </p>
 </div>
@@ -6310,7 +6327,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="orgd6b9ef6" class="figure">
+<div id="org480c56f" class="figure">
 <p><img src="../../../files/raymarching-ao-example.png" alt="raymarching-ao-example.png" width="504px">
 </p>
 </div>
@@ -6352,7 +6369,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="org93e72d3" class="figure">
+<div id="org5e8fec2" class="figure">
 <p><img src="../../../files/more-complicated-scene.png" alt="more-complicated-scene.png" width="504px">
 </p>
 </div>
@@ -6374,7 +6391,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </p>
 
 
-<div id="org0e9b4e7" class="figure">
+<div id="org420635c" class="figure">
 <p><img src="../../../files/Primitives-and-hierarchy.svg" alt="Primitives-and-hierarchy.svg" class="org-svg" width="504px">
 </p>
 </div>
@@ -6492,7 +6509,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="org869343f" class="figure">
+<div id="orgdc5d820" class="figure">
 <p><img src="../../../files/invalid-sdf-sphere.png" alt="invalid-sdf-sphere.png" width="504px">
 </p>
 </div>
@@ -6790,12 +6807,462 @@ n(u, v, w);
 </p>
 </blockquote>
 </div>
-<div id="outline-container-org2380997" class="outline-3">
-<h3 id="org2380997">图像边缘检测 (Edge detection)</h3>
-<div class="outline-text-3" id="text-org2380997">
+<div id="outline-container-orgaeb22ab" class="outline-3">
+<h3 id="orgaeb22ab">卷积 (Convolution)</h3>
+<div class="outline-text-3" id="text-orgaeb22ab">
 <p>
-<code>Sobel</code>.
+卷积在图像处理中发挥着非常重要的作用. 卷积是一种数学运算, 适用于处理连续对象和离散对象.
 </p>
+
+<p>
+以连续版本的卷积运算为例, 其定义为: \((f * g)(t) = \int_{-\infty}^{\infty} f(\tau) g(-\tau + t) d\tau\).
+</p>
+
+
+<div id="orgeb2233d" class="figure">
+<p><img src="../../../files/Convolution_of_spiky_function_with_box2.gif" alt="Convolution_of_spiky_function_with_box2.gif" width="504px">
+</p>
+<p><span class="figure-number">Figure 36: </span>连续卷积</p>
+</div>
+
+<p>
+整个计算过程可以这么描述:
+</p>
+
+<p>
+先对函数 \(g\) 进行变换, 围绕 \(y\) 轴进行翻转, 并往 \(x\) 轴正方向平移 \(t\) 单位作为起点;
+</p>
+
+<p>
+再让经过变换后的 \(g\) 移动, 在移动期间计算 \(f\) 和 \(g\) 之间的乘积, 对乘积进行积分得出结果.
+</p>
+
+<p>
+这里的函数 \(f\) 称为核(<code>kernel</code>)或滤波核(<code>filter kernel</code>), \(g\) 是输入的数据, 核对会输入的数据进行处理.
+</p>
+
+<p>
+为了保证 \(f\) 能够按照数据顺序来处理数据, 所以才对 \(g\) 进行翻转, 而翻转这个动作就叫做"卷".
+</p>
+
+<p>
+这里的处理内容就是 <b>计算核与数据之间的相似程度, 并根据相似程度突出两者差异</b>.
+</p>
+
+<p>
+在上面动画中, 黄色区域就代表着核与数据在当前时刻相似程度.
+</p>
+
+<p>
+因此, 核与输入数据之间的乘积(其实还要乘以 \(d\tau\))可作为两者相似程度的量化, 卷积的含义就是相似度之和.
+</p>
+
+<blockquote>
+<p>
+不要混淆 \((f * g)(t)\) 和 \((fg)\), \((fg)(t)\) 是复合函数, 它的完整定义是 \(f(g(t))\).
+</p>
+
+<p>
+这里 \(*\) 是卷积运算符, 并非乘法.
+</p>
+</blockquote>
+
+<p>
+在图像处理中, 使用的是(二维)离散卷积运算, 因为图片数据是离散对象, 像素间隔固定为 1.
+</p>
+
+<p>
+图像处理更能体现 "计算相似程度, 突出两者差异" 这个说法.
+</p>
+
+
+<div id="org5de75c7" class="figure">
+<p><img src="../../../files/11148cnn_convolve_with_padding.gif" alt="11148cnn_convolve_with_padding.gif" width="504px">
+</p>
+<p><span class="figure-number">Figure 37: </span>2D 离散卷积, 使用 \(3 \times 3\) 的核来处理 \(5 \times 5\) 的数据, 为了保证卷积进行在外层填充 0</p>
+</div>
+
+<p>
+该动画所使用的核是一个 \(3 \times 3\) 的矩阵, 而不是一样函数, 这个矩阵是在二元连续函数采样的结果.
+</p>
+
+<p>
+比如这个连续函数是 \(z = f(x, y)\), 要生成一个 \(N \times N\) 的核,
+</p>
+
+<p>
+要先选定一个有限的定义域范围: \(x, y \in [- \lfloor \frac{N}{2} \rfloor, \lfloor \frac{N}{2} \rfloor]\);
+</p>
+
+<p>
+再根据像素间隔对定义域范围进行离散化: \(x, y \in \{ - \lfloor \frac{N}{2} \rfloor,  - \lfloor \frac{N}{2} \rfloor + 1, \dots, -1, 0, 1, \dots, \lfloor \frac{N}{2} \rfloor - 1, \lfloor \frac{N}{2} \rfloor \}\);
+</p>
+
+<p>
+在离散化的定义域内计算出全部的函数值, 最后得到的矩阵就是一个 \(N \times N\) 的核.
+</p>
+
+<blockquote>
+<p>
+一元连续函数离散化之后得到的核是一个向量.
+</p>
+</blockquote>
+
+<p>
+在获得核后, 每次需要读取一个 \(N \times N\) 局部图像数据矩阵, 让核与数据矩阵的对应行向量进行点积, 最后对点积求和作为对应像素的值.
+</p>
+
+<p>
+计算过程如下:
+</p>
+
+<p>
+假设核为 \(F = \left( \begin{array}{c} w_1 & w_2 & w_3 \\ w_4 & w_5 & w_6 \\ w_7 & w_8 & w_9 \end{array} \right)\), 选取像素 \(d_5\) 以及它的 8 个相邻像素的作为数据 \(G = \left( \begin{array}{c} d_1 & d_2 & d_3 \\ d_4 & d_5 & d_6 \\ d_7 & d_8 & d_9 \end{array} \right)\),
+</p>
+
+<p>
+\(A = \left(\begin{array}{c} w_1 & w_2 & w_3 \end{array}\right) \cdot \left(\begin{array}{c} d_1 & d_2 & d_3 \end{array}\right) = w_1 d_1 + w_2 d_2 + w_3 d_3\)
+</p>
+
+<p>
+\(B = \left(\begin{array}{c} w_4 & w_5 & w_6 \end{array}\right) \cdot \left(\begin{array}{c} d_4 & d_5 & d_6 \end{array}\right) = w_4 d_4 + w_5 d_5 + w_6 d_6\)
+</p>
+
+<p>
+\(C = \left(\begin{array}{c} w_7 & w_8 & w_9 \end{array}\right) \cdot \left(\begin{array}{c} d_7 & d_8 & d_9 \end{array}\right) = w_7 d_7 + w_8 d_8 + w_9 d_9\)
+</p>
+
+<p>
+最终, 像素 \(d_5\) 新的像素值为 \(F * G = A + B + C\).
+</p>
+
+<p>
+点积可以用来表示两个向量之间的相似程度: \(\vec{A} \cdot \vec{B} = |\vec{A}||\vec{B}|\cos\theta\), \(\cos\theta\) 越大, 两向量之间的相似程度越高.
+</p>
+
+<p>
+并且 \(A\) 还能作为模式(<code>pattern</code>)来提取出 \(B\) 的分量, 考虑以下运算: \(A \cdot B = \left( \begin{array}{c} w_x & w_y & w_z \end{array} \right) \cdot \left( \begin{array}{c} x & y & z \end{array} \right)\),
+</p>
+
+<p>
+比如想要提取 \(B\) 的 \(y\) 分量, 那么可以令 \(A = \left( \begin{array}{c} w_x = 0 & w_y = 1 & w_z = 0 \end{array} \right)\),
+</p>
+
+<p>
+令 \(w_y \gt 1\) 还可以对 \(y\) 分量进行放大; 令 \(0 \lt w_y \lt 1\) 对 \(y\) 分量进行缩小; 令 \(w_y \lt 0\) 对 \(y\) 分量进行翻转.
+</p>
+
+<p>
+因此, 核的本质上就是一个模式与权重分布的结合体, 提取与模式匹配的部分数据,
+</p>
+
+<p>
+根据权重分布对匹配的数据进行变换, 从而突出数据与模式之间的差异.
+</p>
+
+<p>
+这也是为什么是每次要取一片区域的像素而不是一个像素作为处理数据, 因为单凭一个像素无法形成模式.
+</p>
+
+<p>
+根据卷积的运算特性: 运算结果作为中间数据的新值, 我们可以使用核来实现像素偏移.
+</p>
+
+<p>
+比如 \(\left( \begin{array}{c} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 0 & 0 \end{array} \right)\) 可以让数据往左偏移 1 个单位, 相当于把右边的像素复制过来一样.
+</p>
+
+<p>
+而偏移的距离和会受到核尺寸的限制, 比如 \(\left( \begin{array}{c} 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \end{array} \right)\) 可以让数据往左偏移 2 个单位.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf0f83e2" class="outline-3">
+<h3 id="orgf0f83e2">高斯模糊核</h3>
+<div class="outline-text-3" id="text-orgf0f83e2">
+<p>
+二维高斯函数: \(G(x, y) = (\frac{1}{2 \pi \sigma^2})^{e^{-\frac{x^2 + y^2}{2 \sigma^2}}}\)
+</p>
+
+<p>
+离散化步骤:
+</p>
+
+<ol class="org-ol">
+<li><p>
+确定采样网格范围
+</p>
+
+<p>
+高斯函数理论上无限延伸，但实际需截断到有限范围 (通常取 \([−3 \sigma, 3 \sigma ]\), 覆盖约 <code>99.7%</code> 的分布).
+</p>
+
+<p>
+例如, \(\sigma = 1\), 那么采样范围就是 \([-3, 3] \times [-3, 3]\)
+</p></li>
+
+<li><p>
+选择离散网格范围, 网格间距为 1, 对应像素间距
+</p>
+
+<p>
+如果核的大小为 \(5 \times 5\), 那么 \(x, y \in \{-2, -1, 0, 1, 2\}\)
+</p></li>
+
+<li>计算每个网格点的函数值</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org781d7b5" class="outline-3">
+<h3 id="org781d7b5">Sobel 核</h3>
+<div class="outline-text-3" id="text-org781d7b5">
+<p>
+<code>Sobel</code> 核用于图像边缘检测(Edge detection), <code>Sobel</code> 核的想法是计算出当前像素在所有方向上的导数, 以这些导数作为权重分布进行计算.
+</p>
+
+
+<div id="org4638f3d" class="figure">
+<p><img src="../../../files/sobel_neighborhood_cell_distances.png" alt="sobel_neighborhood_cell_distances.png" width="504px">
+</p>
+<p><span class="figure-number">Figure 38: </span>相邻元素的距离</p>
+</div>
+
+<p>
+\(a, b, c, d, e, f, g, h, i\) 分别是对应位置上片元的颜色.
+</p>
+
+<p>
+求出中心点在 8 个方向上的方向导数.
+</p>
+
+<p>
+在 \(X^{+}\) 方向上的方向导数: \(D_{(1, 0)} = \frac{(f - e) \vec{i}}{1} = (f - e) \vec{i}\)
+</p>
+
+<p>
+在 \(X^{-}\) 方向上的方向导数: \(D_{(-1, 0)} = \frac{-(d - e) \vec{i}}{1} = (e - d) \vec{i}\)
+</p>
+
+<p>
+在 \(Y^{+}\) 方向上的方向导数: \(D_{(0, 1)} = \frac{(b - e) \vec{j}}{1} = (b - e) \vec{j}\)
+</p>
+
+<p>
+在 \(Y^{-}\) 方向上的方向导数: \(D_{(0, -1)} = \frac{-(h - e) \vec{j}}{1} = (e - h) \vec{j}\)
+</p>
+
+<p>
+在与轴对齐的方向上, 片元之间的距离为 1, 但在对角线上, 根据勾股定理, 片元之间的距离为 \(\sqrt{2}\). 所以:
+</p>
+
+<p>
+在对角线 \((1, 1)\) 方向上的方向导数: \(D_{(1, 1)} = \frac{(c - e) (\cos\frac{\pi}{4} \vec{i} + \sin\frac{\pi}{4} \vec{j})}{\sqrt{2}} = \frac{1}{2}(c - e)(\vec{i} + \vec{j})\)
+</p>
+
+<blockquote>
+<p>
+这里使用 \(\cos\frac{\pi}{4} \vec{i} + \sin\frac{\pi}{4}\) 是对向量 \(\vec{i} + \vec{j}\) 进行单位化.
+</p>
+</blockquote>
+
+<p>
+在对角线 \((-1, -1)\) 方向上的方向导数: \(D_{(-1, -1)} = \frac{(g - e) (- \cos\frac{\pi}{4}\vec{i} - \sin\frac{\pi}{4}\vec{j})}{\sqrt{2}} = \frac{1}{2}(e - g)(\vec{i} + \vec{j})\)
+</p>
+
+<p>
+在对角线 \((-1, 1)\) 方向上的方向导数: \(D_{(-1, 1)} = \frac{(a - e) (- \cos\frac{\pi}{4} \vec{i} +  \sin\frac{\pi}{4} \vec{j})}{\sqrt{2}} = \frac{1}{2}(e - a)(\vec{i} - \vec{j})\)
+</p>
+
+<p>
+在对角线 \((1, -1)\) 方向上的方向导数: \(D_{(1, -1)} = \frac{(i - e) (\cos\frac{\pi}{4} \vec{i} - \sin\frac{\pi}{4} \vec{j})}{\sqrt{2}} = \frac{1}{2} (i - e)(\vec{i} - \vec{j})\)
+</p>
+
+<p>
+对这个方向导数进行求和得到:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} & D_{(1, 0)} + D_{(-1, 0)} + D_{(0, 1)} + D_{(0, -1)} + D_{(1, 1)} + D_{(-1, -1)} + D_{(-1, 1)} + D_{(1, -1)} \\ = & (f - d)\vec{i} + (b - h)\vec{j} + \frac{1}{2} [(c - g)(\vec{i} + \vec{j}) + (i - a)(\vec{i} - \vec{j})] \\ = & \frac{1}{2}[ 2 (f - d)\vec{i} + 2 (b - h)\vec{j} + (c - g)\vec{i} + (c - g)\vec{j} + (i - a)\vec{i} - (i - a)\vec{j}] \\ = & \frac{1}{2}[2(f - d) + (c - g) + (i - a)]\vec{i} + \frac{1}{2}[2(b - h) + (c - g) - (i - a)]\vec{j} \\ = & \frac{1}{2} [-a + c -2d + 2f - g + i]\vec{i} + \frac{1}{2} [a + 2b + c - g - 2h - i]\vec{j}\end{aligned} \end{equation*}\)
+</p>
+
+<p>
+把 \(\vec{i}\) 相关的系数整理出来得到在水平方向上的 <code>kernel</code>,
+</p>
+
+<p>
+把 \(\vec{j}\) 相关的系数整理出来得到在垂直方向上的 <code>kernel</code>.
+</p>
+
+<p>
+最后像素的的值为 \(\sqrt{(F_x * G)^2 + (F_y * G)^2}\), 其中 \(G\) 是 \(3 \times 3\) 的图像数据矩阵.
+</p>
+
+
+<div id="org15df568" class="figure">
+<p><img src="../../../files/sobel_G_half.png" alt="sobel_G_half.png" width="400px">
+</p>
+</div>
+
+<p>
+根据<a href="https://www.researchgate.net/publication/239398674_An_Isotropic_3x3_Image_Gradient_Operator">原本的论文</a>, 由于有 8 个方向, 所以需要乘以 \(\frac{1}{8}\) 进行平均, 使得最终系数是 \(\frac{1}{16} = \frac{1}{2} \times \frac{1}{8}\),
+</p>
+
+<p>
+但在实际中通常会忽略该参数, 除非想要降低亮度.
+</p>
+
+<blockquote>
+<p>
+如果是 \(5 \times 5\) 的核, 那么就是 16 个方向了.
+</p>
+</blockquote>
+
+<p>
+为了使结果更准确, 使用 <code>Sobel</code> 算子之前通常会先对图片进行灰阶处理, 以及使用平滑处理(盒状模糊/高斯模糊)进行降噪.
+</p>
+
+<p>
+以下是一个结合灰阶处理的 <code>Sobel</code> 算子例子:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">run: glslViewer dip-sobel.frag textures/2999645.jpg</span>
+
+<span style="color: #b0c4de;">#ifndef</span> PLATFORM_WEBGL
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> u_resolution;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> u_tex0;
+
+<span style="color: #b0c4de;">#define</span> iResolution u_resolution
+<span style="color: #b0c4de;">#define</span> iChannel0 u_tex0
+<span style="color: #b0c4de;">#endif</span>
+
+<span style="color: #98fb98;">vec4</span> convolution(<span style="color: #98fb98;">vec2</span> uv, <span style="color: #98fb98;">float</span>[9] kernel, <span style="color: #98fb98;">vec4</span>[9] pixels) {
+  <span style="color: #98fb98;">vec4</span> conv = <span style="color: #98fb98;">vec4</span>(0.0);
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt;= 2; i++) {
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> j = 0; j &lt;= 2; j++) {
+      <span style="color: #98fb98;">int</span> index = j * 3 + i;
+      conv += pixels[index] * kernel[index];
+    }
+  }
+  <span style="color: #00ffff;">return</span> conv;
+}
+
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / iResolution.xy;
+  <span style="color: #98fb98;">vec2</span> steps = 1.0 / iResolution.xy;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Pixel Sampling</span>
+  <span style="color: #98fb98;">vec4</span> pixels[9];
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = -1; i &lt;= 1; i++) { <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[-1, 1] =&gt; [0, 2]</span>
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> j = 1; j &gt;= -1; j--) { <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[1, -1] =&gt; [0, 2]</span>
+      <span style="color: #98fb98;">int</span> index = (-j + 1) * 3 + (i + 1);
+      <span style="color: #98fb98;">vec4</span> c = <span style="color: #b0c4de;">texture</span>(iChannel0, uv + <span style="color: #98fb98;">vec2</span>(<span style="color: #98fb98;">float</span>(i) * steps.x, <span style="color: #98fb98;">float</span>(j) * steps.y));
+      pixels[index] = c;
+    }
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">GrayScale</span>
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt; pixels.<span style="color: #b0c4de;">length</span>(); i++) {
+    <span style="color: #98fb98;">float</span> gray = <span style="color: #b0c4de;">dot</span>(pixels[i].rgb, <span style="color: #98fb98;">vec3</span>(0.299, 0.587, 0.114));
+    pixels[i] = <span style="color: #98fb98;">vec4</span>(<span style="color: #98fb98;">vec3</span>(gray), pixels[i].a);
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Sobel</span>
+  <span style="color: #98fb98;">float</span> kernel_x[9] = <span style="color: #98fb98;">float</span>[9](-1, 0, 1, -2, 0, 2, -1, 0, 1);
+  <span style="color: #98fb98;">float</span> kernel_y[9] = <span style="color: #98fb98;">float</span>[9](1, 2, 1, 0, 0, 0, -1, -2, -1);
+  <span style="color: #98fb98;">vec4</span> conv_x = convolution(uv, kernel_x, pixels);
+  <span style="color: #98fb98;">vec4</span> conv_y = convolution(uv, kernel_y, pixels);
+  <span style="color: #98fb98;">vec4</span> g = <span style="color: #b0c4de;">sqrt</span>(conv_x * conv_x + conv_y * conv_y);
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(1. - g.rgb, 1.0);
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9e96012" class="outline-3">
+<h3 id="org9e96012">拉普拉斯核 (Laplacian 核)</h3>
+<div class="outline-text-3" id="text-org9e96012">
+<p>
+拉普拉斯核的作用是对图像的二阶导数进行二维各向同性(<code>isotropic</code>, 在各个方向上性质相同)度量, 突出边缘以及突变区域.
+</p>
+
+<p>
+因此, 拉普拉斯核也能用在边缘检查上. 与 <code>Sobel</code> 核不同的地方在于, <code>Sobel</code> 核实际上使用了两个核,
+</p>
+
+<p>
+而拉普拉斯核只用了一个核, 这导致运算效率会更高一点, 但由于拉普拉斯核测量的是二阶导数, 也导致了处理结果对图片的噪声非常敏感.
+</p>
+
+<p>
+可以根据泰勒展开式, 来分别求出在 \(x\) 和 \(y\) 轴两个正交方向上的二阶导数:
+</p>
+
+<p>
+\(\frac{\partial G(x, y)}{\partial x^2} = G(x + 1, y) + G(x - 1, y) - 2 G(x, y)\)
+</p>
+
+<p>
+\(\frac{\partial G(x, y)}{\partial y^2} = G(x, y + 1) + G(x, y - 1) - 2 G(x, y)\)
+</p>
+
+<p>
+其中, \(G(x, y)\) 是位于 \((x, y)\) 的像素的值.
+</p>
+
+<p>
+对这两个二阶导数进行求和就能得出拉普拉斯核了: \(G(x + 1, y) + G(x - 1, y) + G(x, y + 1) + G(x, y - 1) - 4 G(x, y)\),
+</p>
+
+<p>
+把系数按照位置整理成矩阵形: \(\left( \begin{array}{c} 0 & 1 & 0 \\ 1 & -4 & 1 \\ 0 & 1 & 0 \end{array} \right)\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">run: glslViewer dip-sobel.frag textures/2999645.jpg</span>
+
+<span style="color: #b0c4de;">#ifndef</span> PLATFORM_WEBGL
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> u_resolution;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> u_tex0;
+
+<span style="color: #b0c4de;">#define</span> iResolution u_resolution
+<span style="color: #b0c4de;">#define</span> iChannel0 u_tex0
+<span style="color: #b0c4de;">#endif</span>
+
+<span style="color: #98fb98;">vec4</span> convolution(<span style="color: #98fb98;">vec2</span> uv, <span style="color: #98fb98;">float</span>[9] kernel, <span style="color: #98fb98;">vec4</span>[9] pixels) {
+  <span style="color: #98fb98;">vec4</span> conv = <span style="color: #98fb98;">vec4</span>(0.0);
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt;= 2; i++) {
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> j = 0; j &lt;= 2; j++) {
+      <span style="color: #98fb98;">int</span> index = j * 3 + i;
+      conv += pixels[index] * kernel[index];
+    }
+  }
+  <span style="color: #00ffff;">return</span> conv;
+}
+
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / iResolution.xy;
+  <span style="color: #98fb98;">vec2</span> steps = 1.0 / iResolution.xy;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Pixel Sampling</span>
+  <span style="color: #98fb98;">vec4</span> pixels[9];
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = -1; i &lt;= 1; i++) { <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[-1, 1] =&gt; [0, 2]</span>
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> j = 1; j &gt;= -1; j--) { <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">[1, -1] =&gt; [0, 2]</span>
+      <span style="color: #98fb98;">int</span> index = (-j + 1) * 3 + (i + 1);
+      <span style="color: #98fb98;">vec4</span> c = <span style="color: #b0c4de;">texture</span>(iChannel0, uv + <span style="color: #98fb98;">vec2</span>(<span style="color: #98fb98;">float</span>(i) * steps.x, <span style="color: #98fb98;">float</span>(j) * steps.y));
+      pixels[index] = c;
+    }
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Laplacian</span>
+  <span style="color: #98fb98;">float</span> kernel[9] = <span style="color: #98fb98;">float</span>[9](0, 1, 0, 1, -4, 1, 0, 1, 0);
+  <span style="color: #98fb98;">vec4</span> conv = convolution(uv, kernel, pixels);
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(1. - conv.rgb, 1.0);
+}
+</pre>
+</div>
 </div>
 </div>
 </div>
