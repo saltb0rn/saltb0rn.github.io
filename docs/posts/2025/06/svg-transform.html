@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-06-09 Mon 15:16 -->
+<!-- 2025-06-10 Tue 02:55 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SVG 变换解惑</title>
@@ -261,7 +261,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgb13653b">
+<div class="abstract" id="org20f7673">
 <p>
 在很久之前在学习 <code>SVG</code> 时就想着写一篇笔记, 但 <code>SVG</code> 元素和属性的用法在网上就有一大堆,
 </p>
@@ -474,7 +474,7 @@
 
 
 <p>
-后面也不会提及这对变换, 但是开发者需要知道它们的存在.
+开发者需要知道它们的存在, 并且在元素的 <code>x</code> 和 <code>y</code> 属性被设置时把这对矩阵加入进去.
 </p>
 </blockquote>
 
@@ -495,7 +495,7 @@
 </p>
 
 <p>
-别看这个矩阵很长, 实际上在 <code>SVG</code> 里面很简单:
+别看这个矩阵很长, 实际上在 <code>SVG</code> 里面很简单, 这里顺便 <code>x</code> 和 <code>y</code> 属性也考虑上去:
 </p>
 
 <div class="org-src-container">
@@ -505,9 +505,13 @@
     <span style="color: #eedd82;">--w-div-2</span>: 50px;
     <span style="color: #eedd82;">--h-div-2</span>: 50px;
     <span style="color: #eedd82;">--angle</span>: 60deg;
-    <span style="color: #00ffff;">transform</span>: translate(calc(var(<span style="color: #eedd82;">--w-div-2</span>) - var(<span style="color: #eedd82;">--xo</span>)), calc(var(<span style="color: #eedd82;">--h-div-2</span>) - var(<span style="color: #eedd82;">--yo</span>)))
+    <span style="color: #eedd82;">--x</span>: 100px;
+    <span style="color: #eedd82;">--y</span>: 0px;
+    <span style="color: #00ffff;">transform</span>: translate(var(<span style="color: #eedd82;">--x</span>), var(<span style="color: #eedd82;">--y</span>))
+               translate(calc(var(<span style="color: #eedd82;">--w-div-2</span>) - var(<span style="color: #eedd82;">--xo</span>)), calc(var(<span style="color: #eedd82;">--h-div-2</span>) - var(<span style="color: #eedd82;">--yo</span>)))
                rotate(var(<span style="color: #eedd82;">--angle</span>))
-               translate(calc(var(<span style="color: #eedd82;">--xo</span>) - var(<span style="color: #eedd82;">--w-div-2</span>)), calc(var(<span style="color: #eedd82;">--yo</span>) - var(<span style="color: #eedd82;">--h-div-2</span>)));
+               translate(calc(var(<span style="color: #eedd82;">--xo</span>) - var(<span style="color: #eedd82;">--w-div-2</span>)), calc(var(<span style="color: #eedd82;">--yo</span>) - var(<span style="color: #eedd82;">--h-div-2</span>)))
+               translate(calc(0px - var(<span style="color: #eedd82;">--x</span>)), calc(0px - var(<span style="color: #eedd82;">--y</span>)));
 }
 </pre>
 </div>
@@ -529,7 +533,11 @@
 <h3 id="orgd52a9f9">缩放变换</h3>
 <div class="outline-text-3" id="text-orgd52a9f9">
 <p>
-缩放变换(<code>transform</code> 的 <code>scale</code> 函数)也是类似思路, 物体边框的任意一个点 \((x, y)\) 的经过缩放后的位置是这么计算的:
+缩放变换(<code>transform</code> 的 <code>scale</code> 函数)也是类似思路, 同样假设物体定位在父级元素的 \((0, 0)\) 上,
+</p>
+
+<p>
+物体边框的任意一个点 \((x, y)\) 的经过缩放后的位置是这么计算的:
 </p>
 
 <p>
@@ -552,6 +560,10 @@
 \(M_{scale\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{2} \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right) M_{scale\_svg} \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -\frac{w}{2} \\ 0 & 1 & -\frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)\), 其中 \(w\) 和 \(h\) 是物体的宽和高.
 </p>
 
+<p>
+在实现时同样考虑上元素的 <code>x</code> 和 <code>y</code> 属性:
+</p>
+
 <div class="org-src-container">
 <pre class="src src-css"><span style="color: #87cefa;">.svgElm</span> {
     <span style="color: #eedd82;">--xo</span>: 200px;
@@ -559,9 +571,13 @@
     <span style="color: #eedd82;">--w-div-2</span>: 50px;
     <span style="color: #eedd82;">--h-div-2</span>: 50px;
     <span style="color: #eedd82;">--scale-factor</span>: 0.2;
-    <span style="color: #00ffff;">transform</span>: translate(calc(var(<span style="color: #eedd82;">--w-div-2</span>) - var(<span style="color: #eedd82;">--xo</span>)), calc(var(<span style="color: #eedd82;">--h-div-2</span>) - var(<span style="color: #eedd82;">--yo</span>)))
+    <span style="color: #eedd82;">--x</span>: 100px;
+    <span style="color: #eedd82;">--y</span>: 0px;
+    <span style="color: #00ffff;">transform</span>: translate(var(<span style="color: #eedd82;">--x</span>), var(<span style="color: #eedd82;">--y</span>))
+               translate(calc(var(<span style="color: #eedd82;">--w-div-2</span>) - var(<span style="color: #eedd82;">--xo</span>)), calc(var(<span style="color: #eedd82;">--h-div-2</span>) - var(<span style="color: #eedd82;">--yo</span>)))
                scale(var(<span style="color: #eedd82;">--scale-factor</span>))
-               translate(calc(var(<span style="color: #eedd82;">--xo</span>) - var(<span style="color: #eedd82;">--w-div-2</span>)), calc(var(<span style="color: #eedd82;">--yo</span>) - var(<span style="color: #eedd82;">--h-div-2</span>)));
+               translate(calc(var(<span style="color: #eedd82;">--xo</span>) - var(<span style="color: #eedd82;">--w-div-2</span>)), calc(var(<span style="color: #eedd82;">--yo</span>) - var(<span style="color: #eedd82;">--h-div-2</span>)))
+               translate(calc(0px - var(<span style="color: #eedd82;">--x</span>)), calc(0px - var(<span style="color: #eedd82;">--y</span>)));
 }
 </pre>
 </div>

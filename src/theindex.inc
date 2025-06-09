@@ -1,4 +1,4 @@
-*** [[file:posts/2025/06/svg-transform.html?hash=56dd1a725be82a9d2204bb41eff8e889][SVG 变换解惑]]
+*** [[file:posts/2025/06/svg-transform.html?hash=099c53dd1c0f9d8b109f1ded1495ba93][SVG 变换解惑]]
 在很久之前在学习 =SVG= 时就想着写一篇笔记, 但 =SVG= 元素和属性的用法在网上就有一大堆,
 
 秉承不重复造轮子的想法, 最后在好不容易找到了两个方向进行二选一: 如何使用贝塞尔曲线进行连续地拼接, 以及 =SVG= 的变换.

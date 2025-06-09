@@ -115,7 +115,7 @@ $\left(\begin{array}{c} x_{attr\_new} \\ y_{attr\_new} \\ 1 \end{array}\right) =
 3. 会导致整个公式长上加长, 难以阅读;
 
 
-后面也不会提及这对变换, 但是开发者需要知道它们的存在.
+开发者需要知道它们的存在, 并且在元素的 =x= 和 =y= 属性被设置时把这对矩阵加入进去.
 #+end_quote
 
 想要实现 =DOM= 那样的围绕物体中心旋转, 需要把物体的中心平移对齐到 $(x_o, y_o)$ 再进行旋转, 最后平移回去, 完整的矩阵是这样的:
@@ -126,7 +126,7 @@ $M_{rot\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{
 
 所以 $M_{rot\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)\left( \begin{array}{c} \cos \pi & -\sin \pi & 0 \\ \sin \pi & \cos \pi & 0 \\ 0 & 0 & 1 \end{array} \right)\left( \begin{array}{c} 1 & 0 & -\frac{w}{2} \\ 0 & 1 & -\frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)$.
 
-别看这个矩阵很长, 实际上在 =SVG= 里面很简单:
+别看这个矩阵很长, 实际上在 =SVG= 里面很简单, 这里顺便 =x= 和 =y= 属性也考虑上去:
 
 #+BEGIN_SRC css
   .svgElm {
@@ -135,9 +135,13 @@ $M_{rot\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{
       --w-div-2: 50px;
       --h-div-2: 50px;
       --angle: 60deg;
-      transform: translate(calc(var(--w-div-2) - var(--xo)), calc(var(--h-div-2) - var(--yo)))
+      --x: 100px;
+      --y: 0px;
+      transform: translate(var(--x), var(--y))
+                 translate(calc(var(--w-div-2) - var(--xo)), calc(var(--h-div-2) - var(--yo)))
                  rotate(var(--angle))
-                 translate(calc(var(--xo) - var(--w-div-2)), calc(var(--yo) - var(--h-div-2)));
+                 translate(calc(var(--xo) - var(--w-div-2)), calc(var(--yo) - var(--h-div-2)))
+                 translate(calc(0px - var(--x)), calc(0px - var(--y)));
   }
 #+END_SRC
 
@@ -149,7 +153,9 @@ $M_{rot\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{
 
 **** 缩放变换
 
-缩放变换(=transform= 的 =scale= 函数)也是类似思路, 物体边框的任意一个点 $(x, y)$ 的经过缩放后的位置是这么计算的:
+缩放变换(=transform= 的 =scale= 函数)也是类似思路, 同样假设物体定位在父级元素的 $(0, 0)$ 上,
+
+物体边框的任意一个点 $(x, y)$ 的经过缩放后的位置是这么计算的:
 
 先计算向量 $(x - x_o, y - y_o)$, 再对该向量缩放, 最后把计算结果加上 $(x_o, y_o)$ 得到缩放后的点位置, 整个过程可用以下矩阵表示:
 
@@ -161,6 +167,8 @@ $M_{scale\_svg} \left(\begin{array}{c} x \\ y \\ 1\end{array}\right) \rightarrow
 
 $M_{scale\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h}{2} \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -x_o \\ 0 & 1 & -y_o \\ 0 & 0 & 1 \end{array} \right) M_{scale\_svg} \left( \begin{array}{c} 1 & 0 & x_o \\ 0 & 1 & y_o \\ 0 & 0 & 1 \end{array} \right) \left( \begin{array}{c} 1 & 0 & -\frac{w}{2} \\ 0 & 1 & -\frac{h}{2} \\ 0 & 0 & 1 \end{array} \right)$, 其中 $w$ 和 $h$ 是物体的宽和高.
 
+在实现时同样考虑上元素的 =x= 和 =y= 属性:
+
 #+begin_src css
   .svgElm {
       --xo: 200px;
@@ -168,9 +176,13 @@ $M_{scale\_dom} = \left( \begin{array}{c} 1 & 0 & \frac{w}{2} \\ 0 & 1 & \frac{h
       --w-div-2: 50px;
       --h-div-2: 50px;
       --scale-factor: 0.2;
-      transform: translate(calc(var(--w-div-2) - var(--xo)), calc(var(--h-div-2) - var(--yo)))
+      --x: 100px;
+      --y: 0px;
+      transform: translate(var(--x), var(--y))
+                 translate(calc(var(--w-div-2) - var(--xo)), calc(var(--h-div-2) - var(--yo)))
                  scale(var(--scale-factor))
-                 translate(calc(var(--xo) - var(--w-div-2)), calc(var(--yo) - var(--h-div-2)));
+                 translate(calc(var(--xo) - var(--w-div-2)), calc(var(--yo) - var(--h-div-2)))
+                 translate(calc(0px - var(--x)), calc(0px - var(--y)));
   }
 #+end_src
 
