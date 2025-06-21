@@ -55,7 +55,7 @@
 
 而这种程度的联想就是人们口中的灵感，也是人们口中天才的特质.
 
-想要到达运用自如的境界需要经常练习, 以及找出知识与知识之间的联系, 就比如梯度向量与导数与法线向量三者之间的联系.
+想要到达运用自如的境界需要经常练习, 以及找出知识与知识之间的联系, 就比如多元函数的梯度向量与导数与法线向量三者之间的联系.
 
 所以说, 学数学依靠的是耐心和理解.
 
@@ -1516,7 +1516,7 @@ $noise$ 的算法可以看作是在一条线上的两个点之间进行插值, �
 
 噪声算法有很多, 很多艺术创作者会根据需求来选择合适的噪声算法来进行艺术创作, 比如柏林噪声算法(=Perlin Noise Algorithm=),
 
-接下来会介绍三种比较基础的噪声算法: 值噪声, 梯度噪声以及单行噪声.
+接下来会介绍三种比较基础的噪声算法: 值噪声, 梯度噪声以及单形噪声.
 
 **** 值噪声
 
@@ -2387,7 +2387,7 @@ $G$ 的 =SDF= 的定义为 $f(p) = \begin{cases} d(p, \partial G) & \text{if } p
 
 最短意味着 $\vec{\varepsilon} = p_0 - p$ 与点 $p$ 上的切线/切平面垂直,
 
-点上的梯度向量正好也与该点上的切线/切平面垂直, 可以看作是切线/切平面上的法线.
+对于二元标量函数而言, 点上的梯度向量正好也与该点上的切线/切平面垂直, 可以看作是切线/切平面上的法线.
 
 在实际运算中不可能找出 $p_0$ 的, 因为通常来说函数 $g$ 都是连续且可微的, 在该函数上有无数种取点可能, 所以穷举法取点是无法处理的.
 
@@ -2410,7 +2410,7 @@ $f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以
 #+caption: 等值线之间的距离
 [[../../../files/isocurve-distance.png]]
 
-但 $c$ 并非我们想要的, 我们的是 $p$ 和 $p_0$ 之间的距离: $|\vec{\varepsilon}|$, 为此需要找到求解 $\vec{\varepsilon}$ 的方法.
+但 $c$ 并非我们想要的, 想要的是 $p$ 和 $p_0$ 之间的距离: $|\vec{\varepsilon}|$, 为此需要找到求解 $\vec{\varepsilon}$ 的方法.
 
 #+begin_quote
 三角不等式(=triangle inequality=): $|a + b| \le |a| + |b|$.
@@ -2420,7 +2420,7 @@ $f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以
 如果满足 $\frac{a}{b} \lt 0$, 那么 $|a + b| \lt |a| + |b|$.
 #+end_quote
 
-根据三角不等式 $|a + b| = |a| + |b|$, $a$ 和 $b$ 可以是任何实数, 为了方便找到 $\vec{\varepsilon}$ 的范围,
+根据三角不等式 $|a + b| \le |a| + |b|$, $a$ 和 $b$ 可以是任何实数, 为了方便找到 $\vec{\varepsilon}$ 的范围,
 
 这里假设 $\begin{cases} a = s + t \\ b = -t \\ a + b = s \end{cases}$, 可以推导出该不等式: $\begin{equation*} \begin{aligned} |s| \le |s + t| + |t| \Rightarrow |s| - |t| \le |s + t| \end{aligned} \end{equation*}$,
 
@@ -2446,7 +2446,9 @@ $f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以
 
 另外一种求导数(梯度向量)近似值方法叫做<<central-diff-application>>中心差商法(=central difference method=), 这种方法不需要我们求出函数的导数解析式.
 
-它来源于导数的定义: $f^{'}(x) = \lim\limits_{h \to 0} \frac{f(x + h) - f(x)}{h} \rightarrow \lim\limits_{h \to 0} \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$, 对 $h$ 任取一个很小的值即可: $f^{'}(x) \approx \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$,
+它来源于导数的定义: $f^{'}(x) = \lim\limits_{h \to 0} \frac{f(x + h) - f(x)}{h} \rightarrow \lim\limits_{h \to 0} \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$, 对 $h$ 任取一个很小的值即可: $f^{'}(x) \approx \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$.
+
+但要切记, 如果函数 $y = f(x)$ 是一元标量函数, 那么要先把它转成隐函数 $F(x, y) = f(x) - y = 0$, 因为一元标量函数的导数是斜率, 而不是梯度向量.
 
 所以使用中心差商法计算梯度向量的方法如下:
 
@@ -2552,11 +2554,15 @@ $\begin{cases} \frac{\partial f(x, y)}{\partial x} = \frac{\partial f(r, a)}{\pa
 
 **** 案例二: 估算点与直线之间的距离
 
-假设现在有一条直线的隐函数: $g(x, y) = 3x + 0.1 - y$, 它的梯度向量为 $\nabla g(x, y) = (\frac{\partial g(x, y)}{\partial x}, \frac{\partial g(x, y)}{\partial y}) = (1, 3)$.
+对于任意线性函数 $f(x) = kx + b$, 它的切向量为 $(1, f^{'}(x))$,
 
-对于任意线性函数 $f(x) = kx + b$, 它的梯度向量为 $(1, f^{'}(x))$.
+要求它的梯度向量, 需要先把它转换成隐函数 $F(x, y) = kx + b - f(x) = 0$,
+
+然后梯度向量为 $\nabla F(x, y) = (\frac{\partial F(x, y)}{\partial x}, \frac{\partial F(x, y)}{\partial y}) = (f^{'}(x) = k, -1)$.
 
 根据线性函数的特性: $f(a) + f(b) = f(a + b)$, 估算的结果必定是准确的.
+
+假设现在有一条直线的隐函数: $g(x, y) = 3x + 0.1 - y$, 它的梯度向量为 $\nabla g(x, y) = (\frac{\partial g(x, y)}{\partial x}, \frac{\partial g(x, y)}{\partial y}) = (3, -1)$.
 
 #+BEGIN_SRC glsl
   float f( vec2 x ) {
@@ -2566,7 +2572,7 @@ $\begin{cases} \frac{\partial f(x, y)}{\partial x} = \frac{\partial f(r, a)}{\pa
   void main() {
     vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / min(iResolution.x, iResolution.y);
     float v = f(uv);
-    vec2 g = vec2(1.0, 3.0);
+    vec2 g = vec2(3.0, -1.0);
     float de = abs(v) / length(g);
     float lw = 1.0 / 32.0;        // 线粗
     float c = smoothstep(0.0, lw, de);
@@ -3300,7 +3306,7 @@ float geometrySchlickGGX (float NdotV, float roughness){
 }
 
 float geometrySmith (vec3 N, vec3 V, vec3 L, float roughness){
-    return geometrySchlickGGX (max (dot (N, L), 0.0), roughness) * 
+    return geometrySchlickGGX (max (dot (N, L), 0.0), roughness) *
            geometrySchlickGGX (max (dot (N, V), 0.0), roughness);
 }
 
@@ -3310,55 +3316,55 @@ vec3 fresnelSchlick (float cosTheta, vec3 F0){
 
 // https://www.shadertoy.com/view/4d2XWV by Inigo Quilez
 float sphereIntersect(vec3 ro, vec3 rd, vec4 sph) {
-	vec3 oc = ro - sph.xyz;
-	float b = dot( oc, rd );
-	float c = dot( oc, oc ) - sph.w*sph.w;
-	float h = b*b - c;
-	if( h<0.0 ) return -1.0;
-	return -b - sqrt( h );
+        vec3 oc = ro - sph.xyz;
+        float b = dot( oc, rd );
+        float c = dot( oc, oc ) - sph.w*sph.w;
+        float h = b*b - c;
+        if( h<0.0 ) return -1.0;
+        return -b - sqrt( h );
 }
 
 void main (){
     vec3 lightPos   = vec3(1.25, 1.0, -2);
     vec3 lightColor = vec3(1.0);
     vec3 totColor = vec3(0.0);
-    
+
     vec3 ro = vec3(0.0, 0.0, -2.0);
 
     for (float x = 0.0; x <= 1.0; x += 1.) {
         for (float y = 0.0; y <= 1.0; y += 1.) {
-            
+
             vec3 rd = normalize(vec3(vScreen + vec2(x, y) / iResolution.y, 1.2));
             float d = sphereIntersect(ro, rd, vec4(0,0,0,1));
-            
+
             if (d > 0.) {
                 vec3 worldPos = ro + d * rd;
                 vec3 N = normalize (worldPos);
                 vec3 V = -rd;
                 vec3 L = normalize (lightPos - worldPos);
                 vec3 H = normalize (V + L);
-                
+
                 // Cook-Torrance BRDF
                 vec3  F0 = mix (vec3 (0.04), pow(albedo, vec3 (2.2)), metallic);
                 float NDF = distributionGGX(N, H, roughness);
                 float G   = geometrySmith(N, V, L, roughness);
-                vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);        
+                vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
                 vec3  kD  = vec3(1.0) - F;
-                kD *= 1.0 - metallic;	  
-                
+                kD *= 1.0 - metallic;
+
                 vec3  numerator   = NDF * G * F;
                 float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-                vec3  specular    = numerator / max(denominator, 0.001);  
-                    
-                float NdotL = max(dot(N, L), 0.0);                
-                vec3  color = lightColor * (kD * pow(albedo, vec3 (2.2)) / PI + specular) * 
+                vec3  specular    = numerator / max(denominator, 0.001);
+
+                float NdotL = max(dot(N, L), 0.0);
+                vec3  color = lightColor * (kD * pow(albedo, vec3 (2.2)) / PI + specular) *
                               (NdotL / dot(lightPos - worldPos, lightPos - worldPos));
-                
+
                 totColor += color;
             }
         }
     }
-    
+
     // HDR tonemapping gamma correct
     gl_FragColor = vec4(pow(totColor/(totColor + 1.0), vec3 (1.0/2.2)), 1.0);
 }
@@ -3710,7 +3716,7 @@ void main (){
 
 最简单的权重分配就是求平均值: $(tex_{x} + tex_{y} + tex_{z}) / 3$.
 
-显然平均值不太准确, 最正式做法应该是根据顶点的法线向量进行权重分配, 正好法线向量本质上是梯度向量, 梯度向量由每个坐标轴上的偏导数(变化率)构成.
+显然平均值不太准确, 最正式做法应该是根据顶点的法线向量进行权重分配, 正好多元函数的法线向量本质上是梯度向量, 梯度向量由每个坐标轴上的偏导数(变化率)构成.
 
 具体做法:
 
@@ -4738,6 +4744,8 @@ $\begin{equation*}\begin{aligned} & D_{(1, 0)} + D_{(-1, 0)} + D_{(0, 1)} + D_{(
 *** 拉普拉斯核 (Laplacian 核)
 
 # https://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
+
+拉普拉斯核是空间二阶导运算, 一阶导描述了切线方向, 二阶导数描述了切线方向的变化,
 
 拉普拉斯核的作用是对图像的二阶导数进行二维各向同性(=isotropic=, 在各个方向上性质相同)度量, 突出边缘以及突变区域.
 

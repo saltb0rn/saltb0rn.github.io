@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-06-10 Tue 02:54 -->
+<!-- 2025-06-13 Fri 01:21 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SVG 变换解惑</title>
@@ -233,20 +233,20 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org63038bb">1. <code>viewBox</code> 属性: 设置画布的坐标系</a></li>
-<li><a href="#org90ee1d8">2. 自身以外的变换参考点: 混乱的源头</a>
+<li><a href="#orgaeb853a">1. <code>viewBox</code> 属性: 设置画布的坐标系</a></li>
+<li><a href="#org73a4259">2. 自身以外的变换参考点: 混乱的源头</a>
 <ul>
-<li><a href="#org8c697ce">2.1. 旋转变换</a></li>
-<li><a href="#orga1dc2a4">2.2. 缩放变换</a></li>
-<li><a href="#orge0325c7">2.3. 平移变换</a></li>
+<li><a href="#org738e9cb">2.1. 旋转变换</a></li>
+<li><a href="#orgc795a38">2.2. 缩放变换</a></li>
+<li><a href="#org117c8be">2.3. 平移变换</a></li>
 </ul>
 </li>
-<li><a href="#org8c2b0ec">3. 重新设定变换的参考</a></li>
-<li><a href="#org5fc422e">4. 结语</a></li>
+<li><a href="#orgb19b0c8">3. 重新设定变换的参考</a></li>
+<li><a href="#org3561b4c">4. 结语</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org8ba46d3">
+<div class="abstract" id="orgc5a9490">
 <p>
 在很久之前在学习 <code>SVG</code> 时就想着写一篇笔记, 但 <code>SVG</code> 元素和属性的用法在网上就有一大堆,
 </p>
@@ -284,8 +284,8 @@
 </p>
 
 </div>
-<div id="outline-container-org63038bb" class="outline-2">
-<h2 id="org63038bb"><span class="section-number-2">1.</span> <code>viewBox</code> 属性: 设置画布的坐标系</h2>
+<div id="outline-container-orgaeb853a" class="outline-2">
+<h2 id="orgaeb853a"><span class="section-number-2">1.</span> <code>viewBox</code> 属性: 设置画布的坐标系</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 变换离不开坐标系, 因此, 在深入主题之前先了解 <code>SVG</code> 的坐标系是如何确定的.
@@ -326,8 +326,8 @@
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org90ee1d8" class="outline-2">
-<h2 id="org90ee1d8"><span class="section-number-2">2.</span> 自身以外的变换参考点: 混乱的源头</h2>
+<div id="outline-container-org73a4259" class="outline-2">
+<h2 id="org73a4259"><span class="section-number-2">2.</span> 自身以外的变换参考点: 混乱的源头</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 <code>SVG</code> 的变换和 <code>DOM</code> 元素的变换有比较大的差别, 它并不像 <code>DOM</code> 元素那样以自身中心作为变换原点进行变换,
@@ -403,8 +403,8 @@
 这个结论最容易通过旋转变换来得到, 因为在 <code>OpenGL</code> 和 <code>DOM</code> 里面, 默认情况下旋转都是围绕物体的中心进行的.
 </p>
 </div>
-<div id="outline-container-org8c697ce" class="outline-3">
-<h3 id="org8c697ce"><span class="section-number-3">2.1.</span> 旋转变换</h3>
+<div id="outline-container-org738e9cb" class="outline-3">
+<h3 id="org738e9cb"><span class="section-number-3">2.1.</span> 旋转变换</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 这里先假设物体是定位在父级元素的 \((0, 0)\) 上, 那么物体边框的任意一个点 \((x, y)\) 的经过旋转后的位置是这么计算的:
@@ -436,22 +436,24 @@
 </p>
 
 <p>
-<code>x</code> 和 <code>y</code> 属性是发生在计算过程的最初和最后阶段的, 那么为什么 \(M_{rot\_svg}\) 不包含这一对变换呢?
+这么做的目的是为了在计算前让物体边框的左上角对齐 \((0, 0)\), 在计算后回到原来位置,
 </p>
 
 <p>
-原因有三个:
+如等式所示, <code>x</code> 和 <code>y</code> 属性是发生在计算过程的最初和最后阶段的, 那么为什么 \(M_{rot\_svg}\) 不包含这一对变换呢?
+</p>
+
+<p>
+原因有两个:
 </p>
 
 <ol class="org-ol">
-<li>实现 <code>DOM</code> 那样旋转变换是基于 \(M_{rot\_svg}\) 进行拓展推导的, 包含这两个变换导致不方便拓展;</li>
-
 <li><p>
-它们并没有什么可操作空间, 意思是它们并不会与 \(M_{rot\_svg}\) 里面的矩阵进行抵消从而产生影响,
+实现 <code>DOM</code> 那样参考自身中心的旋转变换是基于 \(M_{rot\_svg}\) 进行拓展推导的,
 </p>
 
 <p>
-也不影响开发人员在编码时设置 <code>transform</code> 属性的思考过程;
+包含这两个变换没法保证让它们生在最初和最后阶段;
 </p></li>
 
 <li>会导致整个公式长上加长, 难以阅读;</li>
@@ -514,8 +516,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-orga1dc2a4" class="outline-3">
-<h3 id="orga1dc2a4"><span class="section-number-3">2.2.</span> 缩放变换</h3>
+<div id="outline-container-orgc795a38" class="outline-3">
+<h3 id="orgc795a38"><span class="section-number-3">2.2.</span> 缩放变换</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 缩放变换(<code>transform</code> 的 <code>scale</code> 函数)也是类似思路, 同样假设物体定位在父级元素的 \((0, 0)\) 上,
@@ -568,8 +570,8 @@
 </div>
 </div>
 </div>
-<div id="outline-container-orge0325c7" class="outline-3">
-<h3 id="orge0325c7"><span class="section-number-3">2.3.</span> 平移变换</h3>
+<div id="outline-container-org117c8be" class="outline-3">
+<h3 id="org117c8be"><span class="section-number-3">2.3.</span> 平移变换</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 平移变换(<code>transform</code> 的 <code>translate</code> 函数)比前两个变换特殊一点, 前两个变换本质上就是基于 <code>OpenGL</code> 变换的拓展,
@@ -593,8 +595,8 @@
 </div>
 </div>
 </div>
-<div id="outline-container-org8c2b0ec" class="outline-2">
-<h2 id="org8c2b0ec"><span class="section-number-2">3.</span> 重新设定变换的参考</h2>
+<div id="outline-container-orgb19b0c8" class="outline-2">
+<h2 id="orgb19b0c8"><span class="section-number-2">3.</span> 重新设定变换的参考</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 似乎标准定制者也发现了 <code>SVG</code> 默认的变换参考所带来的问题, 所以他们为开发者提供了调整参考系的能力.
@@ -657,8 +659,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org5fc422e" class="outline-2">
-<h2 id="org5fc422e"><span class="section-number-2">4.</span> 结语</h2>
+<div id="outline-container-org3561b4c" class="outline-2">
+<h2 id="org3561b4c"><span class="section-number-2">4.</span> 结语</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 到目前位置, <code>SVG</code> 元素变换的重点已经介绍完了, 事实上 <code>SVG</code> 还支持 <code>skew</code> 变换,
@@ -681,7 +683,7 @@
 <div id="postamble" class="status">
 <p class="date">Date: 2025-06-09</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-06-10 Tue 02:54</p>
+<p class="date">Created: 2025-06-13 Fri 01:21</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2025-06-21 Sat 15:05 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>D3 Selection 解释</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content" class="content">
+<h1 class="title">D3 Selection 解释</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org29e62f3"><code>Selection.enter()</code> 和 <code>Selection.exit()</code> 的解释</a></li>
+<li><a href="#org5856fa5"><code>D3.js</code> 如何划分元素到对应集合</a></li>
+<li><a href="#org473a61d"><code>D3.js</code> 的通常更新模式</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org51fea62">
+<p>
+这篇文章是 <code>2023</code> 年使用 <code>D3.js</code> 和 <code>Drage-d3</code> 做可视化项目时的学习笔记补完版.
+</p>
+
+<p>
+在初学 <code>D3.js</code> 时最难以让人理解的就是它的选中功能:
+</p>
+
+<p>
+<code>Selection.enter()</code> 和 <code>Selection.exit()</code> 到底代表什么, 它的返回结果又是怎么确定.
+</p>
+
+<p>
+由于选中功能是整个 <code>D3.js</code> 的基础, 所以对选中功能的含糊理解是不可容忍的.
+</p>
+
+<p>
+相比于最初的笔记内容, 这里新增了配图以及优化了一下演示例子, 让内容更好理解.
+</p>
+
+</div>
+<div id="outline-container-org29e62f3" class="outline-2">
+<h2 id="org29e62f3"><code>Selection.enter()</code> 和 <code>Selection.exit()</code> 的解释</h2>
+<div class="outline-text-2" id="text-org29e62f3">
+<p>
+<code>Selection.enter()</code> 方法和 <code>Selection.exit()</code> 方法的文档并不能清楚地解释它们的作用,
+</p>
+
+<p>
+其实换个角度, 从集合论的角度去理解会变得十分容易.
+</p>
+
+<p>
+这里先给出一段代码,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">Data</span> = [<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">xxx</span><span style="color: #ff7f24;"> */</span>]
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">key</span> = (d, index, group, dom) =&gt; {
+  <span style="color: #00ffff;">return</span> <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">something to be assigned to dom.__data__</span><span style="color: #ff7f24;"> */</span>
+}
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">Elements</span> = d3.selectAll(<span style="color: #ffa07a;">'sth'</span>)
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">Update</span> = Elements.data(Data, key)
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">Enter</span> = Update.enter()
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">Exit</span> = Update.exit()
+</pre>
+</div>
+
+<p>
+<code>selectAll()</code> 返回的结果 <code>Elements</code> 是 <code>DOM</code> 元素集合, 用 \(E\) 表示;
+</p>
+
+<p>
+<code>Elements.data(Data, key)</code> 方法的参数 <code>Data</code> 为数据元素集合, 用 \(D\) 表示;
+</p>
+
+<p>
+<code>Update</code> 结构如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js">{
+  _enter: [<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">xxx</span><span style="color: #ff7f24;"> */</span>],
+  _exit: [<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">xxx</span><span style="color: #ff7f24;"> */</span>]
+  _groups: [<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">xxx</span><span style="color: #ff7f24;"> */</span>],
+  _parents: [<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">xxx</span><span style="color: #ff7f24;"> */</span>]
+}
+</pre>
+</div>
+
+<p>
+它比一般的 <code>Selection</code> 对象（可以参考 <code>Elements</code>) 多出 <code>_enter</code> 和 <code>_exit</code> 两个字段,
+</p>
+
+<p>
+<code>Update._enter</code> 是 \(D\) 中存在但 \(E\) 中不存在的元素集合, 也就是 \(D - E\),
+</p>
+
+<p>
+该集合的元素是新增元素的占位符: <code>EnterNode</code> 对象;
+</p>
+
+<p>
+<code>Update._exit</code> 是 \(E\) 中存在但 \(D\) 中不存在的元素集合, 也就是 \(E - D\),
+</p>
+
+<p>
+该集合的元素是将被移除的 <code>DOM</code> 元素;
+</p>
+
+<p>
+<code>Update._enter</code> 和 <code>Update._exit</code> 字段还不是 <code>Selection</code> 对象,
+</p>
+
+<p>
+所以需要 <code>Update.enter()</code> 方法和 <code>Update.exit()</code> 方法把它们转换成 <code>Selection</code> 对象,
+</p>
+
+<p>
+接下来会把这两个 <code>Selection</code> 分别称为 <code>Enter</code> 集合和 <code>Exit</code> 集合.
+</p>
+
+<p>
+实际上 <code>Update</code> 本身也是一个虚拟的集合, 包含了既不属于 <code>Enter</code> 也不属于 <code>Exit</code> 的元素集合,
+</p>
+
+<p>
+也就是 \(D\) 和 \(E\) 的交集: \(D \cap E\), 该集合的元素是可更新的 <code>DOM</code> 元素.
+</p>
+
+<p>
+<code>Update</code> 集合, <code>Enter</code> 集合和 <code>Exit</code> 集合这三者的关系如下文恩图所示:
+</p>
+
+
+<div id="orgc26a5a1" class="figure">
+<p><img src="../../../files/d3-enter-exit-update.svg" alt="d3-enter-exit-update.svg" class="org-svg">
+</p>
+</div>
+
+<p>
+<code>Update._groups</code> 其实就包含了 <code>Update</code> 集合的元素, 也可能包含一些空元素, 这些空元素是 <code>Enter</code> 集合元素的占位,
+</p>
+
+<p>
+像 <code>Selection.append</code>, <code>Selection.attr</code> 这种操作选中元素的方法, 它们内部的操作对象就是 <code>Selection._groups</code> 字段,
+</p>
+
+<p>
+这些方法的主体就是一个遍历 <code>Selection._groups</code> 的循环, 只对非空元素做处理:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">d3-selection/src/selection/each.js</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26469;&#28304;&#20110;&#28304;&#20195;&#30721;: https://github.com/d3/d3-selection/blob/main/src/selection/each.js</span>
+<span style="color: #00ffff;">export</span> <span style="color: #00ffff;">default</span> <span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">callback</span>) {
+
+  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">var</span> <span style="color: #eedd82;">groups</span> = <span style="color: #7fffd4;">this</span>._groups, <span style="color: #eedd82;">j</span> = 0, <span style="color: #eedd82;">m</span> = groups.length; j &lt; m; ++j) {
+    <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">var</span> <span style="color: #eedd82;">group</span> = groups[j], <span style="color: #eedd82;">i</span> = 0, <span style="color: #eedd82;">n</span> = group.length, <span style="color: #eedd82;">node</span>; i &lt; n; ++i) {
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21482;&#26377; node &#20026;&#38750;&#31354;&#20803;&#32032;&#25165;&#35843;&#29992; callback</span>
+      <span style="color: #00ffff;">if</span> (node = group[i]) callback.call(node, node.__data__, i, group);
+    }
+  }
+
+  <span style="color: #00ffff;">return</span> <span style="color: #7fffd4;">this</span>;
+}
+</pre>
+</div>
+
+<p>
+这个方法在类似 <code>Selection.attr</code> 这种方法中被广泛使用, 可以说得上这类方法的处理逻辑代表.
+</p>
+</div>
+</div>
+<div id="outline-container-org5856fa5" class="outline-2">
+<h2 id="org5856fa5"><code>D3.js</code> 如何划分元素到对应集合</h2>
+<div class="outline-text-2" id="text-org5856fa5">
+<p>
+<code>DOM</code> 元素和数据元素不是同一个类型, 那么 <code>D3.js</code> 是如何判断 \(D\) 和 \(E\) 两个集合的元素是否同一个呢?
+</p>
+
+<p>
+默认情况下, 会按照索引进行比对, 比如说 \(E[i]\) 和 \(D[i]\) 同时存在,
+</p>
+
+<p>
+那么 \(E[i]\) 和 \(D[i]\) 会被认为是同一个元素, \(D[i]\) 会被绑定到 \(E[i]\) 的 <code>__data__</code> 属性上, 并把 \(E[i]\) 划入 <code>Update</code> 集合中;
+</p>
+
+<p>
+如果 \(E[i]\) 存在, 但 \(D[i]\) 不存在, 那么 \(E[i]\) 会被划分到 <code>Exit</code> 集合中;
+</p>
+
+<p>
+如果 \(E[i]\) 不存在, 但 \(D[i]\) 存在, 那么会创建一个占位符元素 \(E[i]\) 并把 \(D[i]\) 绑定到它的 <code>__data__</code> 属性上, 再把 \(E[i]\) 划入 <code>Enter</code> 集合中.
+</p>
+
+<p>
+\(E[i]\) 的 <code>__data__</code> 可用在后续的渲染上, 对于 <code>Update</code> 集合的元素而言就是更新的数据源.
+</p>
+
+<p>
+索引比较法依赖于数据的排序, 如果数据的排序不稳定, 那么应该为每个元素赋予唯一标识, 通过标识进行比对,
+</p>
+
+<p>
+<code>Elements.data</code> 的参数 <code>key</code> 是一个返回字符串的函数, 该函数以 \(D[i]\) 为主要参数, 用于计算出字符串,
+</p>
+
+<p>
+这个字符串用来作为 \(E[i]\) 的唯一标识, 只要 \(E[i]\) 和 \(D[i]\) 的标识一致就可认为两者是同一个元素.
+</p>
+
+<p>
+先来观察 <b>索引比较法</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">svg</span> = d3.select(<span style="color: #ffa07a;">'.svg-container'</span>)
+    .append(<span style="color: #ffa07a;">'svg'</span>)
+    .attr(<span style="color: #ffa07a;">'width'</span>, 500)
+    .attr(<span style="color: #ffa07a;">'height'</span>, 500)
+    .append(<span style="color: #ffa07a;">'text'</span>)
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20808;&#21019;&#24314;&#20004;&#20010; tspan</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 2, value: <span style="color: #ffa07a;">'A'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'B'</span> }])
+  .enter()
+  .append(<span style="color: #ffa07a;">'tspan'</span>)
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value })
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20877;&#23581;&#35797;&#21019;&#24314;&#20845;&#20010; tspan</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 0, value: <span style="color: #ffa07a;">'1'</span> },
+         { id: 1, value: <span style="color: #ffa07a;">'2'</span> },
+         { id: 2, value: <span style="color: #ffa07a;">'3'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'4'</span> },
+         { id: 4, value: <span style="color: #ffa07a;">'5'</span> },
+         { id: 5, value: <span style="color: #ffa07a;">'6'</span> }])
+  .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'cyan'</span>)         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545; Update &#38598;&#21512;&#30340;&#20803;&#32032;&#35774;&#32622;&#38738;&#34013;&#33394;</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">.text(function(d) { return 'this data is ' + d.value })</span>
+  .enter()                      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462; Enter &#38598;&#21512;&#30340;&#20803;&#32032;</span>
+  .append(<span style="color: #ffa07a;">'tspan'</span>)
+  .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'pink'</span>)         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545; Enter &#38598;&#21512;&#30340;&#20803;&#32032;&#35774;&#32622;&#31881;&#33394;</span>
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value })
+</pre>
+</div>
+
+
+<div id="orga5e186e" class="figure">
+<p><img src="../../../files/index-based-diff.png" alt="index-based-diff.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>索引比较 - 运行结果</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-html">&lt;<span style="color: #87cefa;">svg</span> <span style="color: #eedd82;">width</span>=<span style="color: #ffa07a;">"500"</span> <span style="color: #eedd82;">height</span>=<span style="color: #ffa07a;">"500"</span>&gt;
+  &lt;<span style="color: #87cefa;">text</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"cyan"</span>&gt;this data is A&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"cyan"</span>&gt;this data is B&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 3&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 4&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 5&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 6&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+  &lt;/<span style="color: #87cefa;">text</span>&gt;
+&lt;/<span style="color: #87cefa;">svg</span>&gt;
+</pre>
+</div>
+
+<p>
+正如结果显示, 第二次创建的 <code>tspan</code> 中只有后面四个插入进去了,
+</p>
+
+<p>
+因为第一次创建的 <code>tspan</code> 对于第二次绑定的数据而言是属于 <code>Update</code> 集合, 所以前者没有被覆盖.
+</p>
+
+<p>
+另外, 可以把被注释掉的代码恢复出来, 使用 <code>Update</code> 集合的数据更新文本.
+</p>
+
+<p>
+接下来看一下 <b>标识比较法</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">svg</span> = d3.select(<span style="color: #ffa07a;">'.svg-container'</span>)
+    .append(<span style="color: #ffa07a;">'svg'</span>)
+    .attr(<span style="color: #ffa07a;">'width'</span>, 500)
+    .attr(<span style="color: #ffa07a;">'height'</span>, 500)
+    .append(<span style="color: #ffa07a;">'text'</span>)
+
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#26681;&#25454;&#25968;&#25454;&#35745;&#31639;&#20986;&#26631;&#35782;, &#36820;&#22238;&#20540;&#36890;&#24120;&#26159;&#23383;&#31526;&#20018;,</span>
+<span style="color: #ff7f24;">   &#22914;&#26524;&#19981;&#26159;&#23383;&#31526;&#20018;, &#20869;&#37096;&#20250;&#25226;&#36820;&#22238;&#20540;&#36716;&#25442;&#25104;&#23383;&#31526;&#20018;,</span>
+<span style="color: #ff7f24;">   &#24212;&#35813;&#23613;&#37327;&#25353;&#29031;&#25991;&#26723;&#35201;&#27714;&#36820;&#22238;&#23383;&#31526;&#20018;</span>
+<span style="color: #ff7f24;">*/</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">keyFunc</span> = (d) =&gt; d.id
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20808;&#21019;&#24314;&#20004;&#20010; tspan</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 2, value: <span style="color: #ffa07a;">'A'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'B'</span> }],
+        keyFunc)
+  .enter()
+  .append(<span style="color: #ffa07a;">'tspan'</span>)
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value })
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20877;&#23581;&#35797;&#21019;&#24314;&#20845;&#20010; tspan</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 0, value: <span style="color: #ffa07a;">'1'</span> },
+         { id: 1, value: <span style="color: #ffa07a;">'2'</span> },
+         { id: 2, value: <span style="color: #ffa07a;">'3'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'4'</span> },
+         { id: 4, value: <span style="color: #ffa07a;">'5'</span> },
+         { id: 5, value: <span style="color: #ffa07a;">'6'</span> }],
+        keyFunc)
+  .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'cyan'</span>)         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545; Update &#38598;&#21512;&#30340;&#20803;&#32032;&#35774;&#32622;&#38738;&#34013;&#33394;</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">.text(function(d) { return 'this data is ' + d.value })</span>
+  .enter()                      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462; Enter &#38598;&#21512;&#30340;&#20803;&#32032;</span>
+  .append(<span style="color: #ffa07a;">'tspan'</span>)
+  .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'pink'</span>)         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545; Enter &#38598;&#21512;&#30340;&#20803;&#32032;&#35774;&#32622;&#31881;&#33394;</span>
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value })
+</pre>
+</div>
+
+
+<div id="orgb6da952" class="figure">
+<p><img src="../../../files/id-based-diff.png" alt="id-based-diff.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>标识比较 - 运行结果</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-html">&lt;<span style="color: #87cefa;">svg</span> <span style="color: #eedd82;">width</span>=<span style="color: #ffa07a;">"500"</span> <span style="color: #eedd82;">height</span>=<span style="color: #ffa07a;">"500"</span>&gt;
+  &lt;<span style="color: #87cefa;">text</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 1&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 2&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"cyan"</span>&gt;this data is A&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"cyan"</span>&gt;this data is B&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 5&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+    &lt;<span style="color: #87cefa;">tspan</span> <span style="color: #eedd82;">fill</span>=<span style="color: #ffa07a;">"pink"</span> <span style="color: #eedd82;">text-anchor</span>=<span style="color: #ffa07a;">"middle"</span> <span style="color: #eedd82;">x</span>=<span style="color: #ffa07a;">"50"</span> <span style="color: #eedd82;">dy</span>=<span style="color: #ffa07a;">"20"</span>&gt;this data is 6&lt;/<span style="color: #87cefa;">tspan</span>&gt;
+  &lt;/<span style="color: #87cefa;">text</span>&gt;
+&lt;/<span style="color: #87cefa;">svg</span>&gt;
+</pre>
+</div>
+
+<p>
+正如结果所示, 这次的 <code>Update</code> 集合元素是第三和第四个 <code>tspan</code>, 因为是通过 <code>id</code> 来进行比较的.
+</p>
+
+<p>
+在实际开发中应尽可能避免索引比较.
+</p>
+</div>
+</div>
+<div id="outline-container-org473a61d" class="outline-2">
+<h2 id="org473a61d"><code>D3.js</code> 的通常更新模式</h2>
+<div class="outline-text-2" id="text-org473a61d">
+<p>
+这里基于上面的标识比较法例程作为演示, 完整展示在日常开发中如何更新图表:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">svg</span> = d3.select(<span style="color: #ffa07a;">'.svg-container'</span>)
+    .append(<span style="color: #ffa07a;">'svg'</span>)
+    .attr(<span style="color: #ffa07a;">'width'</span>, 500)
+    .attr(<span style="color: #ffa07a;">'height'</span>, 500)
+    .append(<span style="color: #ffa07a;">'text'</span>)
+
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">keyFunc</span> = (d) =&gt; d.id
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26087;&#22270;&#34920;</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 2, value: <span style="color: #ffa07a;">'A'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'B'</span> }],
+        keyFunc)
+  .enter()
+  .append(<span style="color: #ffa07a;">'tspan'</span>)
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value })
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26032;&#22270;&#34920;</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">1. &#33719;&#21462; Update &#38598;&#21512;</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">update</span> = svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+      .data([{ id: 0, value: <span style="color: #ffa07a;">'1'</span> },
+             { id: 1, value: <span style="color: #ffa07a;">'2'</span> },
+             { id: 2, value: <span style="color: #ffa07a;">'3'</span> },
+             { id: 3, value: <span style="color: #ffa07a;">'4'</span> },
+             { id: 4, value: <span style="color: #ffa07a;">'5'</span> },
+             { id: 5, value: <span style="color: #ffa07a;">'6'</span> }],
+            keyFunc)
+
+update
+  .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'cyan'</span>)         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38024;&#23545; Update &#38598;&#21512;&#30340;&#20803;&#32032;&#36827;&#34892;&#35843;&#25972;</span>
+  .enter()                      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">2. &#33719;&#21462; Enter &#38598;&#21512;</span>
+  .append(<span style="color: #ffa07a;">'tspan'</span>)              <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454; Enter &#38598;&#21512;&#21019;&#24314;&#20803;&#32032;</span>
+  .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'pink'</span>)         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38024;&#23545; Enter &#38598;&#21512;&#30340;&#20803;&#32032;&#36827;&#34892;&#35843;&#25972;</span>
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+.merge(update)                  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">3. &#21512;&#24182; Enter &#38598;&#21512;&#19982; Update &#38598;&#21512;</span>
+.text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value }) <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#26032;&#38598;&#21512;&#36827;&#34892;&#32479;&#19968;&#35843;&#25972;</span>
+
+update.exit().remove()          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">4. &#20174;&#30011;&#24067;&#19978;&#31227;&#38500; Exit &#38598;&#21512;&#37324;&#30340;&#20803;&#32032;</span>
+</pre>
+</div>
+
+<p>
+在 <code>D3.js</code> 的 <code>v5+</code> 版本中, 可以使用 <code>Selection.join()</code> 方法简化上面的更新过程:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">svg</span> = d3.select(<span style="color: #ffa07a;">'.svg-container'</span>)
+    .append(<span style="color: #ffa07a;">'svg'</span>)
+    .attr(<span style="color: #ffa07a;">'width'</span>, 500)
+    .attr(<span style="color: #ffa07a;">'height'</span>, 500)
+    .append(<span style="color: #ffa07a;">'text'</span>)
+
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">keyFunc</span> = (d) =&gt; d.id
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26087;&#22270;&#34920;</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 2, value: <span style="color: #ffa07a;">'A'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'B'</span> }],
+        keyFunc)
+  .enter()
+  .append(<span style="color: #ffa07a;">'tspan'</span>)
+  .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+  .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+  .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value })
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26032;&#22270;&#34920;</span>
+svg.selectAll(<span style="color: #ffa07a;">'tspan'</span>)
+  .data([{ id: 0, value: <span style="color: #ffa07a;">'1'</span> },
+         { id: 1, value: <span style="color: #ffa07a;">'2'</span> },
+         { id: 2, value: <span style="color: #ffa07a;">'3'</span> },
+         { id: 3, value: <span style="color: #ffa07a;">'4'</span> },
+         { id: 4, value: <span style="color: #ffa07a;">'5'</span> },
+         { id: 5, value: <span style="color: #ffa07a;">'6'</span> }],
+        keyFunc)
+  .join(
+    enter =&gt; { <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38024;&#23545; Update &#38598;&#21512;&#30340;&#20803;&#32032;&#36827;&#34892;&#35843;&#25972;</span>
+      <span style="color: #00ffff;">return</span> enter
+        .append(<span style="color: #ffa07a;">'tspan'</span>)
+        .attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'pink'</span>)
+        .attr(<span style="color: #ffa07a;">'text-anchor'</span>, <span style="color: #ffa07a;">'middle'</span>)
+        .attr(<span style="color: #ffa07a;">'x'</span>, 50)
+        .attr(<span style="color: #ffa07a;">'dy'</span>, 20)
+    },
+    update =&gt; { <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38024;&#23545; Update &#38598;&#21512;&#30340;&#20803;&#32032;&#36827;&#34892;&#35843;&#25972;</span>
+      <span style="color: #00ffff;">return</span> update.attr(<span style="color: #ffa07a;">'fill'</span>, <span style="color: #ffa07a;">'cyan'</span>)
+    },
+    exit =&gt; {
+      <span style="color: #00ffff;">return</span> exit.remove() <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20174;&#30011;&#24067;&#19978;&#31227;&#38500; Exit &#38598;&#21512;&#37324;&#30340;&#20803;&#32032;</span>
+    }
+  )
+  .text(<span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">d</span>) { <span style="color: #00ffff;">return</span> <span style="color: #ffa07a;">'this data is '</span> + d.value }) <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#20803;&#32032;&#36827;&#34892;&#32479;&#19968;&#35843;&#25972;</span>
+</pre>
+</div>
+
+<p>
+可以看到 <code>Selection.join()</code> 方法把对于三个集合的操作集成在一起了, 每个集合的操作是一个函数, 代码逻辑更加清晰了.
+</p>
+
+<p>
+这里面只有 <code>Enter</code> 集合的操作函数是必要参数, <code>Update</code> 和 <code>Exit</code> 集合的操作参数是可选的,
+</p>
+
+<p>
+默认情况下 <code>Update</code> 和 <code>Exit</code> 集合的操作是:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js">update =&gt; update
+exit =&gt; exit.remove()
+</pre>
+</div>
+
+<p>
+鉴于 <code>Selection.join()</code> 方法的用法十分灵活, 这里就不覆盖所有细节了, 就请自行阅读文档.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2025-06-21</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.1 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
