@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-06-03 Tue 01:42 -->
+<!-- 2025-08-26 Tue 21:21 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-光和材质</title>
@@ -193,6 +193,12 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { }
 </style>
+<style type="text/css">
+.styledtable col:nth-of-type(1) { width:  2%; background: orange; }
+.styledtable col:nth-of-type(2) { width: 20%; background: dodgerblue; }
+.styledtable col:nth-of-type(3) { width: 78%; background: hotpink; }
+.styledtable td { color: #333; }
+</style>
 <script>
   window.MathJax = {
     tex: {
@@ -233,54 +239,66 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org387fa9a">1. 现实与计算机中颜色</a></li>
-<li><a href="#org56c5f55">2. 光照模型</a>
+<li><a href="#orgeddd9b6">1. 现实与计算机中颜色</a></li>
+<li><a href="#orge34c97d">2. 光照模型</a>
 <ul>
-<li><a href="#org03539d4">2.1. 最基础的光照模型 - Phong lighting model</a>
+<li><a href="#orgf36a682">2.1. 最基础的光照模型 - Phong lighting model</a>
 <ul>
-<li><a href="#orge67e67f">2.1.1. 光源</a></li>
-<li><a href="#org0fe674e">2.1.2. 材质</a></li>
-<li><a href="#orgf1a9c55">2.1.3. 光照计算</a></li>
+<li><a href="#org1b23e4f">2.1.1. 反射</a></li>
+<li><a href="#orgf8c5722">2.1.2. 材质</a></li>
+<li><a href="#org828df05">2.1.3. 光照计算</a></li>
 </ul>
 </li>
-<li><a href="#org5da0462">2.2. OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
+<li><a href="#org5a868c6">2.2. OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
 <ul>
-<li><a href="#org221c00b">2.2.1. 光在 OpenGL 中的定义</a></li>
-<li><a href="#org3d818b4">2.2.2. 材质在 OpenGL 中的定义</a></li>
-<li><a href="#orgb9bc85a">2.2.3. 光线计算</a></li>
+<li><a href="#org2592f11">2.2.1. 光在 OpenGL 中的定义</a></li>
+<li><a href="#org6963aee">2.2.2. 材质在 OpenGL 中的定义</a></li>
+<li><a href="#orgbd23e50">2.2.3. 光线计算</a></li>
 </ul>
 </li>
-<li><a href="#org6367c1a">2.3. 基于物理的渲染 - PBR (Physically Based Rendering)</a>
+<li><a href="#orge71721b">2.3. 基于物理的渲染 - PBR (Physically Based Rendering)</a>
 <ul>
-<li><a href="#orge2ad698">2.3.1. 微表面和宏表面 (Micro and Macro Surface)</a></li>
-<li><a href="#org6a671d9">2.3.2. 辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</a></li>
-<li><a href="#org1b20370">2.3.3. 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</a></li>
-<li><a href="#orgea56932">2.3.4. 完整的反射率方程</a></li>
-<li><a href="#org8fdbccd">2.3.5. 创作 <code>PBR</code> 材质 (Authoring PBR Materials)</a></li>
-<li><a href="#org98700e2">2.3.6. GLSL 实现</a></li>
+<li><a href="#orgc8d57d6">2.3.1. 微表面和宏表面 (Micro and Macro Surface)</a></li>
+<li><a href="#org47ac705">2.3.2. 辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</a></li>
+<li><a href="#org826e04d">2.3.3. 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</a></li>
+<li><a href="#orgc139c01">2.3.4. 完整的反射率方程</a></li>
+<li><a href="#org1fc1e5b">2.3.5. 创作 <code>PBR</code> 材质 (Authoring PBR Materials)</a></li>
+<li><a href="#orgfa153a1">2.3.6. GLSL 实现</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org2d9542f">3. 附录</a>
+<li><a href="#org5b5764f">3. 阴影</a>
 <ul>
-<li><a href="#slope-space">3.1. 斜率空间 (Slope Space)</a>
+<li><a href="#org42459ee">3.1. 定向光源的阴影</a>
 <ul>
-<li><a href="#org9845d5f">3.1.1. 斜率空间和极坐标之间的转换</a></li>
-<li><a href="#why-slope-space">3.1.2. 为什么需要斜率空间</a></li>
-<li><a href="#orge8e6aed">3.1.3. 斜率空间上的分布函数</a></li>
-<li><a href="#org360bd49">3.1.4. 从斜率空间上的正态分布函数到 <code>NDF</code></a></li>
-<li><a href="#t-distribution-in-slope-space">3.1.5. 从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></a></li>
+<li><a href="#org530dc1f">3.1.1. 阴影自遮挡 (Shadow Acne)</a></li>
+<li><a href="#orgfe6e3df">3.1.2. Peter Panning</a></li>
+<li><a href="#org2074383">3.1.3. 阴影边缘柔化 (PCF, Percentage-closer filtering)</a></li>
 </ul>
 </li>
-<li><a href="#org8d37bb3">3.2. 各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</a></li>
+<li><a href="#orgb56d85a">3.2. 位置光源的阴影</a></li>
 </ul>
 </li>
-<li><a href="#orgd79f6f2">4. 完结心声</a></li>
+<li><a href="#orgf69d751">4. 附录</a>
+<ul>
+<li><a href="#slope-space">4.1. 斜率空间 (Slope Space)</a>
+<ul>
+<li><a href="#orgb4d7d96">4.1.1. 斜率空间和极坐标之间的转换</a></li>
+<li><a href="#why-slope-space">4.1.2. 为什么需要斜率空间</a></li>
+<li><a href="#org5789ba9">4.1.3. 斜率空间上的分布函数</a></li>
+<li><a href="#org3ba0d90">4.1.4. 从斜率空间上的正态分布函数到 <code>NDF</code></a></li>
+<li><a href="#t-distribution-in-slope-space">4.1.5. 从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></a></li>
+</ul>
+</li>
+<li><a href="#org477862f">4.2. 各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</a></li>
+</ul>
+</li>
+<li><a href="#org195d593">5. 完结心声</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgbdbaa82">
+<div class="abstract" id="org0f31638">
 <p>
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 </p>
@@ -304,8 +322,8 @@
 </ol>
 
 </div>
-<div id="outline-container-org387fa9a" class="outline-2">
-<h2 id="org387fa9a"><span class="section-number-2">1.</span> 现实与计算机中颜色</h2>
+<div id="outline-container-orgeddd9b6" class="outline-2">
+<h2 id="orgeddd9b6"><span class="section-number-2">1.</span> 现实与计算机中颜色</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 <b>在物理学上,我们之所以能够看到一件物体是因为光照射到物体上,然后物体再反射光,最后被我们眼睛接收到.</b>
@@ -324,7 +342,7 @@
 </p>
 
 
-<div id="orga1e3f9b" class="figure">
+<div id="orgea0ea02" class="figure">
 <p><img src="../../../files/wave.jpeg" alt="wave.jpeg" />
 </p>
 </div>
@@ -367,7 +385,7 @@
 </p>
 
 
-<div id="org4c2ccc5" class="figure">
+<div id="orga960259" class="figure">
 <p><img src="../../../files/cone-response.jpg" alt="cone-response.jpg" />
 </p>
 </div>
@@ -434,33 +452,45 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org56c5f55" class="outline-2">
-<h2 id="org56c5f55"><span class="section-number-2">2.</span> 光照模型</h2>
+<div id="outline-container-orge34c97d" class="outline-2">
+<h2 id="orge34c97d"><span class="section-number-2">2.</span> 光照模型</h2>
 <div class="outline-text-2" id="text-2">
 <p>
-光的意义在于它能够照明物体,所以并不能只谈光,需要从 <b>照明</b> 与 <b>被照明</b> 这两角度进行了解,主动照明的当然就是光源(light source)了,被照明的是物体,光照射到物体发生什么完全由物体表面材质(material)特点决定,比如颜色,光泽度,是平还是圆的等等.
+当人们说学习图形学光照时, 他们的真正意思是学习光照模型, 而光照模型是数学建模, 这会涉及大量数学内容.
 </p>
 
 <p>
-计算机的光照模型基本上就是对现实光照的抽象,虽然说不同的图形系统的光照系统都一样,不过都差不多, <code>OpenGL</code> 和 <code>Direct3D</code> 就基本相同,所以在介绍完现实的光照后会通过 <code>OpenGL</code> 的光照模型进行了解.
+光照模型并非公理, 我们可以在学习之后按照自己的想法对模型进行调整. 模型有很多种, 不同模型的照明效果也会不一样,
+</p>
+
+<p>
+当然复杂程度也不一样. 接下来会从简单到复杂介绍三个光照模型.
+</p>
+
+<p>
+想实现照明效果, 需要从 <b>照明</b> 与 <b>被照明</b> 这两角度进行了解: 当光照射到物体上时, 物体表面如何对光进行反射.
+</p>
+
+<p>
+具体取决于物体表面材质(material)特点, 比如物体表面的颜色, 光泽度, 是平还是圆的等等.
 </p>
 </div>
-<div id="outline-container-org03539d4" class="outline-3">
-<h3 id="org03539d4"><span class="section-number-3">2.1.</span> 最基础的光照模型 - Phong lighting model</h3>
+<div id="outline-container-orgf36a682" class="outline-3">
+<h3 id="orgf36a682"><span class="section-number-3">2.1.</span> 最基础的光照模型 - Phong lighting model</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 这一部分通过介绍最基础的光照模型来入门光照计算.
 </p>
 </div>
-<div id="outline-container-orge67e67f" class="outline-4">
-<h4 id="orge67e67f"><span class="section-number-4">2.1.1.</span> 光源</h4>
+<div id="outline-container-org1b23e4f" class="outline-4">
+<h4 id="org1b23e4f"><span class="section-number-4">2.1.1.</span> 反射</h4>
 <div class="outline-text-4" id="text-2-1-1">
 <p>
 这部分的内容主要是围绕光源以及光的反射进行讨论,现实中光的反射方式有两种: 镜面反射(specular reflection)和漫反射(diffuse reflection),光如何反射是取决于反射面(也就是它照射的物体表面)的,如果反射面光滑,那么就是镜面反射;相反,反射面粗糙,那么就是漫反射.
 </p>
 
 
-<div id="org4eaf342" class="figure">
+<div id="orgeaefccf" class="figure">
 <p><img src="../../../files/diffuse-vs-specular.png" alt="diffuse-vs-specular.png" />
 </p>
 </div>
@@ -475,7 +505,7 @@
 </p>
 
 
-<div id="org15eb83c" class="figure">
+<div id="org4cf3708" class="figure">
 <p><img src="../../../files/reflection-cone.png" alt="reflection-cone.png" />
 </p>
 </div>
@@ -485,7 +515,7 @@
 </p>
 
 
-<div id="org0bc7524" class="figure">
+<div id="orgbd3baaa" class="figure">
 <p><img src="../../../files/specular_hilites.png" alt="specular_hilites.png" />
 </p>
 </div>
@@ -551,73 +581,55 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org0fe674e" class="outline-4">
-<h4 id="org0fe674e"><span class="section-number-4">2.1.2.</span> 材质</h4>
+<div id="outline-container-orgf8c5722" class="outline-4">
+<h4 id="orgf8c5722"><span class="section-number-4">2.1.2.</span> 材质</h4>
 <div class="outline-text-4" id="text-2-1-2">
 <p>
-现实中每个物体对同样的光都有不同的反应,比如金属品和木制品,通常金属品的表面更加光滑,反光效果更好,而木制品一般都比较粗糙,反光效果比较差.
+现实中每个物体对同样的光都有不同的反应,比如金属品和木制品,通常金属品的表面更加光滑,反光效果更好,
 </p>
 
 <p>
-甚至有些物体还会自己发光,比如汽车前灯,荧光棒等等,这种自己发出的光叫做发射光(emissive),
+而木制品一般都比较粗糙,反光效果比较差. 甚至有些物体还会自己发光,比如汽车前灯,荧光棒等等,
 </p>
 
 <p>
-物体对光的作出的反应取决于材质(material),可以理解为物体表面的特点,比如颜色,还有在上面的 <code>Phong lighting model</code> 的例子中提到过的光泽度 \(\mathrm{shininess}\),这些都是材质的属性.
+这种自己发出的光叫做发射光(emissive), 物体对光的作出的反应取决于材质(material),可以理解为物体表面的特点,
 </p>
 
 <p>
-话说回来,上面的计算是没有完全地把材质所有属性都考虑进去的,这是因为到目前为止还没有了解材质的定义,所以也不知道是如何影响计算的,
+比如颜色,还有在上面的 <code>Phong lighting model</code> 的例子中提到过的光泽度 \(\mathrm{shininess}\), 这些都是材质的属性.
 </p>
-
-<p>
-所以接下来会介绍一种改进的算法,这种算法就会把其它材质属性也给考虑进去.
-</p>
-
-<blockquote>
-<p>
-某种意义上来说, 材质这个词等同于光照的计算模型, 正如上一节的标题一样, <code>Phong lighting model</code> 只是基础光照模型.
-</p>
-
-<p>
-有些软件/库会把用于基础光照模型的材质叫做标准材质(standard materials).
-</p>
-
-<p>
-和直觉一样, 有标准的那么就有超出标准的光照模型, 那就是 <code>PBR(physically based rendering)</code> 的光照模型, 该模型所使用到的材质叫做 <code>PBR</code> 材质 (PBR materials),
-</p>
-
-<p>
-相比标准材质而言会更加贴近现实, 而且也更加复杂, 这是以后的话题了, 本人之后会抽空学习以及记录笔记的.
-</p>
-</blockquote>
 </div>
 </div>
-<div id="outline-container-orgf1a9c55" class="outline-4">
-<h4 id="orgf1a9c55"><span class="section-number-4">2.1.3.</span> 光照计算</h4>
+<div id="outline-container-org828df05" class="outline-4">
+<h4 id="org828df05"><span class="section-number-4">2.1.3.</span> 光照计算</h4>
 <div class="outline-text-4" id="text-2-1-3">
 <p>
-在开始介绍光照模型前先思考一个问题,还记得在讲坐标变换时所提到的"光照计算"吗?它到底是干什么的呢?结合上面的概念"铺垫",不能发现有一个词语从开始至今不停地出现在我们面前:颜色.
+在开始介绍光照模型前先思考一个问题, "光照计算" 具体实在计算什么呢?
 </p>
 
 <p>
-估计你也猜到了(没猜到也没关系), <b>光照计算就是为了得出物体在眼中的颜色</b>, 光照计算和阴影是没有关系的,这点得清楚.
+<b>光照计算就是为了得出物体在观察者眼中的颜色</b>, 光照计算和阴影是没有关系的, 阴影的内容可以单独作为一个主题了.
 </p>
 
 <p>
-最早的光照模型叫做冯氏光照模型/ <code>Phong</code> 光照模型(Phong lighting model),因为有不少光照模型是基于它进行拓展或者改进,
+图形学第一个提出的真实光照模型是 <code>Phong</code> 光照模型(Phong lighting model),
 </p>
 
 <p>
-比如 <code>OpenGL</code> 固定流水线(fixed function pipeline)中所使用的 <code>Blinn-Phong shading model</code>,所以说这套模型虽然老,但依然有学习地价值.
+虽然它现在已经不是主流的照明方案, 但其核心思想依然是不少光照模型的基础,
 </p>
 
 <p>
-<code>Phong</code> 光照模型认为光分为三个部分: 环境反射光,镜面反射光和漫反射光,也就是上面说到的内容了.
+比如 <code>OpenGL</code> 固定流水线(fixed function pipeline)中所使用的 <code>Blinn-Phong shading model</code>.
+</p>
+
+<p>
+<code>Phong</code> 光照模型认为反射光分为三个部分: 环境反射光, 镜面反射光和漫反射光.
 </p>
 
 
-<div id="org87d1100" class="figure">
+<div id="org952c7d8" class="figure">
 <p><img src="../../../files/basic_lighting_phong.png" alt="basic_lighting_phong.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>(图片来源于网络)</p>
@@ -650,7 +662,7 @@
 </blockquote>
 </div>
 <ol class="org-ol">
-<li><a id="orga50d2fd"></a>ambient<br />
+<li><a id="org9dcc796"></a>ambient<br />
 <div class="outline-text-5" id="text-2-1-3-1">
 <p>
 假设光源产生了 \(\mathrm{ambient\_strength}\) 比例的 \(\mathrm{ambient}\), 那么 \(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color}\).
@@ -680,7 +692,7 @@
 </p>
 
 
-<div id="org2797729" class="figure">
+<div id="org142b73c" class="figure">
 <p><img src="../../../files/diffuse_light.png" alt="diffuse_light.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>漫反射(图片来源于网络)</p>
@@ -714,7 +726,7 @@
 </p>
 
 
-<div id="orgd5f5856" class="figure">
+<div id="org3be829b" class="figure">
 <p><img src="../../../files/basic_lighting_specular_theory.png" alt="basic_lighting_specular_theory.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>镜面反射(图片来源于网络)</p>
@@ -774,7 +786,7 @@
 </p>
 </div>
 </li>
-<li><a id="orgf0081b1"></a>result<br />
+<li><a id="orgc476c81"></a>\(\mathrm{result\_color}\)<br />
 <div class="outline-text-5" id="text-2-1-3-4">
 <p>
 最后就是我们眼中的结果,也就是经过物体反射的光: \(\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times \mathrm{object\_color}\).
@@ -814,11 +826,11 @@
 </ol>
 </div>
 </div>
-<div id="outline-container-org5da0462" class="outline-3">
-<h3 id="org5da0462"><span class="section-number-3">2.2.</span> OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
+<div id="outline-container-org5a868c6" class="outline-3">
+<h3 id="org5a868c6"><span class="section-number-3">2.2.</span> OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
-<code>Blinn-Phong shading model</code> 是基于 <code>Phong lighting model</code> 改进的,主要改进了镜面反射光的计算.
+<code>Blinn-Phong shading model</code> 是 <code>Phong lighting model</code> 改进模型, 主要改进了镜面反射光的计算.
 </p>
 
 <p>
@@ -859,8 +871,8 @@
 </p>
 </blockquote>
 </div>
-<div id="outline-container-org221c00b" class="outline-4">
-<h4 id="org221c00b"><span class="section-number-4">2.2.1.</span> 光在 OpenGL 中的定义</h4>
+<div id="outline-container-org2592f11" class="outline-4">
+<h4 id="org2592f11"><span class="section-number-4">2.2.1.</span> 光在 OpenGL 中的定义</h4>
 <div class="outline-text-4" id="text-2-2-1">
 <p>
 当光照射到物体表面时,物体材质的颜色就意味着是对光的反射率.
@@ -896,101 +908,96 @@
 <code>OpenGL</code> 提供 <code>glLight*(light, pname, value)</code> 一类的函数来对光的参数 <code>pname</code>, 以下是对参数 <code>pname</code> 的说明:
 </p>
 
-
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" class="styledtable">
 
 
 <colgroup>
 <col  class="org-left" />
 
-<col  class="org-right" />
+<col  class="org-left" />
 
 <col  class="org-left" />
 </colgroup>
 <thead>
 <tr>
 <th scope="col" class="org-left">属性</th>
-<th scope="col" class="org-right">默认值</th>
+<th scope="col" class="org-left">默认值</th>
 <th scope="col" class="org-left">描述</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_AMBIENT</code></td>
-<td class="org-right">(0.0, 0.0, 0.0, 1.0)</td>
+<td class="org-left">(0.0, 0.0, 0.0, 1.0)</td>
 <td class="org-left">形式如(x, y, z, w),环境反射光的 RGBA 强度</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_DIFFUSE</code></td>
-<td class="org-right">(1.0, 1.0, 1.0, 1.0)</td>
+<td class="org-left">(1.0, 1.0, 1.0, 1.0)</td>
 <td class="org-left">形式如(x, y, z, w),漫反射光的 RGBA 强度</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_SPECULAR</code></td>
-<td class="org-right">(1.0, 1.0, 1.0, 1.0)</td>
+<td class="org-left">(1.0, 1.0, 1.0, 1.0)</td>
 <td class="org-left">形式如(x, y, z, w),漫反射光的 RGBA 强度</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_POSITION</code></td>
-<td class="org-right">(0.0, 0.0, 1.0, 0.0)</td>
-<td class="org-left">形式如(x, y, z, w),如果 w 为0,那么光源位置就是在无限远处,因此认为光线之间是平行的,(x, y, z) 表示 <b>指向光源的方向</b>,这种光源叫做 <b>定向光源(directional light)</b>,而默认值的意思就是光源往 \(z\) 轴的负方向,也就是 (0, 0, -1) 发出光线;若 w 不为0,那么光源位置位于场景附近,位于 (x, y, z),以光源为中心光向各个反向出发,这种光源叫做 <b>位置光源(positional light)</b>,另外,把这种光源屏蔽相当的一部分就能够达到聚光灯的效果</td>
+<td class="org-left">(0.0, 0.0, 1.0, 0.0)</td>
+<td class="org-left">形式如(x, y, z, w),如果 w 为0,那么光源位置就是在无限远处,因此认为光线之间是平行的,(x, y, z) 表示 <b>指向光源的方向</b>,这种光源叫做 <b>定向光源(directional light)</b>,而默认值的意思就是光源往 \(z\) 轴的负方向,也就是 (0, 0, -1) 发出光线;若 w 不为0,那么光源位置位于场景附近,位于 (x, y, z),以光源为中心光向各个反向出发,这种光源叫做 <b>位置光源(positional light)</b>, 偶尔也被叫做 <b>点光源(point light)</b>. 另外,把这种光源屏蔽相当的一部分就能够达到聚光灯的效果</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_SPOT_DIRECTION</code></td>
-<td class="org-right">(0.0, 0.0, -1.0)</td>
+<td class="org-left">(0.0, 0.0, -1.0)</td>
 <td class="org-left">形式如(x, y, z), 聚光灯的方向,聚光灯本质就是位置光源,所以一般来说 <code>GL_POSITION</code> 的 w 不应该为 0,不过 OpenGL 并没有限制这么做,但是采用定向光加聚光灯设置这种组合不一定是你想要的结果</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_SPOT_EXPONENT</code></td>
-<td class="org-right">0.0</td>
+<td class="org-left">0.0</td>
 <td class="org-left">[0,128] 之间的整数或者浮点数,聚光灯的强度分布,如果为 0,那么聚光灯照射范围内的所有光的强度都一样,如果为正数,光线离照射中心越远,光的强度越弱,如果该值越大,那么衰减程度就越大,最后光的中心区域和外围区域差别越明显</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_SPOT_CUTOFF</code></td>
-<td class="org-right">180.0</td>
+<td class="org-left">180.0</td>
 <td class="org-left"><img src="../../../files/Image79.gif" alt="Image79.gif" />, [0,90] 之间的整数或者浮点数以及特殊值 180.0,聚光灯光束角度的 \(\frac{1}{2}\),当为 180.0 的时候就表示没有屏蔽位置光源.</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_CONSTANT_ATTENUATION</code></td>
-<td class="org-right">1.0</td>
+<td class="org-left">1.0</td>
 <td class="org-left">恒定衰减因素(factor),下文用 \(k_{c}\) 表示</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_LINEAR_ATTENUATION</code></td>
-<td class="org-right">0.0</td>
+<td class="org-left">0.0</td>
 <td class="org-left">线性衰减因素,下文用 \(k_{l}\) 表示</td>
 </tr>
 </tbody>
 <tbody>
 <tr>
 <td class="org-left"><code>GL_QUADRATIC_ATTENUATION</code></td>
-<td class="org-right">0.0</td>
+<td class="org-left">0.0</td>
 <td class="org-left">二次衰减因素,下文用 \(k_{q}\) 表示</td>
-</tr>
-
-<tr>
-<td class="org-left">&#xa0;</td>
-<td class="org-right">&#xa0;</td>
-<td class="org-left">&#xa0;</td>
 </tr>
 </tbody>
 </table>
+
+
 
 
 <p>
@@ -998,11 +1005,11 @@
 </p>
 
 <p>
-取而代之的是用了 \(\mathrm{GL\_AMBIENT}\), \(\mathrm{GL\_DIFFUSE}\) 和 \(\mathrm{GL\_SPECULAR}\) 来设置光的颜色,这样就不需要把光的每个部分求出来.
+取而代之的是用了 \(\mathrm{GL\_AMBIENT}\), \(\mathrm{GL\_DIFFUSE}\) 和 \(\mathrm{GL\_SPECULAR}\) 来设置光的颜色,
 </p>
 
 <p>
-接下来就是一些其他的补充了.
+这样在后续就不需要把光的每个部分求出来. 接下来就是一些其他的补充了.
 </p>
 
 <p>
@@ -1018,7 +1025,7 @@
 另外, <code>OpenGL</code> 提供 <code>glLightModel*(pname, param)</code> 调整计算规则, 接下来是参数 <code>pname</code> 的说明:
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" class="styledtable">
 
 
 <colgroup>
@@ -1059,14 +1066,14 @@
 </table>
 </div>
 </div>
-<div id="outline-container-org3d818b4" class="outline-4">
-<h4 id="org3d818b4"><span class="section-number-4">2.2.2.</span> 材质在 OpenGL 中的定义</h4>
+<div id="outline-container-org6963aee" class="outline-4">
+<h4 id="org6963aee"><span class="section-number-4">2.2.2.</span> 材质在 OpenGL 中的定义</h4>
 <div class="outline-text-4" id="text-2-2-2">
 <p>
 直接从 <code>glMaterial*(face, pname, param)</code> 切入主题,下面是它能够设置的材质属性参数 <code>pname</code> 说明:
 </p>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" class="styledtable">
 
 
 <colgroup>
@@ -1141,8 +1148,8 @@
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orgb9bc85a" class="outline-4">
-<h4 id="orgb9bc85a"><span class="section-number-4">2.2.3.</span> 光线计算</h4>
+<div id="outline-container-orgbd23e50" class="outline-4">
+<h4 id="orgbd23e50"><span class="section-number-4">2.2.3.</span> 光线计算</h4>
 <div class="outline-text-4" id="text-2-2-3">
 <p>
 <b>这里的颜色模式用的是 RGBA 模式</b>.
@@ -1189,7 +1196,11 @@
 </p>
 
 <p>
-一个光源由环境反射光,漫反射光以及镜面反射光共同构成(三项的和),另外还有两个因素需要考虑,光也没有经过衰减,以及光源是否为聚光灯.
+一个光源由环境反射光,漫反射光以及镜面反射光共同构成(三项的和),另外还有两个因素需要考虑:
+</p>
+
+<p>
+光有没有经过衰减,以及光源是否为聚光灯.
 </p>
 
 <p>
@@ -1197,19 +1208,19 @@
 </p>
 
 <p>
-\(\mathrm{contribute} = \mathrm{attenuation\_factor} \times \mathrm{spotlight\_effect} \times (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular})\)
+\(\mathrm{contribution} = \mathrm{attenuation\_factor} \times \mathrm{spotlight\_effect} \times (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular})\)
 </p>
 
 <p>
-\(\mathrm{Contributions\_From\_Light\_Sources} = \displaystyle\sum_{i=0}^{n-1}\mathrm{contribute}_{i}\).
+\(\mathrm{Contributions\_From\_Light\_Sources} = \displaystyle\sum_{i=0}^{n-1}\mathrm{contribution}_{i}\).
 </p>
 
 <p>
-这里的 \(\mathrm{attenuation\_factor} \times \mathrm{spotlight\_effect}\) 就是我们在 <code>Phong lighting model</code> 提到过的系数 \(k\),这里只是三项的系数都一样.
+\(\mathrm{attenuation\_factor}\) 就是在 <code>Phong lighting model</code> 提到过的系数 \(k\), 这里只是三项的系数都一样.
 </p>
 
 <p>
-接下来分别对 \(\mathrm{contribute}\) 的每一项计算进行深入了解.
+接下来分别对 \(\mathrm{contribution}\) 的每一项计算进行深入了解.
 </p>
 
 <ul class="org-ul">
@@ -1278,23 +1289,31 @@
 </p>
 
 <p>
-先计算出光源到直线的单位向量 \(\vec{n} = \frac{v - \mathrm{GL\_POSITION}}{|v - \mathrm{GL\_POSITION}|} = \frac{(x_{v} - x_{l}, y_{v} - y_{l}, z_{v} - z_{l})}{\sqrt{(x_{v} - x_{l})^{2} + (y_{v} - y_{l})^{2} + (z_{v} - z_{l})^{2}}}\),
+先计算出光源到顶点的单位向量 \(\vec{n} = \frac{v - \mathrm{GL\_POSITION}}{|v - \mathrm{GL\_POSITION}|} = \frac{(x_{v} - x_{l}, y_{v} - y_{l}, z_{v} - z_{l})}{\sqrt{(x_{v} - x_{l})^{2} + (y_{v} - y_{l})^{2} + (z_{v} - z_{l})^{2}}}\),
 </p>
 
 <p>
-然后通过 \(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION} = |\vec{n}||\mathrm{GL\_SPOT\_DIRECTION}|\cos\theta\) 来求出夹角的 \(cosie\) 值.
+然后通过 \(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION} = |\vec{n}||\mathrm{GL\_SPOT\_DIRECTION}|\cos\theta\) 来求出夹角的 \(cosine\) 值.
 </p>
 
 <p>
-如果 \(\mathrm{GL\_SPOT\_DIRECTION}\) 是单位向量的话, \(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION} = \cos\theta\).(实际上方向也的确是用单位向量表示,后面就不赘述了,凡是方向统一暗示单位向量).
+如果 \(\mathrm{GL\_SPOT\_DIRECTION}\) 是单位向量的话, \(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION} = \cos\theta\).
 </p>
 
 <p>
-因为 \(\mathrm{GL\_SPOT\_DIRECTION}\) 的取值可能是 \([0.0, 90.0]\) 以及 \(180.0\),不考虑 \(180.0\) 的话,整个计算结果应该是 \(max(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION}, 0)\),
+(实际上方向也的确是用单位向量表示,后面就不赘述了,凡是方向统一暗示单位向量).
 </p>
 
 <p>
-如果这个结果比 \(\mathrm{GL\_SPOT\_CUTOFF}\) 的 \(cosine\) 值要大,根据 \(cosine\) 函数的性质可以得出顶点在聚光灯的照射范围内,否则顶点就在照射范围内.
+因为 \(\mathrm{GL\_SPOT\_DIRECTION}\) 的取值可能是 \([0.0, 90.0]\) 以及 \(180.0\),不考虑 \(180.0\) 的话,
+</p>
+
+<p>
+整个计算结果应该是 \(max(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION}, 0)\), 如果这个结果比 \(\mathrm{GL\_SPOT\_CUTOFF}\) 的 \(cosine\) 值要大,
+</p>
+
+<p>
+根据 \(cosine\) 函数的性质可以得出顶点在聚光灯的照射范围内, 否则顶点就在照射范围内.
 </p>
 
 <p>
@@ -1302,7 +1321,7 @@
 </p>
 
 <p>
-如果 <b>顶点在聚光灯照射击范围内</b>,那么 \(\mathrm{spotlight\_effect} = max(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION}, 0)^{\mathrm{GL\_SPOT\_EXPONENT}}\).
+如果 <b>顶点在聚光灯照射范围内</b>,那么 \(\mathrm{spotlight\_effect} = max(\vec{n} \cdot \mathrm{GL\_SPOT\_DIRECTION}, 0)^{\mathrm{GL\_SPOT\_EXPONENT}}\).
 </p></li>
 
 <li><p>
@@ -1342,7 +1361,7 @@
 </p>
 
 <p>
-一旦计算出 \(L\) 以后,就进而可以得出 \(L\) 和 \(N\) 夹角 \(\theta\) 的 \(cosine\) 值了: \(cos\theta = \frac{L \cdot N}{|L||N|}\), 这个值也表示了 \(L\) 和 \(N\) 不一致的时顶点接收到入射光的强度系数.
+一旦计算出 \(L\) 以后,就进而可以得出 \(L\) 和 \(N\) 夹角 \(\theta\) 的 \(cosine\) 值了: \(\cos\theta = \frac{L \cdot N}{|L||N|}\), 这个值也表示了 \(L\) 和 \(N\) 不一致的时顶点接收到入射光的强度系数.
 </p>
 
 <p>
@@ -1398,7 +1417,7 @@
 </p>
 
 
-<div id="org33da598" class="figure">
+<div id="orgdb9bca8" class="figure">
 <p><img src="../../../files/advanced_lighting_over_90.png" alt="advanced_lighting_over_90.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>镜面反射2(图片来源于网络)</p>
@@ -1409,11 +1428,11 @@
 </p>
 
 <p>
-<code>James F. Blinn</code> 在 1977 年提出了一个 \(\mathrm{specular}\) 计算方法: 不依赖反射向量,利用半角向量 <a id="org1b34007"></a>\(H\) (halfway vector)进行角度的计算,半角向量就是 \(L\) 和 \(V\) 夹角的 \(\frac{1}{2}\) 的那个方向,
+<code>James F. Blinn</code> 在 1977 年提出了一个 \(\mathrm{specular}\) 计算方法: 不依赖反射向量,利用半角向量 <a id="org9c83a5b"></a>\(H\) (halfway vector)进行角度的计算,半角向量就是 \(L\) 和 \(V\) 夹角的 \(\frac{1}{2}\) 的那个方向,
 </p>
 
 
-<div id="orgdbd5dc1" class="figure">
+<div id="org98a2c98" class="figure">
 <p><img src="../../../files/advanced_lighting_halfway_vector.png" alt="advanced_lighting_halfway_vector.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>半角向量(图片来源于网络)</p>
@@ -1434,19 +1453,27 @@
 </div>
 </div>
 </div>
-<div id="outline-container-org6367c1a" class="outline-3">
-<h3 id="org6367c1a"><span class="section-number-3">2.3.</span> 基于物理的渲染 - PBR (Physically Based Rendering)</h3>
+<div id="outline-container-orge71721b" class="outline-3">
+<h3 id="orge71721b"><span class="section-number-3">2.3.</span> 基于物理的渲染 - PBR (Physically Based Rendering)</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 这个章节大部分内容涉及到了微积分和概率论的知识, 理解难度比之前的内容大一点.
 </p>
 
 <p>
-原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长, 因此这一章只会着重介绍相关函数的作用和性质, 因此会把一些推导会整理在附录中.
+原本想把里面的一些公式的推导整理进来, 但是这会造成篇幅过长.
+</p>
+
+<p>
+因此这一章只会着重介绍相关函数的作用和性质, 把推导会整理在附录中.
+</p>
+
+<p>
+<code>PBR</code> 是目前主流的光照模型, 如果想开发游戏, 那么 <code>PBR</code> 是避不开的.
 </p>
 </div>
-<div id="outline-container-orge2ad698" class="outline-4">
-<h4 id="orge2ad698"><span class="section-number-4">2.3.1.</span> 微表面和宏表面 (Micro and Macro Surface)</h4>
+<div id="outline-container-orgc8d57d6" class="outline-4">
+<h4 id="orgc8d57d6"><span class="section-number-4">2.3.1.</span> 微表面和宏表面 (Micro and Macro Surface)</h4>
 <div class="outline-text-4" id="text-2-3-1">
 <p>
 在 <code>3D</code> 建模中, 宏表面是实际存在的, 由顶点构成, 宏表面的法线由顶点法线决定;
@@ -1457,7 +1484,7 @@
 </p>
 
 
-<div id="org4393d1f" class="figure">
+<div id="org24533d8" class="figure">
 <p><img src="../../../files/micro-vs-macro-surface.png" alt="micro-vs-macro-surface.png" width="400px" />
 </p>
 <p><span class="figure-number">Figure 6: </span>微表面和宏表面, \(n\) 是宏表面的法线, \(m\) 是微表面的法线</p>
@@ -1494,7 +1521,7 @@
 </p>
 
 
-<div id="org93e5b96" class="figure">
+<div id="org13520f2" class="figure">
 <p><img src="../../../files/subpixel.png" alt="subpixel.png" width="400px" />
 </p>
 <p><span class="figure-number">Figure 7: </span>亚像素</p>
@@ -1514,12 +1541,12 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org6a671d9" class="outline-4">
-<h4 id="org6a671d9"><span class="section-number-4">2.3.2.</span> 辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</h4>
+<div id="outline-container-org47ac705" class="outline-4">
+<h4 id="org47ac705"><span class="section-number-4">2.3.2.</span> 辐射度量(radiometric quantities): \(L_{i}(p, \omega_{i})|\omega_{i} \cdot n|\)</h4>
 <div class="outline-text-4" id="text-2-3-2">
 </div>
 <ol class="org-ol">
-<li><a id="orgb9be69c"></a>能量 (energy)<br />
+<li><a id="orga43a967"></a>能量 (energy)<br />
 <div class="outline-text-5" id="text-2-3-2-1">
 <p>
 光源发射出光子, 光子的能量(焦耳, joules): \(Q = \frac{hc}{\lambda}\),
@@ -1542,7 +1569,7 @@
 </p>
 </div>
 </li>
-<li><a id="org2ccdb43"></a>通量 (flux)<br />
+<li><a id="org927fcf7"></a>通量 (flux)<br />
 <div class="outline-text-5" id="text-2-3-2-2">
 <p>
 能量测量可以发生在一段时间内, 比如说计算一个物体在接受光照一段时间后所受到的所有能量是多少.
@@ -1569,7 +1596,7 @@
 </p>
 </div>
 </li>
-<li><a id="orgadd922d"></a>辐射度 (Irradiance)<br />
+<li><a id="orgb054647"></a>辐射度 (Irradiance)<br />
 <div class="outline-text-5" id="text-2-3-2-3">
 <p>
 也称辐射通量密度, 是指单位面积 \(A\) 内接受的功率是多少: \(E = \frac{\Phi}{A}\).
@@ -1603,7 +1630,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 
-<div id="orgdc8fcd2" class="figure">
+<div id="orgeb6f6f0" class="figure">
 <p><img src="../../../files/Kugelkoord-lokb-e.svg" alt="Kugelkoord-lokb-e.svg" class="org-svg" width="504px" />
 </p>
 <p><span class="figure-number">Figure 8: </span>球体坐标系</p>
@@ -1617,30 +1644,34 @@ angle of incidence of illumination, since illumination is over a larger area at 
 把 \(E\) 定义成是一个函数, 计算 \(p\) 点的辐射度: \(E(p) = \lim\limits_{\Delta A \to 0}\frac{\Delta \Phi (p)}{\Delta A}\), 其中 \(\Delta A\) 是 \(p\) 点的辐射区域面积.
 </p>
 
+<p>
+可以对辐射度进行积分算出照射面的功率: \(\Phi = \int_{A}E(p)dA\).
+</p>
 
-<div id="org346176d" class="figure">
+
+<div id="org061a351" class="figure">
 <p><img src="../../../files/lamberts-law.png" alt="lamberts-law.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 9: </span>平面 N 和 平面 M 之间的投影关系</p>
 </div>
 
 <p>
-可以得到 \(\frac{M}{N} = \cos\theta = \frac{\omega \cdot n}{|\omega||n|}\), 因为 \(\omega\) 和 \(n\) 都是单位向量, 所以 \(|\omega| = |n| = 1\).
+根据三角函数关系, 可以得到 \(\frac{M}{N} = \cos\theta = \frac{\omega \cdot n}{|\omega||n|}\), 因为 \(\omega\) 和 \(n\) 都是单位向量, 所以 \(|\omega| = |n| = 1\).
 </p>
 
 <p>
 所以平面 \(N\) 的辐射度为 \(E_{N} = \frac{\Phi}{N} = \frac{\Phi \cos\theta}{M} = E_{M} \times \cos\theta\).
 </p>
-
-<p>
-可以对辐射度进行积分算出照射面的功率: \(\Phi = \int_{A}E(p)dA\).
-</p>
 </div>
 </li>
-<li><a id="org9924c3f"></a>辐射强度(Intensity)<br />
+<li><a id="orgd2c105d"></a>辐射强度(Intensity)<br />
 <div class="outline-text-5" id="text-2-3-2-4">
 <p>
 辐射强度是描述每一个立体角(<code>solid angle</code>)受到的辐射通量 \(\Phi\) 是多少, 单位是 \(\mathrm{W/sr}\), 用 \(I\) 表示: \(I(\omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta \phi}{\Delta \omega} = \frac{d\phi}{d\omega}\).
+</p>
+
+<p>
+可以对强度进行积分反求出辐射通量 \(\Phi = \int_{\Omega}I(\omega)d\omega\).
 </p>
 
 <blockquote>
@@ -1653,7 +1684,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgbddef4b" class="figure">
+<div id="org66ede9f" class="figure">
 <p><img src="../../../files/480px-Solid_Angle,_1_Steradian.svg.png" alt="480px-Solid_Angle,_1_Steradian.svg.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 10: </span>\(1\ \mathrm{sr}\)</p>
@@ -1667,10 +1698,6 @@ angle of incidence of illumination, since illumination is over a larger area at 
 半球体表面积(不包含底部): \(\frac{4 \pi r^{2}}{2}\), 其球面度为 \(2 \pi\).
 </p>
 </blockquote>
-
-<p>
-可以对强度进行积分反求出辐射通量 \(\Phi = \int_{\Omega}I(\omega)d\omega\).
-</p>
 </div>
 </li>
 <li><a id="radiance"></a>辐射 (Radiance)<br />
@@ -1684,12 +1711,12 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-\(L(p, \omega) = \lim\limits_{\Delta \omega \to 0}\lim\limits_{\Delta A^{\perp} \to 0} \frac{\Delta \Phi}{\Delta \omega \Delta A^{\perp}} = \lim\limits_{\Delta \omega \to 0}\frac{\Delta E_{\omega}(p)}{\Delta \omega} = \frac{dE_{\omega}(p)}{d\omega} = \frac{dE_{\omega}(p)}{d\omega}\).
+\(L(p, \omega) = \lim\limits_{\Delta \omega \to 0}\lim\limits_{\Delta A^{\perp} \to 0} \frac{\Delta \Phi}{\Delta \omega \Delta A^{\perp}} = \lim\limits_{\Delta \omega \to 0}\frac{\Delta E_{\omega}(p)}{\Delta \omega} = \frac{dE_{\omega}(p)}{d\omega}\).
 </p>
 
 <blockquote>
 <p>
-<a id="orga4f5f6d"></a>
+<a id="org30f07e9"></a>
 这里直接方向向量 \(\omega\) 的微元 \(d\omega\) 表示为立体角, 其背后的依据是把方向向量 \((x, y, z)\) 转换成以 \((x_{0}, y_{0}, z_{0})\) 为球心的球体坐标系后再计算微元:
 </p>
 
@@ -1702,14 +1729,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 
-<div id="org7c0bc7a" class="figure">
+<div id="org81f7109" class="figure">
 <p><img src="../../../files/differential-solid-angle.png" alt="differential-solid-angle.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 11: </span>微元立体角 \(d\omega\)</p>
 </div>
 
 <p>
-严格来讲, 不应该用 \(d\omega\) 来表示立体角度的, 这里有写符号滥用的嫌疑了, 读者很容易搞混.
+严格来讲, 不应该用 \(d\omega\) 来表示立体角度的, 这里有符号滥用的嫌疑了, 读者很容易搞混.
 </p>
 
 <p>
@@ -1726,7 +1753,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orge7b5c3f" class="figure">
+<div id="org36717e0" class="figure">
 <p><img src="../../../files/radiance.png" alt="radiance.png" />
 </p>
 <p><span class="figure-number">Figure 12: </span>辐射投影关系</p>
@@ -1761,8 +1788,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </li>
 </ol>
 </div>
-<div id="outline-container-org1b20370" class="outline-4">
-<h4 id="org1b20370"><span class="section-number-4">2.3.3.</span> 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</h4>
+<div id="outline-container-org826e04d" class="outline-4">
+<h4 id="org826e04d"><span class="section-number-4">2.3.3.</span> 双向反射分布函数(bidirectional reflective distribution function), 简称 BRDF: \(f_{r}(p, \omega_i, \omega_o)\)</h4>
 <div class="outline-text-4" id="text-2-3-3">
 <p>
 能量守恒(Energy Conservation): 出射光的能量不能超过入射光的能量, 排除自发光的表面光.
@@ -1785,7 +1812,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-所谓的被吸收其实就是光在进入表面后, 与材质的粒子发生多次碰撞后全部转化成热能, 然而有一部分光会在全部转化成热能之前以随机的方向逃离出表面,
+所谓的被吸收其实就是光在进入表面后, 与材质的粒子发生多次碰撞后全部转化成热能,
+</p>
+
+<p>
+然而有一部分光会在全部转化成热能之前以随机的方向逃离出表面,
 </p>
 
 <p>
@@ -1793,11 +1824,19 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-不过在目前介绍的 <code>PBR</code> 模型中会假设折射光被全部吸收, 忽视散射光在离开表面后的远处消失的效果, 不过有项叫做次表面散射(subsurface scattering)的着色技术会实现这些效果, 但伴随而来的是性能代价.
+不过在目前介绍的 <code>PBR</code> 模型中会假设折射光被全部吸收, 忽视散射光在离开表面后的远处消失的效果,
 </p>
 
 <p>
-\(k_{\mathrm{specular}} + k_{\mathrm{diffuse}} = 1.0\)
+不过有一项叫做次表面散射(subsurface scattering)的着色技术可以实现这些效果, 但伴随而来的是性能代价.
+</p>
+
+<p>
+因为遵守能量守恒, 所以满足该关系: \(k_{\mathrm{specular}} + k_{\mathrm{diffuse}} = 1.0\),
+</p>
+
+<p>
+其中 \(k_{\mathrm{specular}}\) 和 \(k_{\mathrm{diffuse}}\) 分别是镜面反射光占总能量的比例, 以及漫反射光占总能量的比例.
 </p>
 
 <p>
@@ -1810,7 +1849,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 <p>
-<code>BRDF</code> 是一个以入射光方向 \(\omega_{i}\), 出射光方向 \(\omega_{o}\), 宏表面法线 \(n\) 以及表面粗糙度 \(\alpha\) 为参数的函数, 计算出每个光线 \(\omega_{i}\) 在特定材质的不透明表面光上产生多少反射光.
+<code>BRDF</code> 是一个以入射光方向 \(\omega_{i}\), 出射光方向 \(\omega_{o}\), 宏表面法线 \(n\) 以及表面粗糙度 \(\alpha\) 为参数的函数,
+</p>
+
+<p>
+计算出每个光线 \(\omega_{i}\) 在特定材质的不透明表面光上产生多少反射光.
 </p>
 
 <p>
@@ -1822,7 +1865,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-这个公式之所以定义为辐射 \(L_o\) 和辐射度 \(E_i\) 之比, 而不是 \(L_o\) 和 \(L_i\) 或者 \(E_o\) 与 \(E_i\) 之比, 是因为在入射时需要考虑照射面积, 在反射时需要考虑每立体角的辐射通量, 反射角度以及投影面积.
+这个公式之所以定义为辐射 \(L_o\) 和辐射度 \(E_i\) 之比, 而不是 \(L_o\) 和 \(L_i\) 或者 \(E_o\) 与 \(E_i\) 之比,
+</p>
+
+<p>
+是因为在入射时需要考虑照射面积, 在反射时需要考虑每立体角的辐射通量, 反射角度以及投影面积.
 </p>
 
 <p>
@@ -1834,7 +1881,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-\(f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}\) 计算反射光, \(f_{\mathrm{cook-torrance}}\) 的定义离不开源于最早的 <code>BRDF</code>, 其中 \(D\) 是法线分布函数, \(G\) 是几何函数, \(F\) 是菲涅尔方程. 接下来分别学习这 3 个部分, 并在最后介绍 \(f_{\mathrm{cook-torrance}}\) 是怎么推导出来的.
+\(f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}\) 计算反射光, \(f_{\mathrm{cook-torrance}}\) 的定义源于最早的 <code>BRDF</code>, 其中 \(D\) 是法线分布函数, \(G\) 是几何函数, \(F\) 是菲涅尔方程.
+</p>
+
+<p>
+接下来分别学习这 3 个部分, 并在最后介绍 \(f_{\mathrm{cook-torrance}}\) 是怎么推导出来的.
 </p>
 
 <p>
@@ -1868,7 +1919,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 </div>
 <ol class="org-ol">
-<li><a id="org98f4505"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF): \(D(m, n, \alpha)\)</b><br />
+<li><a id="orgeb3643f"></a><b>法线分布函数 (<code>Normal Distribution Function</code>, NDF): \(D(m, n, \alpha)\)</b><br />
 <div class="outline-text-5" id="text-2-3-3-1">
 <blockquote>
 <p>
@@ -1914,25 +1965,25 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org65682b2" class="figure">
+<div id="orgf90c265" class="figure">
 <p><img src="../../../files/micro-macro-area-0.png" alt="micro-macro-area-0.png" />
 </p>
 <p><span class="figure-number">Figure 13: </span>微平面在宏表面上的投影, \(dA_{m}\) 是微平面总面积, \(dA\) 微平面在是宏表面上的投影</p>
 </div>
 
 <p>
-<code>BRDF</code> 把入射光 \(l\) 和视线 \(v\) 两者共同决定的<a href="#org1b34007">半角向量</a> \(h\) 定义为微平面的法线向量, 是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 而统计内容就是被看到的那部分.
+<code>BRDF</code> 把入射光 \(l\) 和视线 \(v\) 两者共同决定的<a href="#org9c83a5b">半角向量</a> \(h\) 定义为微平面的法线向量, 是因为 <b>只有 \(m = h\) 才能让入射光 \(l\) 正确在视线 \(v\) 上进行反射, 从而被相机接收到</b>, 而统计内容就是被看到的那部分.
 </p>
 
 
-<div id="orgaacf649" class="figure">
+<div id="org571a743" class="figure">
 <p><img src="../../../files/micro-macro-area-1.png" alt="micro-macro-area-1.png" />
 </p>
 <p><span class="figure-number">Figure 14: </span>宏表面的半角向量作为微平面的法线向量</p>
 </div>
 
 
-<div id="orgf6dfc6e" class="figure">
+<div id="orgf9a6c9b" class="figure">
 <p><img src="../../../files/real-time-rendering-4th-microfacet.png" alt="real-time-rendering-4th-microfacet.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 15: </span>所有符合 \(m = h\) 的微平面</p>
@@ -1943,15 +1994,27 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-根据上图的投影关系: \(dA = (m \cdot n) \times dA_{m}\), 其中 \(0 \lt m \cdot n \le 1\) 可以得出微表面的总面积始终不小于宏表面总面积.
+根据上图的投影关系: \(dA = (m \cdot n) \times dA_{m} \rightarrow A = \int_{m \in \Theta} (m \cdot n) dA_{m}\),
 </p>
 
 <p>
-我们把宏表面的总面积约定为 1, 那么 \(\int_{m \in \Theta}D(m)d\omega_{m} \ge 1\).
+其中 \(0 \lt m \cdot n \le 1\), 可以得出微表面的总面积始终不小于宏表面总面积.
 </p>
 
 <p>
-换而言之, 微表面到宏表面上的投影为 1: \(\int_{m \in \Theta}D(m)(m \cdot n)d\omega_{m} = 1\).
+并且可以得出该关系: \(\int_{m \in \Theta}D(m)d\omega_{m} = \int_{m \in \Theta} \frac{dA_m}{d\omega_m dA} d\omega_m = \int_{m \in \Theta} \frac{1}{m \cdot n} \ge 1\);
+</p>
+
+<p>
+可以发现 \(D(m)\) 并非概率密度函数, 因为它的总积分不为 1.
+</p>
+
+<p>
+为此在对它进行积分时需要进行归一化: \(\int_{m \in \Theta}D(m)(m \cdot n)d\omega_{m} = \frac{1}{A}\int_{m \in \Theta} (m \cdot n)dA_{m} = 1\).
+</p>
+
+<p>
+<a id="org23c62bc"></a>从微表面到宏表面的投影系数 \(m \cdot n\) 来看, \(D(m)\) 并非定义为微平面在球体立体角里的面积密度, 而是定义为微平面在 \(xy\) 宏表面上的投影面积密度.
 </p>
 
 <p>
@@ -1963,7 +2026,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org2a649dc" class="figure">
+<div id="org2c72969" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v.png" alt="micro-macro-projected-onto-plane-prep-to-v.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 16: </span>微表面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -1994,7 +2057,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orga60eba3" class="figure">
+<div id="orga7e112e" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v-visible.png" alt="micro-macro-projected-onto-plane-prep-to-v-visible.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 17: </span>可见微平面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -2081,7 +2144,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org142b0e7" class="figure">
+<div id="org11bdd25" class="figure">
 <p><img src="../../../files/shape-invariance.png" alt="shape-invariance.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 18: </span>粗糙度变小, 微平面数量的变少, 但微平面的面积变大, 微表面更平滑</p>
@@ -2108,7 +2171,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgb422fa6" class="figure">
+<div id="org8de1c54" class="figure">
 <p><img src="../../../files/isotropic-to-anisotropic.png" alt="isotropic-to-anisotropic.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 19: </span>图片来自 [Heitz 2014]</p>
@@ -2121,7 +2184,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org6a85f7c" class="figure">
+<div id="orgf96b740" class="figure">
 <p><img src="../../../files/ggx-vs-beckmann.png" alt="ggx-vs-beckmann.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 20: </span>GGX VS Beckmann (图片来自 <a href="https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/">https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/</a>)</p>
@@ -2132,7 +2195,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orge2c865b" class="figure">
+<div id="org7520805" class="figure">
 <p><img src="../../../files/ndf_beckmann_trowbridge.jpg" alt="ndf_beckmann_trowbridge.jpg" width="504px" />
 </p>
 <p><span class="figure-number">Figure 21: </span>更长的尾部一味着更明显的光晕</p>
@@ -2167,7 +2230,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </li>
-<li><a id="org139584e"></a><b>几何函数 (<code>Geometry Functions</code>): \(G(v, l, m)\)</b><br />
+<li><a id="orgf0608de"></a><b>几何函数 (<code>Geometry Functions</code>): \(G(v, l, m)\)</b><br />
 <div class="outline-text-5" id="text-2-3-3-2">
 <blockquote>
 <p>
@@ -2196,7 +2259,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orga3aec5f" class="figure">
+<div id="org2d94a43" class="figure">
 <p><img src="../../../files/shadowing-and-masking.png" alt="shadowing-and-masking.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 22: </span>阴影和遮蔽</p>
@@ -2215,7 +2278,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orga4c18eb" class="figure">
+<div id="org81b1bc1" class="figure">
 <p><img src="../../../files/G1_vs_G2.png" alt="G1_vs_G2.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 23: </span>\(G_{2}\) 和 \(G_{1}\) 的关系</p>
@@ -2242,7 +2305,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgfb2cdf1" class="figure">
+<div id="org3bea8a5" class="figure">
 <p><img src="../../../files/microsurface-profile.png" alt="microsurface-profile.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 24: </span>图片修改自 [Heitz 2014]: 相同的法线分布但不同的轮廓导致不同的 <code>BRDF</code></p>
@@ -2257,7 +2320,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org55774a5" class="figure">
+<div id="orgbc31d03" class="figure">
 <p><img src="../../../files/smith-masking-function.png" alt="smith-masking-function.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 25: </span>现实表面轮廓(左)和 <code>Smith</code> 模型的表面轮廓(右) (图片来自[Heitz 2014])</p>
@@ -2272,7 +2335,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org8d63f38" class="figure">
+<div id="org178bac6" class="figure">
 <p><img src="../../../files/v-cavity-scattering-mode.png" alt="v-cavity-scattering-mode.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 26: </span><code>V</code> 腔散射模型 (图片来自[Heitz 2014])</p>
@@ -2291,7 +2354,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org32759ff" class="figure">
+<div id="org91786d5" class="figure">
 <p><img src="../../../files/stretch-invariance.png" alt="stretch-invariance.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 27: </span>对微表面在一个维度上拉伸 2 倍, 所有斜率都被缩小 1 倍 (图片来自[Heitz 2014])</p>
@@ -2307,7 +2370,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-在后面 <a href="#org1b409ef">\(G_1\) 推导</a> 中可以再次看到这个概念, 届时相信你能够理解这个概念.
+在后面 <a href="#org81aeb96">\(G_1\) 推导</a> 中可以再次看到这个概念, 届时相信你能够理解这个概念.
 </p>
 </blockquote>
 
@@ -2316,7 +2379,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org4dccf7d" class="figure">
+<div id="orgf40b3f7" class="figure">
 <p><img src="../../../files/v-cavity-smith-reference-brdf.png" alt="v-cavity-smith-reference-brdf.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 28: </span><code>V</code> 腔散射 <code>BRDF</code> <b><code>VS</code></b> <code>Smith BRDF</code> <b><code>VS</code></b> 参考现实效果的(Reference) <code>BRDF</code> (图片来自[Heitz 2014])</p>
@@ -2447,7 +2510,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgc8c7f1a" class="figure">
+<div id="orgdaf88f0" class="figure">
 <p><img src="../../../files/multiple-surface-bounce.png" alt="multiple-surface-bounce.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 29: </span>现有的几何函数未考虑蓝色部分的 <code>multiple surface bounce</code> 反射 (图片来自 [Naty Hoffman, Recent Advances in Physically Based Shading, SIGGRAPH 2016])</p>
@@ -2536,10 +2599,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 <div class="org-src-container">
 <pre class="src src-glsl"><span style="color: #98fb98;">float</span> G_UESchlickApproxGGX(<span style="color: #98fb98;">float</span> NdotV, <span style="color: #98fb98;">float</span> NdotL, <span style="color: #98fb98;">float</span> roughness) {
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float sqa = 0.5 * (roughness + 1.0);</span>
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float a = sqa * sqa;</span>
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float k = a / 2.0;</span>
-  <span style="color: #98fb98;">float</span> r = 1.0 + roughness;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float sqa = 0.5 * (roughness + 1.0);
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float a = sqa * sqa;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float k = a / 2.0;
+</span>  <span style="color: #98fb98;">float</span> r = 1.0 + roughness;
   <span style="color: #98fb98;">float</span> k = r * r / 8.0;
   <span style="color: #98fb98;">float</span> G1 = NdotV / (NdotV * (1.0 - k) + k);
   <span style="color: #98fb98;">float</span> G2 = NdotL / (NdotL * (1.0 - k) + k);
@@ -2714,7 +2777,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ul>
 </div>
 </li>
-<li><a id="org8be1578"></a><b>菲涅耳反射 (<code>Fresnel Reflection</code>): \(F(v, m, F_0)\)</b><br />
+<li><a id="orga9913e0"></a><b>菲涅耳反射 (<code>Fresnel Reflection</code>): \(F(v, m, F_0)\)</b><br />
 <div class="outline-text-5" id="text-2-3-3-3">
 <blockquote>
 <p>
@@ -2757,7 +2820,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 </li>
-<li><a id="org633583e"></a><b>\(f_{\mathrm{cook-torrance}}\) 的推导</b><br />
+<li><a id="orga1c0ccc"></a><b>\(f_{\mathrm{cook-torrance}}\) 的推导</b><br />
 <div class="outline-text-5" id="text-2-3-3-4">
 <blockquote>
 <p>
@@ -2776,7 +2839,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org94e3f6b" class="figure">
+<div id="orga26da58" class="figure">
 <p><img src="../../../files/torrance-sparrow-model-m.png" alt="torrance-sparrow-model-m.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 30: </span>Torrance-Sparrow Model</p>
@@ -2809,7 +2872,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-根据<a href="#orga4f5f6d">极坐标的微元立体角</a>定义: \(\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m \times d\theta_m \times d\phi_m}{\sin\theta_i \times d\theta_i \times d\phi_i}\).
+根据<a href="#org30f07e9">极坐标的微元立体角</a>定义: \(\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m \times d\theta_m \times d\phi_m}{\sin\theta_i \times d\theta_i \times d\phi_i}\).
 </p>
 
 <blockquote>
@@ -2855,8 +2918,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </li>
 </ol>
 </div>
-<div id="outline-container-orgea56932" class="outline-4">
-<h4 id="orgea56932"><span class="section-number-4">2.3.4.</span> 完整的反射率方程</h4>
+<div id="outline-container-orgc139c01" class="outline-4">
+<h4 id="orgc139c01"><span class="section-number-4">2.3.4.</span> 完整的反射率方程</h4>
 <div class="outline-text-4" id="text-2-3-4">
 <p>
 经过前面的推导后, 我们对反射率方程有了新的认识:
@@ -2875,11 +2938,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 </div>
 </div>
-<div id="outline-container-org8fdbccd" class="outline-4">
-<h4 id="org8fdbccd"><span class="section-number-4">2.3.5.</span> 创作 <code>PBR</code> 材质 (Authoring PBR Materials)</h4>
+<div id="outline-container-org1fc1e5b" class="outline-4">
+<h4 id="org1fc1e5b"><span class="section-number-4">2.3.5.</span> 创作 <code>PBR</code> 材质 (Authoring PBR Materials)</h4>
 <div class="outline-text-4" id="text-2-3-5">
 
-<div id="org9603207" class="figure">
+<div id="org0d41c42" class="figure">
 <p><img src="../../../files/pbr-materials.png" alt="pbr-materials.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 31: </span>常见 PBR 贴图</p>
@@ -3002,23 +3065,86 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ul>
 </div>
 </div>
-<div id="outline-container-org98700e2" class="outline-4">
-<h4 id="org98700e2"><span class="section-number-4">2.3.6.</span> GLSL 实现</h4>
+<div id="outline-container-orgfa153a1" class="outline-4">
+<h4 id="orgfa153a1"><span class="section-number-4">2.3.6.</span> GLSL 实现</h4>
 <div class="outline-text-4" id="text-2-3-6">
+<p>
+该实现的 <code>Fragment Shader</code> 来源于 <code>LearnOpenGL</code>, 但作了一些调整, 使得可用于 <code>WebGL</code>.
+</p>
+
+<p>
+<code>Vertex Shader</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 100
+<span style="color: #b0c4de;">#if</span> defined(USE_TEXTURE)
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aTangent;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aBitangent;
+<span style="color: #b0c4de;">#endif</span>
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aNormal;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aPos;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec2</span> aTexCoords;
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> TexCoords;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> WorldPos;
+
+<span style="color: #b0c4de;">#if</span> defined(USE_TEXTURE)
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">mat4</span> TBN;
+<span style="color: #b0c4de;">#else</span>
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> Normal;
+<span style="color: #b0c4de;">#endif</span>
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> ModelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> ViewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> ProjectMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+<span style="color: #b0c4de;">  #if</span> defined(USE_TEXTURE)
+  <span style="color: #98fb98;">vec3</span> T = <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec3</span>(ModelMatrix * <span style="color: #98fb98;">vec4</span>(aTangent, 0.0)));
+  <span style="color: #98fb98;">vec3</span> B = <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec3</span>(ModelMatrix * <span style="color: #98fb98;">vec4</span>(aBitangent, 0.0)));
+  <span style="color: #98fb98;">vec3</span> N = <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec3</span>(ModelMatrix * <span style="color: #98fb98;">vec4</span>(aNormal, 0.0)));
+  TBN = <span style="color: #98fb98;">mat3</span>(T, B, N);
+<span style="color: #b0c4de;">  #else</span>
+  Normal = aNormal;
+<span style="color: #b0c4de;">  #endif</span>
+
+  TexCoords = aTexCoords;
+  WorldPos = ModelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0);
+  <span style="color: #eedd82;">gl_Position</span> = ProjectMatrix * ViewMatrix * WorldPos;
+}
+</pre>
+</div>
+
+<p>
+<code>Fragment Shader</code>:
+</p>
+
 <div class="org-src-container">
 <pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 100
 <span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> TexCoords;
 <span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> WorldPos;
-<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> Normal;
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">material parameters</span>
-<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span>  albedo;
+<span style="color: #b0c4de;">#if</span> defined(USE_TEXTURE)
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">mat4</span> TBN;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">material textures
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> albedoMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> normalMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> metallicMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> roughnessMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> aoMap;
+
+<span style="color: #b0c4de;">#else</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">material parameters
+</span><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> Normal;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> albedo;
 <span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> metallic;
 <span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> roughness;
 <span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> ao;
+<span style="color: #b0c4de;">#endif</span>
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">lights</span>
-<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> lightPositions[4];
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">lights
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> lightPositions[4];
 <span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> lightColors[4];
 
 <span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> camPos;
@@ -3061,27 +3187,46 @@ angle of incidence of illumination, since illumination is over a larger area at 
   <span style="color: #00ffff;">return</span> F0 + (1.0 - F0) * <span style="color: #b0c4de;">pow</span>(<span style="color: #b0c4de;">clamp</span>(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+<span style="color: #b0c4de;">#if</span> defined(USE_TEXTURE)
+<span style="color: #98fb98;">vec3</span> getNormalFromNormalMap() {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">obtain normal from normal map in range [0,1]
+</span>  <span style="color: #98fb98;">vec3</span> normal = <span style="color: #b0c4de;">texture</span>(normalMap, TexCoords).rgb;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">transform normal vector back to range [-1,1]
+</span>  normal = normal * 2.0 - 1.0;
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">normalize</span>(TBN * normal);
+}
+<span style="color: #b0c4de;">#endif</span>
+
 <span style="color: #98fb98;">void</span> main()
 {
+<span style="color: #b0c4de;">  #if</span> defined(USE_TEXTURE)
+  <span style="color: #98fb98;">vec3</span> albedo     = <span style="color: #b0c4de;">pow</span>(<span style="color: #b0c4de;">texture</span>(albedoMap, TexCoords).rgb, 2.2); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">with Crt Gamma
+</span>  <span style="color: #98fb98;">vec3</span> N          = getNormalFromNormalMap();
+  <span style="color: #98fb98;">float</span> metallic  = <span style="color: #b0c4de;">texture</span>(metallicMap, TexCoords).r;
+  <span style="color: #98fb98;">float</span> roughness = <span style="color: #b0c4de;">texture</span>(roughnessMap, TexCoords).r;
+  <span style="color: #98fb98;">float</span> ao        = <span style="color: #b0c4de;">texture</span>(aoMap, TexCoords).r;
+<span style="color: #b0c4de;">  #else</span>
   <span style="color: #98fb98;">vec3</span> N = <span style="color: #b0c4de;">normalize</span>(Normal);
+<span style="color: #b0c4de;">  #endif</span>
+
   <span style="color: #98fb98;">vec3</span> V = <span style="color: #b0c4de;">normalize</span>(camPos - WorldPos);
 
   <span style="color: #98fb98;">vec3</span> F0 = <span style="color: #98fb98;">vec3</span>(0.04);
   F0 = <span style="color: #b0c4de;">mix</span>(F0, albedo, metallic);
 
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">reflectance equation</span>
-  <span style="color: #98fb98;">vec3</span> Lo = <span style="color: #98fb98;">vec3</span>(0.0);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">reflectance equation
+</span>  <span style="color: #98fb98;">vec3</span> Lo = <span style="color: #98fb98;">vec3</span>(0.0);
   <span style="color: #00ffff;">for</span>(<span style="color: #98fb98;">int</span> i = 0; i &lt; 4; ++i)
     {
-      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">calculate per-light radiance</span>
-      <span style="color: #98fb98;">vec3</span> L = <span style="color: #b0c4de;">normalize</span>(lightPositions[i] - WorldPos);
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">calculate per-light radiance
+</span>      <span style="color: #98fb98;">vec3</span> L = <span style="color: #b0c4de;">normalize</span>(lightPositions[i] - WorldPos);
       <span style="color: #98fb98;">vec3</span> H = <span style="color: #b0c4de;">normalize</span>(V + L);
-      <span style="color: #98fb98;">float</span> <span style="color: #b0c4de;">distance</span>    = <span style="color: #b0c4de;">length</span>(lightPositions[i] - WorldPos);
-      <span style="color: #98fb98;">float</span> attenuation = 1.0 / (<span style="color: #b0c4de;">distance</span> * <span style="color: #b0c4de;">distance</span>);
+      <span style="color: #98fb98;">float</span> dist        = <span style="color: #b0c4de;">length</span>(lightPositions[i] - WorldPos);
+      <span style="color: #98fb98;">float</span> attenuation = 1.0 / (dist * dist);
       <span style="color: #98fb98;">vec3</span> radiance     = lightColors[i] * attenuation;
 
-      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">cook-torrance brdf</span>
-      <span style="color: #98fb98;">float</span> NDF = DistributionGGX(N, H, roughness);
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">cook-torrance brdf
+</span>      <span style="color: #98fb98;">float</span> NDF = DistributionGGX(N, H, roughness);
       <span style="color: #98fb98;">float</span> G   = GeometrySmith(N, V, L, roughness);
       <span style="color: #98fb98;">vec3</span> F    = fresnelSchlick(<span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(H, V), 0.0), F0);
 
@@ -3093,8 +3238,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
       <span style="color: #98fb98;">float</span> denominator = 4.0 * <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(N, V), 0.0) * <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(N, L), 0.0) + 0.0001;
       <span style="color: #98fb98;">vec3</span> specular     = numerator / denominator;
 
-      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">add to outgoing radiance Lo</span>
-      <span style="color: #98fb98;">float</span> NdotL = <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(N, L), 0.0);
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">add to outgoing radiance Lo
+</span>      <span style="color: #98fb98;">float</span> NdotL = <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(N, L), 0.0);
       Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
@@ -3102,8 +3247,8 @@ angle of incidence of illumination, since illumination is over a larger area at 
   <span style="color: #98fb98;">vec3</span> color = ambient + Lo;
 
   color = color / (color + <span style="color: #98fb98;">vec3</span>(1.0));
-  color = <span style="color: #b0c4de;">pow</span>(color, <span style="color: #98fb98;">vec3</span>(1.0/2.2));
-
+  color = <span style="color: #b0c4de;">pow</span>(color, <span style="color: #98fb98;">vec3</span>(1.0/2.2)); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Gamma Correction
+</span>
   <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(color, 1.0);
 }
 </pre>
@@ -3112,12 +3257,762 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 </div>
-<div id="outline-container-org2d9542f" class="outline-2">
-<h2 id="org2d9542f"><span class="section-number-2">3.</span> 附录</h2>
+<div id="outline-container-org5b5764f" class="outline-2">
+<h2 id="org5b5764f"><span class="section-number-2">3.</span> 阴影</h2>
 <div class="outline-text-2" id="text-3">
+<p>
+阴影生成并没有用到什么新的数学公式, 所有的数学公式全都在之前的文章用总结完了.
+</p>
+
+<p>
+阴影的生成很简单, 首先用一组 <code>Shader</code> 的 <code>vertex shader</code> 以光线为角度生成一个 <a href="../../../2020/06/graphics-opengl-transformation.html#depth-buffer">depth buffer (depth map)</a> 并储存在贴图中,
+</p>
+
+<p>
+这个贴图就叫做阴影贴图 (<code>shadow map</code>); 然后在另外一组 <code>Shader</code> 的 <code>fragment shader</code> 中,
+</p>
+
+<p>
+计算出相机"眼中"的 \(P\) 点在光源"眼中"的 \(NDC\) 坐标: \(P_{ndc}\), 再对 \(P_{ndc}\) 进行归一化: \(P_{normal} = (u, v, d) = P_{ndc} * 0.5 + 0.5\),
+</p>
+
+<p>
+再以 \(P_{normal}.xy\) 作为 <code>UV</code> 从阴影贴图中获取深度 \(d_c\), \(P_{normal}.z\) 是 \(P\) 在在光源"眼中"的深度,
+</p>
+
+<p>
+最后对比 \(d_c\) 和 \(P_{normal}.z\), 如果 \(d_c \le P_{normal}.z\), 那就说明 \(P\) 在阴影中.
+</p>
+
+<p>
+需要注意的是, 这里的 <code>depth buffer</code> 所使用的深度值是线性深度值.
+</p>
+
+
+<div id="org9a31dff" class="figure">
+<p><img src="../../../files/shadow_mapping_theory_spaces.png" alt="shadow_mapping_theory_spaces.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 32: </span>阴影贴图</p>
+</div>
+
+<p>
+定向光源和位置光源生成阴影的方式是不一样的, 定向光源的发射光只有一个方向, 因此只需要一张 <code>2D</code> 阴影贴图,
+</p>
+
+<p>
+位置光源的发射光是全方位的, 一张 <code>2D</code> 阴影贴图不足以记录全方位的阴影, 因此需要一个立方体贴图(<code>Cubemap</code>)作为阴影贴图.
+</p>
+
+<p>
+另外, 定向光源和位置光源两者的阴影形状是不一样的, 定向光源和位置光源分别需要正交投影和透视投影生成阴影的形状.
+</p>
+
+
+<div id="org5ad5483" class="figure">
+<p><img src="../../../files/shadow_mapping_projection.png" alt="shadow_mapping_projection.png" width="504px" />
+</p>
+<p><span class="figure-number">Figure 33: </span>正交投影 vs 透视投影</p>
+</div>
+</div>
+<div id="outline-container-org42459ee" class="outline-3">
+<h3 id="org42459ee"><span class="section-number-3">3.1.</span> 定向光源的阴影</h3>
+<div class="outline-text-3" id="text-3-1">
+<ol class="org-ol">
+<li><p>
+通过光源进行 <b>正交投影</b>, 计算出要成像的顶点 \(P_{object}\) 在光源"眼中所见"的投影坐标 \(P_{clip}\), 并生成阴影贴图:
+</p>
+
+<p>
+\(P_{clip} = M_{\mathrm{light\_ortho\_proj}}M_{\mathrm{light\_view}}M_{\mathrm{model}} P_{object}\)
+</p>
+
+<p>
+该等式用在第一组 <code>Shader</code> 的 <code>vertex shader</code> 中, 用来生成阴影贴图;
+</p>
+
+<p>
+此外, 还会用在第二组 <code>Shader</code> 的 <code>fragment shader</code> 中, 用来计算当前片元的线性深度值.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vertex shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uLightOrthoProjMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uLightViewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uModelMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #eedd82;">gl_Position</span> = uLightOrthoProjMatrix * uLightViewMatrix * uModelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">fragment shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #eedd82;">gl_FragDepth</span> = <span style="color: #eedd82;">gl_FragCoord</span>.z;
+}
+</pre>
+</div></li>
+
+<li><p>
+\(P_{clip}\) 需要在第二组 <code>Shader</code> 的 <code>vertex shader</code> 中进行计算, 并传到第二组 <code>Shader</code> 的 <code>fragment shader</code> 中,
+</p>
+
+<p>
+再根据 \(P_{clip}\) 计算出线性深度值 \(d_{\mathrm{linear}}\), 从阴影贴图中找出与它相关的深度值 \(d_{c}\), 对两者进行对比, 从而确定该片元是否处于阴影之中:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vertex shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">float</span>;
+
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec3</span> aPos;
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec3</span> aNormal;
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec3</span> aTexCoord;
+
+<span style="color: #00ffff;">out</span> VS_OUT {
+  <span style="color: #98fb98;">vec3</span> fragPos;
+  <span style="color: #98fb98;">vec3</span> normal;
+  <span style="color: #98fb98;">vec2</span> texCoord;
+  <span style="color: #98fb98;">vec4</span> fragPosLightSpace;
+} vs_out;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uProjectionMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uViewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uModelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uLightOrthoProjMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uLightViewMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  vs_out.fragPos = <span style="color: #98fb98;">vec3</span>(uModelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0));
+  vs_out.normal = <span style="color: #b0c4de;">transpose</span>(<span style="color: #b0c4de;">inverse</span>(<span style="color: #98fb98;">mat3</span>(uModelMatrix))) * aNormal;
+  vs_out.texCoord = aTexCoord;
+  vs_out.fragPosLightSpace = uLightOrthoProjMatrix * uLightViewMatrix * <span style="color: #98fb98;">vec4</span>(vs_out.fragPos, 1.0);
+  <span style="color: #eedd82;">gl_Position</span> = uProjectionMatrix * uViewMatrix * <span style="color: #98fb98;">vec4</span>(vs_out.fragPos, 1.0);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">fragment shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">float</span>;
+
+<span style="color: #00ffff;">out</span> <span style="color: #98fb98;">vec4</span> fragColor;
+
+<span style="color: #00ffff;">in</span> VS_OUT {
+  <span style="color: #98fb98;">vec3</span> fragPos;
+  <span style="color: #98fb98;">vec3</span> normal;
+  <span style="color: #98fb98;">vec2</span> texCoord;
+  <span style="color: #98fb98;">vec4</span> fragPosLightSpace;
+} fs_in;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> lightPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> cameraPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> shadowMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> diffuseTexture;
+
+<span style="color: #98fb98;">float</span> ShadowCalculation(<span style="color: #98fb98;">vec4</span> fragPosLightSpace) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">perform perspective divide, be NDC
+</span>  <span style="color: #98fb98;">vec3</span> fragPosLightNDC = fragPosLightSpace.xyz / fragPosLightSpace.w;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">transform to [0,1] range, be UV
+</span>  <span style="color: #98fb98;">vec3</span> fragPosLightNormal = fragPosLightNDC * 0.5 + 0.5;
+  <span style="color: #98fb98;">float</span> closestDepth = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(shadowMap, fragPosLightNormal.xy).r;
+  <span style="color: #98fb98;">float</span> currentFragDepth = fragPosLightNormal.z;
+  <span style="color: #98fb98;">float</span> shadow = currentFragDepth &gt; closestDepth ? 1.0: 0.0;
+  <span style="color: #00ffff;">return</span> shadow;
+}
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec3</span> color = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(diffuseTexture, fs_in.texCoord).rgb;
+  <span style="color: #98fb98;">vec3</span> normal = <span style="color: #b0c4de;">normalize</span>(fs_in.normal);
+  <span style="color: #98fb98;">vec3</span> lightColor = <span style="color: #98fb98;">vec3</span>(1.0);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">ambient
+</span>  <span style="color: #98fb98;">vec3</span> ambient = 0.15 * lightColor;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">diffuse
+</span>  <span style="color: #98fb98;">vec3</span> lightDir = <span style="color: #b0c4de;">normalize</span>(lightPos - fs_in.fragPos);
+  <span style="color: #98fb98;">float</span> diff = <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(lightDir, normal), 0.0);
+  <span style="color: #98fb98;">vec3</span> diffuse = diff * lightColor;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">specular
+</span>  <span style="color: #98fb98;">vec3</span> viewDir = <span style="color: #b0c4de;">normalize</span>(cameraPos - fs_in.fragPos);
+  <span style="color: #98fb98;">vec3</span> halfwayDir = <span style="color: #b0c4de;">normalize</span>(lightDir + viewDir);
+  <span style="color: #98fb98;">float</span> spec = <span style="color: #b0c4de;">pow</span>(<span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(normal, halfwayDir), 0.0) 64.0);
+  <span style="color: #98fb98;">vec3</span> specular = spec * lightColor;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">calculate shadow
+</span>  <span style="color: #98fb98;">float</span> shadow = ShadowCalculation(fs_in.fragPosLightSpace);
+  <span style="color: #98fb98;">vec3</span> lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
+  fragColor = <span style="color: #98fb98;">vec4</span>(lighting, 1.0);
+}
+</pre>
+</div></li>
+</ol>
+</div>
+<div id="outline-container-org530dc1f" class="outline-4">
+<h4 id="org530dc1f"><span class="section-number-4">3.1.1.</span> 阴影自遮挡 (Shadow Acne)</h4>
+<div class="outline-text-4" id="text-3-1-1">
+
+<div id="orgda534d6" class="figure">
+<p><img src="../../../files/shadow-acne.png" alt="shadow-acne.png" />
+</p>
+</div>
+
+<p>
+从 <code>Camera Plane</code> 到 <code>Shadow Func</code> 之间的距离: <code>Sample Pos</code>, 表示像素从阴影贴图上对应的深度值 \(d_{c}\);
+</p>
+
+<p>
+红色虚实线表示在 <code>fragment shader</code> 中实时计算的深度值 \(P_{normal}.z\).
+</p>
+
+<p>
+图像 <code>Shadow Func</code> 反映了一个区域上若干像素的实时深度值在不同位置上的变化, 以及阴影贴图深度值在不同位置上都是一致的,
+</p>
+
+<p>
+这是阴影贴图是对连续对象进行采样(离散化)的结果, 对连续对象进行离散化后, 离散结果与连续对象相比必然会有精度差异的,
+</p>
+
+<p>
+无法避免的, 提升采样精度也不可能解决这个问题, 这就是自遮挡产生的原因:
+</p>
+
+<p>
+同一个区域的像素有一部分的实时深度值 \(P_{normal}.z\) 大于贴图上的深度值 \(d_{c}\).
+</p>
+
+<p>
+因此, 可以立马想到一个解决自遮挡问题的方法: 让实时深度值 \(P_{normal}.z\) 减去一个偏移值 \(b\) 后再与贴图深度值 \(d_{c}\) 进行对比,
+</p>
+
+<p>
+又或者让贴图深度值加上偏移值 \(b\) 后与实时深度值进行对比, 其中 \(b\) 是一个很小的值, 这个方法叫做 <code>shadow bias</code>.
+</p>
+
+<p>
+但是, 这个偏移值 \(b\) 应该如何决定呢? 从图中可以发现, 偏移值大小和光线与 <code>Geometry</code> 之间的夹角 \(\theta \in [0, \pi]\) 有关.
+</p>
+
+<p>
+当 \(\theta \to \frac{\pi}{2}\) 时, 自遮挡现象就呈消失趋势, 因为实时深度值和贴图深度值大小是一致的, 因此, \(b\) 接近于 0;
+</p>
+
+<p>
+当 \(\theta \to 0\) 或 \(\theta \to \pi\), 自遮挡现象开始出现, \(|b|\) 越大.
+</p>
+
+<p>
+这符合 \(cosine\) 函数的描述, 所以 \(b = \cos\theta\).
+</p>
+
+<p>
+但通常只能拿到光线方向 \(l\) 和 <code>Geometry</code> 的法线 \(n\), 这个时候 \(b = 1 - \cos\theta_{n}\), 其中 \(\theta_{n} \in [0, \frac{\pi}{2}]\) 是 \(l\) 和 \(n\) 的夹角, \(\cos\theta_{n} = l \cdot n\).
+</p>
+
+<p>
+不过 \(b \in [0, 1]\), 不满足很小的要求, 所以这里对它重新映射: \([0.0005, 0.005]\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> ShadowCalculation(<span style="color: #98fb98;">vec4</span> fragPosLightSpace, <span style="color: #98fb98;">vec3</span> normal, <span style="color: #98fb98;">vec3</span> lightDir) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">parameter 'normal' and 'lightDir' need to be normalized beforehand
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">perform perspective divide, be NDC
+</span>  <span style="color: #98fb98;">vec3</span> fragPosLightNDC = fragPosLightSpace.xyz / fragPosLightSpace.w;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">transform to [0,1] range, be UV
+</span>  <span style="color: #98fb98;">vec3</span> fragPosLightNormal = fragPosLightNDC * 0.5 + 0.5;
+  <span style="color: #98fb98;">float</span> closestDepth = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(shadowMap, fragPosLightNormal.xy).r;
+  <span style="color: #98fb98;">float</span> currentFragDepth = fragPosLightNormal.z;
+  <span style="color: #98fb98;">float</span> bias = <span style="color: #b0c4de;">max</span>(0.005 * (1.0 - <span style="color: #b0c4de;">dot</span>(normal, lightDir)), 0.0005);
+  <span style="color: #98fb98;">float</span> shadow = currentFragDepth - bias &gt; closestDepth ? 1.0: 0.0;
+  <span style="color: #00ffff;">return</span> shadow;
+}
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>  <span style="color: #98fb98;">float</span> shadow = ShadowCalculation(fs_in.fragPosLightSpace, normal, lightDir);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>}
+</pre>
+</div>
+
+<p>
+需要注意的是, 偏移值不能太小, 否则无法完全解决自遮挡问题.
+</p>
+
+<p>
+虽然 <code>Shadow Bias</code> 解决了自遮蔽, 但也引入了一个新问题: 阴影发生了偏移, 这个问题被称为 <code>Peter Panning</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-orgfe6e3df" class="outline-4">
+<h4 id="orgfe6e3df"><span class="section-number-4">3.1.2.</span> Peter Panning</h4>
+</div>
+
+<div id="outline-container-org2074383" class="outline-4">
+<h4 id="org2074383"><span class="section-number-4">3.1.3.</span> 阴影边缘柔化 (PCF, Percentage-closer filtering)</h4>
+<div class="outline-text-4" id="text-3-1-3">
+<p>
+由于阴影贴图的分辨率是固定且有限的, 这导致阴影有锯齿.
+</p>
+
+<p>
+通常第一反应就是通过增加阴影贴图的分辨率进行解决, 又或者让光源的视椎体尽可能贴近场景.
+</p>
+
+<p>
+然而这些都不是好方法, 锯齿可以通过反走样处理(<code>anti-aliasing</code>)进行解决, 对阴影进行反走样被成为 <code>PCF</code>.
+</p>
+
+<p>
+<code>PCF</code> 有很多种实现, 最简单的实现为 <code>Box Filtering</code>, 也被成为<a href="https://en.wikipedia.org/wiki/Box_blur">盒装模糊</a>.
+</p>
+
+<p>
+以下是经过改进的实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> ShadowCalculation(<span style="color: #98fb98;">vec4</span> fragPosLightSpace, <span style="color: #98fb98;">vec3</span> normal, <span style="color: #98fb98;">vec3</span> lightDir) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">parameter 'normal' and 'lightDir' need to be normalized beforehand
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">perform perspective divide, be NDC
+</span>  <span style="color: #98fb98;">vec3</span> fragPosLightNDC = fragPosLightSpace.xyz / fragPosLightSpace.w;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">transform to [0,1] range, be UV
+</span>  <span style="color: #98fb98;">vec3</span> fragPosLightNormal = fragPosLightNDC * 0.5 + 0.5;
+  <span style="color: #98fb98;">float</span> currentFragDepth = fragPosLightNormal.z;
+  <span style="color: #98fb98;">float</span> bias = <span style="color: #b0c4de;">max</span>(0.005 * (1.0 - <span style="color: #b0c4de;">dot</span>(normal, lightDir)), 0.0005);
+  <span style="color: #98fb98;">float</span> shadow = 0.0;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vec2 texelSize = 1.0 / textureSize(shadowMap, 0); // use this if textureSize is available
+</span>  <span style="color: #98fb98;">vec2</span> texelSize = 1.0 / <span style="color: #98fb98;">vec2</span>(shadowMap_size); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">shadowMap_size is the size of shadow map
+</span>  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> x = -1; x &lt;= 1; x++) {
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> y = -1; y &lt;= 1; y++) {
+      <span style="color: #98fb98;">float</span> closestDepth = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(shadowMap, fragPosLightNormal.xy + <span style="color: #98fb98;">vec2</span>(x, y) * texelSize).r;
+      shadow += currentFragDepth - bias &gt; closestDepth ? 1.0: 0.0;
+    }
+  }
+  shadow /= 9.0;
+  <span style="color: #00ffff;">return</span> shadow;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb56d85a" class="outline-3">
+<h3 id="orgb56d85a"><span class="section-number-3">3.2.</span> 位置光源的阴影</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+相比定向光源只有一个照射方向, 位置光源在四面八方都有照射, 所以需要 6 张二维贴图来记录深度值.
+</p>
+
+
+<div id="org0479db5" class="figure">
+<p><img src="../../../files/point_shadows_diagram.png" alt="point_shadows_diagram.png" />
+</p>
+</div>
+
+<p>
+但用 6 张贴图的话, 需要手动根据光照方向计算出应从哪张贴图进行采样, 因此, 使用立方贴图(<code>cubemap</code>)可以省去这些工作.
+</p>
+
+<p>
+在此之前需要了解如何在立方贴图上采样, 二维贴图是根据 <code>UV</code> 坐标进行采样, 而立方贴图是根据方向向量进行采样,
+</p>
+
+<p>
+以 \(1 \times 1 \times 1\) 单位立方体的中心作为坐标系的原点, 而这个原点是和模型中心是重合的,
+</p>
+
+<p>
+因此模型的顶点坐标就是方向向量, 可用于立方贴图的采样. 另外, 方向向量的模大小无关紧要.
+</p>
+
+
+<div id="org81f860f" class="figure">
+<p><img src="../../../files/cubemaps_sampling.png" alt="cubemaps_sampling.png" />
+</p>
+</div>
+
+<p>
+生成立方阴影贴图时, 需要在每个面的方向上进行透视投影, 在 <code>WebGL</code> 和 <code>OpenGL</code> 上的做法会有些差别,
+</p>
+
+<p>
+<code>OpenGL 3.2+</code> 开始支持 <code>Geometry Shader</code>, 可以使用 <code>Geometry Shader</code> 完成这项工作;
+</p>
+
+<p>
+但 <code>WebGL</code> 不支持, 在 <code>WebGL</code> 上生成立方阴影贴图要在 <code>CPU</code> 端完成, 具体做法可以参考这个<a href="https://stackoverflow.com/questions/34639572/render-to-cubemap-tutorial-in-webgl">链接</a>.
+</p>
+
+<p>
+在这个过程中保证贴图之间的 <code>UV</code> 的连贯性，因此在投影时需要注意光源"相机"在不同方向上的 <code>look</code> 和 <code>up</code> 向量组合,
+</p>
+
+<p>
+具体可以看官方给出的参考图:
+</p>
+
+
+<div id="org696f959" class="figure">
+<p><img src="../../../files/CubeMapAxes.png" alt="CubeMapAxes.png" />
+</p>
+</div>
+
+<p>
+以下是计算阴影矩阵并生成阴影贴图的 <code>WebGL</code> 实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#37324;&#20351;&#29992;&#20102; glMatrix &#23454;&#29616;&#30697;&#38453;&#25805;&#20316;: https://glmatrix.net/
+</span><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">CUBE_LOOK_DIR</span> = [
+  {
+    target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+    lookAt: vec3.fromValues(1.0, 0.0, 0.0),
+    up: vec3.fromValues(0.0, -1.0, 0.0)
+  },
+  {
+    target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+    lookAt: vec3.fromValues(-1.0, 0.0, 0.0),
+    up: vec3.fromValues(0.0, -1.0, 0.0)
+  },
+  {
+    target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+    lookAt: vec3.fromValues(0.0, 1.0, 0.0),
+    up: vec3.fromValues(0.0, 0.0, 1.0)
+  },
+  {
+    target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    lookAt: vec3.fromValues(0.0, -1.0, 0.0),
+    up: vec3.fromValues(0.0, 0.0, -1.0)
+  },
+  {
+    target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+    lookAt: vec3.fromValues(0.0, 0.0, 1.0),
+    up: vec3.fromValues(0.0, -1.0, 0.0)
+  },
+  {
+    target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+    lookAt: vec3.fromValues(0.0, 0.0, -1.0),
+    up: vec3.fromValues(0.0, -1.0, 0.0)
+  },
+];
+
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">CUBE_PROJECTION</span> = mat4.perspective(mat4.create(), Math.PI/2, aspect, near, far);
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">shadowMatrices</span> = [];
+
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">shadowCubeMap</span> = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowCubeMap);
+<span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">side</span> <span style="color: #00ffff;">of</span> CUBE_LOOK_DIR) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#23545;&#24212;&#38754;&#30340;&#36148;&#22270;&#20998;&#37197;&#31354;&#38388;
+</span>  gl.texImage2D(
+    CUBE_LOOK_DIR[side].target,
+    0,
+    gl.DEPTH_COMPONENT,
+    shadowMapSize,
+    shadowMapSize,
+    0,
+    gl.DEPTH_COMPONENT,
+    gl.UNSIGNED_SHORT,
+    <span style="color: #7fffd4;">null</span>
+  );
+}
+
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">shadowFrameBuffer</span> = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFrameBuffer);
+
+<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">matrixLocation</span> = gl.getUniformLocation(shadowShaderProgram, <span style="color: #ffa07a;">"u_ViewProjection"</span>);
+
+<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">change to right framebuffer...
+</span><span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">side</span> = 0; side&lt;6;side++) {
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.DEPTH_ATTACHMENT,
+    CUBE_LOOK_DIR[side].target,
+    shadowCubeMap,
+    0);
+
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">view</span> = mat4.lookAt(
+    mat4.create(),
+    lightPos,
+    vec3.add(vec3.create(), lightPos, CUBE_LOOK_DIR[side].lookAt),
+    CUBE_LOOK_UP[side].up);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">uViewProjection</span> = mat4.mul(mat4.create(), CUBE_PROJECTION, view);
+  shadowMatrices[side] = uViewProjection;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">upload uniforms including uViewProjection
+</span>  gl.uniformMatrix4fv(matrixLocation, <span style="color: #7fffd4;">false</span>, uViewProjection);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">render scene
+</span>}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#28210;&#26579;&#22330;&#26223;&#30340; shader &#31243;&#24207;&#20013;&#19978;&#20256; uniforms
+</span><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">textureLocation</span> = gl.getUniformLocation(sceneShaderProgram, <span style="color: #ffa07a;">"u_shadowCubeMap"</span>);
+gl.uniform1i(textureLocation, 0);
+</pre>
+</div>
+
+<p>
+如果支持 <code>Geometry Shader</code>, 就不需要分别手动渲染 6 次了, 这样可以减少 5 次几何数据的提交,
+</p>
+
+<p>
+既提高了开发效率, 也优化运行效率. 需要注意的是, 使用 <code>Geometry Shader</code> 时, <code>CUBE_LOOK_DIR</code> 的顺序必须严格和上面的一样.
+</p>
+
+<p>
+从上面可以看出, 为位置光源生成阴影贴图实际上是很浪费性能的操作,
+</p>
+
+<p>
+如果位置光源是固定的, 那么应该使用烘培: 把第一次生成阴影贴图和接收阴影的物体的贴图进行合并. 尽可能不使用动态的位置光源.
+</p>
+
+<p>
+总的来说, 位置光源的阴影实现思路和定向光源的差别不大, 因此这里就加快进度了.
+</p>
+
+<ol class="org-ol">
+<li><p>
+生成阴影贴图
+</p>
+
+<p>
+以下是用于生成立方体阴影贴图的 <code>Shaders</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vertex shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">layout</span> (location = 0) <span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec3</span> aPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uModelMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #eedd82;">gl_Position</span> = uModelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">geometry shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">layout</span> (triangles) <span style="color: #00ffff;">in</span>;          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36755;&#20837;&#22270;&#20803;&#20026;&#19977;&#35282;&#24418;, &#21363;&#38271;&#24230;&#20026; 3 &#30340;&#39030;&#28857;&#27969;
+</span><span style="color: #00ffff;">layout</span> (triangle_strip, max_vertices=18) <span style="color: #00ffff;">out</span>; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36755;&#20986;&#22270;&#20803;&#20026;&#19977;&#35282;&#24418;, &#26368;&#22810; 18 &#20010;&#39030;&#28857;, &#19968;&#20010;&#19977;&#35282;&#24418;&#19977;&#20010;&#39030;&#28857;, &#20063;&#23601;&#26159;&#36755;&#20986; 6 &#27425;
+</span>
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> shadowMatrices[6];
+
+<span style="color: #00ffff;">out</span> <span style="color: #98fb98;">vec4</span> FragPos; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">FragPos from GS (output per emitvertex)
+</span>
+<span style="color: #98fb98;">void</span> main()
+{
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24635;&#20849;&#36755;&#20986; 6 &#23618;&#22270;&#24418;, &#27599;&#20010;&#22270;&#23618;&#37117;&#26377;&#33258;&#24049;&#30340;&#32034;&#24341;, &#32034;&#24341;&#20174; 0 &#24320;&#22987;
+</span>  <span style="color: #00ffff;">for</span>(<span style="color: #98fb98;">int</span> face = 0; face &lt; 6; ++face)
+    {
+      <span style="color: #eedd82;">gl_Layer</span> = face; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">gl_Layer &#20026;&#20869;&#32622;&#21464;&#37327;, &#29992;&#20110;&#25351;&#23450;&#22810;&#23618;&#24103;&#32531;&#20914;&#38468;&#20214;&#30340;&#23618;&#32423;
+</span>      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://registry.khronos.org/OpenGL-Refpages/gl4/html/gl_Layer.xhtml
+</span>      <span style="color: #00ffff;">for</span>(<span style="color: #98fb98;">int</span> i = 0; i &lt; 3; ++i) <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27599;&#20010;&#19977;&#35282;&#24418;&#26377;&#19977;&#20010;&#39030;&#28857;, &#36825;&#38024;&#23545;&#39030;&#28857;&#36827;&#34892;&#22788;&#29702;
+</span>        {
+          FragPos = gl_in[i].<span style="color: #eedd82;">gl_Position</span>; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">gl_in &#20026;&#20869;&#32622;&#21464;&#37327;, &#29992;&#26469;&#33719;&#21462;&#19978;&#19968;&#20010;&#38454;&#27573;&#39030;&#28857;&#35745;&#31639;&#32467;&#26524;
+</span>          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://www.khronos.org/opengl/wiki/Built-in_Variable_(GLSL)#Geometry_shader_inputs
+</span>          <span style="color: #eedd82;">gl_Position</span> = shadowMatrices[face] * FragPos;
+          <span style="color: #b0c4de;">EmitVertex</span>();         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#24403;&#21069;&#39030;&#28857;&#30340; gl_Position &#35774;&#32622;&#25552;&#20132;&#21040;&#24403;&#21069;&#22270;&#20803;&#20013;
+</span>        }
+      <span style="color: #b0c4de;">EndPrimitive</span>();           <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25552;&#20132;&#24403;&#21069;&#22270;&#20803;&#30340;&#20462;&#25913;, &#29983;&#25104;&#22270;&#20803;
+</span>    }
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">fragment shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec4</span> FragPos;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> lightPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> far_plane;
+
+<span style="color: #98fb98;">void</span> main()
+{
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">get distance between fragment and light source
+</span>  <span style="color: #98fb98;">float</span> lightDistance = <span style="color: #b0c4de;">length</span>(FragPos.xyz - lightPos);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">map to [0;1] range by dividing by far_plane
+</span>  lightDistance = lightDistance / far_plane;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">write this as modified depth
+</span>  <span style="color: #eedd82;">gl_FragDepth</span> = lightDistance;
+}
+</pre>
+</div>
+
+<p>
+相比定向光源中阴影贴图 <code>Shader</code> 采用了内置深度值作为阴影深度值, 这里的 <code>Fragment Shader</code> 中自行计算了阴影深度值 \(d_c\):
+</p>
+
+<p>
+直接以片元与光源的世界坐标距离的归一化结果作为深度值. 这个算法有一个好处, 那就是容易在后面的 <code>ShadowCalculation</code> 函数中计算出片元的阴影深度.
+</p></li>
+
+<li><p>
+判断片元是否处于阴影之中
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vertex shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec3</span> aPos;
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec3</span> aNormal;
+<span style="color: #00ffff;">in</span> <span style="color: #98fb98;">vec2</span> aTexCoord;
+
+<span style="color: #00ffff;">out</span> VS_OUT {
+  <span style="color: #98fb98;">vec3</span> fragPos;
+  <span style="color: #98fb98;">vec3</span> normal;
+  <span style="color: #98fb98;">vec2</span> texCoord;
+} vs_out;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uProjectionMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uViewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uModelMatrix;
+
+<span style="color: #98fb98;">void</span> main()
+{
+  vs_out.fragPos = <span style="color: #98fb98;">vec3</span>(uModelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0));
+  vs_out.normal = <span style="color: #b0c4de;">transpose</span>(<span style="color: #b0c4de;">inverse</span>(<span style="color: #98fb98;">mat3</span>(uModelMatrix))) * aNormal;
+  vs_out.texCoord = aTexCoord;
+  <span style="color: #eedd82;">gl_Position</span> = uProjectionMatrix * uViewMatrix * uModelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0);
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">fragment shader
+</span><span style="color: #b0c4de;">#version</span> 330
+<span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">float</span>;
+
+<span style="color: #00ffff;">out</span> <span style="color: #98fb98;">vec4</span> fragColor;
+
+<span style="color: #00ffff;">in</span> VS_OUT {
+  <span style="color: #98fb98;">vec3</span> fragPos;
+  <span style="color: #98fb98;">vec3</span> normal;
+  <span style="color: #98fb98;">vec2</span> texCoord;
+} fs_in;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> lightPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> cameraPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">samplerCube</span> shadowMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> diffuseTexture;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> far_plane;
+
+<span style="color: #98fb98;">float</span> ShadowCalculation(<span style="color: #98fb98;">vec3</span> fragPos) {
+  <span style="color: #98fb98;">vec3</span> lightToFrag = fragPos - lightPos;
+  <span style="color: #98fb98;">float</span> closestDepth = <span style="color: #b0c4de;">texture</span>(shadowMap, lightToFrag).r; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">range: [0, 1]
+</span>  closestDepth *= far_plane;    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">transform back to original value
+</span>  <span style="color: #98fb98;">float</span> currentFragDepth = <span style="color: #b0c4de;">length</span>(lightToFrag);
+  <span style="color: #98fb98;">float</span> shadow = currentFragDepth &gt; closestDepth ? 1.0: 0.0;
+  <span style="color: #00ffff;">return</span> shadow;
+}
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec3</span> color = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(diffuseTexture, fs_in.texCoord).rgb;
+  <span style="color: #98fb98;">vec3</span> normal = <span style="color: #b0c4de;">normalize</span>(fs_in.normal);
+  <span style="color: #98fb98;">vec3</span> lightColor = <span style="color: #98fb98;">vec3</span>(1.0);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">ambient
+</span>  <span style="color: #98fb98;">vec3</span> ambient = 0.15 * lightColor;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">diffuse
+</span>  <span style="color: #98fb98;">vec3</span> lightDir = <span style="color: #b0c4de;">normalize</span>(lightPos - fs_in.fragPos);
+  <span style="color: #98fb98;">float</span> diff = <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(lightDir, normal), 0.0);
+  <span style="color: #98fb98;">vec3</span> diffuse = diff * lightColor;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">specular
+</span>  <span style="color: #98fb98;">vec3</span> viewDir = <span style="color: #b0c4de;">normalize</span>(cameraPos - fs_in.fragPos);
+  <span style="color: #98fb98;">vec3</span> halfwayDir = <span style="color: #b0c4de;">normalize</span>(lightDir + viewDir);
+  <span style="color: #98fb98;">float</span> spec = <span style="color: #b0c4de;">pow</span>(<span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(normal, halfwayDir), 0.0) 64.0);
+  <span style="color: #98fb98;">vec3</span> specular = spec * lightColor;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">calculate shadow
+</span>  <span style="color: #98fb98;">float</span> shadow = ShadowCalculation(fs_in.fragPos);
+  <span style="color: #98fb98;">vec3</span> lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
+  fragColor = <span style="color: #98fb98;">vec4</span>(lighting, 1.0);
+}
+</pre>
+</div></li>
+
+<li><p>
+解决自遮蔽问题
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> ShadowCalculation(<span style="color: #98fb98;">vec3</span> fragPos, <span style="color: #98fb98;">vec3</span> normal) {
+  <span style="color: #98fb98;">vec3</span> lightToFrag = fragPos - lightPos;
+  <span style="color: #98fb98;">vec3</span> lightDir = -<span style="color: #b0c4de;">normalize</span>(lightToFrag);
+  <span style="color: #98fb98;">float</span> closestDepth = <span style="color: #b0c4de;">texture</span>(shadowMap, lightToFrag).r; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">range: [0, 1]
+</span>  closestDepth *= far_plane;                                <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">transform back to original value
+</span>  <span style="color: #98fb98;">float</span> currentFragDepth = <span style="color: #b0c4de;">length</span>(lightToFrag);
+  <span style="color: #98fb98;">float</span> bias = <span style="color: #b0c4de;">max</span>(0.005 * (1.0 - <span style="color: #b0c4de;">dot</span>(normal, lightDir)), 0.0005);
+  <span style="color: #98fb98;">float</span> shadow = currentFragDepth - bias &gt; closestDepth ? 1.0: 0.0;
+  <span style="color: #00ffff;">return</span> shadow;
+}
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>  <span style="color: #98fb98;">float</span> shadow = ShadowCalculation(fs_in.fragPosLightSpace, normal);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>}
+</pre>
+</div></li>
+
+<li><p>
+PCF
+</p>
+
+<p>
+按照 <code>Box Filtering</code> 方法实现 <code>PCF</code>, 代码如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> ShadowCalculation(<span style="color: #98fb98;">vec4</span> fragPos, <span style="color: #98fb98;">vec3</span> normal) {
+  <span style="color: #98fb98;">vec3</span> lightToFrag = fragPos - lightPos;
+  <span style="color: #98fb98;">vec3</span> lightDir = -<span style="color: #b0c4de;">normalize</span>(lightToFrag);
+  <span style="color: #98fb98;">float</span> currentFragDepth = <span style="color: #b0c4de;">length</span>(lightToFrag);
+  <span style="color: #98fb98;">float</span> shadow = 0.0;
+  <span style="color: #98fb98;">float</span> offset = 1.0;
+  <span style="color: #98fb98;">float</span> samples = 4.0;
+  <span style="color: #98fb98;">float</span> increment = offset / (samples * 0.5);
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> x = -offset; x &lt; offset; x += increment) {
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> y = -offset; y &lt; offset; y += increment) {
+      <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> z = -offset; z &lt; offset; z += increment) {
+        <span style="color: #98fb98;">vec3</span> ld = <span style="color: #b0c4de;">normalize</span>(lightDir + <span style="color: #98fb98;">vec3</span>(x, y, z));
+        <span style="color: #98fb98;">float</span> bias = <span style="color: #b0c4de;">max</span>(0.005 * (1.0 - <span style="color: #b0c4de;">dot</span>(normal, ld)), 0.0005);
+        <span style="color: #98fb98;">float</span> closestDepth = <span style="color: #b0c4de;">texture</span>(shadowMap, ld).r;
+        closestDepth *= far_plane;
+        shadow += currentFragDepth - bias &gt; closestDepth ? 1.0: 0.0;
+      }
+    }
+  }
+  shadow /= (samples * samples * samples);
+  <span style="color: #00ffff;">return</span> shadow;
+}
+</pre>
+</div>
+
+<p>
+这个 <code>PCF</code> 每个阴影像素进行了 64 次采样, 但有不少采样是重复的, 我们可以直接硬编码下不重复的组合.
+</p></li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf69d751" class="outline-2">
+<h2 id="orgf69d751"><span class="section-number-2">4.</span> 附录</h2>
+<div class="outline-text-2" id="text-4">
 </div>
 <div id="outline-container-slope-space" class="outline-3">
-<h3 id="slope-space"><span class="section-number-3">3.1.</span> 斜率空间 (Slope Space)</h3>
+<h3 id="slope-space"><span class="section-number-3">4.1.</span> 斜率空间 (Slope Space)</h3>
 <div class="outline-text-3" id="text-slope-space">
 <blockquote>
 <p>
@@ -3150,10 +4045,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgf997292" class="figure">
+<div id="orgf56a64d" class="figure">
 <p><img src="../../../files/normal-to-slope.png" alt="normal-to-slope.png" />
 </p>
-<p><span class="figure-number">Figure 32: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
+<p><span class="figure-number">Figure 34: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
 </div>
 
 <p>
@@ -3175,10 +4070,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org940df0a" class="figure">
+<div id="org587850f" class="figure">
 <p><img src="../../../files/normal-xz.png" alt="normal-xz.png" />
 </p>
-<p><span class="figure-number">Figure 33: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
+<p><span class="figure-number">Figure 35: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
 </div>
 
 <p>
@@ -3190,10 +4085,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org89aa0b6" class="figure">
+<div id="orgdd0bc22" class="figure">
 <p><img src="../../../files/normal-yz.png" alt="normal-yz.png" />
 </p>
-<p><span class="figure-number">Figure 34: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
+<p><span class="figure-number">Figure 36: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
 </div>
 
 <p>
@@ -3201,7 +4096,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-为了对应变化前笛卡尔坐标系的 \(xy\) 平面, 我们让斜率空间在水平方向上往左和在垂直方向上往下为正,
+为了对应变化前笛卡尔坐标系的 \(xy\) 平面, 我们让斜率空间在水平方向往左和在垂直方向往下为正,
 </p>
 
 <p>
@@ -3213,10 +4108,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org8ec9ded" class="figure">
+<div id="orgfe13bc1" class="figure">
 <p><img src="../../../files/normal-in-slope-space.png" alt="normal-in-slope-space.png" />
 </p>
-<p><span class="figure-number">Figure 35: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
+<p><span class="figure-number">Figure 37: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
 </div>
 
 <p>
@@ -3243,9 +4138,9 @@ angle of incidence of illumination, since illumination is over a larger area at 
 根据以上关系可以得出 \(\frac{(-\widetilde{x}, -\widetilde{y}, 1)}{\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2} + 1}} = \frac{(-(-\frac{x}{z}), -(-\frac{y}{z}), 1)}{\frac{1}{z}} = (x, y, z) = n\).
 </p>
 </div>
-<div id="outline-container-org9845d5f" class="outline-4">
-<h4 id="org9845d5f"><span class="section-number-4">3.1.1.</span> 斜率空间和极坐标之间的转换</h4>
-<div class="outline-text-4" id="text-3-1-1">
+<div id="outline-container-orgb4d7d96" class="outline-4">
+<h4 id="orgb4d7d96"><span class="section-number-4">4.1.1.</span> 斜率空间和极坐标之间的转换</h4>
+<div class="outline-text-4" id="text-4-1-1">
 <p>
 以极角 \(\theta\) 和方位角 \(\phi\) 作为参数进行参数化可以把极坐标转换到斜率空间上.
 </p>
@@ -3269,7 +4164,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-根据 <a href="#orgf997292">32</a>, \(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
+根据 <a href="#orgf56a64d">34</a>, \(|\widetilde{n}| = \sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \frac{\sqrt{\sin^2\theta (\cos^2\theta + \sin^2\theta)}}{\cos\theta} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
 </p>
 
 <p>
@@ -3282,7 +4177,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 <div id="outline-container-why-slope-space" class="outline-4">
-<h4 id="why-slope-space"><span class="section-number-4">3.1.2.</span> 为什么需要斜率空间</h4>
+<h4 id="why-slope-space"><span class="section-number-4">4.1.2.</span> 为什么需要斜率空间</h4>
 <div class="outline-text-4" id="text-why-slope-space">
 <ol class="org-ol">
 <li>微表面是一个高度场, 法线被限制在球体的上半部分中. 而我们的斜率空间是通过参数化球体上半部分(\(z \gt 0\))得到的, 两者非常契合.</li>
@@ -3309,7 +4204,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-这里需要透过法线和平面垂直的关系才能看出来, 假设 \(p_{1} = (x_{1}, y_{1}, z_{1})\) 和 \(p_{0} = (x_{0}, y_{0}, z_{0})\) 是平面上的两个点, 这两个点构成的直线 \(l = p_{1} - p_{0} = (x_{1} - x_{0}, y_{1} - y_{0}, z_{1} - z_{0}) = (x_{l}, y_{l}, z_{l})\) 与法线向量 \(n = (x, y, z)\) 垂直:
+这里需要透过法线和平面垂直的关系才能看出来, 假设 \(p_{1} = (x_{1}, y_{1}, z_{1})\) 和 \(p_{0} = (x_{0}, y_{0}, z_{0})\) 是平面上的两个点,
+</p>
+
+<p>
+这两个点构成的直线 \(l = p_{1} - p_{0} = (x_{1} - x_{0}, y_{1} - y_{0}, z_{1} - z_{0}) = (x_{l}, y_{l}, z_{l})\) 与法线向量 \(n = (x, y, z)\) 垂直:
 </p>
 
 <p>
@@ -3391,9 +4290,9 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </ol>
 </div>
 </div>
-<div id="outline-container-orge8e6aed" class="outline-4">
-<h4 id="orge8e6aed"><span class="section-number-4">3.1.3.</span> 斜率空间上的分布函数</h4>
-<div class="outline-text-4" id="text-3-1-3">
+<div id="outline-container-org5789ba9" class="outline-4">
+<h4 id="org5789ba9"><span class="section-number-4">4.1.3.</span> 斜率空间上的分布函数</h4>
+<div class="outline-text-4" id="text-4-1-3">
 <p>
 在 <code>BRDF</code> 模型中, <code>NDF</code> 就是先在斜率空间上定义的: \(D(\widetilde{n})\), 最后再把 \(D(\widetilde{n})\) 变换到其它空间上, 比如笛卡尔坐标系 \(D(n_{\mathrm{cartesian}})\) 或极坐标系上: \(D(n_{\mathrm{polar}})\).
 </p>
@@ -3419,10 +4318,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org58e9a67" class="figure">
+<div id="org77bb557" class="figure">
 <p><img src="../../../files/fx-pdf.png" alt="fx-pdf.png" />
 </p>
-<p><span class="figure-number">Figure 36: </span>身高在 [60, 70] 英寸内的女性比例</p>
+<p><span class="figure-number">Figure 38: </span>身高在 [60, 70] 英寸内的女性比例</p>
 </div>
 
 <p>
@@ -3480,7 +4379,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-目前的<a href="https://www.reedbeta.com/blog/slope-space-in-brdf-theory/">参考文章</a>的求解方法涉及了微分形式(<a href="../../../files/diffforms.pdf">differential forms</a>)的形式论和几何代数, 已经超出了本人的知识水平了, 其中的解释本人会在挣够相关知识后进行补充, 这里就直接给出答案了:
+这里先直接给出答案:
 </p>
 
 <p>
@@ -3494,11 +4393,99 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <p>
 在得到雅可比行列式后, 就可以在斜率空间上引入想要的分布函数, 改变其参数并对函数乘以 \(\frac{d\widetilde{n}}{dn}\) 得到在论文中看到的分布函数.
 </p>
+
+<p>
+至于雅可比矩阵的计算方法, 就本人所知而言有两种:
+</p>
+
+<p>
+首先是 <a href="https://www.reedbeta.com/blog/slope-space-in-brdf-theory/">参考文章</a>, 但该解法涉及了微分形式(<a href="../../../files/diffforms.pdf">differential forms</a>)的形式论和几何代数, 本人没这方面的了解;
+</p>
+
+<p>
+其次是根据变换关系直接求解, 这里主要介绍这一种方法, 具体思路如下:
+</p>
+
+<p>
+首先, 没法直接从 \((x, y, z)\) 和 \((\widetilde{x} = -\frac{x}{z}, \widetilde{y} = -\frac{y}{z})\) 的关系中找到关于从 \(f\) 变换到 \(\widetilde{f}\) 的雅可比矩阵,
+</p>
+
+<p>
+因为 \(f\) 和 \(\widetilde{f}\) 的定义是不确定的, 没法直接知道它们之间的关联, 不过它们都可以与极坐标之间进行变换,
+</p>
+
+<p>
+所以可以分别找出极坐标到笛卡尔空间的雅可比矩阵 \(J_{f}\) 以到斜率空间的雅可比矩阵 \(J_{\widetilde{f}}\),
+</p>
+
+<p>
+最后间接地得出从 \(f\) 到 \(\widetilde{f}\) 之间的雅可比矩阵行列式 \(\frac{|J_{\widetilde{f}}|}{|J_{f}|}\).
+</p>
+
+<p>
+需要注意的是, 根据 <a href="#org23c62bc">NDF的定义</a>, 还要分别找出从极坐标到 \(xy\) 平面的投影面积 \(dxdy\) 以及到 \(\widetilde{x} \widetilde{y}\) 平面的投影面积 \(d\widetilde{x} d\widetilde{y}\),
+</p>
+
+<p>
+因此, 在计算 \(J_{f}\) 时不需要考虑 \(z\) 轴的变换, 最终得到一个 \(2 \times 2\) 的矩阵;
+</p>
+
+<p>
+最后 \(\frac{d\widetilde{x}d\widetilde{y}}{dxdy}\) 就是我们想要的结果. 接下来开始计算.
+</p>
+
+<p>
+计算从极坐标系到笛卡尔空间的 \(xy\) 平面投影的面积 \(dxdy\):
+</p>
+
+<p>
+\(f(\theta, \phi) = (\sin\theta \cos\phi, \sin\theta \sin\phi, \cos\theta)\)
+</p>
+
+<p>
+\(J_{f} = \left( \begin{array}{c} \frac{\partial x}{\partial \theta} & \frac{\partial x}{\partial \phi} \\ \frac{\partial y}{\partial \theta} & \frac{\partial y}{\partial \phi} \end{array} \right) = \left( \begin{array}{c} \cos\theta \cos\phi & -\sin\theta\sin\phi \\ \cos\theta \sin\phi & \sin\theta \cos\phi \end{array} \right)\)
+</p>
+
+<p>
+\(|J_{f}| = \frac{\partial x}{\partial \theta} \frac{\partial y}{\partial \phi} - \frac{\partial x}{\partial \phi} \frac{\partial y}{\partial \theta} = \sin\theta\cos\theta \cos^2\phi + \sin\theta \cos\theta \sin^2\phi = \sin\theta \cos\theta\)
+</p>
+
+<p>
+\(dx dy = |J_{f}| d\theta d\phi = \sin\theta \cos\theta d\theta d\phi\)
+</p>
+
+<p>
+计算从极坐标系到斜率空间投影的面积 \(d\widetilde{x}d\widetilde{y}\):
+</p>
+
+<p>
+\(\widetilde{f}(\theta, \phi) = (-\tan\theta \cos\phi, -\tan\theta \sin\phi)\)
+</p>
+
+<p>
+\(J_{\widetilde{f}} = \left( \begin{array}{c} \frac{\partial \widetilde{x}}{\partial \theta} & \frac{\partial \widetilde{x}}{\partial \phi} \\ \frac{\partial \widetilde{y}}{\partial \theta} & \frac{\partial \widetilde{y}}{\partial \phi} \end{array} \right) = \left( \begin{array}{c} -\frac{1}{\cos^2 \theta} \cos\phi & \tan\theta \sin\phi \\ -\frac{1}{\cos^2\theta} \sin\phi & -\tan\theta \cos\phi \end{array} \right)\)
+</p>
+
+<p>
+\(|J_{\widetilde{f}}| = \frac{\partial \widetilde{x}}{\partial \theta} \frac{\partial \widetilde{y}}{\partial \phi} - \frac{\partial \widetilde{x}}{\partial \phi} \frac{\partial \widetilde{y}}{\partial \theta} = \frac{1}{\cos^2 \theta} \cos^2\phi \tan\theta + \frac{1}{\cos^2 \theta} \sin^2 \phi \tan\theta = \frac{\tan\theta}{\cos^2\theta}\)
+</p>
+
+<p>
+\(d\widetilde{x} d\widetilde{y} = |J_{\widetilde{f}}| d\theta d\phi = \frac{\tan\theta}{\cos^2\theta} d\theta d\phi\)
+</p>
+
+<p>
+最后计算最终结果:
+</p>
+
+<p>
+\(\frac{d\widetilde{x} d\widetilde{y}}{dx dy} = \frac{|J_{f}|}{|J_{\widetilde{f}}|} = \frac{\tan\theta}{\sin\theta\cos^3 \theta} = \frac{1}{\cos^4\theta}\)
+</p>
 </div>
 </div>
-<div id="outline-container-org360bd49" class="outline-4">
-<h4 id="org360bd49"><span class="section-number-4">3.1.4.</span> 从斜率空间上的正态分布函数到 <code>NDF</code></h4>
-<div class="outline-text-4" id="text-3-1-4">
+<div id="outline-container-org3ba0d90" class="outline-4">
+<h4 id="org3ba0d90"><span class="section-number-4">4.1.4.</span> 从斜率空间上的正态分布函数到 <code>NDF</code></h4>
+<div class="outline-text-4" id="text-4-1-4">
 <p>
 比如把<a href="https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Bivariate_case">二元正态分布函数</a>引入斜率空间得到: \(D(\widetilde{m}, \sigma) = \frac{1}{2 \pi \sigma^{2}} \times e^{-\frac{|\widetilde{m}|^{2}}{2 \sigma^{2}}}\),
 </p>
@@ -3520,7 +4507,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-另外, 斜率空间本身就限制了 \(m\) 不可能超出上半球范围, 但是笛卡尔坐标或者极坐标并没有该限制, 所以我们需要注意 \(\theta\) 的范围: \(\theta \in [-\frac{\pi}{2}, \frac{\pi}{2}]\), 范围外的统一不进行计算.
+另外, 斜率空间本身就限制了 \(m\) 不可能超出上半球范围, 但是笛卡尔坐标或者极坐标并没有该限制, 所以我们需要注意 \(\theta\) 的范围:
+</p>
+
+<p>
+\(\theta \in [-\frac{\pi}{2}, \frac{\pi}{2}]\), 范围外的统一不进行计算.
 </p>
 
 <p>
@@ -3539,7 +4530,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 <div id="outline-container-t-distribution-in-slope-space" class="outline-4">
-<h4 id="t-distribution-in-slope-space"><span class="section-number-4">3.1.5.</span> 从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></h4>
+<h4 id="t-distribution-in-slope-space"><span class="section-number-4">4.1.5.</span> 从斜率空间上的 <code>T</code> 分布函数到 <code>NDF</code></h4>
 <div class="outline-text-4" id="text-t-distribution-in-slope-space">
 <p>
 把<a href="https://en.wikipedia.org/wiki/Multivariate_t-distribution">二元T分布函数</a>引入斜率空间得到: \(D(\widetilde{m}, \sigma) = \frac{\sigma^{2}}{\pi (\sigma^{2} + |\widetilde{m}|^{2})^{2}}\),
@@ -3577,14 +4568,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 <p>
-<a id="org1b409ef"></a>
+<a id="org81aeb96"></a>
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org8d37bb3" class="outline-3">
-<h3 id="org8d37bb3"><span class="section-number-3">3.2.</span> 各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</h3>
-<div class="outline-text-3" id="text-3-2">
+<div id="outline-container-org477862f" class="outline-3">
+<h3 id="org477862f"><span class="section-number-3">4.2.</span> 各向同性 <code>NDF</code> 的几何函数 \(G_{1}\) 推导</h3>
+<div class="outline-text-3" id="text-4-2">
 <blockquote>
 <p>
 整理自 "Microfacet Models for Refraction through Rough Surfaces"
@@ -3592,10 +4583,10 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 
-<div id="orga9a992b" class="figure">
+<div id="org17d5190" class="figure">
 <p><img src="../../../files/g1_deriving.png" alt="g1_deriving.png" width="504px" />
 </p>
-<p><span class="figure-number">Figure 37: </span>G1</p>
+<p><span class="figure-number">Figure 39: </span>G1</p>
 </div>
 
 <p>
@@ -3671,7 +4662,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 <p>
-观察<a href="#orga9a992b">推导图</a>, 在 \(\tau\) 处 \(\xi_{0} + \mu\tau \gt \xi\), 射线并未与表面相交; 在 \(\tau + \Delta \tau\) 处 \((q - \mu)\Delta \tau \gt (\xi_{0} + \mu\tau) - \xi\), 射线与表面发生相交.
+观察<a href="#org17d5190">推导图</a>, 在 \(\tau\) 处 \(\xi_{0} + \mu\tau \gt \xi\), 射线并未与表面相交; 在 \(\tau + \Delta \tau\) 处 \((q - \mu)\Delta \tau \gt (\xi_{0} + \mu\tau) - \xi\), 射线与表面发生相交.
 </p>
 
 <blockquote>
@@ -3806,9 +4797,9 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div>
 </div>
 </div>
-<div id="outline-container-orgd79f6f2" class="outline-2">
-<h2 id="orgd79f6f2"><span class="section-number-2">4.</span> 完结心声</h2>
-<div class="outline-text-2" id="text-4">
+<div id="outline-container-org195d593" class="outline-2">
+<h2 id="org195d593"><span class="section-number-2">5.</span> 完结心声</h2>
+<div class="outline-text-2" id="text-5">
 <blockquote>
 <p>
 这篇笔记完结于 <b>2025-02-18</b> 的凌晨, 这部分内容也是这时候写下的.
@@ -3978,7 +4969,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <div id="postamble" class="status">
 <p class="date">Date: 2020-08-17</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-06-03 Tue 01:42</p>
+<p class="date">Created: 2025-08-26 Tue 21:21</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

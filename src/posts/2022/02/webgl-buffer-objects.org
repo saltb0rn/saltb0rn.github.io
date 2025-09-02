@@ -60,7 +60,9 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 [[https://webgl2fundamentals.org/webgl/lessons/webgl-how-it-works.html][WebGL2 Fundamentals 的 WebGL是如何工作的]]
 
-但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的, 特别是 =Fragment Shader=, 看别人的 =Shader= 还是一头雾水.
+但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的,
+
+特别是 =Fragment Shader=, 看别人的 =Shader= 还是一头雾水.
 
 回过头去看官方的 [[https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview][渲染流程概览]], 又发现里面的内容不太好理解, 于是乎决定把它们结合在一起进行理解, 接下来就是个人理解了.
 
@@ -73,7 +75,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 #+BEGIN_QUOTE
 由于历史原因, =OpenGL/OpenGL ES/WebGL= 和 =GLSL= 之间的版本对应关系挺混乱的, 幸好维基百科上有列出[[https://en.wikipedia.org/wiki/OpenGL_Shading_Language#Versions][对应关系]].
 
-如果不了解这一块的话, 你无法知道你的 =Shader= 程序能够运行在什么环境上的.
+如果不了解这一块, 你将无法知道 =Shader= 程序能够运行在什么环境上的.
 #+END_QUOTE
 
 接下来着重介绍 =Vertex Shader= 和 =Fragment Shader= 及其前后的几个阶段.
@@ -110,13 +112,37 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 *图元组装 (Primitive Assembly)*
 
-在通过 =Vertex Shader= 处理完所有输入的顶点数据之后, =OpenGL= 会按照一定规律把输出的顶点组合在一起形成一个几何对象, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+在通过 =Vertex Shader= 处理完所有输入的顶点数据之后, =OpenGL= 会按照一定规律把输出的顶点组合在一起形成一个几何对象,
 
-在计算机中, =3D= 物体就是由多个面(或者说图元)组成的.
+几何对象可能会很复杂, 在计算机里面, 这种复杂的几何对象必定是由最简单的图形单位构成的,
 
-#+BEGIN_QUOTE
-当然 =OpenGL/WebGL= 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(=basic primitive=), 包括点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
-#+END_QUOTE
+这种最简单的图形单位被叫做图元, 可以被 =GPU= 直接处理和绘制. 常见的图元包括:
+
+点 (=GL_POINTS=), 直线 (=GL_LINES=), 三角形 (=GL_TRIANGLES=) 以及它们的派生, 具体可以看 [[https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification][OpenGL 图元规范]].
+
+有时候图元也被叫做基础图元(=base primitive=). 在不同语境下, 图元有不同的含义,
+
+对于人来说, 可以理解为最简单的几何图形; 对于 =OpenGL= 来说, 就是一个可解析的顶点流(=vertex stream=).
+
+比如说接收到一个长度为 12 的有序顶点列表, 以每 2 个顶点为一组构成 1 条线段, 最后可以获得 11 条线段,
+
+这 11 条线段就是 11 个直线图元, 这 11 个直线图元也被称为图元流(=primitive stream=).
+
+图元装配这个阶段的工作就是完成从顶点流到图元流的解析.
+
+实际上, 在 =OpenGL= 里面, 图元装配之前还有两个阶段: *[[https://www.khronos.org/opengl/wiki/Tessellation][曲面细分 (Tessellation)]]* 和 *[[https://www.khronos.org/opengl/wiki/Geometry_Shader][几何着色器 (Geometry Shader)]]*.
+
+因为它们不存在于 =WebGL= 的渲染流程中, 所以不是本文重点.
+
+不过, 几何着色器还是值得关注: 几何着色器以一个图元作为输入, 以零个或多个图元作为输出.
+
+使用几何着色器的主要目的之一是: 在不改变渲染目标(=renderTarget=)绑定的前提下, 把一个图元渲染到多张图片中.
+
+所谓渲染目标就是接收渲染结果的对象, 比如显示图像的屏幕, 后面的帧缓冲会详细说明.
+
+比如生成位置光源的阴影贴图, 开发者可以在几何着色器中一次渲染出 6 张 =2D= 贴图来组成一个立方贴图.
+
+这样既提高了开发效率和也优化了运行效率.
 
 *裁剪 (Cliping)*
 
@@ -150,8 +176,6 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 你可以把采样理解为从一个连续对象上抽取若干个数据形成一个不连续的序列, 该序列和连续对象近似乎;
 
 我们把这些抽出来的数据叫做样本(samples), 样本数量越多, 得到的序列就和连续对象越像.
-
-这就是数学里面微分的思想.
 #+END_QUOTE
 
 然而, =OpenGL/WebGL= 是如何在只知道顶点的信息的情况下把中间部分的点给补全呢?
@@ -753,7 +777,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 令人迷惑主要是源于它们背后所对应的概念. 比如什么是 =Buffer=, 什么是 =Framebuffer= 以及什么是 =Renderbuffer=, 以及他们之间有什么区别.
 
-所以这一章节主要是借着介绍 =API= 的机会学习这些概念.
+再加上这些东西的使用频率很高, 这里就借着介绍 =API= 的机会学习这些概念.
 
 **** 缓冲 (Buffer)
 
@@ -789,7 +813,31 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 使用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texParameter][gl.texParameter[fi](target, pname, param)]] 指定贴图的一些参数,
 
-使用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D][gl.texImage2D]] 往贴图对象里面填充贴图数据.
+使用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D][gl.texImage2D]] 往贴图对象里面填充贴图数据, 或者设置贴图储存信息的方式.
+
+#+begin_quote
+在实践中会经常设置贴图储存, 为此要明白 =gl.texImage2D= 哪些参数影响储存.
+
+该函数有很多种声明方式, 这里以最为代表性的声明作为学习例子:
+
+=gl.texImage2D(target, level, internalformat, width, height, border, format, type, srcData)=.
+
+这里面影响贴图储存的参数是 =internalformat=, =format= 和 =type= 这 3 个参数.
+
+它们并非完全独立, 有着[[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D#type][固定的组合]]. 别忘记了 =gl.texImage2D= 的重要作用是把 =CPU= 的像素数据写入到 =GPU= 上,
+
+在该过程中要声明好输入端 - =CPU= 的数据格式以及接收端 =GPU= 储存数据的格式, 这 3 个参数的总体作用就是声明格式:
+
+=internalformat= 指定 =GPU= 储存贴图像素的方式, 一个像素由哪些组件构成以及如何布局, 比如 =gl.RGBA= 表示依次有 =R/G/B/A= $4$ 个组件;
+
+=format= 指定 =CPU= 储存贴图像素的方式, 比如 =gl.RGBA= 表示写入到 =GPU= 的像素依次有 =R/G/B/A= $4$ 个组件;
+
+=type=  指定 =CPU= 这边像素的组件大小, 不同组件应该占多少位(=bits=), 比如 =gl.UNSIGNED_BYTE= 表示一个组件占 $8$ 位,
+
+在比如 =gl.UNSIGNED_SHORT_5_5_5_1= 表示 =R/G/B/A= 4 个组件分别占 =5/5/5/1= 位.
+
+通常来说, =CPU= 和 =GPU= 两端的储存方式应该保持一致, 从而保证数据的一致性.
+#+end_quote
 
 这些函数都不要求传入贴图对象的 =ID= 作为参数来说明对哪个贴图对象进行操作,
 
@@ -868,7 +916,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 颜色缓冲(=color buffer=), 深度缓冲(=depth buffer=) 以及模板缓冲(=stencil buffer=).
 
-新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(=attachments=)上, 没关联一个附件, 集合里面就多出一元素,
+新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(=attachments=)上, 每关联一个附件, 集合里面就多出一元素,
 
 在调用 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawArrays][gl.drawArrays(mode, first, count)]] 或 [[https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements][gl.drawElements(mode, count, type, offset)]] 时, =OpenGL/WebGL= 会把渲染结果输出到帧缓冲上,
 
@@ -888,11 +936,13 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 如果需要把渲染数据用在 =Shader= 程序中或者用在成像画面上, 那么应该选择贴图作为附件,
 
-渲染缓冲适合用与储存深度缓冲和模板缓冲, 进行深度测试和模板测试.
+渲染缓冲适合用于储存深度缓冲和模板缓冲, 进行深度测试和模板测试.
 
 以下代码片段演示了帧缓冲的最基本用法:
 
 #+BEGIN_SRC js
+  const canvas = document.getElementById('#canvas');
+
   gl.enable(gl.DEPTH_TEST);
   // 在把渲染结果输出到 fbo 上之前设置渲染尺寸
   gl.viewport(0, 0, textureWidth, textureHeight);
@@ -906,6 +956,22 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   // 使用贴图作为附件储存颜色缓冲, 并添加到帧缓冲中
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+                canvas.width, canvas.height, 0,
+                gl.RGBA, gl.UNSIGNED_BYTE, null);  // 设置贴图储存
+  /*
+    因为图片的像素以 RGBA 形式储存, 因此在印象中, 我们本能地也认为贴图像素的字节是以整数进行编码.
+
+    但实际上字节也能以浮点数进行编码, 这样最终得到的贴图像素的字节所能储存的值就不用限定在 0 ~ 255 中了.
+
+    想要让贴图储存浮点数, 需要 WebGL 支持浮点数拓展, 常用的有: OES_texture_float 或 OES_texture_half_float.
+
+    if(gl.getExtension('OES_texture_float')) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+                    canvas.width, canvas.height, 0,
+                    gl.RGBA, gl.FLOAT, null);
+    }
+  ,*/
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, level);
   // 把颜色缓冲输出到贴图中: end
 
@@ -922,16 +988,17 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   renderScene();
   // 目前为止, 获得了一个经过深度测试的贴图 texture, 可用在 Shader 程序中
 
-  // 可以用在把贴图上的数据读取出来, 在 Shader 程序以外的地方使用
+  // 可以用在把贴图上的数据读取出来, 在 Shader 程序以外的地方或者其它 Shader 程序中使用
   const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
   /* 每次往 framebuffer 中写入数据, gl.drawingBufferWidth 都会被设置为 textureWidth,
      gl.drawingBufferHeight 则被设置为 textureHeight */
   gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  /* gl.RGBA 和 gl.UNSIGNED_BYTE 为读取 GPU 数据的方式, 也可以理解为 pixels 的数据格式 */
 
   // 把后续的渲染结果输出回画布上
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   // 设置回画布的渲染尺寸
-  gl.viewport(0, 0, canvasWidt, canvasHeight);
+  gl.viewport(0, 0, canvasWidth, canvasHeight);
   renderScene();
 #+END_SRC
 

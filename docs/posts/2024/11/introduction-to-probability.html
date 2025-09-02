@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-06-09 Mon 15:16 -->
+<!-- 2025-09-02 Tue 20:36 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Introduction To Probability 的阅读草稿纸</title>
@@ -384,14 +384,25 @@
 <li><a href="#org510a68f">Chapter 13: 泊松过程 (Poission process)</a></li>
 <li><a href="#orge5f25ed">计算机应用</a>
 <ul>
-<li><a href="#org447fdfb">C语言如何根据概率密度函数来生成随机数</a></li>
-<li><a href="#orgefac3b2">C语言如何根据概率质量函数来生成随机数</a></li>
+<li><a href="#orge656865">Maxima</a>
+<ul>
+<li><a href="#org37fe611">数据类型</a></li>
+<li><a href="#orgb1bba22">随机数和排列</a></li>
+</ul>
+</li>
+<li><a href="#orgc45d2a9">C 语言实现</a>
+<ul>
+<li><a href="#org0da357b">根据概率密度函数来生成随机数</a></li>
+<li><a href="#org59020fa">根据概率质量函数来生成随机数</a></li>
+<li><a href="#org6078076">蒙特卡洛积分 (Monte Carlo Integration)</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org8a59fad">
+<div class="abstract" id="orgd2b2fd5">
 <p>
 关于概率论的阅读笔记, 为了学习 <code>PBR</code> 速通的学习笔记, 还需要完善.
 </p>
@@ -1160,11 +1171,25 @@ P104, <b>随机变量 (Random Variable)</b>: 假设有一个样本空间为 \(S\
 </p>
 
 <p>
-<code>Example 3.1.2</code> 必读.
-</p></li>
+<code>Example 3.1.2</code> 必读, 该例子中随机变量 \(X(s_1, s_2)\) 的值表示抛硬币的正面次数, 其中参数 \(s_1\) 和 \(s_2\) 为两次抛硬币的正反面记录, 正面为 1, 方面为 0.
+</p>
+
+<blockquote>
+<p>
+概率论的核心内容就是围绕随机变量展开的, 一定要记住 <b>随机变量就是函数</b> 这一点理解, 它在解决问题上十分重要.
+</p>
+
+<p>
+在数学中, 使用函数对问题进行建模是非常重要的手段, 基于上面的理解, 可以在建模中引入概率论, 从而多出一个解决问题的角度.
+</p>
+
+<p>
+在后面的蒙特卡洛积分中, 就基于该理解得出一个估算积分的方法.
+</p>
+</blockquote></li>
 
 <li><p>
-P105, <code>Example 3.1.2</code> 必读, 其中介绍了指示随机变量(<code>indicator random variable</code>)的概念: 函数的值只表示 "yes" 和 "no" 两种结果.
+P105, <code>Example 3.1.2</code> 必读, 其中介绍了指示随机变量(<code>indicator random variable</code>) \(I\) 的概念: 函数值只表示 "yes" 和 "no" 两种结果.
 </p>
 
 <p>
@@ -1207,14 +1232,14 @@ P106, <b>离散型随机变量 (Discrete random variable)</b>
 </p>
 
 <ol class="org-ol">
-<li>\(P(X=\left\{a_{1},a_{2},\dots\right\}) = 1\), 变量 \(j\) 表示着集合 \(\left\{ a_{1},a_{2},\dots \right\}\) 的大小</li>
+<li>\(P(X=\left\{a_{1},a_{2},\dots\right\}) = 1\), 集合 \(\left\{ a_{1},a_{2},\dots \right\}\) 的大小为 \(j\)</li>
 
 <li><p>
 \(\sum\limits_{i=1}^{j}P(X=a_{i}) = 1\)
 </p>
 
 <p>
-在 <b>P(X = x)</b> 里面, \(X = x\) 是一个包含了所有满足 \(X(s) = x\) 的实验结果 \(s\) 的集合, 也就是一个事件.
+在 <b>P(X = x)</b> 里面, \(X = x\) 是一个集合, 包含了满足 \(X(s) = x\) 的全部实验结果 \(s\), 也就是一个事件.
 </p>
 
 <p>
@@ -1222,11 +1247,15 @@ P106, <b>离散型随机变量 (Discrete random variable)</b>
 </p>
 
 <p>
-比如 <code>Example 3.1.2</code> 中统计实验结果中硬币为正面的次数, 要取只有一次正面的所有实验结果 (\(X = 1\)): 等同于 \(\left\{ HT, TH \right\}\).
+比如 <code>Example 3.1.2</code> 中统计实验结果中硬币为正面的次数, 要取只有一次正面的所有实验结果 (\(X = 1\)):
 </p>
 
 <p>
-写作 \(\left\{ X = 1 \right\}\) 更符合直觉.
+等同于 \(\left\{ HT, TH \right\}\).
+</p>
+
+<p>
+事实上写作 \(\left\{ X = 1 \right\}\) 更符合直觉.
 </p></li>
 </ol>
 </blockquote>
@@ -1694,10 +1723,10 @@ P171, <b>方差和标准差 (Variance and standard deviation)</b>: 随机变量 
 </p>
 
 
-<div id="orgaf686ab" class="figure">
+<div id="org2d2448b" class="figure">
 <p><img src="../../../files/dispersionnormalbw.gif" alt="dispersionnormalbw.gif">
 </p>
-<p><span class="figure-number">Figure 1: </span>散度和标准差和方差关系</p>
+<p><span class="figure-number">Figure 1: </span>散度和标准差和方差关系, 方差越大, 距离期望值越远</p>
 </div></li>
 
 <li><p>
@@ -1719,7 +1748,13 @@ P172, 对于任意随机变量 \(X\), \(\text{Var}(X) = E(X^{2}) - (E(X))^{2}\).
 
 <li><a id="org3bfbb2c"></a>\(\text{Var}(cX) = c^{2}\text{Var}(X)\), 其中 \(c\) 是任意常数.</li>
 
-<li><a id="orgbc4b01a"></a>如果随机变量 \(X\) 和 \(Y\) 是独立的, 那么 \(\text{Var}(X + Y) = \text{Var}(X) + \text{Var}(Y)\).</li>
+<li><p>
+<a id="orgbc4b01a"></a>如果随机变量 \(X\) 和 \(Y\) 是独立的, 那么 \(\text{Var}(X + Y) = \text{Var}(X) + \text{Var}(Y)\).
+</p>
+
+<p>
+根据该属性, 可以得出常数的方差为 0, 因为 \(\text{Var}(X + c) = \text{Var}(X) + \text{Var}(c) = \text{Var}(X)\).
+</p></li>
 
 <li><p>
 \(\text{Var(X)} \le 0 \Leftrightarrow P(X = a) = 1\), 其中 \(a\) 是某些常数.
@@ -2013,7 +2048,15 @@ P226, <code>Example 5.3.4</code>, <b>Logistic 分布的普遍性 (Universality w
 </p>
 
 <p>
-其中 <code>Logistic CDF</code> \(F\) 的逆函数 \(F^{-1}\) 求解过程: \(y (1 + e^{x})= e^{x} \rightarrow y + (y - 1)e^{x} = 0 \rightarrow e^{x} = \frac{y}{1 - y} \rightarrow x = \ln(\frac{y}{1 - y}) = F^{-1}(y)\).
+其中 <code>Logistic CDF</code> \(F\) 的逆函数 \(F^{-1}\) 求解过程:
+</p>
+
+<p>
+令 \(u = F(x)\),
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} & u (1 + e^{x})= e^{x} \\ & \rightarrow u + (u - 1)e^{x} = 0 \\ & \rightarrow e^{x} = \frac{u}{1 - u} \\ & \rightarrow x = \ln(\frac{u}{1 - u}) = F^{-1}(u) \end{aligned} \end{equation*}\)
 </p></li>
 
 <li><p>
@@ -2021,7 +2064,15 @@ P227, <code>Example 5.3.5</code>, <b>瑞利分布的普遍性 (Universality with
 </p>
 
 <p>
-其中 瑞利分布的 <code>CDF</code> \(F\) 的逆函数 \(F^{-1}\) 求解过程: \(y = 1 - e^{\frac{-x^{2}}{2}} \rightarrow 1 - y = e^{\frac{-x^{2}}{2}} \rightarrow -\frac{x^{2}}{2} = \ln(1 - y) \rightarrow = x = \sqrt{-2\ln(1 - y)} = F^{-1}(y)\).
+其中 瑞利分布的 <code>CDF</code> \(F\) 的逆函数 \(F^{-1}\) 求解过程:
+</p>
+
+<p>
+令 \(u = F(x)\),
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} & u = 1 - e^{\frac{-x^{2}}{2}} \\ & \rightarrow 1 - u = e^{\frac{-x^{2}}{2}} \\ & \rightarrow -\frac{x^{2}}{2} = \ln(1 - u) \\ & \rightarrow = x = \sqrt{-2\ln(1 - u)} = F^{-1}(u) \end{aligned} \end{equation*}\)
 </p></li>
 </ul>
 
@@ -2450,7 +2501,7 @@ P267, <b>平均值/期望(mean/expectation)</b>: 用来找出分布中心(<code>
 </p>
 
 
-<div id="org7a71f6f" class="figure">
+<div id="org2007900" class="figure">
 <p><img src="../../../files/center-of-mass.png" alt="center-of-mass.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>质心</p>
@@ -2494,7 +2545,7 @@ P267, 一个分布可以有多个中位数和多个众数.
 </p>
 
 
-<div id="org5a6639e" class="figure">
+<div id="orgc29a513" class="figure">
 <p><img src="../../../files/a-distribution-with-multiple-medians-and-modes.png" alt="a-distribution-with-multiple-medians-and-modes.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>拥有多个中位数和多个众数的分布的 PDF</p>
@@ -2682,7 +2733,7 @@ P275, <b>峰度/峰态 (Kurtosis, peakedness)</b>: 假设有一个随机变量 \
 </p>
 
 
-<div id="org8bbcede" class="figure">
+<div id="org6fab685" class="figure">
 <p><img src="../../../files/Distribution-of-skewness-and-kurtosis.png" alt="Distribution-of-skewness-and-kurtosis.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>分布的偏度和峰度</p>
@@ -2725,7 +2776,7 @@ P276, <b>样本矩 (Sample moments)</b>
 </p>
 
 <p>
-在统计学中, 第 \(k\) 样本矩被称为第 \(k\) 矩的无偏移估计量(<code>unbiashed/unbiased estimator</code>), 并且满足 \(E(M_k) = E(X_1^k)\).
+在统计学中, 第 \(k\) 样本矩被称为第 \(k\) 矩的无偏移估计量(<code>unbiased/unbiased estimator</code>), 并且满足 \(E(M_k) = E(X_1^k)\).
 </p></li>
 
 <li><p>
@@ -3406,7 +3457,7 @@ P372, <b>多维的变量变换 (Change of variables)</b>
 </p>
 
 
-<div id="org03bb681" class="figure">
+<div id="org8497824" class="figure">
 <p><img src="../../../files/Red_blue_circle.svg" alt="Red_blue_circle.svg" class="org-svg">
 </p>
 <p><span class="figure-number">Figure 5: </span>蓝色完全表示满足 \(x^2 + y^2 = r^2\) 的点集合. 红色表示满足 \(x^2 + y^2 \lt r^2\) 的点集合. 红色集合就是一个开集(<code>open set</code>), 蓝色集合是一个边界集(<code>boundary set</code>) 红色集合和蓝色集合的并集就是闭集(<code>closed set</code>).</p>
@@ -3720,8 +3771,42 @@ P434, <b>夏娃定律 (Eve's law)</b>: 对于任意随机变量 \(X\) 和 \(Y\),
 </p>
 
 <p>
-通过 <b>蒙特卡洛方法 (Monte Carlo)</b> 来进行模拟, 蒙特卡洛只是指使用随机变量进行模拟;
+通过 <b>蒙特卡洛方法 (Monte Carlo)</b> 来进行模拟.
 </p>
+
+<blockquote>
+<p>
+蒙特卡洛方法把求解的问题转化为解某一随机事件的概率, 通过大量重复的随机抽样来获取结果.
+</p>
+
+<p>
+当无法精确计算一个问题的答案时, 通过多次随机试验, 然后用统计结果来逼近真实答案.
+</p>
+
+<p>
+比如模拟圆周率的值, 可以取一个 \(2 \times 2\) 的正方形, 里面嵌入一个半径为 1 的圆,
+</p>
+
+<p>
+它们的面积分别为 \(4\) 和 \(\pi\), 随机往这个正方形区域抛硬币 \(M\) 次,
+</p>
+
+<p>
+统计落在圆内的次数为 \(N\), 圆和正方形之间的面积比为硬币落入圆的概率: \(\frac{N}{M}\),
+</p>
+
+<p>
+利用该概率可以得出圆形的面积为 \(\pi \approx \frac{4 \pi}{M}\), 而圆的面积则是作为计算积分.
+</p>
+
+<p>
+这个例子完美体现了蒙特卡洛方法的核心: 用频率估计概率, 用样本均值估计总体均值.
+</p>
+
+<p>
+书本上使用程序进行模拟采样其实就是蒙特卡洛方法.
+</p>
+</blockquote>
 
 <p>
 通过 <b>不等式 (inequalities)</b> 进行约束, 找出上下界来确定结果.
@@ -4168,19 +4253,312 @@ P515, 如果过渡矩阵 \(Q\) 的每一列的分量之和都为 1, 那么全部
 </div>
 <div id="outline-container-org0acaa53" class="outline-2">
 <h2 id="org0acaa53">Chapter 12: 马尔可夫链蒙特卡洛方法 (Markov chains Monte Carlo)</h2>
+<div class="outline-text-2" id="text-org0acaa53">
+<p>
+<a href="https://www.pbr-book.org/4ed/contents">https://www.pbr-book.org/4ed/contents</a> 的 <code>Chap 2</code> 有实现教学.
+</p>
+</div>
 </div>
 <div id="outline-container-org510a68f" class="outline-2">
 <h2 id="org510a68f">Chapter 13: 泊松过程 (Poission process)</h2>
 </div>
 
-
 <div id="outline-container-orge5f25ed" class="outline-2">
 <h2 id="orge5f25ed">计算机应用</h2>
 <div class="outline-text-2" id="text-orge5f25ed">
 </div>
-<div id="outline-container-org447fdfb" class="outline-3">
-<h3 id="org447fdfb">C语言如何根据概率密度函数来生成随机数</h3>
-<div class="outline-text-3" id="text-org447fdfb">
+<div id="outline-container-orge656865" class="outline-3">
+<h3 id="orge656865">Maxima</h3>
+<div class="outline-text-3" id="text-orge656865">
+<p>
+书本上的编程部分使用的是 <code>R</code> 语言, 我个人是想使用 <code>Maxima</code>, 因为它的解释器可以运行在手机上, 有空可以掏出手机玩一玩.
+</p>
+
+<p>
+在使用 <code>Maxima</code> 练习时发现 <code>R</code> 语言的一些内置函数确实来得更简单, 幸运的时这些内置函数在 <code>Maxima</code> 上也很容易实现,
+</p>
+
+<p>
+以下是说明如何在 <code>Maxima</code> 上实现书本上所用到的一些功能.
+</p>
+</div>
+<div id="outline-container-org37fe611" class="outline-4">
+<h4 id="org37fe611">数据类型</h4>
+<div class="outline-text-4" id="text-org37fe611">
+<p>
+使用 <code>Maxima</code> 的 <code>list</code> 对象替代 <code>R</code> 中的 <code>vector</code> 对象:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">v &lt;- c(3, 1, 4, 1, 5, 9)
+sum(v)
+max(v)
+min(v)
+v[length(v)]
+t &lt;- 3:10
+</pre>
+</div>
+
+<p>
+在 <code>Maxima</code> 中
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima">v<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">9</span><span style="color: #00ffff;">]</span>;
+<span style="color: #b0c4de;">lsum</span>(i, i, v);
+<span style="color: #b0c4de;">lmax</span>(v);
+<span style="color: #b0c4de;">lmin</span>(v);
+v<span style="color: #00ffff;">[</span><span style="color: #b0c4de;">length</span>(v)<span style="color: #00ffff;">]</span>;
+t<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">makelist</span>(i, i, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">10</span>)$
+</pre>
+</div>
+
+<p>
+在索引这一个点上, 两者都是从 1 开始, 而不是一般编程语言那样从 0 开始.
+</p>
+
+<p>
+从上面可以看到 <code>Maxima</code> 对于列表的求和与求积不太方便, 所以这里封装一下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima">psum(lis) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">lsum</span>(i, i, lis)$
+pprod(lis) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">product</span>(lis<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span>, i, <span style="color: #7fffd4;">1</span>, <span style="color: #b0c4de;">length</span>(lis))$
+</pre>
+</div>
+
+<p>
+<code>R</code> 的列表选取也很方便,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">v[c(1,3,5)]                             /* [3, 4, 5] */
+v[c(-1,-3,-5)]                          /* [1, 1, 9] */
+</pre>
+</div>
+
+<p>
+在 <code>Maxima</code> 上需要实现两个函数, 其中 <code>filter_by_indices</code> 就是我们想要的功能:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima">filter(lis, f) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[</span>res<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[]]</span>,
+  f<span style="color: #00ffff;">or</span> i <span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">thru</span> <span style="color: #b0c4de;">length</span>(lis) <span style="color: #00ffff;">do</span> (
+    <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(f(lis<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span>, i)) then res<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">endcons</span>(lis<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span>, res)),
+  res)$
+
+filter_by_<span style="color: #b0c4de;">indices</span>(lis, <span style="color: #b0c4de;">is</span>) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[]</span>,
+  <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">every</span>(<span style="color: #b0c4de;">lambda</span>(<span style="color: #00ffff;">[</span>x<span style="color: #00ffff;">]</span>, x <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">0</span> <span style="color: #00ffff;">and</span> <span style="color: #b0c4de;">integerp</span>(x)), <span style="color: #b0c4de;">is</span>) then
+  filter(lis, <span style="color: #b0c4de;">lambda</span>(<span style="color: #00ffff;">[</span>e, i<span style="color: #00ffff;">]</span>, <span style="color: #b0c4de;">member</span>(i, <span style="color: #b0c4de;">is</span>)))
+  else <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">every</span>(<span style="color: #b0c4de;">lambda</span>(<span style="color: #00ffff;">[</span>x<span style="color: #00ffff;">]</span>, x <span style="color: #00ffff;">&lt;</span> <span style="color: #7fffd4;">0</span> <span style="color: #00ffff;">and</span> <span style="color: #b0c4de;">integerp</span>(x)), <span style="color: #b0c4de;">is</span>) then
+  filter(lis, <span style="color: #b0c4de;">lambda</span>(<span style="color: #00ffff;">[</span>e, i<span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">not</span> <span style="color: #b0c4de;">member</span>(i, <span style="color: #b0c4de;">map</span>(<span style="color: #b0c4de;">lambda</span>(<span style="color: #00ffff;">[</span>x<span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">-</span><span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">*</span> x), <span style="color: #b0c4de;">is</span>))))
+  else <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"The second argument should be a list of positive integers or a list of negative integers"</span>)
+  )$
+
+<span style="color: #00ffff;">/*</span> test <span style="color: #00ffff;">*/</span>
+v<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">9</span><span style="color: #00ffff;">]</span>;
+filter_by_<span style="color: #b0c4de;">indices</span>(v, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>);
+filter_by_<span style="color: #b0c4de;">indices</span>(v, <span style="color: #00ffff;">[-</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>);
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb1bba22" class="outline-4">
+<h4 id="orgb1bba22">随机数和排列</h4>
+<div class="outline-text-4" id="text-orgb1bba22">
+<p>
+<code>Maxima</code> 的随机数函数是 <code>random</code>,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #b0c4de;">random</span>(<span style="color: #7fffd4;">3</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">0</span>);                            <span style="color: #00ffff;">/*</span> &#36820;&#22238; <span style="color: #7fffd4;">0</span> &#21040; <span style="color: #7fffd4;">3</span> (&#19981;&#21253;&#25324; <span style="color: #7fffd4;">3</span>) &#30340;&#28014;&#28857;&#25968; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">random</span>(<span style="color: #7fffd4;">3</span>);                              <span style="color: #00ffff;">/*</span> &#36820;&#22238; <span style="color: #7fffd4;">0</span> &#21040; <span style="color: #7fffd4;">3</span> (&#19981;&#21253;&#25324; <span style="color: #7fffd4;">3</span>) &#30340;&#25972;&#25968; <span style="color: #00ffff;">*/</span>
+</pre>
+</div>
+
+<p>
+生成随机排列可以使用 <code>random_permutation</code> 函数或者 <code>random_perm</code> 函数,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #b0c4de;">random_permutation</span>(<span style="color: #00ffff;">[</span>a, b, c, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>); <span style="color: #00ffff;">/*</span> &#36755;&#20986; <span style="color: #00ffff;">[</span>c, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, a, b<span style="color: #00ffff;">]</span> <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">load</span>(<span style="color: #ffa07a;">"combinatorics"</span>);
+<span style="color: #b0c4de;">random_perm</span>(<span style="color: #7fffd4;">6</span>);                         <span style="color: #00ffff;">/*</span> &#36755;&#20986; <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">6</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span> <span style="color: #00ffff;">*/</span>
+</pre>
+</div>
+
+<p>
+如果想返回所有排列结果, 可以使用 <code>perms</code> 函数,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #b0c4de;">load</span>(<span style="color: #ffa07a;">"combinatorics"</span>);
+<span style="color: #b0c4de;">perms</span>(<span style="color: #7fffd4;">4</span>);                               <span style="color: #00ffff;">/*</span>
+<span style="color: #00ffff;">[[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>,
+<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>,
+<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>,
+<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>,
+<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>,
+<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]]</span>
+<span style="color: #00ffff;">*/</span>
+</pre>
+</div>
+
+<p>
+<code>permute</code> 函数可以把一个索引列表来给一个列表或者集合进行排序,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #b0c4de;">indices</span><span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">6</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>$
+lis<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[</span>a, b, c, d, e, f<span style="color: #00ffff;">]</span>$
+<span style="color: #b0c4de;">permute</span>(<span style="color: #b0c4de;">indices</span>, lis);                  <span style="color: #00ffff;">/*</span> <span style="color: #00ffff;">[</span>f, c, a, e, d, b<span style="color: #00ffff;">]</span> <span style="color: #00ffff;">*/</span>
+<span style="color: #00ffff;">/*</span> &#23454;&#38469;&#20351;&#29992;&#20013;, <span style="color: #b0c4de;">indices</span> &#21487;&#20197;&#20351;&#29992; <span style="color: #b0c4de;">random_perm</span>(<span style="color: #7fffd4;">6</span>) &#26469;&#29983;&#25104; <span style="color: #00ffff;">*/</span>
+</pre>
+</div>
+
+<p>
+由于 <code>Maxima</code> 不支持 <code>perms</code> 那种对元素全排列结果的输出, 这里可以配合 <code>permute</code> 函数来自行实现对应功能的函数,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #b0c4de;">load</span>(<span style="color: #ffa07a;">"combinatorics"</span>);
+permutes(l) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[</span>ins<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">perms</span>(<span style="color: #b0c4de;">length</span>(l))<span style="color: #00ffff;">]</span>, <span style="color: #b0c4de;">map</span>(<span style="color: #b0c4de;">lambda</span>(<span style="color: #00ffff;">[</span>x<span style="color: #00ffff;">]</span>, <span style="color: #b0c4de;">permute</span>(x, l)), ins))$
+</pre>
+</div>
+
+<p>
+<code>Maxima</code> 的随机数是是均匀分布的, <code>R</code> 语言的 <code>sample</code> 函数支持从列表中随机选取元素, 并且支持为每个元素指定权重,
+</p>
+
+<p>
+<code>sample</code> 函数在书本的前几章使用得较多, 为此我们也需要实现这个函数, 不过要分两大步骤,
+</p>
+
+<p>
+先实现按照权重设置进行抽选, 也就是轮盘选择法, 具体实现如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #00ffff;">/*</span>
+Ref1<span style="color: #00ffff;">:</span> https<span style="color: #00ffff;">://</span>stackoverflow<span style="color: #00ffff;">.</span>com<span style="color: #00ffff;">/</span>questions<span style="color: #00ffff;">/</span><span style="color: #7fffd4;">1761626</span><span style="color: #00ffff;">/</span>weighted<span style="color: #00ffff;">-</span><span style="color: #b0c4de;">random</span><span style="color: #00ffff;">-</span>numbers
+Ref2<span style="color: #00ffff;">:</span> https<span style="color: #00ffff;">://</span>en<span style="color: #00ffff;">.</span>wikipedia<span style="color: #00ffff;">.or</span>g<span style="color: #00ffff;">/</span>wiki<span style="color: #00ffff;">/</span>Fitness_prop<span style="color: #00ffff;">or</span>tionate_selection
+<span style="color: #00ffff;">*/</span>
+
+<span style="color: #00ffff;">/*</span> &#36718;&#30424;&#36873;&#25321;&#27861; <span style="color: #00ffff;">*/</span>
+<span style="color: #b0c4de;">random</span>_choice_internal(lis, weights) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[</span> rnd <span style="color: #00ffff;">]</span>,
+  rnd<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">random</span>(<span style="color: #b0c4de;">float</span>(<span style="color: #b0c4de;">lsum</span>(x, x, weights))),
+  f<span style="color: #00ffff;">or</span> i <span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">thru</span> <span style="color: #b0c4de;">length</span>(lis) <span style="color: #00ffff;">do</span> (
+    <span style="color: #00ffff;">if</span> rnd <span style="color: #00ffff;">&lt;</span> weights<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span> then <span style="color: #b0c4de;">return</span>(<span style="color: #00ffff;">[</span>lis<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span>, i<span style="color: #00ffff;">]</span>)
+    else rnd<span style="color: #00ffff;">:</span> rnd <span style="color: #00ffff;">-</span> weights<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span>
+    )
+  )$
+
+<span style="color: #b0c4de;">random</span>_choice(lis, <span style="color: #00ffff;">[</span><span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">]</span>) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(
+  <span style="color: #00ffff;">[</span>argCnt<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">length</span>(<span style="color: #b0c4de;">ARGS</span>), weights<span style="color: #00ffff;">]</span>,
+    <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">1</span> then <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Too many arguments"</span>),
+    weights<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(argCnt <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">1</span>) then <span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span> else <span style="color: #b0c4de;">makelist</span>(<span style="color: #7fffd4;">1</span>, <span style="color: #b0c4de;">length</span>(lis)),
+    <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(<span style="color: #b0c4de;">length</span>(lis) <span style="color: #00ffff;">#</span> <span style="color: #b0c4de;">length</span>(weights)) then <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"length of lis and weights doesn't match"</span>),
+    <span style="color: #b0c4de;">random</span>_choice_internal(lis, weights)<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>
+  )$
+
+test() <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[</span>n1<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">0</span>, n2<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">0</span>, n3<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">0</span>, n4<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">]</span>,
+  f<span style="color: #00ffff;">or</span> i<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">thru</span> <span style="color: #7fffd4;">15000</span> <span style="color: #00ffff;">do</span> (
+    r<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">random</span>_choice(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>),
+    <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(r <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">1</span>) then n1<span style="color: #00ffff;">:</span> n1 <span style="color: #00ffff;">+</span> <span style="color: #7fffd4;">1</span>
+    else <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(r <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">2</span>) then n2<span style="color: #00ffff;">:</span> n2 <span style="color: #00ffff;">+</span> <span style="color: #7fffd4;">1</span>
+    else <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(r <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">3</span>) then n3<span style="color: #00ffff;">:</span> n3 <span style="color: #00ffff;">+</span> <span style="color: #7fffd4;">1</span>
+    else n4<span style="color: #00ffff;">:</span> n4 <span style="color: #00ffff;">+</span> <span style="color: #7fffd4;">1</span>
+    ),
+  <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"n1 is"</span>, n1),                   <span style="color: #00ffff;">/*</span> &#25509;&#36817; <span style="color: #7fffd4;">5000</span> <span style="color: #00ffff;">*/</span>
+  <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"n2 is"</span>, n2),                   <span style="color: #00ffff;">/*</span> &#25509;&#36817; <span style="color: #7fffd4;">5000</span> <span style="color: #00ffff;">*/</span>
+  <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"n3 is"</span>, n3),                   <span style="color: #00ffff;">/*</span> &#25509;&#36817; <span style="color: #7fffd4;">2000</span> <span style="color: #00ffff;">*/</span>
+  <span style="color: #b0c4de;">print</span>(<span style="color: #ffa07a;">"n4 is"</span>, n4)                    <span style="color: #00ffff;">/*</span> &#25509;&#36817; <span style="color: #7fffd4;">3000</span> <span style="color: #00ffff;">*/</span>
+  )$
+</pre>
+</div>
+
+<p>
+在实现轮盘选择法之后, 就有可以实现整个 <code>sample</code> 函数的基础,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima"><span style="color: #b0c4de;">remove</span>_index(lst, index) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[</span>len<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">length</span>(lst), res<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[]]</span>,
+  f<span style="color: #00ffff;">or</span> i <span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">thru</span> len <span style="color: #00ffff;">do</span> (
+    <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">is</span>(i <span style="color: #00ffff;">#</span> index) then res<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">endcons</span>(lst<span style="color: #00ffff;">[</span>i<span style="color: #00ffff;">]</span>, res)
+    ),
+  res
+  )$
+
+boolp(v) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">is</span>(v <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">true</span>) <span style="color: #00ffff;">or</span> <span style="color: #b0c4de;">is</span>(v <span style="color: #00ffff;">=</span> <span style="color: #7fffd4;">false</span>)$
+
+sample(lis, <span style="color: #00ffff;">[</span><span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">]</span>) <span style="color: #00ffff;">:=</span> <span style="color: #b0c4de;">block</span>(<span style="color: #00ffff;">[</span>
+  argCnt<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">length</span>(<span style="color: #b0c4de;">ARGS</span>),
+  weights, replace<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">false</span>,
+  temp<span style="color: #00ffff;">:</span> lis, k,
+  sampleCnt, result<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">[]]</span>,
+  <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">3</span> then <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Too many arguments"</span>),
+  temp<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">numberp</span>(temp) then <span style="color: #b0c4de;">makelist</span>(i, i, temp)
+  else <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">listp</span>(temp) then temp else <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Wrong argument"</span>),
+  k<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">length</span>(temp),
+  weights<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">makelist</span>(<span style="color: #7fffd4;">1</span>, <span style="color: #b0c4de;">length</span>(temp)),
+  replace<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">false</span>,
+  <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">0</span> then (
+    <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">numberp</span>(<span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>) then (
+      k<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>,
+      <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">3</span> then <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Too many arugments"</span>),
+      <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">1</span> then (
+        <span style="color: #00ffff;">if</span> boolp(<span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>) then replace<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>
+        else <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Wrong argument type: replace, should be true or false"</span>)
+        ),
+      <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">2</span> then (
+        <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">listp</span>(<span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>) then weights<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>
+        else <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Wrong argument type: weights, should be a list"</span>)
+        )
+      )
+    else (
+      <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">2</span> then <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Too many arugments"</span>),
+      <span style="color: #00ffff;">if</span> boolp(<span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>) then replace<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>
+      else <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Wrong argument type: replace, should be true or false"</span>),
+      <span style="color: #00ffff;">if</span> argCnt <span style="color: #00ffff;">&gt;</span> <span style="color: #7fffd4;">1</span> then (
+        <span style="color: #00ffff;">if</span> <span style="color: #b0c4de;">listp</span>(<span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>) then weights<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">ARGS</span><span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>
+        else <span style="color: #b0c4de;">error</span>(<span style="color: #ffa07a;">"Wrong argument type: weights, should be a list"</span>))
+      )
+    ),
+  sampleCnt<span style="color: #00ffff;">:</span> <span style="color: #00ffff;">if</span> replace then k else <span style="color: #b0c4de;">min</span>(<span style="color: #b0c4de;">length</span>(temp), k),
+  f<span style="color: #00ffff;">or</span> i<span style="color: #00ffff;">:</span> <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">thru</span> sampleCnt <span style="color: #00ffff;">do</span> (
+    p<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">random</span>_choice_internal(temp, weights),
+    <span style="color: #00ffff;">if</span> <span style="color: #00ffff;">not</span> replace then temp<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">remove</span>_index(temp, p<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>),
+    <span style="color: #00ffff;">if</span> <span style="color: #00ffff;">not</span> replace then weights<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">remove</span>_index(weights, p<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">2</span><span style="color: #00ffff;">]</span>),
+    result<span style="color: #00ffff;">:</span> <span style="color: #b0c4de;">endcons</span>(p<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>, result)
+    ),
+  result
+  )$
+
+<span style="color: #00ffff;">/*</span> test <span style="color: #00ffff;">*/</span>
+sample(<span style="color: #7fffd4;">4</span>);
+sample(<span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">true</span>);
+sample(<span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">true</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>);
+sample(<span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>);
+sample(<span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">true</span>);
+sample(<span style="color: #7fffd4;">4</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">true</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>);
+sample(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>);
+sample(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #7fffd4;">true</span>);
+sample(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #7fffd4;">true</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>);
+sample(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #7fffd4;">3</span>);
+sample(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">true</span>);
+sample(<span style="color: #00ffff;">[</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">4</span><span style="color: #00ffff;">]</span>, <span style="color: #7fffd4;">3</span>, <span style="color: #7fffd4;">true</span>, <span style="color: #00ffff;">[</span><span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">5</span>, <span style="color: #7fffd4;">2</span>, <span style="color: #7fffd4;">3</span><span style="color: #00ffff;">]</span>);
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc45d2a9" class="outline-3">
+<h3 id="orgc45d2a9">C 语言实现</h3>
+<div class="outline-text-3" id="text-orgc45d2a9">
+</div>
+<div id="outline-container-org0da357b" class="outline-4">
+<h4 id="org0da357b">根据概率密度函数来生成随机数</h4>
+<div class="outline-text-4" id="text-org0da357b">
 <blockquote>
 <p>
 这个答案的原理是<a href="#org26c1043">均匀分布的普遍性</a>.
@@ -4188,59 +4566,54 @@ P515, 如果过渡矩阵 \(Q\) 的每一列的分量之和都为 1, 那么全部
 </blockquote>
 
 <p>
-在 C 语言中，根据概率密度函数（Probability Density Function, PDF）生成随机数通常需要以下步骤：
+在 C 语言中，根据概率密度函数(Probability Density Function, PDF)成随机数, 通常需要以下步骤:
 </p>
 
 <ol class="org-ol">
-<li>**计算累积分布函数（CDF）**：
-概率密度函数（PDF）的积分是累积分布函数（CDF）。CDF 是一个单调递增的函数，范围从 0 到 1。</li>
+<li><p>
+定义概率密度函数(PDF)
+</p>
 
-<li>**生成均匀分布的随机数**：
-使用 C 标准库中的 `rand()` 函数生成一个均匀分布在 `[0, RAND<sub>MAX</sub>]` 的随机数，并将其归一化到 `[0, 1]` 区间。</li>
+<p>
+假设你有一个 PDF，例如指数分布 \(f(x) = \lambda e^{-\lambda x}\).
+</p></li>
 
-<li>**通过逆变换采样**：
-使用逆变换采样法（Inverse Transform Sampling），将均匀分布的随机数通过 CDF 的反函数映射到目标分布。</li>
+<li><p>
+计算累积分布函数(CDF)
+</p>
+
+<p>
+对 <code>PDF</code> 进行积分, 得到 <code>CDF</code>. 例如, 指数分布的 <code>CDF</code> 是 \(F(x) = 1 - e^{-\lambda x}\).
+</p></li>
+
+<li><p>
+求 CDF 的反函数
+</p>
+
+<p>
+对于逆变换采样, 需要 CDF 的反函数. 例如, 指数分布的 <code>CDF</code> 反函数是 \(F^{-1}(u) = -\frac{\ln(1 - u)}{\lambda}\).
+</p></li>
+
+<li><p>
+生成均匀分布的随机数
+</p>
+
+<p>
+使用 <code>rand()</code> 生成均匀分布的随机数, 并归一化到 \([0, 1]\).
+</p></li>
+
+<li><p>
+通过反函数生成目标分布的随机数
+</p>
+
+<p>
+将均匀分布的随机数代入 <code>CDF</code> 的反函数, 得到目标分布的随机数.
+</p></li>
 </ol>
 
-<p>
-以下是具体的实现步骤和代码示例：
-</p>
 
 <p>
-&#x2014;
-</p>
-
-<p>
-### 实现步骤
-</p>
-
-<ol class="org-ol">
-<li>**定义概率密度函数（PDF）**：
-假设你有一个 PDF，例如指数分布 \( f(x) = \lambda e^{-\lambda x} \)。</li>
-
-<li>**计算累积分布函数（CDF）**：
-对 PDF 进行积分，得到 CDF。例如，指数分布的 CDF 是 \( F(x) = 1 - e^{-\lambda x} \)。</li>
-
-<li>**求 CDF 的反函数**：
-对于逆变换采样，需要 CDF 的反函数。例如，指数分布的 CDF 反函数是 \( F^{-1}(u) = -\frac{\ln(1 - u)}{\lambda} \)。</li>
-
-<li>**生成均匀分布的随机数**：
-使用 `rand()` 生成均匀分布的随机数，并归一化到 `[0, 1]`。</li>
-
-<li>**通过反函数生成目标分布的随机数**：
-将均匀分布的随机数代入 CDF 的反函数，得到目标分布的随机数。</li>
-</ol>
-
-<p>
-&#x2014;
-</p>
-
-<p>
-### 代码示例
-</p>
-
-<p>
-以下是一个根据指数分布生成随机数的示例：
+以下是一个根据指数分布生成随机数的示例:
 </p>
 
 <div class="org-src-container">
@@ -4249,29 +4622,29 @@ P515, 如果过渡矩阵 \(Q\) 的每一列的分量之和都为 1, 那么全部
 <span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;math.h&gt;</span>
 <span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;time.h&gt;</span>
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#25968;&#20998;&#24067;&#30340; CDF &#21453;&#20989;&#25968;</span>
-<span style="color: #98fb98;">double</span> <span style="color: #87cefa;">inverse_cdf_exponential</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">u</span>, <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">lambda</span>) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#25968;&#20998;&#24067;&#30340; CDF &#21453;&#20989;&#25968;
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">inverse_cdf_exponential</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">u</span>, <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">lambda</span>) {
     <span style="color: #00ffff;">return</span> -log(1 - u) / lambda;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22343;&#21248;&#20998;&#24067;&#30340;&#38543;&#26426;&#25968; [0, 1]</span>
-<span style="color: #98fb98;">double</span> <span style="color: #87cefa;">uniform_random</span>() {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22343;&#21248;&#20998;&#24067;&#30340;&#38543;&#26426;&#25968; [0, 1]
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">uniform_random</span>() {
     <span style="color: #00ffff;">return</span> (<span style="color: #98fb98;">double</span>)rand() / RAND_MAX;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454;&#25351;&#25968;&#20998;&#24067;&#29983;&#25104;&#38543;&#26426;&#25968;</span>
-<span style="color: #98fb98;">double</span> <span style="color: #87cefa;">exponential_random</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">lambda</span>) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454;&#25351;&#25968;&#20998;&#24067;&#29983;&#25104;&#38543;&#26426;&#25968;
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">exponential_random</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">lambda</span>) {
     <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">u</span> = uniform_random();
     <span style="color: #00ffff;">return</span> inverse_cdf_exponential(u, lambda);
 }
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
-    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#38543;&#26426;&#31181;&#23376;</span>
-    srand(time(<span style="color: #7fffd4;">NULL</span>));
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#38543;&#26426;&#31181;&#23376;
+</span>    srand(time(<span style="color: #7fffd4;">NULL</span>));
 
-    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">lambda</span> = 2.0; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#25968;&#20998;&#24067;&#30340;&#21442;&#25968;</span>
-    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">num_samples</span> = 10; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#30340;&#38543;&#26426;&#25968;&#25968;&#37327;</span>
-
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">lambda</span> = 2.0; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#25968;&#20998;&#24067;&#30340;&#21442;&#25968;
+</span>    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">num_samples</span> = 10; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#30340;&#38543;&#26426;&#25968;&#25968;&#37327;
+</span>
     printf(<span style="color: #ffa07a;">"Generated random numbers from exponential distribution (lambda = %.2f):\n"</span>, lambda);
     <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; num_samples; i++) {
         <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">sample</span> = exponential_random(lambda);
@@ -4282,163 +4655,72 @@ P515, 如果过渡矩阵 \(Q\) 的每一列的分量之和都为 1, 那么全部
 }
 </pre>
 </div>
-
-<p>
-&#x2014;
-</p>
-
-<p>
-### 代码说明
-</p>
-
-<ol class="org-ol">
-<li>**`inverse<sub>cdf</sub><sub>exponential</sub>`**：
-<ul class="org-ul">
-<li>计算指数分布的 CDF 反函数 \( F^{-1}(u) = -\frac{\ln(1 - u)}{\lambda} \)。</li>
-</ul></li>
-
-<li>**`uniform<sub>random</sub>`**：
-<ul class="org-ul">
-<li>生成一个均匀分布在 `[0, 1]` 的随机数。</li>
-</ul></li>
-
-<li>**`exponential<sub>random</sub>`**：
-<ul class="org-ul">
-<li>使用逆变换采样法生成符合指数分布的随机数。</li>
-</ul></li>
-
-<li>**`main` 函数**：
-<ul class="org-ul">
-<li>设置随机种子。</li>
-<li>生成并打印 10 个符合指数分布的随机数。</li>
-</ul></li>
-</ol>
-
-<p>
-&#x2014;
-</p>
-
-<p>
-### 输出示例
-</p>
-
-<p>
-运行上述代码后，输出可能如下（具体结果因随机性而异）：
-</p>
-
-<p>
-```
-Generated random numbers from exponential distribution (lambda = 2.00):
-0.1234
-0.5678
-0.2345
-0.6789
-0.3456
-0.7890
-0.4567
-0.8901
-0.5678
-0.9012
-```
-</p>
-
-<p>
-&#x2014;
-</p>
-
-<p>
-### 扩展到其他分布
-</p>
-
-<p>
-如果需要根据其他分布生成随机数，只需替换以下部分：
-</p>
-
-<ol class="org-ol">
-<li>**PDF 和 CDF**：
-<ul class="org-ul">
-<li>定义目标分布的 PDF 和 CDF。</li>
-<li>计算 CDF 的反函数。</li>
-</ul></li>
-
-<li>**反函数**：
-<ul class="org-ul">
-<li>在 `inverse<sub>cdf</sub><sub>exponential</sub>` 中实现目标分布的反函数。</li>
-</ul></li>
-</ol>
-
-<p>
-例如，对于正态分布，可以使用 Box-Muller 变换或 Ziggurat 算法来生成随机数。
-</p>
-
-<p>
-&#x2014;
-</p>
-
-<p>
-希望这段代码和说明对你有帮助！如果有其他问题，欢迎继续提问。
-</p>
 </div>
 </div>
-<div id="outline-container-orgefac3b2" class="outline-3">
-<h3 id="orgefac3b2">C语言如何根据概率质量函数来生成随机数</h3>
-<div class="outline-text-3" id="text-orgefac3b2">
+<div id="outline-container-org59020fa" class="outline-4">
+<h4 id="org59020fa">根据概率质量函数来生成随机数</h4>
+<div class="outline-text-4" id="text-org59020fa">
 <blockquote>
 <p>
 这个答案的原理是<a href="#org2a8c1e6">均匀分布普遍性在PMF上的适用程度</a>.
 </p>
+
+<p>
+该算法的有一个名字: 轮盘选择法, 这里实现方法更接近数学的描述, 下面是其它实现的参考:
+</p>
+
+<p>
+Ref1: <a href="https://stackoverflow.com/questions/1761626/weighted-random-numbers">https://stackoverflow.com/questions/1761626/weighted-random-numbers</a>
+Ref2: <a href="https://en.wikipedia.org/wiki/Fitness_proportionate_selection">https://en.wikipedia.org/wiki/Fitness_proportionate_selection</a>
+</p>
+
+<p>
+前面的 <code>Maxima</code> 中也有实现.
+</p>
 </blockquote>
 
 <p>
-在 C 语言中，根据概率质量函数（Probability Mass Function, PMF）生成随机数通常需要以下步骤：
+在 C 语言中，根据概率质量函数(Probability Mass Function, PMF)生成随机数, 通常需要以下步骤：
 </p>
 
 <ol class="org-ol">
-<li>**定义概率质量函数（PMF）**：
-明确每个可能取值的概率。</li>
+<li><p>
+定义 <code>PMF</code>
+</p>
 
-<li>**计算累积分布函数（CDF）**：
-将 PMF 转换为累积分布函数（CDF），即每个值的累积概率。</li>
+<p>
+假设有一个离散分布, 例如掷骰子, 每个值的概率为 \(P(X = x)\).
+</p></li>
 
-<li>**生成均匀分布的随机数**：
-使用 `rand()` 函数生成一个均匀分布在 `[0, RAND<sub>MAX</sub>]` 的随机数，并将其归一化到 `[0, 1]` 区间。</li>
+<li><p>
+计算 <code>CDF</code>
+</p>
 
-<li>**通过逆变换采样**：
-使用逆变换采样法（Inverse Transform Sampling），将均匀分布的随机数与 CDF 进行比较，找到对应的随机值。</li>
+<p>
+计算每个值的累积概率. 例如, 对于骰子, <code>CDF</code> 为：
+</p>
+
+<p>
+\(F(1) = P(X \leq 1), \quad F(2) = P(X \leq 2), \quad \ldots, \quad F(6) = P(X \leq 6)\).
+</p></li>
+
+<li><p>
+生成均匀分布的随机数
+</p>
+
+<p>
+使用 <code>rand()</code> 生成一个均匀分布的随机数 \(u \in [0, 1]\).
+</p></li>
+
+<li><p>
+通过 <code>CDF</code> 找到对应的随机值
+</p>
+
+<p>
+找到满足 \(F(x-1) < u \leq F(x)\) 的 \(x\), 即为生成的随机数.
+</p></li>
 </ol>
 
-<p>
-&#x2014;
-</p>
-
-<p>
-### 实现步骤
-</p>
-
-<ol class="org-ol">
-<li>**定义 PMF**：
-假设你有一个离散分布，例如掷骰子，每个值的概率为 \( P(X = x) \)。</li>
-
-<li>**计算 CDF**：
-计算每个值的累积概率。例如，对于骰子，CDF 为：
-\[
-   F(1) = P(X \leq 1), \quad F(2) = P(X \leq 2), \quad \ldots, \quad F(6) = P(X \leq 6)
-   \]</li>
-
-<li>**生成均匀分布的随机数**：
-使用 `rand()` 生成一个均匀分布的随机数 \( u \in [0, 1] \)。</li>
-
-<li>**通过 CDF 找到对应的随机值**：
-找到满足 \( F(x-1) < u \leq F(x) \) 的 \( x \)，即为生成的随机数。</li>
-</ol>
-
-<p>
-&#x2014;
-</p>
-
-<p>
-### 代码示例
-</p>
 
 <p>
 以下是一个根据离散分布生成随机数的示例：
@@ -4449,40 +4731,40 @@ Generated random numbers from exponential distribution (lambda = 2.00):
 <span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
 <span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;time.h&gt;</span>
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#27010;&#29575;&#36136;&#37327;&#20989;&#25968;&#65288;PMF&#65289;</span>
-<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">pmf</span>[] = {0.1, 0.2, 0.3, 0.2, 0.15, 0.05}; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31034;&#20363;&#65306;6 &#20010;&#31163;&#25955;&#20540;&#30340;&#27010;&#29575;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">num_values</span> = <span style="color: #00ffff;">sizeof</span>(pmf) / <span style="color: #00ffff;">sizeof</span>(pmf[0]);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#27010;&#29575;&#36136;&#37327;&#20989;&#25968;&#65288;PMF&#65289;
+</span><span style="color: #98fb98;">double</span> <span style="color: #eedd82;">pmf</span>[] = {0.1, 0.2, 0.3, 0.2, 0.15, 0.05}; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31034;&#20363;&#65306;6 &#20010;&#31163;&#25955;&#20540;&#30340;&#27010;&#29575;
+</span><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">num_values</span> = <span style="color: #00ffff;">sizeof</span>(pmf) / <span style="color: #00ffff;">sizeof</span>(pmf[0]);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#32047;&#31215;&#20998;&#24067;&#20989;&#25968;&#65288;CDF&#65289;</span>
-<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">compute_cdf</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">pmf</span>[], <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">cdf</span>[], <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#32047;&#31215;&#20998;&#24067;&#20989;&#25968;&#65288;CDF&#65289;
+</span><span style="color: #98fb98;">void</span> <span style="color: #87cefa;">compute_cdf</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">pmf</span>[], <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">cdf</span>[], <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>) {
     cdf[0] = pmf[0];
     <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 1; i &lt; n; i++) {
         cdf[i] = cdf[i - 1] + pmf[i];
     }
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454; CDF &#29983;&#25104;&#38543;&#26426;&#25968;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">generate_random_value</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">cdf</span>[], <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>) {
-    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">u</span> = (<span style="color: #98fb98;">double</span>)rand() / RAND_MAX; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104; [0, 1] &#30340;&#22343;&#21248;&#38543;&#26426;&#25968;</span>
-    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; n; i++) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454; CDF &#29983;&#25104;&#38543;&#26426;&#25968;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">generate_random_value</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">cdf</span>[], <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>) {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">u</span> = (<span style="color: #98fb98;">double</span>)rand() / RAND_MAX; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104; [0, 1] &#30340;&#22343;&#21248;&#38543;&#26426;&#25968;
+</span>    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; n; i++) {
         <span style="color: #00ffff;">if</span> (u &lt;= cdf[i]) {
-            <span style="color: #00ffff;">return</span> i + 1; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36820;&#22238;&#23545;&#24212;&#30340;&#38543;&#26426;&#20540;</span>
-        }
+            <span style="color: #00ffff;">return</span> i + 1; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36820;&#22238;&#23545;&#24212;&#30340;&#38543;&#26426;&#20540;
+</span>        }
     }
-    <span style="color: #00ffff;">return</span> n; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524; u &gt; cdf[n-1]&#65292;&#36820;&#22238;&#26368;&#21518;&#19968;&#20010;&#20540;</span>
-}
+    <span style="color: #00ffff;">return</span> n; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524; u &gt; cdf[n-1]&#65292;&#36820;&#22238;&#26368;&#21518;&#19968;&#20010;&#20540;
+</span>}
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
-    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#38543;&#26426;&#31181;&#23376;</span>
-    srand(time(<span style="color: #7fffd4;">NULL</span>));
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#38543;&#26426;&#31181;&#23376;
+</span>    srand(time(<span style="color: #7fffd4;">NULL</span>));
 
-    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639; CDF</span>
-    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">cdf</span>[num_values];
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639; CDF
+</span>    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">cdf</span>[num_values];
     compute_cdf(pmf, cdf, num_values);
 
-    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#38543;&#26426;&#25968;</span>
-    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">num_samples</span> = 20; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#30340;&#38543;&#26426;&#25968;&#25968;&#37327;</span>
-    printf(<span style="color: #ffa07a;">"Generated random numbers from PMF:\n"</span>);
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#38543;&#26426;&#25968;
+</span>    <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">num_samples</span> = 20; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#30340;&#38543;&#26426;&#25968;&#25968;&#37327;
+</span>    printf(<span style="color: #ffa07a;">"Generated random numbers from PMF:\n"</span>);
     <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; num_samples; i++) {
         <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">value</span> = generate_random_value(cdf, num_values);
         printf(<span style="color: #ffa07a;">"%d "</span>, value);
@@ -4494,116 +4776,253 @@ Generated random numbers from exponential distribution (lambda = 2.00):
 
 </pre>
 </div>
-
+</div>
+</div>
+<div id="outline-container-org6078076" class="outline-4">
+<h4 id="org6078076">蒙特卡洛积分 (Monte Carlo Integration)</h4>
+<div class="outline-text-4" id="text-org6078076">
 <p>
-&#x2014;
+蒙特卡洛方法把求解的问题转化为解某一随机事件的概率, 通过大量重复的随机抽样, 然后统计结果来逼近真实答案.
 </p>
 
 <p>
-### 代码说明
+当一个问题的答案无法被精确计算时, 蒙特卡洛方法就非常有用.
+</p>
+
+<p>
+比如模拟圆周率的值, 可以取一个 \(2 \times 2\) 的正方形, 里面嵌入一个半径为 1 的圆,
+</p>
+
+<p>
+它们的面积分别为 \(4\) 和 \(\pi\), 随机往这个正方形区域抛硬币 \(M\) 次,
+</p>
+
+<p>
+统计落在圆内的次数为 \(N\), 圆和正方形之间的面积比为硬币落入圆的概率: \(\frac{N}{M}\),
+</p>
+
+<p>
+利用该概率可以得出圆形的面积为 \(\pi \approx \frac{4 \pi}{M}\), 而圆的面积则是作为计算积分.
+</p>
+
+<p>
+这个例子完美体现了蒙特卡洛方法的核心: <b>用频率估计概率, 用样本均值估计总体均值</b>.
+</p>
+
+<p>
+书本上使用程序进行模拟采样其实就是蒙特卡洛方法.
+</p>
+
+<p>
+蒙特卡洛方法还有一个重要用途, 那就是估算任意函数的积分, 这里举一个例子 - 打靶问题:
+</p>
+
+<p>
+设 \(x\) 表示射击运动员的着弹点到靶心的距离, \(f(x)\) 表示击中 \(x\) 处相应的得分，概率密度函数 \(p(x)\) 表示该运动员的着弹点分布.
+</p>
+
+<p>
+通常用 \(f(x)\) 的数学期望衡量该运动员的射击水平，这是一个随机变量的函数的数学期望: \(E\left[f(x)\right] = \int_{0}^{+\infty} f(x) p(x) dx\),
+</p>
+
+<p>
+为了得到该期望, 可使用蒙特卡洛模拟, 让该射击运动员射击 \(n\) 次, 得到样本 \(x_1, x_2, \dots, x_n\).
+</p>
+
+<p>
+用样本的算术平均数作为对 \(f(x)\) 的数学期望的 <b>估计</b> (大数定律), 令 \(p(x) \approx \frac{1}{n}\), 可得: \(\bar{f_n} = \frac{1}{n} \sum\limits_{i=1}^{n} f(x_i) \approx E\left[f(x)\right]\).
+</p>
+
+<p>
+这个例子告诉我们, <b>可以把求积分转换成求概率, 再转换成求期望, 然后配合蒙特卡洛方法进行模拟取样, 对样本求均值即可估计得出积分</b>,
+</p>
+
+<p>
+这就是蒙特卡洛积分. 把打靶问题进行一般化, 对任意函数 \(f(x)\) 进行积分:
 </p>
 
 <ol class="org-ol">
-<li>**`pmf` 数组**：
-<ul class="org-ul">
-<li>定义概率质量函数。例如，`pmf = {0.1, 0.2, 0.3, 0.2, 0.15, 0.05}` 表示 6 个离散值的概率。</li>
-</ul></li>
+<li>转换成求期望, \(\int_{a}^{b}f(x)dx = \int_{a}^{b} \frac{f(x)}{p(x)} p(x) dx = E\left[\frac{f(x)}{p(x)}\right]\), 其中 \(p\) 是随机变量 \(X\) 的任意概率密度函数;</li>
 
-<li>**`compute<sub>cdf</sub>` 函数**：
-<ul class="org-ul">
-<li>计算累积分布函数（CDF）。例如，`cdf = {0.1, 0.3, 0.6, 0.8, 0.95, 1.0}`。</li>
-</ul></li>
-
-<li>**`generate<sub>random</sub><sub>value</sub>` 函数**：
-<ul class="org-ul">
-<li>生成均匀分布的随机数 \( u \in [0, 1] \)。</li>
-<li>通过比较 \( u \) 和 CDF，找到对应的随机值。</li>
-</ul></li>
-
-<li>**`main` 函数**：
-<ul class="org-ul">
-<li>设置随机种子。</li>
-<li>计算 CDF。</li>
-<li>生成并打印 20 个随机数。</li>
-</ul></li>
+<li>配合蒙特卡洛方法在区间 \(x \in [a, b]\) 上采样 \(n\) 次, 并计算均值 \(\int_{a}^{b}f(x)dx \approx \frac{1}{n} \sum\limits_{i=1}^{n} \frac{f(x)}{p(x)}\).</li>
 </ol>
 
+
 <p>
-&#x2014;
+关于 \(p\), 它可以是任意概率密度函数, 但如果 \(p\) 与 \(f\) (分布)近似程度越高, 换句话说, 尽量使得 \(\frac{f(x)}{p(x)}\) 为一个常数,
 </p>
 
 <p>
-### 输出示例
+这样就可以需要少量的采样数来达到较为精确的结果. 但这样的采样就是有偏向的了, 因此这种采样法被称为重要性采样(<code>Importance Sampling</code>).
 </p>
 
 <p>
-运行上述代码后，输出可能如下（具体结果因随机性而异）：
+为什么会这样? 可以回想一下, 函数 \(f(x)\) 的积分为 \(\frac{f(x)}{p(x)}\) 的期望: \(E\left[\frac{f(x)}{p(x)}\right]\),
 </p>
 
 <p>
-```
-Generated random numbers from PMF:
-3 2 4 1 3 5 2 6 3 4 2 1 3 5 4 2 3 1 4 2
-```
+随机变量的 \(X\) 方差描述了 \(X = x\) 与期望 \(E(X)\) 之间的距离, 因此可通过计算估算结果 \(\frac{1}{n} \sum\limits_{i=1}^{n} \frac{f(x)}{p(x)}\) 的方差来衡量与实际积分的差距:
 </p>
 
 <p>
-&#x2014;
+令 \(Y_i = \frac{f(x_i)}{g(x_i)}\), \(\text{Var}(\frac{1}{n} \sum\limits_{i=1}^{n} Y_i) = \frac{1}{n^2}\text{Var}(\sum\limits_{i=1}^{n}Y_i)\), 而 \(Y_1, Y_2, \dots, Y_n\) 是 <code>i.i.d</code>, 假设它们的方差分别为 \(\text{Var}(Y)\),
 </p>
 
 <p>
-### 扩展到其他离散分布
+根据 <a href="#org3bfbb2c">3.2</a> 和 <a href="#orgbc4b01a">3.3</a>, \(\frac{1}{n^2}\text{Var}(\sum \limits_{i=1}^n Y_i) = \frac{1}{n^2} n \text{Var}(Y) = \frac{\text{Var}(Y)}{n}\).
 </p>
 
 <p>
-如果需要根据其他离散分布生成随机数，只需替换以下部分：
-</p>
-
-<ol class="org-ol">
-<li>**PMF**：
-<ul class="org-ul">
-<li>定义目标分布的 PMF。</li>
-</ul></li>
-
-<li>**CDF**：
-<ul class="org-ul">
-<li>使用 `compute<sub>cdf</sub>` 函数计算 CDF。</li>
-</ul></li>
-
-<li>**随机数生成**：
-<ul class="org-ul">
-<li>使用 `generate<sub>random</sub><sub>value</sub>` 函数生成随机数。</li>
-</ul></li>
-</ol>
-
-<p>
-&#x2014;
+当 \(Y = \frac{f(x)}{p(x)}\) 接近常数时, \(\text{Var}(Y)\) 就接近于 0, \(\text{Var}(\frac{1}{n} \sum\limits_{i=1}^{n}Y_i) \to 0\), 换句话说就是 \(\frac{1}{n} \sum\limits_{i=1}^{n} \frac{f(x)}{p(x)}\) 越接近 \(E\left[\frac{f(x)}{p(x)}\right]\).
 </p>
 
 <p>
-### 示例：掷骰子
+不过, 为了便于学习理解, 这里把 \(p\) 设定成均匀分布概率密度函数: \(p(x) = \frac{1}{b - a}\), \(\int_{a}^{b} f(x) dx \approx \frac{b - a}{n} \sum\limits_{i=1}^{n} f(x)\),
 </p>
 
+<blockquote>
 <p>
-假设你有一个公平的骰子，每个值的概率为 \( \frac{1}{6} \)，可以定义 PMF 如下：
+同样, 增加 \(n\) 的大小也可以让误差变小, 这就对应了大数定律.
+</p>
+</blockquote>
+
+<p>
+以下是 <code>C</code> 语言实现:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">double</span> <span style="color: #eedd82;">pmf</span>[] = {1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6};
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span> <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29992;&#20110; rand() &#21644; srand()
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;time.h&gt;</span>   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29992;&#20110; time()
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;math.h&gt;</span>   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29992;&#20110; sin() &#21644; pow()
+</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#35201;&#31215;&#20998;&#30340;&#20989;&#25968;, &#20854;&#21453;&#23548;&#25968;&#20026; -cos(x)
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">f</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x</span>) {
+    <span style="color: #00ffff;">return</span> sin(x);
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#33945;&#29305;&#21345;&#27931;&#26041;&#27861;&#35745;&#31639;&#19968;&#32500;&#31215;&#20998;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">a: &#31215;&#20998;&#19979;&#38480;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">b: &#31215;&#20998;&#19979;&#38480;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">n: &#26679;&#26412;&#28857;&#25968;&#37327;
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">monte_carlo_integrate</span>(<span style="color: #98fb98;">double</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">b</span>, <span style="color: #98fb98;">long</span> <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">n</span>) {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">sum</span> = 0.0;
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">x</span>;
+    <span style="color: #98fb98;">long</span> <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">i</span>;
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#38543;&#26426;&#25968;&#31181;&#23376;&#65292;&#30830;&#20445;&#27599;&#27425;&#36816;&#34892;&#32467;&#26524;&#19981;&#21516;
+</span>    srand(time(<span style="color: #7fffd4;">NULL</span>));
+
+    <span style="color: #00ffff;">for</span> (i = 0; i &lt; n; i++) {
+        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104; [0, 1) &#33539;&#22260;&#20869;&#30340;&#38543;&#26426;&#25968;
+</span>        <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">random_factor</span> = (<span style="color: #98fb98;">double</span>)rand() / RAND_MAX;
+        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23558;&#38543;&#26426;&#25968;&#26144;&#23556;&#21040;&#21306;&#38388; [a, b)
+</span>        x = a + random_factor * (b - a);
+        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#20989;&#25968;&#20540;&#24182;&#32047;&#21152;
+</span>        sum += f(x);
+    }
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36820;&#22238;&#33945;&#29305;&#21345;&#27931;&#20272;&#35745;&#20540;
+</span>    <span style="color: #00ffff;">return</span> (b - a) * sum / n;
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">a</span> = 0.0;      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31215;&#20998;&#19979;&#38480;
+</span>    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">b</span> = 1.0;      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31215;&#20998;&#19978;&#38480;
+</span>    <span style="color: #98fb98;">long</span> <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">n</span> = 1000000; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26679;&#26412;&#28857;&#25968;&#37327;
+</span>    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">result</span>, <span style="color: #eedd82;">exact</span>;
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#33945;&#29305;&#21345;&#27931;&#31215;&#20998;
+</span>    result = monte_carlo_integrate(a, b, n);
+    exact = 1 - cos(1); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#31934;&#30830;&#20540;&#29992;&#20110;&#27604;&#36739;: -cos(1) + cos(0)
+</span>
+    printf(<span style="color: #ffa07a;">"&#33945;&#29305;&#21345;&#27931;&#31215;&#20998;&#32467;&#26524;: %.8f\n"</span>, result);
+    printf(<span style="color: #ffa07a;">"&#31934;&#30830;&#31215;&#20998;&#32467;&#26524;: %.8f\n"</span>, exact);
+    printf(<span style="color: #ffa07a;">"&#32477;&#23545;&#35823;&#24046;: %.8f\n"</span>, fabs(result - exact));
+    printf(<span style="color: #ffa07a;">"&#30456;&#23545;&#35823;&#24046;: %.6f%%\n"</span>, 100 * fabs(result - exact) / exact);
+
+    <span style="color: #00ffff;">return</span> 0;
+}
 </pre>
 </div>
 
 <p>
-然后运行上述代码即可生成符合骰子分布的随机数。
+蒙特卡洛积分可以推广到多重积分上, 比如这里的 \(d\) 重积分, 采样 \(n\) 次,
 </p>
 
 <p>
-&#x2014;
+\(\begin{equation*} \begin{aligned} & \int_{a_d}^{b_d} \dots \int_{a_2}^{b_2}\int_{a_1}^{b_1} f(x_1, x_2, \dots, x_d) dx_1 dx_2 \dots dx_d \\ & = \int_{a_d}^{b_d} \dots \int_{a_2}^{b_2}\int_{a_1}^{b_1} \frac{f(x_1, x_2, \dots, x_d)}{p(x_1, x_2, \dots, x_d)} p(x_1, x_2, \dots, x_d) dx_1 dx_2 \dots dx_d \\ & = E\left[\frac{f(x_1, x_2, \dots, x_d)}{p(x_1, x_2, \dots, x_d)}\right] \\ & \approx \frac{1}{n} \sum \limits_{i=1}^{n} \frac{f(x_{i1}, x_{i2}, \dots, x_{id})}{ p(x_{i1}, x_{i2}, \dots, x_{id})} \end{aligned} \end{equation*}\),
 </p>
 
 <p>
-希望这段代码和说明对你有帮助！如果有其他问题，欢迎继续提问。
+为了方便学习, 这里假设 \(p\) 是随机变量之间独立的高维均匀分布概率密度函数: \(p(x_1, x_2, \dots, x_d) = \frac{1}{\left[ \prod_{j=1}^d (b_j - a_j) \right]}\), 那么:
 </p>
+
+<p>
+\(\int_{a_d}^{b_d} \dots \int_{a_2}^{b_2}\int_{a_1}^{b_1} f(x_1, x_2, \dots, x_d) dx_1 dx_2 \dots dx_d \approx \left[ \prod_{j=1}^d (b_j - a_j) \right] \frac{1}{n} \sum\limits_{i=1}^{n} f(x_{i1}, x_{i2}, \dots, x_{id})\).
+</p>
+
+<p>
+以下是它的 <code>C</code> 语言实现:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;time.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;math.h&gt;</span>
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21160;&#24577;&#20998;&#37197;&#30340;&#22810;&#32500;&#25968;&#32452;&#37319;&#26679;
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">monte_carlo_nd</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">dimensions</span>, <span style="color: #98fb98;">double</span>* <span style="color: #eedd82;">lower_bounds</span>, <span style="color: #98fb98;">double</span>* <span style="color: #eedd82;">upper_bounds</span>,
+                     <span style="color: #98fb98;">long</span> <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">samples</span>, <span style="color: #98fb98;">double</span> (*<span style="color: #87cefa;">func</span>)(<span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">double</span>*)) {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">total</span> = 0.0;
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">hypervolume</span> = 1.0;
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#36229;&#20307;&#31215;
+</span>    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">d</span> = 0; d &lt; dimensions; d++) {
+        hypervolume *= (upper_bounds[d] - lower_bounds[d]);
+    }
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20998;&#37197;&#26679;&#26412;&#28857;&#20869;&#23384;
+</span>    <span style="color: #98fb98;">double</span>* <span style="color: #eedd82;">point</span> = (<span style="color: #98fb98;">double</span>*)malloc(dimensions * <span style="color: #00ffff;">sizeof</span>(<span style="color: #98fb98;">double</span>));
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#38543;&#26426;&#31181;&#23376;
+</span>    <span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">timespec</span> <span style="color: #eedd82;">ts</span>;
+    clock_gettime(CLOCK_MONOTONIC, &amp;ts);
+    srand((<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span>)ts.tv_nsec);
+
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">long</span> <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">i</span> = 0; i &lt; samples; i++) {
+        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;d&#32500;&#38543;&#26426;&#28857;
+</span>        <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">d</span> = 0; d &lt; dimensions; d++) {
+            point[d] = lower_bounds[d] + (<span style="color: #98fb98;">double</span>)rand() / RAND_MAX *
+                      (upper_bounds[d] - lower_bounds[d]);
+        }
+        total += func(dimensions, point);
+    }
+
+    free(point);
+    <span style="color: #00ffff;">return</span> hypervolume * total / samples;
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31034;&#20363;&#65306;d&#32500;&#39640;&#26031;&#20989;&#25968;
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">gaussian_nd</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">dim</span>, <span style="color: #98fb98;">double</span>* <span style="color: #eedd82;">x</span>) {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">sum_sq</span> = 0.0;
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; dim; i++) {
+        sum_sq += x[i] * x[i];
+    }
+    <span style="color: #00ffff;">return</span> exp(-sum_sq);
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31034;&#20363;&#65306;d&#32500;&#20056;&#31215;&#20989;&#25968;
+</span><span style="color: #98fb98;">double</span> <span style="color: #87cefa;">product_sin</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">dim</span>, <span style="color: #98fb98;">double</span>* <span style="color: #eedd82;">x</span>) {
+    <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">result</span> = 1.0;
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0; i &lt; dim; i++) {
+        result *= sin(M_PI * x[i]);
+    }
+    <span style="color: #00ffff;">return</span> result;
+}
+</pre>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -4611,7 +5030,7 @@ Generated random numbers from PMF:
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2024-11-01</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.1 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.2 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

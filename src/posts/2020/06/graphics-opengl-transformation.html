@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-06-03 Tue 02:53 -->
+<!-- 2025-07-06 Sun 23:35 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学-OpenGL坐标变换</title>
@@ -233,41 +233,40 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org36092a5">1. 几个该清楚的概念</a>
+<li><a href="#org57b2381">1. 几个该清楚的概念</a>
 <ul>
-<li><a href="#org2cff768">1.1. 齐次空间</a></li>
-<li><a href="#org99f12d5">1.2. 平面方程</a></li>
+<li><a href="#orgce6dad4">1.1. 齐次空间</a></li>
+<li><a href="#org3bc8ca8">1.2. 平面方程</a></li>
 </ul>
 </li>
-<li><a href="#orgadffbca">2. OpenGL 中对象的变换历程</a>
+<li><a href="#orgb48aa13">2. OpenGL 中对象的变换历程</a>
 <ul>
-<li><a href="#org2a61c65">2.1. 对象坐标系</a></li>
-<li><a href="#orgc684f99">2.2. 世界坐标系</a></li>
-<li><a href="#org161b75a">2.3. 从对象坐标系到世界坐标系的变换</a></li>
-<li><a href="#org91948f7">2.4. 视点坐标系</a></li>
+<li><a href="#org5ba5ef1">2.1. 对象坐标系</a></li>
+<li><a href="#org4367ae1">2.2. 世界坐标系</a></li>
+<li><a href="#org9d10248">2.3. 从对象坐标系到世界坐标系的变换</a></li>
+<li><a href="#org4f20009">2.4. 视点坐标系</a></li>
 <li><a href="#from-world-to-view">2.5. 从世界坐标系到视点坐标系的变换</a>
 <ul>
-<li><a href="#org2345ee4">2.5.1. 法线向量变换</a></li>
-<li><a href="#org724d9dc">2.5.2. 法线贴图 (Normal Texture)</a></li>
-<li><a href="#orgdc7dc49">2.5.3. 视差贴图 (Parallax Map)</a></li>
+<li><a href="#orgcdb7339">2.5.1. 法线向量变换</a></li>
+<li><a href="#orga52a720">2.5.2. 法线贴图 (Normal Texture)</a></li>
 </ul>
 </li>
-<li><a href="#orgef15283">2.6. 3D转化成2D图像</a>
+<li><a href="#org45c1ba1">2.6. 3D转化成2D图像</a>
 <ul>
-<li><a href="#org7e8c7d3">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
-<li><a href="#org86ed7d8">2.6.2. 透视投影</a></li>
+<li><a href="#orgb8e060f">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
+<li><a href="#org832030b">2.6.2. 透视投影</a></li>
 <li><a href="#depth-buffer">2.6.3. 透视投影 - Depth Buffer</a></li>
-<li><a href="#org7ff4e2a">2.6.4. 透视投影 - FOV (Field of View)</a></li>
+<li><a href="#org0d90096">2.6.4. 透视投影 - FOV (Field of View)</a></li>
 <li><a href="#orthographic-projection">2.6.5. 正交投影</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org9d6cccd">3. 接下来</a></li>
+<li><a href="#org3f98a12">3. 接下来</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org921472e">
+<div class="abstract" id="orgf87528b">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -289,19 +288,19 @@
 </p>
 
 </div>
-<div id="outline-container-org36092a5" class="outline-2">
-<h2 id="org36092a5"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
+<div id="outline-container-org57b2381" class="outline-2">
+<h2 id="org57b2381"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
 <div class="outline-text-2" id="text-1">
 </div>
-<div id="outline-container-org2cff768" class="outline-3">
-<h3 id="org2cff768"><span class="section-number-3">1.1.</span> 齐次空间</h3>
+<div id="outline-container-orgce6dad4" class="outline-3">
+<h3 id="orgce6dad4"><span class="section-number-3">1.1.</span> 齐次空间</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 </p>
 
 
-<div id="org0ba7787" class="figure">
+<div id="orgb27e3eb" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -392,8 +391,8 @@
 </ol>
 </div>
 </div>
-<div id="outline-container-org99f12d5" class="outline-3">
-<h3 id="org99f12d5"><span class="section-number-3">1.2.</span> 平面方程</h3>
+<div id="outline-container-org3bc8ca8" class="outline-3">
+<h3 id="org3bc8ca8"><span class="section-number-3">1.2.</span> 平面方程</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 这里先约定一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
@@ -412,7 +411,7 @@
 </p>
 
 
-<div id="org051910d" class="figure">
+<div id="org17cfc47" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png" />
 </p>
 </div>
@@ -507,11 +506,11 @@
 </div>
 </div>
 </div>
-<div id="outline-container-orgadffbca" class="outline-2">
-<h2 id="orgadffbca"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
+<div id="outline-container-orgb48aa13" class="outline-2">
+<h2 id="orgb48aa13"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-2">
 
-<div id="orgfcec531" class="figure">
+<div id="org852a3ab" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png" width="700px" />
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -537,8 +536,8 @@
 如果这些都不理解的话,很容易会因为用错坐标系得到错误的计算结果,比如在以后的光照计算中.
 </p>
 </div>
-<div id="outline-container-org2a61c65" class="outline-3">
-<h3 id="org2a61c65"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
+<div id="outline-container-org5ba5ef1" class="outline-3">
+<h3 id="org5ba5ef1"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
@@ -571,8 +570,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-orgc684f99" class="outline-3">
-<h3 id="orgc684f99"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
+<div id="outline-container-org4367ae1" class="outline-3">
+<h3 id="org4367ae1"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 在 <code>OpenGL</code> 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
@@ -601,8 +600,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org161b75a" class="outline-3">
-<h3 id="org161b75a"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
+<div id="outline-container-org9d10248" class="outline-3">
+<h3 id="org9d10248"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 上面中, \(A\) 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, \(B\) 过程是对象经历了从对象坐标系到世界坐标系的变换,
@@ -647,8 +646,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org91948f7" class="outline-3">
-<h3 id="org91948f7"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
+<div id="outline-container-org4f20009" class="outline-3">
+<h3 id="org4f20009"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 <code>OpenGL</code> 中也有类似的存在,叫做 <code>viewer</code>,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinate system).
@@ -701,21 +700,21 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgeb8870c" class="figure">
+<div id="orgf97ca19" class="figure">
 <p><img src="../../../files/camera-opposite-to-object.png" alt="camera-opposite-to-object.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 3: </span>物体平移上在视觉上的相反: 当相机往原点平移时, 物体在视觉上也是往原点平移, 双方平移的方向相反.</p>
 </div>
 
 
-<div id="orgad12c6f" class="figure">
+<div id="orgca077d2" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif" />
 </p>
 <p><span class="figure-number">Figure 4: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(x\) 轴往逆时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(x\) 轴往顺时针方向旋转.</p>
 </div>
 
 
-<div id="orgf9dfc42" class="figure">
+<div id="orgc6c8a2e" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif" />
 </p>
 <p><span class="figure-number">Figure 5: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(y\) 轴往顺时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(y\) 轴往逆时针方向旋转.</p>
@@ -849,8 +848,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 最后会得到一个新的坐标点 \(p_{e} = M_{view}p_{m} = \left(x_{e}, y_{e}, z_{e}\right)\).
 </p>
 </div>
-<div id="outline-container-org2345ee4" class="outline-4">
-<h4 id="org2345ee4"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
+<div id="outline-container-orgcdb7339" class="outline-4">
+<h4 id="orgcdb7339"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
 <div class="outline-text-4" id="text-2-5-1">
 <p>
 别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的,目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案,这个方案用到法线向量.
@@ -877,7 +876,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org511e8bd" class="figure">
+<div id="org1a3cbdc" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png" />
 </p>
 </div>
@@ -891,7 +890,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgaa92f68" class="figure">
+<div id="org8e510f7" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png" />
 </p>
 </div>
@@ -925,7 +924,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org0c82316" class="figure">
+<div id="org4cb05ed" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png" />
 </p>
 </div>
@@ -1033,8 +1032,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org724d9dc" class="outline-4">
-<h4 id="org724d9dc"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
+<div id="outline-container-orga52a720" class="outline-4">
+<h4 id="orga52a720"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
 <div class="outline-text-4" id="text-2-5-2">
 <blockquote>
 <p>
@@ -1141,7 +1140,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgcff18ca" class="figure">
+<div id="orgf5b58aa" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1152,18 +1151,18 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-\(\begin{equation}\left\{\begin{aligned}
-A_{1} - A_{0} &= (x_{10}, y_{10}, z_{10}) = \Delta_{U1} T + \Delta_{V1} B = \Delta_{U1}(x_{T}, y_{T}, z_{T}) + \Delta_{V1} (x_{B}, y_{B}, z_{B}) \\
-A_{2} - A_{0} &= (x_{20}, y_{20}, z_{20}) = \Delta_{U2} T + \Delta_{V2} B = \Delta_{U2}(x_{T}, y_{T}, z_{T}) + \Delta_{V2} (x_{B}, y_{B}, z_{B})
-\end{aligned}\right.\end{equation}\)
+\(\begin{equation*}\left\{\begin{aligned}
+A_{1} - A_{0} &= (x_{01}, y_{01}, z_{01}) = \Delta_{U1} T + \Delta_{V1} B = \Delta_{U1}(x_{T}, y_{T}, z_{T}) + \Delta_{V1} (x_{B}, y_{B}, z_{B}) \\
+A_{2} - A_{0} &= (x_{02}, y_{02}, z_{02}) = \Delta_{U2} T + \Delta_{V2} B = \Delta_{U2}(x_{T}, y_{T}, z_{T}) + \Delta_{V2} (x_{B}, y_{B}, z_{B})
+\end{aligned}\right.\end{equation*}\)
 </p>
 
 <p>
-\(\begin{equation} \left(\begin{array}{c} x_{10} & y_{10} & z_{10} \\ x_{20} & y_{20} & z_{20} \end{array}\right) = \left(\begin{array}{c} \Delta_{U1} & \Delta_{V1} \\ \Delta_{U2} & \Delta_{V2} \end{array}\right) \left(\begin{array}{c} x_{T} & y_{T} & z_{T} \\ x_{B} & y_{B} & z_{B} \end{array}\right) \end{equation}\)
+\(\begin{equation*} \left(\begin{array}{c} x_{01} & y_{01} & z_{01} \\ x_{02} & y_{02} & z_{02} \end{array}\right) = \left(\begin{array}{c} \Delta_{U1} & \Delta_{V1} \\ \Delta_{U2} & \Delta_{V2} \end{array}\right) \left(\begin{array}{c} x_{T} & y_{T} & z_{T} \\ x_{B} & y_{B} & z_{B} \end{array}\right) \end{equation*}\)
 </p>
 
 <p>
-\(\begin{equation} \left(\begin{array}{c} x_{T} & y_{T} & z_{T} \\ x_{B} & y_{B} & z_{B} \end{array}\right) = \left(\begin{array}{c} \Delta_{U1} & \Delta_{V1} \\ \Delta_{U2} & \Delta_{V2} \end{array}\right)^{-1} \left(\begin{array}{c} x_{10} & y_{10} & z_{10} \\ x_{20} & y_{20} & z_{20} \end{array}\right) \end{equation}\)
+\(\begin{equation*} \left(\begin{array}{c} x_{T} & y_{T} & z_{T} \\ x_{B} & y_{B} & z_{B} \end{array}\right) = \left(\begin{array}{c} \Delta_{U1} & \Delta_{V1} \\ \Delta_{U2} & \Delta_{V2} \end{array}\right)^{-1} \left(\begin{array}{c} x_{01} & y_{01} & z_{01} \\ x_{02} & y_{02} & z_{02} \end{array}\right) \end{equation*}\)
 </p>
 
 <p>
@@ -1171,7 +1170,7 @@ A_{2} - A_{0} &= (x_{20}, y_{20}, z_{20}) = \Delta_{U2} T + \Delta_{V2} B = \Del
 </p>
 
 <p>
-\(\begin{equation} \left(\begin{array}{c} x_{T} & y_{T} & z_{T} \\ x_{B} & y_{B} & z_{B} \end{array}\right) = \frac{1}{\Delta_{U1}\Delta_{V2} - \Delta_{U2}\Delta_{V1}}\left(\begin{array}{c} \Delta_{V2} & -\Delta_{V1} \\ -\Delta_{U2} & \Delta_{U1} \end{array}\right) \left(\begin{array}{c} x_{10} & y_{10} & z_{10} \\ x_{20} & y_{20} & z_{20} \end{array}\right) \end{equation}\)
+\(\begin{equation*} \left(\begin{array}{c} x_{T} & y_{T} & z_{T} \\ x_{B} & y_{B} & z_{B} \end{array}\right) = \frac{1}{\Delta_{U1}\Delta_{V2} - \Delta_{U2}\Delta_{V1}}\left(\begin{array}{c} \Delta_{V2} & -\Delta_{V1} \\ -\Delta_{U2} & \Delta_{U1} \end{array}\right) \left(\begin{array}{c} x_{01} & y_{01} & z_{01} \\ x_{02} & y_{02} & z_{02} \end{array}\right) \end{equation*}\)
 </p>
 
 <p>
@@ -1184,12 +1183,12 @@ A_{2} - A_{0} &= (x_{20}, y_{20}, z_{20}) = \Delta_{U2} T + \Delta_{V2} B = \Del
 </p>
 
 <p>
-\(\begin{equation} \begin{aligned}
+\(\begin{equation*} \begin{aligned}
 N = n_{plane} &= (x_{N}, y_{N}, z_{N}) \\
 &= (A_{1} - A_{0}) \times (A_{2} - A_{0}) \\
-&= (x_{10}, y_{10}, z_{10}) \times (x_{20}, y_{20}, z_{20}) \\
-&= (y_{10}z_{20} - y_{20}z_{10}, x_{10}z_{20} - x_{20}z_{10}, x_{10}y_{20} - x_{20}y_{10})
-\end{aligned} \end{equation}\)
+&= (x_{01}, y_{01}, z_{01}) \times (x_{02}, y_{02}, z_{02}) \\
+&= (y_{01}z_{02} - y_{02}z_{01}, x_{01}z_{02} - x_{02}z_{01}, x_{01}y_{02} - x_{02}y_{01})
+\end{aligned} \end{equation*}\)
 </p>
 </blockquote>
 
@@ -1198,49 +1197,54 @@ N = n_{plane} &= (x_{N}, y_{N}, z_{N}) \\
 </p>
 
 <p>
-\(T^{'} = (\frac{T}{|T|})^{T} = (\frac{\left(\begin{array}{c}x_{T} & y_{T} & z_{T} \end{array}\right)}{\sqrt{x_{T}^{2} + y_{T}^{2} + z_{T}^{2}}})^{T}\)
+\(T^{'} = \left(\frac{T}{|T|}\right)^{T} = \left( \frac{\left(\begin{array}{c}x_{T} & y_{T} & z_{T} \end{array}\right)}{\sqrt{x_{T}^{2} + y_{T}^{2} + z_{T}^{2}}} \right)^{T}\)
 </p>
 
 <p>
-\(B^{'} = (\frac{B}{|B|})^{T} = (\frac{\left(\begin{array}{c}x_{B} & y_{B} & z_{B} \end{array}\right)}{\sqrt{x_{B}^{2} + y_{B}^{2} + z_{B}^{2}}})^{T}\)
+\(B^{'} = \left(\frac{B}{|B|}\right)^{T} = \left( \frac{\left(\begin{array}{c}x_{B} & y_{B} & z_{B} \end{array}\right)}{\sqrt{x_{B}^{2} + y_{B}^{2} + z_{B}^{2}}} \right)^{T}\)
 </p>
 
 <p>
-\(N^{'} = (\frac{N}{|N|})^{T} = (\frac{\left(\begin{array}{c}x_{N} & y_{N} & z_{N} \end{array}\right)}{\sqrt{x_{N}^{2} + y_{N}^{2} + z_{N}^{2}}})^{T}\)
+\(N^{'} = \left(\frac{N}{|N|}\right)^{T} = \left( \frac{\left(\begin{array}{c}x_{N} & y_{N} & z_{N} \end{array}\right)}{\sqrt{x_{N}^{2} + y_{N}^{2} + z_{N}^{2}}} \right)^{T}\)
 </p>
 
 <p>
 \(M^{'}_{tbn} = \left( \begin{array}{c|c} T^{'} & B^{'} & N^{'} \end{array} \right)\)
 </p>
 
+
+<div id="org91de11a" class="figure">
+<p><img src="../../../files/normal_mapping_tbn_vectors.png" alt="normal_mapping_tbn_vectors.png" />
+</p>
+<p><span class="figure-number">Figure 7: </span>TBN 坐标系</p>
+</div>
+
 <p>
-最后进行 <b>格拉姆-施密特处理(Gram-Schmidt process)</b> 让 \(M^{'}_{tbn}\) 进行正交化, 保证得出正交矩阵 \(M_{tbn}\), 通俗点说就是让 \(T^{'}\), \(B^{'}\) 和 \(N^{'}\) 三者相互垂直.
+然而 \(M^{'}_{tbn}\) 的基向量并不保证正交, 为了得出正交的 \(M_{tbn}\), 需要通过 <b>格拉姆-施密特处理(Gram-Schmidt process)</b> 让 \(M^{'}_{tbn}\) 进行正交化,
 </p>
 
 <p>
-这里以 \(N^{'}\) 为基准重新对齐 \(T^{'}\) 得到 \(T^{''}\) 为例: \(T^{''} = \frac{T^{'} - (T^{'} \cdot N^{'}) \times N^{'}}{|T^{'} - (T^{'} \cdot N^{'}) \times N^{'}|}\),
+通俗点说就是让 \(T^{'}\), \(B^{'}\) 和 \(N^{'}\) 三者相互垂直. 以 \(N^{'}\) 为基准重新对齐 \(T^{'}\) 得到 \(T^{''}\) 为例: \(T^{''} = \frac{T^{'} - (T^{'} \cdot N^{'}) \times N^{'}}{|T^{'} - (T^{'} \cdot N^{'}) \times N^{'}|}\),
 </p>
 
 <p>
 \(B^{'}\) 的对齐可以直接通过 \(N^{'}\) 和 \(T^{''}\) 的叉乘求出得到 \(B^{''}\): \(B^{''} = \frac{N^{'} \times T^{''}}{|N^{'} \times T^{''}|}\).
 </p>
 
-<blockquote>
 <p>
-可以看到 \(B^{'}\) 全程没有参与到 \(B^{''}\) 的运算过程中, 也就是说 \(B^{'}\) 这一步是可以省略的.
-</p>
-</blockquote>
-
-<p>
-最后得出 \(M_{tbn} = \left( \begin{array}{c|c} T^{''} & B^{''} & N^{'} \end{array} \right)\).
+最后得出 \(M_{tbn} = \left( \begin{array}{c|c} T^{''} & B^{''} & N^{'} \end{array} \right)\). 这就是目前规范的 \(M_{tbn}\) 构建方法.
 </p>
 
 <p>
-这就是目前规范的 \(M_{tbn}\) 构建方法, 还有请记住, 经过 \(M_{tbn}\) 变换得到的法线向量并不需要像前面章节提到的法线向量一样再进行变换了,
+可以看到 \(B^{'}\) 全程没有参与到 \(B^{''}\) 的运算过程中, 也就是说整个构建过程中可以忽略 \(B^{'}\) 向量.
 </p>
 
 <p>
-\(M_{tbn}\) 已经包含了这一部分的工作了.
+还有请记住, 这里的法线向量 \(N\) 并不需要像前面章节提到的法线向量一样再进行变换,
+</p>
+
+<p>
+因为它本身就是根据几何信息计算出来的, 也就是说 \(M_{tbn}\) 已经包含了这一部分的工作了.
 </p>
 
 <blockquote>
@@ -1285,13 +1289,13 @@ N = n_{plane} &= (x_{N}, y_{N}, z_{N}) \\
 </p>
 
 <p>
-\(\begin{equation} \begin{aligned}
-D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \times x_{2}^{2} + y_{1} \times y_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \times y_{2}^{2} + z_{1} \times z_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \times z_{2}^{2} \\
-&= x_{1} \times x_{2} - x_{1} \times x_{2} \times x_{2}^{2} - y_{1} \times y_{2} \times x_{2}^{2} - z_{1} \times z_{2} \times x_{2}^{2} + y_{1} \times y_{2} - x_{1} \times x_{2} \times y_{2}^{2} - y_{1} \times y_{2} \times y_{2}^{2} - z_{1} \times z_{2} \times y_{2}^{2} + z_{1} \times z_{2} - x_{1} \times x_{2} \times z_{2}^{2} - y_{1} \times y_{2} \times z_{2}^{2} - z_{1} \times z_{2} \times z_{2}^{2} \\
-&= x_{1} \times x_{2} - x_{1} \times x_{2} \times (x_{2}^{2} + y_{2}^{2} + z_{2}^{2}) + y_{1} \times y_{2} - y_{1} \times y_{2} \times (x_{2}^{2} + y_{2}^{2} + z_{2}^{2}) + z_{1} \times z_{2} - z_{1} \times z_{2} \times (x_{2}^{2} + y_{2}^{2} + z_{2}^{2}) \\
-&= (x_{1} \times x_{2}) \times (1 - x_{2}^{2} - y_{2}^{2} - z_{2}^{2}) + (y_{1} \times y_{2}) \times (1 - x_{2}^{2} - y_{2}^{2} - z_{2}^{2}) + (z_{1} \times z_{2}) \times (1 - x_{2}^{2} - y_{2}^{2} - z_{2}^{2}) \\
-&= [1 - (x_{2}^{2} + y_{2}^{2} + z_{2}^{2})] \times (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \\
-\end{aligned} \end{equation}\)
+\(\begin{equation*} \begin{aligned}
+D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \times x_{2}^{2} + y_{1} \times y_{2} \\ & - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \times y_{2}^{2} + z_{1} \times z_{2} \\ & - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \times z_{2}^{2} \\
+= & x_{1} \times x_{2} - x_{1} \times x_{2} \times x_{2}^{2} - y_{1} \times y_{2} \times x_{2}^{2} - z_{1} \times z_{2} \times x_{2}^{2} + y_{1} \times y_{2} - x_{1} \times x_{2} \times y_{2}^{2} \\ & - y_{1} \times y_{2} \times y_{2}^{2} - z_{1} \times z_{2} \times y_{2}^{2} + z_{1} \times z_{2} - x_{1} \times x_{2} \times z_{2}^{2} - y_{1} \times y_{2} \times z_{2}^{2} - z_{1} \times z_{2} \times z_{2}^{2} \\
+= & x_{1} \times x_{2} - x_{1} \times x_{2} \times (x_{2}^{2} + y_{2}^{2} + z_{2}^{2}) + y_{1} \times y_{2} \\ & - y_{1} \times y_{2} \times (x_{2}^{2} + y_{2}^{2} + z_{2}^{2}) + z_{1} \times z_{2} - z_{1} \times z_{2} \times (x_{2}^{2} + y_{2}^{2} + z_{2}^{2}) \\
+= & (x_{1} \times x_{2}) \times (1 - x_{2}^{2} - y_{2}^{2} - z_{2}^{2}) + (y_{1} \times y_{2}) \times (1 - x_{2}^{2} - y_{2}^{2} - z_{2}^{2}) + (z_{1} \times z_{2}) \times (1 - x_{2}^{2} - y_{2}^{2} - z_{2}^{2}) \\
+= & [1 - (x_{2}^{2} + y_{2}^{2} + z_{2}^{2})] \times (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{1} \times z_{2}) \\
+\end{aligned} \end{equation*}\)
 </p>
 
 <p>
@@ -1320,12 +1324,9 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orgdc7dc49" class="outline-4">
-<h4 id="orgdc7dc49"><span class="section-number-4">2.5.3.</span> 视差贴图 (Parallax Map)</h4>
 </div>
-</div>
-<div id="outline-container-orgef15283" class="outline-3">
-<h3 id="orgef15283"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
+<div id="outline-container-org45c1ba1" class="outline-3">
+<h3 id="org45c1ba1"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
 <div class="outline-text-3" id="text-2-6">
 <p>
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上成为一张 2D 图片.
@@ -1404,15 +1405,19 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 <p>
-屏幕坐标系就是以屏幕左上角为原点(<code>OpenGL</code> 传统是左下角为原点),向右为 \(+x\), 向下为 \(+y\),一个像素为一个单位的坐标系,假设视口是一个左上角位于屏幕的 \(\left(x, y\right)\) 并且宽和高分别为 \(w\) 和 \(h\) 的矩形,
+屏幕坐标系就是以屏幕左上角为原点(<code>OpenGL</code> 传统是左下角为原点),向右为 \(+x\), 向下为 \(+y\),一个像素为一个单位的坐标系,
 </p>
 
 <p>
-那么 <code>NDC</code> 显示在屏幕的位置,也就是对应的屏幕坐标就是 \(\left(\begin{array}{c}x_{w} \\ y_{w} \\ z_{w}\end{array}\right) = \left(\begin{array}{c} \frac{w}{2} \cdot x_{ndc} + (x + \frac{w}{2}) \\ \frac{h}{2} \cdot y_{ndc} + (x + \frac{h}{2}) \\ \frac{f-n}{2} \cdot z_{ndc} + \frac{f+n}{2} \end{array}\right)\).
+假设成像窗口是一个左上角位于屏幕的 \(\left(x, y\right)\) 并且宽和高分别为 \(w\) 和 \(h\) 的矩形,
 </p>
 
 <p>
-\(z_{w}\) 值决定了一个顶点会不会被渲染出来,比如拍照的时候被挡住的东西不会被拍到,这里以后会详细简述的.
+根据 <code>NDC</code> 可以计算出对应的屏幕坐标: \(\left(\begin{array}{c}x_{w} \\ y_{w} \\ z_{w}\end{array}\right) = \left(\begin{array}{c} \frac{w}{2} \cdot x_{ndc} + (x + \frac{w}{2}) \\ \frac{h}{2} \cdot y_{ndc} + (y + \frac{h}{2}) \\ \frac{f-n}{2} \cdot z_{ndc} + \frac{f+n}{2} \end{array}\right)\).
+</p>
+
+<p>
+\(z_{w}\) 是深度值, 在许多场景发挥着非常重要的作用. 实际上 \(z_{w}\) 的计算方式并不固定, 在后面的 <code>Depth Buffer</code> 中会了解到.
 </p>
 
 <p>
@@ -1427,25 +1432,25 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <b>到了这一步,其实整个 <code>Primitive Assembly</code> 环节就完成了</b>.
 </p>
 </div>
-<div id="outline-container-org7e8c7d3" class="outline-4">
-<h4 id="org7e8c7d3"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
+<div id="outline-container-orgb8e060f" class="outline-4">
+<h4 id="orgb8e060f"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
 <div class="outline-text-4" id="text-2-6-1">
 <p>
 先看一下如何选择相机看到的内容,有两种选择方案,如下,
 </p>
 
 
-<div id="orgf2dbeba" class="figure">
+<div id="orgdf12aaa" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png" />
 </p>
-<p><span class="figure-number">Figure 7: </span>透视投影(投影相机看到的内容)</p>
+<p><span class="figure-number">Figure 8: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="orgeebf1cb" class="figure">
+<div id="orgbdcdf90" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png" />
 </p>
-<p><span class="figure-number">Figure 8: </span>正交投影(正交相机看到的内容)</p>
+<p><span class="figure-number">Figure 9: </span>正交投影(正交相机看到的内容)</p>
 </div>
 
 <p>
@@ -1469,8 +1474,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-org86ed7d8" class="outline-4">
-<h4 id="org86ed7d8"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
+<div id="outline-container-org832030b" class="outline-4">
+<h4 id="org832030b"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
 <div class="outline-text-4" id="text-2-6-2">
 <p>
 这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
@@ -1490,10 +1495,10 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </ol>
 
 
-<div id="org5ac8c9b" class="figure">
+<div id="org506389a" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png" />
 </p>
-<p><span class="figure-number">Figure 9: </span>透视投影2</p>
+<p><span class="figure-number">Figure 10: </span>透视投影2</p>
 </div>
 
 <p>
@@ -1529,7 +1534,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org0c967b3" class="figure">
+<div id="org6d8ef6d" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png" />
 </p>
 </div>
@@ -1571,10 +1576,10 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="orge6d278a" class="figure">
+<div id="org5c6de43" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png" />
 </p>
-<p><span class="figure-number">Figure 10: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
+<p><span class="figure-number">Figure 11: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
 </div>
 
 <p>
@@ -1598,10 +1603,10 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org5cff2a1" class="figure">
+<div id="org46fa5d0" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png" />
 </p>
-<p><span class="figure-number">Figure 11: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
+<p><span class="figure-number">Figure 12: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
 </div>
 
 <p>
@@ -1609,7 +1614,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 <p>
-\(\begin{equation}\begin{aligned} x_{n} &= \frac{2x_{p}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2 \cdot \frac{n \cdot x_{e}}{-z_{e}}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2n \cdot x_{e}}{\left(r-l\right)\left(-z_{e}\right)} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} + \frac{\frac{r+l}{r-l} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}\) 以及 \(\begin{equation}\begin{aligned} y_{n} &= \frac{2y_{p}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2 \cdot \frac{n \cdot y_{e}}{-z_{e}}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2n \cdot y_{e}}{\left(t-b\right)\left(-z_{e}\right)} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} + \frac{\frac{t+b}{t-b} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation}\).
+\(\begin{equation*}\begin{aligned} x_{n} &= \frac{2x_{p}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2 \cdot \frac{n \cdot x_{e}}{-z_{e}}}{r-l} - \frac{r+l}{r-l} \\ &= \frac{2n \cdot x_{e}}{\left(r-l\right)\left(-z_{e}\right)} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} - \frac{r+l}{r-l} \\ &= \frac{\frac{2n}{r-l} \cdot x_{e}}{-z_{e}} + \frac{\frac{r+l}{r-l} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{r-l} \cdot x_{e} + \frac{r+l}{r-l} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation*}\) 以及 \(\begin{equation*}\begin{aligned} y_{n} &= \frac{2y_{p}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2 \cdot \frac{n \cdot y_{e}}{-z_{e}}}{t-b} - \frac{t+b}{t-b} \\ &= \frac{2n \cdot y_{e}}{\left(t-b\right)\left(-z_{e}\right)} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} - \frac{t+b}{t-b} \\ &= \frac{\frac{2n}{t-b} \cdot y_{e}}{-z_{e}} + \frac{\frac{t+b}{t-b} \cdot z_{e}}{-z_{e}} \\ &= \left(\frac{2n}{t-b} \cdot y_{e} + \frac{t+b}{t-b} \cdot z_{e}\right) / -z_{e} \end{aligned} \end{equation*}\).
 </p>
 
 <p>
@@ -1665,10 +1670,10 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 
 
-<div id="org41ebed3" class="figure">
+<div id="org5a30d1c" class="figure">
 <p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png" width="504px" />
 </p>
-<p><span class="figure-number">Figure 12: </span>比较不同深度下的精确度</p>
+<p><span class="figure-number">Figure 13: </span>比较不同深度下的精确度</p>
 </div>
 </div>
 </div>
@@ -1721,7 +1726,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 在这个变换过程中, 最后会通过关系 \(z_{m} = -z_{e}\) 演示如何通过顶点信息快速计算出顶点的非线性深度:
 </p>
 
-\begin{equation} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
+<p>
+\(\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 &= (\frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}} + 1) \div 2 \\
 &= (\frac{\frac{-z_{e}(f+n) - 2fn}{f-n}}{-z_{e}} + 1) \div 2 \\
 &= (\frac{-z_{e}(f+n) - 2fn}{-z_{e}(f-n)} + 1) \div 2 \\
@@ -1734,7 +1740,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 &= \frac{n - z_{m}}{z_{m}n} \div \frac{n-f}{fn} \\
 &= (\frac{1}{z_{m}} - \frac{1}{n}) \div (\frac{1}{f} - \frac{1}{n}) \\
 &= \frac{\frac{1}{z_{m}} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}
-\end{aligned} \end{equation}
+\end{aligned} \end{equation*}\)
+</p>
 
 <p>
 如变换结果所示, \(d\) 不仅不与 \(z_{e}\) 成线性关系, 反而与 \(\frac{1}{z_{m}}\) 成线性关系, 这就是为什么 \(d\) 被称为非线性深度.
@@ -1851,8 +1858,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </p>
 </div>
 </div>
-<div id="outline-container-org7ff4e2a" class="outline-4">
-<h4 id="org7ff4e2a"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
+<div id="outline-container-org0d90096" class="outline-4">
+<h4 id="org0d90096"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
 <div class="outline-text-4" id="text-2-6-4">
 <p>
 很多图形库的设定投影相机的函数需要视场角(fov), 裁剪平面的宽高比(aspect)以及近裁剪平面(n)以及远裁剪平面(f)作为输入参数.
@@ -1945,10 +1952,10 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <h4 id="orthographic-projection"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
 <div class="outline-text-4" id="text-orthographic-projection">
 
-<div id="orgd4b3eba" class="figure">
+<div id="org7593315" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png" />
 </p>
-<p><span class="figure-number">Figure 13: </span>正交投影2</p>
+<p><span class="figure-number">Figure 14: </span>正交投影2</p>
 </div>
 
 <p>
@@ -2035,8 +2042,8 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 </div>
 </div>
 </div>
-<div id="outline-container-org9d6cccd" class="outline-2">
-<h2 id="org9d6cccd"><span class="section-number-2">3.</span> 接下来</h2>
+<div id="outline-container-org3f98a12" class="outline-2">
+<h2 id="org3f98a12"><span class="section-number-2">3.</span> 接下来</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 这篇笔记涵盖了大部分 <code>OpenGL</code> 中所发生变基式变换以及如何构建它们所对应的 <code>change-of-basis matrix</code>,
@@ -2127,7 +2134,7 @@ D \cdot N &= x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_{
 <div id="postamble" class="status">
 <p class="date">Date: 2020-06-19</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-06-03 Tue 02:53</p>
+<p class="date">Created: 2025-07-06 Sun 23:35</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

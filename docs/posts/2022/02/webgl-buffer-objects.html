@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-05-25 Sun 17:51 -->
+<!-- 2025-09-02 Tue 20:35 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Shader 编程自救指南</title>
@@ -282,7 +282,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgf0e40bd">
+<div class="abstract" id="org6287893">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -378,7 +378,11 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 <p>
-但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的, 特别是 <code>Fragment Shader</code>, 看别人的 <code>Shader</code> 还是一头雾水.
+但很快就发现一个问题: 初学者只看这两个阶段的话其实就是在断章取义, 是难以理解它们是如何工作的,
+</p>
+
+<p>
+特别是 <code>Fragment Shader</code>, 看别人的 <code>Shader</code> 还是一头雾水.
 </p>
 
 <p>
@@ -399,7 +403,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 <p>
-如果不了解这一块的话, 你无法知道你的 <code>Shader</code> 程序能够运行在什么环境上的.
+如果不了解这一块, 你将无法知道 <code>Shader</code> 程序能够运行在什么环境上的.
 </p>
 </blockquote>
 
@@ -423,7 +427,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org4ac6c5a" class="figure">
+<div id="org56d0206" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif">
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
@@ -459,18 +463,68 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 <p>
-在通过 <code>Vertex Shader</code> 处理完所有输入的顶点数据之后, <code>OpenGL</code> 会按照一定规律把输出的顶点组合在一起形成一个几何对象, 比如说把每三个顶点组合一个三角形, 这种由若干个顶点组合而成的几何对象就叫做图元(primitive).
+在通过 <code>Vertex Shader</code> 处理完所有输入的顶点数据之后, <code>OpenGL</code> 会按照一定规律把输出的顶点组合在一起形成一个几何对象,
 </p>
 
 <p>
-在计算机中, <code>3D</code> 物体就是由多个面(或者说图元)组成的.
+几何对象可能会很复杂, 在计算机里面, 这种复杂的几何对象必定是由最简单的图形单位构成的,
 </p>
 
-<blockquote>
 <p>
-当然 <code>OpenGL/WebGL</code> 只支持几种基本的规律, 根据这几种规律组合而成的图元叫做基本图元(<code>basic primitive</code>), 包括点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
+这种最简单的图形单位被叫做图元, 可以被 <code>GPU</code> 直接处理和绘制. 常见的图元包括:
 </p>
-</blockquote>
+
+<p>
+点 (<code>GL_POINTS</code>), 直线 (<code>GL_LINES</code>), 三角形 (<code>GL_TRIANGLES</code>) 以及它们的派生, 具体可以看 <a href="https://www.khronos.org/opengl/wiki/Geometry_Shader#Primitive_in.2Fout_specification">OpenGL 图元规范</a>.
+</p>
+
+<p>
+有时候图元也被叫做基础图元(<code>base primitive</code>). 在不同语境下, 图元有不同的含义,
+</p>
+
+<p>
+对于人来说, 可以理解为最简单的几何图形; 对于 <code>OpenGL</code> 来说, 就是一个可解析的顶点流(<code>vertex stream</code>).
+</p>
+
+<p>
+比如说接收到一个长度为 12 的有序顶点列表, 以每 2 个顶点为一组构成 1 条线段, 最后可以获得 11 条线段,
+</p>
+
+<p>
+这 11 条线段就是 11 个直线图元, 这 11 个直线图元也被称为图元流(<code>primitive stream</code>).
+</p>
+
+<p>
+图元装配这个阶段的工作就是完成从顶点流到图元流的解析.
+</p>
+
+<p>
+实际上, 在 <code>OpenGL</code> 里面, 图元装配之前还有两个阶段: <b><a href="https://www.khronos.org/opengl/wiki/Tessellation">曲面细分 (Tessellation)</a></b> 和 <b><a href="https://www.khronos.org/opengl/wiki/Geometry_Shader">几何着色器 (Geometry Shader)</a></b>.
+</p>
+
+<p>
+因为它们不存在于 <code>WebGL</code> 的渲染流程中, 所以不是本文重点.
+</p>
+
+<p>
+不过, 几何着色器还是值得关注: 几何着色器以一个图元作为输入, 以零个或多个图元作为输出.
+</p>
+
+<p>
+使用几何着色器的主要目的之一是: 在不改变渲染目标(<code>renderTarget</code>)绑定的前提下, 把一个图元渲染到多张图片中.
+</p>
+
+<p>
+所谓渲染目标就是接收渲染结果的对象, 比如显示图像的屏幕, 后面的帧缓冲会详细说明.
+</p>
+
+<p>
+比如生成位置光源的阴影贴图, 开发者可以在几何着色器中一次渲染出 6 张 <code>2D</code> 贴图来组成一个立方贴图.
+</p>
+
+<p>
+这样既提高了开发效率和也优化了运行效率.
+</p>
 
 <p>
 <b>裁剪 (Cliping)</b>
@@ -521,7 +575,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org64a2119" class="figure">
+<div id="org0ce17ef" class="figure">
 <p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif">
 </p>
 </div>
@@ -538,10 +592,6 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 <p>
 我们把这些抽出来的数据叫做样本(samples), 样本数量越多, 得到的序列就和连续对象越像.
 </p>
-
-<p>
-这就是数学里面微分的思想.
-</p>
 </blockquote>
 
 <p>
@@ -557,7 +607,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org55fdd24" class="figure">
+<div id="org03ef1ca" class="figure">
 <p><img src="../../../files/trianglerast_f1_joshbeam.png" alt="trianglerast_f1_joshbeam.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>三个顶点所对应的片元坐标</p>
@@ -584,13 +634,13 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">/*</span>
-<span style="color: #ff7f24;">  i0: int</span>
-<span style="color: #ff7f24;">  i1: int</span>
+<pre class="src src-javascript"><span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+  i0: int
+  i1: int
 
-<span style="color: #ff7f24;">  d0: decimal</span>
-<span style="color: #ff7f24;">  d1: decimal</span>
-<span style="color: #ff7f24;">*/</span>
+  d0: decimal
+  d1: decimal
+</span><span style="color: #ff7f24;">*/</span>
 <span style="color: #00ffff;">function</span> <span style="color: #87cefa;">interpolate</span>(<span style="color: #eedd82;">i0</span>, <span style="color: #eedd82;">d0</span>, <span style="color: #eedd82;">i1</span>, <span style="color: #eedd82;">d1</span>) {
   <span style="color: #00ffff;">if</span> (i0 == i1) {
     <span style="color: #00ffff;">return</span> [d0];
@@ -599,8 +649,8 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   <span style="color: #00ffff;">var</span> <span style="color: #eedd82;">values</span> = [];
   <span style="color: #00ffff;">var</span> <span style="color: #eedd82;">a</span> = (d1 - d0) / (i1 - i0);
   <span style="color: #00ffff;">var</span> <span style="color: #eedd82;">d</span> = d0;
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">incrementing i by 1 is because the difference between each two adjacent pixels is 1</span>
-  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">var</span> <span style="color: #eedd82;">i</span> = i0; i &lt;= i1; i++) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">incrementing i by 1 is because the difference between each two adjacent pixels is 1
+</span>  <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">var</span> <span style="color: #eedd82;">i</span> = i0; i &lt;= i1; i++) {
     values.push(d);
     d += a;
   }
@@ -643,10 +693,10 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38656;&#35201;&#27880;&#24847;&#30340;&#26159;, p0 p1 p2 &#19977;&#20010;&#22352;&#26631;&#30340;&#20998;&#37327;&#26159; decimal &#31867;&#22411;, &#36825;&#26159;&#20174;&#35009;&#21098;&#31354;&#38388;&#36716;&#25442;&#21040;&#23631;&#24149;&#31354;&#38388;&#24471;&#21040;&#30340;&#32467;&#26524;;</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32780;&#23631;&#24149;&#31354;&#38388;&#19978;&#30340;&#20687;&#32032;&#20998;&#37327;&#26159; int &#31867;&#22411;, &#22240;&#27492;&#25105;&#20204;&#38656;&#35201;&#22312;&#20851;&#38190;&#26102;&#20505;&#23545;&#20998;&#37327;&#36827;&#34892;&#21462;&#25972;,</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#20801;&#35768;&#30340;&#35805;,&#26368;&#22909;&#22312;&#35745;&#31639;&#36807;&#31243;&#30340;&#26368;&#21518;&#19968;&#27493;&#32473;&#35745;&#31639;&#32467;&#26524;&#21462;&#25972;&#26469;&#20445;&#35777;&#32467;&#26524;&#23613;&#37327;&#31934;&#30830;.</span>
-
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38656;&#35201;&#27880;&#24847;&#30340;&#26159;, p0 p1 p2 &#19977;&#20010;&#22352;&#26631;&#30340;&#20998;&#37327;&#26159; decimal &#31867;&#22411;, &#36825;&#26159;&#20174;&#35009;&#21098;&#31354;&#38388;&#36716;&#25442;&#21040;&#23631;&#24149;&#31354;&#38388;&#24471;&#21040;&#30340;&#32467;&#26524;;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32780;&#23631;&#24149;&#31354;&#38388;&#19978;&#30340;&#20687;&#32032;&#20998;&#37327;&#26159; int &#31867;&#22411;, &#22240;&#27492;&#25105;&#20204;&#38656;&#35201;&#22312;&#20851;&#38190;&#26102;&#20505;&#23545;&#20998;&#37327;&#36827;&#34892;&#21462;&#25972;,
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22914;&#26524;&#20801;&#35768;&#30340;&#35805;,&#26368;&#22909;&#22312;&#35745;&#31639;&#36807;&#31243;&#30340;&#26368;&#21518;&#19968;&#27493;&#32473;&#35745;&#31639;&#32467;&#26524;&#21462;&#25972;&#26469;&#20445;&#35777;&#32467;&#26524;&#23613;&#37327;&#31934;&#30830;.
+</span>
 <span style="color: #00ffff;">if</span> (Math.abs(p1.x - p0.x) &gt; Math.abs(p1.y - p0.y)) {
   <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ys01</span> = interpolate(p0.x | 0, p0.y, p1.x | 0, p1.y);
   <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = p0.x; x &lt;= p1.x; x++) {
@@ -686,7 +736,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </div>
 
 
-<div id="org60cdb4e" class="figure">
+<div id="org2653680" class="figure">
 <p><img src="../../../files/trianglerast_f2_joshbeam.png" alt="trianglerast_f2_joshbeam.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>三角形线框</p>
@@ -705,16 +755,16 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org9328fd7" class="figure">
+<div id="org0671354" class="figure">
 <p><img src="../../../files/trianglerast_f3_joshbeam_aux.png" alt="trianglerast_f3_joshbeam_aux.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>实心三角形</p>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#39318;&#20808;&#38656;&#35201;&#23545; p0 p1 p2 &#19977;&#20010;&#29255;&#20803;&#22352;&#26631;&#26681;&#25454; $y$ &#20998;&#37327;&#36827;&#34892;&#20132;&#25442;&#25490;&#24207;, &#27604;&#22914;&#20174;&#23567;&#21040;&#22823;&#36827;&#34892;&#25490;&#24207;: p0.y &lt;= p1.y &lt;= p2.y</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#26679;&#21487;&#20197;&#36991;&#20813;&#35752;&#35770;&#21738;&#20010;&#28857;&#26368;&#39640;,&#21738;&#20010;&#28857;&#26368;&#20302;</span>
-<span style="color: #00ffff;">if</span> (p1.y &lt; p0.y) {
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#39318;&#20808;&#38656;&#35201;&#23545; p0 p1 p2 &#19977;&#20010;&#29255;&#20803;&#22352;&#26631;&#26681;&#25454; $y$ &#20998;&#37327;&#36827;&#34892;&#20132;&#25442;&#25490;&#24207;, &#27604;&#22914;&#20174;&#23567;&#21040;&#22823;&#36827;&#34892;&#25490;&#24207;: p0.y &lt;= p1.y &lt;= p2.y
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#26679;&#21487;&#20197;&#36991;&#20813;&#35752;&#35770;&#21738;&#20010;&#28857;&#26368;&#39640;,&#21738;&#20010;&#28857;&#26368;&#20302;
+</span><span style="color: #00ffff;">if</span> (p1.y &lt; p0.y) {
   <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">temp</span> = p0;
   p0 = p1;
   p1 = temp;
@@ -732,19 +782,19 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   p2 = temp;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#19977;&#35282;&#24418;&#26368;&#39640;&#30340;&#19968;&#26465;&#36793;&#30475;&#20316;&#26159;&#19968;&#20010;&#31471;&#28857;&#38598;&#21512;, &#25226;&#21478;&#22806;&#20004;&#26465;&#36793;&#30340;&#38598;&#21512;&#30475;&#20316;&#21478;&#22806;&#19968;&#20010;&#31471;&#28857;&#38598;&#21512;</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27880;&#24847;, &#36825;&#37324;&#30340;&#26368;&#39640;&#36793;&#26159; p0 &#36830;&#25509; p2 &#30340;&#36793;, &#21478;&#22806;&#20004;&#26465;&#36793;&#20998;&#21035;&#26159; p0 &#36830;&#25509; p1 &#21644; p1 &#36830;&#25509; p2</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#24050;&#30693;&#29255;&#20803;&#30340; y &#20998;&#37327;&#26102;, &#21487;&#20197;&#25554;&#20540;&#20986;&#29255;&#20803;&#23545;&#24212;&#30340; x &#20998;&#37327;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x01</span> = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#19977;&#35282;&#24418;&#26368;&#39640;&#30340;&#19968;&#26465;&#36793;&#30475;&#20316;&#26159;&#19968;&#20010;&#31471;&#28857;&#38598;&#21512;, &#25226;&#21478;&#22806;&#20004;&#26465;&#36793;&#30340;&#38598;&#21512;&#30475;&#20316;&#21478;&#22806;&#19968;&#20010;&#31471;&#28857;&#38598;&#21512;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27880;&#24847;, &#36825;&#37324;&#30340;&#26368;&#39640;&#36793;&#26159; p0 &#36830;&#25509; p2 &#30340;&#36793;, &#21478;&#22806;&#20004;&#26465;&#36793;&#20998;&#21035;&#26159; p0 &#36830;&#25509; p1 &#21644; p1 &#36830;&#25509; p2
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#24050;&#30693;&#29255;&#20803;&#30340; y &#20998;&#37327;&#26102;, &#21487;&#20197;&#25554;&#20540;&#20986;&#29255;&#20803;&#23545;&#24212;&#30340; x &#20998;&#37327;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x01</span> = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x12</span> = interpolate(p1.y | 0, p1.x, p2.y | 0, p2.x);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x02</span> = interpolate(p0.y | 0, p0.x, p2.y | 0, p2.x);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23454;&#38469;&#19978;, p0-p2 &#30340;&#36793;&#39640;&#24230;&#26159;&#19982; p0-p1 + p1-p2 &#30340;&#39640;&#24230;&#26159;&#19968;&#26679;&#30340;, &#21487;&#20197;&#25226; p0-p1-p2 &#21333;&#29420;&#30475;&#20316;&#26159;&#19968;&#26465;&#36793;</span>
-x01.pop(); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x01 &#30340;&#26368;&#21518;&#19968;&#20010;&#20803;&#32032;&#21644; x12 &#30340;&#31532;&#19968;&#20010;&#20803;&#32032;&#37325;&#22797;&#23454;&#38469;&#19978;&#26159;&#21516;&#19968;&#20010;&#29255;&#20803;&#30340; x &#20998;&#37327;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x012</span> = x01.concat(x12);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23454;&#38469;&#19978;, p0-p2 &#30340;&#36793;&#39640;&#24230;&#26159;&#19982; p0-p1 + p1-p2 &#30340;&#39640;&#24230;&#26159;&#19968;&#26679;&#30340;, &#21487;&#20197;&#25226; p0-p1-p2 &#21333;&#29420;&#30475;&#20316;&#26159;&#19968;&#26465;&#36793;
+</span>x01.pop(); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x01 &#30340;&#26368;&#21518;&#19968;&#20010;&#20803;&#32032;&#21644; x12 &#30340;&#31532;&#19968;&#20010;&#20803;&#32032;&#37325;&#22797;&#23454;&#38469;&#19978;&#26159;&#21516;&#19968;&#20010;&#29255;&#20803;&#30340; x &#20998;&#37327;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">x012</span> = x01.concat(x12);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25509;&#19979;&#26469;&#21482;&#35201;&#21306;&#20998; p0-p2 &#21644; p0-p1-p2 &#21738;&#20010;&#26159;&#24038;&#36793;&#21738;&#20010;&#26159;&#21491;&#36793;, &#20877;&#36827;&#34892;&#36880;&#34892;&#25554;&#20540;&#23601;&#21487;&#20197;&#32472;&#21046;&#20986;&#19977;&#35282;&#24418;&#20102;</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21306;&#20998;&#24038;&#21491;&#36793;&#30340;&#26041;&#27861;&#24456;&#31616;&#21333;, &#20998;&#21035;&#21462;&#20004;&#36793;&#30340;&#20013;&#38388;&#28857;&#30340; x &#20998;&#37327;&#36827;&#34892;&#23545;&#27604;&#21363;&#21487;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">m</span> = Math.floor(x02.length / 2);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25509;&#19979;&#26469;&#21482;&#35201;&#21306;&#20998; p0-p2 &#21644; p0-p1-p2 &#21738;&#20010;&#26159;&#24038;&#36793;&#21738;&#20010;&#26159;&#21491;&#36793;, &#20877;&#36827;&#34892;&#36880;&#34892;&#25554;&#20540;&#23601;&#21487;&#20197;&#32472;&#21046;&#20986;&#19977;&#35282;&#24418;&#20102;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21306;&#20998;&#24038;&#21491;&#36793;&#30340;&#26041;&#27861;&#24456;&#31616;&#21333;, &#20998;&#21035;&#21462;&#20004;&#36793;&#30340;&#20013;&#38388;&#28857;&#30340; x &#20998;&#37327;&#36827;&#34892;&#23545;&#27604;&#21363;&#21487;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">m</span> = Math.floor(x02.length / 2);
 <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x_left</span>, <span style="color: #eedd82;">x_right</span>;
 <span style="color: #00ffff;">if</span> (x02[m] &lt; x012[m]) {
   x_left = x02;
@@ -773,40 +823,40 @@ x01.pop(); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;"
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#31446;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h01</span> = interpolate(p0.y | 0, p0.h, p1.y | 0, p1.h);
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#31446;&#21521;&#36827;&#34892;&#25554;&#20540;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h01</span> = interpolate(p0.y | 0, p0.h, p1.y | 0, p1.h);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h12</span> = interpolate(p1.y | 0, p1.h, p2.y | 0, p2.h);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h02</span> = interpolate(p0.y | 0, p0.h, p2.y | 0, p2.h);
 h01.pop();
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h012</span> = h01.concat(h12);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">h_left</span>, <span style="color: #eedd82;">h_right</span>;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">h_left</span>, <span style="color: #eedd82;">h_right</span>;
 <span style="color: #00ffff;">if</span> (x02[m]  &lt; x012[m]) {
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-  h_left = h02;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>  h_left = h02;
   h_right = h012;
 } <span style="color: #00ffff;">else</span> {
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-  h_left = h012;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>  h_left = h012;
   h_right = h02;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-<span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xl</span> = x_left[(y - p0.y) | 0];
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xr</span> = x_right[(y - p0.y) | 0];
 
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hl</span> = h_left[(y - p0.y) | 0];
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hr</span> = h_right[(y - p0.y) | 0];
 
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#27178;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
-  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hs</span> = interpolate(xl, hl, xr, hr);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#27178;&#21521;&#36827;&#34892;&#25554;&#20540;
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">hs</span> = interpolate(xl, hl, xr, hr);
 
   <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = xl; x &lt;= xr; x++) {
-    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462;&#24403;&#21069;&#29255;&#20803;&#25152;&#23545;&#24212;&#30340;&#21487;&#36873;&#25968;&#25454; h, &#29992;&#22312;&#20043;&#21518;&#30340; fragment shader &#38454;&#27573;&#20013;</span>
-    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h</span> = hs[x - xl];
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462;&#24403;&#21069;&#29255;&#20803;&#25152;&#23545;&#24212;&#30340;&#21487;&#36873;&#25968;&#25454; h, &#29992;&#22312;&#20043;&#21518;&#30340; fragment shader &#38454;&#27573;&#20013;
+</span>    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">h</span> = hs[x - xl];
     putPixel(x | 0, y | 0);
   }
 }
@@ -844,36 +894,36 @@ h01.pop();
 </p>
 
 <div class="org-src-container">
-<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#31446;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz01</span> = interpolate(p0.y | 0, 1 / p0.z, p1.y | 0, 1 / p1.z);
+<pre class="src src-js"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#31446;&#21521;&#36827;&#34892;&#25554;&#20540;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz01</span> = interpolate(p0.y | 0, 1 / p0.z, p1.y | 0, 1 / p1.z);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz12</span> = interpolate(p1.y | 0, 1 / p1.z, p2.y | 0, 1 / p2.z);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz02</span> = interpolate(p0.y | 0, 1 / p0.z, p2.y | 0, 1 / p2.z);
 iz01.pop();
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz012</span> = iz01.concat(iz12);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">iz_left</span>, <span style="color: #eedd82;">iz_right</span>;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">iz_left</span>, <span style="color: #eedd82;">iz_right</span>;
 <span style="color: #00ffff;">if</span> (x02[m]  &lt; x012[m]) {
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-  iz_left = iz02;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>  iz_left = iz02;
   iz_right = iz012;
 } <span style="color: #00ffff;">else</span> {
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-  iz_left = iz012;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>  iz_left = iz012;
   iz_right = iz02;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...</span>
-<span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">y</span> = p0.y; y &lt;= p2.y; y++) {
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xl</span> = x_left[(y - p0.y) | 0];
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">xr</span> = x_right[(y - p0.y) | 0];
 
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izl</span> = iz_left[(y - p0.y) | 0];
   <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izr</span> = iz_right[(y - p0.y) | 0];
 
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#27178;&#21521;&#36827;&#34892;&#25554;&#20540;</span>
-  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izs</span> = interpolate(xl, izl, xr, izr);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#21487;&#36873;&#25968;&#25454;&#25353;&#29031;&#27178;&#21521;&#36827;&#34892;&#25554;&#20540;
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">izs</span> = interpolate(xl, izl, xr, izr);
 
   <span style="color: #00ffff;">for</span> (<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">x</span> = xl; x &lt;= xr; x++) {
     <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">iz</span> = izs[x - xl];
@@ -991,7 +1041,7 @@ iz01.pop();
 </p>
 
 
-<div id="org58d387b" class="figure">
+<div id="orge74516e" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>模板测试</p>
@@ -1058,14 +1108,14 @@ iz01.pop();
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;</span>
-<span style="color: #00ffff;">let</span> <span style="color: #eedd82;">buffer</span> = gl.createBuffer();
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21578;&#35785; GPU &#21019;&#24314;&#22909;&#32531;&#20914;,&#29992;&#20110;&#21518;&#32493;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454;
+</span><span style="color: #00ffff;">let</span> <span style="color: #eedd82;">buffer</span> = gl.createBuffer();
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#36827;&#34892;&#25805;&#20316;</span>
-gl.bindBuffer(target, buffer);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#23450;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;,&#22240;&#20026; GPU &#21487;&#20197;&#26377;&#19981;&#27490;&#19968;&#20010;&#32531;&#20914;,&#25152;&#20197;&#38656;&#35201;&#21578;&#35785; GPU &#25509;&#19979;&#26469;&#35201;&#23545;&#21738;&#20010;&#32531;&#20914;&#36827;&#34892;&#25805;&#20316;
+</span>gl.bindBuffer(target, buffer);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.</span>
-gl.bufferData(target, data, usage);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24448;&#24403;&#21069;&#21487;&#25805;&#20316;&#32531;&#20914;&#37324;&#38754;&#22635;&#20805;&#25968;&#25454;,&#36825;&#19968;&#27493;&#25442;&#21477;&#35805;&#35828;&#23601;&#26159;&#20648;&#23384; CPU &#21457;&#36807;&#26469;&#30340;&#25968;&#25454; data &#20102;.
+</span>gl.bufferData(target, data, usage);
 </pre>
 </div>
 
@@ -1209,7 +1259,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 
-<div id="orgedc0cf6" class="figure">
+<div id="org7cfea72" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>vertexAttribPointer</p>
@@ -1488,7 +1538,7 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-所以这一章节主要是借着介绍 <code>API</code> 的机会学习这些概念.
+再加上这些东西的使用频率很高, 这里就借着介绍 <code>API</code> 的机会学习这些概念.
 </p>
 </div>
 <div id="outline-container-orgd9f989b" class="outline-3">
@@ -1559,8 +1609,54 @@ gl.bufferData(target, data, usage);
 </p>
 
 <p>
-使用 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D">gl.texImage2D</a> 往贴图对象里面填充贴图数据.
+使用 <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D">gl.texImage2D</a> 往贴图对象里面填充贴图数据, 或者设置贴图储存信息的方式.
 </p>
+
+<blockquote>
+<p>
+在实践中会经常设置贴图储存, 为此要明白 <code>gl.texImage2D</code> 哪些参数影响储存.
+</p>
+
+<p>
+该函数有很多种声明方式, 这里以最为代表性的声明作为学习例子:
+</p>
+
+<p>
+<code>gl.texImage2D(target, level, internalformat, width, height, border, format, type, srcData)</code>.
+</p>
+
+<p>
+这里面影响贴图储存的参数是 <code>internalformat</code>, <code>format</code> 和 <code>type</code> 这 3 个参数.
+</p>
+
+<p>
+它们并非完全独立, 有着<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D#type">固定的组合</a>. 别忘记了 <code>gl.texImage2D</code> 的重要作用是把 <code>CPU</code> 的像素数据写入到 <code>GPU</code> 上,
+</p>
+
+<p>
+在该过程中要声明好输入端 - <code>CPU</code> 的数据格式以及接收端 <code>GPU</code> 储存数据的格式, 这 3 个参数的总体作用就是声明格式:
+</p>
+
+<p>
+<code>internalformat</code> 指定 <code>GPU</code> 储存贴图像素的方式, 一个像素由哪些组件构成以及如何布局, 比如 <code>gl.RGBA</code> 表示依次有 <code>R/G/B/A</code> \(4\) 个组件;
+</p>
+
+<p>
+<code>format</code> 指定 <code>CPU</code> 储存贴图像素的方式, 比如 <code>gl.RGBA</code> 表示写入到 <code>GPU</code> 的像素依次有 <code>R/G/B/A</code> \(4\) 个组件;
+</p>
+
+<p>
+<code>type</code>  指定 <code>CPU</code> 这边像素的组件大小, 不同组件应该占多少位(<code>bits</code>), 比如 <code>gl.UNSIGNED_BYTE</code> 表示一个组件占 \(8\) 位,
+</p>
+
+<p>
+在比如 <code>gl.UNSIGNED_SHORT_5_5_5_1</code> 表示 <code>R/G/B/A</code> 4 个组件分别占 <code>5/5/5/1</code> 位.
+</p>
+
+<p>
+通常来说, <code>CPU</code> 和 <code>GPU</code> 两端的储存方式应该保持一致, 从而保证数据的一致性.
+</p>
+</blockquote>
 
 <p>
 这些函数都不要求传入贴图对象的 <code>ID</code> 作为参数来说明对哪个贴图对象进行操作,
@@ -1575,50 +1671,50 @@ gl.bufferData(target, data, usage);
 </p>
 
 <div class="org-src-container">
-<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">WebGL &#40664;&#35748;&#25351;&#23450; gl.TEXTURE0 &#20026;&#24403;&#21069;&#25554;&#27133;, &#26377;&#20123;&#31243;&#24207;&#21482;&#20351;&#29992;&#19968;&#20010;&#25554;&#27133;, &#36825;&#31181;&#24773;&#20917;&#19979;&#36825;&#19968;&#21477;&#22522;&#26412;&#20250;&#34987;&#24573;&#30053;&#25481;</span>
-gl.activeTexture(gl.TEXTURE0);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21019;&#24314;&#36148;&#22270;&#23545;&#35937;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">texture</span> = gl.createTexture();
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#36148;&#22270;&#32465;&#23450;&#21040;&#25554;&#27133;&#19978;</span>
-gl.bindTexture(gl.TEXTURE_2D, texture);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#23450;&#36148;&#22270;&#25968;&#25454;&#30340;&#20648;&#23384;</span>
-gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#36148;&#22270;&#35774;&#23450;&#21442;&#25968;</span>
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">WebGL &#40664;&#35748;&#25351;&#23450; gl.TEXTURE0 &#20026;&#24403;&#21069;&#25554;&#27133;, &#26377;&#20123;&#31243;&#24207;&#21482;&#20351;&#29992;&#19968;&#20010;&#25554;&#27133;, &#36825;&#31181;&#24773;&#20917;&#19979;&#36825;&#19968;&#21477;&#22522;&#26412;&#20250;&#34987;&#24573;&#30053;&#25481;
+</span>gl.activeTexture(gl.TEXTURE0);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21019;&#24314;&#36148;&#22270;&#23545;&#35937;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">texture</span> = gl.createTexture();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#36148;&#22270;&#32465;&#23450;&#21040;&#25554;&#27133;&#19978;
+</span>gl.bindTexture(gl.TEXTURE_2D, texture);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25351;&#23450;&#36148;&#22270;&#25968;&#25454;&#30340;&#20648;&#23384;
+</span>gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#36148;&#22270;&#35774;&#23450;&#21442;&#25968;
+</span>gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#36148;&#22270;&#20998;&#37197;&#31354;&#38388;, &#21442;&#25968; pixels &#20026; null, &#24847;&#21619;&#30528;&#19981;&#25552;&#20379;&#25968;&#25454;, &#36825;&#31181;&#31354;&#30333;&#36148;&#22270;&#19968;&#33324;&#26377;&#29305;&#27530;&#29992;&#36884;</span>
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, <span style="color: #7fffd4;">null</span>);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20026;&#36148;&#22270;&#20998;&#37197;&#31354;&#38388;, &#21442;&#25968; pixels &#20026; null, &#24847;&#21619;&#30528;&#19981;&#25552;&#20379;&#25968;&#25454;, &#36825;&#31181;&#31354;&#30333;&#36148;&#22270;&#19968;&#33324;&#26377;&#29305;&#27530;&#29992;&#36884;
+</span>gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, <span style="color: #7fffd4;">null</span>);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#30452;&#25509; img &#20803;&#32032;&#20316;&#20026;&#36148;&#22270;&#30340;&#25968;&#25454;&#26469;&#28304;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">image</span> = document.getElementById(<span style="color: #ffa07a;">'image-element'</span>);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#30452;&#25509; img &#20803;&#32032;&#20316;&#20026;&#36148;&#22270;&#30340;&#25968;&#25454;&#26469;&#28304;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">image</span> = document.getElementById(<span style="color: #ffa07a;">'image-element'</span>);
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">isPowerOf2</span> = (value) =&gt; value &amp; (value - 1) === 0;
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26816;&#26597;&#22270;&#29255;&#30340;&#23610;&#23544;&#26159;&#21542;&#20026; 2 &#30340;&#24130;&#27425;&#26041;</span>
-<span style="color: #00ffff;">if</span> (isPowerOf2(image.width) &amp;&amp; isPowerOf2(image.height)) {
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22810;&#32423;&#32441;&#29702;</span>
-  gl.generateMipmap(gl.TEXTURE_2D);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26816;&#26597;&#22270;&#29255;&#30340;&#23610;&#23544;&#26159;&#21542;&#20026; 2 &#30340;&#24130;&#27425;&#26041;
+</span><span style="color: #00ffff;">if</span> (isPowerOf2(image.width) &amp;&amp; isPowerOf2(image.height)) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22810;&#32423;&#32441;&#29702;
+</span>  gl.generateMipmap(gl.TEXTURE_2D);
 } <span style="color: #00ffff;">else</span> {
-  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#19981;&#26159; 2 &#30340;&#24130;&#27425;&#26041;, &#36890;&#36807;&#35774;&#32622; gl.TEXTURE_MIN_FILTER &#20026; gl.LINEAR &#25110; gl.NEARST &#26469;&#20851;&#38381;&#22810;&#32423;&#32441;&#29702;&#29983;&#25104;,</span>
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#19981;&#26159; 2 &#30340;&#24130;&#27425;&#26041;, &#36890;&#36807;&#35774;&#32622; gl.TEXTURE_MIN_FILTER &#20026; gl.LINEAR &#25110; gl.NEARST &#26469;&#20851;&#38381;&#22810;&#32423;&#32441;&#29702;&#29983;&#25104;,
 
-<span style="color: #ff7f24;">     &#30001;&#20110;&#20851;&#38381;&#22810;&#32423;&#32441;&#29702;&#21518;, &#36828;&#36317;&#31163;&#30340;&#32441;&#29702;&#21487;&#33021;&#22240;&#20026;&#32553;&#23567;&#32780;&#20986;&#29616;&#38191;&#40831;, &#25152;&#20197;&#20351;&#29992; gl.LINEAR &#26368;&#22909;.</span>
+     &#30001;&#20110;&#20851;&#38381;&#22810;&#32423;&#32441;&#29702;&#21518;, &#36828;&#36317;&#31163;&#30340;&#32441;&#29702;&#21487;&#33021;&#22240;&#20026;&#32553;&#23567;&#32780;&#20986;&#29616;&#38191;&#40831;, &#25152;&#20197;&#20351;&#29992; gl.LINEAR &#26368;&#22909;.
 
-<span style="color: #ff7f24;">     &#22810;&#32423;&#32441;&#29702;&#19981;&#24433;&#21709;&#25918;&#22823;, &#25152;&#20197; gl.TEXTURE_MAG_FILTER &#21487;&#20197;&#19981;&#29992;&#35774;&#32622;.</span>
-<span style="color: #ff7f24;">   */</span>
+     &#22810;&#32423;&#32441;&#29702;&#19981;&#24433;&#21709;&#25918;&#22823;, &#25152;&#20197; gl.TEXTURE_MAG_FILTER &#21487;&#20197;&#19981;&#29992;&#35774;&#32622;.
+</span><span style="color: #ff7f24;">   */</span>
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#36148;&#22270;&#30340;&#29615;&#32469;&#27169;&#24335;&#35774;&#32622;&#20026; gl.CLAMP_TO_EDGE</span>
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#36148;&#22270;&#30340;&#29615;&#32469;&#27169;&#24335;&#35774;&#32622;&#20026; gl.CLAMP_TO_EDGE
+</span>  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36890;&#36807; uniform &#21464;&#37327;&#20026; Shader &#25552;&#20379;&#36148;&#22270;&#25968;&#25454;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">textureLocation</span> = gl.getUniformLocation(shaderProgram, <span style="color: #ffa07a;">"u_texture"</span>);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">0 &#34920;&#31034;&#20351;&#29992; gl.TEXTURE0 &#25554;&#27133;&#19978;&#30340;&#36148;&#22270;, &#22914;&#27492;&#31867;&#25512;, 1 &#34920;&#31034;&#20351;&#29992; gl.TEXTURE1 &#19978;&#30340;&#36148;&#22270;</span>
-gl.uniform1i(textureLocation, 0);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36890;&#36807; uniform &#21464;&#37327;&#20026; Shader &#25552;&#20379;&#36148;&#22270;&#25968;&#25454;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">textureLocation</span> = gl.getUniformLocation(shaderProgram, <span style="color: #ffa07a;">"u_texture"</span>);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">0 &#34920;&#31034;&#20351;&#29992; gl.TEXTURE0 &#25554;&#27133;&#19978;&#30340;&#36148;&#22270;, &#22914;&#27492;&#31867;&#25512;, 1 &#34920;&#31034;&#20351;&#29992; gl.TEXTURE1 &#19978;&#30340;&#36148;&#22270;
+</span>gl.uniform1i(textureLocation, 0);
 </pre>
 </div>
 
@@ -1666,7 +1762,7 @@ gl.uniform1i(textureLocation, 0);
 </p>
 
 <p>
-新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(<code>attachments</code>)上, 没关联一个附件, 集合里面就多出一元素,
+新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(<code>attachments</code>)上, 每关联一个附件, 集合里面就多出一元素,
 </p>
 
 <p>
@@ -1704,7 +1800,7 @@ gl.uniform1i(textureLocation, 0);
 </p>
 
 <p>
-渲染缓冲适合用与储存深度缓冲和模板缓冲, 进行深度测试和模板测试.
+渲染缓冲适合用于储存深度缓冲和模板缓冲, 进行深度测试和模板测试.
 </p>
 
 <p>
@@ -1712,45 +1808,64 @@ gl.uniform1i(textureLocation, 0);
 </p>
 
 <div class="org-src-container">
-<pre class="src src-js">gl.enable(gl.DEPTH_TEST);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#25226;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040; fbo &#19978;&#20043;&#21069;&#35774;&#32622;&#28210;&#26579;&#23610;&#23544;</span>
-gl.viewport(0, 0, textureWidth, textureHeight);
+<pre class="src src-js"><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">canvas</span> = document.getElementById(<span style="color: #ffa07a;">'#canvas'</span>);
+
+gl.enable(gl.DEPTH_TEST);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#25226;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040; fbo &#19978;&#20043;&#21069;&#35774;&#32622;&#28210;&#26579;&#23610;&#23544;
+</span>gl.viewport(0, 0, textureWidth, textureHeight);
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">fbo</span> = gl.createFramebuffer();
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040; fbo &#19978;</span>
-gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040; fbo &#19978;
+</span>gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#39068;&#33394;&#32531;&#20914;&#36755;&#20986;&#21040;&#36148;&#22270;&#20013;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">texture</span> = gl.createTexture();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#39068;&#33394;&#32531;&#20914;&#36755;&#20986;&#21040;&#36148;&#22270;&#20013;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">texture</span> = gl.createTexture();
 <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">level</span> = 0;
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#36148;&#22270;&#20316;&#20026;&#38468;&#20214;&#20648;&#23384;&#39068;&#33394;&#32531;&#20914;, &#24182;&#28155;&#21152;&#21040;&#24103;&#32531;&#20914;&#20013;</span>
-gl.activeTexture(gl.TEXTURE0);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#36148;&#22270;&#20316;&#20026;&#38468;&#20214;&#20648;&#23384;&#39068;&#33394;&#32531;&#20914;, &#24182;&#28155;&#21152;&#21040;&#24103;&#32531;&#20914;&#20013;
+</span>gl.activeTexture(gl.TEXTURE0);
 gl.bindTexture(gl.TEXTURE_2D, texture);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+              canvas.width, canvas.height, 0,
+              gl.RGBA, gl.UNSIGNED_BYTE, <span style="color: #7fffd4;">null</span>);  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#36148;&#22270;&#20648;&#23384;
+</span><span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+  &#22240;&#20026;&#22270;&#29255;&#30340;&#20687;&#32032;&#20197; RGBA &#24418;&#24335;&#20648;&#23384;, &#22240;&#27492;&#22312;&#21360;&#35937;&#20013;, &#25105;&#20204;&#26412;&#33021;&#22320;&#20063;&#35748;&#20026;&#36148;&#22270;&#20687;&#32032;&#30340;&#23383;&#33410;&#26159;&#20197;&#25972;&#25968;&#36827;&#34892;&#32534;&#30721;.
+
+  &#20294;&#23454;&#38469;&#19978;&#23383;&#33410;&#20063;&#33021;&#20197;&#28014;&#28857;&#25968;&#36827;&#34892;&#32534;&#30721;, &#36825;&#26679;&#26368;&#32456;&#24471;&#21040;&#30340;&#36148;&#22270;&#20687;&#32032;&#30340;&#23383;&#33410;&#25152;&#33021;&#20648;&#23384;&#30340;&#20540;&#23601;&#19981;&#29992;&#38480;&#23450;&#22312; 0 ~ 255 &#20013;&#20102;.
+
+  &#24819;&#35201;&#35753;&#36148;&#22270;&#20648;&#23384;&#28014;&#28857;&#25968;, &#38656;&#35201; WebGL &#25903;&#25345;&#28014;&#28857;&#25968;&#25299;&#23637;, &#24120;&#29992;&#30340;&#26377;: OES_texture_float &#25110; OES_texture_half_float.
+
+  if(gl.getExtension('OES_texture_float')) {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+                  canvas.width, canvas.height, 0,
+                  gl.RGBA, gl.FLOAT, null);
+  }
+</span><span style="color: #ff7f24;">*/</span>
 gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, level);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#39068;&#33394;&#32531;&#20914;&#36755;&#20986;&#21040;&#36148;&#22270;&#20013;: end</span>
-
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#21040; renderbuffer &#20013;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">rbo</span> = gl.createRenderbuffer();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#39068;&#33394;&#32531;&#20914;&#36755;&#20986;&#21040;&#36148;&#22270;&#20013;: end
+</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#21040; renderbuffer &#20013;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">rbo</span> = gl.createRenderbuffer();
 gl.bindRenderbuffer(gl.FRAMEBUFFER, rbo);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35753;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#30340;&#23610;&#23544;&#21644;&#36148;&#22270;&#30340;&#19968;&#26679;</span>
-gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, textureWidth, textureHeight);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35753;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#30340;&#23610;&#23544;&#21644;&#36148;&#22270;&#30340;&#19968;&#26679;
+</span>gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, textureWidth, textureHeight);
 gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#21040; renderbuffer &#20013;: end</span>
-
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#28145;&#24230;&#32531;&#20914;&#36755;&#20986;&#21040; renderbuffer &#20013;: end
+</span>
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#19968;&#20010;&#35843;&#29992;&#20102; gl.drawArrays/gl.drawEelements &#26041;&#27861;&#30340;&#20989;&#25968;</span>
-renderScene();
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#30446;&#21069;&#20026;&#27490;, &#33719;&#24471;&#20102;&#19968;&#20010;&#32463;&#36807;&#28145;&#24230;&#27979;&#35797;&#30340;&#36148;&#22270; texture, &#21487;&#29992;&#22312; Shader &#31243;&#24207;&#20013;</span>
-
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21487;&#20197;&#29992;&#22312;&#25226;&#36148;&#22270;&#19978;&#30340;&#25968;&#25454;&#35835;&#21462;&#20986;&#26469;, &#22312; Shader &#31243;&#24207;&#20197;&#22806;&#30340;&#22320;&#26041;&#20351;&#29992;</span>
-<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">pixels</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
-<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#27599;&#27425;&#24448; framebuffer &#20013;&#20889;&#20837;&#25968;&#25454;, gl.drawingBufferWidth &#37117;&#20250;&#34987;&#35774;&#32622;&#20026; textureWidth,</span>
-<span style="color: #ff7f24;">   gl.drawingBufferHeight &#21017;&#34987;&#35774;&#32622;&#20026; textureHeight</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#19968;&#20010;&#35843;&#29992;&#20102; gl.drawArrays/gl.drawEelements &#26041;&#27861;&#30340;&#20989;&#25968;
+</span>renderScene();
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#30446;&#21069;&#20026;&#27490;, &#33719;&#24471;&#20102;&#19968;&#20010;&#32463;&#36807;&#28145;&#24230;&#27979;&#35797;&#30340;&#36148;&#22270; texture, &#21487;&#29992;&#22312; Shader &#31243;&#24207;&#20013;
+</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21487;&#20197;&#29992;&#22312;&#25226;&#36148;&#22270;&#19978;&#30340;&#25968;&#25454;&#35835;&#21462;&#20986;&#26469;, &#22312; Shader &#31243;&#24207;&#20197;&#22806;&#30340;&#22320;&#26041;&#25110;&#32773;&#20854;&#23427; Shader &#31243;&#24207;&#20013;&#20351;&#29992;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">pixels</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Uint8Array</span>(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#27599;&#27425;&#24448; framebuffer &#20013;&#20889;&#20837;&#25968;&#25454;, gl.drawingBufferWidth &#37117;&#20250;&#34987;&#35774;&#32622;&#20026; textureWidth,
+   gl.drawingBufferHeight &#21017;&#34987;&#35774;&#32622;&#20026; textureHeight</span><span style="color: #ff7f24;"> */</span>
 gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">gl.RGBA &#21644; gl.UNSIGNED_BYTE &#20026;&#35835;&#21462; GPU &#25968;&#25454;&#30340;&#26041;&#24335;, &#20063;&#21487;&#20197;&#29702;&#35299;&#20026; pixels &#30340;&#25968;&#25454;&#26684;&#24335;</span><span style="color: #ff7f24;"> */</span>
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#21518;&#32493;&#30340;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#22238;&#30011;&#24067;&#19978;</span>
-gl.bindFramebuffer(gl.FRAMEBUFFER, <span style="color: #7fffd4;">null</span>);
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#22238;&#30011;&#24067;&#30340;&#28210;&#26579;&#23610;&#23544;</span>
-gl.viewport(0, 0, canvasWidt, canvasHeight);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#21518;&#32493;&#30340;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#22238;&#30011;&#24067;&#19978;
+</span>gl.bindFramebuffer(gl.FRAMEBUFFER, <span style="color: #7fffd4;">null</span>);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622;&#22238;&#30011;&#24067;&#30340;&#28210;&#26579;&#23610;&#23544;
+</span>gl.viewport(0, 0, canvasWidth, canvasHeight);
 renderScene();
 </pre>
 </div>
@@ -2017,7 +2132,7 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 <div id="postamble" class="status">
 <p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
 <p class="date">Date: 2022-02-11</p>
-<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.1 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.2 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

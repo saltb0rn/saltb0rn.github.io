@@ -45,7 +45,6 @@
   - [[file:2018/07/regex.org][Regex]]
 * S
   - [[file:2022/02/webgl-buffer-objects.org][Shader 编程自救指南]]
-  - [[file:2025/06/svg-transform.org][SVG 变换解惑]]
 * T
   - [[file:2018/11/eopl-interpreter.org][The Interpreter]]
   - [[file:2018/11/eopl-sllgen.org][The Sllgen Parser]]

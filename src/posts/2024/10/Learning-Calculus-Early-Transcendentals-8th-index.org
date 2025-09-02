@@ -494,7 +494,7 @@
 
     导数的两种解释:
 
-    - 函数 $y = f(x)$ 在 $(a, f(a))$ 上的切线的斜率就是 $f^{'}(a)$, 也就是 $f$ 在 $a$ 处的导数.
+    - 在几何上, 导数 $f^{'}(a)$ 是 $y = f(x)$ 在 $(a, f(a))$ 处切线的斜率.
 
       根据点斜式定义: $y - y_0 = k(x - x_0)$, 在点 $(a, f(a))$ 上的切线等式为 $y - f(a) = f^{'}(a)(x - a)$.
 
@@ -656,14 +656,28 @@
      交接点满足 $f^{''}(x) = 0$ 并且该点两边的斜率的变化率分别为一正一负(由正变负或由负变正).
 
      #+BEGIN_QUOTE
-     如果也有可能会出现某个点上的二阶导数不存在但两边变号的情况, 这种情况下该点也同样是拐点.
+     也有可能出现某个点上的二阶导数不存在但两边变号的情况, 这种情况下该点也同样是拐点.
 
      具体参考这里: https://math.stackexchange.com/questions/402459/an-inflection-point-where-the-second-derivative-doesnt-exist
+
+     #+BEGIN_SRC maxima
+       f(x) := if x >= 0 then x * x else -1 * x * x$
+       plot2d(f(x), [x, -10, 10])$
+     #+END_SRC
+
+     #+attr_html: :width 700px
+     [[../../../files/inflection-point-with-2nd-diff-exist.png]]
+
+     $f = \begin{cases} -2x^2 & x \le 0 \\ 2x^2 & \gt 0 \end{cases}$ 在 $x = 0$ 处不存在二阶导数, 甚至不存在一阶导数, 但是 $x = 0$ 两边的二阶导数正好互为正负:
+
+     $f^{''}(x) = \begin{cases} -2 & x \lt 0 \\ \mathrm{undefined} & x = 0 \\ 2 & x \gt 0 \end{cases}$
+
+     因此, $(0, f(0))$ 是 $f$ 的拐点.
      #+END_QUOTE
 
-     我们可以通过拐点处的切线的变化率判断正负情况, 比如拐点处的切线为 $y = -3x + 4$, 它的导数是 $y^{'} = -3$, 也就是说在逐渐减少,
+     可以通过拐点处的切线的变化率判断正负情况, 比如拐点处的切线为 $y = -3x + 4$, 它的导数是 $y^{'} = -3$, 说明 $y$ 在逐渐减少,
 
-     也就是拐点左边的斜率的变化率是负, 右边的是正, 函数的图像在拐点处的左边下凹, 右边则是下凸.
+     也就是拐点左边的斜率变化率小于 0, 右边大于 0, 函数的图像在拐点处的左边下凹, 右边则是下凸.
 
      #+BEGIN_QUOTE
      上图拐点 $(x_{p}, y_{p})$ 以及其切线 $y = kx + b$ 是这么计算出来的.
@@ -676,7 +690,6 @@
 
      因此, 在点 $(2, -2)$ 上的切线为 $y = -3x + 4$.
      #+END_QUOTE
-
 
 *** Ch 3: 微分法 (Differentiation Rules)
 
@@ -1131,7 +1144,11 @@
 
   - P413, 不定积分的换元法
 
+    换元法相当于积分版的链式法则, 通过引入符号来简化复杂的函数, 从而进行积分.
+
     $\int f(g(x))g^{'}(x)\mathrm{d}x = \int f(u)\mathrm{d}u$, 其中 $u = g(x)$ 以及 $\mathrm{d}u = g^{'}(x)\mathrm{d}x$.
+
+    重点在于找出 $x$ 和 $u$ 之间的关系: $u = g(x)$, 以及 $\mathrm{d}x$ 和 $\mathrm{d}u$ 之间的关系: $g^{'}(x) = \frac{\mathrm{d}u}{\mathrm{d}x}$.
 
   - P416, 定积分的换元法
 
@@ -1155,6 +1172,8 @@
 - P455, 计算物理功 (Work)
 
 - P461, 函数的平均值 (Average Value of a Function)
+
+  积分的均值定理同时也是在概率论中服从均匀分布的函数的期望.
 
 
 *** Ch 7: 积分技巧 (Techniques of Integration)
@@ -1777,7 +1796,9 @@
 
     $\frac{\mathrm{d}r}{\mathrm{d}t} = r^{'}(t) = \lim\limits_{h \to 0}\frac{r(t + h) - r(t)}{h}$.
 
-    $r(t)$ 的导数 $r^{'}(t)$ 是一个向量, 我们称 $r(t)$ 所定义的曲线为 $C$, 那么 $r^{'}(t)$ 就是曲线 $C$ 上某点的切线, 所以也被称为切线向量(tangent vector).
+    $r(t)$ 的导数 $r^{'}(t)$ 是一个向量, 它定义的曲线为 $C$, 那么 $r^{'}(t)$ 就是曲线 $C$ 上某点的切线, 也被称为切线向量(tangent vector).
+
+    (对比 =P144= 和 =P954= 中标量函数的导数)
 
     有时候只要考虑切线的方向, 所以会只考虑单位切线向量(unit tangent vector): $T(t) = \frac{r^{'}(t)}{|r^{'}(t)|}$.
 
@@ -1855,6 +1876,8 @@
 
     所以曲率的定义为: $\kappa = |T^{'}(s)| = |\frac{\mathrm{d}T}{\mathrm{d}s}|$.
 
+    对于同一大小的角度, 半径越大, 弧长越大, 曲率越小. 曲率的倒数刚好为曲率半径.
+
     #+begin_quote
     因为是变化程度, 所以需要取变化率的绝对值.
     #+end_quote
@@ -1871,19 +1894,25 @@
 
     根据导数的乘法法则可以得出 $r^{''} = \frac{d}{\mathrm{d}t}(\frac{\mathrm{d}s}{\mathrm{d}t}T) = \frac{\mathrm{d}^{2}s}{\mathrm{d}t^{2}}T + \frac{\mathrm{d}s}{\mathrm{d}t}T^{'}$.
 
-    $r^{'} \times r^{''} = \frac{\mathrm{d}s}{\mathrm{d}t}T \times (\frac{\mathrm{d}^{2}s}{\mathrm{d}t^{2}}T + \frac{\mathrm{d}s}{\mathrm{d}t}T^{'}) = \frac{\mathrm{d}s}{\mathrm{d}t} \frac{\mathrm{d^{2}}s}{\mathrm{d}t^{2}} T^{2} + \frac{\mathrm{d}s^{2}}{\mathrm{d}t^{2}}T \times T^{'}$.
+    $r^{'} \times r^{''} = \frac{\mathrm{d}s}{\mathrm{d}t}T \times (\frac{\mathrm{d}^{2}s}{\mathrm{d}t^{2}}T + \frac{\mathrm{d}s}{\mathrm{d}t}T^{'}) = \frac{\mathrm{d}s}{\mathrm{d}t} \frac{\mathrm{d^{2}}s}{\mathrm{d}t^{2}} T^{2} + (\frac{\mathrm{d}s}{\mathrm{d}t})^2 T \times T^{'}$.
 
-    接下来计算该向量的模长 $|r^{'} \times r^{''}|$.
+    接下来计算该向量的模长 $|r^{'} \times r^{''}|$,
 
-    因为 $T$ 是单位切线向量, 所以 $|T(t)| = 1$;
+    向量叉积 $T^2$ 的模长是 $|T||T|\sin \theta$, 其中 $\theta$ 是 $T$ 和 $T$ 之间的夹角, 也就是 0, 所以 $|T \times T| = 0$.
 
-    向量叉积 $T \times T$ 的模长是 $|T||T|sin \theta$, 其中 $\theta$ 是 $T$ 和 $T$ 之间的夹角, 也就是 0, 所以 $|T \times T| = 0$.
+    在几何上 $T^{'}$ 是 $T$ 的切线, 所以 $T^{'}$ 和 $T$ 之间的夹角是 $\frac{\pi}{2}$, 由于 $T$ 是单位切线向量,
 
-    在几何上 $T^{'}$ 是 $T$ 的切线, 所以 $T^{'}$ 和 $T$ 之间的夹角是 $\frac{\pi}{2}$, 因此 $|T^{'} \times T| = |T^{'}||T|\sin \frac{\pi}{2} = |T^{'}|$.
+    所以 $|T(t)| = 1$, $|T^{'} \times T| = |T^{'}||T|\sin \frac{\pi}{2} = |T^{'}|$.
 
     可以进一步得出 $|r^{'} \times r^{''}| = (\frac{\mathrm{d}s}{\mathrm{d}t})^{2}|T^{'}| = |r^{'}|^{2}|T^{'}| \rightarrow |T^{'}| = \frac{|r^{'} \times r^{''}|}{|r^{'}|^{2}}$.
 
     最终得到 $\kappa(t) = \frac{|T^{'}(t)|}{|r^{'}(t)|} = \frac{|r^{'}(t) \times r^{''}(t)|}{|r^{'}(t)|^{3}}$.
+
+    向量函数曲线的曲率同样适用于标量函数曲线 $y = f(x)$,
+
+    首先把标量函数按 $x$ 进行参数化: $r(x) = \langle x, f(x) \rangle$, 然后得到曲率所需的变量:
+
+    $\begin{equation*} \begin{cases} r^{'}(x) = \langle 1, f^{'}(x) \rangle \\ r^{''}(x) = \langle 0, f^{''}(x) \rangle \\ |r^{'}(x)| = \sqrt{1 + (f^{'}(x))^2} = [1 + (f^{'}(x))^2]^{\frac{1}{2}} \\ r^{'}(x) \times r^{''}(x) = f^{''}(x) \times 1 - f^{'}(x) \times 0 = f^{''}(x) \end{cases}  \Rightarrow \kappa(x) = \frac{|r^{'}(x) \times r^{''}(x)|}{|r^{'}(x)|^3} = \frac{|f^{''}(x)|}{[1 + (f^{'}(x))^2]^{\frac{3}{2}}} \end{equation*}$
 
   - P866, 法线向量和副法线向量 (The Normal and Binormal Vectors)
 
@@ -2101,7 +2130,7 @@
 
       等价于以下条件:
 
-      1. 偏导数 $f_x(x, y)$ 和 $f_y(x, y)$ 在 $(a, b)$ 上存在定义; 
+      1. 偏导数 $f_x(x, y)$ 和 $f_y(x, y)$ 在 $(a, b)$ 上存在定义;
 
       2. 满足 $\lim\limits_{(x, y) \to (a, b)} f_x(x, y) = f_x(a, b)$ 以及 $\lim\limits_{(x, y) \to (a, b)} f_y(x, y) = f_y(a, b)$;
 
@@ -2150,7 +2179,11 @@
 
     先把 $y = f(x)$ 改写成隐函数 $g(x, y) = f(x) - y = kx + b - y = 0$, 得到: $\begin{equation*} \begin{cases} g_{x}(x, y) = f^{'}(x) = k \\ g_{y}(x, y) = -1 \\ u = \langle 1, 0 \rangle \end{cases} \end{equation*}$.
 
-    根据方向导数的定义可得: $D_{u}g(x, y) = \langle f^{'}(x), -1 \rangle \cdot \langle 1, 0 \rangle = f^{'}(x) \times 1 - 0 = f^{'}(x)$.
+    根据方向导数的定义可得: $D_{u}g(x, y) = \langle f^{'}(x), -1 \rangle \cdot \langle 1, 0 \rangle = f^{'}(x) \times 1 - 0 = f^{'}(x)$,
+
+    在后面会了解到 $\langle f^{'}(x), -1 \rangle$ 是 $f$ 在 $x$ 上的梯度向量, 而 $\langle 1, f^{'}(x) \rangle$ 是切向量;
+
+    如果变成 $y - f(x) - b = 0$, 梯度向量就是 $\langle -f^{'}(x), 1 \rangle$, 切向量不变.
 
     直接用显式等式也可以, 但是讨论的上下文就从二维空间变成一维空间了, 方向就只有 $\langle -1 \rangle$ 和 $\langle 1 \rangle$ 两种,
 
@@ -2205,9 +2238,9 @@
 
     $\langle f_{x}(x_{0}, y_{0}), f_{y}(x_{0}, y_{0}), \frac{\partial f}{\partial z} = -1 \rangle \cdot \langle x - x_0, y - y_0, z - z_0 \rangle = 0$.
 
-    如上所见, 点 $\langle x_0, y_0, z_0 \rangle$ 上的梯度向量就是该点的切平面的法线向量.
+    如上所见, 在点 $\langle x_0, y_0, z_0 \rangle$ 上的梯度向量就是位于该点的切平面的法线向量.
 
-    但是不要把多元函数的导数和向量函数的导数搞混, 向量函数的导数是切线向量.
+    *但是不要把多元函数的导数和向量函数的导数搞混, 向量函数的导数是切线向量.* (对比 =P855= 中的向量函数的导数)
 
   - P956, 梯度向量的重要性 (Significance the Grandient Vector)
 
@@ -2248,7 +2281,7 @@
 
   使用二重积分计算体积.
 
-  $\begin{equation*} \begin{aligned} & \iint\limits_{R}f(x, y)\mathrm{d}A \\ = & \lim\limits_{m,n \to \infty}\sum\limits_{i=1}^{m}\sum\limits_{j=1}^{n}f(x_{ij}^{\ast}, y_{ij}^{\ast})\Delta A \\ = & \lim\limits_{m,n \to \infty}\sum\limits_{i=1}^{m}\sum\limits_{j=1}^{n}f(x_{ij}^{\ast}, y_{ij}^{\ast})\Delta x_{ij}^{\ast} \Delta y_{ij}^{\ast} \\ = & \lim\limits_{m,n \to \infty}\sum\limits_{i=1}^{m}\sum\limits_{j=1}^{n}f(x_{ij}^{\ast}, y_{ij}^{\ast})\mathrm{d} x_{ij}^{\ast} \mathrm{d} y_{ij}^{\ast} \end{aligned} \end{equation*}$
+  $\begin{equation*} \begin{aligned} & \iint\limits_{R}f(x, y)\mathrm{d}A \\ = & \sum\limits_{i=1}^{m}\sum\limits_{j=1}^{n}f(x_{ij}^{\ast}, y_{ij}^{\ast})\Delta A \\ = & \sum\limits_{i=1}^{m}\sum\limits_{j=1}^{n}f(x_{ij}^{\ast}, y_{ij}^{\ast})\Delta x_{ij}^{\ast} \Delta y_{ij}^{\ast} \end{aligned} \end{equation*}$
 
   (PS: 这里的 $R$ 表示 =rectangle=.)
 
@@ -2305,6 +2338,10 @@
 
     - P1073, 非旋场/保守向量场 (conservative vector field)
 
+      如果一个向量场 $F$ 是一个标量场 $f$ 的梯度向量: $F = \nabla f$,
+
+      那么称 $F$ 为是 $f$ 的保守向量场, 称 $f$ 是 $F$ 的势函数(=potential function=).
+
 - p1075, 二元/三元函数的曲线积分 (Line Integrals)
 
   # 以曲线 $r(t) = \langle x(t), y(t) \rangle$ 作为参数的,
@@ -2319,7 +2356,7 @@
 
 - P1087, 曲线积分的基本定理 (The Fundamental Theorem for Line Integrals)
 
-  - P1087, 这里确认了一个事实: 二元或三元函数 $f$ 的梯度向量 $\nabla f$ 被认为是 $f$ 的导数的一种.
+  - P1087, 这里确认了一个事实: 二元或三元标量函数 $f$ 的梯度向量 $\nabla f$ 被认为是 $f$ 的导数的一种.
 
   - P1088, 路径无关性 (Independence of Path)
 
@@ -2341,38 +2378,113 @@
 
   - P1103, 向量微分算子 (vector differential operator): $\nabla$ ("del")
 
-    对多元标量函数 $f(x, y)$ 运算可以得到一个梯度向量 $\nabla f = \langle \frac{\partial f}{\partial x}, \frac{\partial f}{\partial y} \rangle$,
+    对多元标量函数 $f(x, y) = z$ 运算可以得到一个梯度向量 $\nabla f = \langle \frac{\partial f}{\partial x}, \frac{\partial f}{\partial y} \rangle$,
 
     对多元向量函数 $F(x, y) = \langle f_1(x, y), f_2(x, y) \rangle$ 运算可以得到一个雅可比矩阵(Jacobian Matrix) $\left( \begin{array}{c} \nabla f_1 \\ \nabla f_2 \end{array} \right) = \left( \begin{array}{c} \frac{\partial f_1}{\partial x} & \frac{\partial f_1}{\partial y} \\ \frac{\partial f_2}{\partial x} & \frac{\partial f_2}{\partial y} \end{array} \right)$.
 
     就像梯度向量在形式上相当于多元标量函数的导数一样, 雅可比矩阵在形式上相当于多元向量函数的导数.
 
+    为了方便后续的运算, 把 $\nabla$ 定义成一个运算符: $\nabla = \mathbf{i} \frac{\partial}{\partial x} + \mathbf{j} \frac{\partial}{\partial y} = \langle \frac{\partial}{\partial x}, \frac{\partial}{\partial y} \rangle$.
+
+    该运算符被叫做 =Nabla= 算子, 或向量微分算子, 是一个一元运算符, 支持的运算对象有标量函数和向量函数.
+
+    对于标量函数 $f$ 而言, 在便于记忆的层面上, $\nabla f$ 在可以看作是向量 $\langle \frac{\partial}{\partial x}, \frac{\partial}{\partial y} \rangle$ 与标量 $f$ 之间的乘法,
+
+    即我们熟悉的梯度(=gradient=).
+
+    对于向量函数 $F$ 而言, $\nabla$ 支持点积 $\nabla \cdot F$ 和叉积 $\nabla \times F$ 两种运算规则,
+
+    其中点积结果被称为散度(=divergence=), 叉积结果被称为旋度(=curl=).
+
+    [[../../../files/gradient_divergence_curl_magnetica.png]]
+
   - P1103, 旋度 (Curl)
 
-    是一个向量, 流体围绕点 $(x, y)$ 的旋转趋势: 旋转方向以及旋转速度.
+    是一个向量, 表示流体围绕点 $(x, y)$ 的旋转趋势: 旋转方向以及旋转速度.
 
     旋转方向只有两种: 是围绕点以顺时针方向旋转, 还是以逆时针方向旋转,
 
-    通常是按照右手法则作为基准, 旋度代表作大拇指的方向.
+    通常是按照右手法则作为基准, 旋度代表作大拇指的方向. 旋度的模长则是用来描述转速.
 
-    旋度的模长则是用来描述转速.
+    假设函数 $F(x, y) = \langle f_1(x, y), f_2(x, y) \rangle$, 那么在 $(x, y)$ 上的旋度为:
+
+    $\langle \nabla, 0 \rangle \times \langle F, 0 \rangle = \langle \frac{\partial}{\partial x}, \frac{\partial}{\partial y}, 0 \rangle \times \langle f_1(x, y), f_2(x, y), 0 \rangle = \langle 0, 0, \frac{\partial f_2(x, y)}{\partial x} - \frac{\partial f_1(x, y)}{\partial y} \rangle$
+
+    这里需要注意一下, 严格来说二维向量不支持叉积, 最少三维才支持叉积, 所以这里进行了维度拓展.
+
+    假设函数 $F(x, y, z) = \langle f_1(x, y, z), f_2(x, y, z), f_3(x, y, z) \rangle$, 那么在 $(x, y, z)$ 上的旋度为:
+
+    $\nabla \times F = \langle \frac{\partial}{\partial x}, \frac{\partial}{\partial y}, \frac{\partial}{\partial z} \rangle \times \langle f_1(x, y, z), f_2(x, y, z), f_3(x, y, z) \rangle = \langle \frac{\partial f_3(x, y, z)}{\partial y} - \frac{\partial f_2(x, y, z)}{\partial z},  \frac{\partial f_1(x, y, z)}{\partial z} - \frac{\partial f_3(x, y, z)}{\partial x}, \frac{\partial f_2(x, y, z)}{\partial x} - \frac{\partial f_1(x, y, z)}{\partial y} \rangle$
 
   - P1106, 散度 (Divergence)
 
-    是一个标量, 描述在点 $(x, y)$ 上产生或吸收的流体量(或者通量).
+    是一个标量, 描述流体在点 $(x, y)$ 上产生或吸收的流体量(或者通量).
 
     如果散度大于 0, 那么 $(x, y)$ 产生流体, 该点被称为源(source); 如果小于 0, 那么 $(x, y)$ 吸收流体, 该点被成为汇(sink).
 
     对于现实中的流体而言, 在任意点上的散度均为 0, 这被称之为不可压缩的(incompressible).
 
-  - 雅可比矩阵
+    假设函数 $F(x, y) = \langle f_1(x, y), f_2(x, y) \rangle$, 那么在 $(x, y)$ 上的散度为:
+
+    $\nabla \cdot F = \langle \frac{\partial}{\partial x}, \frac{\partial}{\partial y} \rangle \cdot \langle f_1(x, y), f_2(x, y) \rangle = \frac{\partial f_1(x, y)}{\partial x} + \frac{\partial f_2(x, y)}{\partial y}$
+
+    另外, 梯度的散度有特殊意义, 该运算被称为拉普拉斯算子, 是一个二阶微分算子, 用 $\nabla^2$ 表示:
+
+    $\nabla^2 = \nabla \cdot \nabla = \text{div(grad)}$, 最终结果是一个标量.
+
+    $\nabla^2 F = \frac{\partial^2 f_1(x, y)}{\partial x^2} + \frac{\partial^2 f_2(x, y)}{\partial y^2}$ 反映了函数 $F$ 在点 $(x, y)$ 附近的"平均值"与 $F(x, y)$ 之差.
+
+    这个结论是根据函数的平均值定理(=P461=)推导出来的.
+
+  - 雅可比矩阵 (Jacobian matrix)
 
     # deepseek 提问: 雅可比矩阵的几何含义
 
     # https://www.bilibili.com/video/BV1NJ411r7ja?spm_id_from=333.788.recommend_more_video.0&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30
 
-    
+    通过雅可比矩阵可以将复杂的非线性映射局部近似为线性代数问题(当然也可以反过来), 这也是它的几何含义.
 
-通过雅可比矩阵，我们可以将复杂的非线性映射局部简化为线性代数问题，这是微分几何、物理学和机器学习中分析多维变换的基础工具。
+    #+attr_html: :width 700px
+    #+caption: 从线性表面 $S$ 变换到非线性表面 $R$: $R = T(S) \rightarrow (x_i, y_i) = T(u_i, v_i) = \langle g(u_i, v_i), h(u_i, v_i) \rangle$
+    [[../../../files/Jocobian-transform-geometry-meaning.png]]
+
+    其中 $T$ 被称为 $C^1$ 变换 ($C^1$ transformation), 这意味着 $g$ 和 $h$ 有连续的一阶导数.
+
+    这里设表面 $R$ 的函数为 $\mathbf{r}(u, v) = g(u, v)\mathbf{i} + h(u, v)\mathbf{j}$.
+
+    #+attr_html: :width 700px
+    #+caption: 使用向量 $\Delta u \; \mathbf{r}_u$ 和 $\Delta v \; \mathbf{r}_v$ 所构成的平行四边行对表面 $R$ 的局部进行线性近似
+    [[../../../files/r-s-approx.png]]
+
+    向量函数 $\mathbf{r}$ 在方向 $u$ 和 $v$ 上的偏导数为 $\mathbf{r}_u$ 和 $\mathbf{r}_v$:
+
+    $\begin{cases} \mathbf{r}_u = \lim\limits_{\Delta u \to 0} \frac{\mathbf{r}(u_0 + \Delta u, v_0) - \mathbf{r}(u_0, v_0)}{\Delta u} = g_u(u_0, v_0) \mathbf{i} + h_u(u_0, v_0) \mathbf{j} = \frac{\partial x}{\partial u} \mathbf{i} + \frac{\partial y}{\partial u} \mathbf{j} \\ \mathbf{r}_v = \lim\limits_{\Delta v \to 0} \frac{\mathbf{r}(u_0, v_0 + \Delta v) - \mathbf{r}(u_0, v_0)}{\Delta v} = g_v(u_0, v_0) \mathbf{i} + h_v(u_0, v_0) \mathbf{j} = \frac{\partial x}{\partial v} \mathbf{i} + \frac{\partial y}{\partial v} \mathbf{j} \end{cases} \rightarrow \begin{cases} \Delta u \; \mathbf{r}_u \approx \mathbf{r}(u_0 + \Delta u, v_0) - \mathbf{r}(u_0, v_0) \\ \Delta v \; \mathbf{r}_v \approx \mathbf{r}(u_0, v_0 + \Delta v) - \mathbf{r}(u_0, v_0) \end{cases}$
+
+    二维向量叉积的模是平行四边形的面积, 所以:
+
+    $\Delta A_{R} \approx |(\Delta u \; \mathbf{r}_u) \times (\Delta v \; \mathbf{r}_v)| = |\mathbf{r}_u \times \mathbf{r}_v| \Delta u \Delta v = (\frac{\partial x}{\partial u} \frac{\partial y}{\partial v} - \frac{\partial y}{\partial u} \frac{\partial x}{\partial v}) \Delta u \Delta v$.
+
+    假设现有多元向量: $F(x_1, x_2, \dots, x_n) = \langle f_1(x_1, x_2, \dots, x_n), f_2(x_1, x_2, \dots, x_n), \dots, f_n(x_1, x_2, \dots, x_n) \rangle$,
+
+    它的雅可比矩阵为 $J = \left( \begin{array}{c} \frac{\partial f_1}{\partial x_1} & \frac{\partial f_1}{\partial x_2} & \cdots & \frac{\partial f_1}{\partial x_n} \\ \frac{\partial f_2}{\partial x_1} & \frac{\partial f_2}{\partial x_2} & \cdots & \frac{\partial f_2}{\partial x_n} \\ \vdots & \vdots & \vdots & \vdots \\ \frac{\partial f_n}{\partial x_1} & \frac{\partial f_n}{\partial x_2} & \cdots & \frac{\partial f_n}{\partial x_n}  \end{array} \right)$.
+
+    根据雅可比矩阵的定义, 可以发现上面的 $\left(\begin{array}{c} \mathbf{r}_u \\ \hline \mathbf{r}_v \end{array}\right)$ 是向量函数 $\mathbf{r}$ 的雅可比矩阵 $J_{\mathbf{r}} = \left( \begin{array}{c} \frac{\partial x}{\partial u} & \frac{\partial x}{\partial v} \\ \frac{\partial y}{\partial u} & \frac{\partial y}{\partial v} \end{array} \right)$ 的转置矩阵,
+
+    要清楚转置操作不改变矩阵的行列式, 因此 $|\left(\begin{array}{c} \mathbf{r}_u \\ \hline \mathbf{r}_v \end{array}\right)| = |J_{\mathbf{r}}|$.
+
+    对于雅可比矩阵的行列式可以使用类似于莱布尼茨的表示法: $|J| = \frac{\partial(f_1, f_2, \dots, f_n)}{\partial(x_1, x_2, \dots, x_n)} = \frac{\mathrm{d}f_1 \mathrm{d}f_2 \dots \mathrm{d}f_n }{\mathrm{d}x_1 \mathrm{d}x_2 \dots \mathrm{d}x_n }$,
+
+    并满足以下关系: $\partial(f_1, f_2, \dots, f_n) = |J|\partial(x_1, x_2, \dots, x_n)$.
+
+    行列式的几何含义是线性变换所造成的局部伸缩比例, 根据以上关系可像在一元积分中换元(=P412=)那样在多重积分中换元.
+
+    以近似为方法计算表面 $R$ 的面积为例: $\iint\limits_{R} f(x, y) \mathrm{d}x \mathrm{d}y = \iint\limits_{S} f(g(u, v), h(u, v)) |\frac{\partial(x, y)}{\partial(u, v)}| \mathrm{d} u \mathrm{d} v$,
+
+    需要注意, 该处使用的是行列式的绝对值, 因为面积不能小于 0, 而行列式有可能小于 0; 另外 $S$ 到 $R$ 上下限变换没有公式, 需要按照实际情况讨论.
+
+    多重积分的换元是雅可比矩阵行列式的重要应用之一.
 
 *** Ch 17: 二阶微分方程 (Second-Order Differential Equations)
+
+
+$(a, b, 0) \times (c, d, 0) = b \times 0 - d \times 0 + a \times 0 - 0 \times c + a \times d - b \times d$

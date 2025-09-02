@@ -1146,6 +1146,529 @@ $remap(value, low1, high1, low2, high2)$: 对 $value$ 从 $[low1, high1]$ 映射
 
 参考资料: https://offscreencanvas.com/issues/generative-shader-color-palettes/
 
+*** 缓动函数
+
+缓动函数(Easing Function) $f$ 用于描述动画的进度 $p$ 如何随着时间 $t$ 的变化而变化.
+
+在数学上, 其定义大概为: $p = f(t)$.
+
+其中 $t \in [0, 1]$, $t$ 是一个规范化的时间,
+
+假设一个动画的总时长为 $30$ 秒, 在播放到一半时(在第 $15$ 秒), 那么 $t = \frac{15}{30} = 0.5$,
+
+所以 $t = 0$ 表示动画开始, $t = 1$ 表示动画结束;
+
+$p$ 它没有固定范围, 但满足关系: $p = \begin{cases} 0 & \text{if } t = 0 \\ 1 & \text{if } t = 1 \end{cases}$.
+
+根据这些特点, $p$ 可以看作是 $0$ 到 $1$ 的插值函数, $p$ 可以表示动画已播放帧数的归一化, 也可以表示变量插值变化的归一化.
+
+比如动画的总帧数为 $120$ 帧, 假设播放到一半(在第 $60$ 帧), 那么 $p = \frac{60}{120}$,
+
+在其它地方中, $p$ 会被定义为动画已播放的帧数, 这两者本质上是一致的, 只要知道动画的总帧数就可以进行相互转换.
+
+通俗点来说, 缓动函数描述动画在什么时间上处于哪一帧.
+
+另外, $t$ 和 $p$ 的关系类似与时间和位移之间关系, 一阶导数 $f^{'}(t)$ 就是动画的当前播放速度, 二阶导数 $f^{''}(t)$ 是动画的当前播放加速度.
+
+缓动函数的作用通常是让运动的速度看起来更加自然, 而不是机械的匀速运动,
+
+比如说汽车在启动到驾驶到目的地, 整个过程至少经历了缓缓加速(=Ease-in=)和缓缓减速(=Ease-out=)两个过程,
+
+而不是一开始就以固定速度启动, 然后在目的地直接变为 0 速.
+
+还有缓出缓入(=Ease-In-Out=), 这一类函数整体上是先从静止状态逐渐加速, 在中间阶段达到最大速度, 然后逐渐减速直到静止.
+
+https://easings.net/
+
+#+BEGIN_SRC glsl
+  #define PI 3.14159265359
+  #define POW_IN(n, t) (pow(t, n))
+  #define POW_OUT(n, t) (pow(1.0 - (t), n))
+  #define POW_IN_OUT(n, t) ((t) < 0.5 ? pow(2.0, (n) - 1.0) * pow(t, n): 1.0 - 0.5 * pow(-2.0 * t + 2.0, n))
+
+  float easeInSine(float t) {
+    return 1.0 - cos(0.5 * PI * t);
+  }
+
+  float easeOutSine(float t) {
+    return sin(0.5 * PI * t);
+  }
+
+  float easeInOutSine(float t) {
+    return -0.5 * (cos(PI * t) - 1.0);
+  }
+
+  // Pow 2
+  float easeInQuad(float t) {
+    return POW_IN(2.0, t);
+  }
+
+  float easeOutQuad(float t) {
+    return POW_OUT(2.0, t);
+  }
+
+  float easeInOutQuad(float t) {
+    return POW_IN_OUT(2.0, t);
+  }
+
+  // Pow 3
+  float easeInCubic(float t) {
+    return POW_IN(3.0, t);
+  }
+
+  float easeOutCubic(float t) {
+    return POW_OUT(3.0, t);
+  }
+
+  float easeInOutCubic(float t) {
+    return POW_IN_OUT(3.0, t);
+  }
+
+  // Pow 4
+  float easeInQuart(float t) {
+    return POW_IN(4.0, t);
+  }
+
+  float easeOutQuart(float t) {
+    return POW_OUT(4.0, t);
+  }
+
+  float easeInOutQuart(float t) {
+    return POW_IN_OUT(4.0, t);
+  }
+
+  // Pow 5
+  float easeInQuint(float t) {
+    return POW_IN(5.0, t);
+  }
+
+  float easeOutQuint(float t) {
+    return POW_OUT(5.0, t);
+  }
+
+  float easeInOutQuint(float t) {
+    return POW_IN_OUT(5.0, t);
+  }
+
+  // Expo
+  float easeInExpo(float t) {
+    return t == 0.0 ? 0.0: pow(2.0, 10.0 * t - 10.0);
+  }
+
+  float easeOutExpo(float t) {
+    return t == 1.0 ? 1.0: 1.0 - pow(2.0, -10.0 * t);
+  }
+
+  float easeInOutExpo(float t) {
+    if (0.0 == x || 1.0 == x) {
+      return x;
+    } else if (x < 0.5) {
+      return 0.5 * pow(2.0, 20.0 * t - 10.0);
+    } else {
+      return 0.5 * (2.0 - pow(2.0, -20.0 * t + 10.0));
+    }
+  }
+
+  // Circ
+  float easeInCirc(float t) {
+    return 1.0 - sqrt(1.0 - pow(x, 2.0));
+  }
+
+  float easeOutCirc(float t) {
+    return sqrt(1.0 - pow(x - 1.0, 2.0));
+  }
+
+  float easeInOutCirc(float t) {
+    return x < 0.5 ?
+      0.5 * (1.0 - sqrt(1.0 - pow(2.0 * x, 2.0))):
+      0.5 * (sqrt(1.0 - pow(-2.0 * x + 2.0, 2.0)) + 1.0);
+  }
+
+  // Back
+  #define OVERSHOT 1.70158
+  float easeInBack(float t) {
+    // 和 smoothstep 非常相似
+    return (OVERSHOT + 1.0) * pow(t, 3.0) - OVERSHOT * pow(t, 2.0);
+  }
+
+  float easeOutBack(float t) {
+    return 1.0 + (OVERSHOT + 1.0) * pow(t - 1.0, 3.0) + OVERSHOT * pow(t - 1.0, 2.0);
+  }
+
+  float easeInOutBack(float t) {
+    float c2 = OVERSHOT * 1.525;
+    return t < 0.5 ?
+      0.5 * pow(2.0 * t, 2.0) * ((c2 + 1.0) * 2.0 * t - c2):
+      0.5 * (pow(2.0 * t - 2.0, 2.0) * ((c2 + 1.0) * (2.0 * t - 2.0) + c2) + 2.0);
+  }
+
+  // Elastic
+  float easeInElastic(float t) {
+    float c4 = 2.0 * PI / 3.0;
+    if (0.0 == t || 1.0 == t) {
+      return t;
+    } else {
+      return -pow(2.0, 10.0 * t - 10.0) * sin((10.0 * t - 10.75) * c4);
+    }
+  }
+
+  float easeOutElastic(float t) {
+    float c4 = 2.0 * PI / 3.0;
+    if (0.0 == t || 1.0 == t) {
+      return t;
+    } else {
+      return pow(2.0, -10.0 * t) * sin((t * 10.0 - 0.75) * c4) + 1.0;
+    }
+  }
+
+  float easeInOutElastic(float t) {
+    float c5 = 2.0 * PI / 4.5;
+
+    if (0.0 == t || 1.0 == t) {
+      return t;
+    } else if (t < 0.5) {
+      return -0.5 * pow(2.0, 20.0 * t - 10.0) * sin((20.0 * t - 11.125) * c5);
+    } else {
+      return 0.5 * pow(2.0, -20.0 * t + 10.0) * sin((20.0 * t - 11.125) * c5) + 1.0;
+    }
+  }
+
+  // Bounce
+  float easeInBounce(float t) {
+    return 1.0 - easeOutBounce(1.0 - t);
+  }
+
+  float easeOutBounce(float t) {
+    float n1 = 7.5625;
+    float d1 = 2.75;
+
+    if (t < 1.0 / d1) {
+      return n1 * t * t;
+    } else if (t < 2.0 / d1) {
+      return n1 * pow(t - 1.5 / d1, 2.0) + 0.75;
+    } else if (t < 2.5 / d1) {
+      return n1 * pow(t - 2.25 / d1, 2.0) + 0.9375;
+    } else {
+      return n1 * pow(t - 2.625 / d1, 2.0) + 0.984375;
+    }
+  }
+
+  float easeInOutBounce(float t) {
+    return t < 0.5 ?
+      0.5 * (1.0 - easeOutBounce(1.0 - 2.0 * t)):
+      0.5 * (1.0 + easeOutBounce(2.0 * t - 1.0));
+  }
+#+END_SRC
+
+以下是这些缓动函数的 =Maxima= 实现以及绘制函数本身以及一阶和二阶导数图像的命令:
+
+#+BEGIN_SRC maxima
+  load("draw")$
+
+  /* Sine */
+  easeInSine(x) := 1 - cos(0.5 * %pi * x)$
+  plot2d(easeInSine(x), [x, 0, 1])$
+  plot2d(diff(easeInSine(x), x), [x, 0, 1])$
+  plot2d(diff(easeInSine(x), x, 2), [x, 0, 1])$
+
+  easeOutSine(x) := sin(0.5 * %pi * x)$
+  plot2d(easeOutSine(x), [x, 0, 1])$
+  plot2d(diff(easeOutSine(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutSine(x), x, 2), [x, 0, 1])$
+
+  easeInOutSine(x) := -0.5 * (cos(%pi * x) - 1)$
+  plot2d(easeInOutSine(x), [x, 0, 1])$
+  plot2d(diff(easeInOutSine(x), x), [x, 0, 1])$
+  plot2d(diff(easeInOutSine(x), x, 2), [x, 0, 1])$
+
+
+  /* Quad */
+  easeInQuad(x) := x * x$
+  plot2d(easeInQuad(x), [x, 0, 1])$
+  plot2d(diff(easeInQuad(x), x), [x, 0, 1])$
+  plot2d(diff(easeInQuad(x), x, 2), [x, 0, 1])$
+
+  easeOutQuad(x) := 1.0 - (1.0 - x) * (1.0 - x)$
+  plot2d(easeOutQuad(x), [x, 0, 1])$
+  plot2d(diff(easeOutQuad(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutQuad(x), x, 2), [x, 0, 1])$
+
+  easeInOutQuad(x) := if x < 0.5 then 2 * x * x else 1 - 0.5 * (-2 * x + 2)^2$
+  plot2d(easeInOutQuad(x), [x, 0, 1])$
+  draw2d(color=red, explicit(diff(2 * x^2, x), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^2, x), x, 0.5, 1)
+    )$
+  draw2d(
+    yrange=[-5, 5],
+    color=red, explicit(diff(2 * x * x, x, 2), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^2, x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Cubic */
+  easeInCubic(x) := x^3$
+  plot2d(easeInCubic(x), [x, 0, 1])$
+  plot2d(diff(easeInCubic(x), x), [x, 0, 1])$
+  plot2d(diff(easeInCubic(x), x, 2), [x, 0, 1])$
+
+  easeOutCubic(x) := 1.0 - (1.0 - x)^3$
+  plot2d(easeOutCubic(x), [x, 0, 1])$
+  plot2d(diff(easeOutCubic(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutCubic(x), x, 2), [x, 0, 1])$
+
+  easeInOutCubic(x) := if x < 0.5 then 4 * x^3 else 1 - 0.5 * (-2 * x + 2)^3$
+  plot2d(easeInOutCubic(x), [x, 0, 1])$
+  draw2d(color=red, explicit(diff(4 * x^3, x), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^3, x), x, 0.5, 1)
+    )$
+  draw2d(color=red, explicit(diff(4 * x^3, x, 2), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^3, x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Quart */
+  easeInQuart(x) := x^4$
+  plot2d(easeInQuart(x), [x, 0, 1])$
+  plot2d(diff(easeInQuart(x), x), [x, 0, 1])$
+  plot2d(diff(easeInQuart(x), x, 2), [x, 0, 1])$
+
+  easeOutQuart(x) := 1.0 - (1.0 - x)^4$
+  plot2d(easeOutQuart(x), [x, 0, 1])$
+  plot2d(diff(easeOutQuart(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutQuart(x), x, 2), [x, 0, 1])$
+
+  easeInOutQuart(x) := if x < 0.5 then 8 * x^4 else 1 - 0.5 * (-2 * x + 2)^4$
+  plot2d(easeInOutQuart(x), [x, 0, 1])$
+  draw2d(color=red, explicit(diff(8 * x^4, x), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^4, x), x, 0.5, 1)
+    )$
+  draw2d(color=red, explicit(diff(8 * x^4, x, 2), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^4, x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Quint */
+  easeInQuint(x) := x^5$
+  plot2d(easeInQuint(x), [x, 0, 1])$
+  plot2d(diff(easeInQuint(x), x), [x, 0, 1])$
+  plot2d(diff(easeInQuint(x), x, 2), [x, 0, 1])$
+
+  easeOutQuint(x) := 1.0 - (1.0 - x)^5$
+  plot2d(easeOutQuint(x), [x, 0, 1])$
+  plot2d(diff(easeOutQuint(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutQuint(x), x, 2), [x, 0, 1])$
+
+  easeInOutQuint(x) := if x < 0.5 then 16 * x^5 else 1 - 0.5 * (-2 * x + 2)^5$
+  plot2d(easeInOutQuint(x), [x, 0, 1])$
+  draw2d(color=red, explicit(diff(16 * x^5, x), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^5, x), x, 0.5, 1)
+    )$
+  draw2d(color=red, explicit(diff(16 * x^5, x, 2), x, 0, 0.5),
+    color=blue, explicit(diff(1 - 0.5 * (-2 * x + 2)^5, x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Expo */
+  easeInExpo(x) := if x # 0 then 2^(10.0 * x - 10.0) else 0$
+  plot2d(easeInExpo(x), [x, 0, 1])$
+  plot2d(diff(easeInExpo(x), x), [x, 0, 1])$
+  plot2d(diff(easeInExpo(x), x, 2), [x, 0, 1])$
+
+  easeOutExpo(x) := if x # 1 then 1 - 2^(-10.0 * x) else 1$
+  plot2d(easeOutExpo(x), [x, 0, 1])$
+  plot2d(diff(easeOutExpo(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutExpo(x), x, 2), [x, 0, 1])$
+
+  easeInOutExpo(x) := if (x = 0 or x = 1) then x else if x < 0.5 then 0.5 * 2^(20 * x - 10) else 0.5 * (2 - 2^(-20 * x + 10))$
+  plot2d(easeInOutExpo(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(
+      diff(0.5 * 2^(20 * x - 10), x), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * (2 - 2^(-20 * x + 10)), x), x, 0.5, 1)
+    )$
+  draw2d(color=red,
+    explicit(
+      diff(0.5 * 2^(20 * x - 10), x, 2), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * (2 - 2^(-20 * x + 10)), x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Circ */
+  easeInCirc(x) := 1.0 - sqrt(1.0 - x^2);
+  plot2d(easeInCirc(x), [x, 0, 1])$
+  plot2d(diff(easeInCirc(x), x), [x, 0, 1])$
+  plot2d(diff(easeInCirc(x), x, 2), [x, 0, 1])$
+
+  easeOutCirc(x) := sqrt(1.0 - (x - 1.0)^2);
+  plot2d(easeOutCirc(x), [x, 0, 1])$
+  plot2d(diff(easeOutCirc(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutCirc(x), x, 2), [x, 0, 1])$
+
+  easeInOutCirc(x) := if x < 0.5 then 0.5 * (1.0 - sqrt(1.0 - (2.0 * x)^2)) else 0.5 * (sqrt(1.0 - (2.0 - 2.0 * x)^2) + 1.0);
+  plot2d(easeInOutCirc(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(
+      diff(0.5 * (1.0 - sqrt(1.0 - (2.0 * x)^2)), x), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * (sqrt(1.0 - (2.0 - 2.0 * x)^2) + 1.0), x), x, 0.5, 1)
+    )$
+  draw2d(color=red,
+    explicit(
+      diff(0.5 * (1.0 - sqrt(1.0 - (2.0 * x)^2)), x, 2), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * (sqrt(1.0 - (2.0 - 2.0 * x)^2) + 1.0), x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Back */
+  easeInBack(x) := (1.70158 + 1.0) * x^3 - 1.70158 * x^2$
+  plot2d(easeInBack(x), [x, 0, 1])$
+  plot2d(diff(easeInBack(x), x), [x, 0, 1])$
+  plot2d(diff(easeInBack(x), x, 2), [x, 0, 1])$
+
+  easeOutBack(x) := 1.0 + (1.70158 + 1.0) * (x - 1.0)^3 + 1.70158 * (x - 1.0)^2$
+  plot2d(easeOutBack(x), [x, 0, 1])$
+  plot2d(diff(easeOutBack(x), x), [x, 0, 1])$
+  plot2d(diff(easeOutBack(x), x, 2), [x, 0, 1])$
+
+  easeInOutBack(x) := block([c2: 1.70158 * 1.525],
+    if x < 0.5
+    then 0.5 * (2 * x)^2 * ((c2 + 1) * 2 * x - c2)
+    else 0.5 * ((2 * x - 2.0)^2 * ((c2 + 1.0) * (2 * x - 2) + c2) + 2)
+    )$
+  plot2d(easeInOutBack(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(
+      diff(0.5 * (2 * x)^2 * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525), x), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * ((2 * x - 2.0)^2 * ((1.70158 * 1.525 + 1.0) * (2 * x - 2) + 1.70158 * 1.525) + 2), x), x, 0.5, 1)
+    )$
+  draw2d(color=red,
+    explicit(
+      diff(0.5 * (2 * x)^2 * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525), x, 2), x, 0, 0.5),
+    color=blue,
+    explicit(
+      diff(
+        0.5 * ((2 * x - 2.0)^2 * ((1.70158 * 1.525 + 1.0) * (2 * x - 2) + 1.70158 * 1.525) + 2),
+        x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Elastic */
+  easeInElastic(x) := block([c4: 2 * %pi / 3],
+    if (x # 0 or x # 1)
+    then -2^(10 * x - 10) * sin((10 * x - 10.75) * c4)
+    else x
+    )$
+  plot2d(easeInElastic(x), [x, 0, 1])$
+  plot2d(diff(-2^(10 * x - 10) * sin((10 * x - 10.75) * (2 * %pi / 3)), x), [x, 0, 1])$
+  plot2d(diff(-2^(10 * x - 10) * sin((10 * x - 10.75) * (2 * %pi / 3)), x, 2), [x, 0, 1])$
+
+  easeOutElastic(x) := block([c4: 2 * %pi / 3],
+    if (x # 0 or x # 1)
+    then 2^(-10 * x) * sin((10 * x - 0.75) * c4) + 1
+    else x
+    )$
+  plot2d(easeOutElastic(x), [x, 0, 1])$
+  plot2d(diff(2^(-10 * x) * sin((10 * x - 0.75) * (2 * %pi / 3)) + 1, x), [x, 0, 1])$
+  plot2d(diff(2^(-10 * x - 10) * sin((10 * x - 0.75) * (2 * %pi / 3)) + 1, x, 2), [x, 0, 1])$
+
+  easeInOutElastic(x) := block([c5: 2 * %pi / 4.5],
+    if (x # 0 or x # 1)
+    then
+    if x < 0.5 then -0.5 * 2^(20 * x - 10) * sin((20 * x - 11.125) * c5) else 0.5 * 2^(-20 * x + 10) * sin((20 * x - 11.125) * c5) + 1
+    else x
+    )$
+  plot2d(easeInOutElastic(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(
+      diff(-0.5 * 2^(20 * x - 10) * sin((20 * x - 11.125) * (2 * %pi / 4.5)), x), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * 2^(-20 * x + 10) * sin((20 * x - 11.125) * (2 * %pi / 4.5)) + 1, x), x, 0.5, 1)
+    )$
+  draw2d(color=red,
+    explicit(
+      diff(-0.5 * 2^(20 * x - 10) * sin((20 * x - 11.125) * (2 * %pi / 4.5)), x, 2), x, 0, 0.5),
+    color=blue,
+    explicit(diff(0.5 * 2^(-20 * x + 10) * sin((20 * x - 11.125) * (2 * %pi / 4.5)) + 1, x, 2), x, 0.5, 1)
+    )$
+
+
+  /* Bounce */
+  easeInBounce(x) := 1 - easeOutBounce(1 - x)$
+  plot2d(easeInBounce(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(diff(1 - 7.5625 * x * x, x), x, 0, 1 / 2.75),
+    color=green,
+    explicit(diff(1 - 7.5625 * (x - 1.5 / 2.75)^2 - 0.75, x), x, 1 / 2.75, 2 / 2.75),
+    color=blue,
+    explicit(diff(1 - 7.5625 * (x - 2.25 / 2.75)^2 - 0.9375, x), x, 2 / 2.75, 2.5 / 2.75),
+    color=yellow,
+    explicit(diff(1 - 7.5625 * (x - 2.625 / 2.75)^2 - 0.984375, x), x, 2.5 / 2.75, 1)
+    )$
+  draw2d(color=red,
+    explicit(diff(1 - 7.5625 * x * x, x, 2), x, 0, 1 / 2.75),
+    color=green,
+    explicit(diff(1 - 7.5625 * (x - 1.5 / 2.75)^2 - 0.75, x, 2), x, 1 / 2.75, 2 / 2.75),
+    color=blue,
+    explicit(diff(1 - 7.5625 * (x - 2.25 / 2.75)^2 - 0.9375, x, 2), x, 2 / 2.75, 2.5 / 2.75),
+    color=yellow,
+    explicit(diff(1 - 7.5625 * (x - 2.625 / 2.75)^2 - 0.984375, x, 2), x, 2.5 / 2.75, 1)
+    )$
+
+  easeOutBounce(x) := block([n1: 7.5625, d1: 2.75],
+    if (x < 1 / d1) then n1 * x * x
+    else if (x < 2 / d1) then n1 * (x - 1.5 / d1)^2 + 0.75
+    else if (x < 2.5 / d1) then n1 * (x - 2.25 / d1)^2 + 0.9375
+    else n1 * (x - 2.625 / d1)^2 + 0.984375
+    )$
+  plot2d(easeOutBounce(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(diff(7.5625 * x * x, x), x, 0, 1 / 2.75),
+    color=green,
+    explicit(diff(7.5625 * (x - 1.5 / 2.75)^2 + 0.75, x), x, 1 / 2.75, 2 / 2.75),
+    color=blue,
+    explicit(diff(7.5625 * (x - 2.25 / 2.75)^2 + 0.9375, x), x, 2 / 2.75, 2.5 / 2.75),
+    color=yellow,
+    explicit(diff(7.5625 * (x - 2.625 / 2.75)^2 + 0.984375, x), x, 2.5 / 2.75, 1)
+    )$
+  draw2d(color=red,
+    explicit(diff(7.5625 * x * x, x, 2), x, 0, 1 / 2.75),
+    color=green,
+    explicit(diff(7.5625 * (x - 1.5 / 2.75)^2 + 0.75, x, 2), x, 1 / 2.75, 2 / 2.75),
+    color=blue,
+    explicit(diff(7.5625 * (x - 2.25 / 2.75)^2 + 0.9375, x, 2), x, 2 / 2.75, 2.5 / 2.75),
+    color=yellow,
+    explicit(diff(7.5625 * (x - 2.625 / 2.75)^2 + 0.984375, x, 2), x, 2.5 / 2.75, 1)
+    )$
+
+  easeInOutBounce(x) := if x < 0.5 then 0.5 * (1 - easeOutBounce(1 - 2 * x)) else 0.5 * (1 + easeOutBounce(2 * x - 1))$
+  plot2d(easeInOutBounce(x), [x, 0, 1])$
+  draw2d(color=red,
+    explicit(diff(0.5 * (1 - 7.5625 * (1 - 2 * x)^2), x), x, 0, 1 / 2.75),
+    color=green,
+    explicit(diff(0.5 * (1 - 7.5625 * ((1 - 2 * x) - 1.5 / 2.75)^2 - 0.75), x), x, 1 / 2.75, 0.5),
+    color=orange,
+    explicit(diff(0.5 * (1 + 7.5625 * ((2 * x - 1) - 1.5 / 2.75)^2 + 0.75), x), x, 0.5, 2 / 2.75),
+    color=blue,
+    explicit(diff(0.5 * (1 + 7.5625 * ((2 * x - 1) - 2.25 / 2.75)^2 + 0.9375), x), x, 2 / 2.75, 2.5 / 2.75),
+    color=yellow,
+    explicit(diff(0.5 * (1 + 7.5625 * ((2 * x - 1) - 2.625 / 2.75)^2 + 0.984375), x), x, 2.5 / 2.75, 1)
+    )$
+  draw2d(color=red,
+    explicit(diff(0.5 * (1 - 7.5625 * (1 - 2 * x)^2), x, 2), x, 0, 1 / 2.75),
+    color=green,
+    explicit(diff(0.5 * (1 - 7.5625 * ((1 - 2 * x) - 1.5 / 2.75)^2 - 0.75), x, 2), x, 1 / 2.75, 0.5),
+    color=orange,
+    explicit(diff(0.5 * (1 + 7.5625 * ((2 * x - 1) - 1.5 / 2.75)^2 + 0.75), x, 2), x, 0.5, 2 / 2.75),
+    color=blue,
+    explicit(diff(0.5 * (1 + 7.5625 * ((2 * x - 1) - 2.25 / 2.75)^2 + 0.9375), x, 2), x, 2 / 2.75, 2.5 / 2.75),
+    color=yellow,
+    explicit(diff(0.5 * (1 + 7.5625 * ((2 * x - 1) - 2.625 / 2.75)^2 + 0.984375), x, 2), x, 2.5 / 2.75, 1)
+    )$
+#+END_SRC
 
 ** COMMENT 创意用的数学函数
 
@@ -1413,16 +1936,40 @@ https://iquilezles.org/articles/sfrand/
 
 这种随机函数是用来生成向量的, 在 =Shader= 开发中通常是用来根据坐标计算出对应片元的颜色, 这种函数既可以用标量, 也可以用向量作为输入, 最后以向量作为输出.
 
-比如下面这个例子, 以 =3D= 向量作为输入和输出:
+比如下面这个例子, 以 =2D= 向量作为输入和输出:
+
+#+BEGIN_SRC glsl
+  // https://www.shadertoy.com/view/lldyDn
+  vec2 rand(vec2 p)
+  {
+    vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+19.19);
+    return fract((p3.xx+p3.yz) * p3.zy);
+  }
+#+END_SRC
+
+比如以 =3D= 向量作为输入和输出:
 
 #+BEGIN_SRC glsl
   vec3 rand(vec3 v) {
     vec3 p = vec3(dot(v, vec3(127.1, 311.7, 74.7)), dot(v, vec3(269.5, 183.3, 246.1)), dot(v, vec3(113.5, 271.9, 124.6)));
-    return fract(sin(p) * 43758.5453123)
+    return fract(sin(p) * 43758.5453123);
   }
 #+END_SRC
 
-**** $\mathrm{fract(sin(dot(x)))}$ 方法的缺陷
+比如以 =2D= 向量作为输入, 以 =3D= 向量作为输出:
+
+#+BEGIN_SRC glsl
+  vec3 rand(vec2 v) {
+    v -= 0.00001727738;
+    float z = fract(tan(v.x*3.14+v.y))*10.751135;
+    vec3 a = fract(vec3(v.x/1.000383,v.y/1.000401,z)*3.14)*10.8372611876;
+    float w = fract(dot(a, vec3(1.3774, 8.2446, 2.2883)))*10.0973326;
+    return fract(7.817082*tan(9.726749*reflect(a, vec3(w, z, fract(z*43.28)*10.114865))));
+  }
+#+END_SRC
+
+**** 三角函数的缺陷
 
 在 =WebGL= 或 =OpenGL= 中, $\sin$ 的实现取决于机器, 这导致了同一段 =Shader= 代码在不同平台上的效果不一样.
 
@@ -1466,6 +2013,132 @@ https://iquilezles.org/articles/sfrand/
     p = ((x>>8U)^p.yzx) * k;
 
     return vec3(x) * (1.0 / float(0xffffffffU));
+  }
+#+END_SRC
+
+不过这些随机函数还不够齐全, 所以从 [[https://tips.orels.sh/optimized-hash-for-shaders][Orels' Tips]] 摘抄了一个较为全面的实现, 并进行了调整:
+
+#+BEGIN_SRC glsl
+  //  1 out, 1 in...
+  float chash11(float p)
+  {
+    p = fract(p * .1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
+  }
+
+  //----------------------------------------------------------------------------------------
+  //  1 out, 2 in...
+  float chash12(vec2 p)
+  {
+    vec3 p3  = fract(vec3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
+
+  //----------------------------------------------------------------------------------------
+  //  1 out, 3 in...
+  float chash13(vec3 p3)
+  {
+    p3  = fract(p3 * .1031);
+    p3 += dot(p3, p3.zyx + 31.32);
+    return fract((p3.x + p3.y) * p3.z);
+  }
+
+  //----------------------------------------------------------------------------------------
+  //  2 out, 1 in...
+  vec2 chash21(float p)
+  {
+    vec3 p3 = fract( p * vec3(.1031, .1030, .0973) );
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+
+  }
+
+  //----------------------------------------------------------------------------------------
+  ///  2 out, 2 in...
+  vec2 chash22(vec2 p)
+  {
+    vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+
+  }
+
+  //----------------------------------------------------------------------------------------
+  ///  2 out, 3 in...
+  vec2 chash23(vec3 p3)
+  {
+    p3 = fract(p3 * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+  }
+
+  //----------------------------------------------------------------------------------------
+  //  3 out, 1 in...
+  vec3 chash31(float p)
+  {
+    vec3 p3 = fract(p * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xxy+p3.yzz)*p3.zyx);
+  }
+
+  //----------------------------------------------------------------------------------------
+  ///  3 out, 2 in...
+  vec3 chash32(vec2 p)
+  {
+    vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yxz+33.33);
+    return fract((p3.xxy+p3.yzz)*p3.zyx);
+  }
+
+  //----------------------------------------------------------------------------------------
+  ///  3 out, 3 in...
+  vec3 chash33(vec3 p3)
+  {
+    p3 = fract(p3 * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yxz+33.33);
+    return fract((p3.xxy + p3.yxx)*p3.zyx);
+
+  }
+
+  //----------------------------------------------------------------------------------------
+  // 4 out, 1 in...
+  vec4 chash41(float p)
+  {
+    vec4 p4 = fract( p * vec4(.1031, .1030, .0973, .1099));
+    p4 += dot(p4, p4.wzxy+33.33);
+    return fract((p4.xxyz+p4.yzzw)*p4.zywx);
+
+  }
+
+  //----------------------------------------------------------------------------------------
+  // 4 out, 2 in...
+  vec4 chash42(vec2 p)
+  {
+    vec4 p4 = fract(vec4(p.xyxy) * vec4(.1031, .1030, .0973, .1099));
+    p4 += dot(p4, p4.wzxy+33.33);
+    return fract((p4.xxyz+p4.yzzw)*p4.zywx);
+
+  }
+
+  //----------------------------------------------------------------------------------------
+  // 4 out, 3 in...
+  vec4 chash43(vec3 p)
+  {
+    vec4 p4 = fract(vec4(p.xyzx)  * vec4(.1031, .1030, .0973, .1099));
+    p4 += dot(p4, p4.wzxy+33.33);
+    return fract((p4.xxyz+p4.yzzw)*p4.zywx);
+  }
+
+  //----------------------------------------------------------------------------------------
+  // 4 out, 4 in...
+  vec4 chash44(vec4 p4)
+  {
+    p4 = fract(p4  * vec4(.1031, .1030, .0973, .1099));
+    p4 += dot(p4, p4.wzxy+33.33);
+    return fract((p4.xxyz+p4.yzzw)*p4.zywx);
   }
 #+END_SRC
 
@@ -2942,7 +3615,7 @@ $t^2 + \frac{2b}{a} t$ 转换成 $t$ 和 $\frac{b}{a}$ 为主的完全平方和:
 
 $f(t) = a(t + \frac{b}{a})^2 - \frac{b^2}{a} + c = a(t + \frac{b}{a})^2 + \frac{ac - b^2}{a} = a[(t + \frac{b}{a})^2 + \frac{ac - b^2}{a^2}]$,
 
-令 $u^2 = (t + \frac{b}{a})^2$ 以及 $v^2 = \frac{ac - b^2}{a^2} \rightarrow \frac{1}{f(t)} = \frac{1}{a} \frac{1}{u^2 + v^2}$,
+令 $u^2 = (t + \frac{b}{a})^2$ 以及 $v^2 = \frac{ac - b^2}{a^2}$, 经过变换可以得到 $\frac{1}{f(t)} = \frac{1}{a} \frac{1}{u^2 + v^2}$,
 
 对 $\int \frac{1}{f(x)} dt$ 使用换元法, 令 $u(t) = t + \frac{b}{a}$, $du = u^{'}(t) \cdot dt = dt$, 所以:
 
@@ -4528,7 +5201,7 @@ $n(u, v, w) = (h - g - f + e - d + c + b - a)uvw + (g - e - c + a)vw + (f - e - 
 
 这里的处理内容就是 *计算核与数据之间的相似程度, 并根据相似程度突出两者差异*.
 
-在上面动画中, 黄色区域就代表着核与数据在当前时刻相似程度.
+在上面动画中, 黄色区域就代表着核与数据在当前时刻的相似程度.
 
 因此, 核与输入数据之间的乘积(其实还要乘以 $d\tau$)可作为两者相似程度的量化, 卷积的含义就是相似度之和.
 
@@ -4572,9 +5245,11 @@ $B = \left(\begin{array}{c} w_4 & w_5 & w_6 \end{array}\right) \cdot \left(\begi
 
 $C = \left(\begin{array}{c} w_7 & w_8 & w_9 \end{array}\right) \cdot \left(\begin{array}{c} d_7 & d_8 & d_9 \end{array}\right) = w_7 d_7 + w_8 d_8 + w_9 d_9$
 
-最终, 像素 $d_5$ 新的像素值为 $F * G = A + B + C$.
+最终, 像素 $d_5$ 新的像素值为 $F * G = A + B + C$. 如果把 $F$ 和 $G$ 分别展开成向量 $v_F$ 和 $v_G$:
 
-点积可以用来表示两个向量之间的相似程度: $\vec{A} \cdot \vec{B} = |\vec{A}||\vec{B}|\cos\theta$, $\cos\theta$ 越大, 两向量之间的相似程度越高.
+$\begin{cases} v_{F} = \left(\begin{array}{c} w_1 & w_2 & w_3 & w_4 & w_5 & w_6 & w_7 & w_8 & w_9 \end{array} \right) \\ v_{G} = \left( \begin{array}{c} d_1 & d_2 & d_3 & d_4 & d_5 & d_6 & d_7 & d_8 & d_9 \end{array} \right) \end{cases}$, 那么 $d_5$ 就是 $v_F$ 和 $v_G$ 的点积.
+
+点积可以用来表示两个向量之间的相似程度: $\vec{A} \cdot \vec{B} = |\vec{A}||\vec{B}|\cos\theta$, $\cos\theta$ 越大, 两向量之间的相似程度越高, 该相似度也被称为余弦相似度.
 
 并且 $A$ 还能作为模式(=pattern=)来提取出 $B$ 的分量, 考虑以下运算: $A \cdot B = \left( \begin{array}{c} w_x & w_y & w_z \end{array} \right) \cdot \left( \begin{array}{c} x & y & z \end{array} \right)$,
 
