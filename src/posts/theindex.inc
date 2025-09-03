@@ -14,7 +14,6 @@
   - [[file:2018/06/continuation-passing-style.org][Continuation Passing Style]]
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
 * D
-  - [[file:2025/06/d3-selection-explained.org][D3-Selection-Explained]]
   - [[file:2018/08/distributed-computing-with-python.org][Distributed Computing with Python的阅读笔记]]
   - [[file:2019/02/docker-compose-file.org][Docker stack depoly 的使用]]
 * E
@@ -73,8 +72,8 @@
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 * 图
+  - [[file:2020/08/graphics-opengl-light-and-material.org][图形学 - 光和材质]]
   - [[file:2020/06/graphics-opengl-transformation.org][图形学-OpenGL坐标变换]]
-  - [[file:2020/08/graphics-opengl-light-and-material.org][图形学-光和材质]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
   - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
 * 宝
