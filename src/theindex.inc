@@ -38,11 +38,11 @@
 同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
-*** [[file:posts/2024/11/introduction-to-probability.html?hash=de45a6f88ff367d87b5b4defecd720e1][Introduction To Probability 的阅读草稿纸]]
+*** [[file:posts/2024/11/introduction-to-probability.html?hash=bab36ad7978c16cfa2565c2ded8507a6][Introduction To Probability 的阅读草稿纸]]
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=e3df479269ebce72fdfd8c758bd666f0][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=ceaa6aceff85f8ac24e57ac5cb94708d][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的.
@@ -172,7 +172,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=af73df195883aeeac53da7ce34a06b7c][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=20c38cc5f54acf72446b7d554e094f0d][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -242,7 +242,7 @@
 当基础知识足够扎实时, 应该就有能力实现 [[https://advances.realtimerendering.com/][Advances in Real-Time Rendering in 3D Graphics and Games]] 里面的技术了.
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=bf983d9e527f408227d76d51e301d318][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=d96c520183c75da47960558a719ea4c7][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -378,7 +378,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=1864f57b617c84842c4722a06a9d98c8][图形学 - 光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=2efe74746085e6046f6ad62da1904bd5][图形学 - 光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
@@ -392,7 +392,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 2. [[../../2022/02/webgl-buffer-objects.html][Shader 编程自救指南]]: 需要插值是如何进行.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=efcd86515975db97a5d0cf3861f44365][图形学 - OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=ac222eb5c702a2b7511d1b49c5c64f32][图形学 - OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),

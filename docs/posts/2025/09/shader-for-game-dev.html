@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2025-09-10 Wed 14:54 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>游戏 Shader 开发</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> -->
+<meta name="referrer" content="same-origin">
+<link rel="stylesheet" type="text/css" href="../../../css/stylesheet.css"/>
+<link rel="icon" type="image/png" href="../../../img/icon.png" />
+<!-- <script type="text/javascript" src="../../../js/live.js" defer></script> -->
+<script src="../../../js/main.js" defer></script>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="../../../js/mathjax/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+    <nav>
+        <a href="../../../"><img src="../../../img/logo.png" alt="Logo is on the way"/></a>
+        <ul>
+            <li><a accesskey="H" href="../../../"> Home </a></li>
+            <li><a accesskey="T" href="../../../tags"> Tags </a></li>
+            <li><a accesskey="A" href="../../../about"> About </a></li>
+            <li><a accesskey="L" href="../../../todos"> Todos </a></li>
+        </ul>
+    </nav>
+</div>
+<div id="content" class="content">
+<h1 class="title">游戏 Shader 开发</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org2206dc6">描边 (Outlining)</a></li>
+<li><a href="#org2a2827b">Screen Space Ambient Occlusion, SSAO</a>
+<ul>
+<li><a href="#org997f7f2">把视点空间的顶点储存在贴图中</a></li>
+<li><a href="#org39faa4c">把视点空间的法线储存在贴图中</a></li>
+<li><a href="#orga4d8e5b">SSAO</a></li>
+<li><a href="#org83944fe">对噪点进行模糊</a></li>
+</ul>
+</li>
+<li><a href="#orgce14609">Screen Space Reflection</a></li>
+<li><a href="#org0aaf009">Screen Space Refraction</a></li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="orgd67e257">
+<p>
+这篇文章主要是收集一些 <code>3D</code> 游戏开发中常用到的 <code>Shader</code> 技术的实现.
+</p>
+
+<p>
+总得来说是一篇应用类的文章, 这些应用使用了很多"基础理论", 可以从以下文章找到:
+</p>
+
+<ol class="org-ol">
+<li><p>
+<a href="../../2020/06/graphics-geometric-transformation.html">图形学 - 几何变换</a>
+</p>
+
+<p>
+要求掌握线性代数, 学习对于坐标点的常用变换.
+</p></li>
+
+<li><p>
+<a href="../../2020/06/graphics-opengl-transformation.html">图形学 - OpenGL坐标变换</a>
+</p>
+
+<p>
+要求掌握线性代数, 学习 <code>3D</code> 成像流程中需要了解的坐标系.
+</p></li>
+
+<li><p>
+<a href="../../2022/02/webgl-buffer-objects.html">Shader 编程自救指南</a>
+</p>
+
+<p>
+了解 <code>3D</code> 成像的总体流程以及 <code>Shader</code> 在哪些阶段中运行, 如何进行基础的 <code>Shader</code> 编程.
+</p>
+
+<p>
+通过 <code>WebGL API</code> 了解贴图, <code>FBO</code> 等概念, 以及如何在 <code>Shader</code> 中使用它们.
+</p>
+
+<p>
+以及介绍了如何快速上手 <code>Three.js</code> 框架.
+</p></li>
+
+<li><p>
+<a href="../../2020/08/graphics-opengl-light-and-material.html">图形学 - 光和材质</a>
+</p>
+
+<p>
+要求掌握微积分和概率论, 学习 <code>3D</code> 世界是如何实现光照系统.
+</p>
+
+<p>
+这篇文章会少量使用到贴图和 <code>FBO</code> 这两个工具, 所以前一篇文章一定要看.
+</p></li>
+
+<li><p>
+<a href="../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html">ShaderToy常见代码解析</a>
+</p>
+
+<p>
+要求掌握微积分和概率论, 学习 <code>Shader</code> 编程中一些常用的知识点,
+</p>
+
+<p>
+比如如何实现随机函数, 如何检查图像边缘, 如何实现噪声等等, 另外的成像算法 <code>RayMarching</code>.
+</p>
+
+<p>
+有很多人说 <code>ShaderToy</code> 的代码对游戏开发没有帮助, 其实是不对的, 前面这些举例在实际开发中很常见.
+</p></li>
+</ol>
+
+
+<p>
+这些文章是按照知识点之间的依赖关系罗列好的, 如果是初学的话请务必按照顺序进行阅读.
+</p>
+
+<p>
+本人最初学习图形学就是为了游戏的 <code>Shader</code> 编程, 因此本文在定位上可以说是 <code>Shader</code> 开发的最终章,
+</p>
+
+<p>
+后续会不断记录游戏开发中的 <code>Shader</code> 技术, 这里选择 <a href="https://threejs.org/">three.js</a> 作为实践平台.
+</p>
+
+<p>
+原因如下:
+</p>
+
+<ul class="org-ul">
+<li><code>JavaScript</code> 比起 <code>C++</code> 这样的编程语言更容易上手</li>
+</ul>
+
+
+<ul class="org-ul">
+<li>运行环境容易搭建, 只要有个现代浏览器即可</li>
+</ul>
+
+
+<ul class="org-ul">
+<li><p>
+相对于游戏引擎, <code>three.js</code> 的封装程度更低
+</p>
+
+<p>
+<code>three.js</code> 缺少游戏引擎的一些高级特性, 要求开发者自行实现, 对于学习而言是有益的,
+</p>
+
+<p>
+以后切换到其它引擎上也是没问题的; 其次, 互联网上关于 <code>three.js</code> 的资料十分充足,
+</p>
+
+<p>
+一定程度上可以弥补文档上的不足.
+</p></li>
+</ul>
+
+</div>
+<div id="outline-container-org2206dc6" class="outline-2">
+<h2 id="org2206dc6">描边 (Outlining)</h2>
+<div class="outline-text-2" id="text-org2206dc6">
+<p>
+描边的实现有很多种方式, 但这些方式在思路上是一样的:
+</p>
+
+<p>
+通过判断片元 \(p\) 与它周围片元在某个属性上否连续, 以此断定 \(p\) 是否处于轮廓边上;
+</p>
+
+<p>
+如果在属性上不连续, 就说明 \(p\) 在物体的轮廓边上, \(p\) 就是需要描边的片元.
+</p>
+
+<p>
+在图像处理中, 判断两个相邻片元是否在属性上连续, 等同于判断属性之间的变化是否平滑, 相当于求关于属性的导数.
+</p>
+
+<p>
+在数学上的定义完全相反, 是导数存在才能说连续, 但上面的说法有的确如此,
+</p>
+
+<p>
+根据一阶导数的定义，可得出导数的估算方式为: \(f^{'}(x) \approx \frac{f(x + h) - f(x)}{h}\),
+</p>
+
+<p>
+相邻片元意味着 \(h = 1\), 所以 \(f^{'}(x) \approx = f(x + h) - f(x)\),
+</p>
+
+<p>
+根据连续的定义, 当 \(f(x + h) - f(x)\) 足够小时, \(f\) 在 \(x\) 上连续, 同理两个片元在某个属性上连续,
+</p>
+
+<p>
+至于多少为足够小, 取决于开发者的定义了. 比较的属性一般为片元的深度值(<code>depth</code>)或法线(<code>normal</code>),
+</p>
+
+<p>
+深度值用于找出物体的外轮廓, 法线则是用于找出物体的内轮廓, 也可以结合是在一起, 得出完全的轮廓图.
+</p>
+
+
+<div id="org507d81c" class="figure">
+<p><img src="../../../files/outlining.webp" alt="outlining.webp">
+</p>
+<p><span class="figure-number">Figure 1: </span>图片来源于 <a href="https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9">How to render outlines in WebGL</a></p>
+</div>
+
+<p>
+<a href="https://lettier.github.io/3d-game-shaders-for-beginners/outlining.html">3D Game Shaders For Beginners - Outlining</a> 的实现方式则是如下:
+</p>
+
+<p>
+通过计算相邻片元的 \(y\) 分量差 (该项目的 \(y\) 分量相当于平时的 \(z\) 分量), 找出最大的分量差,
+</p>
+
+<p>
+如果最大分量差大于一定程度, 就说明该当前片元处于轮廓边上.
+</p>
+
+<p>
+另外常见的方法是使用图像处理领域的 <a href="https://blog.darksalt.me/docs/posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=af73df195883aeeac53da7ce34a06b7c#org781d7b5">Sobel核</a> 来找出轮廓线, 原理是计算当前片元在各个方向上的导数,
+</p>
+
+<p>
+并与当前片元以及其周围片元进行模式匹配, 相似程度越高, 那么当前片元就会被加强亮度, 反之变暗.
+</p>
+
+<p>
+两种方法在原理上其实差不多. 由于灰阶(gray scale)图更能突显物体的轮廓, 因此为了提高连续性判断的准确性,
+</p>
+
+<p>
+通常会先生成场景的灰阶图, 再从灰阶图提取轮廓线.
+</p>
+
+<p>
+这就是为什么会选择深度值做连续性判断, 因为深度贴图本身就是一张灰阶图; 法线贴图虽不是灰阶图, 但可以根据法线向量计算出某种灰阶值,
+</p>
+
+<p>
+由于连续的法线向量是相似的, 所以它们的灰阶值也是相似的, 同样可以很好地突显出轮廓线.
+</p>
+
+<p>
+在得到灰阶图后, 使用 <code>Sobel</code> 核分别从它们中提取出外轮廓线和内轮廓线, 最后把两者合并即可得出完整的轮廓线.
+</p>
+
+
+<div id="orgbd8b135" class="figure">
+<p><img src="../../../files/outline-input-textures.png" alt="outline-input-textures.png">
+</p>
+</div>
+
+
+<div id="org74ff2a7" class="figure">
+<p><img src="../../../files/depth+normal-front.png" alt="depth+normal-front.png">
+</p>
+<p><span class="figure-number">Figure 2: </span>正面轮廓</p>
+</div>
+
+
+<div id="orga18bb22" class="figure">
+<p><img src="../../../files/depth+normal+almost-top.png" alt="depth+normal+almost-top.png">
+</p>
+<p><span class="figure-number">Figure 3: </span>几乎垂直的俯视轮廓</p>
+</div>
+
+
+<div id="org756e7de" class="figure">
+<p><img src="../../../files/depth+normal+almost-top-with-large-depth.png" alt="depth+normal+almost-top-with-large-depth.png">
+</p>
+<p><span class="figure-number">Figure 4: </span>增强后深度值后的俯视轮廓</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org2a2827b" class="outline-2">
+<h2 id="org2a2827b">Screen Space Ambient Occlusion, SSAO</h2>
+<div class="outline-text-2" id="text-org2a2827b">
+<blockquote>
+<p>
+未完成
+</p>
+</blockquote>
+</div>
+<div id="outline-container-org997f7f2" class="outline-3">
+<h3 id="org997f7f2">把视点空间的顶点储存在贴图中</h3>
+<div class="outline-text-3" id="text-org997f7f2">
+<p>
+以视点空间的顶点坐标 \(z\) 分量作为深度.
+</p>
+
+<p>
+生成顶点贴图的 <code>Shader</code> 如下:
+</p>
+
+<p>
+<code>Position.vert</code>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aPos;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec4</span> vPosInViewSpace;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  vPosInViewSpace = viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(aPos, 1.0);
+}
+</pre>
+</div>
+
+<p>
+<code>Position.frag</code>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec4</span> vPosInViewSpace;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = vPosInViewSpace;
+}
+</pre>
+</div>
+
+<p>
+生成视点空间上顶点坐标的贴图, 用在后续的 <code>uViewPositionTex</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org39faa4c" class="outline-3">
+<h3 id="org39faa4c">把视点空间的法线储存在贴图中</h3>
+<div class="outline-text-3" id="text-org39faa4c">
+<p>
+把视点空间的法线储存到贴图上, 用于后续构建出视点空间的 <code>TBN</code>.
+</p>
+
+<p>
+以下是生成法线贴图的 <code>Shader</code> 程序.
+</p>
+
+<p>
+<code>Normal.vert</code>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec2</span> aCoord;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aNormal;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aTangent;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> aBitangent;
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vCoord;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vNormal;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vTangent;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vBitangent;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  vNormal = <span style="color: #b0c4de;">normalize</span>((viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(aNormal, 0.0)).xyz);
+  vTangent = <span style="color: #b0c4de;">normalize</span>((viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(aTangent, 0.0)).xyz);
+  vBitangent = <span style="color: #b0c4de;">normalize</span>((viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(aBitangent, 0.0)).xyz);
+  vCoord = aCoord;
+}
+</pre>
+</div>
+
+<p>
+<code>Normal.frag</code>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vCoord;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vNormal;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vTangent;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vBitangent;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">int</span> useNormalTex;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> uNormalTex;
+
+<span style="color: #98fb98;">void</span> main() {
+
+  <span style="color: #98fb98;">vec3</span> normal;
+
+  <span style="color: #00ffff;">if</span> (useNormalTex == 1) {
+    <span style="color: #98fb98;">vec3</span> normalInTangentSpace = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(uNormalTex, vCoord) * 2.0 - 1.0;
+    <span style="color: #98fb98;">mat3</span> tbn = <span style="color: #98fb98;">mat3</span>(vTangent, vBitangent, vNormal);
+    normal = <span style="color: #b0c4de;">normalize</span>(tbn * normalInTangentSpace);
+  } <span style="color: #00ffff;">else</span> {
+    normal = <span style="color: #b0c4de;">normalize</span>(vNormal);
+  }
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(normal, 1.0) * 0.5 + 0.5;
+}
+</pre>
+</div>
+
+<p>
+生成视点空间上法线的贴图, 用在后续的 <code>uViewNormalTex</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-orga4d8e5b" class="outline-3">
+<h3 id="orga4d8e5b">SSAO</h3>
+<div class="outline-text-3" id="text-orga4d8e5b">
+<p>
+<code>SSAO</code> 的关键点在于如何判断一个片元是否被遮蔽, 以下是它的原理解释.
+</p>
+
+
+<div id="org460fedb" class="figure">
+<p><img src="../../../files/normal-oriented-hemisphere-ssao.jpg" alt="normal-oriented-hemisphere-ssao.jpg">
+</p>
+</div>
+
+<p>
+在视点空间上, 以当前片元 \(p\) 为原点构建出面向其法线 <code>normal</code> 的单位半球体, 在球体内进行随机采样,
+</p>
+
+<p>
+得到一个采样点集合 \(S\). 这里以其中两个采样点 <code>sample 1</code> 和 <code>sample 2</code> 作为后续的研究例子.
+</p>
+
+<p>
+首先在切线空间 (<code>tangent space</code>) 上进行采样, 把采样点变换到裁剪空间 (<code>clip space</code>) 上,
+</p>
+
+<p>
+再从裁剪坐标变换到 <code>NDC</code>, 最后把 <code>NDC</code> 坐标变换到屏幕空间 (<code>screen space</code>) 上得到屏幕坐标.
+</p>
+
+<p>
+根据屏幕坐标从顶点贴图 <code>uViewPositionTex</code> 获取实际成像的顶点坐标, 该顶点坐标的 \(z\) 分量就是实际成像的深度值 <code>depth</code>.
+</p>
+
+<p>
+比如, 根据屏幕坐标从顶点贴图上获得 <code>sample 1</code> 的深度 <code>depth 1</code> 以及 <code>sample 2</code> 的深度 <code>depth 2</code>.
+</p>
+
+<p>
+如图所示, 当深度值 <code>depth</code> 比其采样点 \(s \in S\) 的 \(z\) 分量小, 那就说明 \(p\) 点在 \(\vec{ps} = s - p\) 方向上被遮蔽;
+</p>
+
+<p>
+所以 <code>sample 2</code> 被遮蔽, <code>sample 1</code> 没有被遮蔽.
+</p>
+
+<p>
+那么如何计算 \(p\) 点的被遮蔽程度呢? 计算方法有很多种, 这里假设 \(p\) 点的被遮蔽程度的范围为 \([0, 1]\),
+</p>
+
+<p>
+当采样点 \(s \in S\) 被遮蔽时, 以 \(o(r) = smoothstep(0.0, 1.0, \frac{r}{|z - \mathrm{depth}|})\) 作为 \(s\) 的被遮蔽程度,
+</p>
+
+<p>
+其中 \(z\) 是 \(s\) 的 \(z\) 分量, \(\mathrm{depth}\) 是根据 \(s\) 在 <code>uViewPositionTex</code> 上获得的深度值, \(r\) 是半球体的半径.
+</p>
+
+<p>
+以此方法计算出 \(S\) 中所有采样点的被遮蔽程度, 并以它们平均值作为 \(p\) 点的被遮蔽程度:
+</p>
+
+<p>
+\(\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^{n-1} smoothstep(0.0, 1.0, \frac{r}{|z_{i} - \mathrm{depth}_{i}|})\).
+</p>
+
+<p>
+想要遮蔽效果准确, 需要采样点有足够多的数量和合适的分布, 当然采样点数量越多, 性能也越差.
+</p>
+
+<p>
+如果采样点数量过少, 遮蔽效果的精确度会下降, 生成的 <code>SSAO</code> 贴图会出现带状条纹(<code>banding</code>)的效果,
+</p>
+
+
+<div id="org8765003" class="figure">
+<p><img src="../../../files/ssao_banding_noise.jpg" alt="ssao_banding_noise.jpg">
+</p>
+</div>
+
+<p>
+为了消除带状条纹效果, 可以让 \(p\) 的采样点集合 \(S\) (\(s \in S\)) 围绕法线进行统一的旋转, 不同的采样点集合的旋转是不一样的,
+</p>
+
+<p>
+比如 \(p_i\) 和 \(p_j\) 的采样点集合分别为 \(S_i\) 和 \(S_j\), 它们的旋转矩阵分别是 \(M_{i}\) 和 \(M_{j}\), 其中 \(i \ne j\).
+</p>
+
+<p>
+这样确实会获得更好的效果, 但也会引入一些噪点图案(<code>noise pattern</code>), 解决方法就是对结果模糊, 弱化噪点效果.
+</p>
+
+<p>
+在分布方面, 我们希望随着采样点索引的增加, 新增采样点与原点之间距离增加,
+</p>
+
+<p>
+使得新采样点之间越分散, 最早的采样点在原点附近聚集,
+</p>
+
+<p>
+如下图的关系:
+</p>
+
+
+<div id="orgc646f87" class="figure">
+<p><img src="../../../files/sample-distirbution.jpg" alt="sample-distirbution.jpg">
+</p>
+</div>
+
+<p>
+这个图的函数是 \(mix(0.1, 1.0, x) = 0.1 \times (1 - x) + x\), \(x = i^2 \in (0, 1]\),
+</p>
+
+<p>
+其中 \(i\) 是采样点索引 \(I\) 与采样点数量 \(N\) 之比: \(\frac{I}{N} \in (0, 1]\).
+</p>
+
+<p>
+因为采样点是 <code>TBN</code> 坐标, 所以只要能为不同 \(p\) 点生产随机的 <code>TBN</code> 矩阵就可以实现围绕法线进行统一的随机旋转.
+</p>
+
+<p>
+最简单的做法就是根据 \(p\) 的信息生成一个随机变量 \(R\) 来作为校准前 <code>TBN</code> 坐标的 <code>tangent</code> 分量, 再根据 \(R\) 和 \(N\) 计算出 <code>TBN</code> 矩阵.
+</p>
+
+<p>
+最终生成的实际是开放(<code>openness</code>)贴图, 而不是遮蔽(<code>occlusion</code>)贴图,
+</p>
+
+<p>
+因为计算一个片元被遮蔽后的颜色是 \(c \times \mathrm{openness}\), 其中 \(c\) 是片元的颜色,
+</p>
+
+<p>
+如果是遮蔽贴图, 那么就算方式变成 \(c \times (1.0 - \mathrm{occlusion})\), 生成开放贴图是为了方便后续运算.
+</p>
+
+<p>
+<code>SSAO.frag</code>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #b0c4de;">#define</span> NUM_SAMPLES 8
+<span style="color: #b0c4de;">#define</span> NUM_NOISE   4
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> u_resolution;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> uViewNormalTex;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> uViewPositionTex;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uProjectionMatrix;
+
+<span style="color: #98fb98;">float</span> hash11 ( <span style="color: #98fb98;">uint</span> n ) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">integer hash copied from Hugo Elias
+</span>  n = (n &lt;&lt; 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">float</span>( n &amp; <span style="color: #98fb98;">uint</span>(0x7fffffffU) ) / <span style="color: #98fb98;">float</span>(0x7fffffff);
+}
+
+<span style="color: #98fb98;">vec3</span> hash13( <span style="color: #98fb98;">uint</span> n ) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">integer hash copied from Hugo Elias
+</span>  n = (n &lt;&lt; 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  <span style="color: #98fb98;">uvec3</span> k = n * <span style="color: #98fb98;">uvec3</span>(n, n*16807U, n*48271U);
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">vec3</span>( k &amp; <span style="color: #98fb98;">uvec3</span>(0x7fffffffU) ) / <span style="color: #98fb98;">float</span>(0x7fffffff);
+}
+
+<span style="color: #98fb98;">vec3</span> getSamplePoint( <span style="color: #98fb98;">uint</span> i ) {
+  <span style="color: #98fb98;">float</span> scale = <span style="color: #98fb98;">float</span>(i) / <span style="color: #98fb98;">float</span>(NUM_SAMPLES);
+  scale = <span style="color: #b0c4de;">mix</span>(0.1, 1.0, scale * scale);
+  <span style="color: #98fb98;">vec3</span> r = hash13(i);
+  r.x = r.x * 2.0 - 1.0;
+  r.y = r.y * 2.0 - 1.0;
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">normalize</span>(r) * scale;
+}
+
+<span style="color: #98fb98;">vec3</span> getNoise( <span style="color: #98fb98;">uint</span> n ) {
+  <span style="color: #98fb98;">vec3</span> r = <span style="color: #98fb98;">vec3</span>(hash11(n * 17) * 2.0 - 1.0,
+                hash11(n * 289) * 2.0 - 1.0,
+                0.0);
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">normalize</span>(r);
+}
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">float</span> radius = 0.6;
+  <span style="color: #98fb98;">float</span> bias = 0.01;
+
+  <span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / u_resolution.xy;
+  <span style="color: #98fb98;">vec3</span> origin = (<span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(uViewPositionTex, uv)).xyz;
+  <span style="color: #98fb98;">vec3</span> normal = (<span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(uViewNormalTex, uv) * 2.0 - 1.0).xyz;
+
+  <span style="color: #98fb98;">int</span>  noiseS = <span style="color: #98fb98;">int</span>(<span style="color: #b0c4de;">sqrt</span>(NUM_NOISE));
+  <span style="color: #98fb98;">int</span>  noiseX = <span style="color: #98fb98;">int</span>(<span style="color: #eedd82;">gl_FragCoord</span>.x - 0.5) % noiseS;
+  <span style="color: #98fb98;">int</span>  noiseY = <span style="color: #98fb98;">int</span>(<span style="color: #eedd82;">gl_FragCoord</span>.y - 0.5) % noiseS;
+  <span style="color: #98fb98;">vec3</span> rvec = getNoise(noiseX + (noiseY * noiseS));
+
+  <span style="color: #98fb98;">vec3</span> tangent = <span style="color: #b0c4de;">normalize</span>(rvec - <span style="color: #b0c4de;">dot</span>(rvec, normal) * normal);
+  <span style="color: #98fb98;">vec3</span> bitangent = <span style="color: #b0c4de;">cross</span>(normal, tangent);
+  <span style="color: #98fb98;">mat3</span> tbn = <span style="color: #98fb98;">mat3</span>(tangent, bitangent, normal);
+
+  <span style="color: #98fb98;">float</span> openness = NUM_SAMPLES;
+
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt; NUM_SAMPLES; i++) {
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Transform the tangent space sampling points into world space
+</span>    <span style="color: #98fb98;">vec3</span> dir = tbn * getSamplePoint(i);
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Scale the sample points by radius of hemisphere (maybe not a unit hemisphere) in view space
+</span>    <span style="color: #98fb98;">vec3</span> surfaceView = origin.xyz + dir * radius;
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Clip Space
+</span>    <span style="color: #98fb98;">vec4</span> surfaceClip = uProjectionMatrix * <span style="color: #98fb98;">vec4</span>(surfaceView, 1.0);
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">NDC
+</span>    <span style="color: #98fb98;">vec3</span> surfaceNDC = surfaceClip.xyz / surfaceClip.w;
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Screen Space
+</span>    <span style="color: #98fb98;">vec2</span> surfaceUV = (surfaceNDC.xy * 0.5 + 0.5).xy;
+
+    <span style="color: #98fb98;">vec4</span> sampleDepth = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(positionTexture, surfaceUV).z;
+
+    <span style="color: #98fb98;">float</span> occluded = 0.0;
+    <span style="color: #00ffff;">if</span> (surfaceView.z + bias &lt;= sampleDepth) {
+      occluded = 0.0;
+    } <span style="color: #00ffff;">else</span> {
+      occluded = 1.0;
+    }
+    openness -= occluded * <span style="color: #b0c4de;">smoothstep</span>(0.0,
+                                      1.0,
+                                      radius / <span style="color: #b0c4de;">abs</span>(surfaceView.z - sampleDepth));
+  }
+
+  openness /= NUM_SAMPLES;
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(<span style="color: #98fb98;">vec3</span>(openness), origin.a);
+}
+</pre>
+</div>
+
+<p>
+开放贴图用在后续的 <code>uSSAOInTex</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org83944fe" class="outline-3">
+<h3 id="org83944fe">对噪点进行模糊</h3>
+<div class="outline-text-3" id="text-org83944fe">
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span>
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> uSSAOInTex;
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgce14609" class="outline-2">
+<h2 id="orgce14609">Screen Space Reflection</h2>
+</div>
+
+<div id="outline-container-org0aaf009" class="outline-2">
+<h2 id="org0aaf009">Screen Space Refraction</h2>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: saltb0rn (<a href="mailto:asche34@outlook.com">asche34@outlook.com</a>)</p>
+<p class="date">Date: 2025-09-03</p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 30.2 (<a href="https://orgmode.org">Org</a> mode 9.7.11)</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

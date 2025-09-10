@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-09-02 Tue 20:35 -->
+<!-- 2025-09-10 Wed 14:54 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Shader 编程自救指南</title>
@@ -279,10 +279,18 @@
 </ul>
 </li>
 <li><a href="#orgf85c7ed">搭建自己的 Shadertoy</a></li>
+<li><a href="#org4600b7d">学习使用 Three.js 进行实践</a>
+<ul>
+<li><a href="#org0c27478">如何搭建基础项目</a></li>
+<li><a href="#org0f2ba51">如何把 <code>Shader</code> 应用到物体上</a></li>
+<li><a href="#orgc070c9d">如何进行后处理</a></li>
+<li><a href="#org34c6ead">项目结构推荐</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org6287893">
+<div class="abstract" id="org46db66c">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -427,7 +435,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org56d0206" class="figure">
+<div id="org193bc8f" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif">
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
@@ -575,7 +583,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org0ce17ef" class="figure">
+<div id="org91388db" class="figure">
 <p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif">
 </p>
 </div>
@@ -607,7 +615,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org03ef1ca" class="figure">
+<div id="org56dcc87" class="figure">
 <p><img src="../../../files/trianglerast_f1_joshbeam.png" alt="trianglerast_f1_joshbeam.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>三个顶点所对应的片元坐标</p>
@@ -736,7 +744,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </div>
 
 
-<div id="org2653680" class="figure">
+<div id="orge6357e5" class="figure">
 <p><img src="../../../files/trianglerast_f2_joshbeam.png" alt="trianglerast_f2_joshbeam.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>三角形线框</p>
@@ -755,7 +763,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org0671354" class="figure">
+<div id="org09174b1" class="figure">
 <p><img src="../../../files/trianglerast_f3_joshbeam_aux.png" alt="trianglerast_f3_joshbeam_aux.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>实心三角形</p>
@@ -1041,7 +1049,7 @@ iz01.pop();
 </p>
 
 
-<div id="orge74516e" class="figure">
+<div id="org361b933" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>模板测试</p>
@@ -1259,7 +1267,7 @@ iz01.pop();
 </p>
 
 
-<div id="org7cfea72" class="figure">
+<div id="orgefeaab5" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png">
 </p>
 <p><span class="figure-number">Figure 6: </span>vertexAttribPointer</p>
@@ -1750,10 +1758,6 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, 
 <h3 id="org6b42b40">帧缓冲 (FrameBuffer)</h3>
 <div class="outline-text-3" id="text-org6b42b40">
 <p>
-<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer">gl.bindFramebuffer(target, framebuffer)</a> 用来指定渲染结果输出 <code>framebuffer</code> 上, 如果 <code>framebuffer</code> 是 <code>null</code>, 那么渲染结果输出到画布上.
-</p>
-
-<p>
 帧缓冲是一个缓冲集合, 该集合包含若干个渲染数据, 所谓渲染数据就是渲染结果的拆分:
 </p>
 
@@ -1763,6 +1767,10 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, 
 
 <p>
 新创建的帧缓冲是一个空集, 开发者需要把渲染数据关联到附件(<code>attachments</code>)上, 每关联一个附件, 集合里面就多出一元素,
+</p>
+
+<p>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer">gl.bindFramebuffer(target, framebuffer)</a> 用来指定渲染结果输出 <code>framebuffer</code> 上, 如果 <code>framebuffer</code> 是 <code>null</code>, 那么渲染结果输出到画布上.
 </p>
 
 <p>
@@ -1869,6 +1877,18 @@ gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.U
 renderScene();
 </pre>
 </div>
+
+<p>
+帧缓冲经常会被用在后处理(<code>post processing</code>)上, 所谓的后处理就是在整个场景渲染完毕之后, 把渲染结果写入到帧缓冲的贴图上,
+</p>
+
+<p>
+创建一个 <code>3D</code> 平面铺满整个画布, 为这个 <code>3D</code> 平面编写 <code>Shader</code> 程序: 以帧缓冲的贴图作为 <code>uniform</code> 变量, 针对贴图内容进行处理并渲染到 <code>3D</code> 平面上.
+</p>
+
+<p>
+举个通俗点的例子, 比如拍照, 照片就是帧缓冲的贴图, 使用软件对照片进行美化就是后处理, 当然也可以对后处理结果再做一次后处理, 个人把这种情况叫做多阶段后处理(<code>multi pass post procesing</code>).
+</p>
 </div>
 </div>
 </div>
@@ -2126,6 +2146,846 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 再说难道游戏里面用到的噪声算法在 <code>ShaderToy</code> 里面看不到吗? 退一步讲, 难道里面的各种数学知识用不上?
 </p>
 </blockquote>
+</div>
+</div>
+<div id="outline-container-org4600b7d" class="outline-2">
+<h2 id="org4600b7d">学习使用 Three.js 进行实践</h2>
+<div class="outline-text-2" id="text-org4600b7d">
+<p>
+想学习游戏开发的 <code>Shader</code> 编程的话, 通常来说是直接上手游戏引擎的.
+</p>
+
+<p>
+但是个人体验下来, 游戏引擎的封装程度很高, 一些基础的图形效果是不需要开发者去实现的,
+</p>
+
+<p>
+对于工作意味着效率, 但是对于学习而言就是一个黑盒子, 作为图形学初学者而言, 个人认为不应该通过游戏引擎上手.
+</p>
+
+<p>
+但也不推荐直接使用 <code>WebGL</code> 或 <code>OpenGL</code> 的 <code>API</code> 去实践, 这些 <code>API</code> 在开发效率上并不占优势,
+</p>
+
+<p>
+而初学者在实践时不断地调整代码是不可避免的, 这个时候使用这些低效的 <code>API</code> 很容易疲劳.
+</p>
+
+<p>
+这里推荐 <code>Three.js</code> 作为开发工具, 它对 <code>WebGL API</code> 封装程度比起游戏引擎对 <code>WebGL/OpenGL API</code> 的封装程度要低,
+</p>
+
+<p>
+在使用难度上对 <code>WebGL API</code> 进行了大幅度的简化. 虽然 <code>Three.js</code> 定位上不是游戏引擎,
+</p>
+
+<p>
+毕竟很多概念都是相通的, 所以不用担心学习的知识无法迁移到游戏开发上, 况且相比游戏引擎,
+</p>
+
+<p>
+<code>Three.js</code> 的学习成本比起游戏引擎更低, 使用的 <code>JavaScript</code> 语言, 只要有一个现代浏览器就可以进行开发了.
+</p>
+
+<p>
+(如果选择了工程化的开发方式, 还可以使用 <code>TypeScript</code> 进行开发).
+</p>
+
+<p>
+学习 <code>Three.js</code> 的正确方式并非是通过扣文档来掌握它的 <code>API</code>, 这些 <code>API</code> 规定到底就是图形学知识的实现,
+</p>
+
+<p>
+也就是学好图形学的知识再读个文档基本上知道怎么用这些 <code>API</code> 了, 而且文档上最多只会说明白这个 <code>API</code> 是对应哪个图形学知识,
+</p>
+
+<p>
+知识的具体细节是不会提及的, 所以脑海没有概念是用不懂这些 <code>API</code> 的, 这也是我观察身边的人与自身情况进行对比得出的感想.
+</p>
+
+<p>
+最后一个原因是 <code>API</code> 会随着 <code>Three.js</code> 的升级而发生改变, 扣文档学 <code>API</code> 容易使得花了大力气学习的知识被浪费掉.
+</p>
+
+<p>
+因此, 在掌握了图形学基础的情况下, 只着重掌握以下几点即可.
+</p>
+</div>
+<div id="outline-container-org0c27478" class="outline-3">
+<h3 id="org0c27478">如何搭建基础项目</h3>
+<div class="outline-text-3" id="text-org0c27478">
+<p>
+这一点阅读文档 <a href="https://threejs.org/manual/#en/creating-a-scene">Creating a Scene</a> 即可, 它介绍了一个最基础的场景需要什么.
+</p>
+
+<p>
+在搭建完基础场景后, <b>了解</b> 以下以下几个大类做什么的以及有什么子类(如果有的话)即可:
+</p>
+
+<ul class="org-ul">
+<li><p>
+<a href="https://threejs.org/docs/?q=Camera#api/en/cameras/Camera">Camera</a>
+</p>
+
+<p>
+相机类
+</p></li>
+
+<li><p>
+<a href="https://threejs.org/docs/?q=Mesh#api/en/objects/Mesh">Mesh</a>
+</p>
+
+<p>
+<code>3D</code> 物体类, 一个 <code>3D</code> 物体由一个 <a href="https://threejs.org/docs/?q=Geometry#api/en/core/BufferGeometry">BufferGeometry</a> (缓冲几何体) 实例和一个 <a href="https://threejs.org/docs/?q=Material#api/en/materials/Material">Material</a> (材质类) 实例构成.
+</p>
+
+<p>
+一个 <code>BufferGeometry</code> 实例整合了 <code>VBO</code> 和 <code>VAO</code>;
+</p>
+
+<p>
+一个 <code>Material</code> 则是整合了一组 <code>Vertex/Fragment Shader</code>.
+</p>
+
+<blockquote>
+<p>
+实际上 <code>Mesh</code> 应该翻译成网格, 它的父类 <code>Object3D</code> 才应该被翻译成 <code>3D</code> 物体,
+</p>
+
+<p>
+但是 <code>Object3D</code> 定位应该是抽象类, 所以这里把更具体的 <code>Mesh</code> 翻译成物体.
+</p>
+</blockquote></li>
+
+<li><p>
+<a href="https://threejs.org/docs/?q=Light#api/en/lights/Light">Light</a>
+</p>
+
+<p>
+光源类, 建议在学习完毕 <a href="../../2020/graphics-opengl-light-and-material.html">图形学 - 光和材质</a> 后再回来了解.
+</p></li>
+
+<li><p>
+<a href="https://threejs.org/docs/?q=Scene#api/en/scenes/Scene">Scene</a>
+</p>
+
+<p>
+场景类, 一个包含了 <code>Mesh</code> 实例和 <code>Light</code> 实例的集合, 事实上 <code>Scene/Mesh/Light</code> 的父类都是 <a href="https://threejs.org/docs/?q=Light#api/en/core/Object3D">Object3D</a> 的子类.
+</p>
+
+<p>
+因此, 从通俗的角度来讲, 场景类就是最顶层的 <code>3D</code> 物体.
+</p></li>
+
+<li><p>
+<a href="https://threejs.org/docs/?q=WebGLRender#api/en/renderers/WebGLRenderer">WebGLRenderer</a>
+</p>
+
+<p>
+渲染器, 一个可以调用绘制命令(<code>gl.drawArrays</code> 以及 <code>gl.gl.drawElements</code>)的类.
+</p>
+
+<p>
+同时包含很多全局设置选项, 比如阴影贴图选项, 背景色等选项.
+</p></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org0f2ba51" class="outline-3">
+<h3 id="org0f2ba51">如何把 <code>Shader</code> 应用到物体上</h3>
+<div class="outline-text-3" id="text-org0f2ba51">
+<p>
+<code>Three.js</code> 有两种 <code>Material</code> 子类支持 <code>Shader</code> 编程: <a href="https://threejs.org/docs/?q=ShaderMate#api/en/materials/ShaderMaterial">ShaderMaterial</a> 和 <a href="https://threejs.org/docs/?q=ShaderMate#api/en/materials/RawShaderMaterial">RawShaderMaterial</a>.
+</p>
+
+<p>
+<code>ShaderMaterial</code> 相比 <code>RawShaderMaterial</code> 内置了很多 <a href="https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram">Uniforms/Attributes</a> 和函数,
+</p>
+
+<p>
+<code>Three.js</code> 的 <code>Shader</code> 编译器支持 <code>#include</code> 宏引入内置 <code>Shader</code> 代码, 从而提供内置函数,
+</p>
+
+<p>
+这些内置代码在 <a href="https://github.com/mrdoob/three.js/tree/dev/src/renderers/shaders/ShaderChunk">ShaderChunk</a> 中, 可惜的是这些代码并没有在文档中详细描述.
+</p>
+
+<p>
+初学者开始时应要做到不依赖内置的函数, 能够自己实现, 理由如下:
+</p>
+
+<p>
+内置函数实现起来不复杂, 是基础得不再能基础的知识, 可以迁移到游戏引擎或者 <code>3D</code> 渲染器框架上.
+</p>
+
+<p>
+在使用感觉和效率上, <code>RawShaderMaterial</code> 和 <code>WebGL API</code> 差不多, 所以建议使用 <code>ShaderMaterial</code> 进行学习,
+</p>
+
+<p>
+至少可以免掉定义 <code>Uniforms/Attributes</code> 的功夫.
+</p>
+
+<blockquote>
+<p>
+说起来有点难以置信, <code>RawShaderMaterial</code> 是 <code>ShaderMaterial</code> 的子类.
+</p>
+</blockquote>
+
+<p>
+此外, 也可以在其它内置 <code>Material</code> 子类的基础上进行拓展.
+</p>
+
+<p>
+比如想要自定义符合 <code>PBR</code> 流程的 <code>Material</code> 类, 最简单的做法应该是基于 <a href="https://github.com/mrdoob/three.js/blob/8722ea5455a6a6623f194b9a60ef5887ac16a4b0/src/materials/MeshStandardMaterial.js">MeshStandardMaterial (r179)</a> 进行修改,
+</p>
+
+<p>
+而不是直接使用 <code>ShaderMaterial</code> 再实现一遍 <code>PBR</code> 流程, 那么该如何修改呢?
+</p>
+
+<p>
+在官方文档上可以看到 <a href="https://github.com/mrdoob/three.js/blob/8722ea5455a6a6623f194b9a60ef5887ac16a4b0/src/materials/Material.js">Material (r179)</a> 都有一个 <a href="https://threejs.org/docs/#api/en/materials/Material.onBeforeCompile">onBeforeCompile</a> 方法, 该方法在 <code>shader</code> 程序编译之前被执行.
+</p>
+
+<p>
+开发者一般不会 <b>直接</b> 调用该方法, 该方法执行的地方有两处, 可在 <a href="https://github.com/mrdoob/three.js/blob/8722ea5455a6a6623f194b9a60ef5887ac16a4b0/src/renderers/WebGLRenderer.js">WebGLRenderer (r179)</a> 中找到:
+</p>
+
+<blockquote>
+<ul class="org-ul">
+<li><p>
+<code>WebGLRenderer.compile</code>
+</p>
+
+<p>
+<code>prepareMaterial</code>
+</p>
+
+<p>
+<code>getProgram</code>
+</p>
+
+<p>
+<code>Material.onBeforeCompile</code>
+</p></li>
+</ul>
+
+
+<ul class="org-ul">
+<li><p>
+<code>WebGLRenderer.render</code>
+</p>
+
+<p>
+<code>renderTransmissionPass</code>
+</p>
+
+<p>
+<code>renderObjects</code>
+</p>
+
+<p>
+<code>renderObject</code>
+</p>
+
+<p>
+<code>WebGLRenderer.renderBufferDirect</code>
+</p>
+
+<p>
+<code>setProgram</code>
+</p>
+
+<p>
+<code>getProgram</code>
+</p>
+
+<p>
+<code>Material.onBeforeCompile</code>
+</p></li>
+</ul>
+</blockquote>
+
+<p>
+简单来说是调用在 <code>Shader</code> 解析和编译之前. <code>onBeforeCompile</code> 的第一个参数是一个 <code>Shader</code> 对象(参考 <code>ShaderMaterial</code> 的参数),
+</p>
+
+<p>
+这个 <code>Shader</code> 对象代表着当前材质的所有 <code>Shader</code> 信息, 包括 <code>Vertex/Fragment Shader</code> 的代码, 该对象会被用于后续的解析和编译阶段.
+</p>
+
+<p>
+因此, 可以在这个函数里对 <code>Shader</code> 对象进行修改影响最终结果.
+</p>
+
+<p>
+这里推荐阅读 <a href="https://github.com/pailhead/three.js/blob/materials-multi-uv/examples/webgl_materials_extended_multiple_uvs.html">webgl materials extended multiple uvs</a> 和 <a href="https://medium.com/@pailhead011/extending-three-js-materials-with-glsl-78ea7bbb9270">extending-three-js-materials-with-glsl</a> 这两个参考资料.
+</p>
+</div>
+</div>
+<div id="outline-container-orgc070c9d" class="outline-3">
+<h3 id="orgc070c9d">如何进行后处理</h3>
+<div class="outline-text-3" id="text-orgc070c9d">
+<p>
+了解如何 <a href="https://threejs.org/manual/#en/how-to-use-post-processing">使用 EffectComposer 类</a> 和各种内置 <a href="https://github.com/mrdoob/three.js/blob/8722ea5455a6a6623f194b9a60ef5887ac16a4b0/examples/jsm/postprocessing/Pass.js">Pass</a> 的子类完成后处理.
+</p>
+
+<p>
+诚然, 内置后处理效果是无法满足全部人的需求, 所以 <code>Three.js</code> 也开放了自定义后处理效果的能力.
+</p>
+
+<p>
+目前有两种自定义后处理效果的方法, 一是为 <code>ShaderPass</code> 编写 <code>Shader</code>, 上一个文档链接有说明如何进行;
+</p>
+
+<p>
+第二种就是继承 <code>Pass</code> 类实现自定义 <code>Pass</code>, 实现自己想要的后处理效果.
+</p>
+
+<p>
+这两种做法适用于不同情况, 如果只是想直接对渲染结果进行后处理, 那么直接使用 <code>ShaderPass</code> 方案;
+</p>
+
+<p>
+如果后处理需要使用到场景的深度贴图/法线贴图等内容, 那么就得使用定义 <code>Pass</code> 子类方案.
+</p>
+
+<p>
+生成场景的深度贴图/法线贴图需要额外的渲染步骤, 它们本身也是后处理, 所以这种情况就是多阶段后处理,
+</p>
+
+<p>
+换而言之, 多阶段后处理就得使用定义 <code>Pass</code> 子类方案.
+</p>
+
+<p>
+多阶段后处理要求掌握 <a href="https://threejs.org/docs/?q=WebGLRender#api/en/renderers/WebGLRenderTarget">WebGLRenderTarget</a> 类的用法, 该类所对应的就是帧缓冲.
+</p>
+
+<p>
+可惜的是, 文档并没有该类的使用例子, 这里给出两个例子: 生成场景的深度贴图, 以及生成场景的法线贴图.
+</p>
+
+<p>
+这两个算是有代表性的例子, 前者代表着特殊贴图的生成和读取, 后者代表通用贴图的生成和读取.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">width</span> = 1920, <span style="color: #eedd82;">height</span> = 1080, <span style="color: #eedd82;">samples</span> = 8;
+
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">scene</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.Scene</span>();
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">camera</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.PerspectiveCamera</span>(75, width / height, 0.5, 2000);
+
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">renderer</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderer</span>(width, height, { samples });
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#30340;&#27861;&#32447;&#36148;&#22270;
+</span>{
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21019;&#24314;&#27861;&#32447;&#26448;&#36136;
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalMaterial</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.ShaderMaterial</span>({
+    uniforms: {},
+    vertexShader: <span style="color: #ffa07a;">`
+varying vec3 vNormal;
+
+void main () {
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vNormal = normalize(normalMatrix * normal);
+}
+  `</span>,
+    fragmentShader: <span style="color: #ffa07a;">`
+varying vec3 vNormal;
+
+void main () {
+  vec3 color = vNormal * 0.5 + 0.5;
+  gl_FragColor = vec4(color, 1.0);
+}
+  `</span>
+  });
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21019;&#24314;&#29992;&#20110;&#33719;&#21462;&#27861;&#32447;&#22330;&#26223;&#28210;&#26579;&#32467;&#26524;&#30340; FBO, &#30456;&#24403;&#20110; const normalFBO = gl.createFramebuffer();
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(width * samples, height * samples, {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21487;&#20197;&#22312;&#36825;&#37324;&#35774;&#32622;&#36148;&#22270;&#21442;&#25968;: wrapS/wrapT/magFilter/minFilter &#31561;&#31561;
+</span>  });
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35201;&#24819;&#33719;&#21462;&#22330;&#26223;&#30340;&#27861;&#32447;&#36148;&#22270;, &#35753;&#27861;&#32447;&#26448;&#36136;&#35206;&#30422;&#22330;&#26223;&#20013;&#25152;&#26377;&#29289;&#20307;&#30340;&#21407;&#26448;&#36136;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Scene &#31867;&#26377;&#19968;&#20010; overrideMaterial &#23646;&#24615;, &#21487;&#29992;&#20110;&#20020;&#26102;&#35206;&#30422;&#22330;&#26223;&#26448;&#36136;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#35206;&#30422;&#21069;&#24212;&#35813;&#20808;&#20445;&#21407;&#20808;&#30340; overrideMaterial &#23646;&#24615;&#20540;
+</span>  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">overrideMaterialOriginal</span> = scene.overrideMaterial;
+  scene.overrideMaterial = normalMaterial;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32465;&#23450;&#24103;&#32531;&#20914;, &#31867;&#20284;&#20110; gl.bindFramebuffer(gl.FRAMEBUFFER, normalFBO)
+</span>  renderer.setRenderTarget(normalFBO);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36827;&#34892;&#28210;&#26579;, &#30456;&#24403;&#20110;&#35843;&#29992; gl.drawArrays/gl.drawEelements
+</span>  renderer.render(scene, camera);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36824;&#21407; scene.overrideMaterial &#23646;&#24615;
+</span>  scene.overrideMaterial = overrideMaterialOriginal;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32465;&#23450;&#24103;&#32531;&#20914;, &#21518;&#32493;&#28210;&#26579;&#32467;&#26524;&#36755;&#20986;&#21040;&#23631;&#24149;&#19978;
+</span>  renderer.setRenderTarget(<span style="color: #7fffd4;">null</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">normalFBO.texture &#35775;&#38382;&#27861;&#32447;&#36148;&#22270;
+</span>}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#30340;&#28145;&#24230;&#36148;&#22270;
+</span>{
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#30340;&#28210;&#26579;&#32467;&#26524;&#36148;&#22270;&#27604;&#36215;&#27861;&#32447;&#36148;&#22270;&#35201;&#31616;&#21333;&#24471;&#22810;, Three.js &#24050;&#32463;&#20869;&#37096;&#23436;&#25104;&#35206;&#30422;&#21644;&#36824;&#21407;&#25972;&#20010;&#22330;&#26223;&#30340;&#26448;&#36136;
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">depthFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(width * samples, height * samples);
+  depthFBO.depthTexture = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.DepthTexture</span>(width * samples, height * samples);
+  renderer.setRenderTarget(depthFBO);
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(<span style="color: #7fffd4;">null</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">depthFBO.depthTexture &#35775;&#38382;&#28210;&#26579;&#32467;&#26524;&#36148;&#22270;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderLib/depth.glsl.js
+</span>}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21487;&#20197;&#21482;&#20351;&#29992;&#19968;&#20010; WebGLRenderTarget &#21516;&#26102;&#29983;&#25104;&#28145;&#24230;&#36148;&#22270;&#21644;&#27861;&#32447;&#36148;&#22270;
+</span>{
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalMaterial</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.ShaderMaterial</span>({
+    uniforms: {},
+    vertexShader: <span style="color: #ffa07a;">`
+varying vec3 vNormal;
+
+void main () {
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vNormal = normalize(normalMatrix * normal);
+}
+  `</span>,
+    fragmentShader: <span style="color: #ffa07a;">`
+varying vec3 vNormal;
+
+void main () {
+  vec3 color = vNormal * 0.5 + 0.5;
+  gl_FragColor = vec4(color, 1.0);
+}
+  `</span>
+  });
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(width * samples, height * samples);
+  normalFBO.depthTexture = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.DepthTexture</span>(width * samples, height * samples);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">overrideMaterialOriginal</span> = scene.overrideMaterial;
+  scene.overrideMaterial = normalMaterial;
+  renderer.setRenderTarget(normalFBO);
+  renderer.render(scene, camera);
+  scene.overrideMaterial = overrideMaterialOriginal;
+  renderer.setRenderTarget(<span style="color: #7fffd4;">null</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">normalFBO.texture &#33719;&#21462;&#27861;&#32447;&#36148;&#22270;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">normalFBO.depthTexture &#33719;&#21462;&#28145;&#24230;&#36148;&#22270;
+</span>}
+</pre>
+</div>
+
+<p>
+接下来要做的就是明白如何继承 <code>Pass</code> 类需要实现哪些关键内容,
+</p>
+
+<p>
+不幸的是, 文档没有关于 <code>Pass</code> 类的描述, 幸运的是 <code>Pass</code> 类本身就很简单, 它的定位是抽象类,
+</p>
+
+<p>
+意味着不会直接对它进行实例化, 而是作为父类使用.
+</p>
+
+<p>
+<code>Pass</code> 类的源文件提供了 <code>Pass</code> 和 <code>FullScreenQuad</code> 两个类,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">import</span> {
+        BufferGeometry,
+        Float32BufferAttribute,
+        OrthographicCamera,
+        Mesh
+} from <span style="color: #ffa07a;">'three'</span>;
+
+<span style="color: #ffa07a;">/**
+ * Abstract base class for all post processing passes.
+ *
+ * This module is only relevant for post processing with {@link WebGLRenderer}.
+ *
+ * @abstract
+ * @three_import import { Pass } from 'three/addons/postprocessing/Pass.js';
+ */</span>
+<span style="color: #00ffff;">class</span> Pass {
+
+        <span style="color: #ffa07a;">/**
+         * Constructs a new pass.
+         */</span>
+        constructor() {
+
+                <span style="color: #ffa07a;">/**
+                 * This flag can be used for type testing.
+                 *
+                 * @type {boolean}
+                 * @readonly
+                 * @default true
+                 */</span>
+                <span style="color: #7fffd4;">this</span>.isPass = <span style="color: #7fffd4;">true</span>;
+
+                <span style="color: #ffa07a;">/**
+                 * If set to `true`, the pass is processed by the composer.
+                 *
+                 * @type {boolean}
+                 * @default true
+                 */</span>
+                <span style="color: #7fffd4;">this</span>.enabled = <span style="color: #7fffd4;">true</span>;
+
+                <span style="color: #ffa07a;">/**
+                 * If set to `true`, the pass indicates to swap read and write buffer after rendering.
+                 *
+                 * @type {boolean}
+                 * @default true
+                 */</span>
+                <span style="color: #7fffd4;">this</span>.needsSwap = <span style="color: #7fffd4;">true</span>;
+
+                <span style="color: #ffa07a;">/**
+                 * If set to `true`, the pass clears its buffer before rendering
+                 *
+                 * @type {boolean}
+                 * @default false
+                 */</span>
+                <span style="color: #7fffd4;">this</span>.clear = <span style="color: #7fffd4;">false</span>;
+
+                <span style="color: #ffa07a;">/**
+                 * If set to `true`, the result of the pass is rendered to screen. The last pass in the composers
+                 * pass chain gets automatically rendered to screen, no matter how this property is configured.
+                 *
+                 * @type {boolean}
+                 * @default false
+                 */</span>
+                <span style="color: #7fffd4;">this</span>.renderToScreen = <span style="color: #7fffd4;">false</span>;
+
+        }
+
+        <span style="color: #ffa07a;">/**
+         * Sets the size of the pass.
+         *
+         * @abstract
+         * @param {number} width - The width to set.
+         * @param {number} height - The height to set.
+         */</span>
+        setSize( <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">width, height</span><span style="color: #ff7f24;"> */</span> ) {}
+
+        <span style="color: #ffa07a;">/**
+         * This method holds the render logic of a pass. It must be implemented in all derived classes.
+         *
+         * @abstract
+         * @param {WebGLRenderer} renderer - The renderer.
+         * @param {WebGLRenderTarget} writeBuffer - The write buffer. This buffer is intended as the rendering
+         * destination for the pass.
+         * @param {WebGLRenderTarget} readBuffer - The read buffer. The pass can access the result from the
+         * previous pass from this buffer.
+         * @param {number} deltaTime - The delta time in seconds.
+         * @param {boolean} maskActive - Whether masking is active or not.
+         */</span>
+        render( <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">renderer, writeBuffer, readBuffer, deltaTime, maskActive</span><span style="color: #ff7f24;"> */</span> ) {
+
+                console.error( <span style="color: #ffa07a;">'THREE.Pass: .render() must be implemented in derived pass.'</span> );
+
+        }
+
+        <span style="color: #ffa07a;">/**
+         * Frees the GPU-related resources allocated by this instance. Call this
+         * method whenever the pass is no longer used in your app.
+         *
+         * @abstract
+         */</span>
+        dispose() {}
+
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Helper for passes that need to fill the viewport with a single quad.
+</span>
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">_camera</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">OrthographicCamera</span>( - 1, 1, 1, - 1, 0, 1 );
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://github.com/mrdoob/three.js/pull/21358
+</span>
+<span style="color: #00ffff;">class</span> FullscreenTriangleGeometry <span style="color: #00ffff;">extends</span> BufferGeometry {
+
+        constructor() {
+
+                <span style="color: #00ffff;">super</span>();
+
+                <span style="color: #7fffd4;">this</span>.setAttribute( <span style="color: #ffa07a;">'position'</span>, <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Float32BufferAttribute</span>( [ - 1, 3, 0, - 1, - 1, 0, 3, - 1, 0 ], 3 ) );
+                <span style="color: #7fffd4;">this</span>.setAttribute( <span style="color: #ffa07a;">'uv'</span>, <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Float32BufferAttribute</span>( [ 0, 2, 0, 0, 2, 0 ], 2 ) );
+
+        }
+
+}
+
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">_geometry</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">FullscreenTriangleGeometry</span>();
+
+
+<span style="color: #ffa07a;">/**
+ * This module is a helper for passes which need to render a full
+ * screen effect which is quite common in context of post processing.
+ *
+ * The intended usage is to reuse a single full screen quad for rendering
+ * subsequent passes by just reassigning the `material` reference.
+ *
+ * This module can only be used with {@link WebGLRenderer}.
+ *
+ * @augments Mesh
+ * @three_import import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
+ */</span>
+<span style="color: #00ffff;">class</span> FullScreenQuad {
+
+        <span style="color: #ffa07a;">/**
+         * Constructs a new full screen quad.
+         *
+         * @param {?Material} material - The material to render te full screen quad with.
+         */</span>
+        constructor( material ) {
+
+                <span style="color: #7fffd4;">this</span>._mesh = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">Mesh</span>( _geometry, material );
+
+        }
+
+        <span style="color: #ffa07a;">/**
+         * Frees the GPU-related resources allocated by this instance. Call this
+         * method whenever the instance is no longer used in your app.
+         */</span>
+        dispose() {
+
+                <span style="color: #7fffd4;">this</span>._mesh.geometry.dispose();
+
+        }
+
+        <span style="color: #ffa07a;">/**
+         * Renders the full screen quad.
+         *
+         * @param {WebGLRenderer} renderer - The renderer.
+         */</span>
+        render( renderer ) {
+
+                renderer.render( <span style="color: #7fffd4;">this</span>._mesh, _camera );
+
+        }
+
+        <span style="color: #ffa07a;">/**
+         * The quad's material.
+         *
+         * @type {?Material}
+         */</span>
+        get material() {
+
+                <span style="color: #00ffff;">return</span> <span style="color: #7fffd4;">this</span>._mesh.material;
+
+        }
+
+        set material( value ) {
+
+                <span style="color: #7fffd4;">this</span>._mesh.material = value;
+
+        }
+
+}
+
+<span style="color: #00ffff;">export</span> { Pass, FullScreenQuad };
+</pre>
+</div>
+
+<p>
+其中 <code>FullScreenQuad</code> 是一个用于绑定 <code>ShaderMaterial</code> 并渲染的上下文,
+</p>
+
+<p>
+它向外提供了 <code>material</code> 的 <code>setter</code> 用于内部的 <code>mesh</code> 绑定 <code>ShaderMaterial</code>,
+</p>
+
+<p>
+(PS: 它的 <code>mesh</code> 覆盖了整个屏幕空间的, 然而这个 <code>mesh</code> 是一个三角形而不是矩形, 这里是<a href="https://github.com/mrdoob/three.js/pull/21358">原因</a>.)
+</p>
+
+<p>
+提供的 <code>render( renderer )</code> 方法指定 <code>renderer</code> 调用绘制命令(<code>drawcall</code>), 用于绘制这个 <code>mesh</code> 对象从而执行绑定的 <code>ShaderMaterial</code>;
+</p>
+
+<p>
+<code>renderer</code> 是一个 <code>WebGLRenderer</code> 实例, 在调用 <code>render( renderer )</code> 方法前,
+</p>
+
+<p>
+<code>renderer</code> 应该先调用 setRendererTarget 方法设定渲染结果的输出保存在哪里,
+</p>
+
+<p>
+<code>WebGLRenderer.setRendererTarget</code> 的参数是一个 <code>WebGLRenderTarget</code> 实例.
+</p>
+
+<p>
+<code>Pass</code> 类主要是为 <code>FullScreenQuad</code> 实例的渲染提供一个调度, 这个调度需要在 <code>Pass</code> 提供的 <code>render</code> 方法里面完成,
+</p>
+
+<p>
+这个 <code>render</code> 方法的主要内容应该是从 <code>readBuffer</code> 从读取上一个渲染阶段的渲染结果,
+</p>
+
+<p>
+用到 <code>FullScreenQuad</code> 实例的渲染计算上, 再把这个阶段的渲染结果根据情况通过输出到下一个渲染阶段 (<code>writeBuffer</code>) 或屏幕上,
+</p>
+
+<p>
+完整的调度在 <code>EffectComposer</code> 的 <code>render</code> 方法中可以找到, 本质就是一个遍历 <code>Pass</code> 实例列表的循环,
+</p>
+
+<p>
+每遍历一个 <code>Pass</code>, 默认情况下都会把 <code>writeBuffer</code> 和 <code>readBuffer</code> 两者进行交换, 这样可以把当前 <code>Pass</code> 的渲染结果传递到下一个 <code>Pass</code> 上.
+</p>
+
+<p>
+(PS: 由于源文件内容过长, 这里只截取其中的 <code>render</code> 方法)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">examples/jsm/postprocessing/EffectComposer.js
+</span>render( deltaTime ) {
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">deltaTime value is in seconds
+</span>
+  <span style="color: #00ffff;">if</span> ( deltaTime === <span style="color: #7fffd4;">undefined</span> ) {
+
+    deltaTime = <span style="color: #7fffd4;">this</span>.clock.getDelta();
+
+  }
+
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">currentRenderTarget</span> = <span style="color: #7fffd4;">this</span>.renderer.getRenderTarget();
+
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">maskActive</span> = <span style="color: #7fffd4;">false</span>;
+
+  <span style="color: #00ffff;">for</span> ( <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">i</span> = 0, <span style="color: #eedd82;">il</span> = <span style="color: #7fffd4;">this</span>.passes.length; i &lt; il; i ++ ) {
+
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">pass</span> = <span style="color: #7fffd4;">this</span>.passes[ i ];
+
+    <span style="color: #00ffff;">if</span> ( pass.enabled === <span style="color: #7fffd4;">false</span> ) <span style="color: #00ffff;">continue</span>;
+
+    pass.renderToScreen = ( <span style="color: #7fffd4;">this</span>.renderToScreen &amp;&amp; <span style="color: #7fffd4;">this</span>.isLastEnabledPass( i ) );
+    pass.render( <span style="color: #7fffd4;">this</span>.renderer, <span style="color: #7fffd4;">this</span>.writeBuffer, <span style="color: #7fffd4;">this</span>.readBuffer, deltaTime, maskActive ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25191;&#34892; Pass &#23454;&#20363;
+</span>
+    <span style="color: #00ffff;">if</span> ( pass.needsSwap ) {     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#40664;&#35748;&#24773;&#20917;&#19979; Pass &#23454;&#20363;&#30340; needsSwap &#25104;&#21592;&#20026; true
+</span>
+      <span style="color: #00ffff;">if</span> ( maskActive ) {
+
+      <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">context</span> = <span style="color: #7fffd4;">this</span>.renderer.getContext();
+      <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">stencil</span> = <span style="color: #7fffd4;">this</span>.renderer.state.buffers.stencil;
+
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">context.stencilFunc( context.NOTEQUAL, 1, 0xffffffff );
+</span>      stencil.setFunc( context.NOTEQUAL, 1, 0xffffffff );
+
+      <span style="color: #7fffd4;">this</span>.copyPass.render( <span style="color: #7fffd4;">this</span>.renderer, <span style="color: #7fffd4;">this</span>.writeBuffer, <span style="color: #7fffd4;">this</span>.readBuffer, deltaTime );
+
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">context.stencilFunc( context.EQUAL, 1, 0xffffffff );
+</span>      stencil.setFunc( context.EQUAL, 1, 0xffffffff );
+
+      }
+
+      <span style="color: #7fffd4;">this</span>.swapBuffers();       <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20132;&#25442; readBuffer &#21644; writeBuffer
+</span>
+    }
+
+    <span style="color: #00ffff;">if</span> ( MaskPass !== <span style="color: #7fffd4;">undefined</span> ) {
+
+      <span style="color: #00ffff;">if</span> ( pass <span style="color: #00ffff;">instanceof</span> <span style="color: #98fb98;">MaskPass</span> ) {
+
+      maskActive = <span style="color: #7fffd4;">true</span>;
+
+      } <span style="color: #00ffff;">else</span> <span style="color: #00ffff;">if</span> ( pass <span style="color: #00ffff;">instanceof</span> <span style="color: #98fb98;">ClearMaskPass</span> ) {
+
+      maskActive = <span style="color: #7fffd4;">false</span>;
+
+      }
+
+    }
+
+  }                             <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Loop ends here
+</span>
+  <span style="color: #7fffd4;">this</span>.renderer.setRenderTarget( currentRenderTarget );
+
+}
+</pre>
+</div>
+
+<p>
+因此结论是, 在实现 <code>Pass</code> 的子类时, 重点是实现它 <code>render</code> 方法,
+</p>
+
+<p>
+<code>render</code> 所作的事情可以概括为:
+</p>
+
+<p>
+从 <code>readBuffer</code> 读取上一个 <code>Pass</code> 的渲染结果, 然后创建 <code>ShaderMaterial</code> 绑定给 <code>FullScreenQuad</code>,
+</p>
+
+<p>
+调用 <code>FullScreenQuad</code> 的 <code>render</code> 方法完成后处理, 最后把处理结果输出到屏幕上, 或者通过 <code>writeBuffer</code> 输出到下一个 <code>Pass</code> 中.
+</p>
+
+<p>
+作为学习参考, 内置的 <a href="https://github.com/mrdoob/three.js/blob/master/examples/jsm/postprocessing/FilmPass.js">FilmPass</a> 和 <a href="https://github.com/mrdoob/three.js/blob/master/examples/jsm/postprocessing/SavePass.js">SavePass</a> 因复杂度适中非常适合作为入门例子, 适合以 <a href="https://github.com/mrdoob/three.js/blob/master/examples/jsm/postprocessing/SSAOPass.js">SSAOPass</a> 作为进阶例子.
+</p>
+</div>
+</div>
+<div id="outline-container-org34c6ead" class="outline-3">
+<h3 id="org34c6ead">项目结构推荐</h3>
+<div class="outline-text-3" id="text-org34c6ead">
+<p>
+如果按照文档教程的方式开发项目, 把所有内容都写在一个文件上, 必然会面临复杂度提高且难以维护的问题.
+</p>
+
+<p>
+这里分享一套本人从 <a href="https://www.bilibili.com/video/BV13jU4YoErU/">Three.js Journey</a> 总结的项目结构, 以此解决问题.
+</p>
+
+<p>
+(PS: 本人使用了 <code>TypeScript</code> 开发, 但对于 <code>JavaScript</code> 也合适, <a href="../../../files/Outline.zip">例子的源代码</a>)
+</p>
+
+<blockquote>
+<p>
+eventEmitter.ts: 事件派发器
+disposer.ts:     专门针对 <code>Scene</code> 实例进行内存释放
+access.ts:       应对模块化, 对 <code>Scene/Camera/WebGLRenderer</code> 等实例进行全局化
+camera.ts:       对全局 <code>Camera</code> 实例进行初始化和配置
+main.ts:         对 <code>Scene/Camera/WebGLRenderer</code> 等全局实例进行调度, 项目的入口
+materials/:      存放自定义材质
+postProcessing/: 存放自定义后处理
+postProc.ts:     对全局 <code>EffectComposer</code> 实例进行初始化和配置
+renderer.ts:     对全局 <code>WebGLRenderer</code> 实例进行初始化和配置
+scene.ts:        对全局 <code>Scene</code> 实例进行初始化和配置, 该文件负责定义加载 <code>3D</code> 物体, 设置光源
+</p>
+</blockquote>
+
+<p>
+这个结构的思路是, 如果新增一个重要的全局实例, 那么就为它单独编写一个模块进行初始化和配置,
+</p>
+
+<p>
+这样即可以有效地保证模块的复杂程度低于一定程度, 同时也让结构看上去更加清晰.
+</p>
+
+<p>
+比如 <code>postProc.ts</code> 就是专门为全局 <code>EffectComposer</code> 实例编写的模块;
+</p>
+
+<p>
+这个结构还方便拓展, 比如想对场景定义一些鼠标事件, 可以在不动 <code>scene.ts</code> 模块的情况下单独写一个 <code>mouse.ts</code> 的模块完成,
+</p>
+
+<p>
+当然这少不了 <code>eventEmitter.ts</code> 的功劳, 它是 <code>access.ts</code> 的父类, 主要作用是让模块之间进行通信,
+</p>
+
+<p>
+具体可以参考 <code>renderer.ts</code> 如何调度(<code>EventEmitter.tirgger</code> 方法)这些钩子,
+</p>
+
+<p>
+以及 <code>postProc.ts</code> 如何设置(<code>EventEmitter.on</code> 方法)和卸载(<code>EventEmitter.off</code>)钩子.
+</p>
+
+<p>
+大部分情况下, 基本上只有 <code>postProc.ts</code> 和 <code>scene.ts</code> 两个文件需要进行修改, 其它文件基本定型.
+</p>
+
+<p>
+自定义材质和后处理效果都属于 <code>Shader</code> 编程的范围, 所以把它们单独存放.
+</p>
+</div>
 </div>
 </div>
 </div>
