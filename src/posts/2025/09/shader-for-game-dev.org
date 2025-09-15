@@ -4,7 +4,7 @@
 #+tags: Graphics
 #+status: wd
 #+begin_abstract
-这篇文章主要是收集一些 =3D= 游戏开发中常用到的 =Shader= 技术的实现.
+这篇文章主要是收集一些 =3D= 游戏开发常用的 =Shader= 技术, 以及一些风格化渲染实现.
 
 总得来说是一篇应用类的文章, 这些应用使用了很多"基础理论", 可以从以下文章找到:
 
@@ -22,7 +22,7 @@
 
    通过 =WebGL API= 了解贴图, =FBO= 等概念, 以及如何在 =Shader= 中使用它们.
 
-   以及介绍了如何快速上手 =Three.js= 框架.
+   为快速上手 =Three.js= 提供了一些[[../../2022/02/webgl-buffer-objects.html#guide-to-learn-threejs][方向]].
 
 4. [[../../2020/08/graphics-opengl-light-and-material.html][图形学 - 光和材质]]
 
@@ -60,66 +60,131 @@
   以后切换到其它引擎上也是没问题的; 其次, 互联网上关于 =three.js= 的资料十分充足,
 
   一定程度上可以弥补文档上的不足.
+
+
+阅读时你会文章中的示例 =Shader= 与提供的项目代码有所区别,
+
+这是因为 =three.js= 的 [[https://threejs.org/docs/?q=shader#api/en/materials/ShaderMaterial][ShaderMaterial]] 的 =Shader= 本身就内置了一些 [[https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram][uniforms/attributes]] 变量,
+
+所以项目代码的 =Shader= 并不会声明这些用到的变量; 文章的代码会按照 [[https://threejs.org/docs/?q=shader#api/en/materials/RawShaderMaterial][RawShaderMaterial]] 的 =Shader= 去写,
+
+也就是文章中的示例 =Shader= 会把需要用到的内置 =uniforms/attributes= 变量也声明上,
+
+保证示例的代码可以轻松的移至到其他框架上.
 #+end_abstract
 
-*** 描边 (Outlining)
+*** 渲染到贴图 (Render To Texture)
 
-描边的实现有很多种方式, 但这些方式在思路上是一样的:
+游戏开发 *经常* 需要把渲染结果写入到贴图上供其它 =Shader= 程序使用, 本质上就是 [[../../2022/02/webgl-buffer-objects.html#fbo][帧缓冲(Framebuffer Object / FBO)]] 的应用.
 
-通过判断片元 $p$ 与它周围片元在某个属性上否连续, 以此断定 $p$ 是否处于轮廓边上;
+=Three.js= 的 =WebGLRenderTarget= 就是对帧缓冲的高级封装, 具体用法可以参考 [[../../2022/02/webgl-buffer-objects.html#fbo-in-threejs][Three.js 中使用帧缓冲]].
 
-如果在属性上不连续, 就说明 $p$ 在物体的轮廓边上, $p$ 就是需要描边的片元.
+最常见的用法是生成场景的深度贴图, 法线贴图. 这里将会介绍一些常用的贴图生成.
 
-在图像处理中, 判断两个相邻片元是否在属性上连续, 等同于判断属性之间的变化是否平滑, 相当于求关于属性的导数.
+**** 深度贴图 (Depth Texture)
 
-在数学上的定义完全相反, 是导数存在才能说连续, 但上面的说法有的确如此,
+根据 [[../../2020/06/graphics-opengl-transformation.html#depth-buffer][图形学 - OpenGL坐标变换: 透视投影 - Depth Buffer]] 可得知, 深度贴图的像素用于储存深度值,
 
-根据一阶导数的定义，可得出导数的估算方式为: $f^{'}(x) \approx \frac{f(x + h) - f(x)}{h}$,
+而深度值是 =NDC= 坐标的 $z_{ndc}$ 分量经过归一化的结果: $depth = z_{ndc} * 0.5 + 0.5$.
 
-相邻片元意味着 $h = 1$, 所以 $f^{'}(x) \approx = f(x + h) - f(x)$,
+$z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
-根据连续的定义, 当 $f(x + h) - f(x)$ 足够小时, $f$ 在 $x$ 上连续, 同理两个片元在某个属性上连续,
+不同项目有不同的深度值计算方式, 这只是最常见一种方式.
 
-至于多少为足够小, 取决于开发者的定义了. 比较的属性一般为片元的深度值(=depth=)或法线(=normal=),
+***** 实现
 
-深度值用于找出物体的外轮廓, 法线则是用于找出物体的内轮廓, 也可以结合是在一起, 得出完全的轮廓图.
+*Vertex Shader*:
 
-#+caption: 图片来源于 [[https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9][How to render outlines in WebGL]]
-[[../../../files/outlining.webp]]
+#+BEGIN_SRC glsl
+  #version 130
 
-[[https://lettier.github.io/3d-game-shaders-for-beginners/outlining.html][3D Game Shaders For Beginners - Outlining]] 的实现方式则是如下:
+  attribute vec3 position;
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
 
-通过计算相邻片元的 $y$ 分量差 (该项目的 $y$ 分量相当于平时的 $z$ 分量), 找出最大的分量差,
+  void main() {
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+#+END_SRC
 
-如果最大分量差大于一定程度, 就说明该当前片元处于轮廓边上.
+*Fragment Shader*:
 
-另外常见的方法是使用图像处理领域的 [[https://blog.darksalt.me/docs/posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=af73df195883aeeac53da7ce34a06b7c#org781d7b5][Sobel核]] 来找出轮廓线, 原理是计算当前片元在各个方向上的导数,
+#+BEGIN_SRC glsl
+  #version 130
 
-并与当前片元以及其周围片元进行模式匹配, 相似程度越高, 那么当前片元就会被加强亮度, 反之变暗.
+  void main() {
+    float depth = gl_FragCoord.z * 0.5 + 0.5;
+    gl_FragColor = vec4(depth);
+  }
+#+END_SRC
 
-两种方法在原理上其实差不多. 由于灰阶(gray scale)图更能突显物体的轮廓, 因此为了提高连续性判断的准确性,
+把深度值归一化到 $[0, 1]$ 有利于储存, 因为默认情况下图片就是以 =RGBA= 储存像素,
 
-通常会先生成场景的灰阶图, 再从灰阶图提取轮廓线.
+像素的每个组件可以被解释为在 $x \in [0, 255]$ 内的整数, 对应 =Shader= 里面对应 $\frac{x}{255} \in [0, 1]$.
 
-这就是为什么会选择深度值做连续性判断, 因为深度贴图本身就是一张灰阶图; 法线贴图虽不是灰阶图, 但可以根据法线向量计算出某种灰阶值,
+当然可以[[../../2022/02/webgl-buffer-objects.html#texture][对贴图进行参数设置]]储存 $[0, 1]$ 范围外的数值.
 
-由于连续的法线向量是相似的, 所以它们的灰阶值也是相似的, 同样可以很好地突显出轮廓线.
+***** 应用例子
 
-在得到灰阶图后, 使用 =Sobel= 核分别从它们中提取出外轮廓线和内轮廓线, 最后把两者合并即可得出完整的轮廓线.
+这里演示在后处理中使用深度贴图,
 
-[[../../../files/outline-input-textures.png]]
+*Vertex Shader*:
 
-#+caption: 正面轮廓
-[[../../../files/depth+normal-front.png]]
+#+BEGIN_SRC glsl
+  #version 130
 
-#+caption: 几乎垂直的俯视轮廓
-[[../../../files/depth+normal+almost-top.png]]
+  attribute vec3 position;
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
 
-#+caption: 增强后深度值后的俯视轮廓
-[[../../../files/depth+normal+almost-top-with-large-depth.png]]
+  varying vec2 vUV;
+
+  void main() {
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vUV = uv;
+  }
+#+END_SRC
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+  #version 130
+
+  attribute vec3 position;
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
+
+  varying vec2 vUV;
+  uniform sampler2D tDepth;
+  uniform float uCameraNear;
+  uniform float uCameraFar;
+
+  // 把非线性深度值转换成线性深度值
+  float getLinearDepth(sampler2D t, vec2 uv) {
+    vec4 pixel = texture2D(t, uv);
+    float ndcZ = 2.0 * pixel.r - 1.0;
+    float viewZ = 2.0 * uCameraNear * uCameraFar /
+      (ndcZ * (uCameraFar - uCameraNear) - (uCameraFar + uCameraNear));
+    float modelZ = -viewZ;
+    float linearDepth = (modelZ - uCameraNear) / (uCameraFar - uCameraNear);
+    return linearDepth;
+  }
+
+  void main() {
+    float linearDepth = getLinearDepth(tDepth, vUV);
+    gl_FragColor = vec4(vec3(linearDepth), 1.0);
+  }
+#+END_SRC
 
 
-*** Screen Space Ambient Occlusion, SSAO
+**** 法线贴图 (Normal Texture)
+
+
+
+*** 屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)
+:PROPERTIES:
+:custom_id: ssao
+:END:
 
 #+begin_quote
 未完成
@@ -394,6 +459,113 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 #+END_SRC
 
 
-*** Screen Space Reflection
+*** COMMENT Screen Space Reflection
 
-*** Screen Space Refraction
+*** COMMENT Screen Space Refraction
+
+*** COMMENT 地平线视差
+
+https://github.com/skylarbeaty/curved-world
+
+https://zhuanlan.zhihu.com/p/137774049
+
+*** 描边 (Outlining)
+:PROPERTIES:
+:CUSTOM_ID: outlining
+:END:
+
+描边常用于卡通风格渲染和水墨画渲染上, 模拟现实中的笔画/线稿.
+
+其中比较有名的游戏例子: =Borderlands= 系列.
+
+**** 判断片元是处于轮廓上
+
+对场景的物体进行描边, 需要先找出物体的轮廓线, 然后对轮廓线进行加黑和加粗实现描边.
+
+为此大部分情况下, 描边效果都是在后处理中实现的, 此时描边实现变成图形处理的工作了.
+
+在图像处理的领域中, 找出描边有很多种方式, 它们在思路上是一样的:
+
+*通过判断片元 $p$ 与它周围片元在某个属性上否连续, 以此断定 $p$ 是否处于轮廓边上;*
+
+*如果属性不连续, 就说明 $p$ 在物体的轮廓边上, $p$ 就是需要描边的片元.*
+
+图像处理中的判断两个相邻片元是否在属性上连续, 等同于判断属性之间的变化是否平滑, 即求属性关于片元位置的导数.
+
+这与在数学上的定义是完全相反, 数学上导数存在才能说连续; 但在图像处理中, 相邻片元之间连续等就是同于两者的变化平滑;
+
+根据一阶导数的定义，可得出导数的估算方式为: $f^{'}(x) \approx \frac{f(x + h) - f(x)}{h}$,
+
+先考虑水平方向上相邻片元的连续性, 把 $f$ 看作片元属性, $x$ 看作片元的水平纹理坐标, $h$ 意味着片元之间的距离差;
+
+相邻片元意味着 $h = 1$, 所以 $f^{'}(x) \approx f(x + h) - f(x)$; 根据连续的定义, 当 $f(x + h) - f(x)$ 足够小,
+
+$f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够小, 取决于开发者的定义了.
+
+这里该处在各个方向上的导数估算方式: $f^{'}(x, y) \approx \frac{f(x + \Delta x, y + \Delta y) - f(x, y)}{\sqrt{(\Delta x)^2 + (\Delta y)^2}}$, 其核心思路为 $\frac{\mathbf{片元之间的属性差}}{\mathbf{片元之间的距离}}$.
+
+**** 提取描边
+
+比较的属性一般为片元的深度值(=depth=)或法线(=normal=).
+
+深度值用于找出物体的外轮廓, 法线则是用于找出物体的内轮廓, 把两者结合在一起就可以得出完全的轮廓图.
+
+#+caption: 图片来源于 [[https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9][How to render outlines in WebGL]]
+[[../../../files/outlining.webp]]
+
+[[https://lettier.github.io/3d-game-shaders-for-beginners/outlining.html][3D Game Shaders For Beginners - Outlining]] 的实现方式则是如下:
+
+通过计算相邻片元的 $y$ 分量差, 找出最大的分量差, 如果最大分量差大于一定程度, 就说明该当前片元处于轮廓边上.
+
+这种方法很简单易懂, 但提取内轮廓效果不是特别好, 所以这里就不详细介绍了.
+
+#+begin_quote
+3D Game Shaders For Beginners 所用坐标系的 $z$ 分量是向上, 它 $y$ 分量才是我们平时学习的 $z$ 分量.
+#+end_quote
+
+接下来会介绍第二种方法: [[../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=af73df195883aeeac53da7ce34a06b7c#org781d7b5][Sobel核]].
+
+在图像处理中, =Sobel核= 是用于图像边缘检查的, 原理是计算当前片元在各个方向上的导数,
+
+让导数集合与当前片元以及其周围片元的集合进行模式匹配, 相似程度越高, 那么当前片元就会被加强亮度, 反之变暗;
+
+由于灰阶(gray scale)图更能突显物体的轮廓, 因此为了提高连续性判断的准确性,
+
+在使用 =Sobel核= 之前通常会先生成场景的灰阶图, 再从灰阶图提取轮廓线.
+
+这就是为什么会选择深度值做连续性判断, 因为深度贴图本身就是一张灰阶图;
+
+法线贴图虽不是灰阶图, 但可根据法线向量计算出某种灰阶值来得出灰阶图, 比如说计算亮度,
+
+由于连续的法线向量是相似的, 因此它们的灰阶值也是相似的, 同样可以很好地突显出轮廓线.
+
+# 在得到灰阶图后, 使用 =Sobel= 核分别从它们中提取出外轮廓线和内轮廓线, 最后把两者合并即可得出完整的轮廓线.
+
+#+attr_html: :width 800px
+#+caption: 从深度贴图提取外轮廓; 从法线贴图的亮度图中提取内轮廓
+[[../../../files/outline-input-textures.png]]
+
+从效果来看, 法线贴图就基本上能内外轮廓一起提取了, 因此, 有些实现是不会用上深度贴图提取外轮廓的.
+
+但法线贴图在某些情况下并不能很好的获取到内轮廓, 比如图中的情况:
+
+在俯视角上, 地板与立方体的法线不存在差异, 看上去就是连续的, 导致无法识别轮廓.
+
+#+attr_html: :width 400px
+#+caption: 从法线亮度图提取的轮廓图 (俯视角)
+[[../../../files/depth+normal+almost-top.png]]
+
+(PS: 这里相机还是稍微偏了一点, 否则完全看不到立方体)
+
+在俯视角上, 地板和立方体的唯一区别就只有它们的深度值了, 这里立方体顶部的深度值要稍微比地板的要小,
+
+所以结合(深度)外轮廓图可以给地板和立方体增加一个差异, 这样就可以对两者进行区分从而正确识别轮廓.
+
+不过还有一个问题, 那就是地板和立方体的深度值差异太小了, 最终效果和原本没太大差别,
+
+所以在两者结合的情况下, 需要提高深度值的权重, 从而提高地板和立方体的深度值差异.
+
+#+attr_html: :width 400px
+#+caption: 两贴图一同提取轮廓, 并增强后深度值后的权重 (俯视角)
+[[../../../files/depth+normal+almost-top-with-large-depth.png]]
+**** 对场景进行描边

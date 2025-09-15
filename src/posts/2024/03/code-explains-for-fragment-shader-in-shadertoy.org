@@ -4199,22 +4199,36 @@ void main (){
 
 另外, 在最后的颜色输出阶段进行了调整, 这项调整被称为伽马校正(=gamma correction=). 伽马校正是最容易被人忽视的环节.
 
-被发送到显示器的像素值是处于伽马空间(=gamma space=)的, 该空间并非线性, 使用更少的位(=bits=)来储存人类敏感度不高的颜色, 最大化地提高储存效率和精确度.
+=Shader= 程序一般以线性 =RGB= (=linear RGB=)编码像素, 即像素值代表作物理光强度, 且成线性正比关系.
 
-不同显示器之间有着不同的伽马曲线(=gamma curve=), 人们都以 $\gamma_{\text{monitor}} = 2.2$ 作为基准的显示器伽马,
+但像素值在显示器是被解析为电压值, 并且电压值和物理光强度成非线性关系, 比如 2 倍电压不代表 2 倍物理光强度.
 
-其对应的伽马曲线为 $y = x^{2.2}$, 其中 $x$ 是图像原本的色彩, $x^{2.2}$ 则是在显示器上的色彩.
+电压值和物理光强度之间为幂函数关系: $y = x^{\gamma_{\text{monitor}}}$, 称为伽马曲线(=gamma curve=),
 
-以 $\gamma_{\text{ideal}} = 1$ 作为色彩处理效果的理想状态: $y = x^{1}$, 也就是以图像真正的色彩进行输出.
+每个显示器的 $\gamma_{\text{monitor}}$ 都不一样, 导致它们曲线也不一样, 通常以 $\gamma_{\text{monitor}} = 2.2$ 作为基准.
 
-为了达到理想状态, 需要根据显示器伽马输出的颜色 $x^{2.2}$ 进行校正: $(x^{\gamma_{\text{correction}}})^{\gamma_{\text{monitor}}} = x^{\gamma_{\text{ideal}}}$,
+纹理和图片通常以 $(x_{\text{linear}})^{2.2}$ 方式储存像素, 其中 $x_{\text{linear}}$ 是线性 =RGB= 编码的像素,
 
-计算得出校正值为 $\gamma_{\text{correction}} = \frac{1}{2.2}$.
+这种编码方案被称为标准 =RGB= (=sRGB/standard RGB=), 所以图片一般是什么颜色, 它在屏幕上显示的就是什么颜色.
+
+但对于 =Shader= 来说就不一样了, 把 $x_{\text{linear}}$ 直接输出到屏幕上, 最终色彩 $(x_{\text{linear}})^{\gamma_{\text{monitor}}}$ 就会偏暗.
+
+为了输出原本颜色 $x_{\text{linear}}$, 在被输出到显示器前要根据 $\gamma_{\text{monitor}}$ 进行校正: $x^{\gamma_{\text{correction}}}$, 其中 $\gamma_{\text{correction}} = \frac{1}{\gamma_{\text{monitor}}}$.
+
+这样在像素输出到浏览器时的色彩为: $[(x_{\text{linear}})^{\gamma_{\text{correction}}}]^{\gamma_{\text{monitor}}} = x_{\text{linear}}$.
+
+这个处理过程被称为伽马校正(=gamma correction=).
 
 #+attr_html: :width 504px
 [[../../../files/1-gamma.svg]]
 
 代码中的 =.4545= 就是 $\frac{1}{2.2}$.
+
+有些渲染引擎会在输出画面前在内部对像素进行一次标准 =RGB= 编码, 因为它们默认开发者操作的是线性 =RGB=,
+
+但这容易出现一个问题: 如果输出贴图的像素作为画面, 那么显示画面就会变暗, 这是因为贴图通常以标准 =RGB= 编码.
+
+这种情况需要注意进行伽马校正.
 
 ***** 使用鼠标控制相机
 
@@ -5332,11 +5346,13 @@ $p(\tau_i)$ 可以是任意概率密度函数, 最简单的就是均匀分布, �
 $a, b, c, d, e, f, g, h, i$ 分别是对应位置上片元的属性值, 比如强度值, 求出中心点在 8 个代表了不同方向的梯度,
 
 #+begin_quote
-这里的梯度并不完全符合严格定义, 其计算方式形如计算方向导数(标量), 但具备着方向, 使其在结构上与梯度向量一致.
-
-与其说在计算梯度, 不如说是在定义梯度. 其计算方式为: $\mathrm{片元之间的属性差} \times \mathrm{片元之间的距离} \times \mathrm{片元之间的方向向量}$.
+这里梯度的计算方式为 $\frac{\mathbf{片元之间的属性差}}{\mathbf{片元之间的距离}} \times \mathbf{片元之间的方向向量}$.
 
 在与轴对齐的方向上, 片元之间的距离为 1, 在对角线上, 根据勾股定理, 片元之间的距离为 $\sqrt{2}$.
+
+# 这里梯度形如计算方向导数(标量), 但具备着方向, 使其在结构上与梯度向量一致.
+
+该计算方式看上去并不符合梯度向量的定义, 但其实是符合的, 在计算对角线方向上的梯度时会进行论证.
 #+end_quote
 
 在 $(1, 0)$ 方向上梯度: $F_{(1, 0)} = (\frac{f - e}{1})\vec{i} = (f - e) \vec{i}$
@@ -5352,7 +5368,29 @@ $a, b, c, d, e, f, g, h, i$ 分别是对应位置上片元的属性值, 比如�
 #+begin_quote
 $\vec{i} + \vec{j}$ 不是单位向量, 需要进行单位化, 可以根据旋转角 $\theta$ 对方向进行参数化: $( \cos\theta, \sin\theta )$,
 
-所以指向右上角的单位向量为 $(\cos \frac{\pi}{4}, \sin \frac{\pi}{4}) = (\frac{1}{\sqrt{2}}, \frac{1}{\sqrt{2}}) = \frac{1}{\sqrt{2}}(\vec{i} + \vec{j})$.
+所以指向右上角的单位向量为 $(\cos \frac{\pi}{4}, \sin \frac{\pi}{4}) = (\frac{1}{\sqrt{2}}, \frac{1}{\sqrt{2}}) = \frac{1}{\sqrt{2}}(\vec{i} + \vec{j})$. 既然谈到旋转,
+
+我们可通过矩阵变换的角度看待这个问题:
+
+把 $\begin{cases} \vec{i} = (1, 0) \\ \vec{j} = (0, 1) \end{cases}$ 看作基变量, 使用旋转矩阵 $M_{R} = \left( \begin{array}{c} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{array} \right)$ 对它们进行旋转,
+
+得出新的基变量 $\begin{cases} \vec{i}_{r} = \left( \cos\theta, -\sin\theta \right) = \cos\theta \vec{i} - \sin\theta \vec{j} \\ \vec{j}_{r} = \left( \sin\theta, \cos\theta \right) = \sin\theta \vec{i} + \cos\theta \vec{j} \end{cases}$.
+
+目前的情况是旋转 $45^{\circ}$ 让新基变量对齐对角线: $\begin{cases} \vec{i}_{r} = \frac{1}{\sqrt{2}}(\vec{i} + \vec{j}) \\ \vec{j}_{r} = \frac{1}{\sqrt{2}}(\vec{i} + \vec{j}) \end{cases}$,
+
+现有近似梯度向量的定义: $\nabla f(x, y) \approx ( \frac{f(x + \Delta x, y) - f(x, y)}{\Delta x}, \frac{f(x, y + \Delta y) - f(x, y)}{\Delta y} ) = \frac{f(x + \Delta x, y) - f(x, y)}{\Delta x} \vec{i}_{r} + \frac{f(x, y + \Delta y) - f(x, y)}{\Delta y} \vec{j}_{r}$,
+
+在新坐标系中 $\Delta x = 1$ 表示片元在水平方向上的距离为 1, $\Delta y = 1$ 表示片元在垂直方向上的距离为 1;
+
+把参数看成是一个向量可以得到 $f(x, y) = f(\langle x, y \rangle) = f(x \vec{i}_{r} + y \vec{j}_{r})$, 可得出新的近似梯度向量定义:
+
+$\begin{equation*} \begin{aligned} & \nabla f(x \vec{i}_{r} + y \vec{j}_{r}) \\ = & (\frac{f((x + \Delta x) \vec{i}_{r} + y \vec{j}_{r}) - f(x \vec{i}_{r} + y \vec{j}_{r})}{\Delta x}, \frac{f(x \vec{i}_{r} + (y + \Delta y) \vec{j}_{r}) - f(x \vec{i}_{r} + y \vec{j}_{r})}{\Delta y}) \\ = & ( \frac{f((x + \Delta x + y)(\vec{i} + \vec{j})) - f((x + y) (\vec{i} + \vec{j})) }{\sqrt{2} \Delta x}, \frac{f((x + y + \Delta y) (\vec{i} + \vec{j})) - f((x + y)(\vec{i} + \vec{j})) }{\sqrt{2} \Delta y} ) \\ = & (\frac{f(x + \Delta x + y, x + \Delta x + y) - f(x + y, x + y)}{\sqrt{2} \Delta x}, \frac{f(x + y + \Delta y, x + y + \Delta y) - f(x + y, x + y)}{\sqrt{2} \Delta y}) \\ = & (\frac{f(x + y + 1, x + y + 1) - f(x + y, x + y)}{\sqrt{2}}, \frac{f(x + y + 1, x + y + 1) - f(x + y, x + y)}{\sqrt{2}}) \end{aligned} \end{equation*}$
+
+现在可以得出梯度变量 $F_{(1, 1)} = \nabla f(0, 0) = (\frac{f(1, 1) - f(0, 0)}{\sqrt{2}}, \frac{f(1, 1) - f(0, 0)}{\sqrt{2}}) = \frac{1}{\sqrt{2}}(c - e) (\vec{i} + \vec{j})$,
+
+最后单位化就可以得到 $\frac{1}{2}(c - e) (\vec{i} + \vec{j})$.
+
+这整个过程的结果与前面提到的计算方式是一致的, 并且其过程也符合梯度向量的定义.
 #+end_quote
 
 在对角线 $(-1, -1)$ 方向上的梯度: $F_{(-1, -1)} = \frac{(g - e) (\cos\frac{5 \pi}{4}\vec{i} + \sin\frac{5 \pi}{4}\vec{j})}{\sqrt{2}} = \frac{1}{2}(e - g)(\vec{i} + \vec{j})$
