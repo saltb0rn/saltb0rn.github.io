@@ -1289,16 +1289,166 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
   =Material.onBeforeCompile=
 #+end_quote
 
-简单来说是调用在 =Shader= 解析和编译之前. =onBeforeCompile= 的第一个参数是一个 =Shader= 对象(参考 =ShaderMaterial= 的参数),
+简单来说是在 =Shader= 解析和编译之前被调用. =onBeforeCompile= 的第一个参数是一个 =Shader= 对象(参考 =ShaderMaterial= 的参数),
 
 这个 =Shader= 对象代表着当前材质的所有 =Shader= 信息, 包括 =Vertex/Fragment Shader= 的代码, 该对象会被用于后续的解析和编译阶段.
 
-因此, 可以在这个函数里对 =Shader= 对象进行修改影响最终结果.
+因此, 可以在这个函数里对 =Shader= 对象进行修改影响最终结果. =Material= 类本身不包含 =Shader= 代码,
 
-这里推荐阅读 [[https://github.com/pailhead/three.js/blob/materials-multi-uv/examples/webgl_materials_extended_multiple_uvs.html][webgl materials extended multiple uvs]] 和 [[https://medium.com/@pailhead011/extending-three-js-materials-with-glsl-78ea7bbb9270][extending-three-js-materials-with-glsl]] 这两个参考资料.
+在调用 =onBeforeCompile= 前会[[https://github.com/mrdoob/three.js/blob/r179/src/renderers/webgl/WebGLPrograms.js#L573][根据 Material 的具体类型映射到对应 Shader 对象]], 以此[[https://github.com/mrdoob/three.js/blob/r179/src/renderers/WebGLRenderer.js#L2084][作为 onBeforeCompile 的参数]],
 
+所有 =Shader= 对象的定义都可以在 [[https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderLib.js][shaderLib.js (r179)]] 中找到. 现在大部分项目的渲染都避不开 =PBR= 渲染了, 是修改常客,
+
+熟悉 =three.js= 的 [[https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderLib/meshphysical.glsl.js][PBR Shader (r179)]] 就很有必要了, 我个人拓展方法是找出可以替换成自己 =shader= 的地方进行替换,
+
+=vertex shader= 和 =fragment shader= 的情况有所不同.
+
+***** 拓展 MeshStandardMaterial 的 Vertex Shader
+
+=Vertex shader= 一般只是替换它计算 =gl_Position= 的方式, 为此找到了首次计算的地方: =#include <clipping_planes_vertex>=,
+
+#+begin_src glsl
+  // ...
+          #include <logdepthbuf_vertex>
+          #include <clipping_planes_vertex>
+
+        vViewPosition = - mvPosition.xyz;
+
+        #include <worldpos_vertex>
+        #include <shadowmap_vertex>
+        #include <fog_vertex>
+
+  #ifdef USE_TRANSMISSION
+
+        vWorldPosition = worldPosition.xyz;
+
+  #endif
+#+end_src
+
+=clipping_planes_vertex= 的内容是:
+
+#+begin_src javascript
+  // src/renderers/shaders/ShaderChunk/project_vertex.glsl.js
+  export default /* glsl */`
+  vec4 mvPosition = vec4( transformed, 1.0 );
+
+  #ifdef USE_BATCHING
+
+        mvPosition = batchingMatrix * mvPosition;
+
+  #endif
+
+  #ifdef USE_INSTANCING
+
+        mvPosition = instanceMatrix * mvPosition;
+
+  #endif
+
+  mvPosition = modelViewMatrix * mvPosition;
+
+  gl_Position = projectionMatrix * mvPosition;
+  `;
+#+end_src
+
+所以 =vertex shader= 拓展方案为:
+
+#+begin_src javascript
+  meshStandardMaterial.onBeforeCompile = function(parameters) {
+
+    let ogVertexShader = parameters.vertexShader
+
+    parameters.vertexShader = `
+    // add you code used in main(), like uniforms/attributes/varyings/functions`
+    + ogVertexShader
+
+    parameters.vertexShader = parameters.vertexShader.replace(
+      "#include <clipping_planes_vertex>",
+
+      `#include <clipping_planes_vertex>
+
+      // add you code to compute gl_Position`
+    )
+  }
+#+end_src
+
+***** 拓展 MeshStandardMaterial 的 Fragment Shader
+
+=fragment shader= 的思路也一样, 找出第一次计算 =gl_FragColor= 的地方 =#include <opaque_fragment>= 进行替换,
+
+#+BEGIN_SRC glsl
+  // ...
+  vec3 outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;
+
+  #ifdef USE_SHEEN
+
+        // Sheen energy compensation approximation calculation can be found at the end of
+        // https://drive.google.com/file/d/1T0D1VSyR4AllqIJTQAraEIzjlb5h4FKH/view?usp=sharing
+        float sheenEnergyComp = 1.0 - 0.157 * max3( material.sheenColor );
+
+        outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
+
+  #endif
+
+  #ifdef USE_CLEARCOAT
+
+        float dotNVcc = saturate( dot( geometryClearcoatNormal, geometryViewDir ) );
+
+        vec3 Fcc = F_Schlick( material.clearcoatF0, material.clearcoatF90, dotNVcc );
+
+        outgoingLight = outgoingLight * ( 1.0 - material.clearcoat * Fcc ) + ( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * material.clearcoat;
+
+  #endif
+
+  #include <opaque_fragment>
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+  #include <fog_fragment>
+  #include <premultiplied_alpha_fragment>
+  #include <dithering_fragment>
+#+END_SRC
+
+#+BEGIN_SRC javascript
+  // src/renderers/shaders/ShaderChunk/opaque_fragment.glsl.js
+  export default /* glsl */`
+  #ifdef OPAQUE
+  diffuseColor.a = 1.0;
+  #endif
+
+  #ifdef USE_TRANSMISSION
+  diffuseColor.a *= material.transmissionAlpha;
+  #endif
+
+  gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+  `;
+#+END_SRC
+
+想拓展 =MeshStandardMaterial= 的 =fragment shader= 的话可以这样替换:
+
+#+BEGIN_SRC javascript
+  meshStandardMaterial.onBeforeCompile = function(parameters) {
+
+    let ogFragmentShader = parameters.vertexShader
+
+    parameters.fragmentShader = `
+    // add you code used in main(), like uniforms/varyings/functions`
+      + ogFragmentShader
+
+    parameters.fragmentShader = parameters.vertexShader.replace(
+      "#include <opaque_fragment>",
+
+      `#include <opaque_fragment>
+
+    // add you code to compute gl_FragColor`
+    )
+  }
+#+END_SRC
+
+=#include <opaque_fragment>= 后面是针对不同设备进行颜色映射处理, 所以有需要也可以对后面的 =#include= 进行替换.
 
 **** 如何进行后处理
+:PROPERTIES:
+:CUSTOM_ID: how-to-postprocessing-in-threejs
+:END:
 
 了解如何 [[https://threejs.org/manual/#en/how-to-use-post-processing][使用 EffectComposer 类]] 和各种内置 [[https://github.com/mrdoob/three.js/blob/8722ea5455a6a6623f194b9a60ef5887ac16a4b0/examples/jsm/postprocessing/Pass.js][Pass]] 的子类完成后处理.
 
@@ -1323,9 +1473,15 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 
 多阶段后处理要求掌握 [[https://threejs.org/docs/?q=WebGLRender#api/en/renderers/WebGLRenderTarget][WebGLRenderTarget]] 类的用法, 该类所对应的就是帧缓冲.
 
-可惜的是, 文档并没有该类的使用例子, 这里给出两个例子: 生成场景的深度贴图, 以及生成场景的法线贴图.
+可惜的是, 文档并没有该类的使用例子, 这里给出四个例子,
 
-这两个算是有代表性的例子, 前者代表着特殊贴图的生成和读取, 后者代表通用贴图的生成和读取.
+前两个分别是生成场景的深度贴图, 以及生成场景的法线贴图, 这两个算是有代表性的例子,
+
+前者代表着特殊贴图的生成和读取, 后者代表通用贴图的生成和读取;
+
+后两个分别是定向光源和点光源的阴影贴图获取, 在编写 =Shader= 可能会用得上,
+
+然而文档上并没有太多介绍阴影贴图的获取, 加上点光源的阴影贴图有着不同于教材的实现, 因此非常有必要提一下.
 
 #+begin_src javascript
   const width = 1920, height = 1080, samples = 8;
@@ -1358,7 +1514,8 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
     `
     });
     // 创建用于获取法线场景渲染结果的 FBO, 相当于 const normalFBO = gl.createFramebuffer();
-    const normalFBO = new THREE.WebGLRenderTarget(width * samples, height * samples, {
+    const normalFBO = new THREE.WebGLRenderTarget(
+      width * samples, height * samples, {
       // 可以在这里设置贴图参数: wrapS/wrapT/magFilter/minFilter 等等
     });
     // 要想获取场景的法线贴图, 让法线材质覆盖场景中所有物体的原材质
@@ -1380,8 +1537,10 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
   // 生成场景的深度贴图
   {
     // 生成场景的渲染结果贴图比起法线贴图要简单得多, three.js 已经内部完成覆盖和还原整个场景的材质
-    const depthFBO = new THREE.WebGLRenderTarget(width * samples, height * samples);
-    depthFBO.depthTexture = new THREE.DepthTexture(width * samples, height * samples);
+    const depthFBO = new THREE.WebGLRenderTarget(
+      width * samples, height * samples);
+    depthFBO.depthTexture = new THREE.DepthTexture(
+      width * samples, height * samples);
     renderer.setRenderTarget(depthFBO);
     renderer.render(scene, camera);
     renderer.setRenderTarget(null);
@@ -1410,8 +1569,10 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
   }
     `
     });
-    const normalFBO = new THREE.WebGLRenderTarget(width * samples, height * samples);
-    normalFBO.depthTexture = new THREE.DepthTexture(width * samples, height * samples);
+    const normalFBO = new THREE.WebGLRenderTarget(
+      width * samples, height * samples);
+    normalFBO.depthTexture = new THREE.DepthTexture(
+      width * samples, height * samples);
     let overrideMaterialOriginal = scene.overrideMaterial;
     scene.overrideMaterial = normalMaterial;
     renderer.setRenderTarget(normalFBO);
@@ -1421,7 +1582,34 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
     // normalFBO.texture 获取法线贴图
     // normalFBO.depthTexture 获取深度贴图
   }
+
+  // 获取定向光源的深度贴图
+  {
+    const dirLight = new THREE.DirectionalLight('#fff', 4.5);
+    /* 在第一次渲染后, dirLight.shadow.map 才会被初始化,
+       它也是一个 WebGLRenderTarget, 无需手动调用
+     ,*/
+    if (dirLight.shadow.map) {
+      // dirLight.shadow.map.texture 阴影贴图
+    }
+    // dirLight.shadow.matrix 用于计算深度的矩阵, 通常配合阴影贴图使用
+  }
+
+  // 获取点光源的深度贴图
+  {
+    const pointLight = new THREE.PointLight('#fff', 4.5)
+    if (pointLight.shadow.map) {
+      // pointLight.shadow.map.texture 阴影贴图
+    }
+    // pointLight.shadow.matrix 用于计算顶点变换
+  }
 #+end_src
+
+#+begin_quote
+点光源的阴影贴图并非立方体贴图而是 =2D= 贴图, 在使用时要根据光照方向计算出 =uv= 坐标进行读取,
+
+具体参考 [[../../2020/08/graphics-opengl-light-and-material.html#no-cube-map-shadow-mapping][OpenGL - 光和材质: 位置光源的阴影 - 不使用 CubeMap]] (必读).
+#+end_quote
 
 ***** 继承 Pass 类
 

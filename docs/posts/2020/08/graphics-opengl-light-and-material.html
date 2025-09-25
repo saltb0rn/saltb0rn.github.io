@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-09-08 Mon 14:15 -->
+<!-- 2025-09-25 Thu 22:12 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学 - 光和材质</title>
@@ -259,13 +259,15 @@
 <li><a href="#org38779ff">光照计算</a></li>
 </ul>
 </li>
-<li><a href="#orge4be280">OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
+<li><a href="#blinn-phong-shading-model">OpenGL 的基础光照模型 - Blinn-Phong shading model</a>
 <ul>
 <li><a href="#org509652d">光在 OpenGL 中的定义</a></li>
 <li><a href="#org097da98">材质在 OpenGL 中的定义</a></li>
 <li><a href="#org251a99a">光线计算</a></li>
 </ul>
 </li>
+<li><a href="#org113596e">菲涅尔系数 (Fresnel Factor)</a></li>
+<li><a href="#org6445592">边缘光 (Rim Lighting)</a></li>
 <li><a href="#orgb8a2bd5">基于物理的渲染 - PBR (Physically Based Rendering)</a>
 <ul>
 <li><a href="#orgba60288">微表面和宏表面 (Micro and Macro Surface)</a></li>
@@ -280,14 +282,18 @@
 </li>
 <li><a href="#orge1d4c7f">阴影</a>
 <ul>
-<li><a href="#org5ae4458">定向光源的阴影</a>
+<li><a href="#dirlight-shadow">定向光源的阴影</a>
 <ul>
-<li><a href="#orgd105ad1">阴影自遮挡 (Shadow Acne)</a></li>
+<li><a href="#shadow-acne">阴影自遮挡 (Shadow Acne)</a></li>
 <li><a href="#orgae6a151">Peter Panning</a></li>
 <li><a href="#org726707e">阴影边缘柔化 (PCF, Percentage-closer filtering)</a></li>
 </ul>
 </li>
-<li><a href="#org3adcbd0">位置光源的阴影</a></li>
+<li><a href="#org3adcbd0">位置光源的阴影</a>
+<ul>
+<li><a href="#no-cube-map-shadow-mapping">不使用 CubeMap</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#org3f4b4d7">附录</a>
@@ -308,7 +314,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgd46e071">
+<div class="abstract" id="orgb11fe00">
 <p>
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 </p>
@@ -352,7 +358,7 @@
 </p>
 
 
-<div id="orgdf796a3" class="figure">
+<div id="orgf7eacde" class="figure">
 <p><img src="../../../files/wave.jpeg" alt="wave.jpeg">
 </p>
 </div>
@@ -395,7 +401,7 @@
 </p>
 
 
-<div id="org24942a5" class="figure">
+<div id="orgc106603" class="figure">
 <p><img src="../../../files/cone-response.jpg" alt="cone-response.jpg">
 </p>
 </div>
@@ -474,7 +480,11 @@
 </p>
 
 <p>
-当然复杂程度也不一样. 接下来会从简单到复杂介绍三个光照模型.
+当然复杂程度也不一样. 接下来会从简单到复杂介绍三个光照模型, 其中最难的是 <code>PBR</code>,
+</p>
+
+<p>
+在 <code>PBR</code> 之前还会了解一些可以增强光照模型的选项.
 </p>
 
 <p>
@@ -500,7 +510,7 @@
 </p>
 
 
-<div id="orgc722321" class="figure">
+<div id="orgd93040c" class="figure">
 <p><img src="../../../files/diffuse-vs-specular.png" alt="diffuse-vs-specular.png">
 </p>
 </div>
@@ -515,7 +525,7 @@
 </p>
 
 
-<div id="org012ccaa" class="figure">
+<div id="orgb62069d" class="figure">
 <p><img src="../../../files/reflection-cone.png" alt="reflection-cone.png">
 </p>
 </div>
@@ -525,7 +535,7 @@
 </p>
 
 
-<div id="org92300de" class="figure">
+<div id="orge43b290" class="figure">
 <p><img src="../../../files/specular_hilites.png" alt="specular_hilites.png">
 </p>
 </div>
@@ -639,7 +649,7 @@
 </p>
 
 
-<div id="org9a865fe" class="figure">
+<div id="org812c453" class="figure">
 <p><img src="../../../files/basic_lighting_phong.png" alt="basic_lighting_phong.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>(图片来源于网络)</p>
@@ -675,23 +685,31 @@
 <li><a id="orgb3783a4"></a>ambient<br>
 <div class="outline-text-5" id="text-orgb3783a4">
 <p>
-假设光源产生了 \(\mathrm{ambient\_strength}\) 比例的 \(\mathrm{ambient}\), 那么 \(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color}\).
+假设光源产生了 \(\mathrm{ambient\_strength}\) 比例的 \(\mathrm{ambient}\), 那么:
 </p>
 
 <p>
-这里还可以乘以一个系数 \(k\) 来调整光的强度: \(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color} \times k\),
+\(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color}\)
 </p>
 
 <p>
-同样之后的 \(\mathrm{diffuse}\) 和 \(\mathrm{specular}\) 的计算也可以这做,并且每一项的系数都可以不同,
+还可以乘以一个系数 \(k\) 来调整光的强度:
 </p>
 
 <p>
-这个系数 \(k\) 是可以代表某种影响光的强度的因素,比如光线的衰减,这个系数就等在学习 <code>OpenGL</code> 光照模型时深入了解,
+\(\mathrm{ambient} = \mathrm{ambient\_strength} \times \mathrm{light\_color} \times k\)
 </p>
 
 <p>
-目前只要知道可以这么做足够了.
+之后的 \(\mathrm{diffuse}\) 和 \(\mathrm{specular}\) 的计算也可以这做, 并且每一项的系数都可以不同,
+</p>
+
+<p>
+\(k\) 是可以代表某种影响光的强度的因素, 比如光线的衰减,
+</p>
+
+<p>
+这个系数就等在学习 <code>OpenGL</code> 光照模型时深入了解, 目前只要知道可以这么做足够了.
 </p>
 </div>
 </li>
@@ -702,7 +720,7 @@
 </p>
 
 
-<div id="orgff3a08a" class="figure">
+<div id="org81dd12e" class="figure">
 <p><img src="../../../files/diffuse_light.png" alt="diffuse_light.png">
 </p>
 <p><span class="figure-number">Figure 2: </span>漫反射(图片来源于网络)</p>
@@ -717,54 +735,53 @@
 </p>
 
 <p>
-要注意一下 \(L\) 和 \(N\) 都必须是单位向量,因为 \(L \cdot N = |L||N|\cos\theta\),如果 \(L\) 和 \(N\) 都是单位向量的话 \(L \cdot N = \cos\theta\).
+要注意一下 \(L\) 和 \(N\) 都必须是单位向量, 只有这样才满足:
 </p>
 
 <p>
-因此可以得到 \(\mathrm{diffuse} = max(L \cdot N, 0) \times \mathrm{light\_color}\),
+\(L \cdot N = |L||N|\cos\theta = 1^2 \times \cos\theta\)
 </p>
 
 <p>
-要注意这里 \(max(L \cdot N, 0)\) 是为了避免 \(\theta\) 超过 90 度造成的负数,而超过 90 度就是没有照射到(看图就懂了),这个时候就应该取 0.
+由于实际中的 \(\theta\) 可以超过 \(90\) 度, 超过 90 度就是没有照射到(看图就懂了), 并且 \(\cos\theta < 0\);
+</p>
+
+<p>
+而期望的 \(\theta\) 范围应该是 \([0, 90^{\circ}]\), 所以对计算结果进行限制:
+</p>
+
+<p>
+\(\mathrm{diffuse} = max(L \cdot N, 0) \times \mathrm{light\_color}\)
 </p>
 </div>
 </li>
 <li><a id="specular"></a>specular<br>
 <div class="outline-text-5" id="text-specular">
 <p>
-\(\mathrm{specular}\) 同样需要根据 \(L\) 和 \(N\) 来确定结果,此外还需要一个 <b>从照射点到 viewer 的方向</b> \(V\),同样它们都是单位向量.
+\(\mathrm{specular}\) 也要根据 \(L\) 和 \(N\) 进行确定, 还需一个 <b>从照射点到 viewer 的方向</b> \(V\), 都是单位向量.
 </p>
 
 
-<div id="orge667bf9" class="figure">
+<div id="org907c8c4" class="figure">
 <p><img src="../../../files/basic_lighting_specular_theory.png" alt="basic_lighting_specular_theory.png">
 </p>
 <p><span class="figure-number">Figure 3: </span>镜面反射(图片来源于网络)</p>
 </div>
 
 <p>
-<code>viewer</code> 的位置可以区别于相机单独设置,也可以直接设置成相机位置,当然最后的计算结果是不一样的.
+接下来解释如何计算这些变量, 以及这些变量如何一起计算 \(\mathrm{specular}\).
 </p>
 
 <p>
-首先要计算出反射方向 \(R\),然后计算出 \(R\) 和 \(V\) 之间的夹角 \(\theta\) 的 \(cosine\) 值.
+<b>首先</b> 是观察方向 \(V\) <code>viewer</code> 与观察点 \(o\) 位置差的单位化,
 </p>
 
 <p>
-因为入射光线和反射光线的强度时一样的(认为是镜面反射),所以到 <code>viewer</code> 的光线强度就很好得到了: \(max(R \cdot V, 0) \times \mathrm{light\_color}\),
+<code>viewer</code> 的位置可以区别于相机单独设置, 一般来说是设置成相机位置.
 </p>
 
 <p>
-不要忘记还有光泽度 \(\mathrm{shininess}\) 这一因素,所以 \(\mathrm{specular} = max(R \cdot V, 0)^{\mathrm{shininess}} \times \mathrm{light\_color}\).
-</p>
-
-<p>
-当 <code>viewer</code> 的越是偏离反射光线, \(\mathrm{specular}\) 就越衰减, \(\mathrm{shininess}\) 控制了衰减程度, \(\mathrm{shininess}\) 越大,衰减越快.
-</p>
-
-
-<p>
-这里还有一个关键点就是如何求出反射向量(reflect vector) \(R\),通过上面的图可以进行推导,
+<b>然后</b> 要计算出反射向量 \(R\), 通过上面的图可以进行推导,
 </p>
 
 <p>
@@ -772,34 +789,50 @@
 </p>
 
 <p>
-其中 \(\vec{ap} = \vec{pb} = \vec{ao} + \vec{op}\),所以 \(\vec{ab} = 2\vec{ap} = 2(\vec{ao} + \vec{op})\).
+其中 \(\vec{ap} = \vec{pb} = \vec{ao} + \vec{op}\),所以 \(\vec{ab} = 2\vec{ap} = 2(\vec{ao} + \vec{op}) \rightarrow \vec{ob} = \vec{ab} - \vec{ao} = 2\vec{op} + \vec{ao}\).
 </p>
 
 <p>
-因此, \(\vec{ob} = \vec{ab} - \vec{ao} = 2\vec{op} + \vec{ao}\).
+图中的 \(\vec{op}\) 虽与 \(N\) 方向一致, 但两者长度并不一致, \(\vec{op}\) 是 \(\vec{oa}\) 在 \(N\) 上的投影,
 </p>
 
 <p>
-这里的 \(\vec{op}\) 虽然与 \(N\) 的方向是一样的,但是它并非单位向量,所以还是要求出它的值的.
+所以 \(\vec{oa} \cdot N\) 可以得出 \(\vec{op}\) 的模长, 进一步可得 \(\vec{op} = (\vec{oa} \cdot N) \times N\),
 </p>
 
 <p>
-\(\vec{op}\) 实际就是 \(\vec{oa}\) 在 \(N\) 上的投影, 所以 \(\vec{oa} \cdot N\) 可以得出 \(\vec{op}\) 的模长,
+\(\vec{ob} = 2(\vec{oa} \cdot N) \times N + \vec{ao} \rightarrow R = -L + 2(L \cdot N) \times N\).
 </p>
 
 <p>
-又因为 \(\vec{op}\) 和 \(N\) 的方向是一样的,所以 \(\vec{op} = (\vec{oa} \cdot N) \times N\).
+<b>再</b> 计算 <code>viewer</code> 接收到的光线强度, 镜面反射意味着入射/反射的光强度一致, 所以:
 </p>
 
 <p>
-最后 \(\vec{ob} = 2(\vec{oa} \cdot N) \times N + \vec{ao}\),也就是 \(R = -L + 2(L \cdot N) \times N\).
+\(max(R \cdot V, 0) \times \mathrm{light\_color}\)
+</p>
+
+<p>
+<b>最后</b> 考虑反射光的衰减, 这是由光泽度 \(\mathrm{shininess}\) 进行控制的, 具体计算过程为:
+</p>
+
+<p>
+\(\mathrm{specular} = max(R \cdot V, 0)^{\mathrm{shininess}} \times \mathrm{light\_color}\)
+</p>
+
+<p>
+其中, \(V\) 越偏离 \(R\), \(\mathrm{specular}\) 越小, \(\mathrm{shininess}\) 控制衰减程度, \(\mathrm{shininess}\) 越大, 衰减越快.
 </p>
 </div>
 </li>
 <li><a id="orgeaeeef2"></a>\(\mathrm{result\_color}\)<br>
 <div class="outline-text-5" id="text-orgeaeeef2">
 <p>
-最后就是我们眼中的结果,也就是经过物体反射的光: \(\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times \mathrm{object\_color}\).
+最后就是我们眼中的结果,也就是经过物体反射的光:
+</p>
+
+<p>
+\(\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times \mathrm{object\_color}\).
 </p>
 
 <p>
@@ -836,9 +869,9 @@
 </ul>
 </div>
 </div>
-<div id="outline-container-orge4be280" class="outline-3">
-<h3 id="orge4be280">OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
-<div class="outline-text-3" id="text-orge4be280">
+<div id="outline-container-blinn-phong-shading-model" class="outline-3">
+<h3 id="blinn-phong-shading-model">OpenGL 的基础光照模型 - Blinn-Phong shading model</h3>
+<div class="outline-text-3" id="text-blinn-phong-shading-model">
 <p>
 <code>Blinn-Phong shading model</code> 是 <code>Phong lighting model</code> 改进模型, 主要改进了镜面反射光的计算.
 </p>
@@ -1427,7 +1460,7 @@
 </p>
 
 
-<div id="orge9739ba" class="figure">
+<div id="org8798345" class="figure">
 <p><img src="../../../files/advanced_lighting_over_90.png" alt="advanced_lighting_over_90.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>镜面反射2(图片来源于网络)</p>
@@ -1442,7 +1475,7 @@
 </p>
 
 
-<div id="orgc1b320d" class="figure">
+<div id="org8ab0688" class="figure">
 <p><img src="../../../files/advanced_lighting_halfway_vector.png" alt="advanced_lighting_halfway_vector.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>半角向量(图片来源于网络)</p>
@@ -1463,6 +1496,14 @@
 </div>
 </div>
 </div>
+<div id="outline-container-org113596e" class="outline-3">
+<h3 id="org113596e">菲涅尔系数 (Fresnel Factor)</h3>
+</div>
+
+<div id="outline-container-org6445592" class="outline-3">
+<h3 id="org6445592">边缘光 (Rim Lighting)</h3>
+</div>
+
 <div id="outline-container-orgb8a2bd5" class="outline-3">
 <h3 id="orgb8a2bd5">基于物理的渲染 - PBR (Physically Based Rendering)</h3>
 <div class="outline-text-3" id="text-orgb8a2bd5">
@@ -1494,7 +1535,7 @@
 </p>
 
 
-<div id="org8ef339e" class="figure">
+<div id="org34a9031" class="figure">
 <p><img src="../../../files/micro-vs-macro-surface.png" alt="micro-vs-macro-surface.png" width="400px">
 </p>
 <p><span class="figure-number">Figure 6: </span>微表面和宏表面, \(n\) 是宏表面的法线, \(m\) 是微表面的法线</p>
@@ -1531,7 +1572,7 @@
 </p>
 
 
-<div id="org1667186" class="figure">
+<div id="orgaf758fc" class="figure">
 <p><img src="../../../files/subpixel.png" alt="subpixel.png" width="400px">
 </p>
 <p><span class="figure-number">Figure 7: </span>亚像素</p>
@@ -1640,7 +1681,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </blockquote>
 
 
-<div id="org850b97d" class="figure">
+<div id="org19e27bc" class="figure">
 <p><img src="../../../files/Kugelkoord-lokb-e.svg" alt="Kugelkoord-lokb-e.svg" class="org-svg" width="504px">
 </p>
 <p><span class="figure-number">Figure 8: </span>球体坐标系</p>
@@ -1659,7 +1700,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org99fbc4b" class="figure">
+<div id="org0ffca1c" class="figure">
 <p><img src="../../../files/lamberts-law.png" alt="lamberts-law.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 9: </span>平面 N 和 平面 M 之间的投影关系</p>
@@ -1694,7 +1735,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org6a9aa4e" class="figure">
+<div id="orgb37125c" class="figure">
 <p><img src="../../../files/480px-Solid_Angle,_1_Steradian.svg.png" alt="480px-Solid_Angle,_1_Steradian.svg.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 10: </span>\(1\ \mathrm{sr}\)</p>
@@ -1739,7 +1780,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 
 
-<div id="org50ba9c3" class="figure">
+<div id="org943e552" class="figure">
 <p><img src="../../../files/differential-solid-angle.png" alt="differential-solid-angle.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 11: </span>微元立体角 \(d\omega\)</p>
@@ -1763,7 +1804,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgf23ea14" class="figure">
+<div id="orgd8f2c4a" class="figure">
 <p><img src="../../../files/radiance.png" alt="radiance.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>辐射投影关系</p>
@@ -1975,7 +2016,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgd678496" class="figure">
+<div id="org72fcd4c" class="figure">
 <p><img src="../../../files/micro-macro-area-0.png" alt="micro-macro-area-0.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>微平面在宏表面上的投影, \(dA_{m}\) 是微平面总面积, \(dA\) 微平面在是宏表面上的投影</p>
@@ -1986,14 +2027,14 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org08f8d0d" class="figure">
+<div id="orgff0604c" class="figure">
 <p><img src="../../../files/micro-macro-area-1.png" alt="micro-macro-area-1.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>宏表面的半角向量作为微平面的法线向量</p>
 </div>
 
 
-<div id="orgc6f71d7" class="figure">
+<div id="orgcf86f54" class="figure">
 <p><img src="../../../files/real-time-rendering-4th-microfacet.png" alt="real-time-rendering-4th-microfacet.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 15: </span>所有符合 \(m = h\) 的微平面</p>
@@ -2036,7 +2077,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgd1ecbb6" class="figure">
+<div id="org02c17a7" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v.png" alt="micro-macro-projected-onto-plane-prep-to-v.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 16: </span>微表面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -2067,7 +2108,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org2e33c72" class="figure">
+<div id="org2f33f0b" class="figure">
 <p><img src="../../../files/micro-macro-projected-onto-plane-prep-to-v-visible.png" alt="micro-macro-projected-onto-plane-prep-to-v-visible.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 17: </span>可见微平面和宏表面在垂直于 \(v\) 的平面的投影</p>
@@ -2154,7 +2195,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org6e19b3f" class="figure">
+<div id="org9f72ca6" class="figure">
 <p><img src="../../../files/shape-invariance.png" alt="shape-invariance.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 18: </span>粗糙度变小, 微平面数量的变少, 但微平面的面积变大, 微表面更平滑</p>
@@ -2181,7 +2222,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org4411021" class="figure">
+<div id="orgec42b3a" class="figure">
 <p><img src="../../../files/isotropic-to-anisotropic.png" alt="isotropic-to-anisotropic.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 19: </span>图片来自 [Heitz 2014]</p>
@@ -2194,7 +2235,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orge732eee" class="figure">
+<div id="orgda3dd73" class="figure">
 <p><img src="../../../files/ggx-vs-beckmann.png" alt="ggx-vs-beckmann.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 20: </span>GGX VS Beckmann (图片来自 <a href="https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/">https://banbao991.github.io/2021/05/12/CG/YLQ-GAMES202/10/</a>)</p>
@@ -2205,7 +2246,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org278c78a" class="figure">
+<div id="org25d252c" class="figure">
 <p><img src="../../../files/ndf_beckmann_trowbridge.jpg" alt="ndf_beckmann_trowbridge.jpg" width="504px">
 </p>
 <p><span class="figure-number">Figure 21: </span>更长的尾部一味着更明显的光晕</p>
@@ -2269,7 +2310,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgb982a3d" class="figure">
+<div id="orgca712e5" class="figure">
 <p><img src="../../../files/shadowing-and-masking.png" alt="shadowing-and-masking.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 22: </span>阴影和遮蔽</p>
@@ -2288,7 +2329,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org7d2edd4" class="figure">
+<div id="org439c0bd" class="figure">
 <p><img src="../../../files/G1_vs_G2.png" alt="G1_vs_G2.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 23: </span>\(G_{2}\) 和 \(G_{1}\) 的关系</p>
@@ -2315,7 +2356,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org95d47f2" class="figure">
+<div id="org9a7b6c8" class="figure">
 <p><img src="../../../files/microsurface-profile.png" alt="microsurface-profile.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 24: </span>图片修改自 [Heitz 2014]: 相同的法线分布但不同的轮廓导致不同的 <code>BRDF</code></p>
@@ -2330,7 +2371,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org3b4b074" class="figure">
+<div id="org78e3ef8" class="figure">
 <p><img src="../../../files/smith-masking-function.png" alt="smith-masking-function.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 25: </span>现实表面轮廓(左)和 <code>Smith</code> 模型的表面轮廓(右) (图片来自[Heitz 2014])</p>
@@ -2345,7 +2386,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orge8a5052" class="figure">
+<div id="orgb1c0c9a" class="figure">
 <p><img src="../../../files/v-cavity-scattering-mode.png" alt="v-cavity-scattering-mode.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 26: </span><code>V</code> 腔散射模型 (图片来自[Heitz 2014])</p>
@@ -2364,7 +2405,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgb4737bc" class="figure">
+<div id="orgcf027b7" class="figure">
 <p><img src="../../../files/stretch-invariance.png" alt="stretch-invariance.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 27: </span>对微表面在一个维度上拉伸 2 倍, 所有斜率都被缩小 1 倍 (图片来自[Heitz 2014])</p>
@@ -2389,7 +2430,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgcddd7a9" class="figure">
+<div id="org4bb6067" class="figure">
 <p><img src="../../../files/v-cavity-smith-reference-brdf.png" alt="v-cavity-smith-reference-brdf.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 28: </span><code>V</code> 腔散射 <code>BRDF</code> <b><code>VS</code></b> <code>Smith BRDF</code> <b><code>VS</code></b> 参考现实效果的(Reference) <code>BRDF</code> (图片来自[Heitz 2014])</p>
@@ -2520,7 +2561,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org5863e05" class="figure">
+<div id="orga199411" class="figure">
 <p><img src="../../../files/multiple-surface-bounce.png" alt="multiple-surface-bounce.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 29: </span>现有的几何函数未考虑蓝色部分的 <code>multiple surface bounce</code> 反射 (图片来自 [Naty Hoffman, Recent Advances in Physically Based Shading, SIGGRAPH 2016])</p>
@@ -2849,7 +2890,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org159c832" class="figure">
+<div id="org89853cf" class="figure">
 <p><img src="../../../files/torrance-sparrow-model-m.png" alt="torrance-sparrow-model-m.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 30: </span>Torrance-Sparrow Model</p>
@@ -2952,7 +2993,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <h4 id="org7e0ea3d">创作 <code>PBR</code> 材质 (Authoring PBR Materials)</h4>
 <div class="outline-text-4" id="text-org7e0ea3d">
 
-<div id="org7922e65" class="figure">
+<div id="org9ec4d9a" class="figure">
 <p><img src="../../../files/pbr-materials.png" alt="pbr-materials.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 31: </span>常见 PBR 贴图</p>
@@ -3275,27 +3316,31 @@ angle of incidence of illumination, since illumination is over a larger area at 
 <h2 id="orge1d4c7f">阴影</h2>
 <div class="outline-text-2" id="text-orge1d4c7f">
 <p>
-阴影生成并没有用到什么新的数学公式, 所有的数学公式全都在之前的文章用总结完了.
+阴影生成并没有用到什么新的数学公式, 思路很简单,
 </p>
 
 <p>
-阴影的生成很简单, 首先用一组 <code>Shader</code> 的 <code>vertex shader</code> 以光线为角度生成一个 <a href="../../../2020/06/graphics-opengl-transformation.html#depth-buffer">depth buffer (depth map)</a> 并储存在贴图中,
+首先用一组 <code>Shader</code> 以光源作为"相机"生成一个 <a href="../../../2020/06/graphics-opengl-transformation.html#depth-buffer">depth buffer (depth map)</a> 并储存在贴图中,
 </p>
 
 <p>
-这个贴图就叫做阴影贴图 (<code>shadow map</code>); 然后在另外一组 <code>Shader</code> 的 <code>fragment shader</code> 中,
+这个贴图就叫做阴影贴图 (<code>shadow map</code>);
 </p>
 
 <p>
-计算出相机"眼中"的 \(P\) 点在光源"眼中"的 \(NDC\) 坐标: \(P_{ndc}\), 再对 \(P_{ndc}\) 进行归一化: \(P_{normal} = (u, v, d) = P_{ndc} * 0.5 + 0.5\),
+然后用另外一组 <code>Shader</code> 计算出 <b>真相机</b> 所看到的 \(P\) 点在光源眼中的 \(NDC\) 坐标 \(P_{ndc}\),
 </p>
 
 <p>
-再以 \(P_{normal}.xy\) 作为 <code>UV</code> 从阴影贴图中获取深度 \(d_c\), \(P_{normal}.z\) 是 \(P\) 在在光源"眼中"的深度,
+并进行归一化: \(P_{normalized} = P_{ndc} * 0.5 + 0.5\). 其中 \(P_{normalized}.xy\) 是阴影贴图的 <code>UV</code> 坐标,
 </p>
 
 <p>
-最后对比 \(d_c\) 和 \(P_{normal}.z\), 如果 \(d_c \le P_{normal}.z\), 那就说明 \(P\) 在阴影中.
+用它获取深度 \(d_c\); \(P_{normalized}.z\) 是 \(P\) 在光源"眼中"的深度.
+</p>
+
+<p>
+对比 \(d_c\) 和 \(P_{normalized}.z\), 如果 \(d_c \le P_{normalized}.z\), 就说明光源看不到 \(P\) 点, 所以 \(P\) 在阴影中.
 </p>
 
 <p>
@@ -3303,7 +3348,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org48f57e1" class="figure">
+<div id="org0d345d2" class="figure">
 <p><img src="../../../files/shadow_mapping_theory_spaces.png" alt="shadow_mapping_theory_spaces.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 32: </span>阴影贴图</p>
@@ -3322,15 +3367,15 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="orgb408dad" class="figure">
+<div id="org1c26628" class="figure">
 <p><img src="../../../files/shadow_mapping_projection.png" alt="shadow_mapping_projection.png" width="504px">
 </p>
 <p><span class="figure-number">Figure 33: </span>正交投影 vs 透视投影</p>
 </div>
 </div>
-<div id="outline-container-org5ae4458" class="outline-3">
-<h3 id="org5ae4458">定向光源的阴影</h3>
-<div class="outline-text-3" id="text-org5ae4458">
+<div id="outline-container-dirlight-shadow" class="outline-3">
+<h3 id="dirlight-shadow">定向光源的阴影</h3>
+<div class="outline-text-3" id="text-dirlight-shadow">
 <ol class="org-ol">
 <li><p>
 通过光源进行 <b>正交投影</b>, 计算出要成像的顶点 \(P_{object}\) 在光源"眼中所见"的投影坐标 \(P_{clip}\), 并生成阴影贴图:
@@ -3373,7 +3418,25 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 <p>
 这组 <code>Shader</code> 需要作为场景中每个物体的材质, 再对整个场景进行渲染, 渲染结果就是我们想要的阴影贴图.
-</p></li>
+</p>
+
+<blockquote>
+<p>
+<code>uLightViewMatrix</code> 的构建可以参考以下连接:
+</p>
+
+<p>
+<a href="../../2020/06/graphics-opengl-transformation.html#from-world-to-view">图形学 - OpenGL坐标变换: 从世界坐标系到视点坐标系的变换</a>
+</p>
+
+<p>
+<code>uLightOrthoProjMatrix</code> 的构建可以参考以下连接:
+</p>
+
+<p>
+<a href="../../2020/06/graphics-opengl-transformation.html#orthographic-projection">图形学 - OpenGL坐标变换: 正交投影</a>
+</p>
+</blockquote></li>
 
 <li><p>
 \(P_{clip}\) 需要在第二组 <code>Shader</code> 的 <code>vertex shader</code> 中进行计算, 并传到第二组 <code>Shader</code> 的 <code>fragment shader</code> 中,
@@ -3471,11 +3534,11 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </div></li>
 </ol>
 </div>
-<div id="outline-container-orgd105ad1" class="outline-4">
-<h4 id="orgd105ad1">阴影自遮挡 (Shadow Acne)</h4>
-<div class="outline-text-4" id="text-orgd105ad1">
+<div id="outline-container-shadow-acne" class="outline-4">
+<h4 id="shadow-acne">阴影自遮挡 (Shadow Acne)</h4>
+<div class="outline-text-4" id="text-shadow-acne">
 
-<div id="org9989bdf" class="figure">
+<div id="org7eb27d5" class="figure">
 <p><img src="../../../files/shadow-acne.png" alt="shadow-acne.png">
 </p>
 </div>
@@ -3628,13 +3691,13 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org761b715" class="figure">
+<div id="orgc6cc971" class="figure">
 <p><img src="../../../files/point_shadows_diagram.png" alt="point_shadows_diagram.png">
 </p>
 </div>
 
 <p>
-但用 6 张贴图的话, 需要手动根据光照方向计算出应从哪张贴图进行采样, 因此, 使用立方贴图(<code>cubemap</code>)可以省去这些工作.
+但用 6 张贴图需要手动根据光照方向计算出应从哪张贴图进行采样, 使用立方贴图(<code>cubemap</code>)可以省去这些工作.
 </p>
 
 <p>
@@ -3650,7 +3713,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org99f22d2" class="figure">
+<div id="org6d5d638" class="figure">
 <p><img src="../../../files/cubemaps_sampling.png" alt="cubemaps_sampling.png">
 </p>
 </div>
@@ -3676,7 +3739,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 </p>
 
 
-<div id="org3a8efca" class="figure">
+<div id="orgb71a44a" class="figure">
 <p><img src="../../../files/CubeMapAxes.png" alt="CubeMapAxes.png">
 </p>
 </div>
@@ -3766,7 +3829,7 @@ gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFrameBuffer);
 
   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">upload uniforms including uViewProjection
 </span>  gl.uniformMatrix4fv(matrixLocation, <span style="color: #7fffd4;">false</span>, uViewProjection);
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">render scene
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">drawcall to render scene
 </span>}
 
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#28210;&#26579;&#22330;&#26223;&#30340; shader &#31243;&#24207;&#20013;&#19978;&#20256; uniforms
@@ -3869,11 +3932,15 @@ gl.uniform1i(textureLocation, 0);
 </div>
 
 <p>
-相比定向光源中阴影贴图 <code>Shader</code> 采用了内置深度值作为阴影深度值, 这里的 <code>Fragment Shader</code> 中自行计算了阴影深度值 \(d_c\):
+相比定向光源中阴影贴图 <code>Shader</code> 采用了内置深度值作为阴影深度值,
 </p>
 
 <p>
-直接以片元与光源的世界坐标距离的归一化结果作为深度值. 这个算法有一个好处, 那就是容易在后面的 <code>ShadowCalculation</code> 函数中计算出片元的阴影深度.
+这里的 <code>Fragment Shader</code> 中自行计算了阴影深度值 \(d_c\): 片元与光源的世界坐标距离的归一化结果作为深度值.
+</p>
+
+<p>
+不像定向光源, 位置光源本身就是有位置属性的, 因此是可以直接计算出深度.
 </p></li>
 
 <li><p>
@@ -4023,6 +4090,97 @@ PCF
 </p></li>
 </ol>
 </div>
+<div id="outline-container-no-cube-map-shadow-mapping" class="outline-4">
+<h4 id="no-cube-map-shadow-mapping">不使用 CubeMap</h4>
+<div class="outline-text-4" id="text-no-cube-map-shadow-mapping">
+<p>
+事实上还真有些图形库不使用 <code>CubeMap</code> 作为阴影贴图, 比如 <code>three.js</code> 就是使用 <code>2D</code> 贴图作为阴影贴图.
+</p>
+
+<p>
+它同样进行 6 次渲染, 只不过把每次渲染结果分别按照不同位置储存在同一张 <code>2D</code> 贴图里面,
+</p>
+
+<p>
+读取的时候根据光照计算出 <code>UV</code> 坐标在进行读取. 就像是立方体映射的张开图那样.
+</p>
+
+
+<div id="org9c3887c" class="figure">
+<p><img src="../../../files/cubemap-unfold.jpg" alt="cubemap-unfold.jpg">
+</p>
+<p><span class="figure-number">Figure 34: </span>立方体映射张开</p>
+</div>
+
+<p>
+但 <code>three.js</code> 没有采用这套布局, 该布局需要 \(4 \times 3\) 个 \(2 \times 2\) 规格的方块储存 6 张贴图的内容,
+</p>
+
+<p>
+每个方块的纹理范围是 \([-1, 1]^2\) 的范围, 整个贴图的有效利用率只有 \(\frac{1}{2}\).
+</p>
+
+<p>
+为了节省空间, 从 <code>three.js</code> 的 <code>shader</code> 函数 <a href="https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderChunk/shadowmap_pars_fragment.glsl.js#L224">cubeToUV (r179)</a> 的描述中可以发现它的布局是这样的,
+</p>
+
+
+<div id="org038b586" class="figure">
+<p><img src="../../../files/cubemap-unfold-in-threejs.jpg" alt="cubemap-unfold-in-threejs.jpg">
+</p>
+<p><span class="figure-number">Figure 35: </span>three.js 阴影贴图的布局</p>
+</div>
+
+<p>
+以 \(-Z\) 作为中心, 只需要用到 \(4 \times 2\) 个 \(2 \times 2\) 规格的方块, 还能把有效利用率提高到 \(\frac{3}{4}\).
+</p>
+
+<p>
+原本实现比较复杂, 其整体思路如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">vec3</span> lightDir;
+<span style="color: #98fb98;">vec3</span> absLightDir = <span style="color: #b0c4de;">abs</span>(lightDir);
+<span style="color: #98fb98;">float</span> mainAxis = <span style="color: #b0c4de;">max</span>(absLightDir.x, <span style="color: #b0c4de;">max</span>(absLightDir.y, absLightDir.z));
+
+<span style="color: #98fb98;">vec2</span> uv;
+
+<span style="color: #00ffff;">if</span> (absLightDir.x &gt;= mainAxis) {
+  <span style="color: #00ffff;">if</span> (lightDir.x &gt; 0.0) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">+X &#38754;
+</span>    uv = cube2uv(<span style="color: #98fb98;">vec2</span>(-lightDir.z, -lightDir.y));
+  } <span style="color: #00ffff;">else</span> {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">-X &#38754;
+</span>    uv = cube2uv(<span style="color: #98fb98;">vec2</span>(lightDir.z, -lightDir.y));
+  }
+ } <span style="color: #00ffff;">else</span> <span style="color: #00ffff;">if</span> (absLightDir.y &gt;= maxComponent) {
+  <span style="color: #00ffff;">if</span> (lightDir.y &gt; 0.0) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">+Y &#38754;
+</span>    uv = cube2uv(<span style="color: #98fb98;">vec2</span>(lightDir.y, lightDir.z));
+  } <span style="color: #00ffff;">else</span> {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">-Y &#38754;
+</span>    uv = cube2uv(<span style="color: #98fb98;">vec2</span>(lightDir.y, -lightDir.z));
+  }
+ } <span style="color: #00ffff;">else</span> <span style="color: #00ffff;">if</span> (absLightDir.z &gt;= maxComponent) {
+  <span style="color: #00ffff;">if</span> (lightDir.z &gt; 0.0) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">+Z &#38754;
+</span>    uv = cube2uv(<span style="color: #98fb98;">vec2</span>(lightDir.x, -lightDir.y));
+  } <span style="color: #00ffff;">else</span> {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">-Z &#38754;
+</span>    uv = cube2uv(<span style="color: #98fb98;">vec2</span>(-lightDir.x, -lightDir.y));
+  }
+ }
+</pre>
+</div>
+
+<blockquote>
+<p>
+官方给出不使用 <code>CubeMap</code> 理由在这个 <code>2017</code> 年的 <a href="https://github.com/mrdoob/three.js/issues/11189">PR</a> 中可以找到.
+</p>
+</blockquote>
+</div>
+</div>
 </div>
 </div>
 <div id="outline-container-org3f4b4d7" class="outline-2">
@@ -4066,7 +4224,7 @@ PCF
 <div id="org19aafcf" class="figure">
 <p><img src="../../../files/normal-to-slope.png" alt="normal-to-slope.png">
 </p>
-<p><span class="figure-number">Figure 34: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
+<p><span class="figure-number">Figure 36: </span>笛卡尔空间的向量 \(n\) 如何映射到斜率空间得到 \(\widetilde{n}\)</p>
 </div>
 
 <p>
@@ -4088,10 +4246,10 @@ PCF
 </p>
 
 
-<div id="orge5e1250" class="figure">
+<div id="orgb0042e4" class="figure">
 <p><img src="../../../files/normal-xz.png" alt="normal-xz.png">
 </p>
-<p><span class="figure-number">Figure 35: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
+<p><span class="figure-number">Figure 37: </span>向量 \(n\) 在 平面 \(xz\) 上的投影</p>
 </div>
 
 <p>
@@ -4103,10 +4261,10 @@ PCF
 </p>
 
 
-<div id="org2fe5474" class="figure">
+<div id="org0de9342" class="figure">
 <p><img src="../../../files/normal-yz.png" alt="normal-yz.png">
 </p>
-<p><span class="figure-number">Figure 36: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
+<p><span class="figure-number">Figure 38: </span>向量 \(n\) 在 平面 \(yz\) 上的投影</p>
 </div>
 
 <p>
@@ -4126,10 +4284,10 @@ PCF
 </p>
 
 
-<div id="org8be0d39" class="figure">
+<div id="orgd22fc58" class="figure">
 <p><img src="../../../files/normal-in-slope-space.png" alt="normal-in-slope-space.png">
 </p>
-<p><span class="figure-number">Figure 37: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
+<p><span class="figure-number">Figure 39: </span>斜率空间上的 \(\widetilde{n} = (\widetilde{x}, \widetilde{y})\)</p>
 </div>
 
 <p>
@@ -4182,7 +4340,7 @@ PCF
 </p>
 
 <p>
-根据 <a href="#org19aafcf">34</a>, \(|\widetilde{n}| = \sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \frac{\sqrt{\sin^2\theta (\cos^2\theta + \sin^2\theta)}}{\cos\theta} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
+根据 <a href="#org19aafcf">36</a>, \(|\widetilde{n}| = \sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}} = \sqrt{\frac{x^{2} + y^{2}}{z^{2}}} = \frac{\sqrt{x^{2} + y^{2}}}{z} = \frac{\sqrt{\sin^2\theta (\cos^2\theta + \sin^2\theta)}}{\cos\theta} = \tan\theta\) 是 \(n\) 在 \(xy\) 平面上的投影长度, 所以 \(\theta = \arctan(\sqrt{\widetilde{x}^{2} + \widetilde{y}^{2}})\).
 </p>
 
 <p>
@@ -4336,10 +4494,10 @@ PCF
 </p>
 
 
-<div id="org80a8692" class="figure">
+<div id="org7f02cfc" class="figure">
 <p><img src="../../../files/fx-pdf.png" alt="fx-pdf.png">
 </p>
-<p><span class="figure-number">Figure 38: </span>身高在 [60, 70] 英寸内的女性比例</p>
+<p><span class="figure-number">Figure 40: </span>身高在 [60, 70] 英寸内的女性比例</p>
 </div>
 
 <p>
@@ -4604,7 +4762,7 @@ PCF
 <div id="org9b397a1" class="figure">
 <p><img src="../../../files/g1_deriving.png" alt="g1_deriving.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 39: </span>G1</p>
+<p><span class="figure-number">Figure 41: </span>G1</p>
 </div>
 
 <p>

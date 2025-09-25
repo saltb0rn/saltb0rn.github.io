@@ -3,6 +3,8 @@
 #+index: 游戏 Shader 开发
 #+tags: Graphics
 #+status: wd
+#+macro: INNERLINK <<$1>>
+
 #+begin_abstract
 这篇文章主要是收集一些 =3D= 游戏开发常用的 =Shader= 技术, 以及一些风格化渲染实现.
 
@@ -47,7 +49,7 @@
 
 原因如下:
 
-- =JavaScript= 比起 =C++= 这样的编程语言更容易上手
+- =JavaScript/Typescript= 比起 =C++= 这样的编程语言更容易上手
 
 
 - 运行环境容易搭建, 只要有个现代浏览器即可
@@ -62,7 +64,7 @@
   一定程度上可以弥补文档上的不足.
 
 
-阅读时你会文章中的示例 =Shader= 与提供的项目代码有所区别,
+阅读时你会文章中的示例 =Shader= 与提供的 [[https://github.com/saltb0rn/shader-for-game-dev][项目代码: shader-for-game-dev]] 有所区别,
 
 这是因为 =three.js= 的 [[https://threejs.org/docs/?q=shader#api/en/materials/ShaderMaterial][ShaderMaterial]] 的 =Shader= 本身就内置了一些 [[https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram][uniforms/attributes]] 变量,
 
@@ -74,6 +76,9 @@
 #+end_abstract
 
 *** 渲染到贴图 (Render To Texture)
+:PROPERTIES:
+:CUSTOM_ID: render-to-texture
+:END:
 
 游戏开发 *经常* 需要把渲染结果写入到贴图上供其它 =Shader= 程序使用, 本质上就是 [[../../2022/02/webgl-buffer-objects.html#fbo][帧缓冲(Framebuffer Object / FBO)]] 的应用.
 
@@ -81,11 +86,19 @@
 
 最常见的用法是生成场景的深度贴图, 法线贴图. 这里将会介绍一些常用的贴图生成.
 
+当然, =three.js= 本身就有可以生成这两种贴图的材质, 但开发者自己也需要掌握生成的方法,
+
+有些开发需求是标准材质满足不了的, 这时候就需要自己手动实现.
+
+另外一个原因是其中的 =Shader= 代码很常见, 很多地方会用到同样的代码,
+
+为了照顾文章篇幅, 这里列出来可用于后续的"复用".
+
 **** 深度贴图 (Depth Texture)
 
 根据 [[../../2020/06/graphics-opengl-transformation.html#depth-buffer][图形学 - OpenGL坐标变换: 透视投影 - Depth Buffer]] 可得知, 深度贴图的像素用于储存深度值,
 
-而深度值是 =NDC= 坐标的 $z_{ndc}$ 分量经过归一化的结果: $depth = z_{ndc} * 0.5 + 0.5$.
+而深度值是 =NDC= 坐标的 $z_{ndc}$ 分量经过归一化的结果: $depth = z_{ndc} \times 0.5 + 0.5$.
 
 $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
@@ -93,7 +106,7 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
 ***** 实现
 
-*Vertex Shader*:
+*Vertex Shader*: {{{INNERLINK(app-vertex)}}}
 
 #+BEGIN_SRC glsl
   #version 130
@@ -122,18 +135,25 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
 像素的每个组件可以被解释为在 $x \in [0, 255]$ 内的整数, 对应 =Shader= 里面对应 $\frac{x}{255} \in [0, 1]$.
 
-当然可以[[../../2022/02/webgl-buffer-objects.html#texture][对贴图进行参数设置]]储存 $[0, 1]$ 范围外的数值.
+当然可以[[../../2022/02/webgl-buffer-objects.html#texture][对贴图进行参数设置]]储存 $[0, 1]$ 范围外的数值, 这样就无须归一化.
+
+在调用渲染命令进行渲染前, 需要把这两个 =Shader= [[https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/RenderToTexture/materials/MeshDepthMaterial][封装成一个材质]], 把所有物体的材质都替换成该材质再进行渲染,
+
+整个场景的渲染结果就是深度贴图, 具体操作流程可以参考示例代码里面的文件:
+
+[[https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/RenderToTexture/postProcessing/DepthPass.ts][src/RenderToTexture/postProcessing/DepthPass.ts]]
 
 ***** 应用例子
 
 这里演示在后处理中使用深度贴图,
 
-*Vertex Shader*:
+*Vertex Shader*:  {{{INNERLINK(app-vertex-uv)}}}
 
 #+BEGIN_SRC glsl
   #version 130
 
   attribute vec3 position;
+  attribute vec2 uv;
   uniform mat4 modelViewMatrix;
   uniform mat4 projectionMatrix;
 
@@ -149,10 +169,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
 #+BEGIN_SRC glsl
   #version 130
-
-  attribute vec3 position;
-  uniform mat4 modelViewMatrix;
-  uniform mat4 projectionMatrix;
 
   varying vec2 vUV;
   uniform sampler2D tDepth;
@@ -176,19 +192,172 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
   }
 #+END_SRC
 
-
 **** 法线贴图 (Normal Texture)
 
+这里演示在后处理中使用法线贴图,
+
+***** 实现
+
+*Vertex Shader*:
+
+#+BEGIN_SRC glsl
+  #version 130
+
+  attribute vec3 position;
+  attribute vec3 normal;
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
+  uniform mat3 normalMatrix;
+
+  varying vec3 vNormal;
+
+  void main() {
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vNormal = normalize(normalMatrix * normal);
+    /* normalMatrix 是 modelMatrix 的逆矩阵, 如果 Shader 版本支持 inverse 函数,
+       可以像以下的方式计算出变换后的法线:
+
+       uniform mat4 modelMatrix;
+       vNormal = normalize(inverse(modelMatrix) * vec4(normal, 1.0)).xyz;
+    ,*/
+  }
+#+END_SRC
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+  #version 130
+
+  varying vec3 vNormal;
+
+  void main() {
+    vec3 normal = vNormal * 0.5 + 0.5;
+    gl_FragColor = vec4(normal, 1.0);
+  }
+#+END_SRC
+
+就像深度贴图归一化深度值一样, 法线向量的每个组件的范围也是 $[-1, 1]$, 所以这里也进行了归一化.
+
+***** 应用例子
+
+[[app-vertex-uv][*Vertex Shader*]]
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+  #version 130
+
+  varying vec2 vUV;
+  uniform sampler2D tNormal;
+
+  void main() {
+    gl_FragColor = vec4(texture2D(tNormal, vUV).xyz * 2.0 - 1.0, 1.0);
+  }
+#+END_SRC
+
+具体后处理流程参考 [[https://github.com/saltb0rn/shader-for-game-dev/blob/master/src/RenderToTexture/postProcessing/NormalPass.ts][src/RenderToTexture/postProcessing/NormalPass.ts]].
 
 
-*** 屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)
+*** 重新计算法线向量
 :PROPERTIES:
-:custom_id: ssao
+:CUSTOM_ID: recompute-normal-after-disp
 :END:
 
+在 =Vertex Shader= 里面对顶点 $V_0$ 进行位移变换只影响视觉, 并非真的修改几何数据, 因此不会对法线向量 $N$ 产生影响,
+
+这导致了变换后的顶点坐标与法线向量 $N$ 对应不上的问题. 在 [[../../2020/06/graphics-opengl-transformation.html#normal-texture][图形学 - OpenGL坐标系变换: 法线贴图]] 可以了解到,
+
+从法线贴图中读取法线需要一个 =TBN= 矩阵对所读取的法线进行变换, 得到一个世界坐标系的法线向量, 这才是通常使用的法线向量.
+
+平时用的 $N$ 就是在构建 =TBN= 矩阵时就顺便计算出来的, $N$ 是在物体坐标系上, 所以以参考 =TBN= 的构建来重新构建法线向量.
+
+但 =TBN= 矩阵的基向量都是 =CPU= 根据几何数据计算出来的, 而 =shader= 中只能获取一个顶点坐标, 这并不满足 =TBN= 构建的条件.
+
+在 [[../../2020/06/graphics-opengl-transformation.html#plane-equation][图形学 - OpenGL坐标系变换: 平面方程]] 可以学习到, 一个法线向量就能构建一个平面方程,
+
+一个向量有无数个正交向量, 这些正交向量全都处于一个平面上, 该向量代表该平面本身, 这个向量就是俗称的法线向量.
+
+根据这个事实, 取 $N \cdot T = 0$ 的其中一个解作为正切向量, 再让 $B = T \times N$ 作为副切向量.
+
+$T$ 和 $B$ 是位移变换前平面上的向量, 可以通过它们找出当前顶点 $V_0$ 的相邻顶点 $\begin{cases} V_T = V_0 + T \\ V_B = V_0 + B \end{cases}$,
+
+$N$ 所代表的平面是一个无限大的平面, 包含了几何体实际的表面, 因此 $V_T$ 和 $V_B$ 并不一定存在,
+
+但即便这两个顶点不实际存在, 也可以用在后续的计算并得出正确结果.
+
+分别计算出 $V_0$, $V_T$ 和 $V_B$ 经过位移变换 $f$ 后的坐标: $f(V_0)$, $f(V_T)$ 和 $f(V_B)$,
+
 #+begin_quote
-未完成
+即便只是在视觉上改变了几何体的结构, 仍然可以认为:
+
+对几何体的顶点 $(x, y, z)$ 进行 $f$ 变换得到 $(u, v, w)$ 从而构建出新几何体.
+
+因此, $f$ 定义应为一个把坐标映射到新坐标的连续多元向量函数:
+
+$f(x, y, z) = (u(x, y, z), v(x, y, z), w(x, y, z))$, 其中 $u, v, w$ 均为多元连续标量值函数.
 #+end_quote
+
+重新构建新的切向量 $T_{f}$ 和副切向量 $B_{f}$ 确认新的平面, 最后计算出法线向量 $N_{f}$: $\begin{cases} T_{f} = \frac{f(V_T) - f(V_0)}{|f(V_T) - f(V_0)|} \\ B_{f} = \frac{f(V_B) - f(V_0)}{|f(V_B) - f(V_0)|} \\ N_{f} = T_{f} \times B_{f} \end{cases}$.
+
+以下是 =Vertex Shader= 的伪代码:
+
+#+BEGIN_SRC glsl
+  vec3 orthgonal(vec3 v) {
+    /* 一个向量有无数个正交向量 n, 只要满足 dot(n, v) = 0 即可,
+
+       选取正交向量时应该尽量避免那些接近零向量的正交向量,
+
+       任何非零向量与零向量进行点积/叉积/标量乘法运算的结果都是零向量.
+
+       这个正交算法是比较 v 的 x 和 z 分量的绝对值大小, 让较大的分量与 y 分量构成正交向量,
+
+       这样可以避免选取的正交向量接近零向量.
+     ,*/
+    if (abs(v.x) > abs(v.z)) {    // 法线偏向 x 轴
+      return normalize(vec3(-v.y, v.x, .0));
+    } else {                      // 法线偏向 y 轴
+      return normalize(vec3(.0, -v.z, v.y));
+    }
+  }
+
+  vec3 calcDispNormal(vec3 oldNormal) {
+    // oldNormal 在物体坐标系上
+
+    float pxOffset = 1.0 / resolution; // 或者一个很小的值即可
+
+    vec3 N = normalize(oldNormal);
+    vec3 T = orthgonal(N);
+    vec3 B = cross(T, N);
+
+    vec3 positionT = position + pxOffset * T;
+    vec3 positionB = position + pxOffset * B;
+
+    vec3 dispPos = f(position);
+    vec3 dispPosT = f(positionT);
+    vec3 dispPosB = f(positionB);
+
+    vec3 dispT = normalize(dispPosT - dispPos);
+    vec3 dispB = normalize(dispPosB - dispPos);
+    vec3 dispN = cross(dispT, dispB);
+
+    return dispN;
+
+  }
+#+END_SRC
+
+#+begin_quote
+上面的内容是对以下链接的总结:
+
+[[https://discourse.threejs.org/t/calculating-vertex-normals-after-displacement-in-the-vertex-shader/16989/8][Calculating vertex normals after displacement in the vertex shader]]
+
+[[https://tonfilm.blogspot.com/2007/01/calculate-normals-in-shader.html][Calculate normals in shader]]
+#+end_quote
+
+
+*** COMMENT 屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)
+:PROPERTIES:
+:CUSTOM_ID: ssao
+:END:
 
 **** 把视点空间的顶点储存在贴图中
 
@@ -277,6 +446,7 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
     if (useNormalTex == 1) {
       vec3 normalInTangentSpace = texture2D(uNormalTex, vCoord) * 2.0 - 1.0;
+      // 这里错了, 需要进行格拉姆-斯密特处理
       mat3 tbn = mat3(vTangent, vBitangent, vNormal);
       normal = normalize(tbn * normalInTangentSpace);
     } else {
@@ -463,11 +633,78 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 
 *** COMMENT Screen Space Refraction
 
-*** COMMENT 地平线视差
+*** 地平线视差
+:properties:
+:CUSTOM_ID: curved-world
+:end:
 
-https://github.com/skylarbeaty/curved-world
+# https://github.com/skylarbeaty/curved-world
 
-https://zhuanlan.zhihu.com/p/137774049
+# https://zhuanlan.zhihu.com/p/137774049
+
+# https://github.com/NovemberDev/godot_curvature_shader/blob/master/curvature_shader.shader
+
+很多人误以为, 这样的视觉效果可以通过把地面建模成圆柱状或球状就能实现.
+
+但是仔细想一下就能明白这不可能, 随着视野距离越远, 地面差越大, 换而言之就是随着视野距离变大, 地面曲率越大.
+
+如果是球体或圆柱体, 地面曲率是固定的, 且先不说建模的效果可不可行, 真要把所有物体围绕弯曲世界去建模, 工作量是非常大的,
+
+而且不同视野距离下物体的弯曲程度也不一样, 总不能为所有可能的视野距离进行建模吧.
+
+我们需要一个数学函数来模拟地面差的行为, 幂函数正好符合要求:
+
+$f(x) = (\frac{x}{r})^{c}$, 其中 $x \gt 0$ 为视野距离, $c \gt 1$ 是曲率指数,
+
+$r \gt 0$ 是曲率平缓的阈值, 当 $x \le r$ 时曲率相对缓和, 当 $x \gt r$ 曲率会骤然增加.
+
+#+begin_quote
+也可以使用其它符合需求的函数, 这里只是给出一个参考.
+#+end_quote
+
+*Vertex Shader*:
+
+#+BEGIN_SRC glsl
+  attribute vec3 position;
+  uniform vec3 cameraPosition;
+  uniform mat4 modelMatrix;
+  uniform mat4 viewMatrix;
+  uniform mat4 projectionMatrix;
+
+  varying vec3 vPosition;
+
+  void main() {
+
+    // 弯曲梯度: 弯曲方向以及大小, 世界坐标系
+    vec3 falloffWeights = vec3(.0, -1., .0);
+    // 以视觉为准进行弯曲, 所以把弯曲梯度变换到视点坐标系
+    vec3 viewFalloffWeights = (viewMatrix * vec4(falloffWeights, .0)).xyz;
+
+    // 计算视野距离, 但相机位置只有世界坐标系, 要把顶点变换到世界坐标系
+    vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+    float viewDist = length(cameraPosition - worldPos);
+    /* 这个计算方式会形成一种微弱的鱼目感, 即四角有一点弯曲,
+
+       如果不想要鱼目感, 可以使用线性深度作为视野距离, 又或者这样:
+
+       float viewDist = length(cameraPosition.z - worldPos.z);
+    ,*/
+
+    // 计算弯曲程度并对顶点进行弯曲
+    float r = 1.0 / 25.0;
+    float c = 5.0;
+    float fallOff = pow(viewDist * r, c);
+    vPosition = position + viewFalloffWeights * fallOff;
+
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vPosition, 1.0);
+  }
+#+END_SRC
+
+这段 =vertex shader= 需要应用在所有物体的材质上.
+
+像法线向量, $uv$ 这些不需要进行弯曲变换, 但计算光照和生成阴影贴图和计算阴影时需要用上变换后的顶点坐标.
+
+光照和阴影可以参考 [[../../2020/08/graphics-opengl-light-and-material.org][图形学 - 光和材质]].
 
 *** 描边 (Outlining)
 :PROPERTIES:
@@ -510,6 +747,7 @@ $f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够�
 
 深度值用于找出物体的外轮廓, 法线则是用于找出物体的内轮廓, 把两者结合在一起就可以得出完全的轮廓图.
 
+#+attr_html: :width 600px
 #+caption: 图片来源于 [[https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9][How to render outlines in WebGL]]
 [[../../../files/outlining.webp]]
 
@@ -523,7 +761,7 @@ $f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够�
 3D Game Shaders For Beginners 所用坐标系的 $z$ 分量是向上, 它 $y$ 分量才是我们平时学习的 $z$ 分量.
 #+end_quote
 
-接下来会介绍第二种方法: [[../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=af73df195883aeeac53da7ce34a06b7c#org781d7b5][Sobel核]].
+接下来会介绍第二种方法: [[../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html#sobel][Sobel核]].
 
 在图像处理中, =Sobel核= 是用于图像边缘检查的, 原理是计算当前片元在各个方向上的导数,
 
@@ -539,9 +777,86 @@ $f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够�
 
 由于连续的法线向量是相似的, 因此它们的灰阶值也是相似的, 同样可以很好地突显出轮廓线.
 
+#+BEGIN_SRC glsl
+  #version 130
+
+  varying vec2 vUV;
+  uniform sampler2D tDiffuse;
+  uniform sampler2D tDepth;
+  uniform sampler2D tNormal;
+  uniform float uCameraNear;
+  uniform float uCameraFar;
+  uniform vec2 uResolution;
+
+  float getLinearDepth(sampler2D t, vec2 uv) {
+    float ndcZ = 2.0 * texture2D(t, uv).r - 1.0;
+    float viewZ = 2.0 * uCameraNear * uCameraFar /
+      (ndcZ * (uCameraFar - uCameraNear) - (uCameraNear + uCameraFar));
+    float modelZ = -viewZ;
+    float linearDepth = (modelZ - uCameraNear) / (uCameraFar - uCameraNear);
+    return linearDepth;
+  }
+
+  float luma(vec3 color) {
+    return dot(vec3(0.2125, 0.7154, 0.0721), color);
+  }
+
+  float convolution(vec2 uv, float[9] kernel, float[9] pixels) {
+    float conv = 0.0;
+    for (int i = 0; i <= 2; i++) {
+      for (int j = 0; j <= 2; j++) {
+        int index = j * 3 + i;
+        conv += pixels[index] * kernel[index];
+      }
+    }
+    return conv;
+  }
+
+  void main () {
+    vec2 uv = vUV;
+    vec4 color = texture2D(tDiffuse, uv);
+
+    vec2 texelSize = 1.0 / uResolution;
+    // 控制描边宽度
+    float outlineThickness = 3.0;
+
+    float attrs[9];
+
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        int index = (-j + 1) * 3 + (i + 1);
+        vec2 coord = uv + outlineThickness * vec2(i, j) * texelSize;
+        float d = getLinearDepth(tDepth, coord);
+        // 这里无需把法线变量还原到 [-1, 1] 的范围， 不影响连续性判断
+        // float l = luma(2.0 * texture2D(tNormal, coord).xyz - 1.0);
+        float l = luma(texture2D(tNormal, coord).xyz);
+        // 只提取外轮廓
+        attrs[index] += d;
+        // 只提取内轮廓
+        attrs[index] += l;
+        // 卷积运算满足分配律: F * (G1 + G2) = F * G1 + F * G2
+      }
+    }
+
+    float kernelX[9] = float[9](-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0);
+    float kernelY[9] = float[9](1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0);
+
+    float convX = convolution(uv, kernelX, attrs);
+    float convY = convolution(uv, kernelY, attrs);
+    float g = sqrt(convX * convX + convY * convY);
+
+    // 1. 显示深度贴图
+    // gl_FragColor = vec4(vec3(getLinearDepth(tDepth, uv)), 1.0);
+    // 2. 显示法线亮度贴图
+    // gl_FragColor = vec4(vec3(luma(texture2D(tNormal, uv).xyz)), 1.0);
+    // 3. 显示轮廓图
+    gl_FragColor = vec4(1.0 - vec3(g), 1.0);
+  }
+#+END_SRC
+
 # 在得到灰阶图后, 使用 =Sobel= 核分别从它们中提取出外轮廓线和内轮廓线, 最后把两者合并即可得出完整的轮廓线.
 
-#+attr_html: :width 800px
+#+attr_html: :width 600px
 #+caption: 从深度贴图提取外轮廓; 从法线贴图的亮度图中提取内轮廓
 [[../../../files/outline-input-textures.png]]
 
@@ -551,7 +866,7 @@ $f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够�
 
 在俯视角上, 地板与立方体的法线不存在差异, 看上去就是连续的, 导致无法识别轮廓.
 
-#+attr_html: :width 400px
+#+attr_html: :width 600px
 #+caption: 从法线亮度图提取的轮廓图 (俯视角)
 [[../../../files/depth+normal+almost-top.png]]
 
@@ -565,7 +880,393 @@ $f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够�
 
 所以在两者结合的情况下, 需要提高深度值的权重, 从而提高地板和立方体的深度值差异.
 
-#+attr_html: :width 400px
+#+BEGIN_SRC glsl
+  // 只提取外轮廓, 给深度值添加权重 25.0
+  attrs[index] += 25.0 * d;
+  // 只提取内轮廓
+  attrs[index] += l;
+#+END_SRC
+
+#+attr_html: :width 600px
 #+caption: 两贴图一同提取轮廓, 并增强后深度值后的权重 (俯视角)
 [[../../../files/depth+normal+almost-top-with-large-depth.png]]
+
 **** 对场景进行描边
+
+最后就是让描边图与场景图结合在一起, 做法是让场景图的像素和描边像素混合.
+
+#+BEGIN_SRC glsl
+  // gl_FragColor = vec4(1.0 - vec3(g), 1.0);
+  vec4 color = texture2D(tDiffuse, uv); // 场景像素
+  vec4 outlineColor = vec4(0.0, 0.0, 0.0, 1.0); // 描边颜色
+  gl_FragColor = mix(color, outlineColor, g);
+#+END_SRC
+
+#+attr_html: :width 400px
+#+caption: 对场景进行描边
+[[../../../files/scene-outlining.png]]
+
+**** 完整代码
+
+这组 =Shader= 要应用在后处理上, 深度贴图和法线贴图的生成可以参考 [[#render-to-texture][Render To Texture]].
+
+[[app-vertex][Vertex Shader]]
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+varying vec2 vUV;
+uniform sampler2D tDiffuse;
+uniform sampler2D tDepth;
+uniform sampler2D tNormal;
+uniform float uCameraNear;
+uniform float uCameraFar;
+uniform vec2 uResolution;
+
+float getLinearDepth(sampler2D t, vec2 uv) {
+  float ndcZ = 2.0 * texture2D(t, uv).r - 1.0;
+  float viewZ = 2.0 * uCameraNear * uCameraFar /
+    (ndcZ * (uCameraFar - uCameraNear) - (uCameraNear + uCameraFar));
+  float modelZ = -viewZ;
+  float linearDepth = (modelZ - uCameraNear) / (uCameraFar - uCameraNear);
+  return linearDepth;
+}
+
+float luma(vec3 color) {
+  return dot(vec3(0.2125, 0.7154, 0.0721), color);
+}
+
+// 卷积运算符
+float convolution(vec2 uv, float[9] kernel, float[9] pixels) {
+  float conv = 0.0;
+  for (int i = 0; i <= 2; i++) {
+    for (int j = 0; j <= 2; j++) {
+      int index = j * 3 + i;
+      conv += pixels[index] * kernel[index];
+    }
+  }
+  return conv;
+}
+
+void main () {
+  vec2 uv = vUV;
+  vec4 color = texture2D(tDiffuse, uv);
+
+  vec2 texelSize = 1.0 / uResolution;
+  float outlineThickness = 3.0;
+  vec4 outlineColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+  float attrs[9];
+
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      int index = (-j + 1) * 3 + (i + 1);
+      vec2 coord = uv + outlineThickness * vec2(i, j) * texelSize;
+      float d = getLinearDepth(tDepth, coord);
+      // 这里无需把法线变量还原到 [-1, 1] 的范围， 不影响连续性判断
+      // float l = luma(2.0 * texture2D(tNormal, coord).xyz - 1.0);
+      float l = luma(texture2D(tNormal, coord).xyz);
+      // 只提取外轮廓
+      attrs[index] += 25.0 * d;
+      // 只提取内轮廓
+      attrs[index] += l;
+      // 卷积运算满足分配律: F * (G1 + G2) = F * G1 + F * G2
+    }
+  }
+
+  float kernelX[9] = float[9](-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0);
+  float kernelY[9] = float[9](1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0);
+
+  float convX = convolution(uv, kernelX, attrs);
+  float convY = convolution(uv, kernelY, attrs);
+  float g = sqrt(convX * convX + convY * convY);
+
+  // 1. 显示深度贴图
+  // gl_FragColor = vec4(vec3(getLinearDepth(tDepth, uv)), 1.0);
+  // 2. 显示法线亮度贴图
+  // gl_FragColor = vec4(vec3(luma(texture2D(tNormal, uv).xyz)), 1.0);
+  // 3. 显示轮廓图
+  // gl_FragColor = vec4(1.0 - vec3(g), 1.0);
+  // 4. 对场景进行描边
+  gl_FragColor = mix(color, outlineColor, g);
+}
+#+END_SRC
+
+后处理过程参考 [[https://github.com/saltb0rn/shader-for-game-dev/blob/master/src/Outlining/postProcessing/OutlinePass.ts][src/Outlining/postProcessing/OutlinePass.ts]].
+
+*** 莫比斯风格渲染 (Moebius Style Shading)
+
+#+begin_quote
+在空余时间受 [[https://www.youtube.com/watch?v=jlKNOirh66E&t=1s][Useless Game Dev - Moebius-style 3D Rendering]] 的启发实现了莫比斯风格渲染,
+
+期间还参考了 [[https://blog.maximeheckel.com/posts/moebius-style-post-processing/][Moebius-style post-processing and other stylized shaders]],
+
+无论是 =shader= 的实现思路还是 =three.js= 的使用方面都能学到不少东西, 于是决定进行一番记录.
+#+end_quote
+
+**** 整体思路
+
+整个实现分为 3 个步骤来完成对莫比斯风格的复刻:
+
+第 1 步: 对场景进行[[#outlining][描边]];
+
+第 2 步: 找出阴影区域, 并绘制自定义形状的阴影;
+
+第 3 步: 找出高亮反射区, 为它描边并对反射区域进行涂白.
+
+**** 描边处理
+
+描边的具体实现就不赘述了, 不过我们要在原有代码上做一些调整, 使得描边类似与手绘那样带有一些扭曲.
+
+[[https://blog.maximeheckel.com/posts/moebius-style-post-processing/#giving-our-outlines-an-hand-drawn-look-in-glsl][参考的文章]]使用了随机函数来生成随机偏移, 从而实现描边扭曲,
+
+#+begin_src glsl
+  vec2 displacement = vec2(
+    (hash(gl_FragCoord.xy) * sin(gl_FragCoord.y * frequency)) ,
+    (hash(gl_FragCoord.xy) * cos(gl_FragCoord.x * frequency))
+  ) * amplitude /resolution.xy;   // hash 是随机函数
+#+end_src
+
+但有一个问题, 随机函数的过渡不平滑, 在描边的扭曲幅度(=amplitude=)稍大(实际上不需要很大)时呈现雪崩效应, 描边会出现断开并形成噪点.
+
+#+attr_html: :width 600px
+#+caption: 原实现的效果: 描边断裂, 形成噪点
+[[../../../files/moebius-outline-breaking.png]]
+
+#+begin_quote
+雪崩效应是指, 函数的输入值只要产生很小的变化就能导致输出值产生较大的变化,
+
+这与函数的连续定义相违背: 连续的函数就是当输入值的变化足够小的时候，输出的变化也会随之足够小的函数.
+#+end_quote
+
+为了解决这个问题, 我换成了用梯度噪声生成偏移, 强行保证即便描边的扭曲幅度再大也不会断开.
+
+#+BEGIN_SRC glsl
+  vec2 texelSize = 1. / uResolution;
+  float amplitude = 1.2;
+  float frequency = noise(gl_FragCoord.xy * texelSize) / amplitude * 0.6;
+  /* noise 是 2D 梯度噪声, 这里对噪声值除以最大幅度,
+     是为了当扭曲幅度越大时, 扭曲之间的间隔也越大, 从避免线条杂乱 */
+
+  vec2 displacement = vec2(sin(gl_FragCoord.y * frequency),
+                           cos(gl_FragCoord.x * frequency)) * amplitude * texelSize;
+
+  float attrs[9];
+
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      int index = (-j + 1) * 3 + (i + 1);
+      vec2 coord = uv + displacement + outlineThickness * vec2(i, j) * texelSize;
+      float d = getLinearDepth(tDepth, coord);
+      float l = luma(texture2D(tNormal, coord).xyz);
+      attrs[index] = d + l;
+    }
+  }
+#+END_SRC
+
+#+caption: 优化过后的描边没有颗粒感
+#+attr_html: :width 600px
+[[../../../files/moebius-outline-handdraw.png]]
+
+#+caption: 扭曲幅度为 5.0 对齐原代码进行对比, 描边扭曲程度较大, 但依然没断裂
+#+attr_html: :width 600px
+[[../../../files/moebius-outline-handdraw-larger-amplitude.png]]
+
+**** 找出场景的阴影区域
+
+我们不需要使用阴影贴图就可以大概找出场景的阴影区域, 思路是使用亮度函数把场景渲染结果转换成亮度灰阶图:
+
+#+BEGIN_SRC glsl
+  float luma(vec3 color) {
+    return dot(vec3(0.2125, 0.7154, 0.0721), color);
+  }
+#+END_SRC
+
+当片元的亮度小于一定值时就可以认为片元处于阴影区域, 这里把阴影区域按照亮度从大到小划分为 3 个等级:
+
+当阴影区域的亮度达到最大等, 在阴影区域上绘制斜线作为阴影线; 如果亮度达到中级, 在原有阴影线上 *添加* 垂直线作为阴影线;
+
+如果亮度达到最小等级, 在原有阴影线 *添加* 水平线作为阴影线; 总而言之, 就是阴影区域亮度越底阴影线越多.
+
+#+BEGIN_SRC glsl
+  #define LOW_LUMA_1 0.32
+  #define LOW_LUMA_2 0.18
+  #define LOW_LUMA_3 0.04
+
+  vec4 pixelColor = texture2D(tDiffuse, uv);
+  float pixelLuma = clamp(luma(pixelColor.rgb), .0, 1.);
+  float interval = 20.0;          // 阴影线的间隔
+  float shadowThickness = 4.0;    // 阴影线的粗细
+
+  // 绘制斜对角阴影线
+  if (pixelLuma <= LOW_LUMA_1 && depth <= 0.99) {
+
+    // 转 x 轴对齐对角线, 在旋转后的 x 轴方向绘制线条
+    float angle = -atan(uResolution.y, uResolution.x);
+    float rx = dot(vec2(cos(angle), -sin(angle)), uv);
+    // 每 interval 个单位绘制一条粗细为 4 的对角线
+    if (mod((rx + displacement.x) * uResolution.x, interval) < shadowThickness) {
+      pixelColor = outlineColor;
+    }
+  }
+
+  // 绘制垂直阴影线
+  if (pixelLuma <= LOW_LUMA_2 && depth <= 0.99) {
+    if (mod((uv.x + displacement.x) * uResolution.x, interval) < shadowThickness) {
+      pixelColor = outlineColor;
+    }
+  }
+
+  // 绘制水平阴影线
+  if (pixelLuma <= LOW_LUMA_3 && depth <= 0.99) {
+    if (mod((uv.y + displacement.y) * uResolution.y, interval) < shadowThickness) {
+      pixelColor = outlineColor;
+    }
+  }
+#+END_SRC
+
+这里的阴影并不是光照计算意义上的阴影, 只是对场景色彩暗部的筛选结果, 因此, 阴影的等级划分取决于场景色彩,
+
+如果场景色彩偏深的话, 那么阴影区最大等级的亮度值应偏小一点, 否则整个场景将会被大面积打上阴影线;
+
+相反场景色彩偏浅, 阴影区最大等级的亮度值应偏大一点, 否则整个场景找不到一处阴影.
+
+这也就是为什么按照其他人的方法去实现可能会得出不一样的效果, 因为大家的场景是不一样的.
+
+#+attr_html: :width 600px
+#+caption: 绘制阴影线
+[[../../../files/moebius-shadow-line.png]]
+
+#+begin_quote
+既然这里的阴影不是真阴影, 那么可以通过真正的光照计算得出阴影再绘制阴影线吗?
+
+如果想完全精确的绘制阴影线, 通过阴影贴图来判断片元是否处于阴影区是非常正确的做法.
+
+不过我们这种方法本身也能真阴影绘制阴影线, 还能通过控制某处的颜色深浅来决定是否绘制阴影线.
+
+用哪种方法取决于开发者.
+#+end_quote
+
+**** 绘制高亮反射区域
+
+大体思路是通过光照计算找出高亮反射区域, 并使用特殊值对高亮反射区域内的片元进行标记.
+
+通常来说需要多一张贴图来储存标记结果的, 幸好描边用的法线贴图生成是自己实现的, 可以在它的基础上修改标记出高亮区域.
+
+原理很简单, 法线贴图是用来做连续性测试的, 通过像 $(0.0, 0.0, 0.0)$ 特殊值作为输出的法线破坏原有法线贴图的连续性,
+
+而这些特殊法线本身又形成一个新的连续区域, 从而勾勒出高亮区域.
+
+为了方便实现, 使用的光照模型为 [[../../2020/08/graphics-opengl-light-and-material.html#blinn-phong-shading-model][图形学 - 光和材质: OpenGL 的基础光照模型 - Blinn-Phong shading model]].
+
+*修改后的法线贴图生成用的 Vertex Shader*:
+
+#+begin_src glsl
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+
+  void main () {
+    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * viewMatrix * modelPosition;
+    vPosition = modelPosition.xyz;
+    vNormal = normalize(normalMatrix * normal);
+  }
+#+end_src
+
+*修改后的法线贴图生成用的 Fragment Shader*:
+
+#+begin_src glsl
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  uniform vec4 uLightPos;
+
+  void main () {
+
+    vec3 viewDir = normalize(cameraPosition - vPosition);
+    vec3 lightDir = normalize(uLightPos.w > 0.0 ? uLightPos.xyz - vPosition: uLightPos.xyz);
+    vec3 halfDir = normalize(viewDir + lightDir);
+    float shiness = uLightPos.w > 0.0 ? length(uLightPos.xyz - vPosition) * 4.0: 60.0;
+    float kSpecular = pow(max(dot(halfDir, vNormal), .0), shiness);
+    float kDiffuse = max(dot(vNormal, lightDir), .0);
+
+    vec3 color = vec3(vNormal * 0.5 + 0.5);
+
+    // 光线和法线之间的角度需要小于 41 度且 halfDir 和视线之间的角度小于 60 角时标记为高亮
+    if (kDiffuse > 0.75 && kSpecular >= .5) {
+      color = vec3(0.0);
+    }
+
+    // 输出 kDiffuse 作为光照计算结果, 高亮区域已经被法线标记, 所以 kSpecular 就不需要返回
+    gl_FragColor = vec4(color, kDiffuse);
+  }
+#+end_src
+
+现在的渲染结果可以勾勒出高亮反射区了,
+
+#+attr_html: :width 600px
+#+caption: 勾勒高亮反射区域
+[[../../../files/moebius-specular-outline.png]]
+
+最后就是给高亮区域涂抹成白色(高亮区域基本都是白色的), 这一步有两个点需要注意:
+
+第一, 考虑光照计算的结果是否应该参与渲染, 参与的话如何参与; 第二, 只有非阴影区域才有能高亮反射区域.
+
+对于第一点, 我个人的想法是可以参与, 但要调整好阴影区域的亮度等级划分, 以及参光照计算结果的参与程度,
+
+具体计算方式如下:
+
+#+BEGIN_SRC glsl
+  float diffuseFactor = 0.17;
+  float pixelLuma = clamp(luma(pixelColor.rgb) + normal.a * diffuseFactor, .0, 1.);
+  /* normal.a * diffuseFactor 的最大值为 diffuseFactor,
+
+     diffuseFactor 应为一个亮度等级差, 意味着最大程度可以为画面阴影区域的亮度提高一个等级,
+
+     从而减少阴影线的密度, 你也可以有自己的计算方法
+   ,*/
+
+  // ...
+
+  // 绘制高亮区
+  if (pixelLuma > LOW_LUMA_1 && depth <= 0.99) {
+    // pixelLuma > LOW_LUMA_1 表示片元不在阴影区, 在阴影区时直接不绘制高亮区域
+    if (all(lessThanEqual(normal.xyz, vec3(0.0)))) {
+      pixelColor = vec4(1.0);
+    }
+  }
+#+END_SRC
+
+#+attr_html: :width 600px
+#+caption: 莫比斯风格渲染的最终效果
+[[../../../files/moebius-final-result.png]]
+
+高亮反射区域的描边在刚进入阴影区时没有完全消失,
+
+原因是在计算法线贴图时没有正确的方法来计算亮度, 导致高亮区的标记除了一点偏差;
+
+#+attr_html: :width 600px
+#+caption: 阴影区出现了高亮反射区的轮廓
+[[../../../files/moebius-normal-drawback.png]]
+
+解决方法有两种:
+
+第一种方法是在渲染法线贴图时, 使用场景贴图配合光照计算得出片元的颜色, 计算该片元亮度后再进行标记;
+
+第二种方法是在渲染法线贴图时, 使用阴影贴图判断片元是否在阴影区, 只有不在阴影区才有机会片元进行高亮标记.
+
+第二种方法比较准确一点, 然而这两种方法都需要使用额外贴图, 这意味着需要额外多一个阶段的渲染.
+
+妥协于篇幅有限, 到此为此整个莫比斯风格渲染完成.
+
+[[https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/Moebius/postProcessing/MoebiusPass.ts][src/Moebius/postProcessing/MoebiusPass.ts]]
+
+
+*** COMMENT 卡通着色 (Cel Shading / Toon Shading / Carton Shading)
+
+**** 构成
+
+光照
+
+Blinn-Phong Shading Model + Fresnel Light
+
+https://www.bilibili.com/video/BV1YA4m1c79b?spm_id_from=333.788.videopod.sections&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30

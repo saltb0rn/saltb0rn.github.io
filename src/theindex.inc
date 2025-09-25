@@ -38,11 +38,11 @@
 同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
-*** [[file:posts/2024/11/introduction-to-probability.html?hash=bab36ad7978c16cfa2565c2ded8507a6][Introduction To Probability 的阅读草稿纸]]
+*** [[file:posts/2024/11/introduction-to-probability.html?hash=b911ad2179bbee93183c10cdb5de2d85][Introduction To Probability 的阅读草稿纸]]
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=ceaa6aceff85f8ac24e57ac5cb94708d][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=624836c1b3f0e3e901100a9d89ce9479][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的.
@@ -67,37 +67,37 @@
 
 微积分的知识点很多, 根据研究对象的不同可以这么进行分类:
 
-- 一元标量函数的微分和积分
+- 一元标量值函数的微分和积分
 
-  一元标量函数的微积分是其它研究对象的微积分基础,
+  一元标量值函数的微积分是其它研究对象的微积分基础,
 
-  一元标量函数的图像是平面曲线, 所以一元标量函数的微积分主要是研究平面曲线.
+  一元标量值函数的图像是平面曲线, 所以一元标量值函数的微积分主要是研究平面曲线.
 
-  标量函数也叫做标量场(scalar field), 意思是把空间位置映射在标量上.
+  标量值函数也叫做标量场(scalar field), 意思是把空间位置映射在标量上.
 
-- 一元向量函数的微分和积分
+- 一元向量值函数的微分和积分
 
-  一元向量函数的函数图像也是曲线, 但并不限于平面曲线, 可以是任何维度的曲线.
+  一元向量值函数的函数图像也是曲线, 但并不限于平面曲线, 可以是任何维度的曲线.
 
-  如果一元向量函数的输出维度是二维, 那么一元向量函数就是一元标量函数的参数方程形式.
+  如果一元向量值函数的输出维度是二维, 那么一元向量值函数就是一元标量值函数的参数方程形式.
 
-  所以一元向量函数的微积分主要是研究任意维度的曲线.
+  所以一元向量值函数的微积分主要是研究任意维度的曲线.
 
-  向量函数也叫做向量场(vector field), 意思是把空间位置映射在向量上.
+  向量值函数也叫做向量场(vector field), 意思是把空间位置映射在向量上.
 
-- 多元标量函数的微和积分
+- 多元标量值函数的微和积分
 
-  二元标量函数的函数图像是三维空间中的曲面, 高于二元以上的函数图像就是更高维度的几何体了,
+  二元标量值函数的函数图像是三维空间中的曲面, 高于二元以上的函数图像就是更高维度的几何体了,
 
   当然多出来的分量可以通过坐标系以外的信息进行表示.
 
-  多元标量函数的微积分主要研究曲面相关特性.
+  多元标量值函数的微积分主要研究曲面相关特性.
 
-- 多元向量函数的微分和积分
+- 多元向量值函数的微分和积分
 
-  多元向量函数的函数图像是流形(manifold), 包括一维曲线, 二维曲面, 三维流形, 如此类推.
+  多元向量值函数的函数图像是流形(manifold), 包括一维曲线, 二维曲面, 三维流形, 如此类推.
 
-  多元向量函数的微积分主要研究矢量变化和场的性质, 在流体模拟中有着重要应用.
+  多元向量值函数的微积分主要研究矢量变化和场的性质, 在流体模拟中有着重要应用.
 
 - 无穷序列和级数
 
@@ -172,7 +172,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=20c38cc5f54acf72446b7d554e094f0d][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=cc2504aba4d074d8c63daecb94e94f0f][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -242,7 +242,7 @@
 当基础知识足够扎实时, 应该就有能力实现 [[https://advances.realtimerendering.com/][Advances in Real-Time Rendering in 3D Graphics and Games]] 里面的技术了.
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=d96c520183c75da47960558a719ea4c7][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=50461d0e4be91f9f798de3f58464e3f8][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -308,14 +308,6 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 这篇文章也有些书本上没有的内容, 虽然存在意义不太大了, 但笔记还是得保留下来.
 
 	
-*** [[file:posts/2021/03/understanding-about-animation-in-css.html?hash=4e4f1d18c3253d17c1d5565c780b3e09][理解CSS动画]]
-这是一篇关于 =CSS animation= 属性的笔记.
-
-虽然说 =MDN= 上有 =animation= 的文档,不过本人比较容易"异想天开",
-
-不确定文档上的说明和我个人的理解是否一致,或者说有没有一些文档上没有说明的内容.
-
-	
 *** [[file:posts/2021/03/remainder-vs-modulo.html?hash=b4977a5d8a39be3a3626e3528bb9ae74][取余和取模的区别]]
 说来惭愧,一直以来都没有真正明白取余(remainder operation)和取模(modulo operation)的区别,不是说他们计算的区别,而是用途上区别,
 
@@ -378,7 +370,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=2efe74746085e6046f6ad62da1904bd5][图形学 - 光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=ca862cc41c2a58379cd7bf9383808e11][图形学 - 光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
@@ -392,7 +384,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 2. [[../../2022/02/webgl-buffer-objects.html][Shader 编程自救指南]]: 需要插值是如何进行.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=ac222eb5c702a2b7511d1b49c5c64f32][图形学 - OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=c2ae49c440716edeb3027821a52281d3][图形学 - OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
@@ -452,40 +444,6 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 所以这句话的意思是: 公式不是需要记忆的魔法咒语,我们要对公式有一个直观了解,包括公式是如何推导的,有什么意义,解决什么问题.
 
 	
-*** [[file:posts/2020/02/et-project-day-.html?hash=cb0123b7703c9bd0d13b552435a2a639][英语消灭计划-Day2]]
-距离上一次英语消灭进行经是几个月前了,当时还是没有坚持下来,现在要开始重启这个计划了,还是不能小看"积累"的力量.
-
-这次的阅读材料取自于 =VA-11 HALL-A:Cyberpunk Bartender Action=,游戏里的日期是 =Tue 13/12=.
-
-	
-*** [[file:posts/2019/12/linear-algebra-notes.html?hash=f244d8d60d8ef1ed0d453249c9952ab1][线性代数读书随笔 (部分内容需要严格验证)]]
-"程序员的数学3线性代数"读书随笔
-
-	
-*** [[file:posts/2019/11/canvas-intro.html?hash=d7ed0af41591a9756520e60e15c301e1][Canvas入门而不入土]]
-从 =Canvas= 的一些相关概念去入门,对 =Canvas= 的 =API= 有一个全局的理解.
-
-这片文章并非是关于 =API= 的详细用法,而是让你用Canvas画图的时候会想有没有这种功能的API,然后自行去查阅文档.
-
-可能有人会问: 不讲 =API= 的话这篇文章还有什么存在意义吗?
-
-针对这个问题,我想那些有开发经验的人应该会理解,比如做 =WEB= 服务端开发,有时候被要求换一个框架,即便如此他们依然可以很快上手,
-
-这是因为 =WEB= 的服务端开发是离不开 =Cookies,Request/Response-Headers, Request/Response-Body= 等等这些 =HTTP= 的知识以及概念,
-
-不同框架 =API= 是肯定不一样的,有经验的开发人员要快速使用新的工具必然是从这些概念上去找对应的 =API= 的.
-
-同样, =Canvas= 也是一样,谁知道以后 =Canvas= 的 =API= 会不会变呢,或许它的 =Canvas= 的某些概念会变,但是绝对比不上 =API= 的变化速度,
-
-因为概念变了, =API= 也必然会变,但反过来就不一定,有可能只是单纯的为了少传两个参数而再封装一下,或者为了方便改变一下用法而已.
-
-但是核心还是那一套概念.并不是说懂概念就是精通 =Canvas=,毕竟写代码是一件需要动手的事情,只是在动手之前对做的事情进行了解会让自己在之后的编码不会"迷茫".
-
-这是为了防止秃头了还没学会,这也是我标题意思:单纯的入门,而不是乱敲一遍什么都不会然后入土.
-
-当然我也会在相关话题下给出相关 =API= 链接,方便边读边动手.
-
-	
 *** [[file:posts/2019/11/web-components.html?hash=c81c0313e8367f8a1e1310806886cdb3][Web Components]]
 前端组件化已经是大势所趋了,随着组件化的口号越来越响,在这种背景下诞生了一些用来实现组件化的开发工具,
 
@@ -494,55 +452,6 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 截至目前为止,Edge有两个分支在同时更新:旧版以及 =beta= 版,后者的内核就是 =chromium=, 这里是[[https://developer.microsoft.com/en-us/microsoft-edge/platform/status/shadowdom/][更新状态]].
 
 在这个时代下,组件化也迎来了它的标准.
-
-	
-*** [[file:posts/2019/08/digital-video-file.html?hash=6c911c10f5fa2101fc3260ebf7b60b92][视频文件简单了解]]
-
-因为临时的工作需要,要处理视频无法在 =ckplayer= 上面播放的问题,久违地使用了一下 =ffmpeg=.
-
-在17年的时候就买了 =ffmpeg= 官网上推荐的 =ffmpeg basics= 来学习 =ffmpeg=,那个时候也是因为工作需求,
-
-但是那个时候我还没有开始写 =blog=,所以这段时间会重新学习一边,顺便写些东西.
-
-(从7.25日开始忙着下班玩火纹:风花雪月,已经偷懒了一段时间了,看来要把学习和锻炼像吃饭睡觉一样作为日常生活必选项).
-
-复习 =ffmpeg= 之前先了解以下视频文件的一些基本概念,否则读 =ffmpeg basics= 会懵,我觉得这本书唯一的缺点就是没有先介绍视频文件,
-
-对 =codec= , =format= 等基础概念的不理解会造成对 =ffmpeg= 的工作流程的不理解.
-
-	
-*** [[file:posts/2019/05/bash-eliminating-project.html?hash=c2371c6130e24e58dab33abb54ad7431][Bash消灭计划]]
-用了两年多的 =Linux= 了,但是一直没有很系统地学习过 =Bash Scripting=,每次写的时候都是去翻文档,写完就忘,一直不能熟练的用它解决问题.
-
-出现这种情况也有我自己的问题: 总想靠 =Python= 完成 =Shell= 的工作.然而事实上很多情况下用 =Python= 解决问题都不太方便,于是不得不重视起来.
-
-这里我只会把几个比较不容易理解或重要的点写下来,目的一是为了节省边幅,去掉不重要的内容,方便以后查阅;二是为了个人偷懒.
-
-	
-*** [[file:posts/2019/05/et-project-day1.html?hash=8be760ab5c20cad8e0685ff3e747533a][英语消灭计划-Day1]]
-从今天开始要拓展自己英语的词汇量了,起始之前很久就想拓展了,只不过没想到用博客这种形式来学习.
-
-有一个准则,由于英语的一词多意的特征,所有笔记都会只介绍示例文本中的单词的当前用法.
-
-关于单词的发音,由于本人用的是 =Merriam Webster= 词典,所以我是通过它使用的音标学习单词发音的,
-
-官方音标指南在[[https://merriam-webster.com/assets/mw/static/pdf/help/guide-to-pronunciation.pdf][这里]],要注意它的是美式发音,这套音标比起其他音标好记易学很多,真是相见恨晚.
-
-针对里面 =\ə\=, =\a\=, =\e\= 这几个比较容易记忆混乱的音标,我这里大概写一下个人学习的感悟:
-
-在不考虑重读的情况下, =\ə\= 的读音和 [[https://www.merriam-webster.com/dictionary/uh][uh]] 这个拟声词的发音完全一致;
-
-=\a\= 和 =\e\= 的读音十分类似,想听具体差别可以参考 [[https://www.merriam-webster.com/dictionary/bat][bat]] 和 [[https://www.merriam-webster.com/dictionary/bet][bet]] 这两个单词,两者读音差不多,口的运动模式也是差不多的,
-
-区别在于前者口的动作幅度比后者的大.其实不追求太精确也是可以的,这三个是比较容易记混的,知道大概发音就行.
-
-至于重读和弱读,就是前者的发音时间更长更清晰,后者则相反.
-
-今天的示例文本来源于"八方旅人" 中 Primrose 的序章剧情. Primrose's Journal 1-1
-
-	
-*** [[file:posts/2019/04/data-transfer-unit.html?hash=434444e1f55bedb7c4bca46bf7cf528c][网络数据传输单位]]
-今天在机核上看到一篇新闻: 韩国三大电信运营商从4月5日开始提供消费用5G通信服务.为了了解5G有多厉害,我决定了解一下数据传输单位.
 
 	
 *** [[file:posts/2019/03/about-audio-file-metadata.html?hash=6514460dc6c6304d1a9e838fe4ca7cfc][关于音频文件的元信息]]
@@ -579,16 +488,6 @@ $p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种
 由于时间长没玩并且随着游戏的不断更新而导致机制变了好多,所以我要复习一下这个游戏伤害机制,复习资料我选择了 =Warframe= 的 =Fandom Wiki=, =fandom= 可以拆分为 =Fan= 和 =dom=,其中 =dom= 是 =kingdom= 里面的一个部分,有国度,国家的意思.
 
 =fan= 当然就是粉丝的意思,所以这个维基资料就是粉丝整理的,并且都是经过玩家们验证的,准确性还是可以的.不过即便如此有空的话最好还是自己动手计算验证资料的准确,这是一个好习惯.
-
-	
-*** [[file:posts/2018/11/gimp-for-webfe-dev.html?hash=5dde4b7e323138c4e29a130f1597655f][前端人员的GIMP]]
-虽然不太想承认,但是前端人员有时候的确会被叫做切图仔.其实孤身一人的前端人员的确需要会一点切图技能.
-
-我自学时候都是在网上找设计稿来还原的,设计稿有了但是素材得自己动手,我就是因为这个问题才来写这篇文章得.
-
-大部份前端人员都是在 =Windows= 或者 =MacOS= 上使用 =PhotoShop= 来处理这些工作,对于使用 =Linux= 的前端人员就行不通了.
-
-这里我选择了 =GIMP= 做为 =PhotoShop= 的替代品.本人使用的 =GIMP= 版本是 *2.10*.
 
 	
 *** [[file:posts/2018/11/eopl-techniques-to-imp-interpreter.html?hash=66ed2ba4a4308706f7e83157515f7744][直译器的实现技术总结]]

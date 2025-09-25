@@ -95,7 +95,9 @@ $RGB$ 作为计算机常用的颜色模型,每一项都用固定大小空间进�
 
 光照模型并非公理, 我们可以在学习之后按照自己的想法对模型进行调整. 模型有很多种, 不同模型的照明效果也会不一样,
 
-当然复杂程度也不一样. 接下来会从简单到复杂介绍三个光照模型.
+当然复杂程度也不一样. 接下来会从简单到复杂介绍三个光照模型, 其中最难的是 =PBR=,
+
+在 =PBR= 之前还会了解一些可以增强光照模型的选项.
 
 想实现照明效果, 需要从 *照明* 与 *被照明* 这两角度进行了解: 当光照射到物体上时, 物体表面如何对光进行反射.
 
@@ -308,6 +310,9 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse}) \times \mathrm{o
 
 
 *** OpenGL 的基础光照模型 - Blinn-Phong shading model
+:properties:
+:custom_id: blinn-phong-shading-model
+:end:
 
 =Blinn-Phong shading model= 是 =Phong lighting model= 改进模型, 主要改进了镜面反射光的计算.
 
@@ -701,6 +706,11 @@ $\mathrm{attenuation\_factor}$ 就是在 =Phong lighting model= 提到过的系�
   最终的计算结果和 =Phong lighting model= 的 $\mathrm{specualr}$ 会稍微不一样,但依然是合理的,当 $V$ 正好等于 $R$,半角向量也正好等于 $N$,这对应了 $V$ 和 $R$ 一致时亮度最高,也符合了 $V$ 越时靠近 $R$,亮度越高.
 
   所以 $\mathrm{specular} = max(H \cdot N, 0)^{\mathrm{GL\_SHININESS}} \times \mathrm{GL\_SPECULAR}_{\mathrm{light}} \times \mathrm{GL\_SPECULAR}_{\mathrm{material}}$.
+
+
+*** 菲涅尔系数 (Fresnel Factor)
+
+*** 边缘光 (Rim Lighting)
 
 *** 基于物理的渲染 - PBR (Physically Based Rendering)
 
@@ -1817,17 +1827,19 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 ** 阴影
 
-阴影生成并没有用到什么新的数学公式, 所有的数学公式全都在之前的文章用总结完了.
+阴影生成并没有用到什么新的数学公式, 思路很简单,
 
-阴影的生成很简单, 首先用一组 =Shader= 的 =vertex shader= 以光线为角度生成一个 [[../../../2020/06/graphics-opengl-transformation.html#depth-buffer][depth buffer (depth map)]] 并储存在贴图中,
+首先用一组 =Shader= 以光源作为"相机"生成一个 [[../../../2020/06/graphics-opengl-transformation.html#depth-buffer][depth buffer (depth map)]] 并储存在贴图中,
 
-这个贴图就叫做阴影贴图 (=shadow map=); 然后在另外一组 =Shader= 的 =fragment shader= 中,
+这个贴图就叫做阴影贴图 (=shadow map=);
 
-计算出相机"眼中"的 $P$ 点在光源"眼中"的 $NDC$ 坐标: $P_{ndc}$, 再对 $P_{ndc}$ 进行归一化: $P_{normal} = (u, v, d) = P_{ndc} * 0.5 + 0.5$,
+然后用另外一组 =Shader= 计算出 *真相机* 所看到的 $P$ 点在光源眼中的 $NDC$ 坐标 $P_{ndc}$,
 
-再以 $P_{normal}.xy$ 作为 =UV= 从阴影贴图中获取深度 $d_c$, $P_{normal}.z$ 是 $P$ 在在光源"眼中"的深度,
+并进行归一化: $P_{normalized} = P_{ndc} * 0.5 + 0.5$. 其中 $P_{normalized}.xy$ 是阴影贴图的 =UV= 坐标,
 
-最后对比 $d_c$ 和 $P_{normal}.z$, 如果 $d_c \le P_{normal}.z$, 那就说明 $P$ 在阴影中.
+用它获取深度 $d_c$; $P_{normalized}.z$ 是 $P$ 在光源"眼中"的深度.
+
+对比 $d_c$ 和 $P_{normalized}.z$, 如果 $d_c \le P_{normalized}.z$, 就说明光源看不到 $P$ 点, 所以 $P$ 在阴影中.
 
 需要注意的是, 这里的 =depth buffer= 所使用的深度值是线性深度值.
 
@@ -1846,6 +1858,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 [[../../../files/shadow_mapping_projection.png]]
 
 *** 定向光源的阴影
+:properties:
+:custom_id: dirlight-shadow
+:end:
 
 1. 通过光源进行 *正交投影*, 计算出要成像的顶点 $P_{object}$ 在光源"眼中所见"的投影坐标 $P_{clip}$, 并生成阴影贴图:
 
@@ -1877,6 +1892,16 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
    #+END_SRC
 
    这组 =Shader= 需要作为场景中每个物体的材质, 再对整个场景进行渲染, 渲染结果就是我们想要的阴影贴图.
+
+   #+begin_quote
+   =uLightViewMatrix= 的构建可以参考以下连接:
+
+   [[../../2020/06/graphics-opengl-transformation.html#from-world-to-view][图形学 - OpenGL坐标变换: 从世界坐标系到视点坐标系的变换]]
+
+   =uLightOrthoProjMatrix= 的构建可以参考以下连接:
+
+   [[../../2020/06/graphics-opengl-transformation.html#orthographic-projection][图形学 - OpenGL坐标变换: 正交投影]]
+   #+end_quote
 
 2. $P_{clip}$ 需要在第二组 =Shader= 的 =vertex shader= 中进行计算, 并传到第二组 =Shader= 的 =fragment shader= 中,
 
@@ -1968,6 +1993,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
    #+END_SRC
 
 **** 阴影自遮挡 (Shadow Acne)
+:properties:
+:custom_id: shadow-acne
+:end:
 
 [[../../../files/shadow-acne.png]]
 
@@ -2068,7 +2096,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 [[../../../files/point_shadows_diagram.png]]
 
-但用 6 张贴图的话, 需要手动根据光照方向计算出应从哪张贴图进行采样, 因此, 使用立方贴图(=cubemap=)可以省去这些工作.
+但用 6 张贴图需要手动根据光照方向计算出应从哪张贴图进行采样, 使用立方贴图(=cubemap=)可以省去这些工作.
 
 在此之前需要了解如何在立方贴图上采样, 二维贴图是根据 =UV= 坐标进行采样, 而立方贴图是根据方向向量进行采样,
 
@@ -2173,7 +2201,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
     // upload uniforms including uViewProjection
     gl.uniformMatrix4fv(matrixLocation, false, uViewProjection);
-    // render scene
+    // drawcall to render scene
   }
 
   // 在渲染场景的 shader 程序中上传 uniforms
@@ -2256,9 +2284,11 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
     }
   #+END_SRC
 
-  相比定向光源中阴影贴图 =Shader= 采用了内置深度值作为阴影深度值, 这里的 =Fragment Shader= 中自行计算了阴影深度值 $d_c$:
+  相比定向光源中阴影贴图 =Shader= 采用了内置深度值作为阴影深度值,
 
-  直接以片元与光源的世界坐标距离的归一化结果作为深度值. 这个算法有一个好处, 那就是容易在后面的 =ShadowCalculation= 函数中计算出片元的阴影深度.
+  这里的 =Fragment Shader= 中自行计算了阴影深度值 $d_c$: 片元与光源的世界坐标距离的归一化结果作为深度值.
+
+  不像定向光源, 位置光源本身就是有位置属性的, 因此是可以直接计算出深度.
 
 2. 判断片元是否处于阴影之中
 
@@ -2392,6 +2422,70 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
    这个 =PCF= 每个阴影像素进行了 64 次采样, 但有不少采样是重复的, 我们可以直接硬编码下不重复的组合.
 
+**** 不使用 CubeMap
+:properties:
+:custom_id: no-cube-map-shadow-mapping
+:end:
+
+事实上还真有些图形库不使用 =CubeMap= 作为阴影贴图, 比如 =three.js= 就是使用 =2D= 贴图作为阴影贴图.
+
+它同样进行 6 次渲染, 只不过把每次渲染结果分别按照不同位置储存在同一张 =2D= 贴图里面,
+
+读取的时候根据光照计算出 =UV= 坐标在进行读取. 就像是立方体映射的张开图那样.
+
+#+caption: 立方体映射张开
+[[../../../files/cubemap-unfold.jpg]]
+
+但 =three.js= 没有采用这套布局, 该布局需要 $4 \times 3$ 个 $2 \times 2$ 规格的方块储存 6 张贴图的内容,
+
+每个方块的纹理范围是 $[-1, 1]^2$ 的范围, 整个贴图的有效利用率只有 $\frac{1}{2}$.
+
+为了节省空间, 从 =three.js= 的 =shader= 函数 [[https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderChunk/shadowmap_pars_fragment.glsl.js#L224][cubeToUV (r179)]] 的描述中可以发现它的布局是这样的,
+
+#+caption: three.js 阴影贴图的布局
+[[../../../files/cubemap-unfold-in-threejs.jpg]]
+
+以 $-Z$ 作为中心, 只需要用到 $4 \times 2$ 个 $2 \times 2$ 规格的方块, 还能把有效利用率提高到 $\frac{3}{4}$.
+
+原本实现比较复杂, 其整体思路如下:
+
+#+BEGIN_SRC glsl
+  vec3 lightDir;
+  vec3 absLightDir = abs(lightDir);
+  float mainAxis = max(absLightDir.x, max(absLightDir.y, absLightDir.z));
+
+  vec2 uv;
+
+  if (absLightDir.x >= mainAxis) {
+    if (lightDir.x > 0.0) {
+      // +X 面
+      uv = cube2uv(vec2(-lightDir.z, -lightDir.y));
+    } else {
+      // -X 面
+      uv = cube2uv(vec2(lightDir.z, -lightDir.y));
+    }
+   } else if (absLightDir.y >= maxComponent) {
+    if (lightDir.y > 0.0) {
+      // +Y 面
+      uv = cube2uv(vec2(lightDir.y, lightDir.z));
+    } else {
+      // -Y 面
+      uv = cube2uv(vec2(lightDir.y, -lightDir.z));
+    }
+   } else if (absLightDir.z >= maxComponent) {
+    if (lightDir.z > 0.0) {
+      // +Z 面
+      uv = cube2uv(vec2(lightDir.x, -lightDir.y));
+    } else {
+      // -Z 面
+      uv = cube2uv(vec2(-lightDir.x, -lightDir.y));
+    }
+   }
+#+END_SRC
+
+#+begin_quote
+官方给出不使用 =CubeMap= 理由在这个 =2017= 年的 [[https://github.com/mrdoob/three.js/issues/11189][PR]] 中可以找到.
+#+end_quote
 
 ** 附录
 

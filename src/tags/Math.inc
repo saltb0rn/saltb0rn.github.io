@@ -1,4 +1,3 @@
-- [[file:../posts/2019/12/linear-algebra-notes.org][线性代数读书随笔 (部分内容需要严格验证)]]
 - [[file:../posts/2021/03/remainder-vs-modulo.org][取余和取模的区别]]
 - [[file:../posts/2021/11/cake-cut.org][切饼问题]]
 - [[file:../posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.org][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]

@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-09-07 Sun 19:56 -->
+<!-- 2025-09-24 Wed 11:38 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>图形学 - OpenGL坐标变换</title>
@@ -233,40 +233,40 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org5ff8d32">1. 几个该清楚的概念</a>
+<li><a href="#orge8e12ae">1. 几个该清楚的概念</a>
 <ul>
-<li><a href="#org1b43084">1.1. 齐次空间</a></li>
-<li><a href="#orge399211">1.2. 平面方程</a></li>
+<li><a href="#org633c1b9">1.1. 齐次空间</a></li>
+<li><a href="#plane-equation">1.2. 平面方程</a></li>
 </ul>
 </li>
-<li><a href="#orgfeca42c">2. OpenGL 中对象的变换历程</a>
+<li><a href="#org305dfda">2. OpenGL 中对象的变换历程</a>
 <ul>
-<li><a href="#org25f8276">2.1. 对象坐标系</a></li>
-<li><a href="#orge1f0d10">2.2. 世界坐标系</a></li>
-<li><a href="#org226d050">2.3. 从对象坐标系到世界坐标系的变换</a></li>
-<li><a href="#org3ba11e9">2.4. 视点坐标系</a></li>
+<li><a href="#org4e4e091">2.1. 对象坐标系</a></li>
+<li><a href="#org05be2e1">2.2. 世界坐标系</a></li>
+<li><a href="#org847f997">2.3. 从对象坐标系到世界坐标系的变换</a></li>
+<li><a href="#org1d4863d">2.4. 视点坐标系</a></li>
 <li><a href="#from-world-to-view">2.5. 从世界坐标系到视点坐标系的变换</a>
 <ul>
-<li><a href="#org4f38a54">2.5.1. 法线向量变换</a></li>
-<li><a href="#orgef327f8">2.5.2. 法线贴图 (Normal Texture)</a></li>
+<li><a href="#org5be4b95">2.5.1. 法线向量变换</a></li>
+<li><a href="#normal-texture">2.5.2. 法线贴图 (Normal Texture)</a></li>
 </ul>
 </li>
-<li><a href="#org6e8a648">2.6. 3D转化成2D图像</a>
+<li><a href="#org8645ec2">2.6. 3D转化成2D图像</a>
 <ul>
-<li><a href="#org3a90f2a">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
-<li><a href="#org182b395">2.6.2. 透视投影</a></li>
+<li><a href="#orgf930277">2.6.1. 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</a></li>
+<li><a href="#org8b1b7f9">2.6.2. 透视投影</a></li>
 <li><a href="#depth-buffer">2.6.3. 透视投影 - Depth Buffer</a></li>
-<li><a href="#org355e566">2.6.4. 透视投影 - FOV (Field of View)</a></li>
+<li><a href="#orga2d4e11">2.6.4. 透视投影 - FOV (Field of View)</a></li>
 <li><a href="#orthographic-projection">2.6.5. 正交投影</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org075c383">3. 接下来</a></li>
+<li><a href="#org686dce3">3. 接下来</a></li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgef602c8">
+<div class="abstract" id="org81d3e2f">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -288,19 +288,19 @@
 </p>
 
 </div>
-<div id="outline-container-org5ff8d32" class="outline-2">
-<h2 id="org5ff8d32"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
+<div id="outline-container-orge8e12ae" class="outline-2">
+<h2 id="orge8e12ae"><span class="section-number-2">1.</span> 几个该清楚的概念</h2>
 <div class="outline-text-2" id="text-1">
 </div>
-<div id="outline-container-org1b43084" class="outline-3">
-<h3 id="org1b43084"><span class="section-number-3">1.1.</span> 齐次空间</h3>
+<div id="outline-container-org633c1b9" class="outline-3">
+<h3 id="org633c1b9"><span class="section-number-3">1.1.</span> 齐次空间</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 </p>
 
 
-<div id="org9260697" class="figure">
+<div id="org1838d0f" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -391,9 +391,9 @@
 </ol>
 </div>
 </div>
-<div id="outline-container-orge399211" class="outline-3">
-<h3 id="orge399211"><span class="section-number-3">1.2.</span> 平面方程</h3>
-<div class="outline-text-3" id="text-1-2">
+<div id="outline-container-plane-equation" class="outline-3">
+<h3 id="plane-equation"><span class="section-number-3">1.2.</span> 平面方程</h3>
+<div class="outline-text-3" id="text-plane-equation">
 <p>
 这里先约定一下: 从原点出发到 \(p\) 的向量会采用 \(\vec{p}\) 这种方式表示, \(p\) 就单纯表示点,如果是从 \(p_{1}\) 出发到 \(p_{2}\) 的向量就用 \(\vec{p_{1}p_{2}} = p_{2} - p_{1}\) 表示.
 </p>
@@ -411,7 +411,7 @@
 </p>
 
 
-<div id="org2741767" class="figure">
+<div id="org266cfd9" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png" />
 </p>
 </div>
@@ -506,11 +506,11 @@
 </div>
 </div>
 </div>
-<div id="outline-container-orgfeca42c" class="outline-2">
-<h2 id="orgfeca42c"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
+<div id="outline-container-org305dfda" class="outline-2">
+<h2 id="org305dfda"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-2">
 
-<div id="orgaa8fb0b" class="figure">
+<div id="org249678c" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png" width="700px" />
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -536,8 +536,8 @@
 如果这些都不理解的话,很容易会因为用错坐标系得到错误的计算结果,比如在以后的光照计算中.
 </p>
 </div>
-<div id="outline-container-org25f8276" class="outline-3">
-<h3 id="org25f8276"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
+<div id="outline-container-org4e4e091" class="outline-3">
+<h3 id="org4e4e091"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
@@ -570,8 +570,8 @@
 </p>
 </div>
 </div>
-<div id="outline-container-orge1f0d10" class="outline-3">
-<h3 id="orge1f0d10"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
+<div id="outline-container-org05be2e1" class="outline-3">
+<h3 id="org05be2e1"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 在 <code>OpenGL</code> 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
@@ -600,8 +600,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org226d050" class="outline-3">
-<h3 id="org226d050"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
+<div id="outline-container-org847f997" class="outline-3">
+<h3 id="org847f997"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 上面中, \(A\) 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, \(B\) 过程是对象经历了从对象坐标系到世界坐标系的变换,
@@ -646,8 +646,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 </div>
 </div>
-<div id="outline-container-org3ba11e9" class="outline-3">
-<h3 id="org3ba11e9"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
+<div id="outline-container-org1d4863d" class="outline-3">
+<h3 id="org1d4863d"><span class="section-number-3">2.4.</span> 视点坐标系</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 <code>OpenGL</code> 中也有类似的存在,叫做 <code>viewer</code>,它有自己的坐标系用来描述它的位置以及看的方向,这个坐标系叫做视点坐标系(eye coordinate system).
@@ -700,21 +700,21 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org237d084" class="figure">
+<div id="orgdb57788" class="figure">
 <p><img src="../../../files/camera-opposite-to-object.png" alt="camera-opposite-to-object.png" width="504px" />
 </p>
 <p><span class="figure-number">Figure 3: </span>物体平移上在视觉上的相反: 当相机往原点平移时, 物体在视觉上也是往原点平移, 双方平移的方向相反.</p>
 </div>
 
 
-<div id="org9b66ca4" class="figure">
+<div id="org71d849b" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif" />
 </p>
 <p><span class="figure-number">Figure 4: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(x\) 轴往逆时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(x\) 轴往顺时针方向旋转.</p>
 </div>
 
 
-<div id="org256a3fd" class="figure">
+<div id="orge9da9ac" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif" />
 </p>
 <p><span class="figure-number">Figure 5: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(y\) 轴往顺时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(y\) 轴往逆时针方向旋转.</p>
@@ -771,11 +771,19 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-<b>虽然视点坐标系是左手坐标系, 但由于 \(lookAt\) 的参数都是世界坐标系的坐标, 因此, 在构建视点坐标系的全程都得使用右手坐标系, 直到最后才变换成左手坐标系.</b>
+<b>虽然视点坐标系是左手坐标系, 但由于 \(lookAt\) 的参数都是世界坐标系的坐标,</b>
 </p>
 
 <p>
-首先, 算出相机的"视线"方向: \(forward = center - eye \rightarrow \hat{f}_{\text{right-hand}} = \frac{forward}{|forward|}\),
+<b>因此, 在构建视点坐标系的全程都得使用右手坐标系, 直到在形状上变成左手坐标系后才变换成左手坐标系.</b>
+</p>
+
+<p>
+首先, 算出相机的"视线"方向:
+</p>
+
+<p>
+\(forward = center - eye \rightarrow \hat{f}_{\text{right-hand}} = \frac{forward}{|forward|}\),
 </p>
 
 <p>
@@ -783,7 +791,11 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-然后, 用 \(\hat{f}_{\text{right-hand}}\) 或者 \(forward\) 与向量 \(up\) 进行叉积, 求出同时垂直于它们的向量 \(right = \hat{f}_{\text{right-hand}} \times up \rightarrow \hat{r}_{\text{right-hand}}\),
+然后, 用 \(\hat{f}_{\text{right-hand}}\) 或者 \(forward\) 与向量 \(up\) 进行叉积, 求出同时垂直于它们的向量:
+</p>
+
+<p>
+\(right = \hat{f}_{\text{right-hand}} \times up \rightarrow \hat{r}_{\text{right-hand}}\),
 </p>
 
 <p>
@@ -791,11 +803,15 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-最后, \(up\) 并不是一定和 \(\hat{f}_{\text{right-hand}}\) 正交的, 所以要构建出一个同时垂直于 \(\hat{f}_{\text{right-hand}}\) 和 \(\hat{r}_{\text{right-hand}}\) 的向量 \(\hat{u}_{\text{right-hand}}\),
+最后, \(up\) 并不一定与 \(\hat{f}_{\text{right-hand}}\) 正交, 所以它并不能作为左手坐标系的 \(y\) 轴,
 </p>
 
 <p>
-并且 \(\hat{u}_{\text{right-hand}}\) 要对齐左手坐标系的 \(y\) 轴, 所以根据几何关系, \(\hat{u}_{\text{right-hand}} = \hat{r}_{\text{right-hand}} \times \hat{f}_{\text{right-hand}}\),
+要构建出一个同时垂直于 \(\hat{f}_{\text{right-hand}}\) 和 \(\hat{r}_{\text{right-hand}}\) 的向量 \(\hat{u}_{\text{right-hand}}\) 作为 \(y\) 轴, 根据几何关系可得:
+</p>
+
+<p>
+\(\hat{u}_{\text{right-hand}} = \hat{r}_{\text{right-hand}} \times \hat{f}_{\text{right-hand}}\),
 </p>
 
 <p>
@@ -848,8 +864,8 @@ B. 把对象放到场景(scene)/世界(world)中.
 最后会得到一个新的坐标点 \(p_{e} = M_{view}p_{m} = \left(x_{e}, y_{e}, z_{e}\right)\).
 </p>
 </div>
-<div id="outline-container-org4f38a54" class="outline-4">
-<h4 id="org4f38a54"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
+<div id="outline-container-org5be4b95" class="outline-4">
+<h4 id="org5be4b95"><span class="section-number-4">2.5.1.</span> 法线向量变换</h4>
 <div class="outline-text-4" id="text-2-5-1">
 <p>
 别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,但是模拟现实光线的运算量是十分大的,目前的硬件条件下只能对现实光线进行简化或者另外一种取代方案,这个方案用到法线向量.
@@ -876,7 +892,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org5d85ae0" class="figure">
+<div id="orge554917" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png" />
 </p>
 </div>
@@ -890,7 +906,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org3d69f90" class="figure">
+<div id="orgcc32e3e" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png" />
 </p>
 </div>
@@ -924,7 +940,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org94b859f" class="figure">
+<div id="org9e93e37" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png" />
 </p>
 </div>
@@ -1032,9 +1048,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orgef327f8" class="outline-4">
-<h4 id="orgef327f8"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
-<div class="outline-text-4" id="text-2-5-2">
+<div id="outline-container-normal-texture" class="outline-4">
+<h4 id="normal-texture"><span class="section-number-4">2.5.2.</span> 法线贴图 (Normal Texture)</h4>
+<div class="outline-text-4" id="text-normal-texture">
 <blockquote>
 <p>
 在了解发现贴图之前需要先了解什么是贴图(textures), 什么是贴图坐标/纹理坐标(texture coordiantes), <code>OpenGL</code> 是如何根据贴图坐标把贴图贴在平面上的.
@@ -1140,7 +1156,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgd02aaae" class="figure">
+<div id="org7416fd8" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
@@ -1213,7 +1229,7 @@ N = n_{plane} &= (x_{N}, y_{N}, z_{N}) \\
 </p>
 
 
-<div id="org5c281b1" class="figure">
+<div id="org38f4430" class="figure">
 <p><img src="../../../files/normal_mapping_tbn_vectors.png" alt="normal_mapping_tbn_vectors.png" />
 </p>
 <p><span class="figure-number">Figure 7: </span>TBN 坐标系</p>
@@ -1325,8 +1341,8 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </div>
 </div>
 </div>
-<div id="outline-container-org6e8a648" class="outline-3">
-<h3 id="org6e8a648"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
+<div id="outline-container-org8645ec2" class="outline-3">
+<h3 id="org8645ec2"><span class="section-number-3">2.6.</span> 3D转化成2D图像</h3>
 <div class="outline-text-3" id="text-2-6">
 <p>
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上成为一张 2D 图片.
@@ -1337,19 +1353,57 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-<b>第一步</b> 选择相机看到的内容,因为相机是不能看到完整场景的(不可能看到无限远),所以要先求出相机看到空间范围,因此需要求出哪些顶点是在视野范围内的,
+<b>第一步</b> 选择相机看到的内容, 因为相机是不能看到完整场景的(不可能看到无限远),
 </p>
 
 <p>
-之前几个阶段用到的顶点的坐标都是 \(\left(x, y, z, w\right)\), \(w=1\) 的这种形式,确定顶点是否在视野内的是由根据 \(w\) 的值来决定的,
+所以要先求出相机看到空间范围, 因此需要求出哪些顶点是在视野范围内的,
 </p>
 
 <p>
-所以现在不能单纯地把 \(w\) 设定为 1,这需要经过计算,最后得到的坐标叫做裁剪坐标(clip coordinates, 也可以叫投影坐标): \(\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)\).
+顶点的视点坐标的每个分量都是有范围的, 比如 \((x_e \in [l, r], y_e \in [t, b], z_e \in [n, f])\), 范围外的顶点就会被丢弃.
 </p>
 
 <p>
 这个过程叫做视截体剔除(frustum culling)/裁剪(clipping),最后会看到的空间形状形成一个几何体(下面会有图片),
+</p>
+
+<p>
+但由于各种变换的缘故, 没有办法写三个条件语句来判断顶点是否在范围内, 所以裁剪也是需要变换的.
+</p>
+
+<blockquote>
+<p>
+如果不理解这句话是什么意思, 可以看一下这个例子:
+</p>
+
+<p>
+有一个平面坐标系, 坐标系未经过任意变换时, 想让坐标 \((x, y)\) 往右移动 1 个单位就是 \((x + 1, y)\),
+</p>
+
+<p>
+坐标系往逆时针方向旋转 \(45^{c}\) 之后, 想让坐标往右移动一个单位就是 \((x + \frac{\sqrt{2}}{2}, y + \frac{\sqrt{2}}{2})\).
+</p>
+
+<p>
+你应该能看到同样是移动一个单位, 但是分量的变化发生了改变, 如果分量有范围, 那么范围也要遵守一样的变化,
+</p>
+
+<p>
+因此, 想只靠三个条件语句做裁剪那是不太可能的.
+</p>
+</blockquote>
+
+<p>
+之前几个阶段用到的顶点的坐标都是 \(\left(x, y, z, w\right)\), \(w=1\) 的这种形式, 确定顶点是否在视野内的是由根据 \(w\) 的值来决定的,
+</p>
+
+<p>
+所以现在不能单纯地把 \(w\) 设定为 1,这需要经过计算,最后得到的坐标叫做裁剪坐标(clip coordinates, 也可以叫投影坐标):
+</p>
+
+<p>
+\(\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)\)
 </p>
 
 <p>
@@ -1376,15 +1430,23 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-只需要进行透视除法(<code>perspective divide</code>)就可以把 \(\left(x_{projection}, y_{projection}, z_{projection}, w_{projection}\right)\) 转换 <code>NDC</code> 坐标: \(\left(x_{ndc}, y_{ndc}, z_{ndc}\right) = \left(\frac{x_{projection}}{w_{projection}}, \frac{y_{projection}}{w_{projection}}, \frac{z_{projection}}{w_{projection}}\right)\).
+只需要进行透视除法(<code>perspective divide</code>)就可以把 \(\left(x_{projection}, y_{projection}, z_{projection}, w_{projection}\right)\) 转换 <code>NDC</code> 坐标:
 </p>
 
 <p>
-所以,不满足这个条件 \(-w_{projection} \leq x_{projection}, y_{projection}, z_{projection} \leq w_{projection}\) 的顶点都会被丢弃,因为 \(-1 \leq x_{ndc}, y_{ndc}, z_{ndc} \leq 1\).
+\(\left(x_{ndc}, y_{ndc}, z_{ndc}\right) = \left(\frac{x_{projection}}{w_{projection}}, \frac{y_{projection}}{w_{projection}}, \frac{z_{projection}}{w_{projection}}\right)\)
 </p>
 
 <p>
-这个过程叫做 <code>NDC</code> 变换(NDC transformation).相信你已经发现 <code>NDC</code> 的每个分量其实就是一个比例,什么之间比例呢?这就涉及到 <code>NDC</code> 的作用了,它是用来适配视口(viewport)的,
+不满足这个条件 \(-w_{projection} \leq x_{projection}, y_{projection}, z_{projection} \leq w_{projection}\) 的顶点都会被丢弃, 因为 \(-1 \leq x_{ndc}, y_{ndc}, z_{ndc} \leq 1\).
+</p>
+
+<p>
+这个过程叫做 <code>NDC</code> 变换(NDC transformation).相信你已经发现 <code>NDC</code> 的每个分量其实就是一个比例,什么之间比例呢?
+</p>
+
+<p>
+这就涉及到 <code>NDC</code> 的作用了,它是用来适配视口(viewport)的,
 </p>
 
 <p>
@@ -1393,7 +1455,11 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 
 
 <p>
-<b>第三步</b>,就是把裁剪空间里面的内容适配到视口上,这一步叫视口变换(viewport transformation), <code>NDC</code> 是一个比例集合,通过这个比例集合可以计算出一个顶点输出到视口上的位置,
+<b>第三步</b>,就是把裁剪空间里面的内容适配到视口上,这一步叫视口变换(viewport transformation), <code>NDC</code> 是一个比例集合,
+</p>
+
+<p>
+通过这个比例集合可以计算出一个顶点输出到视口上的位置,
 </p>
 
 <p>
@@ -1432,50 +1498,80 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 <b>到了这一步,其实整个 <code>Primitive Assembly</code> 环节就完成了</b>.
 </p>
 </div>
-<div id="outline-container-org3a90f2a" class="outline-4">
-<h4 id="org3a90f2a"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
+<div id="outline-container-orgf930277" class="outline-4">
+<h4 id="orgf930277"><span class="section-number-4">2.6.1.</span> 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.</h4>
 <div class="outline-text-4" id="text-2-6-1">
 <p>
 先看一下如何选择相机看到的内容,有两种选择方案,如下,
 </p>
 
 
-<div id="orgd8000d4" class="figure">
+<div id="orgc776d85" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png" />
 </p>
 <p><span class="figure-number">Figure 8: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="org57af1a5" class="figure">
+<div id="orgad71e07" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>正交投影(正交相机看到的内容)</p>
 </div>
 
 <p>
-图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum),第二个是长方体.
+图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,
 </p>
 
 <p>
-构造这两个多边体都只需要 6 个参数, 分别是 \(l(eft)\), \(r(ight)\), \(b(ottom)\), \(t(op)\), \(n(ear)\) 以及 \(f(ar)\),为了区分方向, 我们采用正负号来表示, 并让这 6 个参数要满足这样的关系 \(\begin{equation*} \left\{ \begin{aligned} l < r \\ b < t \\ n < f\end{aligned} \right. \end{equation*}\).
+这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum), 第二个是长方体.
 </p>
 
 <p>
-可以看到每个多边体都有两个比较深色的平面,离相机近叫做近裁剪平面(near plane / near clipping plane),远的叫做远裁剪平面(far plane / far clipping plane).
+构造这两个多边体都只需要 6 个参数, 分别是 \(l(eft)\), \(r(ight)\), \(b(ottom)\), \(t(op)\), \(n(ear)\) 以及 \(f(ar)\),
 </p>
 
 <p>
-(你可能会问为什么看到的内容不是从相机位置到远处,而是要截头呢?截掉尾部很好理解,那是因为人不可能看到无限远,而从相机位置,也就是 \(z = 0\) 会影响齐次坐标到 <code>NDC</code> 的计算,看过整个推导后可以回过来重新思考一下.)
+并让这 6 个参数要满足这样的关系 \(\begin{equation*} \left\{ \begin{aligned} & l < r \\ & b < t \\ & 0 < n < f\end{aligned} \right. \end{equation*}\), 这里只让 \(n\) 和 \(f\) 大于 0 是因为相机看的方向是 \(-Z\).
 </p>
 
 <p>
-这两种选择方案分别叫做: 透视投影(perspective projection)以及正交投影(orthographic projection). <b>在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上,所以近裁剪平面也叫投影平面(projection plane)</b>.
+(PS: 有些文章会让 \(n\) 和 \(f\) 小于 0, 无论哪种定义, 只要推导过程对了结果就是对的)
 </p>
+
+<p>
+可以看到每个多边体都有两个比较深色的平面,
+</p>
+
+<p>
+离相机近叫做近裁剪平面(near plane / near clipping plane),
+</p>
+
+<p>
+远的叫做远裁剪平面(far plane / far clipping plane).
+</p>
+
+<p>
+这两种选择方案分别叫做: 透视投影(perspective projection)以及正交投影(orthographic projection).
+</p>
+
+<p>
+<b>在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上, 所以近裁剪平面也叫投影平面(projection plane)</b>.
+</p>
+
+<blockquote>
+<p>
+你可能会问为什么看到的内容不是从相机位置到远处, 而是要从截头开始呢?
+</p>
+
+<p>
+在学习透视投影的后就会明白 \(n = 0\) 会如何影响计算结果.
+</p>
+</blockquote>
 </div>
 </div>
-<div id="outline-container-org182b395" class="outline-4">
-<h4 id="org182b395"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
+<div id="outline-container-org8b1b7f9" class="outline-4">
+<h4 id="org8b1b7f9"><span class="section-number-4">2.6.2.</span> 透视投影</h4>
 <div class="outline-text-4" id="text-2-6-2">
 <p>
 这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
@@ -1495,14 +1591,15 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </ol>
 
 
-<div id="org41d8682" class="figure">
-<p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png" />
+
+<div id="orga0c18d6" class="figure">
+<p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png" width="600px" />
 </p>
 <p><span class="figure-number">Figure 10: </span>透视投影2</p>
 </div>
 
 <p>
-这里第一个就是透视的截头锥体,第二个是标准化设备坐标系.
+这里第一个就是透视的截头锥体, 第二个是标准化设备坐标系, 两者的 \(Z\) 轴方向是相反的.
 </p>
 
 <p>
@@ -1510,7 +1607,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-近和远裁剪平面到相机的距离 \(-n\) 和 \(-f\),
+由于相机看向的是 \(-Z\) 方向, 所以近和远裁剪平面到相机的距离 \(-n\) 和 \(-f\),
 </p>
 
 <p>
@@ -1534,7 +1631,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org1ce64f8" class="figure">
+<div id="org7e2138a" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png" />
 </p>
 </div>
@@ -1568,7 +1665,11 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-还不能这么断言, 仍然需要找到 \(p_{p}\) 到 \(p_{n}\) 之间映射关系来进行验证,也就是找出 \(x_{p}\), \(y_{p}\) 和 \(z_{p}\) 分别到 \(x_{n}\), \(y_{n}\) 和 \(z_{n}\) 的关系: \(\begin{equation*} \left\{ \begin{aligned} x_{p} \in \left[l, r\right] \longrightarrow x_{n} \in \left[-1, 1\right] \\ y_{p} \in \left[t, b\right] \longrightarrow y_{n} \in \left[-1, 1\right] \end{aligned} \right. \end{equation*}\).
+还不能这么断言, 仍然需要找到 \(p_{p}\) 到 \(p_{n}\) 之间映射关系来进行验证, 也就是找出 \(x_{p}\), \(y_{p}\) 和 \(z_{p}\) 分别到 \(x_{n}\), \(y_{n}\) 和 \(z_{n}\) 的关系:
+</p>
+
+<p>
+\(\begin{equation*} \left\{ \begin{aligned} x_{p} \in \left[l, r\right] \longrightarrow x_{n} \in \left[-1, 1\right] \\ y_{p} \in \left[t, b\right] \longrightarrow y_{n} \in \left[-1, 1\right] \end{aligned} \right. \end{equation*}\)
 </p>
 
 <p>
@@ -1576,7 +1677,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org99a5a3d" class="figure">
+<div id="org7a8212c" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png" />
 </p>
 <p><span class="figure-number">Figure 11: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
@@ -1603,7 +1704,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org58314cc" class="figure">
+<div id="org2ccb97e" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png" />
 </p>
 <p><span class="figure-number">Figure 12: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
@@ -1638,43 +1739,40 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-再根据 \(\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)\),可以得到 \(z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}\),因为在视点空间上, \(w_{e} = 1\), 所以 \(z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}\).
+再根据 \(\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)\), 可以得到 \(z_{n} = \frac{z_{p}}{w_{p}} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}\), 因为在视点空间上, \(w_{e} = 1\), 所以 \(z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}\).
 </p>
 
 <p>
-还是根据变换到 <code>NDC</code> 的过程: \(\left[-n,-f\right] \longrightarrow \left[-1, 1\right]\),把 \(\left(-n, -1\right)\) 以及 \(\left(-f, 1\right)\) 代入到上面的等式中, \(\begin{equation*}\left\{\begin{aligned} -1 = \frac{-z_{f} \cdot n + z}{n} \\ 1 = \frac{-z_{f} \cdot f + z}{f} \end{aligned} \right. \longrightarrow \left\{\begin{aligned} -n = -z_{f} \cdot n + z \\ f = -z_{f} \cdot f + z \end{aligned} \right. \end{equation*}\).
+还是根据变换到 <code>NDC</code> 的过程: \(\left[-n,-f\right] \longrightarrow \left[-1, 1\right]\),把 \(\left(-n, -1\right)\) 以及 \(\left(-f, 1\right)\) 代入到上面的等式中, 得到:
 </p>
 
 <p>
-把其中一个等式改写成以 \(z\) 作为因变量的等式,这里采用第一个: \(z = z_{f} \cdot n - n\),再把这个等式代入另外一个等式中,得到
+\(\begin{equation*}\left\{\begin{aligned} -1 = \frac{-z_{f} \cdot n + z}{n} \\ 1 = \frac{-z_{f} \cdot f + z}{f} \end{aligned} \right. \longrightarrow \left\{\begin{aligned} -n = -z_{f} \cdot n + z \\ f = -z_{f} \cdot f + z \end{aligned} \right. \end{equation*}\)
 </p>
 
 <p>
-\(f = -z_{f} \cdot f + z_{f} \cdot n - n \longrightarrow f + n = -\left(f - n\right)z_{f} \longrightarrow z_{f} = -\frac{f+n}{f-n}\), 这样就得到 \(z_{f}\) 了,把 \(z_{f}\) 再代入回第一个等式中,得到 \(\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot n = -\frac{2fn}{f-n}\),
+把其中一个等式改写成以 \(z\) 作为因变量的等式, 这里采用第一个: \(z = z_{f} \cdot n - n\),
 </p>
 
 <p>
-根据结果 \(\begin{equation*} \left\{ \begin{aligned} z_{f} = -\frac{f+n}{f-n} \\ z = -\frac{2fn}{f-n} \end{aligned} \right. \end{equation*}\),可以得出 \(z_{n} = \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}}\),以及得出透视投影矩阵 \(M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & -\frac{f+n}{f-n} & -\frac{2fn}{f-n} \\ 0 & 0 & -1 & 0 \end{array}\right)\).
+再把这个等式代入另外一个等式中, 得到:
 </p>
 
 <p>
-<b>再观察 \(z_{n}\) 以及 \(z_{e}\) 的关系可以发现它们根本就不成线性关系,且成反比关系</b>, \(z_{e}\) 越大, \(z_{n}\) 越小,并且 \(z_{n}\) 的变化也会变小,这意味着在裁剪近平面附近的顶点的精准度会很高,在裁剪远平面附近的顶点精准度会很低.
+\(f = -z_{f} \cdot f + z_{f} \cdot n - n \longrightarrow f + n = -\left(f - n\right)z_{f} \longrightarrow z_{f} = -\frac{f+n}{f-n}\)
 </p>
 
 <p>
-也就是说, <b>如果 \(\left[-n, -f\right]\) 的范围越大,裁剪远平面附近顶点的 \(z_{e}\) 的一个细微的改变越不会对该顶点转化成 <code>NDC</code> 后的 \(z_{n}\) 造成影响,假设在裁剪远平面附近有位置十分接近(只是 \(z_{e}\) 相差一点点)的两个顶点,这两个顶点在转化成 <code>NDC</code> 后极可能会重合在一起,这就是深度精确问题/z冲突(depth precision problem/depth buffer precision problem/z-fighting)</b>,
+把 \(z_{f}\) 再代入回第一个等式中, 得到:
 </p>
 
 <p>
-这个时候需要减少 \(n\) 和 \(f\) 之间的距离来最小化这个问题.
+\(\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot n = -\frac{2fn}{f-n}\), 所以 \(z_{n} = \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}}\),
 </p>
 
-
-<div id="org52c08d2" class="figure">
-<p><img src="../../../files/gl_projectionmatrix07.png" alt="gl_projectionmatrix07.png" width="504px" />
+<p>
+最后透视投影矩阵 \(M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & -\frac{f+n}{f-n} & -\frac{2fn}{f-n} \\ 0 & 0 & -1 & 0 \end{array}\right)\).
 </p>
-<p><span class="figure-number">Figure 13: </span>比较不同深度下的精确度</p>
-</div>
 </div>
 </div>
 <div id="outline-container-depth-buffer" class="outline-4">
@@ -1843,7 +1941,11 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 
 
 <p>
-有些效果需要使用线性深度(<code>linear depth</code>), 比如物体阴影(shadow map), 雾效(fog), 就是把世界坐标的 \(z_{m}\) 分量从 \([n, f]\) 重映射到 \([0, 1]\), 步骤如下:
+有些效果需要使用线性深度(<code>linear depth</code>), 比如物体阴影(shadow map), 雾效(fog),
+</p>
+
+<p>
+就是把世界坐标的 \(z_{m}\) 分量从 \([n, f]\) 重映射到 \([0, 1]\), 步骤如下:
 </p>
 
 <ol class="org-ol">
@@ -1858,8 +1960,8 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 </div>
 </div>
-<div id="outline-container-org355e566" class="outline-4">
-<h4 id="org355e566"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
+<div id="outline-container-orga2d4e11" class="outline-4">
+<h4 id="orga2d4e11"><span class="section-number-4">2.6.4.</span> 透视投影 - FOV (Field of View)</h4>
 <div class="outline-text-4" id="text-2-6-4">
 <p>
 很多图形库的设定投影相机的函数需要视场角(fov), 裁剪平面的宽高比(aspect)以及近裁剪平面(n)以及远裁剪平面(f)作为输入参数.
@@ -1870,11 +1972,25 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-\(fov\) 是相机看到的视野范围的角度,从上面的图片 <b>透视投影</b> 可以看出射线会形成一个角度,那个角度就是 \(fov\),再观察 <b>frustum的俯视图</b> 以及 <b>frustum 的侧视图</b> 可以知道有两个 \(fov\),分别是水平方向的 <b>fov</b> 以及垂直反向的 <b>fov</b>.
+\(fov\) 是相机看到的视野范围的角度,从上面的图片 <b>透视投影</b> 可以看出视线会形成一个角度,那个角度就是 \(fov\),
 </p>
 
 <p>
-以 <code>three.js</code> 为例子,它就是使用的水平方向 \(fov\),假设现在水平方向 \(fov\) 是 \(\theta\),需要根据 \(fov\) 计算出6参数,其中 \(n\) 和 \(f\) 都知道了,可以直接根据 \(n\) 和 \(\theta\) 计算出 \(l\) 和 \(r\).
+再观察 <b>frustum的俯视图</b> 以及 <b>frustum 的侧视图</b> 可以知道有两个 \(fov\),分别是水平方向的 <b>fov</b> 以及垂直方向的 <b>fov</b>.
+</p>
+
+
+<div id="org3a00e90" class="figure">
+<p><img src="../../../files/gl_projectiomat-fov.png" alt="gl_projectiomat-fov.png" />
+</p>
+</div>
+
+<p>
+以 <code>three.js</code> 为例子, 它就是使用的水平方向 \(fov\), 假设现在水平方向 \(fov\) 是 \(\theta\),
+</p>
+
+<p>
+需要根据 \(fov\) 计算出6参数,其中 \(n\) 和 \(f\) 都知道了,可以直接根据 \(n\) 和 \(\theta\) 计算出 \(l\) 和 \(r\).
 </p>
 
 <p>
@@ -1882,11 +1998,23 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-\(r-l\) 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 \(t-b = \frac{r-l}{aspect}\),最后以宽和高各自的中心点划分,也就是 \(\begin{equation*}\left\{\begin{aligned}|r| = |l| = \frac{r-l}{2} \\ |t| = |b| = \frac{t-b}{2}\end{aligned} \right.\end{equation*}\),
+\(r-l\) 就是近裁剪平面的宽,根据裁剪平面的宽高比 \(aspect\) 可以得出高 \(t-b = \frac{r-l}{aspect}\),
 </p>
 
 <p>
-这样就可以得出 \(l(eft)\), \(r(ight)\), \(t(op)\) 以及 \(b(ottom)\) 4个参数了(需要保证满足关系 \(\begin{equation*}\left\{\begin{aligned}r > l \\ t > b\end{aligned}\right.\end{equation*}\)),加上一开始给出的 \(n(ear)\) 和 \(f(ar)\) 就凑齐了6个参数来构建截头锥体.
+最后以宽和高各自的中心点划分, 也就是 \(\begin{equation*}\left\{\begin{aligned}|r| = |l| = \frac{r-l}{2} \\ |t| = |b| = \frac{t-b}{2}\end{aligned} \right.\end{equation*}\),
+</p>
+
+<p>
+这样就可以得出 \(l(eft)\), \(r(ight)\), \(t(op)\) 以及 \(b(ottom)\) 4个参数了,
+</p>
+
+<p>
+(需要保证满足关系 \(\begin{equation*}\left\{\begin{aligned}r > l \\ t > b\end{aligned}\right.\end{equation*}\)),
+</p>
+
+<p>
+加上一开始给出的 \(n(ear)\) 和 \(f(ar)\) 就凑齐了6个参数来构建截头锥体.
 </p>
 
 <p>
@@ -1952,42 +2080,54 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 <h4 id="orthographic-projection"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
 <div class="outline-text-4" id="text-orthographic-projection">
 
-<div id="org3467eb5" class="figure">
-<p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png" />
+<div id="orgc196e0b" class="figure">
+<p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 14: </span>正交投影2</p>
+<p><span class="figure-number">Figure 13: </span>正交投影2</p>
 </div>
 
 <p>
-正交投影比透视投影要简单的多,这种投影不符合人的视觉,两条平行不会在远处慢慢靠近最后相交.
+正交投影比透视投影要简单的多, 这种投影不符合人的视觉, 两条平行不会在远处慢慢靠近最后相交,
 </p>
 
 <p>
-看到的视体就是一个由6参数计算得到的长方体,所以裁剪判断很简单,只要点的坐标: \(\left(x, y, z, w\right)\) 满足这个关系 \(\begin{equation*}\left\{\begin{aligned} l < x < r \\ b < y < t \\ n < z < f \end{aligned}\right.\end{equation*}\) 就不会被裁剪,
+视体就是一个由6参数计算得到的长方体, 视点坐标到投影坐标的变换就是一组简单的线性关系:
 </p>
 
 <p>
-所以不再需要特别去计算 \(w\) 的值了,它已经不重要了,考虑到还有 <code>NDC</code> 变换这个过程,直接让 \(w = 1\) 就可以了.
+\(\begin{equation*} \left\{ \begin{aligned} x_{p} &= k_x \cdot x_{e} + c_x \\ y_{p} &= k_y \cdot y_{e} + c_y \\ z_{p} &= k_z \cdot z_{e} + c_z \end{aligned} \right. \end{equation*}\)
 </p>
 
 <p>
-从上面的图可以看到 \(x_{p}\), \(y_{p}\) 以及 \(z_{p}\) 到 \(x_{n}\), \(y_{n}\) 以及 \(z_{n}\) 分别就是单纯的线性关系,所以分别计算出 \(\begin{equation*} \left\{ \begin{aligned} x_{n} &= k \cdot x_{p} + c \\ y_{n} &= k \cdot y_{p} + c \\ z_{n} &= k \cdot z_{p} + c \end{aligned} \right. \end{equation*}\) 这三条关系就可以得出正交投影的矩阵.
+而且知道长方体的尺寸, \(k_x\), \(k_y\), \(k_z\) 甚至可以完成归一化, 使得 \(-1 \le x_p, y_p, z_p \le 1\), 直接完成视点到 <code>NDC</code> 的转换:
 </p>
 
 <p>
-比如 \(x_{p}\) 与 \(x_{n}\) 的线性关系,参考图片透视投影的 \(x_{p}\) 到 \(x_{n}\) 的关系图,可以得出 \(k = \frac{2}{r-l}\).
+\(\begin{equation*} \left\{ \begin{aligned} x_{n} &= k_x \cdot x_{e} + c_x \\ y_{n} &= k_y \cdot y_{e} + c_y \\ z_{n} &= k_z \cdot z_{e} + c_z \end{aligned} \right. \end{equation*}\)
 </p>
 
 <p>
-然后把 \(\left(r, 1\right)\) (当然 \(\left(l, -1\right)\) 也可以)和 \(k\) 代入回原来式子中,得到 \(1 = \frac{2}{r-l}r + c \longrightarrow c = 1 - \frac{2r}{r-1} = -\frac{r+l}{r-l}\).
+比如参考图片上正交投影中 \(x_{e}\) 到 \(x_{n}\) 的关系图, 我们需要把 \([l, r]\) 映射到 \([-1, 1]\) 中,
 </p>
 
 <p>
-最后把 \(c\) 代入回去得到 \(x_{n} = \frac{2}{r-l} \cdot x_{p} - \frac{r+l}{r-l}\).
+当 \(x_e = l\) 时 \(x_n = -1\), 当 \(x_e = r\) 时, \(x_n = 1\), 所以 \(\begin{cases} 1 = k_x \cdot r + c_x \\ -1 = k_x \cdot l + c_x \end{cases}\),
 </p>
 
 <p>
-其它同理,最终关系为 \(\begin{equation*} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{p} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{p} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{p} - \frac{f+n}{f-n} \end{aligned} \right. \end{equation*}\), 所以 \(M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & -\frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)\).
+两者相减可以得出 \(2 = k_x (r - l) \rightarrow k_x = \frac{2}{r-l}\), 把 \(k_y\) 代入回去求得 \(c = -\frac{r + l}{r - l}\);
+</p>
+
+<p>
+同理可得 \(k_y = \frac{2}{t - b}\), \(c_y = -\frac{t + b}{t - b}\);
+</p>
+
+<p>
+\(k_z\) 就有点特殊, 因为相机看向 \(-Z\), 所以是从 \([-n, -f]\) 映射到 \([-1, 1]\), 经过计算得到 \(k_z = \frac{2}{n - f}\) 以及 \(c_z = \frac{n + f}{n - f}\).
+</p>
+
+<p>
+最终关系为 \(\begin{equation*} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{e} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{e} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{e} + \frac{f+n}{f-n} \end{aligned} \right. \end{equation*}\), 所以 \(M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & \frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)\).
 </p>
 
 <p>
@@ -2042,8 +2182,8 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </div>
 </div>
 </div>
-<div id="outline-container-org075c383" class="outline-2">
-<h2 id="org075c383"><span class="section-number-2">3.</span> 接下来</h2>
+<div id="outline-container-org686dce3" class="outline-2">
+<h2 id="org686dce3"><span class="section-number-2">3.</span> 接下来</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 这篇笔记涵盖了大部分 <code>OpenGL</code> 中所发生变基式变换以及如何构建它们所对应的 <code>change-of-basis matrix</code>,
@@ -2134,7 +2274,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 <div id="postamble" class="status">
 <p class="date">Date: 2020-06-19</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-09-07 Sun 19:56</p>
+<p class="date">Created: 2025-09-24 Wed 11:38</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

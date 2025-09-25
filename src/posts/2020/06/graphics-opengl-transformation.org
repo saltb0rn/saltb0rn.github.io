@@ -68,6 +68,9 @@
 
 
 *** 平面方程
+:properties:
+:custom_id: plane-equation
+:end:
 
 这里先约定一下: 从原点出发到 $p$ 的向量会采用 $\vec{p}$ 这种方式表示, $p$ 就单纯表示点,如果是从 $p_{1}$ 出发到 $p_{2}$ 的向量就用 $\vec{p_{1}p_{2}} = p_{2} - p_{1}$ 表示.
 
@@ -270,21 +273,29 @@ B. 把对象放到场景(scene)/世界(world)中.
 
 再加上也有相机朝上的方向 $up$, 利用好叉积就可以构建出这个左手正交坐标系.
 
-*虽然视点坐标系是左手坐标系, 但由于 $lookAt$ 的参数都是世界坐标系的坐标, 因此, 在构建视点坐标系的全程都得使用右手坐标系, 直到最后才变换成左手坐标系.*
+*虽然视点坐标系是左手坐标系, 但由于 $lookAt$ 的参数都是世界坐标系的坐标,*
+
+*因此, 在构建视点坐标系的全程都得使用右手坐标系, 直到在形状上变成左手坐标系后才变换成左手坐标系.*
 
 # 目前 $M_{R}^{-1}$ 的构建有好几种思路, 不过大方向是一样的, 其中 =OpenGL= 上的构建思路比较直接, 也是效率最高的:
 
-首先, 算出相机的"视线"方向: $forward = center - eye \rightarrow \hat{f}_{\text{right-hand}} = \frac{forward}{|forward|}$,
+首先, 算出相机的"视线"方向:
+
+$forward = center - eye \rightarrow \hat{f}_{\text{right-hand}} = \frac{forward}{|forward|}$,
 
 $\hat{f}_{\text{right-hand}}$ 是指向右手坐标系的 $z$ 轴负方向的, 以后将会作为新坐标系上的 $z$ 轴;
 
-然后, 用 $\hat{f}_{\text{right-hand}}$ 或者 $forward$ 与向量 $up$ 进行叉积, 求出同时垂直于它们的向量 $right = \hat{f}_{\text{right-hand}} \times up \rightarrow \hat{r}_{\text{right-hand}}$,
+然后, 用 $\hat{f}_{\text{right-hand}}$ 或者 $forward$ 与向量 $up$ 进行叉积, 求出同时垂直于它们的向量:
+
+$right = \hat{f}_{\text{right-hand}} \times up \rightarrow \hat{r}_{\text{right-hand}}$,
 
 根据几何关系, $\hat{f}_{\text{right-hand}}$ 是围绕 $\hat{r}_{\text{right-hand}}$ 以逆时针方向旋转到达 $up$ 方向上, 所以 $\hat{r}_{\text{right-hand}}$ 会作为新坐标系上的 $x$ 轴.
 
-最后, $up$ 并不是一定和 $\hat{f}_{\text{right-hand}}$ 正交的, 所以要构建出一个同时垂直于 $\hat{f}_{\text{right-hand}}$ 和 $\hat{r}_{\text{right-hand}}$ 的向量 $\hat{u}_{\text{right-hand}}$,
+最后, $up$ 并不一定与 $\hat{f}_{\text{right-hand}}$ 正交, 所以它并不能作为左手坐标系的 $y$ 轴,
 
-并且 $\hat{u}_{\text{right-hand}}$ 要对齐左手坐标系的 $y$ 轴, 所以根据几何关系, $\hat{u}_{\text{right-hand}} = \hat{r}_{\text{right-hand}} \times \hat{f}_{\text{right-hand}}$,
+要构建出一个同时垂直于 $\hat{f}_{\text{right-hand}}$ 和 $\hat{r}_{\text{right-hand}}$ 的向量 $\hat{u}_{\text{right-hand}}$ 作为 $y$ 轴, 根据几何关系可得:
+
+$\hat{u}_{\text{right-hand}} = \hat{r}_{\text{right-hand}} \times \hat{f}_{\text{right-hand}}$,
 
 也就是 $\hat{r}_{\text{right-hand}}$ 围绕 $\hat{u}_{\text{right-hand}}$ 以逆时针方向旋转 $90^{\circ}$ 到达 $\hat{f}_{\text{right-hand}}$, 因此, $\hat{r}_{\text{right-hand}} \times \hat{f}_{\text{right-hand}}$ 本身就是单位向量.
 
@@ -403,6 +414,9 @@ http://www.glprogramming.com/red/appendixf.html
 #+END_QUOTE
 
 **** 法线贴图 (Normal Texture)
+:PROPERTIES:
+:CUSTOM_ID: normal-texture
+:END:
 
 #+begin_quote
 在了解发现贴图之前需要先了解什么是贴图(textures), 什么是贴图坐标/纹理坐标(texture coordiantes), =OpenGL= 是如何根据贴图坐标把贴图贴在平面上的.
@@ -568,13 +582,33 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 
 这一个过程经历3个步骤,
 
-*第一步* 选择相机看到的内容,因为相机是不能看到完整场景的(不可能看到无限远),所以要先求出相机看到空间范围,因此需要求出哪些顶点是在视野范围内的,
+*第一步* 选择相机看到的内容, 因为相机是不能看到完整场景的(不可能看到无限远),
 
-之前几个阶段用到的顶点的坐标都是 $\left(x, y, z, w\right)$, $w=1$ 的这种形式,确定顶点是否在视野内的是由根据 $w$ 的值来决定的,
+所以要先求出相机看到空间范围, 因此需要求出哪些顶点是在视野范围内的,
 
-所以现在不能单纯地把 $w$ 设定为 1,这需要经过计算,最后得到的坐标叫做裁剪坐标(clip coordinates, 也可以叫投影坐标): $\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$.
+顶点的视点坐标的每个分量都是有范围的, 比如 $(x_e \in [l, r], y_e \in [t, b], z_e \in [n, f])$, 范围外的顶点就会被丢弃.
 
 这个过程叫做视截体剔除(frustum culling)/裁剪(clipping),最后会看到的空间形状形成一个几何体(下面会有图片),
+
+但由于各种变换的缘故, 没有办法写三个条件语句来判断顶点是否在范围内, 所以裁剪也是需要变换的.
+
+#+begin_quote
+如果不理解这句话是什么意思, 可以看一下这个例子:
+
+有一个平面坐标系, 坐标系未经过任意变换时, 想让坐标 $(x, y)$ 往右移动 1 个单位就是 $(x + 1, y)$,
+
+坐标系往逆时针方向旋转 $45^{c}$ 之后, 想让坐标往右移动一个单位就是 $(x + \frac{\sqrt{2}}{2}, y + \frac{\sqrt{2}}{2})$.
+
+你应该能看到同样是移动一个单位, 但是分量的变化发生了改变, 如果分量有范围, 那么范围也要遵守一样的变化,
+
+因此, 想只靠三个条件语句做裁剪那是不太可能的.
+#+end_quote
+
+之前几个阶段用到的顶点的坐标都是 $\left(x, y, z, w\right)$, $w=1$ 的这种形式, 确定顶点是否在视野内的是由根据 $w$ 的值来决定的,
+
+所以现在不能单纯地把 $w$ 设定为 1,这需要经过计算,最后得到的坐标叫做裁剪坐标(clip coordinates, 也可以叫投影坐标):
+
+$\left(x_{clip}, y_{clip}, z_{clip}, w_{clip}\right)$
 
 这个步骤除了裁剪外,还会计算顶点投影后的坐标,所以这个过程也叫做投影变换(projection transformation).
 
@@ -589,16 +623,22 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 
 这个"容器"是一个立方体,使用的是左手坐标系,三轴的范围分别都是 $\left[-1, 1\right]$.(下面会有图),
 
-只需要进行透视除法(=perspective divide=)就可以把 $\left(x_{projection}, y_{projection}, z_{projection}, w_{projection}\right)$ 转换 =NDC= 坐标: $\left(x_{ndc}, y_{ndc}, z_{ndc}\right) = \left(\frac{x_{projection}}{w_{projection}}, \frac{y_{projection}}{w_{projection}}, \frac{z_{projection}}{w_{projection}}\right)$.
+只需要进行透视除法(=perspective divide=)就可以把 $\left(x_{projection}, y_{projection}, z_{projection}, w_{projection}\right)$ 转换 =NDC= 坐标:
 
-所以,不满足这个条件 $-w_{projection} \leq x_{projection}, y_{projection}, z_{projection} \leq w_{projection}$ 的顶点都会被丢弃,因为 $-1 \leq x_{ndc}, y_{ndc}, z_{ndc} \leq 1$.
+$\left(x_{ndc}, y_{ndc}, z_{ndc}\right) = \left(\frac{x_{projection}}{w_{projection}}, \frac{y_{projection}}{w_{projection}}, \frac{z_{projection}}{w_{projection}}\right)$
 
-这个过程叫做 =NDC= 变换(NDC transformation).相信你已经发现 =NDC= 的每个分量其实就是一个比例,什么之间比例呢?这就涉及到 =NDC= 的作用了,它是用来适配视口(viewport)的,
+不满足这个条件 $-w_{projection} \leq x_{projection}, y_{projection}, z_{projection} \leq w_{projection}$ 的顶点都会被丢弃, 因为 $-1 \leq x_{ndc}, y_{ndc}, z_{ndc} \leq 1$.
+
+这个过程叫做 =NDC= 变换(NDC transformation).相信你已经发现 =NDC= 的每个分量其实就是一个比例,什么之间比例呢?
+
+这就涉及到 =NDC= 的作用了,它是用来适配视口(viewport)的,
 
 比如 =NDC= 的 $x_{n}$ 分量就是裁剪坐标 $x_{projection}$ 与视口宽度的 *一半* 的比例,这个比例乘以视口的尺寸就可以计算出点在视口中的实际位置.
 
 
-*第三步*,就是把裁剪空间里面的内容适配到视口上,这一步叫视口变换(viewport transformation), =NDC= 是一个比例集合,通过这个比例集合可以计算出一个顶点输出到视口上的位置,
+*第三步*,就是把裁剪空间里面的内容适配到视口上,这一步叫视口变换(viewport transformation), =NDC= 是一个比例集合,
+
+通过这个比例集合可以计算出一个顶点输出到视口上的位置,
 
 通俗点说就是计算出这个顶点要显示在哪个像素上,如何描述像素的位置呢?这就需要一个概念叫做窗口坐标(window coordinate)/屏幕坐标(screen coordinates)了,
 
@@ -629,15 +669,31 @@ $z_{w}$ 是深度值, 在许多场景发挥着非常重要的作用. 实际上 $
 #+CAPTION: 正交投影(正交相机看到的内容)
 [[../../../files/gl_orthographic.png]]
 
-图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum),第二个是长方体.
+图中的两个多边体分别就是眼睛能够看到的空间,选择相机的内容就是构建出这两个多边体,
 
-构造这两个多边体都只需要 6 个参数, 分别是 $l(eft)$, $r(ight)$, $b(ottom)$, $t(op)$, $n(ear)$ 以及 $f(ar)$,为了区分方向, 我们采用正负号来表示, 并让这 6 个参数要满足这样的关系 $\begin{equation*} \left\{ \begin{aligned} l < r \\ b < t \\ n < f\end{aligned} \right. \end{equation*}$.
+这两个多边体叫做视体(view volume),第一个是截了头的锥体(frustum), 第二个是长方体.
 
-可以看到每个多边体都有两个比较深色的平面,离相机近叫做近裁剪平面(near plane / near clipping plane),远的叫做远裁剪平面(far plane / far clipping plane).
+构造这两个多边体都只需要 6 个参数, 分别是 $l(eft)$, $r(ight)$, $b(ottom)$, $t(op)$, $n(ear)$ 以及 $f(ar)$,
 
-(你可能会问为什么看到的内容不是从相机位置到远处,而是要截头呢?截掉尾部很好理解,那是因为人不可能看到无限远,而从相机位置,也就是 $z = 0$ 会影响齐次坐标到 =NDC= 的计算,看过整个推导后可以回过来重新思考一下.)
+并让这 6 个参数要满足这样的关系 $\begin{equation*} \left\{ \begin{aligned} & l < r \\ & b < t \\ & 0 < n < f\end{aligned} \right. \end{equation*}$, 这里只让 $n$ 和 $f$ 大于 0 是因为相机看的方向是 $-Z$.
 
-这两种选择方案分别叫做: 透视投影(perspective projection)以及正交投影(orthographic projection). *在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上,所以近裁剪平面也叫投影平面(projection plane)*.
+(PS: 有些文章会让 $n$ 和 $f$ 小于 0, 无论哪种定义, 只要推导过程对了结果就是对的)
+
+可以看到每个多边体都有两个比较深色的平面,
+
+离相机近叫做近裁剪平面(near plane / near clipping plane),
+
+远的叫做远裁剪平面(far plane / far clipping plane).
+
+这两种选择方案分别叫做: 透视投影(perspective projection)以及正交投影(orthographic projection).
+
+*在 OpenGL 中,视点空间上的点会被投影到近裁剪平面上, 所以近裁剪平面也叫投影平面(projection plane)*.
+
+#+begin_quote
+你可能会问为什么看到的内容不是从相机位置到远处, 而是要从截头开始呢?
+
+在学习透视投影的后就会明白 $n = 0$ 会如何影响计算结果.
+#+end_quote
 
 **** 透视投影
 
@@ -650,14 +706,16 @@ $z_{w}$ 是深度值, 在许多场景发挥着非常重要的作用. 实际上 $
 1. 计算出坐标的 $w$ 用于之后的裁剪,再把坐标变换成标准化设备坐标系,
 2. 顶点会被投影到近裁剪平面上
 
+
+#+attr_html: :width 600px
 #+CAPTION: 透视投影2
 [[../../../files/gl_projectionmatrix01.png]]
 
-这里第一个就是透视的截头锥体,第二个是标准化设备坐标系.
+这里第一个就是透视的截头锥体, 第二个是标准化设备坐标系, 两者的 $Z$ 轴方向是相反的.
 
 为了方面说明推导过程, 先声明一些变量:
 
-近和远裁剪平面到相机的距离 $-n$ 和 $-f$,
+由于相机看向的是 $-Z$ 方向, 所以近和远裁剪平面到相机的距离 $-n$ 和 $-f$,
 
 投影矩阵 $M_{projection} = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ w_{l} & w_{u} & w_{f} & w \end{array}\right)$,
 
@@ -685,7 +743,9 @@ $z_{w}$ 是深度值, 在许多场景发挥着非常重要的作用. 实际上 $
 
 既然如此,那么 $x_{p}$ 以及 $y_{p}$ 是不是可以分别取 $nx_{e}$ 以及 $ny_{e}$ 了吗?
 
-还不能这么断言, 仍然需要找到 $p_{p}$ 到 $p_{n}$ 之间映射关系来进行验证,也就是找出 $x_{p}$, $y_{p}$ 和 $z_{p}$ 分别到 $x_{n}$, $y_{n}$ 和 $z_{n}$ 的关系: $\begin{equation*} \left\{ \begin{aligned} x_{p} \in \left[l, r\right] \longrightarrow x_{n} \in \left[-1, 1\right] \\ y_{p} \in \left[t, b\right] \longrightarrow y_{n} \in \left[-1, 1\right] \end{aligned} \right. \end{equation*}$.
+还不能这么断言, 仍然需要找到 $p_{p}$ 到 $p_{n}$ 之间映射关系来进行验证, 也就是找出 $x_{p}$, $y_{p}$ 和 $z_{p}$ 分别到 $x_{n}$, $y_{n}$ 和 $z_{n}$ 的关系:
+
+$\begin{equation*} \left\{ \begin{aligned} x_{p} \in \left[l, r\right] \longrightarrow x_{n} \in \left[-1, 1\right] \\ y_{p} \in \left[t, b\right] \longrightarrow y_{n} \in \left[-1, 1\right] \end{aligned} \right. \end{equation*}$
 
 对于 $x_{p}\longrightarrow x_{n}$, 先假设下面函数图对应的函数为 $x_{n} = k \cdot x_{p} + c$,
 
@@ -721,25 +781,35 @@ $\begin{equation*}\begin{aligned} x_{n} &= \frac{2x_{p}}{r-l} - \frac{r+l}{r-l} 
 
 根据第三条信息可以知道 $z_{p}$ 不取决于 $x_{e}$ 以及 $y_{e}$, 所以可以得到 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right)$.
 
-再根据 $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$,可以得到 $z_{n} = z_{p}/w_{p} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$,因为在视点空间上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
+再根据 $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$, 可以得到 $z_{n} = \frac{z_{p}}{w_{p}} = \frac{z_{f} \cdot z_{e} + z \cdot w_{e}}{-z_{e}}$, 因为在视点空间上, $w_{e} = 1$, 所以 $z_{n} = \frac{z_{f} \cdot z_{e} + z}{-z_{e}}$.
 
-还是根据变换到 =NDC= 的过程: $\left[-n,-f\right] \longrightarrow \left[-1, 1\right]$,把 $\left(-n, -1\right)$ 以及 $\left(-f, 1\right)$ 代入到上面的等式中, $\begin{equation*}\left\{\begin{aligned} -1 = \frac{-z_{f} \cdot n + z}{n} \\ 1 = \frac{-z_{f} \cdot f + z}{f} \end{aligned} \right. \longrightarrow \left\{\begin{aligned} -n = -z_{f} \cdot n + z \\ f = -z_{f} \cdot f + z \end{aligned} \right. \end{equation*}$.
+还是根据变换到 =NDC= 的过程: $\left[-n,-f\right] \longrightarrow \left[-1, 1\right]$,把 $\left(-n, -1\right)$ 以及 $\left(-f, 1\right)$ 代入到上面的等式中, 得到:
 
-把其中一个等式改写成以 $z$ 作为因变量的等式,这里采用第一个: $z = z_{f} \cdot n - n$,再把这个等式代入另外一个等式中,得到
+$\begin{equation*}\left\{\begin{aligned} -1 = \frac{-z_{f} \cdot n + z}{n} \\ 1 = \frac{-z_{f} \cdot f + z}{f} \end{aligned} \right. \longrightarrow \left\{\begin{aligned} -n = -z_{f} \cdot n + z \\ f = -z_{f} \cdot f + z \end{aligned} \right. \end{equation*}$
 
-$f = -z_{f} \cdot f + z_{f} \cdot n - n \longrightarrow f + n = -\left(f - n\right)z_{f} \longrightarrow z_{f} = -\frac{f+n}{f-n}$, 这样就得到 $z_{f}$ 了,把 $z_{f}$ 再代入回第一个等式中,得到 $\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot n = -\frac{2fn}{f-n}$,
+把其中一个等式改写成以 $z$ 作为因变量的等式, 这里采用第一个: $z = z_{f} \cdot n - n$,
 
-根据结果 $\begin{equation*} \left\{ \begin{aligned} z_{f} = -\frac{f+n}{f-n} \\ z = -\frac{2fn}{f-n} \end{aligned} \right. \end{equation*}$,可以得出 $z_{n} = \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}}$,以及得出透视投影矩阵 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & -\frac{f+n}{f-n} & -\frac{2fn}{f-n} \\ 0 & 0 & -1 & 0 \end{array}\right)$.
+再把这个等式代入另外一个等式中, 得到:
 
-*再观察 $z_{n}$ 以及 $z_{e}$ 的关系可以发现它们根本就不成线性关系,且成反比关系*, $z_{e}$ 越大, $z_{n}$ 越小,并且 $z_{n}$ 的变化也会变小,这意味着在裁剪近平面附近的顶点的精准度会很高,在裁剪远平面附近的顶点精准度会很低.
+$f = -z_{f} \cdot f + z_{f} \cdot n - n \longrightarrow f + n = -\left(f - n\right)z_{f} \longrightarrow z_{f} = -\frac{f+n}{f-n}$
 
-也就是说, *如果 $\left[-n, -f\right]$ 的范围越大,裁剪远平面附近顶点的 $z_{e}$ 的一个细微的改变越不会对该顶点转化成 =NDC= 后的 $z_{n}$ 造成影响,假设在裁剪远平面附近有位置十分接近(只是 $z_{e}$ 相差一点点)的两个顶点,这两个顶点在转化成 =NDC= 后极可能会重合在一起,这就是深度精确问题/z冲突(depth precision problem/depth buffer precision problem/z-fighting)*,
+把 $z_{f}$ 再代入回第一个等式中, 得到:
 
-这个时候需要减少 $n$ 和 $f$ 之间的距离来最小化这个问题.
+$\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot n = -\frac{2fn}{f-n}$, 所以 $z_{n} = \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}}$,
 
-#+attr_html: :width 504px
-#+CAPTION: 比较不同深度下的精确度
-[[../../../files/gl_projectionmatrix07.png]]
+最后透视投影矩阵 $M_{projection} = \left(\begin{array}{c} \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\ 0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\ 0 & 0 & -\frac{f+n}{f-n} & -\frac{2fn}{f-n} \\ 0 & 0 & -1 & 0 \end{array}\right)$.
+
+# *再观察 $z_{n}$ 以及 $z_{e}$ 的关系可以发现它们根本就不成线性关系,且成反比关系*: $z_{e}$ 越大, $z_{n}$ 越小.
+
+# 这意味着在裁剪近平面附近的顶点的精准度会很高,在裁剪远平面附近的顶点精准度会很低.
+
+# 也就是说, *如果 $\left[-n, -f\right]$ 的范围越大,裁剪远平面附近顶点的 $z_{e}$ 的一个细微的改变越不会对该顶点转化成 =NDC= 后的 $z_{n}$ 造成影响,假设在裁剪远平面附近有位置十分接近(只是 $z_{e}$ 相差一点点)的两个顶点,这两个顶点在转化成 =NDC= 后极可能会重合在一起,这就是深度精确问题/z冲突(depth precision problem/depth buffer precision problem/z-fighting)*,
+
+# 这个时候需要减少 $n$ 和 $f$ 之间的距离来最小化这个问题.
+
+# #+attr_html: :width 504px
+# #+CAPTION: 比较不同深度下的精确度
+# [[../../../files/gl_projectionmatrix07.png]]
 
 **** 透视投影 - Depth Buffer
 :PROPERTIES:
@@ -836,7 +906,9 @@ $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
   $z_{e} = \frac{2nf}{z_{n}(f - n) - (f + n)}$
 
 
-有些效果需要使用线性深度(=linear depth=), 比如物体阴影(shadow map), 雾效(fog), 就是把世界坐标的 $z_{m}$ 分量从 $[n, f]$ 重映射到 $[0, 1]$, 步骤如下:
+有些效果需要使用线性深度(=linear depth=), 比如物体阴影(shadow map), 雾效(fog),
+
+就是把世界坐标的 $z_{m}$ 分量从 $[n, f]$ 重映射到 $[0, 1]$, 步骤如下:
 
 1. 从视点坐标转换回世界坐标 $z_{m} = -z_{e} = \frac{2nf}{(f + n) - z_{n}(f - n)}$,
 
@@ -851,15 +923,27 @@ $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 
 以 =three.js= 为例,并非用前面提到6个参数设定相机,不过两者其实是有联系的,毕竟内部还是使用6参数来设定相机的.
 
-$fov$ 是相机看到的视野范围的角度,从上面的图片 *透视投影* 可以看出射线会形成一个角度,那个角度就是 $fov$,再观察 *frustum的俯视图* 以及 *frustum 的侧视图* 可以知道有两个 $fov$,分别是水平方向的 *fov* 以及垂直反向的 *fov*.
+$fov$ 是相机看到的视野范围的角度,从上面的图片 *透视投影* 可以看出视线会形成一个角度,那个角度就是 $fov$,
 
-以 =three.js= 为例子,它就是使用的水平方向 $fov$,假设现在水平方向 $fov$ 是 $\theta$,需要根据 $fov$ 计算出6参数,其中 $n$ 和 $f$ 都知道了,可以直接根据 $n$ 和 $\theta$ 计算出 $l$ 和 $r$.
+再观察 *frustum的俯视图* 以及 *frustum 的侧视图* 可以知道有两个 $fov$,分别是水平方向的 *fov* 以及垂直方向的 *fov*.
+
+[[../../../files/gl_projectiomat-fov.png]]
+
+以 =three.js= 为例子, 它就是使用的水平方向 $fov$, 假设现在水平方向 $fov$ 是 $\theta$,
+
+需要根据 $fov$ 计算出6参数,其中 $n$ 和 $f$ 都知道了,可以直接根据 $n$ 和 $\theta$ 计算出 $l$ 和 $r$.
 
 根据 *frustum的俯视图* 可以看出 $\frac{\frac{r-l}{2}}{n} = \frac{r-l}{2n} = \tan\frac{\theta}{2}$,然后 $r-l = 2n\tan\frac{\theta}{2}$.
 
-$r-l$ 就是近裁剪平面的宽,根据裁剪平面的宽高比可以得出高 $t-b = \frac{r-l}{aspect}$,最后以宽和高各自的中心点划分,也就是 $\begin{equation*}\left\{\begin{aligned}|r| = |l| = \frac{r-l}{2} \\ |t| = |b| = \frac{t-b}{2}\end{aligned} \right.\end{equation*}$,
+$r-l$ 就是近裁剪平面的宽,根据裁剪平面的宽高比 $aspect$ 可以得出高 $t-b = \frac{r-l}{aspect}$,
 
-这样就可以得出 $l(eft)$, $r(ight)$, $t(op)$ 以及 $b(ottom)$ 4个参数了(需要保证满足关系 $\begin{equation*}\left\{\begin{aligned}r > l \\ t > b\end{aligned}\right.\end{equation*}$),加上一开始给出的 $n(ear)$ 和 $f(ar)$ 就凑齐了6个参数来构建截头锥体.
+最后以宽和高各自的中心点划分, 也就是 $\begin{equation*}\left\{\begin{aligned}|r| = |l| = \frac{r-l}{2} \\ |t| = |b| = \frac{t-b}{2}\end{aligned} \right.\end{equation*}$,
+
+这样就可以得出 $l(eft)$, $r(ight)$, $t(op)$ 以及 $b(ottom)$ 4个参数了,
+
+(需要保证满足关系 $\begin{equation*}\left\{\begin{aligned}r > l \\ t > b\end{aligned}\right.\end{equation*}$),
+
+加上一开始给出的 $n(ear)$ 和 $f(ar)$ 就凑齐了6个参数来构建截头锥体.
 
 $fov$ 还可以用来实现视觉上的缩放, 根据关系: $r - l = 2n \tan \frac{\theta}{2}$, 当 $fov$($\theta$) 缩小, $n$ 不变, 那么 $r - l$ 变小,
 
@@ -907,24 +991,31 @@ $fov$ 的改变还可以用来实现希区柯克镜头(=Hitchcock shot/Dolly Zoo
 :custom_id: orthographic-projection
 :end:
 
+#+attr_html: :width 600px
 #+CAPTION: 正交投影2
 [[../../../files/gl_projectionmatrix02.png]]
 
-正交投影比透视投影要简单的多,这种投影不符合人的视觉,两条平行不会在远处慢慢靠近最后相交.
+正交投影比透视投影要简单的多, 这种投影不符合人的视觉, 两条平行不会在远处慢慢靠近最后相交,
 
-看到的视体就是一个由6参数计算得到的长方体,所以裁剪判断很简单,只要点的坐标: $\left(x, y, z, w\right)$ 满足这个关系 $\begin{equation*}\left\{\begin{aligned} l < x < r \\ b < y < t \\ n < z < f \end{aligned}\right.\end{equation*}$ 就不会被裁剪,
+视体就是一个由6参数计算得到的长方体, 视点坐标到投影坐标的变换就是一组简单的线性关系:
 
-所以不再需要特别去计算 $w$ 的值了,它已经不重要了,考虑到还有 =NDC= 变换这个过程,直接让 $w = 1$ 就可以了.
+$\begin{equation*} \left\{ \begin{aligned} x_{p} &= k_x \cdot x_{e} + c_x \\ y_{p} &= k_y \cdot y_{e} + c_y \\ z_{p} &= k_z \cdot z_{e} + c_z \end{aligned} \right. \end{equation*}$
 
-从上面的图可以看到 $x_{p}$, $y_{p}$ 以及 $z_{p}$ 到 $x_{n}$, $y_{n}$ 以及 $z_{n}$ 分别就是单纯的线性关系,所以分别计算出 $\begin{equation*} \left\{ \begin{aligned} x_{n} &= k \cdot x_{p} + c \\ y_{n} &= k \cdot y_{p} + c \\ z_{n} &= k \cdot z_{p} + c \end{aligned} \right. \end{equation*}$ 这三条关系就可以得出正交投影的矩阵.
+而且知道长方体的尺寸, $k_x$, $k_y$, $k_z$ 甚至可以完成归一化, 使得 $-1 \le x_p, y_p, z_p \le 1$, 直接完成视点到 =NDC= 的转换:
 
-比如 $x_{p}$ 与 $x_{n}$ 的线性关系,参考图片透视投影的 $x_{p}$ 到 $x_{n}$ 的关系图,可以得出 $k = \frac{2}{r-l}$.
+$\begin{equation*} \left\{ \begin{aligned} x_{n} &= k_x \cdot x_{e} + c_x \\ y_{n} &= k_y \cdot y_{e} + c_y \\ z_{n} &= k_z \cdot z_{e} + c_z \end{aligned} \right. \end{equation*}$
 
-然后把 $\left(r, 1\right)$ (当然 $\left(l, -1\right)$ 也可以)和 $k$ 代入回原来式子中,得到 $1 = \frac{2}{r-l}r + c \longrightarrow c = 1 - \frac{2r}{r-1} = -\frac{r+l}{r-l}$.
+比如参考图片上正交投影中 $x_{e}$ 到 $x_{n}$ 的关系图, 我们需要把 $[l, r]$ 映射到 $[-1, 1]$ 中,
 
-最后把 $c$ 代入回去得到 $x_{n} = \frac{2}{r-l} \cdot x_{p} - \frac{r+l}{r-l}$.
+当 $x_e = l$ 时 $x_n = -1$, 当 $x_e = r$ 时, $x_n = 1$, 所以 $\begin{cases} 1 = k_x \cdot r + c_x \\ -1 = k_x \cdot l + c_x \end{cases}$,
 
-其它同理,最终关系为 $\begin{equation*} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{p} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{p} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{p} - \frac{f+n}{f-n} \end{aligned} \right. \end{equation*}$, 所以 $M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & -\frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
+两者相减可以得出 $2 = k_x (r - l) \rightarrow k_x = \frac{2}{r-l}$, 把 $k_y$ 代入回去求得 $c = -\frac{r + l}{r - l}$;
+
+同理可得 $k_y = \frac{2}{t - b}$, $c_y = -\frac{t + b}{t - b}$;
+
+$k_z$ 就有点特殊, 因为相机看向 $-Z$, 所以是从 $[-n, -f]$ 映射到 $[-1, 1]$, 经过计算得到 $k_z = \frac{2}{n - f}$ 以及 $c_z = \frac{n + f}{n - f}$.
+
+最终关系为 $\begin{equation*} \left\{ \begin{aligned} x_{n} &= \frac{2}{r-l} \cdot x_{e} - \frac{r+l}{r-l} \\ y_{n} &= \frac{2}{t-b} \cdot y_{e} - \frac{t+b}{t-b} \\ z_{n} &= \frac{2}{f-n} \cdot z_{e} + \frac{f+n}{f-n} \end{aligned} \right. \end{equation*}$, 所以 $M_{projection} = \left(\begin{array}{c} \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\ 0 & \frac{2n}{t-b} & 0 & -\frac{t+b}{t-b} \\ 0 & 0 & \frac{2}{f-n} & \frac{f+n}{f-n} \\ 0 & 0 & 0 & 1 \end{array}\right)$.
 
 观察该矩阵可以发现 $x_{n}$ 和 $y_{n}$ 的计算过程不涉及 $n$ 和 $z_{p}$, 因此, 正交投影不会有近大远小的视觉效果.
 

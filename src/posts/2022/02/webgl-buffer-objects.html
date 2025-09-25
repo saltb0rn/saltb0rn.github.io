@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-09-08 Mon 22:07 -->
+<!-- 2025-09-25 Thu 19:56 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Shader 编程自救指南</title>
@@ -235,47 +235,57 @@
 <ul>
 <li><a href="#how-gl-works">1. Shader 是如何工作的</a>
 <ul>
-<li><a href="#org4028745">1.1. Vertex Shader</a></li>
-<li><a href="#org7b83479">1.2. Vertex Shader 之后, Fragment Shader 之前</a></li>
-<li><a href="#orgdf3cf42">1.3. Fragment Shader</a></li>
-<li><a href="#org3ae6fa5">1.4. Fragment Shader 之后 - Per-Sample Processing</a></li>
+<li><a href="#org167e6e3">1.1. Vertex Shader</a></li>
+<li><a href="#org0cf2d88">1.2. Vertex Shader 之后, Fragment Shader 之前</a></li>
+<li><a href="#org79328dc">1.3. Fragment Shader</a></li>
+<li><a href="#org501cef1">1.4. Fragment Shader 之后 - Per-Sample Processing</a></li>
 </ul>
 </li>
-<li><a href="#org5ed2b70">2. 一个简单而完整的 Shader 程序</a>
+<li><a href="#orgd9e2606">2. 一个简单而完整的 Shader 程序</a>
 <ul>
 <li><a href="#how-cpu-upload-data">2.1. CPU 如何上传数据给 GPU</a></li>
 <li><a href="#how-gl-use-data">2.2. GPU 如何从缓冲读取数据</a></li>
-<li><a href="#org274cd2e">2.3. 如何使用缓冲的数据进行绘制</a></li>
+<li><a href="#org5006a3a">2.3. 如何使用缓冲的数据进行绘制</a></li>
 <li><a href="#glsl-type-qualifier-overview">2.4. GLSL 变量修饰符(Variable Qualifiers / Type Qualifiers)</a>
 <ul>
-<li><a href="#org2955eda">2.4.1. attribute</a></li>
-<li><a href="#org57a8d00">2.4.2. uniform</a></li>
+<li><a href="#orgcbfab54">2.4.1. attribute</a></li>
+<li><a href="#orgc84bb7e">2.4.2. uniform</a></li>
 </ul>
 </li>
-<li><a href="#orge9be2b8">2.5. GLSL 内置变量</a></li>
-<li><a href="#orgb7a842a">2.6. 其它常见问题</a></li>
+<li><a href="#orgc40c1d5">2.5. GLSL 内置变量</a></li>
+<li><a href="#org5c4e2c8">2.6. 其它常见问题</a></li>
 </ul>
 </li>
-<li><a href="#org19e4f77">3. WebGL 的 API 概览</a>
+<li><a href="#orgda5d55e">3. WebGL 的 API 概览</a>
 <ul>
-<li><a href="#org937ab7f">3.1. 缓冲 (Buffer)</a></li>
-<li><a href="#org47c1e51">3.2. 贴图 (Texture)</a></li>
-<li><a href="#org923f98e">3.3. 帧缓冲 (FrameBuffer)</a></li>
+<li><a href="#orgddf29d3">3.1. 缓冲 (Buffer)</a></li>
+<li><a href="#texture">3.2. 贴图 (Texture)</a></li>
+<li><a href="#fbo">3.3. 帧缓冲 (FrameBuffer)</a></li>
 </ul>
 </li>
-<li><a href="#org41591e4">4. 搭建自己的 Shadertoy</a></li>
-<li><a href="#org56a810d">5. 学习使用 Three.js 进行实践</a>
+<li><a href="#org1e78f52">4. 搭建自己的 Shadertoy</a></li>
+<li><a href="#guide-to-learn-threejs">5. 学习使用 three.js 进行实践</a>
 <ul>
-<li><a href="#org785d4cc">5.1. 如何搭建基础项目</a></li>
-<li><a href="#org2fea439">5.2. 如何把 <code>Shader</code> 应用到物体上</a></li>
-<li><a href="#orge52208c">5.3. 如何进行后处理</a></li>
-<li><a href="#orga0d913d">5.4. 项目结构推荐</a></li>
+<li><a href="#orgc2049de">5.1. 如何搭建基础项目</a></li>
+<li><a href="#org2ee312f">5.2. 如何把 <code>Shader</code> 应用到物体上</a>
+<ul>
+<li><a href="#org44a5908">5.2.1. 拓展 MeshStandardMaterial 的 Vertex Shader</a></li>
+<li><a href="#orgf7d4e09">5.2.2. 拓展 MeshStandardMaterial 的 Fragment Shader</a></li>
+</ul>
+</li>
+<li><a href="#how-to-postprocessing-in-threejs">5.3. 如何进行后处理</a>
+<ul>
+<li><a href="#fbo-in-threejs">5.3.1. Three.js 中使用帧缓冲</a></li>
+<li><a href="#orgaa52a87">5.3.2. 继承 Pass 类</a></li>
+</ul>
+</li>
+<li><a href="#org07828b1">5.4. 项目结构推荐</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgb8b2d0f">
+<div class="abstract" id="orgc641d62">
 <p>
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 </p>
@@ -404,8 +414,8 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 接下来着重介绍 <code>Vertex Shader</code> 和 <code>Fragment Shader</code> 及其前后的几个阶段.
 </p>
 </div>
-<div id="outline-container-org4028745" class="outline-3">
-<h3 id="org4028745"><span class="section-number-3">1.1.</span> Vertex Shader</h3>
+<div id="outline-container-org167e6e3" class="outline-3">
+<h3 id="org167e6e3"><span class="section-number-3">1.1.</span> Vertex Shader</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 <code>Vertex Shader</code> 根据几何数据(geometry data)计算出裁剪空间(clip space)的顶点坐标, 也就是投影坐标.
@@ -420,7 +430,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org077602e" class="figure">
+<div id="org961c49d" class="figure">
 <p><img src="../../../files/vertex-shader-anim.gif" alt="vertex-shader-anim.gif" />
 </p>
 <p><span class="figure-number">Figure 1: </span>Vertex Shader 对顶点数据进行处理 (图片来源于上述链接)</p>
@@ -444,8 +454,8 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </ol>
 </div>
 </div>
-<div id="outline-container-org7b83479" class="outline-3">
-<h3 id="org7b83479"><span class="section-number-3">1.2.</span> Vertex Shader 之后, Fragment Shader 之前</h3>
+<div id="outline-container-org0cf2d88" class="outline-3">
+<h3 id="org0cf2d88"><span class="section-number-3">1.2.</span> Vertex Shader 之后, Fragment Shader 之前</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 在 <code>Vertex Shader</code> 之后并非马上就到 <code>Fragment Shader</code> 了, 这期间会发生一切其他事情.
@@ -568,7 +578,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="org40e3d03" class="figure">
+<div id="orge6c3898" class="figure">
 <p><img src="../../../files/opengl-rasterization.gif" alt="opengl-rasterization.gif" />
 </p>
 </div>
@@ -600,7 +610,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="orgbb8d0a6" class="figure">
+<div id="org7999c5a" class="figure">
 <p><img src="../../../files/trianglerast_f1_joshbeam.png" alt="trianglerast_f1_joshbeam.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>三个顶点所对应的片元坐标</p>
@@ -729,7 +739,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </div>
 
 
-<div id="org1a4e297" class="figure">
+<div id="orgf9503d5" class="figure">
 <p><img src="../../../files/trianglerast_f2_joshbeam.png" alt="trianglerast_f2_joshbeam.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>三角形线框</p>
@@ -748,7 +758,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 </p>
 
 
-<div id="orgb5bd6cf" class="figure">
+<div id="org1bc9385" class="figure">
 <p><img src="../../../files/trianglerast_f3_joshbeam_aux.png" alt="trianglerast_f3_joshbeam_aux.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>实心三角形</p>
@@ -940,8 +950,8 @@ iz01.pop();
 </p>
 </div>
 </div>
-<div id="outline-container-orgdf3cf42" class="outline-3">
-<h3 id="orgdf3cf42"><span class="section-number-3">1.3.</span> Fragment Shader</h3>
+<div id="outline-container-org79328dc" class="outline-3">
+<h3 id="org79328dc"><span class="section-number-3">1.3.</span> Fragment Shader</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
 在得到片元后, <code>OpenGL/WebGL</code> 就开始对它们进行处理, 这就是 <code>Fragment Shader</code> <b>主要</b> 要做的事情了:
@@ -1010,8 +1020,8 @@ iz01.pop();
 </p>
 </div>
 </div>
-<div id="outline-container-org3ae6fa5" class="outline-3">
-<h3 id="org3ae6fa5"><span class="section-number-3">1.4.</span> Fragment Shader 之后 - Per-Sample Processing</h3>
+<div id="outline-container-org501cef1" class="outline-3">
+<h3 id="org501cef1"><span class="section-number-3">1.4.</span> Fragment Shader 之后 - Per-Sample Processing</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 该阶段会使用上片元的这些额外值来进行<a href="https://www.khronos.org/opengl/wiki/Per-Sample_Processing">一系列的测试</a>, 来决定是否把该片元的色值输出到屏幕上成为像素,
@@ -1034,7 +1044,7 @@ iz01.pop();
 </p>
 
 
-<div id="orgb443f5d" class="figure">
+<div id="orga08452f" class="figure">
 <p><img src="../../../files/stencil_test.png" alt="stencil_test.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>模板测试</p>
@@ -1058,8 +1068,8 @@ iz01.pop();
 </div>
 </div>
 </div>
-<div id="outline-container-org5ed2b70" class="outline-2">
-<h2 id="org5ed2b70"><span class="section-number-2">2.</span> 一个简单而完整的 Shader 程序</h2>
+<div id="outline-container-orgd9e2606" class="outline-2">
+<h2 id="orgd9e2606"><span class="section-number-2">2.</span> 一个简单而完整的 Shader 程序</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 我们约定 <code>Shader</code> 代码是运行在 <code>CPU</code> 上的, 而调用 <code>OpenGL/WebGL API</code> 的代码则是运行在 <code>CPU</code> 上的;
@@ -1252,7 +1262,7 @@ iz01.pop();
 </p>
 
 
-<div id="org98636fa" class="figure">
+<div id="org7f7f34f" class="figure">
 <p><img src="../../../files/glVertexAttribPointer-api-overview.png" alt="glVertexAttribPointer-api-overview.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>vertexAttribPointer</p>
@@ -1321,8 +1331,8 @@ iz01.pop();
 </p>
 </div>
 </div>
-<div id="outline-container-org274cd2e" class="outline-3">
-<h3 id="org274cd2e"><span class="section-number-3">2.3.</span> 如何使用缓冲的数据进行绘制</h3>
+<div id="outline-container-org5006a3a" class="outline-3">
+<h3 id="org5006a3a"><span class="section-number-3">2.3.</span> 如何使用缓冲的数据进行绘制</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 当给缓冲填充了数据以及设置好读取方式后, 就可以开始绘制图形了.
@@ -1384,8 +1394,8 @@ iz01.pop();
 一个 <code>shader</code> 变量可以使用多种限定符的组合进行声明, 但要注意遵守<a href="https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Qualifier_order">顺序</a>.
 </p>
 </div>
-<div id="outline-container-org2955eda" class="outline-4">
-<h4 id="org2955eda"><span class="section-number-4">2.4.1.</span> attribute</h4>
+<div id="outline-container-orgcbfab54" class="outline-4">
+<h4 id="orgcbfab54"><span class="section-number-4">2.4.1.</span> attribute</h4>
 <div class="outline-text-4" id="text-2-4-1">
 <p>
 它在这篇文章里面第一个被介绍的修饰符, 它属于存储修饰符, 被它修饰后的变量可以简单理解为 <code>Vertex Shader</code> 的输入,
@@ -1400,8 +1410,8 @@ iz01.pop();
 </p>
 </div>
 </div>
-<div id="outline-container-org57a8d00" class="outline-4">
-<h4 id="org57a8d00"><span class="section-number-4">2.4.2.</span> uniform</h4>
+<div id="outline-container-orgc84bb7e" class="outline-4">
+<h4 id="orgc84bb7e"><span class="section-number-4">2.4.2.</span> uniform</h4>
 <div class="outline-text-4" id="text-2-4-2">
 <p>
 例子里面传入了两个 <code>uniform</code> 变量, 这种变量是全局的, 它可以在整个图元处理过程中被访问到,
@@ -1430,8 +1440,8 @@ iz01.pop();
 </div>
 </div>
 </div>
-<div id="outline-container-orge9be2b8" class="outline-3">
-<h3 id="orge9be2b8"><span class="section-number-3">2.5.</span> GLSL 内置变量</h3>
+<div id="outline-container-orgc40c1d5" class="outline-3">
+<h3 id="orgc40c1d5"><span class="section-number-3">2.5.</span> GLSL 内置变量</h3>
 <div class="outline-text-3" id="text-2-5">
 <p>
 这里着重介绍几个稍微重要一点的并且不能被 <code>Shader</code> 修改的内置数据.
@@ -1488,8 +1498,8 @@ iz01.pop();
 </ul>
 </div>
 </div>
-<div id="outline-container-orgb7a842a" class="outline-3">
-<h3 id="orgb7a842a"><span class="section-number-3">2.6.</span> 其它常见问题</h3>
+<div id="outline-container-org5c4e2c8" class="outline-3">
+<h3 id="org5c4e2c8"><span class="section-number-3">2.6.</span> 其它常见问题</h3>
 <div class="outline-text-3" id="text-2-6">
 <ul class="org-ul">
 <li><p>
@@ -1519,8 +1529,8 @@ iz01.pop();
 </div>
 </div>
 </div>
-<div id="outline-container-org19e4f77" class="outline-2">
-<h2 id="org19e4f77"><span class="section-number-2">3.</span> WebGL 的 API 概览</h2>
+<div id="outline-container-orgda5d55e" class="outline-2">
+<h2 id="orgda5d55e"><span class="section-number-2">3.</span> WebGL 的 API 概览</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 <code>WebGL</code> 的很多 <code>API</code> 名字都看着差不多且令人迷惑, 比如: <code>gl.createBuffer</code>, <code>gl.createFramebuffer</code>, <code>gl.createRemderbuffer</code>.
@@ -1534,8 +1544,8 @@ iz01.pop();
 再加上这些东西的使用频率很高, 这里就借着介绍 <code>API</code> 的机会学习这些概念.
 </p>
 </div>
-<div id="outline-container-org937ab7f" class="outline-3">
-<h3 id="org937ab7f"><span class="section-number-3">3.1.</span> 缓冲 (Buffer)</h3>
+<div id="outline-container-orgddf29d3" class="outline-3">
+<h3 id="orgddf29d3"><span class="section-number-3">3.1.</span> 缓冲 (Buffer)</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 <code>Buffer</code> 就是专门用来储存几何数据的缓冲, 使用 <code>gl.createBuffer</code> 进行创建.
@@ -1554,9 +1564,9 @@ iz01.pop();
 </p>
 </div>
 </div>
-<div id="outline-container-org47c1e51" class="outline-3">
-<h3 id="org47c1e51"><span class="section-number-3">3.2.</span> 贴图 (Texture)</h3>
-<div class="outline-text-3" id="text-3-2">
+<div id="outline-container-texture" class="outline-3">
+<h3 id="texture"><span class="section-number-3">3.2.</span> 贴图 (Texture)</h3>
+<div class="outline-text-3" id="text-texture">
 <p>
 贴图本质上就是一个图片对象, 为顶点/片元提供可选数据, 同时贴图也提供了一些针对图片的基本操作.
 </p>
@@ -1739,9 +1749,9 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, 
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org923f98e" class="outline-3">
-<h3 id="org923f98e"><span class="section-number-3">3.3.</span> 帧缓冲 (FrameBuffer)</h3>
-<div class="outline-text-3" id="text-3-3">
+<div id="outline-container-fbo" class="outline-3">
+<h3 id="fbo"><span class="section-number-3">3.3.</span> 帧缓冲 (FrameBuffer)</h3>
+<div class="outline-text-3" id="text-fbo">
 <p>
 帧缓冲是一个缓冲集合, 该集合包含若干个渲染数据, 所谓渲染数据就是渲染结果的拆分:
 </p>
@@ -1874,11 +1884,15 @@ renderScene();
 <p>
 举个通俗点的例子, 比如拍照, 照片就是帧缓冲的贴图, 使用软件对照片进行美化就是后处理, 当然也可以对后处理结果再做一次后处理, 个人把这种情况叫做多阶段后处理(<code>multi pass post procesing</code>).
 </p>
+
+<p>
+在 <code>3D</code> 图形程序的开发中, 后处理的使用频率非常高, 特别是游戏开发, 想实现风格化的美术风格, 后处理是必不可少的手段.
+</p>
 </div>
 </div>
 </div>
-<div id="outline-container-org41591e4" class="outline-2">
-<h2 id="org41591e4"><span class="section-number-2">4.</span> 搭建自己的 Shadertoy</h2>
+<div id="outline-container-org1e78f52" class="outline-2">
+<h2 id="org1e78f52"><span class="section-number-2">4.</span> 搭建自己的 Shadertoy</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 如果想在编写 <code>shader</code> 这条路上走得远, 那么必须得掌握必要的数学基础, 读懂别人 <code>shader</code> 并从中学习, 自己还要动手实践.
@@ -1960,86 +1974,6 @@ renderScene();
 另外, <code>Lewis Lepton</code> 使用 <code>glslViewer</code> 作为演示工具来做了一系列入门短视频 <a href="https://www.youtube.com/watch?v=HIvNePu7UEE&amp;list=PL4neAtv21WOmIrTrkNO3xCyrxg4LKkrF7">Shader Tutorial Series</a>, 每个视频 4 分钟左右, 是一套不错的教程, 理解教程里面的代码能够让你快速熟悉 <code>Shader</code> 编程.
 </p>
 
-<p>
-除了 <code>glslViewer</code> 的教程外, 还有一个 <code>Shadertoy Tutorial</code> 系列的教程也相当不错:
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/47-shadertoy-tutorial-part-1">Shadertoy Tutorial Part 1 - Intro</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/48-shadertoy-tutorial-part-2">Shadertoy Tutorial Part 2 - Circles and Animation</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/49-shadertoy-tutorial-part-3">Shadertoy Tutorial Part 3 - Squares and Rotation</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/50-shadertoy-tutorial-part-4">Shadertoy Tutorial Part 4 - Multiple 2D Shapes and Mixing</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/51-shadertoy-tutorial-part-5">Shadertoy Tutorial Part 5 - 2D SDF Operations and More 2D Shapes</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/52-shadertoy-tutorial-part-6">Shadertoy Tutorial Part 6 - 3D Scenes with Ray Marching</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/53-shadertoy-tutorial-part-7">Shadertoy Tutorial Part 7 - Unique Colors and Multiple 3D Objects</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/54-shadertoy-tutorial-part-8">Shadertoy Tutorial Part 8 - 3D Rotation</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/55-shadertoy-tutorial-part-9">Shadertoy Tutorial Part 9 - Camera Movement</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/56-shadertoy-tutorial-part-10">Shadertoy Tutorial Part 10 - Camera Model with a Lookat Point</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/57-shadertoy-tutorial-part-11">Shadertoy Tutorial Part 11 - Phong Reflection Model</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/58-shadertoy-tutorial-part-12">Shadertoy Tutorial Part 12 - Fresnel and Rim Lighting</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/59-shadertoy-tutorial-part-13">Shadertoy Tutorial Part 13 - Shadows</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/60-shadertoy-tutorial-part-14">Shadertoy Tutorial Part 14 - SDF Operations</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/61-snowman-shader-in-shadertoy">Snowman Shader in Shadertoy</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/62-shadertoy-tutorial-part-15">Shadertoy Tutorial Part 15 - Channels, Textures, and Buffers</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/63-shadertoy-tutorial-part-16">Shadertoy Tutorial Part 16 - Cubemaps and Reflections</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/64-shader-resources">Shader Resources</a>
-</p>
-
-<p>
-<a href="https://inspirnathan.com/posts/65-glow-shader-in-shadertoy">Glow Shader in Shadertoy</a>
-</p>
-
 <hr />
 
 <p>
@@ -2118,24 +2052,34 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 不管怎么说, 如果想要在游戏视觉特效的开发上得心应手, 那么它们两者都很重要.
 </p>
 
-<blockquote>
 <p>
 你可能会听到有人说 <code>ShaderToy</code> 的例子有点太过"邪道", 对游戏开发来说用处不大.
 </p>
 
 <p>
-但我想说的是 "放屁", 就我见过的一些游戏 <code>Demo</code>, 有好几个用了 <code>SDF</code> 替代粒子系统从而大大地节省了画面上的开销.
+这个观点其实是不正确的, 游戏开发会使用到很多出现在 <code>ShaderToy</code> 上的技巧,
 </p>
 
 <p>
-再说难道游戏里面用到的噪声算法在 <code>ShaderToy</code> 里面看不到吗? 退一步讲, 难道里面的各种数学知识用不上?
+<code>ShaderToy</code> 的这些技巧类似于数学中的九九乘法表, 都是很基础且重要的知识,
 </p>
-</blockquote>
+
+<p>
+比如说噪声算法, 图像处理, <code>SDF</code> 等等, 有想了解的话可以阅读我的另外一篇笔记: <a href="../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html">ShaderToy常见代码解释</a>.
+</p>
+
+<p>
+他们的观点可能来源于 <code>ShaderToy</code> 不怎么涉及 <code>FBO</code>, <code>VertexShader</code> 这些经常在游戏开发接触的东西,
+</p>
+
+<p>
+如果是这样的话可以考虑使用一些图形库进行实践学习, 比如 <code>three.js</code>.
+</p>
 </div>
 </div>
-<div id="outline-container-org56a810d" class="outline-2">
-<h2 id="org56a810d"><span class="section-number-2">5.</span> 学习使用 Three.js 进行实践</h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-guide-to-learn-threejs" class="outline-2">
+<h2 id="guide-to-learn-threejs"><span class="section-number-2">5.</span> 学习使用 three.js 进行实践</h2>
+<div class="outline-text-2" id="text-guide-to-learn-threejs">
 <p>
 想学习游戏开发的 <code>Shader</code> 编程的话, 通常来说是直接上手游戏引擎的.
 </p>
@@ -2157,11 +2101,11 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-这里推荐 <code>Three.js</code> 作为开发工具, 它对 <code>WebGL API</code> 封装程度比起游戏引擎对 <code>WebGL/OpenGL API</code> 的封装程度要低,
+这里推荐 <code>three.js</code> 作为开发工具, 它对 <code>WebGL API</code> 封装程度比起游戏引擎对 <code>WebGL/OpenGL API</code> 的封装程度要低,
 </p>
 
 <p>
-在使用难度上对 <code>WebGL API</code> 进行了大幅度的简化. 虽然 <code>Three.js</code> 定位上不是游戏引擎,
+在使用难度上对 <code>WebGL API</code> 进行了大幅度的简化. 虽然 <code>three.js</code> 定位上不是游戏引擎,
 </p>
 
 <p>
@@ -2169,7 +2113,7 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-<code>Three.js</code> 的学习成本比起游戏引擎更低, 使用的 <code>JavaScript</code> 语言, 只要有一个现代浏览器就可以进行开发了.
+<code>three.js</code> 的学习成本比起游戏引擎更低, 使用的 <code>JavaScript</code> 语言, 只要有一个现代浏览器就可以进行开发了.
 </p>
 
 <p>
@@ -2177,11 +2121,11 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-学习 <code>Three.js</code> 的正确方式并非是通过扣文档来掌握它的 <code>API</code>, 这些 <code>API</code> 规定到底就是图形学知识的实现,
+学习 <code>three.js</code> 的正确方式并非是通过扣文档来掌握它的 <code>API</code>, 这些 <code>API</code> 规定到底就是图形学知识的实现,
 </p>
 
 <p>
-也就是学好图形学的知识再读个文档基本上知道怎么用这些 <code>API</code> 了, 而且文档上最多只会说明白这个 <code>API</code> 是对应哪个图形学知识,
+学好图形学的知识再读个文档就知道怎么用这些 <code>API</code> 了, 而且文档上最多只会说明白这个 <code>API</code> 是对应哪个图形学知识,
 </p>
 
 <p>
@@ -2189,15 +2133,15 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-最后一个原因是 <code>API</code> 会随着 <code>Three.js</code> 的升级而发生改变, 扣文档学 <code>API</code> 容易使得花了大力气学习的知识被浪费掉.
+最后一个原因是 <code>API</code> 会随着 <code>three.js</code> 的升级而发生改变, 扣文档学 <code>API</code> 容易使得花了大力气学习的知识被浪费掉.
 </p>
 
 <p>
 因此, 在掌握了图形学基础的情况下, 只着重掌握以下几点即可.
 </p>
 </div>
-<div id="outline-container-org785d4cc" class="outline-3">
-<h3 id="org785d4cc"><span class="section-number-3">5.1.</span> 如何搭建基础项目</h3>
+<div id="outline-container-orgc2049de" class="outline-3">
+<h3 id="orgc2049de"><span class="section-number-3">5.1.</span> 如何搭建基础项目</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 这一点阅读文档 <a href="https://threejs.org/manual/#en/creating-a-scene">Creating a Scene</a> 即可, 它介绍了一个最基础的场景需要什么.
@@ -2276,8 +2220,8 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </ul>
 </div>
 </div>
-<div id="outline-container-org2fea439" class="outline-3">
-<h3 id="org2fea439"><span class="section-number-3">5.2.</span> 如何把 <code>Shader</code> 应用到物体上</h3>
+<div id="outline-container-org2ee312f" class="outline-3">
+<h3 id="org2ee312f"><span class="section-number-3">5.2.</span> 如何把 <code>Shader</code> 应用到物体上</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 <code>Three.js</code> 有两种 <code>Material</code> 子类支持 <code>Shader</code> 编程: <a href="https://threejs.org/docs/?q=ShaderMate#api/en/materials/ShaderMaterial">ShaderMaterial</a> 和 <a href="https://threejs.org/docs/?q=ShaderMate#api/en/materials/RawShaderMaterial">RawShaderMaterial</a>.
@@ -2288,7 +2232,7 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-<code>Three.js</code> 的 <code>Shader</code> 编译器支持 <code>#include</code> 宏引入内置 <code>Shader</code> 代码, 从而提供内置函数,
+<code>three.js</code> 的 <code>Shader</code> 编译器支持 <code>#include</code> 宏引入内置 <code>Shader</code> 代码, 从而提供内置函数,
 </p>
 
 <p>
@@ -2393,7 +2337,7 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </blockquote>
 
 <p>
-简单来说是调用在 <code>Shader</code> 解析和编译之前. <code>onBeforeCompile</code> 的第一个参数是一个 <code>Shader</code> 对象(参考 <code>ShaderMaterial</code> 的参数),
+简单来说是在 <code>Shader</code> 解析和编译之前被调用. <code>onBeforeCompile</code> 的第一个参数是一个 <code>Shader</code> 对象(参考 <code>ShaderMaterial</code> 的参数),
 </p>
 
 <p>
@@ -2401,27 +2345,203 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 </p>
 
 <p>
-因此, 可以在这个函数里对 <code>Shader</code> 对象进行修改影响最终结果.
+因此, 可以在这个函数里对 <code>Shader</code> 对象进行修改影响最终结果. <code>Material</code> 类本身不包含 <code>Shader</code> 代码,
 </p>
 
 <p>
-这里推荐阅读 <a href="https://github.com/pailhead/three.js/blob/materials-multi-uv/examples/webgl_materials_extended_multiple_uvs.html">webgl materials extended multiple uvs</a> 和 <a href="https://medium.com/@pailhead011/extending-three-js-materials-with-glsl-78ea7bbb9270">extending-three-js-materials-with-glsl</a> 这两个参考资料.
+在调用 <code>onBeforeCompile</code> 前会<a href="https://github.com/mrdoob/three.js/blob/r179/src/renderers/webgl/WebGLPrograms.js#L573">根据 Material 的具体类型映射到对应 Shader 对象</a>, 以此<a href="https://github.com/mrdoob/three.js/blob/r179/src/renderers/WebGLRenderer.js#L2084">作为 onBeforeCompile 的参数</a>,
+</p>
+
+<p>
+所有 <code>Shader</code> 对象的定义都可以在 <a href="https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderLib.js">shaderLib.js (r179)</a> 中找到. 现在大部分项目的渲染都避不开 <code>PBR</code> 渲染了, 是修改常客,
+</p>
+
+<p>
+熟悉 <code>three.js</code> 的 <a href="https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderLib/meshphysical.glsl.js">PBR Shader (r179)</a> 就很有必要了, 我个人拓展方法是找出可以替换成自己 <code>shader</code> 的地方进行替换,
+</p>
+
+<p>
+<code>vertex shader</code> 和 <code>fragment shader</code> 的情况有所不同.
+</p>
+</div>
+<div id="outline-container-org44a5908" class="outline-4">
+<h4 id="org44a5908"><span class="section-number-4">5.2.1.</span> 拓展 MeshStandardMaterial 的 Vertex Shader</h4>
+<div class="outline-text-4" id="text-5-2-1">
+<p>
+<code>Vertex shader</code> 一般只是替换它计算 <code>gl_Position</code> 的方式, 为此找到了首次计算的地方: <code>#include &lt;clipping_planes_vertex&gt;</code>,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span>        #include &lt;logdepthbuf_vertex&gt;
+        #include &lt;clipping_planes_vertex&gt;
+
+      vViewPosition = - mvPosition.xyz;
+
+      #include &lt;worldpos_vertex&gt;
+      #include &lt;shadowmap_vertex&gt;
+      #include &lt;fog_vertex&gt;
+
+<span style="color: #b0c4de;">#ifdef</span> USE_TRANSMISSION
+
+      vWorldPosition = worldPosition.xyz;
+
+<span style="color: #b0c4de;">#endif</span>
+</pre>
+</div>
+
+<p>
+<code>clipping_planes_vertex</code> 的内容是:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">src/renderers/shaders/ShaderChunk/project_vertex.glsl.js
+</span><span style="color: #00ffff;">export</span> <span style="color: #00ffff;">default</span> <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">glsl</span><span style="color: #ff7f24;"> */</span><span style="color: #ffa07a;">`
+vec4 mvPosition = vec4( transformed, 1.0 );
+
+</span><span style="color: #b0c4de;">#ifdef</span><span style="color: #ffa07a;"> USE_BATCHING
+
+      mvPosition = batchingMatrix * mvPosition;
+
+</span><span style="color: #b0c4de;">#endif</span><span style="color: #ffa07a;">
+
+</span><span style="color: #b0c4de;">#ifdef</span><span style="color: #ffa07a;"> USE_INSTANCING
+
+      mvPosition = instanceMatrix * mvPosition;
+
+</span><span style="color: #b0c4de;">#endif</span><span style="color: #ffa07a;">
+
+mvPosition = modelViewMatrix * mvPosition;
+
+gl_Position = projectionMatrix * mvPosition;
+`</span>;
+</pre>
+</div>
+
+<p>
+所以 <code>vertex shader</code> 拓展方案为:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript">meshStandardMaterial.onBeforeCompile = <span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">parameters</span>) {
+
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ogVertexShader</span> = parameters.vertexShader
+
+  parameters.vertexShader = <span style="color: #ffa07a;">`
+  // add you code used in main(), like uniforms/attributes/varyings/functions`</span>
+  + ogVertexShader
+
+  parameters.vertexShader = parameters.vertexShader.replace(
+    <span style="color: #ffa07a;">"#include &lt;clipping_planes_vertex&gt;"</span>,
+
+    <span style="color: #ffa07a;">`#include &lt;clipping_planes_vertex&gt;
+
+    // add you code to compute gl_Position`</span>
+  )
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf7d4e09" class="outline-4">
+<h4 id="orgf7d4e09"><span class="section-number-4">5.2.2.</span> 拓展 MeshStandardMaterial 的 Fragment Shader</h4>
+<div class="outline-text-4" id="text-5-2-2">
+<p>
+<code>fragment shader</code> 的思路也一样, 找出第一次计算 <code>gl_FragColor</code> 的地方 <code>#include &lt;opaque_fragment&gt;</code> 进行替换,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">...
+</span><span style="color: #98fb98;">vec3</span> outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;
+
+<span style="color: #b0c4de;">#ifdef</span> USE_SHEEN
+
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Sheen energy compensation approximation calculation can be found at the end of
+</span>      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://drive.google.com/file/d/1T0D1VSyR4AllqIJTQAraEIzjlb5h4FKH/view?usp=sharing
+</span>      <span style="color: #98fb98;">float</span> sheenEnergyComp = 1.0 - 0.157 * max3( material.sheenColor );
+
+      outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
+
+<span style="color: #b0c4de;">#endif</span>
+
+<span style="color: #b0c4de;">#ifdef</span> USE_CLEARCOAT
+
+      <span style="color: #98fb98;">float</span> dotNVcc = saturate( <span style="color: #b0c4de;">dot</span>( geometryClearcoatNormal, geometryViewDir ) );
+
+      <span style="color: #98fb98;">vec3</span> Fcc = F_Schlick( material.clearcoatF0, material.clearcoatF90, dotNVcc );
+
+      outgoingLight = outgoingLight * ( 1.0 - material.clearcoat * Fcc ) + ( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * material.clearcoat;
+
+<span style="color: #b0c4de;">#endif</span>
+
+#include &lt;opaque_fragment&gt;
+#include &lt;tonemapping_fragment&gt;
+#include &lt;colorspace_fragment&gt;
+#include &lt;fog_fragment&gt;
+#include &lt;premultiplied_alpha_fragment&gt;
+#include &lt;dithering_fragment&gt;
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">src/renderers/shaders/ShaderChunk/opaque_fragment.glsl.js
+</span><span style="color: #00ffff;">export</span> <span style="color: #00ffff;">default</span> <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">glsl</span><span style="color: #ff7f24;"> */</span><span style="color: #ffa07a;">`
+</span><span style="color: #b0c4de;">#ifdef</span><span style="color: #ffa07a;"> OPAQUE
+diffuseColor.a = 1.0;
+</span><span style="color: #b0c4de;">#endif</span><span style="color: #ffa07a;">
+
+</span><span style="color: #b0c4de;">#ifdef</span><span style="color: #ffa07a;"> USE_TRANSMISSION
+diffuseColor.a *= material.transmissionAlpha;
+</span><span style="color: #b0c4de;">#endif</span><span style="color: #ffa07a;">
+
+gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+`</span>;
+</pre>
+</div>
+
+<p>
+想拓展 <code>MeshStandardMaterial</code> 的 <code>fragment shader</code> 的话可以这样替换:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript">meshStandardMaterial.onBeforeCompile = <span style="color: #00ffff;">function</span>(<span style="color: #eedd82;">parameters</span>) {
+
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">ogFragmentShader</span> = parameters.vertexShader
+
+  parameters.fragmentShader = <span style="color: #ffa07a;">`
+  // add you code used in main(), like uniforms/varyings/functions`</span>
+    + ogFragmentShader
+
+  parameters.fragmentShader = parameters.vertexShader.replace(
+    <span style="color: #ffa07a;">"#include &lt;opaque_fragment&gt;"</span>,
+
+    <span style="color: #ffa07a;">`#include &lt;opaque_fragment&gt;
+
+  // add you code to compute gl_FragColor`</span>
+  )
+}
+</pre>
+</div>
+
+<p>
+<code>#include &lt;opaque_fragment&gt;</code> 后面是针对不同设备进行颜色映射处理, 所以有需要也可以对后面的 <code>#include</code> 进行替换.
 </p>
 </div>
 </div>
-<div id="outline-container-orge52208c" class="outline-3">
-<h3 id="orge52208c"><span class="section-number-3">5.3.</span> 如何进行后处理</h3>
-<div class="outline-text-3" id="text-5-3">
+</div>
+<div id="outline-container-how-to-postprocessing-in-threejs" class="outline-3">
+<h3 id="how-to-postprocessing-in-threejs"><span class="section-number-3">5.3.</span> 如何进行后处理</h3>
+<div class="outline-text-3" id="text-how-to-postprocessing-in-threejs">
 <p>
 了解如何 <a href="https://threejs.org/manual/#en/how-to-use-post-processing">使用 EffectComposer 类</a> 和各种内置 <a href="https://github.com/mrdoob/three.js/blob/8722ea5455a6a6623f194b9a60ef5887ac16a4b0/examples/jsm/postprocessing/Pass.js">Pass</a> 的子类完成后处理.
 </p>
 
 <p>
-诚然, 内置后处理效果是无法满足全部人的需求, 所以 <code>Three.js</code> 也开放了自定义后处理效果的能力.
+诚然, 内置后处理效果是无法满足全部人的需求, 所以 <code>three.js</code> 也开放了自定义后处理效果的能力.
 </p>
 
 <p>
-目前有两种自定义后处理效果的方法, 一是为 <code>ShaderPass</code> 编写 <code>Shader</code>, 上一个文档链接有说明如何进行;
+目前有两种自定义后处理效果的方法, 一是为 <code>ShaderPass</code> 编写 <code>Shader</code>, 这个官方文档就有教;
 </p>
 
 <p>
@@ -2443,7 +2563,10 @@ PS: 这位大佬除了很多教程文章和视频, 都是非常不错的进阶�
 <p>
 换而言之, 多阶段后处理就得使用定义 <code>Pass</code> 子类方案.
 </p>
-
+</div>
+<div id="outline-container-fbo-in-threejs" class="outline-4">
+<h4 id="fbo-in-threejs"><span class="section-number-4">5.3.1.</span> Three.js 中使用帧缓冲</h4>
+<div class="outline-text-4" id="text-fbo-in-threejs">
 <p>
 多阶段后处理要求掌握 <a href="https://threejs.org/docs/?q=WebGLRender#api/en/renderers/WebGLRenderTarget">WebGLRenderTarget</a> 类的用法, 该类所对应的就是帧缓冲.
 </p>
@@ -2487,7 +2610,8 @@ void main () {
   `</span>
   });
   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21019;&#24314;&#29992;&#20110;&#33719;&#21462;&#27861;&#32447;&#22330;&#26223;&#28210;&#26579;&#32467;&#26524;&#30340; FBO, &#30456;&#24403;&#20110; const normalFBO = gl.createFramebuffer();
-</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(width * samples, height * samples, {
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+    width * samples, height * samples, {
     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21487;&#20197;&#22312;&#36825;&#37324;&#35774;&#32622;&#36148;&#22270;&#21442;&#25968;: wrapS/wrapT/magFilter/minFilter &#31561;&#31561;
 </span>  });
   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35201;&#24819;&#33719;&#21462;&#22330;&#26223;&#30340;&#27861;&#32447;&#36148;&#22270;, &#35753;&#27861;&#32447;&#26448;&#36136;&#35206;&#30422;&#22330;&#26223;&#20013;&#25152;&#26377;&#29289;&#20307;&#30340;&#21407;&#26448;&#36136;
@@ -2508,18 +2632,90 @@ void main () {
 
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#30340;&#28145;&#24230;&#36148;&#22270;
 </span>{
-  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#30340;&#28210;&#26579;&#32467;&#26524;&#36148;&#22270;&#27604;&#36215;&#27861;&#32447;&#36148;&#22270;&#35201;&#31616;&#21333;&#24471;&#22810;, Three.js &#24050;&#32463;&#20869;&#37096;&#23436;&#25104;&#35206;&#30422;&#21644;&#36824;&#21407;&#25972;&#20010;&#22330;&#26223;&#30340;&#26448;&#36136;
-</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">depthFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(width * samples, height * samples);
-  depthFBO.depthTexture = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.DepthTexture</span>(width * samples, height * samples);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#30340;&#28210;&#26579;&#32467;&#26524;&#36148;&#22270;&#27604;&#36215;&#27861;&#32447;&#36148;&#22270;&#35201;&#31616;&#21333;&#24471;&#22810;, three.js &#24050;&#32463;&#20869;&#37096;&#23436;&#25104;&#35206;&#30422;&#21644;&#36824;&#21407;&#25972;&#20010;&#22330;&#26223;&#30340;&#26448;&#36136;
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">depthFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+    width * samples, height * samples);
+  depthFBO.depthTexture = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.DepthTexture</span>(
+    width * samples, height * samples);
   renderer.setRenderTarget(depthFBO);
   renderer.render(scene, camera);
   renderer.setRenderTarget(<span style="color: #7fffd4;">null</span>);
   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">depthFBO.depthTexture &#35775;&#38382;&#28210;&#26579;&#32467;&#26524;&#36148;&#22270;
 </span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderLib/depth.glsl.js
-</span>}  
+</span>}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21035;&#24536;&#35760; FBO &#21487;&#20197;&#20851;&#32852;&#22810;&#20010;&#38468;&#20214;, &#36825;&#24847;&#21619;&#30528;&#21487;&#20197;&#21482;&#20351;&#29992;&#19968;&#20010; WebGLRenderTarget &#21516;&#26102;&#29983;&#25104;&#28145;&#24230;&#36148;&#22270;&#21644;&#27861;&#32447;&#36148;&#22270;
+</span>{
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalMaterial</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.ShaderMaterial</span>({
+    uniforms: {},
+    vertexShader: <span style="color: #ffa07a;">`
+varying vec3 vNormal;
+
+void main () {
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vNormal = normalize(normalMatrix * normal);
+}
+  `</span>,
+    fragmentShader: <span style="color: #ffa07a;">`
+varying vec3 vNormal;
+
+void main () {
+  vec3 color = vNormal * 0.5 + 0.5;
+  gl_FragColor = vec4(color, 1.0);
+}
+  `</span>
+  });
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">normalFBO</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+    width * samples, height * samples);
+  normalFBO.depthTexture = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.DepthTexture</span>(
+    width * samples, height * samples);
+  <span style="color: #00ffff;">let</span> <span style="color: #eedd82;">overrideMaterialOriginal</span> = scene.overrideMaterial;
+  scene.overrideMaterial = normalMaterial;
+  renderer.setRenderTarget(normalFBO);
+  renderer.render(scene, camera);
+  scene.overrideMaterial = overrideMaterialOriginal;
+  renderer.setRenderTarget(<span style="color: #7fffd4;">null</span>);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">normalFBO.texture &#33719;&#21462;&#27861;&#32447;&#36148;&#22270;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">normalFBO.depthTexture &#33719;&#21462;&#28145;&#24230;&#36148;&#22270;
+</span>}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462;&#23450;&#21521;&#20809;&#28304;&#30340;&#28145;&#24230;&#36148;&#22270;
+</span>{
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">dirLight</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.DirectionalLight</span>(<span style="color: #ffa07a;">'#fff'</span>, 4.5);
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#22312;&#31532;&#19968;&#27425;&#28210;&#26579;&#21518;, dirLight.shadow.map &#25165;&#20250;&#34987;&#21021;&#22987;&#21270;,
+     &#23427;&#20063;&#26159;&#19968;&#20010; WebGLRenderTarget, &#26080;&#38656;&#25163;&#21160;&#35843;&#29992;
+</span><span style="color: #ff7f24;">   */</span>
+  <span style="color: #00ffff;">if</span> (dirLight.shadow.map) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">dirLight.shadow.map.texture &#38452;&#24433;&#36148;&#22270;
+</span>  }
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">dirLight.shadow.matrix &#29992;&#20110;&#35745;&#31639;&#28145;&#24230;&#30340;&#30697;&#38453;, &#36890;&#24120;&#37197;&#21512;&#38452;&#24433;&#36148;&#22270;&#20351;&#29992;
+</span>}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33719;&#21462;&#28857;&#20809;&#28304;&#30340;&#28145;&#24230;&#36148;&#22270;
+</span>{
+  <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">pointLight</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.PointLight</span>(<span style="color: #ffa07a;">'#fff'</span>, 4.5)
+  <span style="color: #00ffff;">if</span> (pointLight.shadow.map) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">pointLight.shadow.map.texture &#38452;&#24433;&#36148;&#22270;
+</span>  }
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">pointLight.shadow.matrix &#29992;&#20110;&#35745;&#31639;&#39030;&#28857;&#21464;&#25442;
+</span>}
 </pre>
 </div>
 
+<blockquote>
+<p>
+点光源的阴影贴图并非立方体贴图而是 2D 贴图, 在使用时要根据光照方向计算出 uv 坐标进行读取,
+</p>
+
+<p>
+具体参考 <a href="../../2020/08/graphics-opengl-light-and-material.html#no-cube-map-shadow-mapping">位置光源的阴影#不使用 CubeMap</a>.
+</p>
+</blockquote>
+</div>
+</div>
+<div id="outline-container-orgaa52a87" class="outline-4">
+<h4 id="orgaa52a87"><span class="section-number-4">5.3.2.</span> 继承 Pass 类</h4>
+<div class="outline-text-4" id="text-5-3-2">
 <p>
 接下来要做的就是明白如何继承 <code>Pass</code> 类需要实现哪些关键内容,
 </p>
@@ -2852,11 +3048,7 @@ void main () {
 </div>
 
 <p>
-因此结论是, 在实现 <code>Pass</code> 的子类时, 重点是实现它 <code>render</code> 方法,
-</p>
-
-<p>
-<code>render</code> 所作的事情可以概括为:
+因此结论是, 在实现 <code>Pass</code> 的子类时, 重点是实现它 <code>render</code> 方法, <code>render</code> 所作的事情可以概括为:
 </p>
 
 <p>
@@ -2872,8 +3064,9 @@ void main () {
 </p>
 </div>
 </div>
-<div id="outline-container-orga0d913d" class="outline-3">
-<h3 id="orga0d913d"><span class="section-number-3">5.4.</span> 项目结构推荐</h3>
+</div>
+<div id="outline-container-org07828b1" class="outline-3">
+<h3 id="org07828b1"><span class="section-number-3">5.4.</span> 项目结构推荐</h3>
 <div class="outline-text-3" id="text-5-4">
 <p>
 如果按照文档教程的方式开发项目, 把所有内容都写在一个文件上, 必然会面临复杂度提高且难以维护的问题.
@@ -2887,20 +3080,18 @@ void main () {
 (PS: 本人使用了 <code>TypeScript</code> 开发, 但对于 <code>JavaScript</code> 也合适, <a href="../../../files/Outline.zip">例子的源代码</a>)
 </p>
 
-<blockquote>
-<p>
+<pre class="example" id="orgd14c535">
 eventEmitter.ts: 事件派发器
-disposer.ts:     专门针对 <code>Scene</code> 实例进行内存释放
-access.ts:       应对模块化, 对 <code>Scene/Camera/WebGLRenderer</code> 等实例进行全局化
-camera.ts:       对全局 <code>Camera</code> 实例进行初始化和配置
-main.ts:         对 <code>Scene/Camera/WebGLRenderer</code> 等全局实例进行调度, 项目的入口
+disposer.ts:     专门针对 Scene 实例进行内存释放
+access.ts:       应对模块化, 对 Scene/Camera/WebGLRenderer 等实例进行全局化
+camera.ts:       对全局 Camera 实例进行初始化和配置
+main.ts:         对 Scene/Camera/WebGLRenderer 等全局实例进行调度, 项目的入口
 materials/:      存放自定义材质
 postProcessing/: 存放自定义后处理
-postProc.ts:     对全局 <code>EffectComposer</code> 实例进行初始化和配置
-renderer.ts:     对全局 <code>WebGLRenderer</code> 实例进行初始化和配置
-scene.ts:        对全局 <code>Scene</code> 实例进行初始化和配置, 该文件负责定义加载 <code>3D</code> 物体, 设置光源
-</p>
-</blockquote>
+postProc.ts:     对全局 EffectComposer 实例进行初始化和配置
+renderer.ts:     对全局 WebGLRenderer 实例进行初始化和配置
+scene.ts:        对全局 Scene 实例进行初始化和配置, 该文件负责定义加载 =3D= 物体, 设置光源
+</pre>
 
 <p>
 这个结构的思路是, 如果新增一个重要的全局实例, 那么就为它单独编写一个模块进行初始化和配置,
@@ -2944,7 +3135,7 @@ scene.ts:        对全局 <code>Scene</code> 实例进行初始化和配置, �
 <div id="postamble" class="status">
 <p class="date">Date: 2022-02-11</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-09-08 Mon 22:07</p>
+<p class="date">Created: 2025-09-25 Thu 19:56</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

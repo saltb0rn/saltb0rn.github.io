@@ -785,7 +785,9 @@ $mix(l, r, a)$ 的函数图像必定符合这个规律: $x = 0$ 时 $y = l$, $x 
 
 *** [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/dFdx.xhtml][函数 - dFdx/dFdy]]
 
-要想理解 =dFdx/dFdy= 的作用, 得想知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
+只有 =Fragment Shader= 支持这两函数, 要想理解它们的作用,
+
+得先知道 =GPU= 每次都是以 $2 \times 2$ 这样规模的片元方块作为单位进行处理的, 也就是每次同时调用 4 个 =Fragment Shaders=,
 
 因此, 在一个 =Fragment Shader= 中, 对于 =GPU= 来说可以获取当前片元所在方块内的相邻片元的情况.
 
@@ -1882,7 +1884,9 @@ https://iquilezles.org/articles/sfrand/
 若感兴趣, 可以看一下这个[[https://www.bilibili.com/video/BV1rA411Z7eP/?spm_id_from=333.337.search-card.all.click&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30][视频: 计算机如何生成(伪)随机]].
 #+end_quote
 
-=Shader= 里用的是确定性随机函数, 需要开发人员自己实现的, 通常是使用周期函数来实现, 比如 $\sin$, 并把它的值域限定在 $[0, 1]$ 上.
+=Shader= 里用的是确定性随机函数, 需要开发人员自己实现的, 确定性随机函数本质上是一个周期函数,
+
+比如 $\sin$, 并把它的值域限定在 $[0, 1]$ 上.
 
 #+begin_src glsl
   float rand = fract(sin(x));  // 限制在 [0, 1] 的范围内
@@ -1900,7 +1904,7 @@ https://iquilezles.org/articles/sfrand/
 #+attr_html: :width 504px
 [[../../../files/fract-sin-100000.png]]
 
-即便它看着混乱, 但仍是确定性随机.
+即便它看着混乱随机, 但仍是可以预测.
 
 #+begin_quote
 随机数的生成并不只有一种算法, 你可以充分使用自己的知识去创建随机函数.
@@ -1910,7 +1914,22 @@ https://iquilezles.org/articles/sfrand/
 
 一般来说, 编程语言中提供的随机函数都是像这个 $rand$ 一样服从均匀分布的.
 
-在实际开发中偶尔想让随机函数服从特定分布, 想要控制随机数的分布, 根据均匀分布的普遍性, 可以对服从均匀分布的随机数 $X$ 进行变换成服从其它分布的随机数 $Y$, 这需要掌握一定的概率论知识, 这里不详细展开了.
+在实际开发中偶尔想让随机函数服从特定分布, 想要控制随机数的分布, 根据均匀分布的普遍性,
+
+可以对服从均匀分布的随机数 $X$ 进行变换成服从其它分布的随机数 $Y$, 这需要掌握一定的概率论知识,
+
+在我的概率论学习笔记中有写到具体的[[../../2024/11/introduction-to-probability.html#implement-pdf-random-function][程序实现思路]], 以下是符合指数分布的随机函数的 =GLSL= 实现:
+
+#+BEGIN_SRC glsl
+  float inverse_cdf_exponential(float u, float lambda) {
+    return -log(1.0 - u) / lambda;
+  }
+
+  float exponential_random(float x, float lambda) {
+    float u = fract(sin(x) * 10000.0);
+    return inverse_cdf_exponential(u, lambda);
+  }
+#+END_SRC
 
 另外, =Pixelero= 也发布了一片[[https://pixelero.wordpress.com/2008/04/24/various-functions-and-various-distributions-with-mathrandom/][文章]]来介绍服从一些分布的随机数函数.
 
@@ -1932,7 +1951,7 @@ https://iquilezles.org/articles/sfrand/
   }
 #+END_SRC
 
-**** 向量函数形式的随机函数
+**** 向量值函数形式的随机函数
 
 这种随机函数是用来生成向量的, 在 =Shader= 开发中通常是用来根据坐标计算出对应片元的颜色, 这种函数既可以用标量, 也可以用向量作为输入, 最后以向量作为输出.
 
@@ -2142,6 +2161,55 @@ https://iquilezles.org/articles/sfrand/
   }
 #+END_SRC
 
+按照哈希函数去实现的随机函数也很常见, 这种函数方便预计算:
+
+
+
+#+begin_src glsl
+  float mod289(float x) {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+  }
+
+  vec2 mod289(vec2 x) {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+  }
+
+  vec3 mod289(vec3 x) {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+  }
+
+  vec4 mod289(vec4 x) {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+  }
+
+  // mod(34.0 * x * x + 10.0 * x, 289.0)
+  /* 34.0 * x * x + 10.0 * x 为非线性函数, 该函数具备雪崩效应(avalanche effect),
+     即输入发生微小改变会导致输出发生巨大且不可预测的变化, 或者说具备较大的非常数导数 */
+  float permute(float x) {
+       return mod289(((x*34.0)+10.0)*x);
+  }
+
+  vec2 permute(vec2 x) {
+       return mod289(((x*34.0)+10.0)*x);
+  }
+
+  vec3 permute(vec3 x) {
+       return mod289(((x*34.0)+10.0)*x);
+  }
+
+  vec4 permute(vec4 x) {
+       return mod289(((x*34.0)+10.0)*x);
+  }
+#+end_src
+
+#+begin_quote
+个人很喜欢该实现, 因为相比前面的实现来说太简单.
+
+该实现的理论基础是同余方程(=Nonlinear Congruence Equation=)中的二次同余: $kx^2 + bx + c \equiv a \pmod{m}$.
+
+奈何本人对数论不太熟悉, 所以这里就只留一个线索待日后探索.
+#+end_quote
+
 *** 噪声函数
 
 噪声 (=noise=) 也是一种随机, 但相比一般的随机, 噪声的过度显得更加平滑, 更自然, 适合用来生成丰富的视觉效果, 因此, 噪声也被成为平滑随机性 (=smooth randomness=).
@@ -2185,7 +2253,9 @@ $noise$ 的算法可以看作是在一条线上的两个点之间进行插值, �
 另外一个比较有名的插值函数是五次插值曲线: $g(t) = 6t^5 - 15t^4 + 10t^3$, 是 $smoothstep$ 的改进替代.
 #+end_quote
 
-=GLSL= 也提供了内置的噪音函数: [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/noise.xhtml][noise]], 但对于创意工作而言, 这个内置函数并不能完全满足创作者的需求, 所以基本上都是自己实现噪声函数.
+=GLSL= 也提供了内置的噪音函数: [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/noise.xhtml][noise]], 但对于创意工作而言,
+
+这个内置函数并不能完全满足创作者的需求, 所以基本上都是自己实现噪声函数, 或者使用第三方实现, 比如 [[https://github.com/patriciogonzalezvivo/lygia/tree/main/generative][lygia/generative]].
 
 噪声算法有很多, 很多艺术创作者会根据需求来选择合适的噪声算法来进行艺术创作, 比如柏林噪声算法(=Perlin Noise Algorithm=),
 
@@ -2260,7 +2330,7 @@ $noise$ 的算法可以看作是在一条线上的两个点之间进行插值, �
 #+end_src
 #+end_quote
 
-以 =2D= 噪声为例, 首先, 根据纹理坐标 $st$ 来确定其所处网格的 4 个角的坐标:
+以 =2D= 噪声为例, 首先, 根据纹理坐标 $st$ 来确定其所处网格(=lattice=)的 4 个角的坐标:
 
 $(floor(st.x), floor(st.y))$
 
@@ -2339,11 +2409,13 @@ $(floor(st.x) + 1.0, floor(st.y) + 1.0)$
 
 和值噪声算法的区别在于, 梯度噪声的随机函数以方向(=vec2/vec3/vec4=)作为输出, 值噪声的随机函数以值(=float=)作为输出.
 
-和值噪声的生成类似, 以 =2D= 梯度噪声为例, 通过随机函数为 4 个角生成梯度向量(需要归一化), 再通过点积运算把它们转换成 4 个标量, 之后的过程就与值噪声的计算一样.
+和值噪声的生成类似, 以 =2D= 梯度噪声为例, 通过随机函数为 4 个角生成梯度向量(需要归一化), 再通过点积运算把它们转换成 4 个标量,
 
-在使用点积把梯度向量 $\nabla$ 转换成标量时, 还需要为每个角 $p$ 计算出它的角指向(也称为距离向量), 假设 $o$ 是网格内的坐标, 那么角指向为 $v = (o.x - p.x, o.y - p.y)$, 最后计算角指向和梯度向量之间的点积 $v \cdot \nabla$,
+之后的过程就与值噪声的计算一样. 在使用点积把梯度向量 $\nabla$ 转换成标量时, 需要为每个角 $p$ 计算出它的角指向(也称为距离向量),
 
-这个点积就是角指向 $\vec{op}$ 在梯度向量 $\nabla$ 的投影, 也就是 $\vec{op}$ 在 $\nabla$ 方向上的贡献值.
+假设 $o$ 是网格内的坐标, 那么角指向为 $v = (o.x - p.x, o.y - p.y)$, 最后计算角指向和梯度向量之间的点积 $v \cdot \nabla$.
+
+按照数学定义, 角指向是一个方向向量, 这个点积是方向导数, 换而言之, 梯度噪声的结果是一个方向导数.
 
 如下图所示, 绿色箭头为黄格字的梯度向量 $\nabla$, 黄点为 $o$, 蓝色箭头为角指向 $v$.
 
@@ -2353,7 +2425,7 @@ $(floor(st.x) + 1.0, floor(st.y) + 1.0)$
 按照该思路, 下面为 =GLSL= 的实现:
 
 #+BEGIN_SRC glsl
-  // 2D 向量函数形式的随机函数
+  // 2D 向量值函数形式的随机函数
   vec2 rand(vec2 st){
       st = vec2(dot(st, vec2(127.1,311.7)),
                 dot(st, vec2(269.5,183.3)));
@@ -2368,6 +2440,8 @@ $(floor(st.x) + 1.0, floor(st.y) + 1.0)$
     // vec2 u = f * f * (3.0 - 2.0 * f);
     vec2 u = smoothstep(vec2(0.0), vec2(1.0), f);
 
+    // a,b,c,d 是四个网格上的梯度
+    // va,vb,vc,vd 是四个角指向
     vec2 a = rand(i);
     vec2 va = f - vec2(0.0, 0.0);
     vec2 b = rand(i + vec2(1.0, 0.0));
@@ -2390,11 +2464,15 @@ $(floor(st.x) + 1.0, floor(st.y) + 1.0)$
 #+END_SRC
 
 #+begin_quote
-梯度的全称是梯度向量(=gradient vector=), 源于微积分中向量函数中的概念, 用来表示多元函数 $f$ 在各个分量上的变化率,
+如果对于前面梯度和方向导数之类的名词不了解, 那么建议阅读一下这段科普, 后面很多地方都出现了它们的应用.
+
+梯度的全称是梯度向量(=gradient vector=), 源于微积分中标量值函数, 用来表示多元标量值函数 $f$ 在各个分量上的变化率,
 
 这个变化率就是梯度向量, 以二维向量为例: $\nabla f(x, y) = (\frac{\partial f}{\partial x}, \frac{\partial f}{\partial y})$.
 
 梯度向量 $\nabla f(x, y)$ 表示在所有方向中使得 $f$ 的方向导数最大的那一个方向, 而 $|\nabla f(x, y)|$ 表示最大方向导数的变化率大小.
+
+在几何上, $\nabla f(x, y)$ 是 $f$ 在点 $(x, y)$ 上的法线向量.
 
 方向导数 $D_u f(x, y)$ 表示 $f$ 在某点 $(x, y)$ 上往某方向 $u$ 的变化率:
 
@@ -2483,6 +2561,12 @@ $\begin{equation*}\begin{aligned} P(f) &= a \cdot f \cdot (1 - u) + b \cdot (f -
 一元偶次函数的图像就是抛物线.
 #+end_quote
 
+***** COMMENT 柏林噪声
+
+理解柏林噪声, 使用 =GLSL= 实现柏林噪声.
+
+https://adrianb.io/2014/08/09/perlinnoise.html
+
 **** 单形噪声
 
 #+begin_quote
@@ -2546,7 +2630,7 @@ $\begin{equation*}\begin{aligned} P(f) &= a \cdot f \cdot (1 - u) + b \cdot (f -
 
 包括凹凸贴图(=bump mapping=), 位移贴图(=displacement mapping=), 解析抗锯齿(=analytical antialiasing=)以及使用旋度噪声(=curl nosie=)的粒子动画.
 
-为了解决这个问题, 单形噪声不再像柏林噪声那样根据两角的贡献值进行插值, 而是对每个角的贡献值进行求和作为噪声值.
+为了解决这个问题, 单形噪声不再像梯度噪声那样根据两角的贡献值进行插值, 而是对每个角的贡献值进行求和作为噪声值.
 
 #+attr_html: :width 504px
 [[../../../files/2d-simplex-summation-2.png]]
@@ -2718,19 +2802,23 @@ $\vec{y}$ 轴变换得到 $\vec{v}$ 轴: $\vec{v} = R(-\frac{\pi}{12}) \left( \b
 
 所以, 可以得出 $\begin{equation*} \begin{cases} a = d = \frac{1}{2\sqrt{2}}(\sqrt{3} + 1) \\ b = c = \frac{1}{2\sqrt{2}}(\sqrt{3} - 1) \\ \end{cases} \end{equation*}$, 这个变换可以用矩阵 $M_{r} = \frac{1}{2\sqrt{2}} \left( \begin{array}{c} \sqrt{3} + 1 & \sqrt{3} - 1 \\ \sqrt{3} - 1 & \sqrt{3} + 1 \end{array} \right)$ 表示.
 
-仅凭这些是没办法看出与代码有什么关系, 这是因为文中代码做了性能优化, 非常感谢 =Kristian Nielse= 的贡献, 不然破头也想不出来.
+仅凭这些是没办法看出与代码有什么关系, 这是因为文中代码做了性能优化,
+
+非常感谢 =Kristian Nielsen= 的贡献, 不然破头也想不出来.
 
 先来看一下从 $xy$ 到 $uv$ 之间变换: $\begin{equation*} \begin{cases} u = ax + by \\ v = cx + dy \end{cases} \end{equation*}$, 因为 $a = d$ 并且 $b = c$, 所以该关系可以写成 $\begin{equation*} \begin{cases} u = ax + by \\ v = bx + ay \end{cases} \end{equation*}$.
 
 整个变换需要 4 次乘法, 文中引入 "Fancy version of zero" 对变换进行重组得到: $\begin{equation*} \begin{cases} u = ax - bx + bx  + by = (a - b)x + b(x + y) \\ v = bx - by + by + ay = (a - b)y + b(x + y) \end{cases} \end{equation*}$,
 
-其中 $b(x + y)$ 是重复运算, 可以减少 1 次乘法运算, 再使得 $a - b = 1$, 则可以再去掉 2 次乘法运算, 那么整个变换只需要 1 次乘法运算.
+其中 $b(x + y)$ 是重复运算, 可以减少 1 次乘法运算; 再使得 $a - b = 1$, 则可以再去掉 2 次乘法运算 $\begin{cases} (a - b)x \\ (a - b)y \end{cases}$,
 
-因为 $a - b = \frac{\sqrt{2}}{2}$, 所以只要让 $a$ 和 $b$ 同时除以 $\frac{\sqrt{2}}{2}$ 或乘以 $\sqrt{2}$ 即可, 对应了开头说的统一缩放变换,
+那么整个变换只需要 1 次乘法运算 $b(x + y)$.
+
+因为 $a - b = \frac{\sqrt{2}}{2}$, 所以只要让 $a$ 和 $b$ 同时除以 $\frac{\sqrt{2}}{2}$ 或乘以 $\sqrt{2}$ 即可使得 $a - b = 1$, 对应了开头说的统一缩放变换,
 
 可以用矩阵 $M_{s} = \sqrt{2} \left( \begin{array}{c} 1 & 0 \\ 0 & 1 \end{array} \right)$ 表示.
 
-同时说明了最终的单形网格空间的基底向量并非单位向量: $\begin{equation*} \begin{cases} \sqrt{2} \times \frac{1}{2\sqrt{2}} = \frac{1}{2} \\ a_{1} = d_{1} = \frac{1}{2}(\sqrt{3} + 1) \\ b_{1} = c_{1} = \frac{1}{2}(\sqrt{3} - 1) \end{cases} \end{equation*}$.
+同时说明了最终的单形网格空间的基向量并非单位向量: $\begin{equation*} \begin{cases} \sqrt{2} \times \frac{1}{2\sqrt{2}} = \frac{1}{2} \\ a_{1} = d_{1} = \frac{1}{2}(\sqrt{3} + 1) \\ b_{1} = c_{1} = \frac{1}{2}(\sqrt{3} - 1) \end{cases} \end{equation*}$.
 
 再回过头来对比整个变换过程 $M = M_{s}M_{r}$ 和上面的代码, 其中 $b_{1}(x + y)$ 对应 $\mathrm{(xin + yin) * F2}$, 并且 $b_{1} = \mathrm{F2} = \frac{\sqrt{3} - 1}{2}$.
 
@@ -2865,7 +2953,7 @@ $\mathrm{grad3[gi0]}$ 是从预计算好的梯度表格中获取梯度:
                    {0,1,1},{0,-1,1},{0,1,-1},{0,-1,-1}};
 #+END_SRC
 
-原文中的二维单形噪声的梯度是三维向量, 而我们在实现时可以完全参考柏林噪声中的梯度计算生成二维梯度向量:
+原文中的二维单形噪声的梯度是三维向量, 而我们在实现时可以完全参考梯度噪声中的梯度计算生成二维梯度向量:
 
 $\mathrm{dot(grad3[gi0], x0, y0)}$ 就是梯度的 $xy$ 分量和角指向之间的点积, $\mathrm{n1}$ 和 $\mathrm{n2}$ 的贡献值计算同理.
 
@@ -2884,6 +2972,7 @@ $\sum\limits_{i=0}^{2} (0.5 - |\vec{d_{i}}|^2)^4 \vec{g_{i}}\vec{d_{i}} = \sum\l
 想让 $\vec{g_{i}} \cdot \vec{d_{i}}$ 最大, 要满足两个条件:
 
 1. $\vec{g_{i}}$ 和 $\vec{d_{i}}$ 之间的夹角 $\theta$ 为 0, 换而言之满足这样的关系: $\vec{g_{i}} = \lambda \vec{d_{i}}$, 其中 $\lambda \gt 0$;
+
 2. 两者的模长达到各自的最大值. 由于梯度向量 $\vec{g}$ 是预设的, 所以可以确定它的最大模长为 $\sqrt{2}$.
 
 
@@ -3060,7 +3149,7 @@ $G$ 的 =SDF= 的定义为 $f(p) = \begin{cases} d(p, \partial G) & \text{if } p
 
 最短意味着 $\vec{\varepsilon} = p_0 - p$ 与点 $p$ 上的切线/切平面垂直,
 
-对于二元标量函数而言, 点上的梯度向量正好也与该点上的切线/切平面垂直, 可以看作是切线/切平面上的法线.
+对于二元标量值函数而言, 点上的梯度向量正好也与该点上的切线/切平面垂直, 可以看作是切线/切平面上的法线.
 
 在实际运算中不可能找出 $p_0$ 的, 因为通常来说函数 $g$ 都是连续且可微的, 在该函数上有无数种取点可能, 所以穷举法取点是无法处理的.
 
@@ -3121,7 +3210,7 @@ $f(P) = 0$ 与 $f(P) = c$ 两个等值表面/等值线之间的差异 $c$ 可以
 
 它来源于导数的定义: $f^{'}(x) = \lim\limits_{h \to 0} \frac{f(x + h) - f(x)}{h} \rightarrow \lim\limits_{h \to 0} \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$, 对 $h$ 任取一个很小的值即可: $f^{'}(x) \approx \frac{f(x + \frac{h}{2}) - f(x - \frac{h}{2})}{h}$.
 
-如果函数 $y = f(x)$ 是一元标量函数, 那么要先把它转成隐函数 $F(x, y) = f(x) - y = 0$, 因为一元标量函数的导数是斜率, 而不是梯度向量.
+如果函数 $y = f(x)$ 是一元标量值函数, 那么要先把它转成隐函数 $F(x, y) = f(x) - y = 0$, 因为一元标量值函数的导数是斜率, 而不是梯度向量.
 
 所以使用中心差商法计算梯度向量的方法如下:
 
@@ -5046,6 +5135,24 @@ https://www.shadertoy.com/view/Mtd3DB
   }
 #+END_SRC
 
+**** COMMENT 把 SDF 应用在光栅用的 3D 模型中
+
+https://discourse.threejs.org/t/signed-distance-fields-for-fun-and-profit/77121
+
+https://discourse.threejs.org/t/generation-of-sdfgeometry-online/83262/7
+
+https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
+
+https://www.youtube.com/watch?v=1b5hIMqz_wM&t=261s&ab_channel=MartinDonald (Value) 的 GODOT 实现
+
+https://kosmonautblog.wordpress.com/2017/05/01/signed-distance-field-rendering-journey-pt-1/
+
+https://kosmonautblog.wordpress.com/2017/05/09/signed-distance-field-rendering-journey-pt-2/
+
+https://threejs.org/docs/#api/en/textures/Data3DTexture
+
+根据 3D 模型生成 =SDF= 贴图, 可以利用该贴图实现精确的物理碰撞效果, 也可以用于实现体素.
+
 ** 分形 (Fractal)
 
 #+begin_quote
@@ -5283,6 +5390,8 @@ $p(\tau_i)$ 可以是任意概率密度函数, 最简单的就是均匀分布, �
 
 况且, $p(\tau)$ 不是固定的, 对于这种增加讨论情况的不确定性因数应尽可能忽略.
 
+正因如此, 人们会把两个相乘函数的积分 $\int f(x)g(x) dx$ 称为函数点积, 卷积就是函数点积的一种, 不过是把其中一个函数进行反转了而已.
+
 卷积核 $F$ 还可以看作是一个图案模式(=pattern=), 与数据 $G$ 的图案进行比对:
 
 权重系数的绝对值越大, 对应位置的像素对卷积结果的影响越大; 权重系数的正负分别表示为对卷积结果的增强和抑制作用;
@@ -5303,7 +5412,15 @@ $p(\tau_i)$ 可以是任意概率密度函数, 最简单的就是均匀分布, �
 
 而偏移的距离和会受到核尺寸的限制, 比如 $F = \left( \begin{array}{c} 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \end{array} \right)$ 可以让数据往左偏移 2 个单位.
 
-*** 高斯模糊核
+#+begin_quote
+接下来会以这张图片作为图像处理的学习例子.
+
+#+attr_html: :width 600px
+#+CAPTION: Fallout 4K Game Artwork (https://hdqwalls.com/fallout-4k-game-artwork-wallpaper)
+[[../../../files/fallout-4k-game-artwork-80.jpg]]
+#+end_quote
+
+*** COMMENT 高斯模糊核
 
 #+begin_quote
 未完成
@@ -5334,10 +5451,13 @@ $p(\tau_i)$ 可以是任意概率密度函数, 最简单的就是均匀分布, �
    # F(x, y) := (1 / (2 * %pi))^%e^(-0.5 * (x^2 + y^2));
 
 *** Sobel 核
+:PROPERTIES:
+:CUSTOM_ID: sobel
+:END:
 
 =Sobel= 核用于图像边缘检测(Edge detection), =Sobel= 核的想法是计算出当前像素在所有方向上的梯度,
 
-以这些导数作为权重分布进行计算, 从而判断当前像素在各个方向上的平滑性.
+以这些梯度作为权重分布进行计算, 从而判断当前像素在各个方向上的平滑性.
 
 #+caption: 相邻元素的距离
 #+attr_html: :width 504px
@@ -5360,7 +5480,7 @@ $a, b, c, d, e, f, g, h, i$ 分别是对应位置上片元的属性值, 比如�
 #+begin_quote
 $F$ 的完整形式定义是: $F_{(\Delta x, \Delta y)}$,
 
-其中 $\Delta x$ 和 $\Delta y$ 分别是片元在 $x$ 和 $y$ 方向上的距离.
+其中 $\Delta x$ 和 $\Delta y$ 分别是片元在 $x$ 和 $y$ 方向上的距离, 或者说 $(\Delta x, \Delta y)$ 是方向.
 #+end_quote
 
 在 $(-1, 0)$ 方向上梯度: $F_{(-1, 0)} = (\frac{d - e}{1}) \times -\vec{i} = (e - d)\vec{i}$
@@ -5438,98 +5558,51 @@ $\begin{equation*}\begin{aligned} & F_{(1, 0)} + F_{(-1, 0)} + F_{(0, 1)} + F_{(
 
 以下是一个结合灰阶处理的 =Sobel= 算子例子:
 
-#+BEGIN_SRC glsl
-  #version 130
+#+INCLUDE: "../../../files/dip-sobel.frag" src glsl
 
-  // run: glslViewer dip-sobel.frag textures/2999645.jpg
+#+attr_html: :width 600px
+#+caption: 处理结果
+[[../../../files/dip-sobel-result.png]]
 
-  #ifndef PLATFORM_WEBGL
-  uniform vec2 u_resolution;
-  uniform sampler2D u_tex0;
+**** GlslViewer 的多阶段渲染
 
-  #define iResolution u_resolution
-  #define iChannel0 u_tex0
-  #endif
+有时候图像处理需要分好几个阶段完成, 就比如前面说到的, 先灰阶化, 再降噪, 最后才提取轮廓.
 
-  vec4 convolution(vec2 uv, float[9] kernel, vec4[9] pixels) {
-    vec4 conv = vec4(0.0);
-    for (int i = 0; i <= 2; i++) {
-      for (int j = 0; j <= 2; j++) {
-        int index = j * 3 + i;
-        conv += pixels[index] * kernel[index];
-      }
-    }
-    return conv;
-  }
+=GlslViewer= 本身也支持[[https://github.com/patriciogonzalezvivo/glslViewer/wiki/GlslViewer-DEFINES#buffers-and-doublebuffers][多阶段渲染]], 是通过预编译器实现的.
 
-  void main () {
-    vec2 uv = gl_FragCoord.xy / iResolution.xy;
-    vec2 steps = 1.0 / iResolution.xy;
-    // Pixel Sampling
-    vec4 pixels[9];
-    for (int i = -1; i <= 1; i++) { // [-1, 1] => [0, 2]
-      for (int j = 1; j >= -1; j--) { // [1, -1] => [0, 2]
-        int index = (-j + 1) * 3 + (i + 1);
-        vec4 c = texture(iChannel0, uv + vec2(float(i) * steps.x, float(j) * steps.y));
-        pixels[index] = c;
-      }
-    }
+比如下面的代码, 判断宏 =BUFFER_[NUMBER]= 是否存在来判断渲染阶段(=render pass=) =NUMBER= 是否正在执行,
 
-    // GrayScale
-    for (int i = 0; i < pixels.length(); i++) {
-      float gray = dot(pixels[i].rgb, vec3(0.299, 0.587, 0.114));
-      pixels[i] = vec4(vec3(gray), pixels[i].a);
-    }
+=uniform sampler2D u_buffer[NUMBER]= 储存了渲染阶段 =NUMBER= 的渲染结果;
 
-    // Sobel
-    float kernel_x[9] = float[9](-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0);
-    float kernel_y[9] = float[9](1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0);
-    vec4 conv_x = convolution(uv, kernel_x, pixels);
-    vec4 conv_y = convolution(uv, kernel_y, pixels);
-    vec4 g = sqrt(conv_x * conv_x + conv_y * conv_y);
+这样就把一个 =Shader= 划分成三个渲染阶段: 先是 =BUFFER_0=, 再到 =BUFFER_1=, 最后是 =BUFFER_2=.
 
-    // 相似度高, g 越亮, 我们这里想要黑色边缘线, 所以进行反转
-    gl_FragColor = vec4(1. - g.rgb, 1.0);
-  }
-#+END_SRC
-
-# $f(r) = \frac{1}{\sqrt{r}} = r^{-\frac{1}{2}}$
-
-# $f^{'}(r) = -\frac{1}{2} r^{-\frac{3}{2}}$
-
-# $\frac{f^{'}(1)}{1!} = -\frac{1}{2}$
-
-# $f^{'}(1) (r - 1) = -\frac{1}{2} (r - 1)$
-
-# $f^{''}(r) = \frac{3}{4} r^{-\frac{5}{2}}$
-
-# $\frac{f^{''}(1)}{2!} = \frac{3}{8}$
+#+INCLUDE: "../../../files/dip-sobel-buffers.frag" src glsl
 
 # 雨天效果 SDF
 # https://www.shadertoy.com/view/XsX3DB
 
 
 *** 拉普拉斯核 (Laplacian 核)
-
+:PROPERTIES:
+:CUSTOM_ID: laplacian
+:END:
 # https://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
-
-拉普拉斯核源于拉普拉斯算子, 用于计算出中心点与周围相邻点加权和之差, 是二阶微分的离散近似.
 
 在图像处理中, 拉普拉斯核的作用是对图像的二阶导数进行二维各向同性(=isotropic=, 在各个方向上性质相同)度量, 突出边缘以及突变区域.
 
-因此, 拉普拉斯核也能用在边缘检查上. 与 =Sobel= 核不同的地方在于, =Sobel= 核实际上使用了两个核,
+因此, 拉普拉斯核也能用在边缘检查上. 与 =Sobel= 核不同的地方在于, =Sobel= 核实际上使用了两个核, 拉普拉斯核只用了一个核.
 
-而拉普拉斯核只用了一个核, 这导致运算效率会更高一点, 但由于拉普拉斯核测量的是二阶导数, 也导致了处理结果对图片的噪声非常敏感.
+由于拉普拉斯核测量的是二阶导数, 可以找出变化速率较大的地方, 也导致了处理结果对图片的噪声非常敏感.
 
-# 补充上对计算依据
+另外, 拉普拉斯核不像 =Sobel= 核那样依赖方向, 因此可以检查所有方向, 斜边边缘的检查效果优于 =Sobel= 核.
 
-分别求出在 $x$ 和 $y$ 轴两个正交方向上的二阶导数:
+分别求出在 $x$ 和 $y$ 轴两个正交方向上的二阶导数近似:
 
-这里利用中心差商法求近似一阶导数: $f^{'}(x) = \frac{f(x + h) - f(x - h)}{2h}$, 令 $h = \frac{1}{2}$ 使得间距为一个像素差, 可得 $f^{'}(x) = f(x + \frac{1}{2}) - f(x - \frac{1}{2})$.
+二阶导数的近似可以通过泰勒展开推导出来, 首先有 $\begin{cases} f(x + h) \approx f(x) + h f^{'}(x) + \frac{h^2}{2!} f^{''}(x)\\ f(x - h) \approx f(x) - h f^{'}(x) + \frac{h^2}{2!} f^{''}(x) \end{cases}$,
 
-同样利用中心差商法来求近似二阶导数: $f^{''}(x) = \frac{f^{'}(x + \frac{1}{2}) - f^{'}(x - \frac{1}{2})}{2 \times \frac{1}{2}}$, 其中 $\begin{cases} f^{'}(x + \frac{1}{2}) = f(x + 1) - f(x) \\ f^{'}(x - \frac{1}{2}) = f(x) - f(x - 1) \end{cases}$,
+然后两者相加 $f(x + h) + f(x - h) \approx 2f(x) + h^2 f^{''}(x) \rightarrow f^{''}(x) \approx \frac{f(x + h) + f(x - h) - 2f(x)}{h^2}$,
 
-又回到了前向差分法, 并且还保证了间隔为 1, 最终 $f^{''}(x) = \frac{f^{'}(x + \frac{1}{2}) - f^{'}(x - \frac{1}{2})}{2 \times \frac{1}{2}} = f(x + 1) + f(x - 1) - 2f(x)$;
+令 $h = 1$ 可得 $f^{''}(x) \approx f(x + 1) + f(x - 1) - 2f(x)$.
 
 利用该方法可以快速得到两个方向上的二阶导数: $\begin{cases} \frac{\partial^2 G(x, y)}{\partial x^2} = G(x + 1, y) + G(x - 1, y) - 2 G(x, y) \\ \frac{\partial^2 G(x, y)}{\partial y^2} = G(x, y + 1) + G(x, y - 1) - 2 G(x, y) \end{cases}$,
 
@@ -5539,46 +5612,22 @@ $\begin{equation*}\begin{aligned} & F_{(1, 0)} + F_{(-1, 0)} + F_{(0, 1)} + F_{(
 
 把系数按照位置整理成矩阵: $\left( \begin{array}{c} 0 & 1 & 0 \\ 1 & -4 & 1 \\ 0 & 1 & 0 \end{array} \right)$.
 
-#+BEGIN_SRC glsl
-  #version 130
+#+INCLUDE: "../../../files/dip-laplacian.frag" src glsl
 
-  // run: glslViewer dip-sobel.frag textures/2999645.jpg
+#+attr_html: :width 600px
+#+caption: 处理结果
+[[../../../files/dip-laplacian-result.png]]
 
-  #ifndef PLATFORM_WEBGL
-  uniform vec2 u_resolution;
-  uniform sampler2D u_tex0;
+#+begin_quote
+等一下, 为什么只需要 $x$ 和 $y$ 轴两个方向的导数就说可以检查所有方向?
 
-  #define iResolution u_resolution
-  #define iChannel0 u_tex0
-  #endif
+这涉及到了多元标量值函数的可微定义: $dz = \frac{\partial f(x, y)}{\partial x} dx + \frac{\partial f(x, y)}{\partial y} dy = \langle \frac{\partial f(x, y)}{\partial x}, \frac{\partial f(x, y)}{\partial y} \rangle \cdot \langle dx, dy \rangle$ 存在,
 
-  vec4 convolution(vec2 uv, float[9] kernel, vec4[9] pixels) {
-    vec4 conv = vec4(0.0);
-    for (int i = 0; i <= 2; i++) {
-      for (int j = 0; j <= 2; j++) {
-        int index = j * 3 + i;
-        conv += pixels[index] * kernel[index];
-      }
-    }
-    return conv;
-  }
+与方向导数定义的形式一致, 可微的另外一个表达正好是所有方向上都存在方向导数,
 
-  void main () {
-    vec2 uv = gl_FragCoord.xy / iResolution.xy;
-    vec2 steps = 1.0 / iResolution.xy;
-    // Pixel Sampling
-    vec4 pixels[9];
-    for (int i = -1; i <= 1; i++) { // [-1, 1] => [0, 2]
-      for (int j = 1; j >= -1; j--) { // [1, -1] => [0, 2]
-        int index = (-j + 1) * 3 + (i + 1);
-        vec4 c = texture(iChannel0, uv + vec2(float(i) * steps.x, float(j) * steps.y));
-        pixels[index] = c;
-      }
-    }
+$\langle dx, dy \rangle$ 就是一个任意的线性组合, 也就是任意方向.
 
-    // Laplacian
-    float kernel[9] = float[9](0, 1, 0, 1, -4, 1, 0, 1, 0);
-    vec4 conv = convolution(uv, kernel, pixels);
-    gl_FragColor = vec4(1. - conv.rgb, 1.0);
-  }
-#+END_SRC
+这对于二阶导数也是成立的, 把一阶导数看作是一个新函数, 把二阶导数看作是新函数的一阶导数,
+
+两个新一阶导数之和不就是拉普拉斯核吗.
+#+end_quote

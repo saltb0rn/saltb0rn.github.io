@@ -9,7 +9,6 @@
   - [[file:2018/05/blog-with-emacs.org][Blog with Emacs and Org mode]]
 * C
   - [[file:2022/12/reading-note-of-calculus-early-transcendentals-th.org][Calculus: Early Transcendentals 8th Edition 阅读笔记]]
-  - [[file:2019/11/canvas-intro.org][Canvas入门而不入土]]
   - [[file:2024/03/code-explains-for-fragment-shader-in-shadertoy.org][code-explains-for-fragment-shader]]
   - [[file:2018/06/continuation-passing-style.org][Continuation Passing Style]]
   - [[file:2018/06/coroutines.org][Coroutines in Python]]
@@ -65,15 +64,14 @@
 * 切
   - [[file:2021/11/cake-cut.org][切饼问题]]
 * 前
-  - [[file:2018/11/gimp-for-webfe-dev.org][前端人员的GIMP]]
   - [[file:2018/09/web-frontend.org][前端学习笔记整理(持续更新)]]
 * 取
   - [[file:2021/03/remainder-vs-modulo.org][取余和取模的区别]]
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 * 图
-  - [[file:2020/06/graphics-opengl-transformation.org][图形学-OpenGL坐标变换]]
-  - [[file:2020/08/graphics-opengl-light-and-material.org][图形学-光和材质]]
+  - [[file:2020/06/graphics-opengl-transformation.org][图形学 - OpenGL坐标变换]]
+  - [[file:2020/08/graphics-opengl-light-and-material.org][图形学 - 光和材质]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
   - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
 * 宝
@@ -82,6 +80,8 @@
   - [[file:2021/10/math-proofs.org][数学证明]]
 * 流
   - [[file:2025/02/fluid-typography.org][流式排版]]
+* 游
+  - [[file:2025/09/shader-for-game-dev.org][游戏 Shader 开发]]
 * 理
   - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
   - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]
@@ -97,9 +97,6 @@
 * 自
   - [[file:2019/10/self-taught-and-compiler.org][自学编译原理]]
   - [[file:2019/03/laziness-is-a-habit.org][自身经历谈懒惰]]
-* 英
-  - [[file:2019/05/et-project-day1.org][英语消灭计划-Day1]]
-  - [[file:2020/02/et-project-day-.org][英语消灭计划-Day2]]
 * 视
   - [[file:2019/08/digital-video-file.org][视频文件简单了解]]
 * 计
