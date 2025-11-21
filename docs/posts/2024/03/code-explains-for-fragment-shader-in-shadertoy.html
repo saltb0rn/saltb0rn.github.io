@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-09-25 Thu 22:12 -->
+<!-- 2025-10-10 Fri 15:08 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ShaderToy常见代码解释 (收录中)</title>
@@ -253,34 +253,37 @@
 <li><a href="#orgbcef113">GLSL 矩阵储存方式</a></li>
 </ul>
 </li>
-<li><a href="#org9ca5951">常见的 UV 计算</a>
+<li><a href="#common-uv-calc">常见的 UV 计算</a>
 <ul>
 <li><a href="#orgb6aee9b">UV - 计算片元在屏幕上所对应的 UV 坐标</a></li>
 <li><a href="#org61e9207">UV计算 - 平铺(tiling)</a></li>
+<li><a href="#uv-visualizing">UV格子可视化</a></li>
 </ul>
 </li>
 <li><a href="#orgc8a40ab">GLSL 内置函数</a>
 <ul>
-<li><a href="#org89a9de2">函数 - smoothstep</a>
+<li><a href="#glsl-smoothstep">函数 - smoothstep</a>
 <ul>
 <li><a href="#org4fe9c50">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a></li>
-<li><a href="#org601a049">编写 <code>Fragment Shader</code> 的思路</a></li>
+<li><a href="#org6ac682a">ShaderToy 的编程思路总结</a></li>
 </ul>
 </li>
-<li><a href="#orgd9238f0">函数 - mix</a></li>
+<li><a href="#glsl-mix">函数 - mix</a></li>
 <li><a href="#org222b95a">函数 - dFdx/dFdy</a></li>
 <li><a href="#orgd3db1e0">函数 - fract</a></li>
 <li><a href="#orga43090a">函数 - faceforward</a></li>
 <li><a href="#orga1fd365">函数 - reflect</a></li>
-<li><a href="#org407522c">函数 - refract</a></li>
+<li><a href="#refract">函数 - refract</a></li>
 <li><a href="#orga70f782">函数 - packUnorm 和 函数 - unpackUnorm</a></li>
 <li><a href="#org2bd0a75">函数 - modf</a></li>
 <li><a href="#org55ed4f2">函数 - texture</a></li>
 </ul>
 </li>
-<li><a href="#org71c7f7b">常用自定义函数</a>
+<li><a href="#org6bdb596">常用自定义函数或宏</a>
 <ul>
 <li><a href="#orgcfe532a">remap 函数</a></li>
+<li><a href="#org9dd844c">ColorRamp 宏</a></li>
+<li><a href="#org31e7a8a">luma 函数</a></li>
 <li><a href="#org8171fdf">调色板生成</a></li>
 <li><a href="#orgfe8dc03">缓动函数</a></li>
 </ul>
@@ -304,7 +307,7 @@
 </li>
 </ul>
 </li>
-<li><a href="#org19b4108">SDF</a>
+<li><a href="#sdf">SDF</a>
 <ul>
 <li><a href="#orgde7d658">估算点与几何解析式的距离</a>
 <ul>
@@ -355,7 +358,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org4bb04a5">
+<div class="abstract" id="orgf94a5a4">
 <p>
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 </p>
@@ -514,9 +517,9 @@
 </div>
 </div>
 </div>
-<div id="outline-container-org9ca5951" class="outline-2">
-<h2 id="org9ca5951">常见的 UV 计算</h2>
-<div class="outline-text-2" id="text-org9ca5951">
+<div id="outline-container-common-uv-calc" class="outline-2">
+<h2 id="common-uv-calc">常见的 UV 计算</h2>
+<div class="outline-text-2" id="text-common-uv-calc">
 </div>
 <div id="outline-container-orgb6aee9b" class="outline-3">
 <h3 id="orgb6aee9b">UV - 计算片元在屏幕上所对应的 UV 坐标</h3>
@@ -732,7 +735,7 @@
 </p>
 
 
-<div id="org576d060" class="figure">
+<div id="orgc0f50eb" class="figure">
 <p><img src="../../../files/uv-tiling.png" alt="uv-tiling.png">
 </p>
 <p><span class="figure-number">Figure 1: </span>重复了 4 个 \([0, 1]\) 范围的 \(UV\) 坐标空间</p>
@@ -793,33 +796,32 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">div_num</span> = 2;
+<pre class="src src-c"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">div_num</span> = 2.0;
 <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = fract(gl_FragCoord.xy / (iResolution.xy / div_num));
-<span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
-  or
-
-  vec2 uv = fract(gl_FragCoord.xy / iResolution.xy * div_num);
-</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21448;&#25110;&#32773;
+</span><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = fract(gl_FragCoord.xy / iResolution.xy * div_num);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#19981;&#21516;&#26041;&#21521;&#36724;&#36816;&#29992;&#19981;&#21516;&#20493;&#29575;&#30340;&#24179;&#38138;
+</span><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">div_nums</span> = vec2(10.0, 2.0);
+<span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = fract(gl_FragCoord.xy / iResolution.xy * div_nums);
 </pre>
 </div>
 
 <p>
-这并非唯一的方法, 事实上 <b>只要是周期函数都可以获取周期序列来进行平铺</b>, 比如 <code>cosine</code>, <code>sine</code> 和 <code>modulo</code>, 等等.
+这并非唯一的方法, <b>只要是周期函数都可以获取周期序列来进行平铺</b>, 比如 <code>cosine</code>, <code>sine</code> 和 <code>modulo</code>, 等等.
 </p>
 
 <p>
-<code>cosine</code> 和 <code>sine</code> 的用法和 <code>fract</code> 差不多, 基本上把 <code>fract</code> 替换就可以了:
+<code>cosine</code> 和 <code>sine</code> 的用法和 <code>fract</code> 差不多, 在替换 <code>fract</code> 时要控制好周期:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">div_num</span> = 2;
+<pre class="src src-c"><span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">PI</span> 3.14
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">div_num</span> = 2.0;
+<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">period</span> = 2.0 * PI;
 <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21035;&#24536;&#35760;&#25511;&#21046;&#22909;&#21608;&#26399;
-</span><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = cos(gl_FragCoord.xy / (iResolution.xy / div_num * 2 * PI));
-<span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
-  or
-
-  vec2 uv = fract(gl_FragCoord.xy / iResolution.xy * div_num * 2 * PI);
-</span><span style="color: #ff7f24;"> */</span>
+</span><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = cos(gl_FragCoord.xy / (iResolution.xy / div_num * period));
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21448;&#25110;&#32773;
+</span><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = cos(gl_FragCoord.xy / iResolution.xy * div_num * period);
 </pre>
 </div>
 
@@ -828,20 +830,78 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">div_num</span> = 2;
+<pre class="src src-c"><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">div_num</span> = 2.0;
 <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">period</span> = 1.0;
 <span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = mod(gl_FragCoord.xy / (iResolution.xy / div_num), period);
-<span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
-  or
-
-  vec2 uv = mod(gl_FragCoord.xy / iResolution.xy * div_num, period);
-</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21448;&#25110;&#32773;
+</span><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">uv</span> = mod(gl_FragCoord.xy / iResolution.xy * div_num, period);
 </pre>
 </div>
 
 <p>
-并且模运算的周期可以用来对 \(UV\) 空间进行等比缩放, 如果把 <code>period</code> 定义为 2.0, 那么 \(UV\) 的分量范围就是 \([0, 2]\).
+模运算的周期可以用来对 \(UV\) 空间进行等比缩放, 如果把 <code>period</code> 定义为 2.0, 那么 \(UV\) 的分量范围就是 \([0, 2]\).
 </p>
+</div>
+</div>
+<div id="outline-container-uv-visualizing" class="outline-3">
+<h3 id="uv-visualizing">UV格子可视化</h3>
+<div class="outline-text-3" id="text-uv-visualizing">
+<p>
+有时候为了方便调试可以把 <code>UV</code> 格子绘制出来,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32472;&#21046;&#32593;&#26684;
+</span><span style="color: #98fb98;">float</span> grid(<span style="color: #98fb98;">vec2</span> uv, <span style="color: #98fb98;">vec2</span> xRange, <span style="color: #98fb98;">vec2</span> yRange) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">xRange &#21644; yRange &#20998;&#21035;&#26159; uv.x &#21644; uv.y &#20998;&#37327;&#30340;&#33539;&#22260;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">xRange.x &#26159; xMin, xRange.y &#26159; xMax, yRange.x &#26159; yMin, yRange.y &#26159; yMax
+</span>
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25511;&#21046;&#26684;&#23376;&#32447;&#31895;
+</span>  <span style="color: #98fb98;">float</span> xThickness = 0.01, yThickness = 0.01;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36890;&#36807;&#35745;&#31639;&#29255;&#20803;&#30340;&#20998;&#37327;&#19982;&#20854;&#21462;&#20540;&#33539;&#22260;&#20004;&#31471;&#20043;&#38388;&#30340;&#36317;&#31163;, &#22914;&#26524;&#23567;&#20110;&#19968;&#23450;&#20540;, &#37027;&#20040;&#29255;&#20803;&#22312;&#26684;&#23376;&#36793;&#32536;&#19978;, &#29992; 0 &#34920;&#31034;&#29255;&#20803;&#22312;&#36793;&#32536;&#19978;
+</span>  <span style="color: #98fb98;">float</span> distX = <span style="color: #b0c4de;">any</span>(<span style="color: #b0c4de;">lessThanEqual</span>(<span style="color: #b0c4de;">abs</span>(uv.x - xRange), <span style="color: #98fb98;">vec2</span>(yThickness))) ? 0.0 : 1.0;
+  <span style="color: #98fb98;">float</span> distY = <span style="color: #b0c4de;">any</span>(<span style="color: #b0c4de;">lessThanEqual</span>(<span style="color: #b0c4de;">abs</span>(uv.y - yRange), <span style="color: #98fb98;">vec2</span>(xThickness))) ? 0.0 : 1.0;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Opt2: &#32472;&#21046;&#26580;&#21270;&#19968;&#28857;&#30340;&#26684;&#23376;&#32447;&#26465;
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vec2 distXs = smoothstep(vec2(0.0), vec2(yThickness), abs(uv.x - xRange));
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">vec2 distYs = smoothstep(vec2(0.0), vec2(xThickness), abs(uv.y - yRange));
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float distX = min(distXs.x, distXs.y);
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">float distY = min(distYs.x, distYs.y);
+</span>
+  <span style="color: #00ffff;">return</span> distX * distY;
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20197;&#19979;&#20026;&#20026;&#20363;&#23376;
+</span><span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / iResolution.xy;
+  uv.xy *= 10;
+  uv.y = 10 - uv.y;
+  uv = <span style="color: #b0c4de;">fract</span>(uv);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32593;&#26684;&#32034;&#24341;, &#27604;&#22914; (1.1, 2.3) -&gt; (1.0, 2.0), &#21487;&#20197;&#26377;&#20854;&#23427;&#29992;&#36884;
+</span>  <span style="color: #98fb98;">vec2</span> uvId = <span style="color: #b0c4de;">floor</span>(uv);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24819;&#35201;&#25972;&#22411;&#21521;&#37327;&#21487;&#20197;&#20351;&#29992; ivec2 uvId = ivec2(uv);
+</span>
+  <span style="color: #98fb98;">float</span> g = gird(uv, <span style="color: #98fb98;">vec2</span>(0.0, 1.0), <span style="color: #98fb98;">vec2</span>(0.0, 1.0));
+  <span style="color: #98fb98;">vec3</span> lineColor = <span style="color: #98fb98;">vec3</span>(0.0);
+  <span style="color: #98fb98;">vec3</span> ogColor = <span style="color: #98fb98;">vec3</span>(1.0);                <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21407;&#22270;&#39068;&#33394;
+</span>  <span style="color: #98fb98;">vec3</span> color = <span style="color: #b0c4de;">mix</span>(lineColor, ogColor, g); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#39068;&#33394;&#32447;&#26465;&#19982;&#21407;&#22270;&#39068;&#33394;&#20043;&#38388;&#36827;&#34892;&#20999;&#25442;
+</span>  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(color, 1.);
+}
+</pre>
+</div>
+
+<p>
+这个例子可以在学习完 <a href="#glsl-smoothstep">函数 - smoothstep</a> 以及 <a href="#glsl-mix">函数 - mix</a> 才回头细读.
+</p>
+
+
+<div id="orge1e04ad" class="figure">
+<p><img src="../../../files/uv-visualizing.png" alt="uv-visualizing.png" width="500px">
+</p>
+<p><span class="figure-number">Figure 2: </span>\(10 \times 10\) 网格</p>
+</div>
 </div>
 </div>
 </div>
@@ -849,9 +909,9 @@
 <h2 id="orgc8a40ab">GLSL 内置函数</h2>
 <div class="outline-text-2" id="text-orgc8a40ab">
 </div>
-<div id="outline-container-org89a9de2" class="outline-3">
-<h3 id="org89a9de2"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml">函数 - smoothstep</a></h3>
-<div class="outline-text-3" id="text-org89a9de2">
+<div id="outline-container-glsl-smoothstep" class="outline-3">
+<h3 id="glsl-smoothstep"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml">函数 - smoothstep</a></h3>
+<div class="outline-text-3" id="text-glsl-smoothstep">
 <blockquote>
 <p>
 从这里开始的后面几个章节都会介绍一些常用(或者一些光看名字不知道做啥)的 <code>GLSL</code> <a href="https://gist.github.com/markknol/d06c0167c75ab5c6720fe9083e4319e1">内置函数</a>, 不过并不会介绍一些典型的数学函数, 比如 <code>sin/cos/atan</code> 这些,
@@ -891,10 +951,10 @@ genType <span style="color: #b0c4de;">smoothstep</span>(genType edge0, genType e
 </p>
 
 
-<div id="orgb0d3ff3" class="figure">
+<div id="org77595ff" class="figure">
 <p><img src="../../../files/smoothstep-t.png" alt="smoothstep-t.png">
 </p>
-<p><span class="figure-number">Figure 2: </span>x, edge0 以及 edge1 三者的关系</p>
+<p><span class="figure-number">Figure 3: </span>x, edge0 以及 edge1 三者的关系</p>
 </div>
 
 <p>
@@ -1104,62 +1164,46 @@ smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: 
 </p>
 </div>
 </div>
-<div id="outline-container-org601a049" class="outline-4">
-<h4 id="org601a049">编写 <code>Fragment Shader</code> 的思路</h4>
-<div class="outline-text-4" id="text-org601a049">
+<div id="outline-container-org6ac682a" class="outline-4">
+<h4 id="org6ac682a">ShaderToy 的编程思路总结</h4>
+<div class="outline-text-4" id="text-org6ac682a">
 <p>
-刚开始学习 <code>Fragment Shader</code> 时, 我只知道最终目的是为了设置片元的颜色, 然而并不知道如何绘制出自己想要的图像.
+刚开始接触 <code>ShaderToy</code> 的代码时, 我只知道最终目的是为了设置片元的颜色,
 </p>
 
 <p>
-即便去学习别人的代码, 也只能在有参考的情况下写的出来, 完全不知道别人是如何想出来的, 也不知道所谓的阅读代码中学习要学什么内容.
+但并不知道如何绘制出自己想要的图像. 即便把其中用到的数学知识都掌握了,
 </p>
 
 <p>
-相信很多经历过新手期的人都和我一样认为阅读别人的代码就是要学习其中的数学概念, 其实也没错, <code>Fragment Shader</code> 多少得涉及一些数学概念.
+但仍然不知道作者是如何把这些知识有机地整合在一起的.
 </p>
 
 <p>
-然而, 这解释不了为什么有些数学好的人也不能写出自己想要的效果.
+在阅读了一定数量的作品后, 发现了它们都遵守了同一个模式, 而这个模式正是我想要的答案.
 </p>
 
 <p>
-在经过一定量的阅读以及大量的总结后, 发现了一个事实: 不管实现什么效果, 任何 <code>Fragment Shader</code> 在结构上都有一个固定的模式.
-</p>
-
-<p>
-个人认为那些数学好的人没能实现自己想要的效果是因为不了解这个模式, 虽然没办法证明这个观点, 但相信你在看完这个模式后会认同我这个观点.
-</p>
-
-<p>
-<b>开始吧</b>:
+以下是个人对该模式的粗略总结和见解:
 </p>
 
 <ol class="org-ol">
-<li>确定好 <code>UV</code> 坐标系: 原点在哪, 范围在哪.</li>
+<li>计算当前片元 <code>UV</code> 坐标 \(\mathrm{uv}_0 = \mathrm{gl\_FragCoord.xy} / \mathrm{iResolution.xy}\);</li>
 
 <li><p>
-<b>时刻记住</b> 片元原本的 <code>UV</code> 坐标 \(st_{0}\) 坐标是 <code>gl_FragCoord.xy / iResolution</code>;
+对 <code>UV</code> 坐标进行变换 \(f_1\) 得到新 <code>UV</code> 坐标 \(\mathrm{uv}_1 = f(\mathrm{uv}_0)\), 根据 \(\mathrm{uv}_1\) 计算出片元颜色.
 </p>
 
 <p>
-<b>代码中的变量 \(st\) 可以看作是片元的一个新属性</b>, 其初始值为 \(st_{0}\) 的值, 但是 \(st\) 可能会在经过计算后发生变化.
+像前面 <a href="#common-uv-calc">常见的UV计算</a> 就是一种变换, 比如让 <code>UV</code> 分量的范围变为 \([-0.5, 0.5]\), 因此 \(f_1(\mathrm{uv}) = \mathrm{uv} - \mathrm{vec2}(0.5, 0.5)\).
 </p>
 
 <p>
-因此, 在 <code>Fragment Shader</code> 里面, 一个片元包含始终有一个关系: \(f(st_{0}) = st\).
+实际开发通常有 \(n\) 个变换步骤:
 </p>
 
 <p>
-最后, <code>Fragment Shader</code> 绘图的关键在于如何根据 \(st\) 来计算出片元的颜色, 粗略地讲就是 <b>位置决定颜色</b>.
-</p>
-
-<p>
-函数 \(f\) 就是针对 \(st\) 的计算, \(f\) 可以由多个更小的一系列的函数构成, 比如:
-</p>
-
-<p>
-\(f(st_{0}) = st\)
+\(\mathrm{uv}_1 = f_{1}(\mathrm{uv}_{0})\)
 </p>
 
 <p>
@@ -1167,11 +1211,15 @@ smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: 
 </p>
 
 <p>
-\(f_{0}(st_{0}) = st_{1}\)
+\(\mathrm{uv}_{2} = f_{2}(\mathrm{uv}_{1})\)
 </p>
 
 <p>
-\(f_{1}(st_{1}) = st_{2}\)
+\(\Downarrow\)
+</p>
+
+<p>
+\(\mathrm{uv}_{3} = f_{3}(\mathrm{uv}_{2})\)
 </p>
 
 <p>
@@ -1179,44 +1227,61 @@ smoothstep(l, u, x) <span style="color: #00ffff;">:=</span> <span style="color: 
 </p>
 
 <p>
-\(f_{n}(st_{n}) = st\)
+\(\mathrm{uv}_{n} = f_{n}(\mathrm{uv}_{n-1})\)
 </p>
 
 <p>
-确定好每一个函数(每一步运算)的输入范围和计算结果范围, 并且要求对函数的变化规律有直观的理解.
+确定好每一个函数 \(f_i\) (1 &le; i &le; n) 的输入和输出范围, 并对 \(f_i\) 的连续性/变化/极值有良好的了解;
+</p>
+
+<p>
+第一点可以通过 <a href="https://en.wikipedia.org/wiki/Interval_arithmetic#Interval_operators">区间运算(interval arithmetic)</a> 进行估算, 第二点要求开发者有一定的微积分基础,
+</p>
+
+<p>
+特别是多元标量值函数以及多元向量值函数有了解, 有时候为了定义想要的函数 \(f_i\), 还需要掌握一点概率论.
 </p>
 
 <blockquote>
 <p>
-这就是为什么开篇就推荐绘图工具, 可以帮助我们对函数变化有直观了解;
+上面的模型其实不太全面, \(f_i\) 并非一定要以向量作为输入和输出, 可以向量作为输入以标量作为输出,
 </p>
 
 <p>
-这里再推荐掌握 <a href="https://en.wikipedia.org/wiki/Interval_arithmetic#Interval_operators">区间运算(interval arithmetic)</a> 的应用, 在 <code>Shader</code> 编程中会经常遇到两个函数之间的算术运算,
+也可以标量作为输入以向量作为输出, 或者以标量作为输入和输出, 这取决于具体需求.
 </p>
 
 <p>
-为了估算结果通常都是分别确定好两个函数的计算结果范围在对两者进行运算得到最终范围, 区间运算可以帮助我们快而准地估算出结果.
+由于 <code>ShaderToy</code> 不提供几何数据, 这导致片元只有 <code>UV</code> 坐标一个属性,
 </p>
-</blockquote>
 
 <p>
-在明白了这一点后, 关键点就在于: 怎么定义出一个可以实现自己想要效果的函数 \(f\).
-</p></li>
+因此, <code>ShaderToy</code> 代码通常情况下会以 <code>UV</code> 坐标作为 <b>主要</b> 变换对象, 自然 \(f_i\) 就以向量作为输入;
+</p>
 
-<li>思考如何定义函数 \(f\).
+<p>
+但在通常的 <code>3D</code> 项目中, 片元除了 <code>UV</code> 坐标还会有一大堆几何数据, 这些数据既有向量也有标量,
+</p>
 
-<ol class="org-ol">
+<p>
+<code>UV</code> 通常不再是 <b>主要</b> 变换对象了, 所以 \(f_i\) 的形式是不太固定的.
+</p>
+</blockquote></li>
+
 <li><p>
-正如前面说的, 位置决定了颜色, 所以, 我们要这么思考: <b>随着位置发生怎么样的变化, 颜色要如何变化呢?</b>
+思考如何定义函数 \(f\).
 </p>
 
 <p>
-举几个简单的例子来看看.
+这里举例两种常见的思考方式.
 </p>
 
 <p>
-<b>例子一</b>: 往 \(y\) 方向增加, 颜色越亮, 往 \(x\) 方向增加, 颜色越亮.
+<b>颜色随着位置的变化该如何变化</b>
+</p>
+
+<p>
+往 \(y\) 方向增加, 颜色越亮, 往 \(x\) 方向增加, 颜色越亮.
 </p>
 
 <div class="org-src-container">
@@ -1232,104 +1297,34 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="org8b3e2ce" class="figure">
+<div id="org2656d03" class="figure">
 <p><img src="../../../files/how-to-think-of-fun-creation-in-shader.png" alt="how-to-think-of-fun-creation-in-shader.png">
 </p>
-<p><span class="figure-number">Figure 3: </span>越往右上角方向越亮</p>
+<p><span class="figure-number">Figure 4: </span>越往右上角方向越亮</p>
 </div>
 
 <p>
-<b>例子二</b>: 往 \(y\) 方向增加, 颜色越亮.
+改图的变化可以使用微积分进行分析得到, 变换的定义为一个二元标量值函数: \(f(u, v) = 0.5 \times (u + v)\),
 </p>
-
-<div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / iResolution;
-
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.y
-</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;
-</span><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = st.y;
-
-gl_FragColor = vec4(vec3(color), 1.0);
-</pre>
-</div>
-
-
-<div id="orgda5f40f" class="figure">
-<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-2.png" alt="how-to-think-of-fun-creation-in-shader-2.png">
-</p>
-<p><span class="figure-number">Figure 4: </span>越往上走越亮</p>
-</div>
 
 <p>
-<b>例子三</b>: 往 \(x\) 方向增加, 颜色越亮.
+它的梯度向量为 \(\nabla f(u, v) = (0.5, 0.5)\), 梯度向量是 \(f\) 增长最快的方向,
 </p>
-
-<div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / iResolution;
-
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.x
-</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#22686;&#21152;
-</span><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = st.x;
-
-gl_FragColor = vec4(vec3(color), 1.0);
-</pre>
-</div>
-
-
-<div id="org3cb1b67" class="figure">
-<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-3.png" alt="how-to-think-of-fun-creation-in-shader-3.png">
-</p>
-<p><span class="figure-number">Figure 5: </span>越往右走越亮</p>
-</div>
 
 <p>
-<b>例子四</b>: 往 \(y\) 方向增加, 颜色越亮; 往 \(x\) 方向增加, 颜色越暗.
+这就是为什么往右上角方向走越来越亮, 分别计算出水平/垂直/右上角方向的方向导数:
 </p>
-
-<div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / iResolution;
-
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = st.y + (1.0 - st.x)
-</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;
-</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#20943;&#23567;
-</span><span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = clamp((st.y + 1.0 - st.x) * 0.5, 0.0, 1.0);
-
-gl_FragColor = vec4(vec3(color), 1.0);
-</pre>
-</div>
-
-
-<div id="org246c638" class="figure">
-<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-4.png" alt="how-to-think-of-fun-creation-in-shader-4.png">
-</p>
-<p><span class="figure-number">Figure 6: </span>越往左上角走越亮</p>
-</div>
 
 <p>
-<b>例子五</b>: 往 \(y\) 方向增加, 颜色越亮; 往 \(x\) 方向增加, 颜色越暗, 比上一个例子更明显.
+\(\begin{cases}(0.5, 0.5) \cdot (1.0, 0.0) = 0.5 \\ (0.5, 0.5) \cdot (0.0, 1.0) = 0.5 \\ (0.5, 0.5) \cdot \frac{(1.0, 1.0)}{\sqrt{2}} \approx 0.707 \end{cases}\)
 </p>
-
-<div class="org-src-container">
-<pre class="src src-c"><span style="color: #98fb98;">vec2</span> <span style="color: #eedd82;">st</span> = gl_FragCoord.xy / iResolution;
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">f(st) = (st.x + st.y) + (st.y - 2 * st.x) = 2 * st.y - st.x
-</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">y &#22686;&#21152;, color &#22686;&#21152;
-</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">x &#22686;&#21152;, color &#20943;&#23567;
-</span>st += st.yx * vec2(1.0, -2.0);
-<span style="color: #98fb98;">float</span> <span style="color: #eedd82;">color</span> = clamp((st.x + st.y) * 0.5, 0.0, 1.0);
-
-gl_FragColor = vec4(vec3(color), 1.0);
-</pre>
-</div>
-
-
-<div id="org5d95806" class="figure">
-<p><img src="../../../files/how-to-think-of-fun-creation-in-shader-5.png" alt="how-to-think-of-fun-creation-in-shader-5.png">
-</p>
-<p><span class="figure-number">Figure 7: </span>越往左上角走越亮</p>
-</div>
 
 <p>
-这五个例子中的 \(f\) 都是的线性函数, 凭想象来思考变化是比较轻松的.
+对比可以发现, 它们之间的大小关系正好反应了在不同方向上的变化趋势.
+</p>
+
+<p>
+这个例子中的 \(f(u, v)\) 是线性函数, 只凭想象来就能思考变化规律.
 </p>
 
 <p>
@@ -1355,10 +1350,10 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org0bb7108" class="figure">
-<p><img src="../../../files/x2-y2-10-contour-map-0.svg" alt="x2-y2-10-contour-map-0.svg" class="org-svg" width="800px">
+<div id="org36821bf" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map-0.svg" alt="x2-y2-10-contour-map-0.svg" class="org-svg" width="600px">
 </p>
-<p><span class="figure-number">Figure 8: </span><code>曲面图 + 等值线图</code></p>
+<p><span class="figure-number">Figure 5: </span><code>曲面图 + 等值线图</code></p>
 </div>
 
 <div class="org-src-container">
@@ -1377,10 +1372,10 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org9907511" class="figure">
-<p><img src="../../../files/x2-y2-10-contour-map-1.svg" alt="x2-y2-10-contour-map-1.svg" class="org-svg" width="800px">
+<div id="org0460d1e" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map-1.svg" alt="x2-y2-10-contour-map-1.svg" class="org-svg" width="600px">
 </p>
-<p><span class="figure-number">Figure 9: </span><code>曲面图 + 等值线图 + 灰阶</code></p>
+<p><span class="figure-number">Figure 6: </span><code>曲面图 + 等值线图 + 灰阶</code></p>
 </div>
 
 <div class="org-src-container">
@@ -1397,10 +1392,10 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="orgab48c9f" class="figure">
-<p><img src="../../../files/x2-y2-10-contour-map-3.svg" alt="x2-y2-10-contour-map-3.svg" class="org-svg" width="800px">
+<div id="org1cd92ed" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map-3.svg" alt="x2-y2-10-contour-map-3.svg" class="org-svg" width="600px">
 </p>
-<p><span class="figure-number">Figure 10: </span><code>曲面图附加等值线 + 等值线图</code></p>
+<p><span class="figure-number">Figure 7: </span><code>曲面图附加等值线 + 等值线图</code></p>
 </div>
 
 <div class="org-src-container">
@@ -1416,31 +1411,30 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </pre>
 </div>
 
-<div id="org6a1c437" class="figure">
-<p><img src="../../../files/x2-y2-10-contour-map.svg" alt="x2-y2-10-contour-map.svg" class="org-svg" width="800px">
+<div id="org41a8850" class="figure">
+<p><img src="../../../files/x2-y2-10-contour-map.svg" alt="x2-y2-10-contour-map.svg" class="org-svg" width="600px">
 </p>
-<p><span class="figure-number">Figure 11: </span><code>等值线图 + 灰阶</code></p>
+<p><span class="figure-number">Figure 8: </span><code>等值线图 + 灰阶</code></p>
 </div>
 
 <p>
 关于 <code>Maxima</code> 更多的绘图选项请自行阅读<a href="https://maxima.sourceforge.io/docs/manual/maxima_250.html">文档</a>.
-</p></li>
-
-<li><p>
-也可以这么想: 对于在函数 \(f\) 上的片元应该赋予什么颜色, 在函数外的片元又该赋予什么颜色.
 </p>
 
 <p>
-这一点可以参考前面的函数 \(plot\).
+<b>对于在函数 \(f\) 上的片元应该赋予什么颜色, 在函数外的片元又该赋予什么颜色.</b>
+</p>
+
+<p>
+这一点可以参考前面的函数 \(plot\) 以及 <a href="#uv-visualizing">UV格子可视化</a>; 后面的 <a href="#sdf">SDF</a> 也属于这一类.
 </p></li>
-</ol></li>
 
 <li><p>
 正确思考 <code>Fragment Shader</code> 中的循环.
 </p>
 
 <p>
-<b>时刻记住</b>, <code>Fragment Shader</code> 的一切计算都是针对一个片元的, 对于一个片元的计算是不可能影响到另外一个片元的计算.
+<code>Fragment Shader</code> 的一切计算都是针对一个片元的, 对于一个片元的计算是不可能影响到另外一个片元的计算.
 </p>
 
 <p>
@@ -1466,26 +1460,22 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </div>
 
 
-<div id="orgda75278" class="figure">
+<div id="orga3f9d46" class="figure">
 <p><img src="../../../files/iteration-in-fragment-shader.png" alt="iteration-in-fragment-shader.png">
 </p>
-<p><span class="figure-number">Figure 12: </span>输出结果</p>
+<p><span class="figure-number">Figure 9: </span>输出结果</p>
 </div>
 
 <p>
-观察代码可知每个片元的 \(color\) 要执行 4 轮计算, 每轮计算都 <b>试图</b> 让 \(color\) 自增(我们这里约定能加到 1 才是成功自增), 并且让 \(st\) 翻倍.
+观察代码可知每个片元的 \(color\) 要执行 4 轮计算, 每轮计算都 <b>试图</b> 让 \(color\) 自增(我们这里约定能加到 1 才是成功自增),
 </p>
 
 <p>
-我们知道这是在绘制直线 \(y = x\), 但为什么会绘制出 4 条直线呢?
+并且让 \(st\) 翻倍. 我们知道这是在绘制直线 \(y = x\), 但为什么会绘制出 4 条直线呢?
 </p>
 
 <p>
 <b>绘制过程</b> 是这样的:
-</p>
-
-<p>
-位于直线上的片元的 \(color\) 在整个迭代中实际只能成功自增 1 次, 而不在直线上的片元则是 0 成功的自增.
 </p>
 
 <p>
@@ -1499,15 +1489,15 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </blockquote>
 
 <p>
-在 \(l_{A}\) 上的片元 \(p_{A}: (x_{0}, y_{0})\) 在整个迭代中的第 1 轮计算就成功自增, \(l_{B}\) 上的片元 \(p_{B}: (x_{1}, y_{1})\) 则是在第 2 轮计算才能成功自增.
+在 \(l_{A}\) 上的片元 \(p_{A}: (x_{0}, y_{0})\) 在整个迭代中的第 1 轮时, \(abs(st.x + st.y - 1.0) \le 0.01\) 就成立了,
 </p>
 
 <p>
-这是因为 \(p_{A}\) 在第 1 轮计算中就符合 \(abs(st.x + st.y - 1.0) \le 0.01\), 之后的 3 轮计算其实没有意义了;
+这个时候 \(color\) 自增 1, 之后的 3 轮都是不满足条件因此自增 0;
 </p>
 
 <p>
-而 \(p_{B}\) 则是满足 \(2 \times (x_{1} + y_{1}) = x_{0} + y_{0}\), 所以在经过一轮的 \(st\) 翻倍后使得 \(p_{B} = (2 \times x_{1}, 2 \times y_{1})\), \(p_{B}\) 才符合 \(abs(st.x + st.y - 1.0) \le 0.01\).
+在 \(l_{B}\) 上的片元 \(p_{B}: (x_{1}, y_{1})\) 只有 在第 2 轮完成 <code>uv</code> 缩放: \((x_0, y_0) = 2.0 * (x_1, y_1)\) 后才满足条件使得 \(color\) 自增 1;
 </p>
 
 <p>
@@ -1515,7 +1505,11 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 <p>
-这个其实就是一个很简单的绘制递归图案的例子, 我之所以选它是想对新人(我)说明一个事实: 在 <code>Fragment Shader</code> 中, <b>有时候</b> 迭代的每一轮计算更像是一次条件筛选, 整个迭代就是反复试验(<code>trial and error</code>).
+这个其实就是一个很简单的绘制递归图案的例子, 我之所以选它是想对新人(我)说明一个事实:
+</p>
+
+<p>
+在 <code>Fragment Shader</code> 中, <b>有时候</b> 迭代的每一轮计算更像是一次条件筛选, 整个迭代就是反复试验(<code>trial and error</code>).
 </p>
 
 <p>
@@ -1533,18 +1527,14 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 <p>
-相信现在的你能够理解为什么数学好也不一定写好的 <code>Shader</code> 了: 不知道把数学用在何处.
-</p>
-
-<p>
 只有在掌握整个模式后, "不断阅读其他人的代码并从中吸收所涉及的数学概念以及应用方法" 才是有用的.
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-orgd9238f0" class="outline-3">
-<h3 id="orgd9238f0"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/mix.xhtml">函数 - mix</a></h3>
-<div class="outline-text-3" id="text-orgd9238f0">
+<div id="outline-container-glsl-mix" class="outline-3">
+<h3 id="glsl-mix"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/mix.xhtml">函数 - mix</a></h3>
+<div class="outline-text-3" id="text-glsl-mix">
 <p>
 这个函数可能换个名字比较好理解一点: \(lerp\), 全称 <code>linear interpolation</code>.
 </p>
@@ -1558,10 +1548,10 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 
-<div id="orga526350" class="figure">
+<div id="org230017b" class="figure">
 <p><img src="../../../files/func-mix.png" alt="func-mix.png">
 </p>
-<p><span class="figure-number">Figure 13: </span>\(mix(x, y, a)\)</p>
+<p><span class="figure-number">Figure 10: </span>\(mix(x, y, a)\)</p>
 </div>
 
 <blockquote>
@@ -1664,10 +1654,10 @@ gl_FragColor = vec4(vec3(color), 1.0);
 </p>
 
 
-<div id="orgc48c0a0" class="figure">
+<div id="orgdcf60d7" class="figure">
 <p><img src="../../../files/Shader-Derivatives-1.png" alt="Shader-Derivatives-1.png">
 </p>
-<p><span class="figure-number">Figure 14: </span>dFdx/dFdy</p>
+<p><span class="figure-number">Figure 11: </span>dFdx/dFdy</p>
 </div>
 
 <p>
@@ -1855,10 +1845,10 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </div>
 
 
-<div id="org6fd2e89" class="figure">
+<div id="org98af2e9" class="figure">
 <p><img src="../../../files/func-faceforward.png" alt="func-faceforward.png">
 </p>
-<p><span class="figure-number">Figure 15: </span>faceforward</p>
+<p><span class="figure-number">Figure 12: </span>faceforward</p>
 </div>
 
 <p>
@@ -1898,26 +1888,38 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 <p>
-这个函数定义的推导过程可以看我<a href="../../2020/08/graphics-opengl-light-and-material.html#specular">以前的文章</a>, 这里不再赘述.
+这个函数定义的推导过程可以看我<a href="../../2020/08/graphics-opengl-light-and-material.html#phong-lighting-model-specular">以前的文章</a>, 这里不再赘述.
 </p>
+
+<blockquote>
+<p>
+\(I\) 是从光源位置到照射点的方向.
+</p>
+</blockquote>
 </div>
 </div>
-<div id="outline-container-org407522c" class="outline-3">
-<h3 id="org407522c"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/refract.xhtml">函数 - refract</a></h3>
-<div class="outline-text-3" id="text-org407522c">
+<div id="outline-container-refract" class="outline-3">
+<h3 id="refract"><a href="https://registry.khronos.org/OpenGL-Refpages/gl4/html/refract.xhtml">函数 - refract</a></h3>
+<div class="outline-text-3" id="text-refract">
 <p>
 \(refract(I, N, eta)\) 函数用于计算出入射光线 \(I\) 经过面向 \(N\) 表面(surface)后的折射光线的向量, \(eta\) 是表面的折射率比(ratio of indices of refraction).
 </p>
+
+<blockquote>
+<p>
+\(I\) 是从光源位置到照射点的方向.
+</p>
+</blockquote>
 
 <p>
 想了解 \(eta\) 的定义, 得先了解斯涅尔定律(<code>Snell's law</code>), 又叫折射定律.
 </p>
 
 
-<div id="org8af81fd" class="figure">
+<div id="org794028c" class="figure">
 <p><img src="../../../files/refraction-and-snells-law-from-physics-ib.jpg" alt="refraction-and-snells-law-from-physics-ib.jpg" width="800px">
 </p>
-<p><span class="figure-number">Figure 16: </span><a href="https://www.youtube.com/watch?v=NcCSGtnUUpw&amp;ab_channel=AndyMasley%27sIBPhysicsLectures">折射 &amp; 斯涅尔定律(图来自 IB Physics)</a></p>
+<p><span class="figure-number">Figure 13: </span><a href="https://www.youtube.com/watch?v=NcCSGtnUUpw&amp;ab_channel=AndyMasley%27sIBPhysicsLectures">折射 &amp; 斯涅尔定律(图来自 IB Physics)</a></p>
 </div>
 
 <p>
@@ -1943,22 +1945,32 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 
-<div id="orgf1ca08f" class="figure">
+<div id="org8a6d557" class="figure">
 <p><img src="../../../files/calc-refraction-vector.png" alt="calc-refraction-vector.png">
 </p>
-<p><span class="figure-number">Figure 17: </span>折射向量推导</p>
+<p><span class="figure-number">Figure 14: </span>折射向量推导</p>
 </div>
 
 <p>
-图中的向量 \(I\) / \(N\) / \(M\) 都是单位向量, \(M\) 是垂直于 \(N\) 的向量, 而向量 \(T\) 是 \(refract(I, N, eta)\) 的返回结果: 折射向量.
+根据函数 <code>refract</code> 的定义, \(I\) / \(N\) / \(M\) 都是单位向量, 这也是上图向量关系能成立的重要原因.
+</p>
+
+<blockquote>
+<p>
+但需要注意图中的 \(I\) 与 \(refract\) 中的 \(I\) 是相反方向
+</p>
+</blockquote>
+
+<p>
+\(M\) 是垂直于 \(N\) 的向量, 而向量 \(T\) 是 \(refract(I, N, eta)\) 的返回结果: 折射向量.
 </p>
 
 <p>
-从图中可以看出, 求出 \(T\) 的关键是求出向量 \(M\).
+从图中可以看出, 求出 \(T\) 的关键是求出向量 \(M\). 而向量 \(H\) 的单位向量就是 \(M\),
 </p>
 
 <p>
-其实, 向量 \(H\) 的单位向量就是 \(M\), 但两者的大小不一样, 它们的大小关系为: \(\sin\theta_{i} = \frac{|H|}{|I|} = \frac{|H|}{|M|} = |H|\),
+\(H\) 和 \(M\) 的模长大小关系为: \(\sin\theta_{i} = \frac{|H|}{|I|} = \frac{|H|}{|M|} = |H|\),
 </p>
 
 <p>
@@ -2007,7 +2019,31 @@ facef<span style="color: #00ffff;">or</span>ward(n, i, nr) <span style="color: #
 </p>
 
 <p>
-另外, 如上所示, \(refract\) 函数的计算结果和 \(T\) 是方向相反的.
+但你会发现 \(refract\) 函数定义与 \(T\) 是不一致的, 因为 \(refract\) 的 \(I\) 是从光源位置到照射点的方向, 与图片相反,
+</p>
+
+<p>
+接下来以 \(refract\) 的 \(I\) 进行简单推导:
+</p>
+
+<p>
+令 \(I\) 为 \(refract\) 函数定义的 \(I\), 得出上述向量 \(\begin{cases} H = I + N \times \cos\theta_i \\ M = \frac{H}{\sin\theta_i} \end{cases}\),
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} T = & \frac{I + N \times \cos\theta_i}{\sin\theta_i} \times \sin\theta_t - N \times \cos\theta_t \\ = & \frac{\sin\theta_t}{\sin\theta_i} (I + N \times \cos\theta_i) - N \times \cos\theta_t \\ = & \frac{\sin\theta_t}{\sin\theta_i} \times I + \frac{\sin\theta_t}{\sin\theta_i} \times N \times \cos\theta_i - N \times \cos\theta_t \\ = & \frac{\sin\theta_t}{\sin\theta_i} \times I + (\frac{\sin\theta_t}{\sin\theta_i} \times \cos\theta_i - \cos\theta_t) \times N \\ = & eta \times I + (eta \times \cos\theta_i - \cos\theta_t) \times N \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+其中根据几何关系可得出 \(\cos\theta_i = dot(-N, I) = - dot(N, I)\), 所以:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} T = & eta \times I + (-eta \times dot(N, I) - \cos\theta_t ) \times N \\ = & eta \times I - (eta \times dot(N, I) + \cos\theta_t ) \times N \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+\(k\) 的值不受 \(I\) 的方向影响, 最终的推导结果与 \(refract\) 的定义一致.
 </p>
 
 <p>
@@ -2169,27 +2205,24 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 
 
 
-<div id="org7ada431" class="figure">
+<div id="org94450f2" class="figure">
 <p><img src="../../../files/texture_wrapping.png" alt="texture_wrapping.png">
 </p>
-<p><span class="figure-number">Figure 18: </span>贴图环绕的 4 种选择 (图片来自 LearnOpenGL)</p>
+<p><span class="figure-number">Figure 15: </span>贴图环绕的 4 种选择 (图片来自 LearnOpenGL)</p>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-org71c7f7b" class="outline-2">
-<h2 id="org71c7f7b">常用自定义函数</h2>
-<div class="outline-text-2" id="text-org71c7f7b">
+<div id="outline-container-org6bdb596" class="outline-2">
+<h2 id="org6bdb596">常用自定义函数或宏</h2>
+<div class="outline-text-2" id="text-org6bdb596">
+<p>
+以下这些函数大部分是在其它图形库或 <code>Blender</code> 这样的建模软件移植过来.
+</p>
 </div>
 <div id="outline-container-orgcfe532a" class="outline-3">
 <h3 id="orgcfe532a">remap 函数</h3>
 <div class="outline-text-3" id="text-orgcfe532a">
-<blockquote>
-<p>
-从这里开始会介绍一下 <code>GLSL</code> 没有内置但又常用的函数.
-</p>
-</blockquote>
-
 <p>
 \(remap(value, low1, high1, low2, high2)\): 对 \(value\) 从 \([low1, high1]\) 映射到 \([low2, high2]\) 上, 并返回经过重新映射后的 \(value\).
 </p>
@@ -2197,6 +2230,87 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 <p>
 因此, 函数的定义是: \(low2 + \frac{value - low1}{high1 - low1} \times (high2 - low2)\).
 </p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> remap(<span style="color: #98fb98;">float</span> value, <span style="color: #98fb98;">float</span> low1, <span style="color: #98fb98;">float</span> high1, <span style="color: #98fb98;">float</span> low2, <span style="color: #98fb98;">float</span> high2) {
+  <span style="color: #00ffff;">return</span> low2 + (value - low1) / (high1 - low1) * (high2 - low2);
+}
+
+<span style="color: #98fb98;">vec2</span> remap(<span style="color: #98fb98;">vec2</span> value, <span style="color: #98fb98;">vec2</span> low1, <span style="color: #98fb98;">vec2</span> high1, <span style="color: #98fb98;">vec2</span> low2, <span style="color: #98fb98;">vec2</span> high2) {
+  <span style="color: #00ffff;">return</span> low2 + (value - low1) / (high1 - low1) * (high2 - low2);
+}
+
+<span style="color: #98fb98;">vec3</span> remap(<span style="color: #98fb98;">vec3</span> value, <span style="color: #98fb98;">vec3</span> low1, <span style="color: #98fb98;">vec3</span> high1, <span style="color: #98fb98;">vec3</span> low2, <span style="color: #98fb98;">vec3</span> high2) {
+  <span style="color: #00ffff;">return</span> low2 + (value - low1) / (high1 - low1) * (high2 - low2);
+}
+
+<span style="color: #98fb98;">vec4</span> remap(<span style="color: #98fb98;">vec4</span> value, <span style="color: #98fb98;">vec4</span> low1, <span style="color: #98fb98;">vec4</span> high1, <span style="color: #98fb98;">vec4</span> low2, <span style="color: #98fb98;">vec4</span> high2) {
+  <span style="color: #00ffff;">return</span> low2 + (value - low1) / (high1 - low1) * (high2 - low2);
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9dd844c" class="outline-3">
+<h3 id="org9dd844c">ColorRamp 宏</h3>
+<div class="outline-text-3" id="text-org9dd844c">
+<p>
+该宏的设计参考 <code>Blender</code> 的 <a href="https://docs.blender.org/manual/en/latest/compositing/types/color/color_ramp.html">Color Ramp Node</a>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#define</span> COLOR_RAMP(inputColors, inputPosition, finalColor) {    \
+    <span style="color: #00ffff;">const</span> <span style="color: #98fb98;">int</span> len = inputColors.<span style="color: #b0c4de;">length</span>();                       \
+    <span style="color: #98fb98;">int</span> index = 0;                                              \
+    <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt; len - 1; i++) {                         \
+      Color currentColor = inputColors[i];                      \
+      Color nextColor = inputColors[i + 1];                             \
+      <span style="color: #98fb98;">bool</span> pointExists = currentColor.position &lt;= inputPosition &amp;&amp; inputPosition &lt;= nextColor.position; \
+      index = pointExists ? i : index;                                  \
+    }                                                                   \
+    Color currentColor = inputColors[index];                            \
+    Color nextColor = inputColors[index + 1];                           \
+    <span style="color: #98fb98;">vec3</span> c1 = currentColor.c;                                           \
+    <span style="color: #98fb98;">vec3</span> c2 = nextColor.c;                                              \
+    <span style="color: #98fb98;">float</span> range = nextColor.position - currentColor.position;           \
+    <span style="color: #98fb98;">float</span> lerpFactor = (inputPosition - currentColor.position) / range; \
+    finalColor = <span style="color: #b0c4de;">mix</span>(c1, c2, lerpFactor);                               \
+  }                                                                     \
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29992;&#27861;
+</span><span style="color: #00ffff;">struct</span> Color {
+  <span style="color: #98fb98;">vec3</span> c;
+  <span style="color: #98fb98;">float</span> position;
+};
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec3</span> color;
+  Color[4] colors = Color[](
+                          Color(<span style="color: #98fb98;">vec3</span>(1.), 0.0),
+                          Color(<span style="color: #98fb98;">vec3</span>(0.8), 0.01),
+                          Color(<span style="color: #98fb98;">vec3</span>(0.2, 0.5, 0.2), 0.1),
+                          Color(<span style="color: #98fb98;">vec3</span>(0.01, 0.05, 0.2), 1.0));
+  <span style="color: #98fb98;">float</span> position = 0.3;
+  COLOR_RAMP(colors, position, color);
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(color, 1.);
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org31e7a8a" class="outline-3">
+<h3 id="org31e7a8a">luma 函数</h3>
+<div class="outline-text-3" id="text-org31e7a8a">
+<p>
+计算像素的亮度(<code>luminance</code>), 公式来源于 <code>Rec.709</code>: \(0.2126 \times R + 0.7152 \times G + 0.0722 \times B\).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> luma(<span style="color: #98fb98;">vec3</span> rgb) {
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">dot</span>(<span style="color: #98fb98;">vec3</span>(0.2126, 0.7152, 0.0722), rgb);
+}
+</pre>
+</div>
 </div>
 </div>
 <div id="outline-container-org8171fdf" class="outline-3">
@@ -2211,43 +2325,15 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 <h3 id="orgfe8dc03">缓动函数</h3>
 <div class="outline-text-3" id="text-orgfe8dc03">
 <p>
-缓动函数(Easing Function) \(f\) 用于描述动画的进度 \(p\) 如何随着时间 \(t\) 的变化而变化.
+缓动函数(<code>Easing Function</code>) 是插值函数的一种, 比如 \(f\) 用于描述变量 \(p\) 如何随着时间 \(t\) 的变化而变化.
 </p>
 
 <p>
-在数学上, 其定义大概为: \(p = f(t)\).
-</p>
-
-<p>
-其中 \(t \in [0, 1]\), \(t\) 是一个规范化的时间,
-</p>
-
-<p>
-假设一个动画的总时长为 \(30\) 秒, 在播放到一半时(在第 \(15\) 秒), 那么 \(t = \frac{15}{30} = 0.5\),
-</p>
-
-<p>
-所以 \(t = 0\) 表示动画开始, \(t = 1\) 表示动画结束;
+在数学上, 其定义大概为: \(p = f(t)\), 其中 \(t \in [0, 1]\), \(t\) 是一个规范化的时间,
 </p>
 
 <p>
 \(p\) 它没有固定范围, 但满足关系: \(p = \begin{cases} 0 & \text{if } t = 0 \\ 1 & \text{if } t = 1 \end{cases}\).
-</p>
-
-<p>
-根据这些特点, \(p\) 可以看作是 \(0\) 到 \(1\) 的插值函数, \(p\) 可以表示动画已播放帧数的归一化, 也可以表示变量插值变化的归一化.
-</p>
-
-<p>
-比如动画的总帧数为 \(120\) 帧, 假设播放到一半(在第 \(60\) 帧), 那么 \(p = \frac{60}{120}\),
-</p>
-
-<p>
-在其它地方中, \(p\) 会被定义为动画已播放的帧数, 这两者本质上是一致的, 只要知道动画的总帧数就可以进行相互转换.
-</p>
-
-<p>
-通俗点来说, 缓动函数描述动画在什么时间上处于哪一帧.
 </p>
 
 <p>
@@ -2271,7 +2357,7 @@ fs = <span style="color: #b0c4de;">modf</span>(<span style="color: #98fb98;">vec
 </p>
 
 <p>
-<a href="https://easings.net/">https://easings.net/</a>
+以下代码的实现参考至 <a href="https://easings.net/">https://easings.net/</a>.
 </p>
 
 <div class="org-src-container">
@@ -2852,7 +2938,7 @@ easeInOutBounce(x) <span style="color: #00ffff;">:=</span> <span style="color: #
 </div>
 
 
-<div id="org0ecf03b" class="figure">
+<div id="orge72fd3f" class="figure">
 <p><img src="../../../files/fract-sin.png" alt="fract-sin.png" width="500px">
 </p>
 </div>
@@ -2867,7 +2953,7 @@ easeInOutBounce(x) <span style="color: #00ffff;">:=</span> <span style="color: #
 </div>
 
 
-<div id="org4b257af" class="figure">
+<div id="org0fc893c" class="figure">
 <p><img src="../../../files/fract-sin-100000.png" alt="fract-sin-100000.png" width="504px">
 </p>
 </div>
@@ -3272,7 +3358,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </div>
 
 
-<div id="orgcbb8c47" class="figure">
+<div id="org25f87c8" class="figure">
 <p><img src="../../../files/noise-functions.png" alt="noise-functions.png" width="504px">
 </p>
 </div>
@@ -3286,7 +3372,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org1d0ff8a" class="figure">
+<div id="org78977df" class="figure">
 <p><img src="../../../files/value-noise-1d-lerp.png" alt="value-noise-1d-lerp.png">
 </p>
 </div>
@@ -3350,7 +3436,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org1fe6ebb" class="figure">
+<div id="orge91ad9a" class="figure">
 <p><img src="../../../files/bilinear-texture-weights.png" alt="bilinear-texture-weights.png" width="504px">
 </p>
 </div>
@@ -3406,7 +3492,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org7b4abdb" class="figure">
+<div id="org1a9cb44" class="figure">
 <p><img src="../../../files/trilinear-interpolation.png" alt="trilinear-interpolation.png" width="504px">
 </p>
 </div>
@@ -3514,10 +3600,10 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgb2d1e78" class="figure">
+<div id="orga87736c" class="figure">
 <p><img src="../../../files/2d-value-noise-stX5.png" alt="2d-value-noise-stX5.png">
 </p>
-<p><span class="figure-number">Figure 19: </span>2D 值噪声的效果</p>
+<p><span class="figure-number">Figure 16: </span>2D 值噪声的效果</p>
 </div>
 </div>
 </div>
@@ -3545,7 +3631,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 <p>
-按照数学定义, 角指向是一个方向向量, 这个点积是方向导数, 换而言之, 梯度噪声的结果是一个方向导数.
+按照数学定义, 如果角指向是一个单位向量, 那么这个点积是方向导数, 换而言之, 梯度噪声的结果是一个类似方向导数的存在.
 </p>
 
 <p>
@@ -3553,7 +3639,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org3d3fc84" class="figure">
+<div id="orge8f751d" class="figure">
 <p><img src="../../../files/perlin-noise.png" alt="perlin-noise.png" width="504px">
 </p>
 </div>
@@ -3624,7 +3710,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 <p>
-方向导数 \(D_u f(x, y)\) 表示 \(f\) 在某点 \((x, y)\) 上往某方向 \(u\) 的变化率:
+方向导数 \(D_u f(x, y)\) 表示 \(f\) 在某点 \((x, y)\) 上往某方向 \(u\) (单位向量)的变化率:
 </p>
 
 <p>
@@ -3637,6 +3723,14 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 
 <p>
 把 \(D_{u}f(x, y)\) 看作是一个以方向 \(u\) 为参数的函数 \(g(u)\), 那么 \(\nabla f(x, y)\) 就是 \(g\) 关于 \(u\) 导数: \(\frac{\mathrm{d}g}{\mathrm{d}u}\).
+</p>
+
+<p>
+为什么梯度噪声不对角指向进行单位化再计算? 因为梯度噪声的结果并不是用于测量某方向上的变化率, 而是用来生成视觉效果的,
+</p>
+
+<p>
+单位化之后角指向的长度都一致了, 生产的梯度噪声就会少了点自然, 多了点重复的模式.
 </p>
 </blockquote>
 
@@ -3685,17 +3779,17 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org8f933a8" class="figure">
+<div id="org6d75107" class="figure">
 <p><img src="../../../files/noise-value-vs-perlin1.png" alt="noise-value-vs-perlin1.png">
 </p>
-<p><span class="figure-number">Figure 20: </span>理想情况: 随机值关于 \(x\) 轴良好地分布, 使得噪声函数的振荡在频率上是成规律的.</p>
+<p><span class="figure-number">Figure 17: </span>理想情况: 随机值关于 \(x\) 轴良好地分布, 使得噪声函数的振荡在频率上是成规律的.</p>
 </div>
 
 
-<div id="org0b12548" class="figure">
+<div id="org0df9382" class="figure">
 <p><img src="../../../files/noise-value-vs-perlin2.png" alt="noise-value-vs-perlin2.png">
 </p>
-<p><span class="figure-number">Figure 21: </span>最坏情况: 一些随机值在 \(x\) 轴的一定范围内连续出现多次, 也就是说噪声函数的频率分布是不成规律的.</p>
+<p><span class="figure-number">Figure 18: </span>最坏情况: 一些随机值在 \(x\) 轴的一定范围内连续出现多次, 也就是说噪声函数的频率分布是不成规律的.</p>
 </div>
 
 <p>
@@ -3711,10 +3805,10 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org05fc9dc" class="figure">
+<div id="org67f219b" class="figure">
 <p><img src="../../../files/1d-perlin-noise-func-graph.png" alt="1d-perlin-noise-func-graph.png">
 </p>
-<p><span class="figure-number">Figure 22: </span>1D梯度噪声的函数图像, 梯度向量控制着噪声函数形状 (图片来源: Stefan Gustavson - Simplex Noise Demystified)</p>
+<p><span class="figure-number">Figure 19: </span>1D梯度噪声的函数图像, 梯度向量控制着噪声函数形状 (图片来源: Stefan Gustavson - Simplex Noise Demystified)</p>
 </div>
 
 <p>
@@ -3730,7 +3824,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 <p>
-从 \(floor(p)\) 到 \(p\) 的向量为 \(f\), 从 \(floor(p) + 1\) 到 \(p\) 的向量为 \(f - 1\),
+从 \(floor(p)\) 到 \(p\) 的角指向为 \(f\), 从 \(floor(p) + 1\) 到 \(p\) 的角指向为 \(f - 1\),
 </p>
 
 <p>
@@ -3758,22 +3852,24 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 <p>
-根据函数定义, 函数图像在整数点上的值是 \(P(0) = P(1) = 0\).
+根据函数定义, 函数图像在整数点上的值是 \(P(0) = P(1) = 0\), 即具备周期性;
 </p>
 
 <p>
-根据导数定义, 函数图像的整数点上的斜率就是它们对应的梯度: \(P^{'}(0) = a\) 以及 \(P^{'}(1) = b\).
+整数点上的斜率就是它们对应的梯度: \(P^{'}(0) = a\) 以及 \(P^{'}(1) = b\).
 </p>
 
 <p>
-由于 \(P\) 是一个一元四次函数且具备周期性, 因此函数图由多个抛物线组成, 使得梯度噪声相比值噪声减少低频, 消除了块状效果.
+由于一元偶数次函数的图像就是抛物线, 所以 \(P\) 是一个具备周期性的抛物线,
 </p>
 
-<blockquote>
 <p>
-一元偶次函数的图像就是抛物线.
+因此函数图由多个抛物线组成, 使得梯度噪声相比值噪声减少低频, 消除了块状效果.
 </p>
-</blockquote>
+
+<p>
+同时也说明了为什么角指向不应该为单位向量, 因为按照定义 \(f = f - 1 = 1\) 是不可能成立的.
+</p>
 </div>
 </div>
 <div id="outline-container-org4cc56e9" class="outline-4">
@@ -3843,10 +3939,10 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org065a4c0" class="figure">
+<div id="org50a2f91" class="figure">
 <p><img src="../../../files/2d-simplex-shape.png" alt="2d-simplex-shape.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 23: </span>等边三角形作为单形, 填充二维空间</p>
+<p><span class="figure-number">Figure 20: </span>等边三角形作为单形, 填充二维空间</p>
 </div>
 
 <p>
@@ -3854,10 +3950,10 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org30ec08e" class="figure">
+<div id="orge636a46" class="figure">
 <p><img src="../../../files/3d-simplex-shape.png" alt="3d-simplex-shape.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 24: </span>正四面体作为单形, 填充三维空间</p>
+<p><span class="figure-number">Figure 21: </span>正四面体作为单形, 填充三维空间</p>
 </div>
 
 <p>
@@ -3892,7 +3988,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org2d9b2c4" class="figure">
+<div id="orga8e38a7" class="figure">
 <p><img src="../../../files/2d-simplex-summation-2.png" alt="2d-simplex-summation-2.png" width="504px">
 </p>
 </div>
@@ -3918,7 +4014,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="org7e4c64a" class="figure">
+<div id="orgf6a512f" class="figure">
 <p><img src="../../../files/2d-simplex-summation.png" alt="2d-simplex-summation.png" width="504px">
 </p>
 </div>
@@ -3935,7 +4031,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgc69ee1d" class="figure">
+<div id="orgd5c58ac" class="figure">
 <p><img src="../../../files/2d-simplex-selecting-traversing-order.png" alt="2d-simplex-selecting-traversing-order.png" width="504px">
 </p>
 </div>
@@ -3985,7 +4081,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgd46cb96" class="figure">
+<div id="orgf6668d4" class="figure">
 <p><img src="../../../files/3d-simplex-selecting-traversing-order.png" alt="3d-simplex-selecting-traversing-order.png" width="504px">
 </p>
 </div>
@@ -4077,7 +4173,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgfc5bb5d" class="figure">
+<div id="orgd61ff53" class="figure">
 <p><img src="../../../files/2d-simplex-grid-choice.png" alt="2d-simplex-grid-choice.png" width="504px">
 </p>
 </div>
@@ -4242,7 +4338,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </p>
 
 
-<div id="orgfbe9832" class="figure">
+<div id="orgaff6ab2" class="figure">
 <p><img src="../../../files/2d-simplex-grid-efficient-choice.png" alt="2d-simplex-grid-efficient-choice.png" width="504px">
 </p>
 </div>
@@ -4463,7 +4559,7 @@ noise(x) <span style="color: #00ffff;">:=</span> mix(r<span style="color: #00fff
 </blockquote>
 
 
-<div id="org933fe06" class="figure">
+<div id="org48bb932" class="figure">
 <p><img src="../../../files/2d-simplex-summation.png" alt="2d-simplex-summation.png" width="504px">
 </p>
 </div>
@@ -4679,9 +4775,9 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </div>
 </div>
 </div>
-<div id="outline-container-org19b4108" class="outline-2">
-<h2 id="org19b4108">SDF</h2>
-<div class="outline-text-2" id="text-org19b4108">
+<div id="outline-container-sdf" class="outline-2">
+<h2 id="sdf">SDF</h2>
+<div class="outline-text-2" id="text-sdf">
 <blockquote>
 <p>
 施工中
@@ -4804,10 +4900,10 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </blockquote>
 
 
-<div id="org9a42157" class="figure">
+<div id="org06ff7be" class="figure">
 <p><img src="../../../files/isocurve-distance.png" alt="isocurve-distance.png">
 </p>
-<p><span class="figure-number">Figure 25: </span>等值线之间的距离</p>
+<p><span class="figure-number">Figure 22: </span>等值线之间的距离</p>
 </div>
 
 <p>
@@ -4873,7 +4969,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 <p>
-不管是哪种假设, 现在可以得到估算 \(\vec{\varepsilon}\) 的方法: \(|\vec{\varepsilon}| = \frac{|f(p)|}{|\nabla f(p)|}\).
+不管是哪种假设, 现在可以得到估算 \(\vec{\varepsilon}\) 的方法: \(|\vec{\varepsilon}| \approx \frac{|f(p)|}{|\nabla f(p)|}\).
 </p>
 
 <p>
@@ -4885,11 +4981,11 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 <p>
-如果函数 \(y = f(x)\) 是一元标量值函数, 那么要先把它转成隐函数 \(F(x, y) = f(x) - y = 0\), 因为一元标量值函数的导数是斜率, 而不是梯度向量.
+如果函数 \(y = f(x)\) 是一元标量值函数, 那么要先把它转成隐函数 \(F(x, y) = f(x) - y = 0\),
 </p>
 
 <p>
-所以使用中心差商法计算梯度向量的方法如下:
+因为一元标量值函数的导数是斜率, 而不是梯度向量. 使用中心差商法计算梯度向量的方法如下:
 </p>
 
 <p>
@@ -4909,7 +5005,11 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </div>
 
 <p>
-其实在 <a href="#org4fe9c50">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a> 就已经运用到中心差商法了, 只不过并没有除以 \(h\) 把导数算出来, 直接用的 \(df(x)\).
+其实在 <a href="#org4fe9c50">The Book Of Shaders 的 smoothstep 函数绘制 Shader 解析</a> 就已经运用到中心差商法了,
+</p>
+
+<p>
+只不过并没有除以 \(h\) 把导数算出来, 直接用的 \(df(x)\).
 </p>
 
 <p>
@@ -5249,7 +5349,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="orge0291cf" class="figure">
+<div id="org494fa3b" class="figure">
 <p><img src="../../../files/segment-sdf.png" alt="segment-sdf.png">
 </p>
 </div>
@@ -5259,7 +5359,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org6455ca1" class="figure">
+<div id="orgdbb6279" class="figure">
 <p><img src="../../../files/segment-sdf-2.png" alt="segment-sdf-2.png">
 </p>
 </div>
@@ -5342,10 +5442,10 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 <h4 id="org28ae747">计算点与矩形之间的距离</h4>
 <div class="outline-text-4" id="text-org28ae747">
 
-<div id="org3691968" class="figure">
+<div id="org8e57f0b" class="figure">
 <p><img src="../../../files/sdf_box.png" alt="sdf_box.png">
 </p>
-<p><span class="figure-number">Figure 26: </span>中心位于原点且尺寸为 \(W \times H\) 的矩形与点之间的距离 (图片来源于 <a href="https://numbersmithy.com/signed-distance-function-to-oriented-2d-boxes/#org958ce36">Number-Smithy</a>)</p>
+<p><span class="figure-number">Figure 23: </span>中心位于原点且尺寸为 \(W \times H\) 的矩形与点之间的距离 (图片来源于 <a href="https://numbersmithy.com/signed-distance-function-to-oriented-2d-boxes/#org958ce36">Number-Smithy</a>)</p>
 </div>
 
 <p>
@@ -5488,10 +5588,10 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org9c7b0d3" class="figure">
+<div id="org07ecedc" class="figure">
 <p><img src="../../../files/self-intersecting-polygon-with-holes.png" alt="self-intersecting-polygon-with-holes.png">
 </p>
-<p><span class="figure-number">Figure 27: </span>空心的自交多变形</p>
+<p><span class="figure-number">Figure 24: </span>空心的自交多变形</p>
 </div>
 
 <p>
@@ -5503,10 +5603,10 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="orgb73e6bd" class="figure">
+<div id="org3ab1f72" class="figure">
 <p><img src="../../../files/self-intersecting-polygon-without-holes.png" alt="self-intersecting-polygon-without-holes.png">
 </p>
-<p><span class="figure-number">Figure 28: </span>实心的自交多边形</p>
+<p><span class="figure-number">Figure 25: </span>实心的自交多边形</p>
 </div>
 
 <p>
@@ -5518,14 +5618,14 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org90ca5d6" class="figure">
+<div id="orgdbd414d" class="figure">
 <p><img src="../../../files/Winding_Number_Animation_Small.gif" alt="Winding_Number_Animation_Small.gif">
 </p>
-<p><span class="figure-number">Figure 29: </span>环绕数为 2</p>
+<p><span class="figure-number">Figure 26: </span>环绕数为 2</p>
 </div>
 
 
-<div id="org2dacec5" class="figure">
+<div id="org83d2533" class="figure">
 <p><img src="../../../files/winding-number.png" alt="winding-number.png">
 </p>
 </div>
@@ -5543,10 +5643,10 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org9945204" class="figure">
+<div id="org9652916" class="figure">
 <p><img src="../../../files/subtended-angle.png" alt="subtended-angle.png">
 </p>
-<p><span class="figure-number">Figure 30: </span>\(R\) 是判定点, \(C(t)\) 是曲线上的点</p>
+<p><span class="figure-number">Figure 27: </span>\(R\) 是判定点, \(C(t)\) 是曲线上的点</p>
 </div>
 
 <p>
@@ -5588,7 +5688,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org1271237" class="figure">
+<div id="org67aeda1" class="figure">
 <p><img src="../../../files/signed-angle-for-polygons.png" alt="signed-angle-for-polygons.png">
 </p>
 </div>
@@ -5607,7 +5707,7 @@ Something to note: 2D simplex triangles ( as generated by perlins skew/unskew me
 </p>
 
 
-<div id="org17b5993" class="figure">
+<div id="orga508f1f" class="figure">
 <p><img src="../../../files/triangle-RPQ.png" alt="triangle-RPQ.png">
 </p>
 </div>
@@ -5807,7 +5907,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="orgba76e49" class="figure">
+<div id="orgd5ae549" class="figure">
 <p><img src="../../../files/Winding_number_algorithm_example.svg.png" alt="Winding_number_algorithm_example.svg.png" width="504px">
 </p>
 </div>
@@ -5934,7 +6034,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org830c825" class="figure">
+<div id="orgc12ffb0" class="figure">
 <p><img src="../../../files/ray-tracing.jpg" alt="ray-tracing.jpg" width="504px">
 </p>
 </div>
@@ -5978,10 +6078,10 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org4a96551" class="figure">
+<div id="org1fd30ac" class="figure">
 <p><img src="../../../files/08_displacement_05.png" alt="08_displacement_05.png">
 </p>
-<p><span class="figure-number">Figure 31: </span>光线步进</p>
+<p><span class="figure-number">Figure 28: </span>光线步进</p>
 </div>
 
 <p>
@@ -6050,10 +6150,10 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </div>
 
 
-<div id="orgc1d4224" class="figure">
+<div id="orgdff414d" class="figure">
 <p><img src="../../../files/3d-sdf-example.png" alt="3d-sdf-example.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 32: </span>3D SDF 效果</p>
+<p><span class="figure-number">Figure 29: </span>3D SDF 效果</p>
 </div>
 
 <p>
@@ -6150,10 +6250,10 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </div>
 
 
-<div id="orge774abd" class="figure">
+<div id="org9ca7511" class="figure">
 <p><img src="../../../files/3d-sdf-example-diffuse.png" alt="3d-sdf-example-diffuse.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 33: </span>3D SDF 光照</p>
+<p><span class="figure-number">Figure 30: </span>3D SDF 光照</p>
 </div>
 </div>
 </li>
@@ -6253,10 +6353,10 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </div>
 
 
-<div id="org00f164a" class="figure">
+<div id="orgcb60d36" class="figure">
 <p><img src="../../../files/3d-sdf-example-shadow.png" alt="3d-sdf-example-shadow.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 34: </span>3D SDF 阴影</p>
+<p><span class="figure-number">Figure 31: </span>3D SDF 阴影</p>
 </div>
 </div>
 </li>
@@ -6378,7 +6478,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="orge95f43f" class="figure">
+<div id="org9e76c60" class="figure">
 <p><img src="../../../files/1-gamma.svg" alt="1-gamma.svg" class="org-svg" width="504px">
 </p>
 </div>
@@ -6577,7 +6677,7 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org8475ad3" class="figure">
+<div id="org1e6d129" class="figure">
 <p><img src="../../../files/planar-mapping.png" alt="planar-mapping.png">
 </p>
 </div>
@@ -6615,10 +6715,10 @@ c<span style="color: #00ffff;">:</span> P <span style="color: #00ffff;">.</span>
 </p>
 
 
-<div id="org979fda6" class="figure">
+<div id="org749e906" class="figure">
 <p><img src="../../../files/TriplanarMapping.png" alt="TriplanarMapping.png">
 </p>
-<p><span class="figure-number">Figure 35: </span>三平面映射, 图片来源: <a href="https://docs.otoy.com">https://docs.otoy.com</a></p>
+<p><span class="figure-number">Figure 32: </span>三平面映射, 图片来源: <a href="https://docs.otoy.com">https://docs.otoy.com</a></p>
 </div>
 
 <p>
@@ -6852,7 +6952,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="orgf1a9616" class="figure">
+<div id="org291d0ef" class="figure">
 <p><img src="../../../files/raymarching-tirplanar-mapping.png" alt="raymarching-tirplanar-mapping.png" width="504px">
 </p>
 </div>
@@ -7041,7 +7141,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </p>
 
 
-<div id="org0651997" class="figure">
+<div id="org0ebd8e7" class="figure">
 <p><img src="../../../files/calc-occlusion.png" alt="calc-occlusion.png">
 </p>
 </div>
@@ -7205,7 +7305,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="org6c77ee8" class="figure">
+<div id="org74ccc1c" class="figure">
 <p><img src="../../../files/raymarching-ao-example.png" alt="raymarching-ao-example.png" width="504px">
 </p>
 </div>
@@ -7247,7 +7347,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="org7e14d92" class="figure">
+<div id="orgae35fb8" class="figure">
 <p><img src="../../../files/more-complicated-scene.png" alt="more-complicated-scene.png" width="504px">
 </p>
 </div>
@@ -7269,7 +7369,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </p>
 
 
-<div id="org1108e75" class="figure">
+<div id="org03e2d42" class="figure">
 <p><img src="../../../files/Primitives-and-hierarchy.svg" alt="Primitives-and-hierarchy.svg" class="org-svg" width="504px">
 </p>
 </div>
@@ -7369,7 +7469,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 
 <div class="org-src-container">
 <pre class="src src-glsl"><span style="color: #98fb98;">float</span> sdfScene(<span style="color: #98fb98;">vec3</span> p) {
-  <span style="color: #98fb98;">vec3</span> sp = <span style="color: #98fb98;">vec3</span>(1.0, 3.0, 5.0) * p; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; y &#36724;&#26041;&#21521;&#19978;&#23545;&#29699;&#20307;&#36827;&#34892;&#32553;&#23567;
+  <span style="color: #98fb98;">vec3</span> sp = <span style="color: #98fb98;">vec3</span>(1.0, 3.0, 5.0) * p; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#29699;&#20307;&#36827;&#34892;&#32553;&#23567;
 </span>  <span style="color: #98fb98;">float</span> sphereDist = sdfSphere(sp - sphereCenter, sphereRadius); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36317;&#31163;&#22330; sphereDist &#34987;&#25289;&#20280;&#20102;
 </span>  <span style="color: #98fb98;">float</span> groundDist = sdfGround(p);
 
@@ -7387,13 +7487,13 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 </div>
 
 
-<div id="org5deb5d8" class="figure">
+<div id="orgbf6b8aa" class="figure">
 <p><img src="../../../files/invalid-sdf-sphere.png" alt="invalid-sdf-sphere.png" width="504px">
 </p>
 </div>
 
 <p>
-解决方法是对距离场进行等倍缩小, 让距离场除以原缩放系数当中最大的一个来缩小步长.
+解决方法是对距离场进行等倍缩小: 让距离场除以原缩放系数当中最大的一个来缩小步长.
 </p>
 
 <p>
@@ -7410,7 +7510,7 @@ Intersection sdfScene(<span style="color: #98fb98;">vec3</span> p) {
 
 <div class="org-src-container">
 <pre class="src src-glsl"><span style="color: #98fb98;">float</span> sdfScene(<span style="color: #98fb98;">vec3</span> p) {
-  <span style="color: #98fb98;">vec3</span> sp = <span style="color: #98fb98;">vec3</span>(1.0, 3.0, 5.0) * p; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312; y &#36724;&#26041;&#21521;&#19978;&#23545;&#29699;&#20307;&#36827;&#34892;&#32553;&#23567;
+  <span style="color: #98fb98;">vec3</span> sp = <span style="color: #98fb98;">vec3</span>(1.0, 3.0, 5.0) * p; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23545;&#29699;&#20307;&#36827;&#34892;&#32553;&#23567;
 </span>  <span style="color: #98fb98;">float</span> sphereDist = sdfSphere(sp - sphereCenter, sphereRadius) / 5.0; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21407;&#26412;&#32553;&#25918;&#30340;&#26368;&#22823;&#20998;&#37327;&#26159; 5.0, &#25152;&#20197;&#36825;&#37324;&#35201;&#22788;&#20197; 5.0
 </span>  <span style="color: #98fb98;">float</span> groundDist = sdfGround(p);
 
@@ -7697,10 +7797,10 @@ n(u, v, w);
 </p>
 
 
-<div id="org10e1584" class="figure">
+<div id="org39b0c15" class="figure">
 <p><img src="../../../files/Convolution_of_spiky_function_with_box2.gif" alt="Convolution_of_spiky_function_with_box2.gif" width="504px">
 </p>
-<p><span class="figure-number">Figure 36: </span>连续卷积</p>
+<p><span class="figure-number">Figure 33: </span>连续卷积</p>
 </div>
 
 <p>
@@ -7754,10 +7854,10 @@ n(u, v, w);
 </p>
 
 
-<div id="org2135d02" class="figure">
+<div id="org74fb10f" class="figure">
 <p><img src="../../../files/11148cnn_convolve_with_padding.gif" alt="11148cnn_convolve_with_padding.gif" width="504px">
 </p>
-<p><span class="figure-number">Figure 37: </span>2D 离散卷积, 使用 \(3 \times 3\) 的核来处理 \(5 \times 5\) 的数据, 为了保证卷积进行在外层填充 0</p>
+<p><span class="figure-number">Figure 34: </span>2D 离散卷积, 使用 \(3 \times 3\) 的核来处理 \(5 \times 5\) 的数据, 为了保证卷积进行在外层填充 0</p>
 </div>
 
 <p>
@@ -7904,10 +8004,10 @@ n(u, v, w);
 </p>
 
 
-<div id="org7829991" class="figure">
+<div id="org390a646" class="figure">
 <p><img src="../../../files/fallout-4k-game-artwork-80.jpg" alt="fallout-4k-game-artwork-80.jpg" width="600px">
 </p>
-<p><span class="figure-number">Figure 38: </span>Fallout 4K Game Artwork (<a href="https://hdqwalls.com/fallout-4k-game-artwork-wallpaper">https://hdqwalls.com/fallout-4k-game-artwork-wallpaper</a>)</p>
+<p><span class="figure-number">Figure 35: </span>Fallout 4K Game Artwork (<a href="https://hdqwalls.com/fallout-4k-game-artwork-wallpaper">https://hdqwalls.com/fallout-4k-game-artwork-wallpaper</a>)</p>
 </div>
 </blockquote>
 </div>
@@ -7924,10 +8024,10 @@ n(u, v, w);
 </p>
 
 
-<div id="orgbeb8019" class="figure">
+<div id="org673c9ee" class="figure">
 <p><img src="../../../files/sobel_neighborhood_cell_distances.png" alt="sobel_neighborhood_cell_distances.png" width="504px">
 </p>
-<p><span class="figure-number">Figure 39: </span>相邻元素的距离</p>
+<p><span class="figure-number">Figure 36: </span>相邻元素的距离</p>
 </div>
 
 <p>
@@ -8077,7 +8177,7 @@ n(u, v, w);
 </p>
 
 
-<div id="org19b6deb" class="figure">
+<div id="org25e7305" class="figure">
 <p><img src="../../../files/sobel_G_half.png" alt="sobel_G_half.png" width="400px">
 </p>
 </div>
@@ -8166,10 +8266,10 @@ n(u, v, w);
 </div>
 
 
-<div id="org8a1e5f3" class="figure">
+<div id="org1087975" class="figure">
 <p><img src="../../../files/dip-sobel-result.png" alt="dip-sobel-result.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 40: </span>处理结果</p>
+<p><span class="figure-number">Figure 37: </span>处理结果</p>
 </div>
 </div>
 <div id="outline-container-orgc193edb" class="outline-4">
@@ -8381,10 +8481,10 @@ n(u, v, w);
 </div>
 
 
-<div id="orga02ee6e" class="figure">
+<div id="orga4a48a5" class="figure">
 <p><img src="../../../files/dip-laplacian-result.png" alt="dip-laplacian-result.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 41: </span>处理结果</p>
+<p><span class="figure-number">Figure 38: </span>处理结果</p>
 </div>
 
 <blockquote>
@@ -8401,7 +8501,7 @@ n(u, v, w);
 </p>
 
 <p>
-\(\langle dx, dy \rangle\) 就是一个任意的线性组合, 也就是任意方向.
+\(\langle dx, dy \rangle\) 就是一个任意的线性组合, 一个单位向量, 也就是任意方向.
 </p>
 
 <p>

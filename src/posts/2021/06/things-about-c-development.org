@@ -622,7 +622,7 @@
 
 *** 构建工具之 CMake
 :PROPERTIES:
-:status:   wd
+:status: wd
 :END:
 
 在构建工具这一块, =C/C++= 相对于其它语言来说有很多选择, 什么 =make=, =CMake=, =automake= 等等, 都能用来构建项目.
@@ -664,6 +664,265 @@
 
 跟着教程走一边基本上就 =okay= 了.
 
+
+*** 构建工具之 Docker
+
+=Unix= 系统之所以适合用于开发 =C= 程序是因为它能够把库的头文件和二进制文件做好分类, 并且自动设置好环境变量提供访问.
+
+开发的程序会直接通过这些环境变量来找到依赖库, 对于 =C= 语言来说, 系统本身就是一个依赖管理工具.
+
+但这也会出现一种情况: 一个系统上有多个程序同时依赖于同一个库, 但要求版本却不统一.
+
+传统的方法是给不同版本的库命不同的名, 通常是库名加版本号: =libname.so.[version]=, 然后在编译链接时指定对应版本的库.
+
+但这种方法不方便对库进行管理, 也增加手动操作的情况. 后来有一家公司想到了把系统轻量化后打包到容器中, 把容器当作程序运行在真正的系统上,
+
+这么一来, 容器与真正的系统就形成环境隔离. 开发的程序只要能在容器上进行开发和运行,
+
+部署时就无需担心真系统的环境是否满足程序要求. 这项技术就是 =Docker=.
+
+到目前为此 =C= 语言不像 =Rust/JavaScript= 那样每个项目都有自己的的依赖管理, 因此 =Docker= 在一定程度上可以解决这个问题.
+
+=Docker= 还是有一点点上手难度的, 不仅要求会写 =shell= 和 =Dockerfile=, 还要求对操作系统有一些了解.
+
+这里以 =Docker= 构建运行 [[https://github.com/patriciogonzalezvivo/glslViewer][glslViewer]] 为例子, 作为应用部署的代表.
+
+#+begin_quote
+其实我很早之前就有写过两篇关于 =Docker= 文章, 定位更偏入门:
+
+[[../../2018/08/tornado-with-docker.html][用Docker打包Tornado项目]]
+
+[[../../2019/02/docker-compose-file.html][docker-compose.yml文件的编写]]
+#+end_quote
+
+首先构建目录如下:
+
+#+begin_src sh
+  CWD: ~/path/to/glslViewerDocker
+
+  $ tree -L 1
+  .
+  ├── docker-entrypoint.sh  # 容器启动时的脚本
+  ├── Dockerfile            # 镜像构建文件
+  ├── glslViewer            # 程序的源代码
+  ├── image-tag.txt         # 配置镜像名
+  ├── startup.sh            # 用于启动容器
+  └── volumes.txt           # 配置目录挂载, 格式为 /dir/in/host:/dir/in/docker, 一行一个配置
+#+end_src
+
+=Dockerfile=:
+
+#+BEGIN_SRC dockerfile
+# 选择 ubuntu:22.04 作为基础镜像
+FROM ubuntu:22.04
+
+# DEBIAN_FRONTEND 是 Debian 安装程序用于设置用户界面类型的引导参数, noninteractive 意味着自动化安装, 无需人工干预
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 glslViewer 在 Ubuntu 上的依赖
+RUN set -eux \
+    && apt-get update \
+    && apt-get -yq upgrade \
+    && apt-get -yq install --no-install-recommends \
+    git build-essential cmake xorg-dev libglu1-mesa-dev libncurses5-dev libncursesw5-dev \
+    && exit 0
+
+RUN set -eux \
+    && apt-get -yq install --no-install-recommends \
+    ffmpeg libavcodec-dev libavcodec-extra libavfilter-dev libavfilter-extra libavdevice-dev libavformat-dev libavutil-dev libswscale-dev libv4l-dev libjpeg-dev libpng-dev libtiff-dev \
+    && exit 0
+
+RUN set -eux \
+    && apt-get -yq install --no-install-recommends \
+    xvfb \
+    && exit 0
+
+RUN set -eux \
+    && apt-get -yq clean \
+    && exit 0
+
+RUN mkdir -p /app
+ENV SRC_ROOT=/app/glslViewer
+ENV SRC_BUILD=${SRC_ROOT}/build
+
+# 把 glslViewer 的源代码复制到镜像里面
+ADD ./glslViewer $SRC_ROOT
+# 把容器入口脚本复制到容器里面
+ADD ./docker-entrypoint.sh /bin/
+# 保证脚本可执行
+RUN chmod +x /bin/docker-entrypoint.sh
+# 做构建准备, 需要参考项目的构建说明
+RUN mkdir $SRC_BUILD
+WORKDIR $SRC_BUILD
+RUN cmake ..
+RUN make
+
+# 在启动容器时, 会自动执行 ENTRYPOINT 的命令
+ENTRYPOINT [ "/bin/docker-entrypoint.sh" ]
+#+END_SRC
+
+容器入口脚本, 用来启动 =glslViewer=.
+
+#+BEGIN_SRC sh
+  #!/bin/bash
+  # docker-entrypoint.sh
+  exec /app/glslViewer/build/glslViewer "$@"
+#+END_SRC
+
+在文件都准备好后便可以构建镜像了.
+
+#+BEGIN_SRC sh
+  # 构建容器
+  cd /path/to/dir
+  sudo docker build . -t $(cat image-tag.txt)
+#+END_SRC
+
+构建完毕后就可以启动容器了, 启动容器也是需要一定操作的,
+
+=Docker= 通常用来运行 =CLI= 程序, 而 =glslViewer= 是一个 =GUI= 程序,
+
+网络上这方面的资料比重稍微低一点, 遇到问题不太好解决,
+
+这也是我选择 =glslViewer= 作为例子的原因: 相当有代表性,
+
+#+BEGIN_SRC sh
+  # 修改 X server 的访问控制
+  xhost +local:docker             # 允许 Docker 与 X server 通信, 后面会介绍什么是 X server
+  # 启动容器的命令
+  sudo docker run \
+       --rm \                     # 容器停止时删除容器
+       -it \                      # -it 以交互形式运行容器
+       -e DISPLAY=$DISPLAY \      # 设置容器的 DISPLAY 环境变量为主机的 DISPLAY 环境, 尝试把容器画面输出到主机上
+       --network=host \           # 设置容器与主机共享同一个网络, 两者的端口共享, 只有这样容器的画面才可以输出到主机上
+       -v /dir/in/host:/dir/in/docker \  # 把主机的目录挂在到容器上, 让容器上的 glslViewer 可以在 /dir/in/docker 中查找文件
+       -w /dir/in/docker \               # 设置容器的工作路径
+       glslViewer-img \                  # 容器的镜像
+       shader.frag        # glslViewer 在工作路径上读取的 shader 文件, 即 /dir/in/docker/shader.frag
+#+END_SRC
+
+如果不想容器和主机共享网络, 可以把 =--network-host= 替换成挂载项: =-v /tmp/.X11-unix:/tmp/.X11-unix=.
+
+=/tmp/.X11-unix= 属于 =UNIX= 域套接字(=Unix Domain Socket=), 用在同一机器内程序之间的本地通信,
+
+它是 =X server= 与 =X clients= (即遵守 =X server= 协议的程序)通信的其中一种方式, 也可以用通过 =TCP= 和内存进行通行.
+
+为了理解为什么这么配置能够显示容器里程序的 =GUI=, 接下来介绍一下 =X server= 这个东西:
+
+=X clients= 先通过解析环境变量 =DISPLAY= 后得知要在哪个屏幕(=screen=)上绘制自己的 =GUI=,
+
+把解析结果和绘制命令发送到 =X server=, =X server= 在接收到绘制命令后把绘制结果输出到对应的屏幕上.
+
+#+attr_html: :width 400px
+#+caption: X Server and X Clients
+[[../../../files/x-server-and-x-clients.png]]
+
+其中, 一台电脑上可以运行多个 =X servers=, 一个 =X servers= 可以管理多个 =screen=,
+
+一个 =screen= 可以对应单个或多个物理显示器, 多个物理显示器合成一个逻辑 =screen=.
+
+回到容器启动上, 以同样的路径把主机上的该套接字挂载到容器上,
+
+使得容器上的 =X clients= 可以直接与主机的 =X server= 进行通信,
+
+这样主机上就能使用到容器上 =X clients= 的 =GUI=. =--network=host= 本质上也一样, 只是通信手段不太一样.
+
+上面的启动命令太长了, 启动频繁的话会很麻烦, 所以写了一个脚本进行封装:
+
+#+BEGIN_SRC sh
+  #!/bin/bash
+  # startup.sh: 启动容器的命令封装
+  mapfile -t lines < volumes.txt
+  printf -v volumes " -v %s" "${lines[@]}"
+  image_tag=$(cat image-tag.txt)
+  docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+         $volumes $image_tag "$@"
+#+END_SRC
+
+以上就是使用 =Docker= 部署应用的情况了, 那么开发和编译呢? 这个更简单, 项目结构和构建目录保持一致,
+
+只是 =glslViewer= 目录要换成自己的程序代码, 不过现在就假设我们是 =glslViewer= 的开发者吧.
+
+镜像构建方面, 只要构建一个安装了依赖的镜像即可.
+
+=Dockerfile=:
+
+#+BEGIN_SRC dockerfile
+# 选择 ubuntu:22.04 作为基础镜像
+FROM ubuntu:22.04
+
+# DEBIAN_FRONTEND 是 Debian 安装程序用于设置用户界面类型的引导参数, noninteractive 意味着自动化安装, 无需人工干预
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 glslViewer 在 Ubuntu 上的依赖
+RUN set -eux \
+    && apt-get update \
+    && apt-get -yq upgrade \
+    && apt-get -yq install --no-install-recommends \
+    git build-essential cmake xorg-dev libglu1-mesa-dev libncurses5-dev libncursesw5-dev \
+    && exit 0
+
+RUN set -eux \
+    && apt-get -yq install --no-install-recommends \
+    ffmpeg libavcodec-dev libavcodec-extra libavfilter-dev libavfilter-extra libavdevice-dev libavformat-dev libavutil-dev libswscale-dev libv4l-dev libjpeg-dev libpng-dev libtiff-dev \
+    && exit 0
+
+RUN set -eux \
+    && apt-get -yq install --no-install-recommends \
+    xvfb \
+    && exit 0
+
+RUN set -eux \
+    && apt-get -yq clean \
+    && exit 0
+
+ADD ./docker-entrypoint.sh /bin/
+RUN chmod +x /bin/docker-entrypoint.sh
+
+ENTRYPOINT [ "/bin/docker-entrypoint.sh" ]
+#+END_SRC
+
+这么做是因为开发中的代码需要经常更新, 所以不应该把源代码复制进镜像, 否则每次更新代码都要构建一边镜像,
+
+正确方法是在启动容器时把代码挂载到容器上, 再进入容器里对代码进行编译.
+
+如果不想手动的话, 可以修改 =docker-entrypoint.sh= 实现每次启动容器时会自动编译运行程序.
+
+#+BEGIN_SRC sh
+  #!/bin/bash
+  # docker-entrypoint.sh
+  # 假设容器的源代码挂载路径为 /src/glslViewer
+  SRC_BUILD=/src/glslViewer/build
+  if [[ ! -d $SRC_BUILD ]]; then
+      mkdir $SRC_BUILD
+  fi
+  cd $SRC_BUILD
+  cmake ..
+  make
+  exec ${SRC_BUILD}/glslViewer "$@"
+#+END_SRC
+
+官方文档上关于挂载和执行 =ENTRYPOINT= 的顺序有间接暗示: 挂载先于执行 =ENTRYPOINT=,
+
+=docker run= 命令会先根据镜像创建容器再运行容器, 挂载是发生在容器创建阶段,
+
+执行 =ENTRYPOINT= 是发生在容器运行阶段, 所以才能在启动容器时挂载代码并成功编译运行,
+
+在部署应用的情况中也可以采取源码挂载方案, 这样开发和部署就能共用一套构建方案,
+
+正常情况下部署时只应发布二进制文件, 源代码不应该被包含进容器中.
+
+最后透露一些容器管理方法, 以下方法可以批量停止容器和删除容器:
+
+#+BEGIN_SRC sh
+  sudo docker ps -a -q | sudo xargs docker stop
+  sudo docker ps -a -q | sudo xargs docker rm
+#+END_SRC
+
+镜像也可以通过类似的命令进行批量管理:
+
+#+BEGIN_SRC sh
+  sudo docker images -a -q | sudo xargs docker rmi
+#+END_SRC
 
 *** 内存检测工具
 

@@ -3,13 +3,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-02-25 Sun 23:31 -->
+<!-- 2025-10-11 Sat 14:46 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>关于使用C语言开发的那些事</title>
 <meta name="author" content="saltb0rn" />
 <meta name="generator" content="Org Mode" />
-<style>
+<style type="text/css">
   #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
@@ -201,47 +201,50 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgc4c6d37">1. GNU Binutils</a></li>
-<li><a href="#orgc40969f">2. 关于使用 GCC 的须知事项</a>
+<li><a href="#orga267578">1. GNU Binutils</a></li>
+<li><a href="#org59181d5">2. 关于使用 GCC 的须知事项</a>
 <ul>
-<li><a href="#org1d87e8c">2.1. 预处理阶段的一些细节</a>
+<li><a href="#org387bddc">2.1. 预处理阶段的一些细节</a>
 <ul>
-<li><a href="#orgf0818d1">2.1.1. 宏定义时的一些惯例</a></li>
+<li><a href="#org578893a">2.1.1. 宏定义时的一些惯例</a></li>
 </ul>
 </li>
-<li><a href="#orga02a830">2.2. 头文件以及库文件的一些细节</a></li>
+<li><a href="#orgb8ea50c">2.2. 头文件以及库文件的一些细节</a></li>
 </ul>
 </li>
-<li><a href="#org3e8b8c3">3. 构建工具之 CMake</a></li>
-<li><a href="#org09b0990">4. 内存检测工具</a></li>
-<li><a href="#orgbbf8f69">5. 交叉编译 (cross compilation)</a></li>
-<li><a href="#about-c">6. 关于 C 语言</a>
+<li><a href="#orgdd5175c">3. 构建工具之 CMake</a></li>
+<li><a href="#org3abac57">4. 构建工具之 Docker</a></li>
+<li><a href="#org6b0550d">5. 内存检测工具</a></li>
+<li><a href="#org51e7d32">6. 交叉编译 (cross compilation)</a></li>
+<li><a href="#about-c">7. 关于 C 语言</a>
 <ul>
-<li><a href="#how-to-read-c-declarations">6.1. 读懂 C 的声明语法</a></li>
-<li><a href="#how-to-master-c-pointer">6.2. 指针</a>
+<li><a href="#how-to-read-c-declarations">7.1. 读懂 C 的声明语法</a></li>
+<li><a href="#how-to-master-c-pointer">7.2. 指针</a>
 <ul>
-<li><a href="#org3992b54">6.2.1. 泛型指针</a></li>
+<li><a href="#org348f2e2">7.2.1. 泛型指针</a></li>
 </ul>
 </li>
-<li><a href="#what-is-undefined-behavior">6.3. 未定义行为 (undefined behavior, UB)</a></li>
-<li><a href="#arguments-in-function-declaration">6.4. 函数的参数声明</a></li>
-<li><a href="#orgd7770fa">6.5. 不透明结构体 (Opaque Structures)</a></li>
-<li><a href="#orgb59fdea">6.6. 标签联合体 (Tagged Union)</a></li>
-<li><a href="#org19fd375">6.7. Async/Await</a></li>
-<li><a href="#difference-between-c-and-cpp">6.8. 对比 C++, C 的优点</a></li>
-<li><a href="#org8275c8c">6.9. 一些编码习惯和理由</a></li>
+<li><a href="#what-is-undefined-behavior">7.3. 未定义行为 (undefined behavior, UB)</a></li>
+<li><a href="#arguments-in-function-declaration">7.4. 函数的参数声明</a></li>
+<li><a href="#orgf3ec68f">7.5. 不透明结构体 (Opaque Structures)</a></li>
+<li><a href="#orga0ee24a">7.6. 标签联合体 (Tagged Union)</a></li>
+<li><a href="#org147d75f">7.7. Async/Await</a></li>
+<li><a href="#orgac2d275">7.8. X Macro</a></li>
+<li><a href="#difference-between-c-and-cpp">7.9. 对比 C++, C 的优点</a></li>
+<li><a href="#org9103758">7.10. 一些编码习惯和理由</a></li>
+<li><a href="#org1c04028">7.11. C 语言应用教材</a></li>
 </ul>
 </li>
-<li><a href="#org1c70fa3">7. 关于调试</a></li>
-<li><a href="#org4d4276d">8. GCC flags 的最佳实践</a>
+<li><a href="#org4e19dd7">8. 关于调试</a></li>
+<li><a href="#org2f8e6a6">9. GCC flags 的最佳实践</a>
 <ul>
-<li><a href="#orge61b3cc">8.1. 禁止单精度/双精度/整型之间的隐藏式装换</a></li>
+<li><a href="#orgfd0e7bd">9.1. 禁止单精度/双精度/整型之间的隐藏式装换</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgb5eae73">
+<div class="abstract" id="orgd1d0ca8">
 <p>
 <b>注意</b>, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, 因为 <code>C</code> 代码会被编译成汇编,
 </p>
@@ -299,9 +302,8 @@
 </p>
 
 </div>
-
-<div id="outline-container-orgc4c6d37" class="outline-2">
-<h2 id="orgc4c6d37"><span class="section-number-2">1.</span> GNU Binutils</h2>
+<div id="outline-container-orga267578" class="outline-2">
+<h2 id="orga267578"><span class="section-number-2">1.</span> GNU Binutils</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 学 <code>C</code> 语言时除了掌握 <code>GCC</code> 以及相关的构建工具意外, 还需要掌握一些工具用于使用/调试/分析二进制文件.
@@ -316,22 +318,20 @@
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-orgc40969f" class="outline-2">
-<h2 id="orgc40969f"><span class="section-number-2">2.</span> 关于使用 GCC 的须知事项</h2>
+<div id="outline-container-org59181d5" class="outline-2">
+<h2 id="org59181d5"><span class="section-number-2">2.</span> 关于使用 GCC 的须知事项</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org1d87e8c" class="outline-3">
-<h3 id="org1d87e8c"><span class="section-number-3">2.1.</span> 预处理阶段的一些细节</h3>
+<div id="outline-container-org387bddc" class="outline-3">
+<h3 id="org387bddc"><span class="section-number-3">2.1.</span> 预处理阶段的一些细节</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 我们从一个简单的例子出发:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">eatc.c</span>
-<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">eatc.c
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>) {
   printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
@@ -345,7 +345,7 @@
 </p>
 
 
-<div id="org6e04eff" class="figure">
+<div id="org98db45d" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>GCC编译C语言并生成程序</p>
@@ -436,23 +436,23 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Define ISO C stdio on top of C++ iostreams.</span>
-<span style="color: #ff7f24;">   Copyright (C) 1991-2022 Free Software Foundation, Inc.</span>
-<span style="color: #ff7f24;">   This file is part of the GNU C Library.</span>
+<pre class="src src-c"><span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Define ISO C stdio on top of C++ iostreams.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
 
-<span style="color: #ff7f24;">   The GNU C Library is free software; you can redistribute it and/or</span>
-<span style="color: #ff7f24;">   modify it under the terms of the GNU Lesser General Public</span>
-<span style="color: #ff7f24;">   License as published by the Free Software Foundation; either</span>
-<span style="color: #ff7f24;">   version 2.1 of the License, or (at your option) any later version.</span>
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
 
-<span style="color: #ff7f24;">   The GNU C Library is distributed in the hope that it will be useful,</span>
-<span style="color: #ff7f24;">   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span style="color: #ff7f24;">   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</span>
-<span style="color: #ff7f24;">   Lesser General Public License for more details.</span>
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
 
-<span style="color: #ff7f24;">   You should have received a copy of the GNU Lesser General Public</span>
-<span style="color: #ff7f24;">   License along with the GNU C Library; if not, see</span>
-<span style="color: #ff7f24;">   <a href="https://www.gnu.org/licenses/&gt;.  */
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <a href="https://www.gnu.org/licenses/&gt;.  */
 
 /*
  *      ISO C99 Standard: 7.19 Input/output     &lt;stdio.h&gt;
@@ -494,7 +494,7 @@
 #define _STDIO_H        1
 
 #define __GLIBC_INTERNAL_STARTING_HEADER_IMPLEMENTATION
-#include &lt;bits/libc-header-start.h">/*</a></span><a href="https://www.gnu.org/licenses/&gt;.  */
+#include &lt;bits/libc-header-start.h">/*</a></span><span style="color: #ff7f24;"><a href="https://www.gnu.org/licenses/&gt;.  */
 
 /*
  *      ISO C99 Standard: 7.19 Input/output     &lt;stdio.h&gt;
@@ -505,28 +505,8 @@
 
 #define __GLIBC_INTERNAL_STARTING_HEADER_IMPLEMENTATION
 #include &lt;bits/libc-header-start.h">
-</a><span style="color: #ff7f24;"><a href="https://www.gnu.org/licenses/&gt;.  */
-
-/*
  *      ISO C99 Standard: 7.19 Input/output     &lt;stdio.h&gt;
- */
-
-#ifndef _STDIO_H
-#define _STDIO_H        1
-
-#define __GLIBC_INTERNAL_STARTING_HEADER_IMPLEMENTATION
-#include &lt;bits/libc-header-start.h"> *      ISO C99 Standard: 7.19 Input/output     &lt;stdio.h&gt;</a></span><a href="https://www.gnu.org/licenses/&gt;.  */
-
-/*
- *      ISO C99 Standard: 7.19 Input/output     &lt;stdio.h&gt;
- */
-
-#ifndef _STDIO_H
-#define _STDIO_H        1
-
-#define __GLIBC_INTERNAL_STARTING_HEADER_IMPLEMENTATION
-#include &lt;bits/libc-header-start.h">
-</a><span style="color: #ff7f24;"><a href="https://www.gnu.org/licenses/&gt;.  */
+</a></span><span style="color: #ff7f24;"><a href="https://www.gnu.org/licenses/&gt;.  */
 
 /*
  *      ISO C99 Standard: 7.19 Input/output     &lt;stdio.h&gt;
@@ -720,8 +700,8 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">eatc.c</span>
-<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">eatc.c
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>) {
   printf(<span style="color: #ffa07a;">"Eat something!\n"</span>);
@@ -730,7 +710,7 @@
 </pre>
 </div>
 
-<pre class="example" id="org09ba4a0">
+<pre class="example" id="orgad04a3d">
 // right-bracket
 }
 </pre>
@@ -771,8 +751,8 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">eatc.c</span>
-<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">eatc.c
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
 
 <span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">MAIN_CLOSURE</span>(...) <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) { __VA_ARGS__ }
 
@@ -909,10 +889,8 @@
 </div></li>
 </ul>
 </div>
-
-
-<div id="outline-container-orgf0818d1" class="outline-4">
-<h4 id="orgf0818d1"><span class="section-number-4">2.1.1.</span> 宏定义时的一些惯例</h4>
+<div id="outline-container-org578893a" class="outline-4">
+<h4 id="org578893a"><span class="section-number-4">2.1.1.</span> 宏定义时的一些惯例</h4>
 <div class="outline-text-4" id="text-2-1-1">
 <ul class="org-ul">
 <li><code>do {} while(0)</code> 定义: <a href="https://stackoverflow.com/a/2687595">https://stackoverflow.com/a/2687595</a></li>
@@ -934,9 +912,8 @@
 </div>
 </div>
 </div>
-
-<div id="outline-container-orga02a830" class="outline-3">
-<h3 id="orga02a830"><span class="section-number-3">2.2.</span> 头文件以及库文件的一些细节</h3>
+<div id="outline-container-orgb8ea50c" class="outline-3">
+<h3 id="orgb8ea50c"><span class="section-number-3">2.2.</span> 头文件以及库文件的一些细节</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 通常情况下, 头文件(<code>.h</code>)的内容都是一些宏/变量的定义以及变量/函数的声明(declarations),
@@ -959,16 +936,16 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
   <span style="color: #00ffff;">return</span> a + b;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
-  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
-  <span style="color: #00ffff;">return</span> 0;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
+  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;
+</span>  <span style="color: #00ffff;">return</span> 0;
 }
 </pre>
 </div>
@@ -978,15 +955,15 @@
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
-  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
-  <span style="color: #00ffff;">return</span> 0;
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
+  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;
+</span>  <span style="color: #00ffff;">return</span> 0;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
   <span style="color: #00ffff;">return</span> a + b;
 }
 </pre>
@@ -1029,18 +1006,18 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#35843;&#29992;func&#21069;&#20026;&#20854;&#36827;&#34892;&#22768;&#26126;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span>( <span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">int</span> );
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22312;&#35843;&#29992;func&#21069;&#20026;&#20854;&#36827;&#34892;&#22768;&#26126;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span>( <span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">int</span> );
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
-  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;</span>
-  <span style="color: #00ffff;">return</span> 0;
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#31243;&#24207;&#20837;&#21475;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span> ) {
+  func( 1, 2 ); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#23450;&#20041;&#30340;&#20989;&#25968;
+</span>  <span style="color: #00ffff;">return</span> 0;
 }
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23450;&#20041;&#20989;&#25968;
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
   <span style="color: #00ffff;">return</span> a + b;
 }
 </pre>
@@ -1063,13 +1040,13 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-这里以最终版为例, 把 <code>func</code> 注释掉后会得到一个连接器报的错误:
+这里以最终版为例, 把 <code>func</code> 注释掉后会得到一个链接器报的错误:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">/usr/bin/ld: /tmp/ccxdFKZ5.o:<span style="color: #00ffff;"> in</span> <span style="color: #00ffff;">function</span> <span style="color: #fa8072;">`main':</span>
-<span style="color: #fa8072;">simple-c.c:(.text+0x1e): undefined reference to `</span>func<span style="color: #ffa07a;">'</span>
-<span style="color: #ffa07a;">collect2: error: ld returned 1 exit status</span>
+<pre class="src src-sh">/usr/bin/ld: /tmp/ccxdFKZ5.o:<span style="color: #00ffff;"> in</span> <span style="color: #00ffff;">function</span> <span style="color: #fa8072;">`main':
+simple-c.c:(.text+0x1e): undefined reference to `</span>func<span style="color: #ffa07a;">'
+collect2: error: ld returned 1 exit status</span>
 </pre>
 </div>
 
@@ -1094,11 +1071,11 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-等编译完了就交给连接器在连接时去找 <code>func</code> 的定义, 由于没有找到对应的定义, 于似乎它报错了.
+等编译完了就交给链接器在链接时去找 <code>func</code> 的定义, 由于没有找到对应的定义, 于似乎它报错了.
 </p>
 
 <p>
-解决这个问题除了把注释解除掉外, 还可以在使用 <code>GCC</code> 编译时让它连接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
+解决这个问题除了把注释解除掉外, 还可以在使用 <code>GCC</code> 编译时让它链接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
 </p>
 
 <p>
@@ -1110,24 +1087,24 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </p>
 
 <p>
-连接动态链接库的叫做动态连接, 而把多个二进制文件连接为一体的连接方式就叫静态连接, 静态连接不一定非得使用静态库的,
+链接动态链接库的叫做动态链接, 而把多个二进制文件链接为一体的链接方式就叫静态链接, 静态链接不一定非得使用静态库的,
 </p>
 
 <p>
-动态连接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
+动态链接得到的程序会在运行前寻找动态库并且加载, 如果找不到动态库就运行不起来;
 </p>
 
 <p>
-静态连接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态连接生成的程序本体比动态连接的要大.
+静态链接得到的程序本身就是完整的, 因此是可以直接运行的, 然而静态链接生成的程序本体比动态链接的要大.
 </p>
 
 <p>
-我们基于前面最终版的代码拆分一下用于后续演示两种连接:
+我们基于前面最终版的代码拆分一下用于后续演示两种链接:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
-<span style="color: #00ffff;">extern</span> <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span>( <span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">int</span> );
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c
+</span><span style="color: #00ffff;">extern</span> <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span>( <span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">int</span> );
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>) {
   func(1, 2);
@@ -1137,20 +1114,20 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </div>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.c</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.c
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
   <span style="color: #00ffff;">return</span> a + b;
 }
 </pre>
 </div>
 
 <p>
-<b>静态连接</b> 有两种方法:
+<b>静态链接</b> 有两种方法:
 </p>
 
 <ul class="org-ul">
 <li><p>
-<b>静态连接-1</b>
+<b>静态链接-1</b>
 </p>
 
 <div class="org-src-container">
@@ -1159,7 +1136,7 @@ simple-c.c:4:3: warning: implicit declaration of <span style="color: #00ffff;">f
 </div>
 
 <p>
-这种方法会把中间生成若干个 <code>.o</code> 的目标文件, 然后连接器再它们连接起来得到一个程序, 这个过程其实并未使用到静态库.
+这种方法会把中间生成若干个 <code>.o</code> 的目标文件, 然后链接器再它们链接起来得到一个程序, 这个过程其实并未使用到静态库.
 </p>
 
 <p>
@@ -1174,7 +1151,7 @@ gcc -o simple-c simple-c.o simple-c-func.o
 </div></li>
 
 <li><p>
-<b>静态连接-2</b>
+<b>静态链接-2</b>
 </p>
 
 <div class="org-src-container">
@@ -1189,7 +1166,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L.
 </p>
 
 <p>
-<code>GCC</code> 的 <code>-l</code> 选项就是用来指定要连接的链接库名; <code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
+<code>GCC</code> 的 <code>-l</code> 选项就是用来指定要链接的链接库名; <code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
 </p>
 
 <p>
@@ -1197,7 +1174,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L.
 </p>
 
 <p>
-<b>动态连接</b> 如下:
+<b>动态链接</b> 如下:
 </p>
 
 <div class="org-src-container">
@@ -1215,7 +1192,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
 </p>
 
 <p>
-因此我们需要告诉 <code>ld</code> 该连接生成的程序在 <b>运行时</b> 需要从自身当前位置查找 <code>libsimple-c-func.so</code>,
+因此我们需要告诉 <code>ld</code> 该链接生成的程序在 <b>运行时</b> 需要从自身当前位置查找 <code>libsimple-c-func.so</code>,
 </p>
 
 <p>
@@ -1253,11 +1230,11 @@ If both static and shared libraries are found, the linker gives preference to li
 </blockquote>
 
 <p>
-可以看到默认情况下是默认连接动态库, 而这个 <code>-l</code> 选项是直接传给连接器的, 所以连接器也是这么处理的.
+可以看到默认情况下是默认链接动态库, 而这个 <code>-l</code> 选项是直接传给链接器的, 所以链接器也是这么处理的.
 </p>
 
 <p>
-<code>GCC</code> 启动时会调用一个名叫 <a href="https://gcc.gnu.org/onlinedocs/gccint/Collect2.html">collect2</a> 功能, 这个功能调用 <code>ld</code> 来生成一张符号表用于查找定义以及进行连接, 它就是一个连接器的封装.
+<code>GCC</code> 启动时会调用一个名叫 <a href="https://gcc.gnu.org/onlinedocs/gccint/Collect2.html">collect2</a> 功能, 这个功能调用 <code>ld</code> 来生成一张符号表用于查找定义以及进行链接, 它就是一个链接器的封装.
 </p>
 
 <p>
@@ -1293,8 +1270,8 @@ If both static and shared libraries are found, the linker gives preference to li
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c</span>
-<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"simple-c-func.h"</span>
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c.c
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"simple-c-func.h"</span>
 
 <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> **<span style="color: #eedd82;">argv</span>) {
   func(1, 2);
@@ -1304,17 +1281,17 @@ If both static and shared libraries are found, the linker gives preference to li
 </div>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.h</span>
-<span style="color: #b0c4de;">#if</span><span style="color: #b0c4de;">n</span><span style="color: #b0c4de;">def</span> SIMPLE_C_FUNC_H
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.h
+</span><span style="color: #b0c4de;">#if</span><span style="color: #b0c4de;">n</span><span style="color: #b0c4de;">def</span> SIMPLE_C_FUNC_H
 <span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">SIMPLE_C_FUNC_H</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span>( <span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">int</span> )
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span>( <span style="color: #98fb98;">int</span>, <span style="color: #98fb98;">int</span> );
 <span style="color: #b0c4de;">#endif</span>
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.c</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.c
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
   <span style="color: #00ffff;">return</span> a + b;
 }
 </pre>
@@ -1333,11 +1310,11 @@ If both static and shared libraries are found, the linker gives preference to li
 </p>
 
 <p>
-从代码上看, 它貌似是来源于 <code>stdio</code> 库的, 并且连接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
+从代码上看, 它貌似是来源于 <code>stdio</code> 库的, 并且链接时是从系统路径上查找库的, 如果是这么想的话就不太对了.
 </p>
 
 <p>
-你没办法在系统路径上找到 <code>libstdio.a</code> 或者 <code>libstdio.so</code> 的文件, 你可以 <code>ldd</code> 命令看一个可执行程序或者动态链接库连接了哪些动态链接库,
+你没办法在系统路径上找到 <code>libstdio.a</code> 或者 <code>libstdio.so</code> 的文件, 你可以 <code>ldd</code> 命令看一个可执行程序或者动态链接库链接了哪些动态链接库,
 </p>
 
 <p>
@@ -1398,7 +1375,7 @@ libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007f2fcd67b000)
 </div>
 
 <p>
-按照前面的说法个, 在静态连接中 <code>#include "simple-c-func"</code> 对应一个 <code>simple-c-func.o</code> 或者 <code>simple-c-func.a</code> 的话,
+按照前面的说法个, 在静态链接中 <code>#include "simple-c-func"</code> 对应一个 <code>simple-c-func.o</code> 或者 <code>simple-c-func.a</code> 的话,
 </p>
 
 <p>
@@ -1454,10 +1431,8 @@ nm: sigvec.o: no symbols
 </div>
 </div>
 </div>
-
-
-<div id="outline-container-org3e8b8c3" class="outline-2">
-<h2 id="org3e8b8c3"><span class="section-number-2">3.</span> 构建工具之 CMake</h2>
+<div id="outline-container-orgdd5175c" class="outline-2">
+<h2 id="orgdd5175c"><span class="section-number-2">3.</span> 构建工具之 CMake</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 在构建工具这一块, <code>C/C++</code> 相对于其它语言来说有很多选择, 什么 <code>make</code>, <code>CMake</code>, <code>automake</code> 等等, 都能用来构建项目.
@@ -1468,7 +1443,7 @@ nm: sigvec.o: no symbols
 </p>
 
 <p>
-比如说前面的 <code>simple-c</code> 的动态连接构成的步骤用一个 <code>Makefile</code> 解决:
+比如说前面的 <code>simple-c</code> 的动态链接构成的步骤用一个 <code>Makefile</code> 解决:
 </p>
 
 <div class="org-src-container">
@@ -1492,7 +1467,7 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-在 1991 年的时候, 有个名为 <code>David J. MacKenzie</code> 的程序员厌倦了为 20 个系统(<code>*nix</code> 平台)单独写 <code>Makefile</code> 的任务, 因为每个操作系统上的编译器/连接器/头文件/库文件的路径不一定相同,
+在 1991 年的时候, 有个名为 <code>David J. MacKenzie</code> 的程序员厌倦了为 20 个系统(<code>*nix</code> 平台)单独写 <code>Makefile</code> 的任务, 因为每个操作系统上的编译器/链接器/头文件/库文件的路径不一定相同,
 </p>
 
 <p>
@@ -1532,11 +1507,375 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-org09b0990" class="outline-2">
-<h2 id="org09b0990"><span class="section-number-2">4.</span> 内存检测工具</h2>
+<div id="outline-container-org3abac57" class="outline-2">
+<h2 id="org3abac57"><span class="section-number-2">4.</span> 构建工具之 Docker</h2>
 <div class="outline-text-2" id="text-4">
+<p>
+<code>Unix</code> 系统之所以适合用于开发 <code>C</code> 程序是因为它能够把库的头文件和二进制文件做好分类, 并且自动设置好环境变量提供访问.
+</p>
+
+<p>
+开发的程序会直接通过这些环境变量来找到依赖库, 对于 <code>C</code> 语言来说, 系统本身就是一个依赖管理工具.
+</p>
+
+<p>
+但这也会出现一种情况: 一个系统上有多个程序同时依赖于同一个库, 但要求版本却不统一.
+</p>
+
+<p>
+传统的方法是给不同版本的库命不同的名, 通常是库名加版本号: <code>libname.so.[version]</code>, 然后在编译链接时指定对应版本的库.
+</p>
+
+<p>
+但这种方法不方便对库进行管理, 也增加手动操作的情况. 后来有一家公司想到了把系统轻量化后打包到容器中, 把容器当作程序运行在真正的系统上,
+</p>
+
+<p>
+这么一来, 容器与真正的系统就形成环境隔离. 开发的程序只要能在容器上进行开发和运行,
+</p>
+
+<p>
+部署时就无需担心真系统的环境是否满足程序要求. 这项技术就是 <code>Docker</code>.
+</p>
+
+<p>
+到目前为此 <code>C</code> 语言不像 <code>Rust/JavaScript</code> 那样每个项目都有自己的的依赖管理, 因此 <code>Docker</code> 在一定程度上可以解决这个问题.
+</p>
+
+<p>
+<code>Docker</code> 还是有一点点上手难度的, 不仅要求会写 <code>shell</code> 和 <code>Dockerfile</code>, 还要求对操作系统有一些了解.
+</p>
+
+<p>
+这里以 <code>Docker</code> 构建运行 <a href="https://github.com/patriciogonzalezvivo/glslViewer">glslViewer</a> 为例子, 作为应用部署的代表.
+</p>
+
+<blockquote>
+<p>
+其实我很早之前就有写过两篇关于 <code>Docker</code> 文章, 定位更偏入门:
+</p>
+
+<p>
+<a href="../../2018/08/tornado-with-docker.html">用Docker打包Tornado项目</a>
+</p>
+
+<p>
+<a href="../../2019/02/docker-compose-file.html">docker-compose.yml文件的编写</a>
+</p>
+</blockquote>
+
+<p>
+首先构建目录如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">CWD: ~/path/to/glslViewerDocker
+
+$ tree -L 1
+<span style="color: #b0c4de;">.</span>
+&#9500;&#9472;&#9472; docker-entrypoint.sh  <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23481;&#22120;&#21551;&#21160;&#26102;&#30340;&#33050;&#26412;
+</span>&#9500;&#9472;&#9472; Dockerfile            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#38236;&#20687;&#26500;&#24314;&#25991;&#20214;
+</span>&#9500;&#9472;&#9472; glslViewer            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#31243;&#24207;&#30340;&#28304;&#20195;&#30721;
+</span>&#9500;&#9472;&#9472; image-tag.txt         <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#37197;&#32622;&#38236;&#20687;&#21517;
+</span>&#9500;&#9472;&#9472; startup.sh            <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#29992;&#20110;&#21551;&#21160;&#23481;&#22120;
+</span>&#9492;&#9472;&#9472; volumes.txt           <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#37197;&#32622;&#30446;&#24405;&#25346;&#36733;, &#26684;&#24335;&#20026; /dir/in/host:/dir/in/docker, &#19968;&#34892;&#19968;&#20010;&#37197;&#32622;</span>
+</pre>
+</div>
+
+<p>
+<code>Dockerfile</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-dockerfile"># 选择 ubuntu:22.04 作为基础镜像
+FROM ubuntu:22.04
+
+# DEBIAN_FRONTEND 是 Debian 安装程序用于设置用户界面类型的引导参数, noninteractive 意味着自动化安装, 无需人工干预
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 glslViewer 在 Ubuntu 上的依赖
+RUN set -eux \
+    &amp;&amp; apt-get update \
+    &amp;&amp; apt-get -yq upgrade \
+    &amp;&amp; apt-get -yq install --no-install-recommends \
+    git build-essential cmake xorg-dev libglu1-mesa-dev libncurses5-dev libncursesw5-dev \
+    &amp;&amp; exit 0
+
+RUN set -eux \
+    &amp;&amp; apt-get -yq install --no-install-recommends \
+    ffmpeg libavcodec-dev libavcodec-extra libavfilter-dev libavfilter-extra libavdevice-dev libavformat-dev libavutil-dev libswscale-dev libv4l-dev libjpeg-dev libpng-dev libtiff-dev \
+    &amp;&amp; exit 0
+
+RUN set -eux \
+    &amp;&amp; apt-get -yq install --no-install-recommends \
+    xvfb \
+    &amp;&amp; exit 0
+
+RUN set -eux \
+    &amp;&amp; apt-get -yq clean \
+    &amp;&amp; exit 0
+
+RUN mkdir -p /app
+ENV SRC_ROOT=/app/glslViewer
+ENV SRC_BUILD=${SRC_ROOT}/build
+
+# 把 glslViewer 的源代码复制到镜像里面
+ADD ./glslViewer $SRC_ROOT
+# 把容器入口脚本复制到容器里面
+ADD ./docker-entrypoint.sh /bin/
+# 保证脚本可执行
+RUN chmod +x /bin/docker-entrypoint.sh
+# 做构建准备, 需要参考项目的构建说明
+RUN mkdir $SRC_BUILD
+WORKDIR $SRC_BUILD
+RUN cmake ..
+RUN make
+
+# 在启动容器时, 会自动执行 ENTRYPOINT 的命令
+ENTRYPOINT [ "/bin/docker-entrypoint.sh" ]
+</pre>
+</div>
+
+<p>
+容器入口脚本, 用来启动 <code>glslViewer</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span><span style="color: #ff7f24;">
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">docker-entrypoint.sh
+</span><span style="color: #00ffff;">exec</span> /app/glslViewer/build/glslViewer <span style="color: #ffa07a;">"$@"</span>
+</pre>
+</div>
+
+<p>
+在文件都准备好后便可以构建镜像了.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#26500;&#24314;&#23481;&#22120;
+</span><span style="color: #b0c4de;">cd</span> /path/to/dir
+sudo docker build . -t $(<span style="color: #fa8072;">cat image-tag.txt</span>)
+</pre>
+</div>
+
+<p>
+构建完毕后就可以启动容器了, 启动容器也是需要一定操作的,
+</p>
+
+<p>
+<code>Docker</code> 通常用来运行 <code>CLI</code> 程序, 而 <code>glslViewer</code> 是一个 <code>GUI</code> 程序,
+</p>
+
+<p>
+网络上这方面的资料比重稍微低一点, 遇到问题不太好解决,
+</p>
+
+<p>
+这也是我选择 <code>glslViewer</code> 作为例子的原因: 相当有代表性,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#21551;&#21160;&#23481;&#22120;&#30340;&#21629;&#20196;
+</span>sudo docker run <span style="color: #ffa07a;">\</span>
+     --rm <span style="color: #ffa07a;">\ </span>                    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23481;&#22120;&#20572;&#27490;&#26102;&#21024;&#38500;&#23481;&#22120;
+</span>     -it <span style="color: #ffa07a;">\ </span>                     <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">-it &#20197;&#20132;&#20114;&#24418;&#24335;&#36816;&#34892;&#23481;&#22120;
+</span>     -e <span style="color: #eedd82;">DISPLAY</span>=$<span style="color: #eedd82;">DISPLAY</span> <span style="color: #ffa07a;">\ </span>     <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#35774;&#32622;&#23481;&#22120;&#30340; DISPLAY &#29615;&#22659;&#21464;&#37327;&#20026;&#20027;&#26426;&#30340; DISPLAY &#29615;&#22659;, &#23581;&#35797;&#25226;&#23481;&#22120;&#30011;&#38754;&#36755;&#20986;&#21040;&#20027;&#26426;&#19978;
+</span>     --network=host <span style="color: #ffa07a;">\ </span>          <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#35774;&#32622;&#23481;&#22120;&#19982;&#20027;&#26426;&#20849;&#20139;&#21516;&#19968;&#20010;&#32593;&#32476;, &#20004;&#32773;&#30340;&#31471;&#21475;&#20849;&#20139;, &#21482;&#26377;&#36825;&#26679;&#23481;&#22120;&#30340;&#30011;&#38754;&#25165;&#21487;&#20197;&#36755;&#20986;&#21040;&#20027;&#26426;&#19978;
+</span>     -v /dir/in/host:/dir/in/docker <span style="color: #ffa07a;">\ </span> <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#25226;&#20027;&#26426;&#30340;&#30446;&#24405;&#25346;&#22312;&#21040;&#23481;&#22120;&#19978;, &#35753;&#23481;&#22120;&#19978;&#30340; glslViewer &#21487;&#20197;&#22312; /dir/in/docker &#20013;&#26597;&#25214;&#25991;&#20214;
+</span>     -w /dir/in/docker <span style="color: #ffa07a;">\ </span>              <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#35774;&#32622;&#23481;&#22120;&#30340;&#24037;&#20316;&#36335;&#24452;
+</span>     glslViewer-img <span style="color: #ffa07a;">\ </span>                 <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23481;&#22120;&#30340;&#38236;&#20687;
+</span>     shader.frag        <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">glslViewer &#22312;&#24037;&#20316;&#36335;&#24452;&#19978;&#35835;&#21462;&#30340; shader &#25991;&#20214;, &#21363; /dir/in/docker/shader.frag</span>
+</pre>
+</div>
+
+<p>
+如果不想容器和主机共享网络, 可以把 <code>--network-host</code> 替换成挂载项: <code>-v /tmp/.X11-unix:/tmp/.X11-unix</code>.
+</p>
+
+<p>
+<code>/tmp/.X11-unix</code> 属于 <code>UNIX</code> 域套接字(<code>Unix Domain Socket</code>), 用在同一机器内程序之间的本地通信,
+</p>
+
+<p>
+它是 <code>X server</code> 与 <code>X clients</code> (即遵守 <code>X server</code> 协议的程序)通信的其中一种方式, 也可以用通过 <code>TCP</code> 和内存进行通行.
+</p>
+
+<p>
+为了理解为什么这么配置能够显示容器里程序的 <code>GUI</code>, 接下来介绍一下 <code>X server</code> 这个东西:
+</p>
+
+<p>
+<code>X clients</code> 先通过解析环境变量 <code>DISPLAY</code> 后得知要在哪个屏幕(<code>screen</code>)上绘制自己的 <code>GUI</code>,
+</p>
+
+<p>
+把解析结果和绘制命令发送到 <code>X server</code>, <code>X server</code> 在接收到绘制命令后把绘制结果输出到对应的屏幕上.
+</p>
+
+
+<div id="org9d654ff" class="figure">
+<p><img src="../../../files/x-server-and-x-clients.png" alt="x-server-and-x-clients.png" width="400px" />
+</p>
+<p><span class="figure-number">Figure 2: </span>X Server and X Clients</p>
+</div>
+
+<p>
+其中, 一台电脑上可以运行多个 <code>X servers</code>, 一个 <code>X servers</code> 可以管理多个 <code>screen</code>,
+</p>
+
+<p>
+一个 <code>screen</code> 可以对应单个或多个物理显示器, 多个物理显示器合成一个逻辑 <code>screen</code>.
+</p>
+
+<p>
+回到容器启动上, 以同样的路径把主机上的该套接字挂载到容器上,
+</p>
+
+<p>
+使得容器上的 <code>X clients</code> 可以直接与主机的 <code>X server</code> 进行通信,
+</p>
+
+<p>
+这样主机上就能使用到容器上 <code>X clients</code> 的 <code>GUI</code>. <code>--network=host</code> 本质上也一样, 只是通信手段不太一样.
+</p>
+
+<p>
+上面的启动命令太长了, 启动频繁的话会很麻烦, 所以写了一个脚本进行封装:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span><span style="color: #ff7f24;">
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">startup.sh: &#21551;&#21160;&#23481;&#22120;&#30340;&#21629;&#20196;&#23553;&#35013;
+</span><span style="color: #b0c4de;">mapfile</span> -t lines &lt; volumes.txt
+<span style="color: #b0c4de;">printf</span> -v volumes <span style="color: #ffa07a;">" -v %s"</span> <span style="color: #ffa07a;">"${lines[@]}"</span>
+<span style="color: #eedd82;">image_tag</span>=$(<span style="color: #fa8072;">cat image-tag.txt</span>)
+docker run --rm -it -e <span style="color: #eedd82;">DISPLAY</span>=$<span style="color: #eedd82;">DISPLAY</span> -v /tmp/.X11-unix:/tmp/.X11-unix <span style="color: #ffa07a;">\</span>
+       $<span style="color: #eedd82;">volumes</span> $<span style="color: #eedd82;">image_tag</span> <span style="color: #ffa07a;">"$@"</span>
+</pre>
+</div>
+
+<p>
+以上就是使用 <code>Docker</code> 部署应用的情况了, 那么开发和编译呢? 这个更简单, 项目结构和构建目录保持一致,
+</p>
+
+<p>
+只是 <code>glslViewer</code> 目录要换成自己的程序代码, 假设我们现在就是 <code>glslViewer</code> 的开发者.
+</p>
+
+<p>
+镜像构建方面, 只要构建一个安装了依赖的镜像即可.
+</p>
+
+<p>
+<code>Dockerfile</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-dockerfile"># 选择 ubuntu:22.04 作为基础镜像
+FROM ubuntu:22.04
+
+# DEBIAN_FRONTEND 是 Debian 安装程序用于设置用户界面类型的引导参数, noninteractive 意味着自动化安装, 无需人工干预
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 glslViewer 在 Ubuntu 上的依赖
+RUN set -eux \
+    &amp;&amp; apt-get update \
+    &amp;&amp; apt-get -yq upgrade \
+    &amp;&amp; apt-get -yq install --no-install-recommends \
+    git build-essential cmake xorg-dev libglu1-mesa-dev libncurses5-dev libncursesw5-dev \
+    &amp;&amp; exit 0
+
+RUN set -eux \
+    &amp;&amp; apt-get -yq install --no-install-recommends \
+    ffmpeg libavcodec-dev libavcodec-extra libavfilter-dev libavfilter-extra libavdevice-dev libavformat-dev libavutil-dev libswscale-dev libv4l-dev libjpeg-dev libpng-dev libtiff-dev \
+    &amp;&amp; exit 0
+
+RUN set -eux \
+    &amp;&amp; apt-get -yq install --no-install-recommends \
+    xvfb \
+    &amp;&amp; exit 0
+
+RUN set -eux \
+    &amp;&amp; apt-get -yq clean \
+    &amp;&amp; exit 0
+
+ADD ./docker-entrypoint.sh /bin/
+RUN chmod +x /bin/docker-entrypoint.sh
+
+ENTRYPOINT [ "/bin/docker-entrypoint.sh" ]
+</pre>
+</div>
+
+<p>
+这么做是因为开发中的代码需要经常更新, 所以不应该把源代码复制进镜像, 否则每次更新代码都要构建一边镜像,
+</p>
+
+<p>
+正确方法是在启动容器时把代码挂载到容器上, 再进入容器里对代码进行编译.
+</p>
+
+<p>
+如果不想手动的话, 可以修改 <code>docker-entrypoint.sh</code> 实现每次启动容器时会自动编译运行程序.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span><span style="color: #ff7f24;">
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">docker-entrypoint.sh
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20551;&#35774;&#23481;&#22120;&#30340;&#28304;&#20195;&#30721;&#25346;&#36733;&#36335;&#24452;&#20026; /src/glslViewer
+</span><span style="color: #eedd82;">SRC_BUILD</span>=/src/glslViewer/build
+<span style="color: #00ffff;">if</span> [[ ! -d $<span style="color: #eedd82;">SRC_BUILD</span> ]]; <span style="color: #00ffff;">then</span>
+    mkdir $<span style="color: #eedd82;">SRC_BUILD</span>
+<span style="color: #00ffff;">fi</span>
+<span style="color: #b0c4de;">cd</span> $<span style="color: #eedd82;">SRC_BUILD</span>
+cmake ..
+make
+<span style="color: #00ffff;">exec</span> ${<span style="color: #eedd82;">SRC_BUILD</span>}/glslViewer <span style="color: #ffa07a;">"$@"</span>
+</pre>
+</div>
+
+<p>
+官方文档上关于挂载和执行 <code>ENTRYPOINT</code> 的顺序有间接暗示: 挂载先于执行 <code>ENTRYPOINT</code>,
+</p>
+
+<p>
+<code>docker run</code> 命令会先根据镜像创建容器再运行容器, 挂载是发生在容器创建阶段,
+</p>
+
+<p>
+执行 <code>ENTRYPOINT</code> 是发生在容器运行阶段, 所以才能在启动容器时挂载代码并成功编译运行,
+</p>
+
+<p>
+在部署应用的情况中也可以采取源码挂载方案, 这样开发和部署就能共用一套构建方案,
+</p>
+
+<p>
+正常情况下部署时只应发布二进制文件, 源代码不应该被包含进容器中.
+</p>
+
+<p>
+最后透露一些容器管理方法, 以下方法可以批量停止容器和删除容器:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">sudo docker ps -a -q | sudo xargs docker stop
+sudo docker ps -a -q | sudo xargs docker rm
+</pre>
+</div>
+
+<p>
+镜像也可以通过类似的命令进行批量管理:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">sudo docker images -a -q | sudo xargs docker rmi
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org6b0550d" class="outline-2">
+<h2 id="org6b0550d"><span class="section-number-2">5.</span> 内存检测工具</h2>
+<div class="outline-text-2" id="text-5">
 <p>
 <code>C</code> 并不是一门内存安全型编程语言, 因此在使用 <code>C</code> 开发时最好使用一些工具来检测是否有内存问题.
 </p>
@@ -1558,11 +1897,9 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-orgbbf8f69" class="outline-2">
-<h2 id="orgbbf8f69"><span class="section-number-2">5.</span> 交叉编译 (cross compilation)</h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-org51e7d32" class="outline-2">
+<h2 id="org51e7d32"><span class="section-number-2">6.</span> 交叉编译 (cross compilation)</h2>
+<div class="outline-text-2" id="text-6">
 <p>
 所谓交叉编译是在一个平台上为另外一个平台编译得到可执行代码, 我们把前者叫做编译平台, 后者叫做目标平台.
 </p>
@@ -1604,10 +1941,8 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-
-
 <div id="outline-container-about-c" class="outline-2">
-<h2 id="about-c"><span class="section-number-2">6.</span> 关于 C 语言</h2>
+<h2 id="about-c"><span class="section-number-2">7.</span> 关于 C 语言</h2>
 <div class="outline-text-2" id="text-about-c">
 <p>
 <code>C</code> 语言的语法主要分两种 <code>K&amp;R C</code> (<code>Kernighan and Ritchie</code>) 和 <code>ANSI C</code>.
@@ -1618,7 +1953,7 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-由于早期的 <code>C</code> 语言和 <code>Lisp</code> 一样存在语法存在差别的方言, 于是人们就对 <code>C</code> 语言的语法进行规范化,
+由于早期的 <code>C</code> 语言是和 <code>Lisp</code> 一样, 有着各种各样的方言, 每门方言的语法都不太一样, 于是人们就对 <code>C</code> 语言的语法进行规范化,
 </p>
 
 <p>
@@ -1645,9 +1980,8 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 <code>K&amp;R C</code> 的版本号叫 <code>C78</code>, 而第一版的 <code>ANSI C</code> 版本号叫做 <code>C89</code>, 后面的数字代表它们的发布时间, 后面的版本号也是这个规律.
 </p>
 </div>
-
 <div id="outline-container-how-to-read-c-declarations" class="outline-3">
-<h3 id="how-to-read-c-declarations"><span class="section-number-3">6.1.</span> 读懂 C 的声明语法</h3>
+<h3 id="how-to-read-c-declarations"><span class="section-number-3">7.1.</span> 读懂 C 的声明语法</h3>
 <div class="outline-text-3" id="text-how-to-read-c-declarations">
 <p>
 <code>C/C++</code> 语言的声明语法基本上都是一样, 并且都很难阅读, 个人觉得直接看它们的声明语法也不太直观, 你可以在<a href="https://www.open-std.org/jtc1/sc22/wg14/www/projects#9899">这里</a>找到 C 语言的标准, 看看里面的 <code>Language-Declarations</code> 那一节.
@@ -1658,10 +1992,8 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-
-
 <div id="outline-container-how-to-master-c-pointer" class="outline-3">
-<h3 id="how-to-master-c-pointer"><span class="section-number-3">6.2.</span> 指针</h3>
+<h3 id="how-to-master-c-pointer"><span class="section-number-3">7.2.</span> 指针</h3>
 <div class="outline-text-3" id="text-how-to-master-c-pointer">
 <p>
 很多人都说 C 语言的指针很难, 个人认为他们每个人说的难可能实际上都不是指同一个东西.
@@ -1737,11 +2069,9 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 最后, 个人建议任何人都应该仔细看一遍 <code>Valgrind</code> 的<a href="https://valgrind.org/docs/manual/quick-start.html">上手教程</a>, 特别是 <code>Caveats</code> 部分.
 </p>
 </div>
-
-
-<div id="outline-container-org3992b54" class="outline-4">
-<h4 id="org3992b54"><span class="section-number-4">6.2.1.</span> 泛型指针</h4>
-<div class="outline-text-4" id="text-6-2-1">
+<div id="outline-container-org348f2e2" class="outline-4">
+<h4 id="org348f2e2"><span class="section-number-4">7.2.1.</span> 泛型指针</h4>
+<div class="outline-text-4" id="text-7-2-1">
 <p>
 在声明或定义指针变量时, 开发人员都要告诉编译器指针指向的内存区域上储存什么类型的数据.
 </p>
@@ -1802,8 +2132,8 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
-<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdint.h&gt;</span> <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#20004;&#31867;&#22411;&#23450;&#20041;&#22312;&#35813;&#22836;&#20013;</span>
-<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">func_generic_ptr</span>(<span style="color: #98fb98;">uintptr_t</span> <span style="color: #eedd82;">data</span>) {
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdint.h&gt;</span> <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#20004;&#31867;&#22411;&#23450;&#20041;&#22312;&#35813;&#22836;&#20013;
+</span><span style="color: #98fb98;">void</span> <span style="color: #87cefa;">func_generic_ptr</span>(<span style="color: #98fb98;">uintptr_t</span> <span style="color: #eedd82;">data</span>) {
   printf(<span style="color: #ffa07a;">"%d: "</span>, *(<span style="color: #98fb98;">int</span> *)data);
 }
 
@@ -1821,10 +2151,8 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </div>
 </div>
 </div>
-
-
 <div id="outline-container-what-is-undefined-behavior" class="outline-3">
-<h3 id="what-is-undefined-behavior"><span class="section-number-3">6.3.</span> 未定义行为 (undefined behavior, UB)</h3>
+<h3 id="what-is-undefined-behavior"><span class="section-number-3">7.3.</span> 未定义行为 (undefined behavior, UB)</h3>
 <div class="outline-text-3" id="text-what-is-undefined-behavior">
 <p>
 未定义是指语言规范并未说明该情况该如何处理, 这种情况就是未定义行为.
@@ -1857,10 +2185,8 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-
-
 <div id="outline-container-arguments-in-function-declaration" class="outline-3">
-<h3 id="arguments-in-function-declaration"><span class="section-number-3">6.4.</span> 函数的参数声明</h3>
+<h3 id="arguments-in-function-declaration"><span class="section-number-3">7.4.</span> 函数的参数声明</h3>
 <div class="outline-text-3" id="text-arguments-in-function-declaration">
 <p>
 按照参数个数来分类的话, <code>C</code> 语言的函数声明共有 4 种.
@@ -2047,13 +2373,13 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #87cefa;">VA_ARGS</span>(a, b, c)
-<span style="color: #ff7f24;">/*</span>
-<span style="color: #ff7f24;">  &#39318;&#20808;&#23637;&#24320;&#20026; VA_NUMS_HELPER(a, b, c, 6, 5, 4, 3, 2, 1, 0),</span>
+<span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+  &#39318;&#20808;&#23637;&#24320;&#20026; VA_NUMS_HELPER(a, b, c, 6, 5, 4, 3, 2, 1, 0),
 
-<span style="color: #ff7f24;">  &#36890;&#36807;&#35266;&#23519; VA_NUMS_HELPER &#30340;&#23450;&#20041;&#21487;&#20197;&#21457;&#29616; (2, 1, 0) &#36825;&#19977;&#20010;&#21442;&#25968;&#23601;&#23646;&#20110; ... &#37096;&#20998;,</span>
+  &#36890;&#36807;&#35266;&#23519; VA_NUMS_HELPER &#30340;&#23450;&#20041;&#21487;&#20197;&#21457;&#29616; (2, 1, 0) &#36825;&#19977;&#20010;&#21442;&#25968;&#23601;&#23646;&#20110; ... &#37096;&#20998;,
 
-<span style="color: #ff7f24;">  &#25152;&#20197; VA_NUMS_HELPER &#23439;&#23601;&#34987;&#23637;&#24320;&#25104;&#36825; 3 &#20010;&#21442;&#25968;&#30340;&#21069;&#19968;&#20301; 3, &#36825;&#20063;&#27491;&#26159;&#21442;&#25968;&#21015;&#34920; (a, b, c) &#30340;&#38271;&#24230;.</span>
-<span style="color: #ff7f24;">*/</span>
+  &#25152;&#20197; VA_NUMS_HELPER &#23439;&#23601;&#34987;&#23637;&#24320;&#25104;&#36825; 3 &#20010;&#21442;&#25968;&#30340;&#21069;&#19968;&#20301; 3, &#36825;&#20063;&#27491;&#26159;&#21442;&#25968;&#21015;&#34920; (a, b, c) &#30340;&#38271;&#24230;.
+</span><span style="color: #ff7f24;">*/</span>
 </pre>
 </div>
 
@@ -2074,22 +2400,20 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">header.h</span>
-<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">add</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">count</span>, ...);
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">header.h
+</span><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">add</span> (<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">count</span>, ...);
 <span style="color: #b0c4de;">#define</span> <span style="color: #87cefa;">add</span>(...) add(VA_NUMS(__VA_ARGS__), __VA_ARGS__)
 
-<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">in some c source files</span>
-add(1, 2, 3);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">in some c source files
+</span>add(1, 2, 3);
 </pre>
 </div></li>
 </ul>
 </div>
 </div>
-
-
-<div id="outline-container-orgd7770fa" class="outline-3">
-<h3 id="orgd7770fa"><span class="section-number-3">6.5.</span> 不透明结构体 (Opaque Structures)</h3>
-<div class="outline-text-3" id="text-6-5">
+<div id="outline-container-orgf3ec68f" class="outline-3">
+<h3 id="orgf3ec68f"><span class="section-number-3">7.5.</span> 不透明结构体 (Opaque Structures)</h3>
+<div class="outline-text-3" id="text-7-5">
 <p>
 不透明结构体就是把结构体的声明和定义分开, 声明放在头文件(.h)里面, 定义则是放在实现的源文件(.c)里面, 以达到结构体定义可以被隐藏的目的.
 </p>
@@ -2258,7 +2582,7 @@ add(1, 2, 3);
 <ol class="org-ol">
 <li>引入 <code>op_node.h</code></li>
 
-<li>运行程序时连接你发布的库 <code>O</code></li>
+<li>运行程序时链接你发布的库 <code>O</code></li>
 </ol>
 
 <div class="org-src-container">
@@ -2335,11 +2659,9 @@ add(1, 2, 3);
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-orgb59fdea" class="outline-3">
-<h3 id="orgb59fdea"><span class="section-number-3">6.6.</span> 标签联合体 (Tagged Union)</h3>
-<div class="outline-text-3" id="text-6-6">
+<div id="outline-container-orga0ee24a" class="outline-3">
+<h3 id="orga0ee24a"><span class="section-number-3">7.6.</span> 标签联合体 (Tagged Union)</h3>
+<div class="outline-text-3" id="text-7-6">
 <p>
 一个联合体是一个可以储存任意类型的内存区域. 比如一个联合体可以储存 <code>int</code> 或 <code>char</code> 类型, 那么这个联合体的大小就是 <code>sizeof(int)</code>,
 </p>
@@ -2437,19 +2759,24 @@ example.c = <span style="color: #ffa07a;">'c'</span>;
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-org19fd375" class="outline-3">
-<h3 id="org19fd375"><span class="section-number-3">6.7.</span> Async/Await</h3>
-<div class="outline-text-3" id="text-6-7">
+<div id="outline-container-org147d75f" class="outline-3">
+<h3 id="org147d75f"><span class="section-number-3">7.7.</span> Async/Await</h3>
+<div class="outline-text-3" id="text-7-7">
 <p>
 <a href="https://hackaday.com/2019/09/24/asynchronous-routines-for-c/">https://hackaday.com/2019/09/24/asynchronous-routines-for-c/</a>
 </p>
 </div>
 </div>
-
+<div id="outline-container-orgac2d275" class="outline-3">
+<h3 id="orgac2d275"><span class="section-number-3">7.8.</span> X Macro</h3>
+<div class="outline-text-3" id="text-7-8">
+<p>
+<a href="https://en.wikipedia.org/wiki/X_macro">https://en.wikipedia.org/wiki/X_macro</a>
+</p>
+</div>
+</div>
 <div id="outline-container-difference-between-c-and-cpp" class="outline-3">
-<h3 id="difference-between-c-and-cpp"><span class="section-number-3">6.8.</span> 对比 C++, C 的优点</h3>
+<h3 id="difference-between-c-and-cpp"><span class="section-number-3">7.9.</span> 对比 C++, C 的优点</h3>
 <div class="outline-text-3" id="text-difference-between-c-and-cpp">
 <ul class="org-ul">
 <li><p>
@@ -2477,7 +2804,7 @@ example.c = <span style="color: #ffa07a;">'c'</span>;
 </p>
 
 <p>
-不过 <code>C++</code> 提供连接规范(linkage specification)来为不同的语言声明连接协议,
+不过 <code>C++</code> 提供链接规范(linkage specification)来为不同的语言声明链接协议,
 </p>
 
 <p>
@@ -2578,11 +2905,9 @@ systems in which this is possible, but I'm not aware of them.
 </ul>
 </div>
 </div>
-
-
-<div id="outline-container-org8275c8c" class="outline-3">
-<h3 id="org8275c8c"><span class="section-number-3">6.9.</span> 一些编码习惯和理由</h3>
-<div class="outline-text-3" id="text-6-9">
+<div id="outline-container-org9103758" class="outline-3">
+<h3 id="org9103758"><span class="section-number-3">7.10.</span> 一些编码习惯和理由</h3>
+<div class="outline-text-3" id="text-7-10">
 <ul class="org-ul">
 <li><p>
 为何人们喜欢把 <code>if</code> 相等判断的常量放在双等号前面?
@@ -2590,8 +2915,8 @@ systems in which this is possible, but I'm not aware of them.
 
 <div class="org-src-container">
 <pre class="src src-c"><span style="color: #00ffff;">if</span> (0 == res) {
-  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">...</span>
- }
+  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">...
+</span> }
 </pre>
 </div>
 
@@ -2600,9 +2925,9 @@ systems in which this is possible, but I'm not aware of them.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #00ffff;">if</span> (res = 0) {  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21407;&#26412;&#24819;&#20889; res == 0</span>
-  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">...</span>
- }
+<pre class="src src-c"><span style="color: #00ffff;">if</span> (res = 0) {  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21407;&#26412;&#24819;&#20889; res == 0
+</span>  <span style="color: #ff7f24;">//  </span><span style="color: #ff7f24;">...
+</span> }
 </pre>
 </div>
 
@@ -2631,7 +2956,7 @@ systems in which this is possible, but I'm not aware of them.
 </p>
 
 <p>
-这个其实无所谓, 喜欢的话也可以放在 <code>return</code> 之前. 另外可以查看这个连接:
+这个其实无所谓, 喜欢的话也可以放在 <code>return</code> 之前. 另外可以查看这个链接:
 </p>
 
 <p>
@@ -2640,12 +2965,22 @@ systems in which this is possible, but I'm not aware of them.
 </ul>
 </div>
 </div>
+<div id="outline-container-org1c04028" class="outline-3">
+<h3 id="org1c04028"><span class="section-number-3">7.11.</span> C 语言应用教材</h3>
+<div class="outline-text-3" id="text-7-11">
+<p>
+如果想学习 <code>C</code> 标准库的使用, 或者说 <code>Linux</code> 系统编程, 那么 <a href="https://www.man7.org/tlpi/">The Linux Programming Interface</a> 这本书就是必看的.
+</p>
+
+<p>
+这本书的内容可以说是开发人员的必备基础之一, 同时也可以说是 <code>C</code> 语言练习册.
+</p>
 </div>
-
-
-<div id="outline-container-org1c70fa3" class="outline-2">
-<h2 id="org1c70fa3"><span class="section-number-2">7.</span> 关于调试</h2>
-<div class="outline-text-2" id="text-7">
+</div>
+</div>
+<div id="outline-container-org4e19dd7" class="outline-2">
+<h2 id="org4e19dd7"><span class="section-number-2">8.</span> 关于调试</h2>
+<div class="outline-text-2" id="text-8">
 <p>
 在调试方面来说, 个人认为编译型语言要比解释型语言复杂.
 </p>
@@ -2671,15 +3006,13 @@ systems in which this is possible, but I'm not aware of them.
 </p>
 </div>
 </div>
-
-
-<div id="outline-container-org4d4276d" class="outline-2">
-<h2 id="org4d4276d"><span class="section-number-2">8.</span> GCC flags 的最佳实践</h2>
-<div class="outline-text-2" id="text-8">
+<div id="outline-container-org2f8e6a6" class="outline-2">
+<h2 id="org2f8e6a6"><span class="section-number-2">9.</span> GCC flags 的最佳实践</h2>
+<div class="outline-text-2" id="text-9">
 </div>
-<div id="outline-container-orge61b3cc" class="outline-3">
-<h3 id="orge61b3cc"><span class="section-number-3">8.1.</span> 禁止单精度/双精度/整型之间的隐藏式装换</h3>
-<div class="outline-text-3" id="text-8-1">
+<div id="outline-container-orgfd0e7bd" class="outline-3">
+<h3 id="orgfd0e7bd"><span class="section-number-3">9.1.</span> 禁止单精度/双精度/整型之间的隐藏式装换</h3>
+<div class="outline-text-3" id="text-9-1">
 <p>
 在 <code>C</code> 语言里面, 可以对数据进行隐式转换(implicit conversion). 比如:
 </p>
@@ -2799,7 +3132,7 @@ warning: conversion from ‘float’ to ‘int’ may change value [-Wfloat-conv
 <div id="postamble" class="status">
 <p class="date">Date: 2021-06-13</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2024-02-25 Sun 23:31</p>
+<p class="date">Created: 2025-10-11 Sat 14:46</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

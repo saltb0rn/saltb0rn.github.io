@@ -89,7 +89,7 @@ $RGB$ 作为计算机常用的颜色模型,每一项都用固定大小空间进�
 关于颜色的知识就先简单地说到这里,想更深入就需要去学习计算机色彩学了.
 
 
-** 光照模型
+** 光照模型 (Lighting Model)
 
 当人们说学习图形学光照时, 他们的真正意思是学习光照模型, 而光照模型是数学建模, 这会涉及大量数学内容.
 
@@ -104,9 +104,11 @@ $RGB$ 作为计算机常用的颜色模型,每一项都用固定大小空间进�
 具体取决于物体表面材质(material)特点, 比如物体表面的颜色, 光泽度, 是平还是圆的等等.
 
 *** 最基础的光照模型 - Phong lighting model
+:properties:
+:custom_id: phong-lighting-model
+:end:
 
 这一部分通过介绍最基础的光照模型来入门光照计算.
-
 
 **** 反射
 
@@ -168,6 +170,7 @@ $RGB$ 作为计算机常用的颜色模型,每一项都用固定大小空间进�
 
 比如颜色,还有在上面的 =Phong lighting model= 的例子中提到过的光泽度 $\mathrm{shininess}$, 这些都是材质的属性.
 
+
 **** 光照计算
 
 在开始介绍光照模型前先思考一个问题, "光照计算" 具体实在计算什么呢?
@@ -200,6 +203,9 @@ $RGB$ 作为计算机常用的颜色模型,每一项都用固定大小空间进�
 #+end_quote
 
 ***** ambient
+:PROPERTIES:
+:CUSTOM_ID: phong-lighting-model-ambient
+:END:
 
 假设光源产生了 $\mathrm{ambient\_strength}$ 比例的 $\mathrm{ambient}$, 那么:
 
@@ -249,7 +255,7 @@ $\mathrm{diffuse} = max(L \cdot N, 0) \times \mathrm{light\_color}$
 
 ***** specular
 :PROPERTIES:
-:CUSTOM_ID: specular
+:CUSTOM_ID: phong-lighting-model-specular
 :END:
 
 $\mathrm{specular}$ 也要根据 $L$ 和 $N$ 进行确定, 还需一个 *从照射点到 viewer 的方向* $V$, 都是单位向量.
@@ -301,18 +307,20 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
 
 $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse}) \times \mathrm{object\_color} + \mathrm{specular}$,
 
-这个等式没有像上面那样计算镜面反射光, 或许你会好奇,这样的计算对吗,该用哪种算法?
+这个等式没有像上面那样计算镜面反射光, 所谓的光照模型是一种参考标准, 并不约束严格按照它来,
 
-事实上光线的计算方法是没有对错之分, 它们只是一种模型, 只要这个模型能实现你想要表达的艺术效果, 那么它就是"对"的.
+只要有道理, 任何对模型的改动都可行的, 比如说暗的地方是不可能有高亮反射的, 那么光照计算是这样的:
 
-比如之后还会有更加符合物理的 =PBR= 模型, 它和 =Phong lighting model= 完全不一样, 但它也是"对"的.
+$\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{diffuse} \times \mathrm{specular}) \times \mathrm{object\_color}$.
+
+后面还会见到对模型进行改动的情况, 所以无需惊讶.
 #+end_quote
 
 
 *** OpenGL 的基础光照模型 - Blinn-Phong shading model
-:properties:
-:custom_id: blinn-phong-shading-model
-:end:
+:PROPERTIES:
+:CUSTOM_ID: blinn-phong-shading-model
+:END:
 
 =Blinn-Phong shading model= 是 =Phong lighting model= 改进模型, 主要改进了镜面反射光的计算.
 
@@ -647,7 +655,9 @@ $\mathrm{attenuation\_factor}$ 就是在 =Phong lighting model= 提到过的系�
 
 - $\mathrm{ambient}$
 
-  就只是简单的环境光经过物体反射得到的环境反射色: $\mathrm{ambient} = \mathrm{GL\_AMBIENT}_{\mathrm{light}} \times \mathrm{GL\_AMBIENT}_{\mathrm{material}}$.
+  就只是简单的环境光经过物体反射得到的环境反射色:
+
+  $\mathrm{ambient} = \mathrm{GL\_AMBIENT}_{\mathrm{light}} \times \mathrm{GL\_AMBIENT}_{\mathrm{material}}$.
 
 - $\mathrm{diffuse}$
 
@@ -708,9 +718,80 @@ $\mathrm{attenuation\_factor}$ 就是在 =Phong lighting model= 提到过的系�
   所以 $\mathrm{specular} = max(H \cdot N, 0)^{\mathrm{GL\_SHININESS}} \times \mathrm{GL\_SPECULAR}_{\mathrm{light}} \times \mathrm{GL\_SPECULAR}_{\mathrm{material}}$.
 
 
-*** 菲涅尔系数 (Fresnel Factor)
+*** 菲涅耳效应 (Fresnel Effect)
+:properties:
+:custom_id: fresnel-effect
+:end:
 
-*** 边缘光 (Rim Lighting)
+在谈及镜面反射时, 可能会看到"菲涅耳效应"这个名词.
+
+在物理学中, 菲涅耳方程(=Fresnel equations=)描述了光在入射到不同光学介质时反射(=reflection=)与透射(=transmission=)的规律,
+
+部分光被反射, 另一部分光被折射, 假设它们的占比分别为 $E_R$ 和 $E_T$, 由于能量守恒, 它们会满足关系 $E_R + E_T = 1$.
+
+$E_R$ 和 $E_T$ 之间的大小关系取决于视线 $V$ (从观察物到观察者的方向) 与表面法线 $N$ 的夹角 $\theta$ 的大小,
+
+$V$ 越接近 $N$ 时, $\theta$ 越小, $E_R$ 越小, 而当 $V$ 越偏离 $N$ 时, $\theta$ 越大, $E_R$ 越大.
+
+#+begin_quote
+也可以用反射光 $R$ 替代视线 $V$ 进行讨论
+#+end_quote
+
+这导致了一个名为菲涅耳效应的有趣物理现象: 人与观察物的距离会影响镜面反射, 距离越大镜面反射率越高
+
+#+attr_html: :width 500px
+#+caption: 菲涅耳效应 (原图来自 https://www.dorian-iten.com/fresnel)
+[[../../../files/fresnel-box-sideview.jpg]]
+
+#+attr_html: :width 500px
+#+caption: 有菲涅耳效应 VS 无菲涅耳效应 (原图来自 https://www.dorian-iten.com/fresnel)
+[[../../../files/fresnel-with-or-without.png]]
+
+#+attr_html: :width 500px
+#+caption: 圆形物体的边缘比正面的镜面反射强 (原图来自 https://www.dorian-iten.com/fresnel)
+[[../../../files/fresnel-cylinder.png]]
+
+根据规律, 我们可以粗略地对这个现象进行建模: $E_R = 1 - max(V \cdot N, 0)$, 由此可以得出 $E_T = max(V \cdot N, 0)$.
+
+这个粗略建模也有人会使用. 原版的[[https://en.wikipedia.org/wiki/Fresnel_equations#Derivation][菲涅耳方程]]还说明了介质的折射率如何影响 $E_R$, 如果想让材质的反射效果看起来真实,
+
+那么就用原版方程或者 =Schlick= 近似: $F(v, n, F_0) = F_0 + (1 - F_0)(1 - (n \cdot v))^5$,
+
+其中 $F_0$ 表示垂直入射时的镜子面反射率, $F_0$ 是从[[../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html#refract][斯涅尔定律]]得出来的:
+
+当光线从折射率为 $n_1$ 的介质进入折射率为 $n_2$ 介质时, $F_0 = (\frac{n_1 - n_2}{n_1 + n_2})^2$;
+
+$v$ 是视线方向, $n$ 是法线. 不同项目有不同的实现方法, 有些[[https://lettier.github.io/3d-game-shaders-for-beginners/fresnel-factor.html][实现]]是在 =Blinn Phong= 模型上让 $n$ 为半角向量,
+
+不分对错, 看个人选择. 在计算出菲涅耳系数 $F$ 之后, 应该如何整合到光照模型上呢?
+
+最常见的整合方式是用于调整镜面反射系数, 以 =Phong= 模型为例:
+
+$\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + F \times \mathrm{specular}) \times \mathrm{object\_color}$.
+
+另外一种是以调整物体材质的方式进行整合, 依然以 =Phong= 模型为例:
+
+$\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times mix(\mathrm{object\_color}, (1.0, 1.0, 1.0, 1.0), F)$,
+
+函数 $mix$ 定义参考[[../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html#glsl-mix][这里]], 简单来说就是一个线性插值函数: $mix(a, b, t) = a \times (1 - t) + b \times t$.
+
+
+*** 边缘照明 (Rim Lighting)
+
+受菲涅耳效应的启发, 边缘照明针对物体的轮廓/边缘进行照明.
+
+[[../../../files/rim-lighting.gif]]
+
+$I_{rim}$ 光照强度会随着射线 $V$ 与法线 $N$ 之间的夹角变大而变强, 由此可以进行建模:
+
+$I_{rim} = 1 - max(V \cdot N, 0)$, 然后就可以计算出边缘光: $\mathrm{rim} = I_{rim} \times \mathrm{diffuse} \times \mathrm{object\_color}$.
+
+那么应该如何整合套光照模型上呢? 方法有很多, 这里只介绍一种, 以 =Phong= 模型为例:
+
+$\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specular}) \times \mathrm{object\_color} + \mathrm{rim}$.
+
+另外, 还可以对 $I_{rim}$ 设定衰减,  比如 $I_{rim} = I_{rim}^{2.2}$, 具体方法不限.
+
 
 *** 基于物理的渲染 - PBR (Physically Based Rendering)
 
@@ -757,11 +838,18 @@ $\mathrm{attenuation\_factor}$ 就是在 =Phong lighting model= 提到过的系�
 [[../../../files/subpixel.png]]
 #+end_quote
 
-目前图形学中大多数微观尺度的结构都是高度场(=heightfields=), 所谓高度场就是所有亚像素点的深度信息的集合.
+目前图形学中大多数微观尺度的结构都是高度场(=heightfields=),
 
-我们这里讨论的微表面就是一个高度场, 高度场结构的微表面有一个特征: 微平面的法线 $m$ 不能向下.
+每平面坐标都会有一个值来反应它的高度, 这些值的集合就一个高度场.
 
-接下来就是分部地解析反射率方程 (The reflectance equation): $L_{o}(p, \omega_{o}) = \int_{\Omega}f_{r}(p, \omega_{i}, \omega_{o})L_{i}(p, \omega_{i})|w_{i} \cdot n|d\omega_{i}$.
+#+caption: 高度场
+[[../../../files/heightfield.png]]
+
+微表面就是一个高度场, 而高度场结构的微表面有一个特征: 微平面的法线 $m$ 不能向下.
+
+接下来就是分部地解析反射率方程 (The reflectance equation):
+
+$L_{o}(p, \omega_{o}) = \int_{\Omega}f_{r}(p, \omega_{i}, \omega_{o})L_{i}(p, \omega_{i})|w_{i} \cdot n|d\omega_{i}$
 
 **** 辐射度量(radiometric quantities): $L_{i}(p, \omega_{i})|\omega_{i} \cdot n|$
 
@@ -880,7 +968,7 @@ $L(p, \omega) = \lim\limits_{\Delta \omega \to 0}\lim\limits_{\Delta A^{\perp} \
 
 
 #+attr_html: :width 504px
-#+caption: 微元立体角 $d\omega$
+#+caption: 微元立体角 $d\omega = \sin\theta \times d\phi \times d\theta$
 [[../../../files/differential-solid-angle.png]]
 
 严格来讲, 不应该用 $d\omega$ 来表示立体角度的, 这里有符号滥用的嫌疑了, 读者很容易搞混.
@@ -956,7 +1044,7 @@ $E(p, n) = \int_{\Omega}L(p, \omega)|\omega \cdot n|d\omega = \int_{\Omega}L(p, 
 
 $f_{\mathrm{lambert}} = \frac{c}{\pi}$, $c$ 是表面颜色(surface color) 或者反射率(albedo), 就像 $\mathrm{GL\_DIFFUSE}_{\mathrm{material}}$ 一样决定了反射多少漫反射光.
 
-$f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}$ 计算反射光, $f_{\mathrm{cook-torrance}}$ 的定义源于最早的 =BRDF=, 其中 $D$ 是法线分布函数, $G$ 是几何函数, $F$ 是菲涅尔方程.
+$f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}$ 计算反射光, $f_{\mathrm{cook-torrance}}$ 的定义源于最早的 =BRDF=, 其中 $D$ 是法线分布函数, $G$ 是几何函数, $F$ 是菲涅耳方程.
 
 接下来分别学习这 3 个部分, 并在最后介绍 $f_{\mathrm{cook-torrance}}$ 是怎么推导出来的.
 
@@ -1366,7 +1454,7 @@ $\begin{equation*}\begin{aligned} G_2(v, l, m) &= \frac{\chi^{+}(v \cdot m) \chi
 
   =Frostbite= 的 =Lagarde= 观察到 =GGX-Smith= 高度相关的 $G_2$ 具有与 =BRDF= 的分母组合抵消的项, 所以把 $G_2$ 简化成:
 
-  $\frac{G_2(v, l, m)}{4|n \cdot l||n \cdot v|} \Rightarrow \frac{0.5 \chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{(n \cdot l)^{+} \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot v)^2} + (n \cdot v)^{+} \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot l)^2}}$
+  $\frac{G_2(v, l, m)}{4|n \cdot l||n \cdot v|} \Rightarrow \frac{0.5 \chi^{+}(v \cdot m) \chi^{+}(l \cdot m)}{(n \cdot l)^{+} \times \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot v)^2} + (n \cdot v)^{+} \times \sqrt{\alpha^2 + (1 - \alpha^2)(n \cdot l)^2}}$
 
   它的 =GLSL= 实现如下:
 
@@ -1495,19 +1583,19 @@ $4(v \cdot n)(l \cdot n)$ 是源自于 =Microfacet Cook-Torrance BRDF= 模型推
 #+caption: Torrance-Sparrow Model
 [[../../../files/torrance-sparrow-model-m.png]]
 
-首先第一步是计算面向 $m$ 的微平面接收光线 $l$ 的辐射, 根据 =NDF= 中 $dA_{m} = D(m) d\omega_m dA$ 的关系和[[#radiance][辐射]]的定义: $L(p, l) = \frac{d^2\Phi}{d\omega_l dA_{m}^{\perp}}$.
+首先计算面向 $m$ 的微平面接收光线 $l$ 的辐射度 $L(p, l)$,
 
-根据该关系求出 $d^2 \Phi$:
+根据 $\begin{cases} dA_{m} = D(m) d\omega_m dA \\ L(p, l) = \frac{d^2\Phi}{d\omega_l dA_{m}^{\perp}} \end{cases}$ 可求出辐射通量 $d^{2}\Phi$:
 
 $\begin{equation*}\begin{aligned}d^2\Phi &= L(p, l) d\omega_l dA_{m}^{\perp} \\ &= L(p, l)d\omega_l \cos\theta_l dA_m \\ &= L(p, l) d\omega_l (l \cdot m) dA_m \\ &= L(p, l) d\omega_l (l \cdot m) D(m) d\omega_m dA \\ \end{aligned}\end{equation*}$
 
 其中 $\theta_l$ 是微平面的面法线 $m$ 和光线 $l$ 之间的夹角, $\theta_l = \theta_m$.
 
 #+begin_quote
-因为要模拟能量受到损失的过程, 所以是计算光线入射到微平面的辐射度量, 而不是宏表面受到的辐射度量.
+计算的是光线入射到微平面的辐射度, 而不是宏表面受到的辐射度.
 #+end_quote
 
-再根据菲涅耳反射可以求出反射光 $v$ 的 $d^2 \Phi_v$: $d^2\Phi_v = F(v, m, F_0)d^2\Phi = F(l, m, F_0)d^2\Phi$.
+再根据菲涅耳反射可以求出反射光 $v$ 的辐射度: $d^2\Phi_v = F(v, m, F_0)d^2\Phi = F(l, m, F_0)d^2\Phi$.
 
 根据[[diff-solid-angle][极坐标的微元立体角]]定义: $\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m \times d\theta_m \times d\phi_m}{\sin\theta_i \times d\theta_i \times d\phi_i}$.
 
@@ -1515,11 +1603,13 @@ $\begin{equation*}\begin{aligned}d^2\Phi &= L(p, l) d\omega_l dA_{m}^{\perp} \\ 
 这里是以向量的微元作为微元立体角.
 #+end_quote
 
-因为 $\theta_i = 2\theta_m$, $\phi_i = \phi_m$, 因此可以利用正弦二倍角公式: $\sin2\theta = 2\sin\theta\cos\theta$, 可以得到 $\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m d\theta_m}{2\sin\theta_m\cos\theta_m d\theta_m} = \frac{1}{4 \cos\theta_m} = \frac{1}{4 (l \cdot m)}$.
+因为 $\theta_i = 2\theta_m$, $\phi_i = \phi_m$, 因此可以利用正弦二倍角公式: $\sin2\theta = 2\sin\theta\cos\theta$, 可以得到:
 
-然后求出反射光 $v$ 的辐射:
+$\frac{d\omega_m}{d\omega_v} = \frac{\sin\theta_m d\theta_m}{2\sin\theta_m\cos\theta_m d\theta_m} = \frac{1}{4 \cos\theta_m} = \frac{1}{4 (l \cdot m)}$, 其中 $\theta_m$ 是反射光方向与微平面的夹角.
 
-$\begin{equation*} \begin{aligned} L(p, v) &= \frac{d^2 \Phi_v}{d\omega_v \cos\theta_v dA} \\ &= \frac{F(l, m, F_0)d^2\Phi}{d\omega_v (v \cdot n) dA} \\ &= \frac{F(l, m, F_0) L(p, l) d\omega_l (l \cdot n) D(m) d\omega_m dA}{d\omega_v (v \cdot n) dA} \\ &= \frac{F(l, m, F_0)L(p, l) d\omega_l D(m)}{4 (v \cdot n)} \end{aligned} \end{equation*}$
+接下来求出反射光 $v$ 的辐射能量 $L(p, v)$:
+
+$\begin{equation*} \begin{aligned} L(p, v) &= \frac{d^2 \Phi_v}{d\omega_v \cos\theta_v dA} \\ &= \frac{F(l, m, F_0)d^2\Phi}{d\omega_v (v \cdot n) dA} \\ &= \frac{F(l, m, F_0) L(p, l) d\omega_l (l \cdot m) D(m) d\omega_m dA}{d\omega_v (v \cdot n) dA} \\ &= \frac{F(l, m, F_0)L(p, l) d\omega_l D(m)}{4 (v \cdot n)} \end{aligned} \end{equation*}$
 
 其中, $\theta_v$ 是宏表面的法线 $n$ 与视线 $v$ 之间的夹角.
 
@@ -1527,9 +1617,9 @@ $\begin{equation*} \begin{aligned} L(p, v) &= \frac{d^2 \Phi_v}{d\omega_v \cos\t
 正如公式所示, 反射光的辐射是宏表面的反射光辐射, 理论上其实微平面和宏表面的反射光辐射是一样的, 但最终反射率方程还是要落实到宏表面上的, 因为微平面是统计出来的, 并不像宏表面是实际存在的.
 #+end_quote
 
-根据 =Fred Nicodemus= 的 =BRDF= 定义: $f_r(\omega_i, \omega_o) = \frac{d L_o (\omega_o)}{d E_i(\omega_i)} = \frac{d L_o(\omega_o)}{L_i(\omega_i) \cos\theta_i d\omega_i}$, 把前面的结果代入 $\begin{equation*} \begin{cases} dL_o(\omega_o) = L(p, v) \\ L_i(\omega_i) = L(p, l) \\ \theta_i = \theta_l \\ d\omega_i = d\omega_l \end{cases} \end{equation*}$,
+根据 =Fred Nicodemus= 的 =BRDF= 定义: $f_r(\omega_i, \omega_o) = \frac{d L_o (\omega_o)}{d E_i(\omega_i)} = \frac{d L_o(\omega_o)}{L_i(\omega_i) \cos\theta_i d\omega_i}$,
 
-得到 $f_r(l, v) = \frac{F(l, m, F_0)L(p, l) d\omega_l D(m)}{4 (v \cdot n) L(p, l) \cos\theta_l d\omega_l} = \frac{F(l, m, F_0) D(m)}{4 (v \cdot n) (l \cdot n)}$.
+把前面的结果代入 $\begin{equation*} \begin{cases} dL_o(\omega_o) = L(p, v) \\ L_i(\omega_i) = L(p, l) \\ \theta_i = \theta_l \\ d\omega_i = d\omega_l \end{cases} \end{equation*}$, 得到 $f_r(l, v) = \frac{F(l, m, F_0)L(p, l) d\omega_l D(m)}{4 (v \cdot n) L(p, l) \cos\theta_l d\omega_l} = \frac{F(l, m, F_0) D(m)}{4 (v \cdot n) (l \cdot n)}$.
 
 最后, 加入几何函数就得到 =Cook-Torrance BRDF= 中的 $f_{\mathrm{cook-torrance}} = \frac{F(l, m, F_0) D(m) G(v, l, m)}{4 (v \cdot n) (l \cdot n)}$.
 
@@ -1542,6 +1632,8 @@ $L_o(p, \omega_o) = \int_{\Omega} (k_{\mathrm{diffuse}} \frac{c}{\pi} + k_{\math
 可以进一步变换, 把方程分成漫反射辐射度(=diffuse irradiance=)和镜面反射辐射度(=specular irradiance=):
 
 $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{diffuse}} \frac{c}{\pi} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + \int_{\Omega} k_{\mathrm{specular}} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \\ &= k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + k_{\mathrm{specular}} \int_{\Omega} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \end{aligned} \end{equation*}$
+
+
 
 **** 创作 =PBR= 材质 (Authoring PBR Materials)
 
@@ -1610,7 +1702,8 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
   注意, 是只影响环境光部分, 不影响直接光照, 大概为 $ao \times ambient$, 其中 $ambient$ 是环境光.
 
 # **** IBL
-
+# https://zhuanlan.zhihu.com/p/288112896
+# https://blog.csdn.net/weixin_43803133/article/details/110385305
 # #+begin_quote
 # 这方面的内容偏实现, 以后有空时就再补上, 或者单独写一篇笔记进行记录.
 # #+end_quote
@@ -1641,7 +1734,6 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 # ***** *立方体贴图卷积 (=Cubemap convolution=)*
 
-
 **** GLSL 实现
 
 该实现的 =Fragment Shader= 来源于 =LearnOpenGL=, 但作了一些调整, 使得可用于 =WebGL=.
@@ -1653,15 +1745,15 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 #+BEGIN_SRC glsl
   #version 100
   #if defined(USE_TEXTURE)
-  attribute vec3 aTangent;
+  attribute vec3 tangent;
   attribute vec3 aBitangent;
   #endif
-  attribute vec3 aNormal;
-  attribute vec3 aPos;
-  attribute vec2 aTexCoords;
+  attribute vec3 normal;
+  attribute vec3 position;
+  attribute vec2 uv;
 
-  varying vec2 TexCoords;
-  varying vec3 WorldPos;
+  varying vec2 vUV;
+  varying vec3 vPos;
 
   #if defined(USE_TEXTURE)
   varying mat4 TBN;
@@ -1669,23 +1761,23 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
   varying vec3 Normal;
   #endif
 
-  uniform mat4 ModelMatrix;
-  uniform mat4 ViewMatrix;
-  uniform mat4 ProjectMatrix;
+  uniform mat4 modelMatrix;
+  uniform mat4 viewMatrix;
+  uniform mat4 projectionMatrix;
 
   void main() {
     #if defined(USE_TEXTURE)
-    vec3 T = normalize(vec3(ModelMatrix * vec4(aTangent, 0.0)));
-    vec3 B = normalize(vec3(ModelMatrix * vec4(aBitangent, 0.0)));
-    vec3 N = normalize(vec3(ModelMatrix * vec4(aNormal, 0.0)));
+    vec3 T = normalize(vec3(modelMatrix * vec4(tangent, 0.0)));
+    vec3 N = normalize(vec3(modelMatrix * vec4(normal, 0.0)));
+    vec3 B = normalize(cross(N, T));
     TBN = mat3(T, B, N);
     #else
-    Normal = aNormal;
+    Normal = normal;
     #endif
 
-    TexCoords = aTexCoords;
-    WorldPos = ModelMatrix * vec4(aPos, 1.0);
-    gl_Position = ProjectMatrix * ViewMatrix * WorldPos;
+    vUV = uv;
+    vPos = modelMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * viewMatrix * vPos;
   }
 #+END_SRC
 
@@ -1693,8 +1785,8 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 #+BEGIN_SRC glsl
   #version 100
-  varying vec2 TexCoords;
-  varying vec3 WorldPos;
+  varying vec2 vUV;
+  varying vec3 vPos;
 
   #if defined(USE_TEXTURE)
   varying mat4 TBN;
@@ -1718,7 +1810,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
   uniform vec3 lightPositions[4];
   uniform vec3 lightColors[4];
 
-  uniform vec3 camPos;
+  uniform vec3 cameraPosition;
 
   const float PI = 3.14159265359;
 
@@ -1761,7 +1853,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
   #if defined(USE_TEXTURE)
   vec3 getNormalFromNormalMap() {
     // obtain normal from normal map in range [0,1]
-    vec3 normal = texture(normalMap, TexCoords).rgb;
+    vec3 normal = texture(normalMap, vUV).rgb;
     // transform normal vector back to range [-1,1]
     normal = normal * 2.0 - 1.0;
     return normalize(TBN * normal);
@@ -1771,16 +1863,16 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
   void main()
   {
     #if defined(USE_TEXTURE)
-    vec3 albedo     = pow(texture(albedoMap, TexCoords).rgb, 2.2); // with Crt Gamma
+    vec3 albedo     = pow(texture(albedoMap, vUV).rgb, 2.2); // with Crt Gamma
     vec3 N          = getNormalFromNormalMap();
-    float metallic  = texture(metallicMap, TexCoords).r;
-    float roughness = texture(roughnessMap, TexCoords).r;
-    float ao        = texture(aoMap, TexCoords).r;
+    float metallic  = texture(metallicMap, vUV).r;
+    float roughness = texture(roughnessMap, vUV).r;
+    float ao        = texture(aoMap, vUV).r;
     #else
     vec3 N = normalize(Normal);
     #endif
 
-    vec3 V = normalize(camPos - WorldPos);
+    vec3 V = normalize(cameraPosition - vPos);
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, albedo, metallic);
@@ -1789,10 +1881,11 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
     vec3 Lo = vec3(0.0);
     for(int i = 0; i < 4; ++i)
       {
-        // calculate per-light radiance
-        vec3 L = normalize(lightPositions[i] - WorldPos);
+        vec3 L = normalize(lightPositions[i] - vPos);
         vec3 H = normalize(V + L);
-        float dist        = length(lightPositions[i] - WorldPos);
+
+        // calculate per-light radiance
+        float dist        = length(lightPositions[i] - vPos);
         float attenuation = 1.0 / (dist * dist);
         vec3 radiance     = lightColors[i] * attenuation;
 
@@ -1825,7 +1918,10 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 #+END_SRC
 
 
-** 阴影
+** 阴影 (Shadow)
+:properties:
+:custom_id: shadow-mapping
+:end:
 
 阴影生成并没有用到什么新的数学公式, 思路很简单,
 
@@ -1873,13 +1969,13 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
    #+BEGIN_SRC glsl
      // vertex shader
      #version 330
-     attribute vec3 aPos;
+     attribute vec3 position;
      uniform mat4 uLightOrthoProjMatrix;
      uniform mat4 uLightViewMatrix;
-     uniform mat4 uModelMatrix;
+     uniform mat4 modelMatrix;
 
      void main() {
-       gl_Position = uLightOrthoProjMatrix * uLightViewMatrix * uModelMatrix * vec4(aPos, 1.0);
+       gl_Position = uLightOrthoProjMatrix * uLightViewMatrix * modelMatrix * vec4(position, 1.0);
      }
    #+END_SRC
 
@@ -1912,9 +2008,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
      #version 330
      precision highp float;
 
-     in vec3 aPos;
-     in vec3 aNormal;
-     in vec3 aTexCoord;
+     in vec3 position;
+     in vec3 normal;
+     in vec3 uv;
 
      out VS_OUT {
        vec3 fragPos;
@@ -1923,18 +2019,18 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
        vec4 fragPosLightSpace;
      } vs_out;
 
-     uniform mat4 uProjectionMatrix;
-     uniform mat4 uViewMatrix;
-     uniform mat4 uModelMatrix;
+     uniform mat4 projectionMatrix;
+     uniform mat4 viewMatrix;
+     uniform mat4 modelMatrix;
      uniform mat4 uLightOrthoProjMatrix;
      uniform mat4 uLightViewMatrix;
 
      void main() {
-       vs_out.fragPos = vec3(uModelMatrix * vec4(aPos, 1.0));
-       vs_out.normal = transpose(inverse(mat3(uModelMatrix))) * aNormal;
-       vs_out.texCoord = aTexCoord;
+       vs_out.fragPos = vec3(modelMatrix * vec4(position, 1.0));
+       vs_out.normal = transpose(inverse(mat3(modelMatrix))) * normal;
+       vs_out.texCoord = uv;
        vs_out.fragPosLightSpace = uLightOrthoProjMatrix * uLightViewMatrix * vec4(vs_out.fragPos, 1.0);
-       gl_Position = uProjectionMatrix * uViewMatrix * vec4(vs_out.fragPos, 1.0);
+       gl_Position = projectionMatrix * viewMatrix * vec4(vs_out.fragPos, 1.0);
      }
    #+END_SRC
 
@@ -1953,7 +2049,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
      } fs_in;
 
      uniform vec3 lightPos;
-     uniform vec3 cameraPos;
+     uniform vec3 cameraPosition;
      uniform sampler2D shadowMap;
      uniform sampler2D diffuseTexture;
 
@@ -1980,7 +2076,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
        float diff = max(dot(lightDir, normal), 0.0);
        vec3 diffuse = diff * lightColor;
        // specular
-       vec3 viewDir = normalize(cameraPos - fs_in.fragPos);
+       vec3 viewDir = normalize(cameraPosition - fs_in.fragPos);
        vec3 halfwayDir = normalize(lightDir + viewDir);
        float spec = pow(max(dot(normal, halfwayDir), 0.0) 64.0);
        vec3 specular = spec * lightColor;
@@ -2091,6 +2187,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 
 *** 位置光源的阴影
+:properties:
+:custom_id: positional-light-shadowmap
+:end:
 
 相比定向光源只有一个照射方向, 位置光源在四面八方都有照射, 所以需要 6 张二维贴图来记录深度值.
 
@@ -2100,9 +2199,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 在此之前需要了解如何在立方贴图上采样, 二维贴图是根据 =UV= 坐标进行采样, 而立方贴图是根据方向向量进行采样,
 
-以 $1 \times 1 \times 1$ 单位立方体的中心作为坐标系的原点, 而这个原点是和模型中心是重合的,
-
-因此模型的顶点坐标就是方向向量, 可用于立方贴图的采样. 另外, 方向向量的模大小无关紧要.
+以 $1 \times 1 \times 1$ 单位立方体的中心作为坐标系的原点, 从原点出发的方向向量作为采样根据. 另外, 方向向量的模大小无关紧要.
 
 [[../../../files/cubemaps_sampling.png]]
 
@@ -2226,11 +2323,11 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
    #+BEGIN_SRC glsl
      // vertex shader
      #version 330
-     layout (location = 0) in vec3 aPos;
-     uniform mat4 uModelMatrix;
+     layout (location = 0) in vec3 position;
+     uniform mat4 modelMatrix;
 
      void main() {
-       gl_Position = uModelMatrix * vec4(aPos, 1.0);
+       gl_Position = modelMatrix * vec4(position, 1.0);
      }
    #+END_SRC
 
@@ -2295,9 +2392,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
    #+BEGIN_SRC glsl
      // vertex shader
      #version 330
-     in vec3 aPos;
-     in vec3 aNormal;
-     in vec2 aTexCoord;
+     in vec3 position;
+     in vec3 normal;
+     in vec2 uv;
 
      out VS_OUT {
        vec3 fragPos;
@@ -2305,16 +2402,16 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
        vec2 texCoord;
      } vs_out;
 
-     uniform mat4 uProjectionMatrix;
-     uniform mat4 uViewMatrix;
-     uniform mat4 uModelMatrix;
+     uniform mat4 projectionMatrix;
+     uniform mat4 viewMatrix;
+     uniform mat4 modelMatrix;
 
      void main()
      {
-       vs_out.fragPos = vec3(uModelMatrix * vec4(aPos, 1.0));
-       vs_out.normal = transpose(inverse(mat3(uModelMatrix))) * aNormal;
-       vs_out.texCoord = aTexCoord;
-       gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPos, 1.0);
+       vs_out.fragPos = vec3(modelMatrix * vec4(position, 1.0));
+       vs_out.normal = transpose(inverse(mat3(modelMatrix))) * normal;
+       vs_out.texCoord = uv;
+       gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
      }
    #+END_SRC
 
@@ -2332,7 +2429,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
      } fs_in;
 
      uniform vec3 lightPos;
-     uniform vec3 cameraPos;
+     uniform vec3 cameraPosition;
      uniform samplerCube shadowMap;
      uniform sampler2D diffuseTexture;
      uniform float far_plane;
@@ -2358,7 +2455,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
        float diff = max(dot(lightDir, normal), 0.0);
        vec3 diffuse = diff * lightColor;
        // specular
-       vec3 viewDir = normalize(cameraPos - fs_in.fragPos);
+       vec3 viewDir = normalize(cameraPosition - fs_in.fragPos);
        vec3 halfwayDir = normalize(lightDir + viewDir);
        float spec = pow(max(dot(normal, halfwayDir), 0.0) 64.0);
        vec3 specular = spec * lightColor;
@@ -2427,7 +2524,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 :custom_id: no-cube-map-shadow-mapping
 :end:
 
-事实上还真有些图形库不使用 =CubeMap= 作为阴影贴图, 比如 =three.js= 就是使用 =2D= 贴图作为阴影贴图.
+事实上有些图形库不使用 =CubeMap= 作为阴影贴图, 比如 =three.js= 就是使用 =2D= 贴图作为阴影贴图.
 
 它同样进行 6 次渲染, 只不过把每次渲染结果分别按照不同位置储存在同一张 =2D= 贴图里面,
 
@@ -2447,45 +2544,111 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 以 $-Z$ 作为中心, 只需要用到 $4 \times 2$ 个 $2 \times 2$ 规格的方块, 还能把有效利用率提高到 $\frac{3}{4}$.
 
-原本实现比较复杂, 其整体思路如下:
+这是 =three.js= 的实现:
 
 #+BEGIN_SRC glsl
-  vec3 lightDir;
-  vec3 absLightDir = abs(lightDir);
-  float mainAxis = max(absLightDir.x, max(absLightDir.y, absLightDir.z));
+  vec2 cubeToUV( vec3 v, float texelSizeY ) {
+    // v 是射线方向, 一般经过单位化
+    // texelSizeY 是纹数尺寸
 
-  vec2 uv;
+    // Number of texels to avoid at the edge of each square
 
-  if (absLightDir.x >= mainAxis) {
-    if (lightDir.x > 0.0) {
-      // +X 面
-      uv = cube2uv(vec2(-lightDir.z, -lightDir.y));
-    } else {
-      // -X 面
-      uv = cube2uv(vec2(lightDir.z, -lightDir.y));
+    vec3 absV = abs( v );
+
+    // Intersect unit cube
+
+    float scaleToCube = 1.0 / max( absV.x, max( absV.y, absV.z ) );
+    absV *= scaleToCube;
+
+    // Apply scale to avoid seams
+    // 划分过的边界纹理坐标是不等于整数的, 比如
+    //      |
+    //      |     方格 A
+    //      |
+    //    0.99    <--- 决策边界
+    //      |
+    //      |     安全边界, 不做处理
+    //      |
+    //      1(0)  <--- 理论边界, 自身方格的结束边界, 相邻方格的起始边界
+    //      |
+    //      |
+    //      |     方格 B
+    //      |
+    //    0.01
+    // 需要创建一个安全边界来防止采样错误
+
+    // 这里的安全边界宽度为 2 个纹素大小, NEAREST 滤波只需要一个纹素
+    // two texels less per square (one texel will do for NEAREST)
+    v *= scaleToCube * ( 1.0 - 2.0 * texelSizeY );
+
+    // Unwrap
+
+    // space: -1 ... 1 range for each square
+    //
+    // #X##		dim    := ( 4 , 2 )
+    //  # #		center := ( 1 , 1 )
+
+    vec2 planar = v.xy;
+
+    float almostATexel = 1.5 * texelSizeY;
+    float almostOne = 1.0 - almostATexel;
+
+    if ( absV.z >= almostOne ) {
+
+      if ( v.z > 0.0 )
+        planar.x = 4.0 - v.x;
+
+    } else if ( absV.x >= almostOne ) {
+
+      float signX = sign( v.x );
+      planar.x = v.z * signX + 2.0 * signX;
+
+    } else if ( absV.y >= almostOne ) {
+
+      float signY = sign( v.y );
+      planar.x = v.x + 2.0 * signY + 2.0;
+      planar.y = v.z * signY - 2.0;
+
     }
-   } else if (absLightDir.y >= maxComponent) {
-    if (lightDir.y > 0.0) {
-      // +Y 面
-      uv = cube2uv(vec2(lightDir.y, lightDir.z));
-    } else {
-      // -Y 面
-      uv = cube2uv(vec2(lightDir.y, -lightDir.z));
-    }
-   } else if (absLightDir.z >= maxComponent) {
-    if (lightDir.z > 0.0) {
-      // +Z 面
-      uv = cube2uv(vec2(lightDir.x, -lightDir.y));
-    } else {
-      // -Z 面
-      uv = cube2uv(vec2(-lightDir.x, -lightDir.y));
-    }
-   }
+
+    // Transform to UV space: [0, 1]
+
+    // scale := 0.5 / dim => 0.5 / (4, 2) = (0.125, 0.25)
+    // translate := ( center + 0.5 ) / dim => ((1, 1) + 0.5) / (4, 2) = (0.375, 0.75)
+    return vec2( 0.125, 0.25 ) * planar + vec2( 0.375, 0.75 );
+
+  }
 #+END_SRC
 
 #+begin_quote
 官方给出不使用 =CubeMap= 理由在这个 =2017= 年的 [[https://github.com/mrdoob/three.js/issues/11189][PR]] 中可以找到.
 #+end_quote
+
+
+** COMMENT 更多关于光照的内容
+
+# https://blog.csdn.net/qq_54098120/article/details/140693688
+
+** COMMENT 全局光照 (Global Illumination)
+
+全局光照是模拟光线在场景中多次反射的效果的技术.
+
+相比于传统的直接光照, 全局光照可以更真实地表现光线的传播和反射, 使得场景的光照更加自然和逼真.
+
+整个环境的光照可以这么表示: $I = L_1 + L_2 + L_3 + \dots + L_n$
+
+*** 光线追踪
+
+
+
+** COMMENT 体积光照 (Volumetric Lighting)
+
+体积光照用于模拟光线在体积介质(如雾/烟/云)中的散射和吸收现象. 这种技术可以显著提升场景的深度感和真实感, 特别是在表现大气效果时非常重要.
+
+# https://zhuanlan.zhihu.com/p/573203289
+
+# https://blog.csdn.net/ZJU_fish1996/article/details/87533029
+
 
 ** 附录
 

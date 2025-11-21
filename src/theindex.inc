@@ -38,11 +38,11 @@
 同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
-*** [[file:posts/2024/11/introduction-to-probability.html?hash=b911ad2179bbee93183c10cdb5de2d85][Introduction To Probability 的阅读草稿纸]]
+*** [[file:posts/2024/11/introduction-to-probability.html?hash=44b1f560d640fb70549deff4812253e4][Introduction To Probability 的阅读草稿纸]]
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=624836c1b3f0e3e901100a9d89ce9479][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=b35f690a36232c1aa0e964f5245845f4][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的.
@@ -57,13 +57,15 @@
 
 这个阶段的内容会经常修改, 而且不保证准确性, 所以会显得比较混乱.
 
-第二阶段对应第一阶段内容的重构, 这个阶段会逐渐脱离书本的结果.
+第二阶段对应第一阶段内容的重构, 这个阶段会逐渐脱离书本的结构, 还会包含很多书本上没有的内容.
 
 微积分在很多方面都有应用, 甚至在数学的其它分支上也有着十分重要的作用, 比如概率论.
 
 不懂微积分的话就没办法玩转计算机图形学, 数值分析, 图像处理, 流体模拟这几个方向.
 
-本人学习微积分的目标很明确, 就是为了图形学 (刚好图形学也需要概率论), 所以笔记中的部分内容会经常和几何进行联系.
+本人学习微积分的目标很明确, 就是为了图形学(刚好图形学也需要概率论),
+
+所以笔记中的部分内容会经常和几何进行联系.
 
 微积分的知识点很多, 根据研究对象的不同可以这么进行分类:
 
@@ -172,7 +174,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=cc2504aba4d074d8c63daecb94e94f0f][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=ae2175fd8fe485e904ec0a97f09893bd][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -242,7 +244,7 @@
 当基础知识足够扎实时, 应该就有能力实现 [[https://advances.realtimerendering.com/][Advances in Real-Time Rendering in 3D Graphics and Games]] 里面的技术了.
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=50461d0e4be91f9f798de3f58464e3f8][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=5d76d70027303d12c1fb9fb493ebcf38][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -278,7 +280,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/06/things-about-c-development.html?hash=688484bd136a56ceb2d0fd06a3cbf9f4][关于使用C语言开发的那些事]]
+*** [[file:posts/2021/06/things-about-c-development.html?hash=086da26c5c6c87c7ab918105e4ef90c9][关于使用C语言开发的那些事]]
 *注意*, 看这篇笔记时请务必先学习 =x86= 汇编, 因为 =C= 代码会被编译成汇编,
 
 只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
@@ -370,7 +372,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=ca862cc41c2a58379cd7bf9383808e11][图形学 - 光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=3d166256cdf530ce0a95ece68bb7ff3e][图形学 - 光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
