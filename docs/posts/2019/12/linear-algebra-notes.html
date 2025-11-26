@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-10-10 Fri 15:08 -->
+<!-- 2025-11-26 Wed 22:00 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>线性代数读书随笔 (部分内容需要严格验证)</title>
@@ -267,7 +267,7 @@
 <li><a href="#org7aea0bd">一般的情况</a>
 <ul>
 <li><a href="#org56679b9">变量替换</a></li>
-<li><a href="#org39aaac6">坐标变换</a></li>
+<li><a href="#change-of-basic">基底变换</a></li>
 <li><a href="#orgba58fd6">乘方</a></li>
 <li><a href="#org5228a40">从特征值得出结论</a></li>
 </ul>
@@ -297,7 +297,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="orga8d8207">
+<div class="abstract" id="org7725176">
 <p>
 "程序员的数学3线性代数"读书随笔
 </p>
@@ -392,7 +392,7 @@
 </p>
 
 
-<div id="orgfafd564" class="figure">
+<div id="orgcf82163" class="figure">
 <p><img src="../../../files/maxima-doc-areas.png" alt="maxima-doc-areas.png" width="700px">
 </p>
 <p><span class="figure-number">Figure 1: </span>Maxima 的部分文档</p>
@@ -407,7 +407,7 @@
 </p>
 
 
-<div id="org9f2bf9c" class="figure">
+<div id="orgf61d2f3" class="figure">
 <p><img src="../../../files/maxima-doc-rank.png" alt="maxima-doc-rank.png" width="700px">
 </p>
 <p><span class="figure-number">Figure 2: </span>Maxima 关于 rank 函数的描述</p>
@@ -657,7 +657,7 @@
 </p>
 
 <p>
-确定一个坐标要先确定一个基底,如果这个时候使用另外一个基底,那么就要对这个坐标进行变换,这叫做 <b>坐标变换</b>.
+确定一个坐标要先确定一个基底,如果这个时候使用另外一个基底,那么就要对这个坐标进行变换,这叫做 <b>基底变换</b>.
 </p></li>
 </ol></li>
 </ul>
@@ -815,7 +815,7 @@ l       这个程序是用 <code>Ruby</code> 写的,因为不是所有人都写 
 </blockquote>
 
 
-<div id="org5d86b41" class="figure">
+<div id="org6dcca04" class="figure">
 <p><img src="../../../files/gnuplot-example.gif" alt="gnuplot-example.gif">
 </p>
 <p><span class="figure-number">Figure 3: </span><code>ruby mat_anim.rb | gnuplot</code></p>
@@ -1365,87 +1365,67 @@ l       这个程序是用 <code>Ruby</code> 写的,因为不是所有人都写 
 </ul></li>
 
 <li><p>
-<a id="orgac54e4f"></a>坐标变换与矩阵
+<a id="orgac54e4f"></a>基底变换与矩阵
 </p>
 
 <p>
-坐标变换需要分两步: 1) 先计算阿出新基底,也就是进行基底变换; 2) 旧向量经过新基底得到新向量,也就是坐标变换.
+基底变换就是找出坐标系 \(A\) 上 \(z\) 在坐标系 \(B\) 上的坐标 \(z^{'}\), 举个例子,
 </p>
 
 <p>
-实际上基底就对应一个映射,比如向量 \(\vec{x}\) \((3\;5)^\mathsf{T}\) 的基底就是 \(\left(\begin{array}{c}1 & 0\\0 & 1\end{array}\right)\),\((3\;5)^\mathsf{T}\) 就是在该基底下的向量的描述.
+采用不同长度单位进行描述一个物体的高度, 但是不管采用什么单位, 物体的高度都是客观不变的.
 </p>
 
 <p>
-假设现在有一个在基底 \(A\) 下的向量/坐标 \(\vec{v}\),现在需要进行基底变换,
+通过一个 2 维的线性组合来表示的话,<a id="org3764929"></a>同一个变量 \(\vec{v}\) 在不同基底 \(\begin{cases} A = (\vec{e}_{x},\; \vec{e}_{y}) \\ B = (\vec{e}^{'}_{x},\; \vec{e}^{'}_{y}) \end{cases}\) 上的坐标分别为 \(\begin{cases} z = (x,\;y) \\ z^{'} = (x^{'}, \;y^{'}) \end{cases}\),
 </p>
 
 <p>
-也就是需要随之换另外一种描述方式,可以理解成对于一个物体的个高度采用不同长度单位进行描述,但是不管采用什么单位,物体的高度都是客观不变的.
+并符合关系: \(\vec{v} = x\vec{e}_{x} + y\vec{e}_{y} = x^{'}\vec{e}^{'}_{x} + y^{'}\vec{e}^{'}_{y} = A z = B z^{'} \rightarrow \begin{cases} z^{'} = B^{-1}Az \\ z = A^{-1}Bz^{'} \end{cases}\), 其中 \(A\) 和 \(B\) 必定存在逆矩阵.
 </p>
 
 <p>
-通过一个 2 维的线性组合来表示的话,<a id="org3764929"></a>同一个变量 \(\vec{v}\) 在不同基底下的关系为 \(\begin{equation}\vec{v} = x\vec{e}_{x} + y\vec{e}_{y} = x^{'}\vec{e}^{'}_{x} + y^{'}\vec{e}^{'}_{y}\end{equation}\)
+可以发现, 实现从 \(z\) 到 \(z^{'}\) 需要先算出新基底 \(B\) 的逆矩阵, 求逆矩阵不一定是一件容易的事情;
 </p>
 
 <p>
-从空间上思考的话, \(z\): \((x,\;y)\) 是 \(\vec{v}\) 在基底 \(A\): \((e_{x},\; e_{y})\) 下的坐标, 也就是 \(z\) 是由另外一个坐标 \(z^{'}\): \((x^{'},\;y^{'})\) 经过 \(A\) 得到的,
+在得知新旧基底之间关系的情况下, 可以利用这关系求出从其中一方到另外一方的变换, 比如该关系为:
 </p>
 
 <p>
-而 \(z^{'}\) 原本处于另外一个基底 \(B\) \((e^{'}_{x},\; e^{'}_{y})\) 上的,根据上面的关系可以发现是可以让 \(z\) 经过 \(B\) 回到 \(z^{'}\),可以得出这关系: \(\begin{equation}\left\{\begin{aligned}z = Az^{'}\\ z^{'} = Bz \end{aligned}\right.\end{equation}\).
+\(\begin{equation*}\left\{\begin{aligned}\vec{e}^{'}_{x} & = 3\vec{e}_{x} - 2\vec{e}_{y} \\ \vec{e}^{'}_{y} & = -\vec{e}_{x} + \vec{e}_{y}\end{aligned}\right.\end{equation*}\)
 </p>
 
 <p>
-不难发现基底 \(A\) 和 基底 \(B\) 是互逆矩阵,\(AB = BA = I\).
+可以通过之前上面的关系得出:
 </p>
 
 <p>
-所以第一步需要求出的新基底就是旧基底的逆矩阵,之后再求出新基底下的新坐标旧很简单了.这是第一种方法,通过矩阵求解,就不详细说了,如果上面的内容都理解了就是很简单的事情.
+\(\begin{equation*}\begin{aligned}\vec{v} &= x\vec{e}_{x} + y\vec{e}_{y} \\ &= x^{'}(3\vec{e}_{x} - 2\vec{e}_{y}) + y^{'}(-\vec{e}_{x} + \vec{e}_{y}) \\ &= 3x^{'}\vec{e}_{x} - 2x^{'}\vec{e}_{y} - y^{'}\vec{e}_{x} + y^{'}\vec{e}_{y} \\ &= (3x^{'}-y^{'})\vec{e}_{x} + (-2x^{'} + y^{'})\vec{e}_{y}\end{aligned}\end{equation*}\)
 </p>
 
 <p>
-还有第二种方法,利用新旧基底之间的等式关系求出新基底,比如旧基底和新基底之间的关系: \(\begin{equation}\left\{\begin{aligned}\vec{e}^{'}_{x} = 3\vec{e}_{x} - 2\vec{e}_{y} \\ \vec{e}^{'}_{y} = -\vec{e}_{x} + \vec{e}_{y}\end{aligned}\right.\end{equation}\)
+可以得出方程组:
 </p>
 
 <p>
-可以通过之前上面的关系得出,
+\(\begin{equation*}\left\{\begin{aligned}x &= 3x^{'} - y^{'} \\ y &= -2x^{'} + y^{'}\end{aligned}\right.\end{equation*}\)
 </p>
 
 <p>
-\(\begin{equation}\begin{aligned}\vec{v} &= x\vec{e}_{x} + y\vec{e}_{y} \\ &= x^{'}(3\vec{e}_{x} - 2\vec{e}_{y}) + y^{'}(-\vec{e}_{x} + \vec{e}_{y}) \\ &= 3x^{'}\vec{e}_{x} - 2x^{'}\vec{e}_{y} - y^{'}\vec{e}_{x} + y^{'}\vec{e}_{y} \\ &= (3x^{'}-y^{'})\vec{e}_{x} + (-2x^{'} + y^{'})\vec{e}_{y}\end{aligned}\end{equation}\)
+根据系数可以得出变换 \(A^{-1}B\) 为 \(\left(\begin{array}{c} 3 & -1\\ -2 & 1 \end{array}\right)\), 可以根据方程组反求出 \(B^{-1}A\),
 </p>
 
 <p>
-对比开始于结束时的系数可以得出关系: \(\begin{equation}\left\{\begin{aligned}x &= 3x^{'} - y^{'} \\ y &= -2x^{'} + y^{'}\end{aligned}\right.\end{equation}\)
+新关系的两条等式相加可以先得到 \(x + y = x^{'}\), 然后把 \(x^{'}\) 代入回其中一条等式可以得到 \(2x + 3y = y^{'}\):
 </p>
 
 <p>
-根据而可以得出基底 \(A\) 为 \(\left(\begin{array}{c} 3 & -1\\ -2 & 1 \end{array}\right)\).
+\(\begin{equation*}\left\{\begin{aligned}x + y = x^{'} \\ 2x + 3y = y^{'}\end{aligned}\right.\end{equation*}\)
 </p>
 
 <p>
-这个新的关系的两条等式相加可以先得到 \(x + y = x^{'}\), 然后把 \(x^{'}\) 代入回其中一条等式可以得到 \(2x + 3y = y^{'}\),
-</p>
-
-<p>
-因此又得到一个新的关系 \(\begin{equation}\left\{\begin{aligned}x + y = x^{'} \\ 2x + 3y = y^{'}\end{aligned}\right.\end{equation}\),
-</p>
-
-<p>
-可以从这组关系得出基底 \(B\) 为 \(\left(\begin{array}{c} 1 & 1\\ 2 & 3 \end{array}\right)\),验证一下 \(AB\),发现结果刚好为 \(I_{2}\),
-</p>
-
-<p>
-把这个计算过程一般化之后就是基底变换的推导过程了,具体就不详细说了.
-</p>
-
-<p>
-最后就是利用矩阵与向量之间的乘法的知识来求出变换后的坐标了,也就是进行坐标变换.
-</p>
-
-<p>
-坐标变换是要建立在基底存在逆矩阵的前提下才可以进行的,这点必须记住.
+根据系数可以得出变换 \(B^{-1}A\) 为 \(\left(\begin{array}{c} 1 & 1\\ 2 & 3 \end{array}\right)\).
 </p></li>
 
 <li><p>
@@ -2752,7 +2732,7 @@ l       这个程序是用 <code>Ruby</code> 写的,因为不是所有人都写 
 </p>
 
 
-<div id="orga901150" class="figure">
+<div id="org46c705b" class="figure">
 <p><img src="../../../files/linear-dependence-example1.png" alt="linear-dependence-example1.png">
 </p>
 <p><span class="figure-number">Figure 4: </span>基底(a1, a2, a3)</p>
@@ -2783,7 +2763,7 @@ l       这个程序是用 <code>Ruby</code> 写的,因为不是所有人都写 
 </p>
 
 
-<div id="org1859045" class="figure">
+<div id="orgb96752d" class="figure">
 <p><img src="../../../files/linear-dependence-example2.png" alt="linear-dependence-example2.png">
 </p>
 <p><span class="figure-number">Figure 5: </span>多余的 \(a_{1}\)</p>
@@ -3938,7 +3918,7 @@ sol(mat, y)
 
 
 
-<div id="org553fdca" class="figure">
+<div id="orgce8b64d" class="figure">
 <p><img src="../../../files/discrete-and-continuous.png" alt="discrete-and-continuous.png" width="500px">
 </p>
 <p><span class="figure-number">Figure 6: </span>上面例子所对应的函数图</p>
@@ -4094,11 +4074,11 @@ sol(mat, y)
 </p>
 
 <p>
-有 <b>变量替换</b>, <b>坐标变换</b> 以及 <b>乘方计算</b> 3种方法可以对这个过程进行描述.
+有 <b>变量替换</b>, <b>基底变换</b> 以及 <b>乘方计算</b> 3种方法可以对这个过程进行描述.
 </p>
 </div>
 <div id="outline-container-org56679b9" class="outline-4">
-<h4 id="org56679b9"><a id="org0d83d72"></a>变量替换</h4>
+<h4 id="org56679b9"><a id="org3ef322e"></a>变量替换</h4>
 <div class="outline-text-4" id="text-org56679b9">
 <p>
 变量替换的本质和 <b>选择更好基底</b> 的本质是一样的.
@@ -4336,11 +4316,11 @@ sol(mat, y)
 </p>
 </div>
 </div>
-<div id="outline-container-org39aaac6" class="outline-4">
-<h4 id="org39aaac6">坐标变换</h4>
-<div class="outline-text-4" id="text-org39aaac6">
+<div id="outline-container-change-of-basic" class="outline-4">
+<h4 id="change-of-basic">基底变换</h4>
+<div class="outline-text-4" id="text-change-of-basic">
 <p>
-让我们从坐标变换的角度来理解 <b>对角化</b> 这个操作,让直观上有一个了解.
+让我们从基底变换的角度来理解 <b>对角化</b> 这个操作,让直观上有一个了解.
 </p>
 
 <p>
@@ -4348,7 +4328,7 @@ sol(mat, y)
 </p>
 
 <p>
-我们默认采用 \((\vec{e_{1}}, \ldots, \vec{e_{n}})\) 作为<a href="#orgd991996">基底</a>,对于这个空间上坐标 \(v = (v_{1}, \ldots, v_{n})^{T}\) 使用实体的有向线段来表达: \(\vec{v} = v_{1}\vec{e_{1}} + \ldots + v_{n}\vec{e_{n}}\);
+我们默认采用 \((\vec{e_{1}}, \ldots, \vec{e_{n}})\) 作为<a href="#orgd991996">基底</a>,对于这个空间上坐标 \(v = (v_{1}, \ldots, v_{n})^{T}\) 使用实体的有向线段来表达: \(\vec{v} = v_{1}\vec{e_{1}} + \ldots + v_{n}\vec{e_{n}}\).
 </p>
 
 <p>
@@ -4388,7 +4368,7 @@ sol(mat, y)
 </p>
 
 
-<div id="org31ef3a3" class="figure">
+<div id="orgdee8fc0" class="figure">
 <p><img src="../../../files/gnuplot-example1.gif" alt="gnuplot-example1.gif">
 </p>
 <p><span class="figure-number">Figure 7: </span><code>ruby mat_anim.rb -s=4 | gnuplot</code></p>
@@ -4399,7 +4379,7 @@ sol(mat, y)
 </p>
 
 
-<div id="org39ea6ae" class="figure">
+<div id="orga19927f" class="figure">
 <p><img src="../../../files/gnuplot-example2.gif" alt="gnuplot-example2.gif">
 </p>
 <p><span class="figure-number">Figure 8: </span><code>ruby mat_anim.rb -s5 | gnuplot</code></p>
@@ -4450,7 +4430,7 @@ sol(mat, y)
 </p>
 
 <p>
-这个变换的本质就是基底 \(\left(\vec{e_{1}}, \ldots, \vec{e_{2}}\right)\) 和基底 \(\left(\vec{p_{1}}, \ldots, \vec{p_{n}}\right)\) 之间的关系,<a href="#orgac54e4f">这</a>是很早之前就讲过的"坐标变换".
+这个变换的本质就是基底 \(\left(\vec{e_{1}}, \ldots, \vec{e_{2}}\right)\) 和基底 \(\left(\vec{p_{1}}, \ldots, \vec{p_{n}}\right)\) 之间的关系,<a href="#orgac54e4f">这</a>是很早之前就讲过的"基底变换".
 </p>
 
 <p>
@@ -4458,7 +4438,7 @@ sol(mat, y)
 </p>
 
 <p>
-因此有 \(\vec{x} = \begin{equation}\left\{ \begin{array}{**lr**} \mathcal{p_{1}} = p_{11}\vec{e_{1}} + \ldots + p_{n1}\vec{e_{n}} \\ \vdots \\ \mathcal{p_{n}} = p_{n1}\vec{e_{1}} + \ldots + p_{nn}\vec{e_{n}} \end{array} \right.\end{equation}\).
+因此有 \(\vec{x} = \begin{equation*}\left\{ \begin{array}{**lr**} \mathcal{p_{1}} = p_{11}\vec{e_{1}} + \ldots + p_{n1}\vec{e_{n}} \\ \vdots \\ \mathcal{p_{n}} = p_{n1}\vec{e_{1}} + \ldots + p_{nn}\vec{e_{n}} \end{array} \right.\end{equation*}\).
 </p>
 
 <p>
@@ -5120,7 +5100,7 @@ sol(mat, y)
 </p>
 
 
-<div id="orgd50740d" class="figure">
+<div id="org1fe99b0" class="figure">
 <p><img src="../../../files/discrete-system-stability.png" alt="discrete-system-stability.png">
 </p>
 <p><span class="figure-number">Figure 9: </span>离散系统的稳定性判断</p>
@@ -5381,7 +5361,7 @@ Z^{4} = Z^{5} = ... = O
 </p>
 
 
-<div id="orgef70409" class="figure">
+<div id="orgdaa1de8" class="figure">
 <p><img src="../../../files/a_4_4.png" alt="a_4_4.png">
 </p>
 <p><span class="figure-number">Figure 10: </span>按照往格子里面放元素 (4 选 4)</p>
@@ -5416,7 +5396,7 @@ Z^{4} = Z^{5} = ... = O
 </p>
 
 
-<div id="org3068751" class="figure">
+<div id="orgf1368ca" class="figure">
 <p><img src="../../../files/a_4_2.png" alt="a_4_2.png">
 </p>
 <p><span class="figure-number">Figure 11: </span>按照往格子里面放元素 (4 选 2)</p>
@@ -5427,7 +5407,7 @@ Z^{4} = Z^{5} = ... = O
 </p>
 
 
-<div id="org450632e" class="figure">
+<div id="orgca3e715" class="figure">
 <p><img src="../../../files/a_t_s.png" alt="a_t_s.png">
 </p>
 <p><span class="figure-number">Figure 12: </span>按照往格子里面放元素 (t 选 s)</p>
@@ -5554,7 +5534,7 @@ Z^{4} = Z^{5} = ... = O
 </p>
 
 
-<div id="orge861022" class="figure">
+<div id="org67c0b8b" class="figure">
 <p><img src="../../../files/pascals-triangle.png" alt="pascals-triangle.png">
 </p>
 <p><span class="figure-number">Figure 13: </span>杨辉三角,也叫帕斯卡三角</p>
@@ -5573,7 +5553,7 @@ Z^{4} = Z^{5} = ... = O
 </p>
 
 
-<div id="org43f0d11" class="figure">
+<div id="org9957162" class="figure">
 <p><img src="../../../files/pascals-triangle-2.png" alt="pascals-triangle-2.png">
 </p>
 <p><span class="figure-number">Figure 14: </span>杨辉三角以及组合数</p>
@@ -5836,7 +5816,7 @@ Z^{4} = Z^{5} = ... = O
 <h4 id="org9940011">通过Jordan标准型解决初始值问题(失控判定的最终结论)</h4>
 <div class="outline-text-4" id="text-org9940011">
 <p>
-<a href="#org5e59c81">前面</a>提到过任何矩阵 \(A\) 都可以变成 <code>Jordan</code> 标准型.也就是说,任何 \(x(t) = Ax(t-1)\) 以及 \(\frac{d}{dt}x(t) = Ax(t)\) 可以通过合适的变量替换(坐标变换),都可以归结为 \(A\) 是 <code>Jordan</code> 标准型的情况.
+<a href="#org5e59c81">前面</a>提到过任何矩阵 \(A\) 都可以变成 <code>Jordan</code> 标准型.也就是说,任何 \(x(t) = Ax(t-1)\) 以及 \(\frac{d}{dt}x(t) = Ax(t)\) 可以通过合适的变量替换(基底变换),都可以归结为 \(A\) 是 <code>Jordan</code> 标准型的情况.
 </p>
 
 <p>
@@ -6024,7 +6004,7 @@ Z^{4} = Z^{5} = ... = O
 <ol class="org-ol">
 <li>任何方阵 \(A\) 都可以变换成 <code>Jordan</code> 标准型 (\(P^{-1}AP = J\)).</li>
 
-<li>因为 \(x = Py\) (不记得的话重读<a href="#org3ef322e">这里</a>), 所以 \(y(t) = Jy(t-1)\) 的失控与原系统 \(x(t) = Ax(t-1)\), 再对 \(J\) 进行判定</li>
+<li>因为 \(x = Py\) (不记得的话重读<a href="#orgb51dfb7">这里</a>), 所以 \(y(t) = Jy(t-1)\) 的失控与原系统 \(x(t) = Ax(t-1)\), 再对 \(J\) 进行判定</li>
 
 <li><p>
 由于 \(J\) 的特征值和 \(A\) 的特征值是相同的 (不记得的话复习<a href="#orgcc6c71e">这里</a>),因此 \(J\) 是否失控等同于 \(A\) 是否失控
@@ -6164,7 +6144,7 @@ Ap_{11} = p_{9} + 5p_{11} & \rightarrow (A - 5I)p_{11} = p_{10}
 </p>
 
 <p>
-<b>因为 \(A\) 和 \(J\) 是相似矩阵,所以 \(A\) 的特征值就是 \(J\) 的特征值<a id="org3ef322e"></a>.</b>
+<b>因为 \(A\) 和 \(J\) 是相似矩阵,所以 \(A\) 的特征值就是 \(J\) 的特征值<a id="orgb51dfb7"></a>.</b>
 </p>
 
 <p>
@@ -6389,7 +6369,7 @@ Ap_{11} = p_{9} + 5p_{11} & \rightarrow (A - 5I)p_{11} = p_{10}
 </p>
 
 
-<div id="org828617b" class="figure">
+<div id="org23acbf7" class="figure">
 <p><img src="../../../files/dim_Ker_A-3I.png" alt="dim_Ker_A-3I.png">
 </p>
 <p><span class="figure-number">Figure 15: </span>计算规律</p>

@@ -38,11 +38,11 @@
 同时也算是感慨一下当年热衷于写文章的自己, 
 
 	
-*** [[file:posts/2024/11/introduction-to-probability.html?hash=44b1f560d640fb70549deff4812253e4][Introduction To Probability 的阅读草稿纸]]
+*** [[file:posts/2024/11/introduction-to-probability.html?hash=3d7987f01bc1849b8c5ae5f92db22cdb][Introduction To Probability 的阅读草稿纸]]
 关于概率论的阅读笔记, 为了学习 =PBR= 速通的学习笔记, 还需要完善.
 
 	
-*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=b35f690a36232c1aa0e964f5245845f4][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
+*** [[file:posts/2024/10/Learning-Calculus-Early-Transcendentals-8th-index.html?hash=a0319ba074dbda9f41ad52e93d58a850][Learning Calculus Early Transcendentals 8th 的阅读草稿纸]]
 这份文档用来整理阅读 =Learning Calculus Early Transcendentals 8th= 时的笔记并且标出相关知识点的页码.
 
 笔记内容主要是个人对一些概念的再理解以及对一些证明过程补充缺漏的细节, 这不是一下子就能完成的.
@@ -174,7 +174,7 @@
 
 
 	
-*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=ae2175fd8fe485e904ec0a97f09893bd][ShaderToy常见代码解释 (收录中)]]
+*** [[file:posts/2024/03/code-explains-for-fragment-shader-in-shadertoy.html?hash=b40ee770a231055a11ac5a13f397d55d][ShaderToy常见代码解释 (收录中)]]
 在编程这一方面, 个人认同这一个观点: 要想实现某个东西最有效的办法是抄别人的代码, 并且要抄得明白.
 
 不要看这句话看似很 =low=, 它里面其实有这么一些对应关系, "抄得明白"对应知道原理, "抄别人代码"对应实践.
@@ -244,7 +244,7 @@
 当基础知识足够扎实时, 应该就有能力实现 [[https://advances.realtimerendering.com/][Advances in Real-Time Rendering in 3D Graphics and Games]] 里面的技术了.
 
 	
-*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=5d76d70027303d12c1fb9fb493ebcf38][Shader 编程自救指南]]
+*** [[file:posts/2022/02/webgl-buffer-objects.html?hash=ce3bb4ce025dc6f46fa41b42810ed801][Shader 编程自救指南]]
 由于去年换了工作, 生活变得充实起来了, 这里的充实并非反话, 我在这段时间调整了心态和目标, 学习了一些新的知识;
 
 为了学习游戏开发, 定制了新的学习目标, 包括音乐, 编剧, 使用 =Blender= 建模以及 =Godot= 的使用等等;
@@ -280,7 +280,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 (只考虑平面的情况)
 
 	
-*** [[file:posts/2021/06/things-about-c-development.html?hash=086da26c5c6c87c7ab918105e4ef90c9][关于使用C语言开发的那些事]]
+*** [[file:posts/2021/06/things-about-c-development.html?hash=f6cd67a8ed5caffb82d0b7b2bdc8b798][关于使用C语言开发的那些事]]
 *注意*, 看这篇笔记时请务必先学习 =x86= 汇编, 因为 =C= 代码会被编译成汇编,
 
 只有学习了汇编你才能具体得看到 =C= 语言的内存管理模型, 知道程序是如何产生的, 是什么样的.
@@ -372,7 +372,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为此加强了一下书中后期"从汇编转向 =C= 语言这一部分"的内容, 从而加入了 "=ELF= 文件解析以及链接器的工作细节" 这些参考书上没有的内容.
 
 	
-*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=3d166256cdf530ce0a95ece68bb7ff3e][图形学 - 光和材质]]
+*** [[file:posts/2020/08/graphics-opengl-light-and-material.html?hash=826ee6964074ad91be416176a71733b9][图形学 - 光和材质]]
 在图形学中,决定一个物体是否逼真(realism),除了投影方法外,另外一个重要因素就是光照(lighting)了.
 
 包括这几个方面: 光(light)影(shadow)的表现,不同材质(material)的物体如何反射(reflects)光线,以及当光线照射到半透明物体时该如何弯曲(bend)/衍射(diffracted).
@@ -386,7 +386,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 2. [[../../2022/02/webgl-buffer-objects.html][Shader 编程自救指南]]: 需要插值是如何进行.
 
 	
-*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=c2ae49c440716edeb3027821a52281d3][图形学 - OpenGL坐标变换]]
+*** [[file:posts/2020/06/graphics-opengl-transformation.html?hash=07c1fa44c865e8466e5b74f3e5a02f10][图形学 - OpenGL坐标变换]]
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 
 不过我不打算花重笔写渲染管线的内容,因为渲染管线会随着 =OpenGL= 的升级而改变, =OpenGL 1.X= 到 =OpenGL 2.X= 就经历一次重大改变: 固定管线被移除(fixed function pipepline),取而代之的是可编程管线(programmable pipeline),
@@ -398,44 +398,32 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 本文只会写渲染管线的两个环节: =Vertex Operation= 以及 =Primitive Assembly=,它们背后的数学原理,这是后面学习 =GLSL= 是必须的知识基础.
 
 	
-*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=0829e38da2ff9a57cc8ca50e8cd1b06f][图形学-几何变换]]
+*** [[file:posts/2020/06/graphics-geometric-transformation.html?hash=ebd536f4aded88a7cd868f54878e7d3f][图形学-几何变换]]
 几何变换(geometric transformation)是图形学里面的一个重要基础知识点,
 
 所谓的几何变换可以它看做一个函数就是: 输入几何对象里面的所有点,输出一个新的几何对象.
 
-举个例子,假如 $p$ 点在坐标系 $A$ 中的坐标是 $\left(x, y\right)$,假设现在坐标系 $B$ 是整个 $A$ + $p$ 逆时针旋转 $\theta$ 度后得到的,
+举个例子,假如 $p$ 点在坐标系 $A$ 中的坐标是 $\left(x, y\right)$,假设现在坐标系 $B$ 是 $A$ 逆时针旋转 $\theta$ 度后得到的,
 
-同样 $p$ 也跟着 $A$ 的旋转到达 $p^{'}$ 这个位置, $p^{'}$ 在 $B$ 上也是 $\left(x, y\right)$, 但是 $p^{'}$ 在 $A$ 的坐标呢?
+$p$ 随着 $A$ 的旋转到达 $p^{'}$ 这个位置, $p^{'}$ 在 $B$ 上也是 $\left(x, y\right)$, 但是 $p^{'}$ 在 $A$ 上的坐标呢?
 
 现在就是要求 $p^{'}$ 在 $A$ 上的坐标 $\left(x^{'}, y^{'}\right)$.
 
 首先 $A$ 和 $B$ 分别是描述 $p$ 和 $p^{'}$ 自身的坐标系, $p$ 有 *可能* 会处于 $A$ 的原点位置, $p^{'}$ 和 $B$ 同理,
 
-$A$ 和 $B$ 分别叫做 $p$ 和 $p^{'}$ 的物体坐标系(object coordinate system),每个物体都有自己的物体坐标系.
+$A$ 和 $B$ 分别为 $p$ 和 $p^{'}$ 的物体坐标系(object coordinate system),每个物体都有自己的物体坐标系.
 
-$p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果,这种相对自己的物体坐标系进行的变换就是几何变换(geometric transformation).
+$p^{'}$ 实际上 就是 $p$ 相对于 $A$ 坐标系原点的移动结果, 这种相对自己的物体坐标系进行的变换就是几何变换(geometric transformation).
 
 [[../../../files/2d-rotation-pre.png]]
 
-其实这里也可以看成是坐标变换(coordinate transformation),也就是从坐标系 $A$ 变成坐标系 $B$ 时, $p^{'}$ 在 $A$ 上的坐标是多少,
+也叫做坐标变换(coordinate transformation), 从坐标系 $A$ 变成坐标系 $B$ 时, $p^{'}$ 在 $A$ 上的坐标是多少,
 
-也就是改变了物体参照的坐标系,这里并不是说坐标变换就等于几何变换,只是这里是恰好可以看作一样而已,几何变换本质是在改变物体本身.
+常见的几何变换包括对象的 *伸缩 (scale),平移 (translation) 以及旋转 (rotation)*,这些都可以通过矩阵来进行描述.
 
-举个例子,一辆车在某个位置,现在想让车远离某一个人,那么有两种做法,一是把车开走,二是让人走开.
+而矩阵的含义就是等同于"映射/变换",所以在了解之前需要先了解一些线性代数的知识.
 
-把人看作是车的物体坐标系的原点,车开走就是几何变换;车不动而人走开就是坐标系变换.
-
-从人的角度来看,不管是哪种方式都可以实现车和人的距离拉远.坐标变换会在下一篇文章讲.
-
-所以它们虽然本质不一样,但是它们的计算都基本都是 $Ax = y$ 这种形式.
-
-回到主题,常见的几何变换包括对象的 *伸缩 (scale),平移 (translation) 以及旋转 (rotation)*,这些都可以通过矩阵来进行描述.
-
-而矩阵的含义就是等同于"映射/变换",所以在了解之前需要先了解一些线性代数的知识,我也不是这方面的专家,就不分享自己微不足道的学习经验了.
-
-实际上如果单纯只是为了应用的话,记住结论就可以了,但是个人认为,如果真的打算与图形学打交道,那么只有理解了为什么才能愉快地与图形学相处,
-
-否者会过得很痛苦.很多参考资料都是直接给出变换的结论,没有推导过程,或者有不完全的推导过程,所以我才下定注意写下自己思考.
+很多参考资料都是直接给出这些变换的矩阵,没有推导过程,或者有不完全的推导过程,所以我才下定注意写下自己思考.
 
 在 [[https://betterexplained.com][Better Explained]] 的 [[https://betterexplained.com/articles/intuitive-understanding-of-eulers-formula][Intuitive Understanding Of Euler's Formula]] 上有一句话我非常喜欢:
 

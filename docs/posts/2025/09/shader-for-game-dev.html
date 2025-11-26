@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2025-09-25 Thu 22:12 -->
+<!-- 2025-11-26 Wed 22:00 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>游戏 Shader 开发</title>
@@ -248,25 +248,58 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
+<li><a href="#org8e1c2e0">代码命名规范</a></li>
 <li><a href="#render-to-texture">渲染到贴图 (Render To Texture)</a>
 <ul>
 <li><a href="#org5dcf6a9">深度贴图 (Depth Texture)</a>
-<ul>
-<li><a href="#org08c22d3">实现</a></li>
-<li><a href="#org1d0f070">应用例子</a></li>
-</ul>
-</li>
-<li><a href="#org01d43d3">法线贴图 (Normal Texture)</a>
 <ul>
 <li><a href="#org407f03b">实现</a></li>
 <li><a href="#org850fad9">应用例子</a></li>
 </ul>
 </li>
+<li><a href="#org01d43d3">法线贴图 (Normal Texture)</a>
+<ul>
+<li><a href="#orgcb6eb45">实现</a></li>
+<li><a href="#org1aa759d">应用例子</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#recompute-normal-after-disp">重新计算法线向量</a></li>
-<li><a href="#curved-world">地平线视差</a></li>
-<li><a href="#outlining">描边 (Outlining)</a>
+<li><a href="#heightfield-water-simulation">高度场水面模拟 (Heightfield Water Simulation)</a>
+<ul>
+<li><a href="#org8b226ce">整体实现思路</a></li>
+<li><a href="#gpu-computation">使用 GPU 进行计算</a></li>
+<li><a href="#orgcdd867b">计算水面的高度场</a></li>
+<li><a href="#org87b4351">制作水面</a>
+<ul>
+<li><a href="#org5ef0555">反射 (Reflection)</a></li>
+<li><a href="#screen-space-refraction">折射 (Refraction)</a></li>
+<li><a href="#org485daba">综合反射与折射</a></li>
+<li><a href="#orgd7d947d">使用高度场制造波纹</a></li>
+</ul>
+</li>
+<li><a href="#org3b22734">计算焦散 (Caustic)</a>
+<ul>
+<li><a href="#org1b2c34b">如何在程序中量化聚散程度</a></li>
+<li><a href="#find-hit-point-with-raymarching">在光栅化渲染中使用 Ray Marching 找出射线与场景的交点</a></li>
+<li><a href="#org2c22487">生成焦散贴图</a></li>
+</ul>
+</li>
+<li><a href="#orgea7100d">为水底的场景编写 shader</a></li>
+<li><a href="#org1b92a15">项目总结</a></li>
+</ul>
+</li>
+<li><a href="#ssao">屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)</a>
+<ul>
+<li><a href="#org59db0c7">把视点空间的顶点储存在贴图中</a></li>
+<li><a href="#orgee43805">把视点空间的法线储存在贴图中</a></li>
+<li><a href="#org3f298cd">计算场景的环境光遮蔽程度并储存在贴图中</a></li>
+<li><a href="#org25bdd6a">对噪点进行模糊</a></li>
+</ul>
+</li>
+<li><a href="#curved-world">风格化渲染: 地平线视差 (Curved World)</a></li>
+<li><a href="#outlining">风格化渲染: 描边 (Outlining)</a>
 <ul>
 <li><a href="#org519876b">判断片元是处于轮廓上</a></li>
 <li><a href="#orgb94fb0d">提取描边</a></li>
@@ -274,7 +307,7 @@
 <li><a href="#org3054ec3">完整代码</a></li>
 </ul>
 </li>
-<li><a href="#org649cb77">莫比斯风格渲染 (Moebius Style Shading)</a>
+<li><a href="#org36e6cae">风格化渲染: 莫比斯风格渲染 (Moebius Style Shading)</a>
 <ul>
 <li><a href="#org1a831b6">整体思路</a></li>
 <li><a href="#org59a3375">描边处理</a></li>
@@ -285,7 +318,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org875389f">
+<div class="abstract" id="org8d8c9df">
 <p>
 这篇文章主要是收集一些 <code>3D</code> 游戏开发常用的 <code>Shader</code> 技术, 以及一些风格化渲染实现.
 </p>
@@ -358,7 +391,7 @@
 
 
 <p>
-这些文章是按照知识点之间的依赖关系罗列好的, 如果是初学的话请务必按照顺序进行阅读.
+它们是按照知识点之间的依赖关系罗列好的, 如果是初学的话请务必按照顺序进行阅读.
 </p>
 
 <p>
@@ -366,11 +399,11 @@
 </p>
 
 <p>
-后续会不断记录游戏开发中的 <code>Shader</code> 技术, 这里选择 <a href="https://threejs.org/">three.js</a> 作为实践平台.
+后续会不断记录游戏开发中的 <code>Shader</code> 技术.
 </p>
 
 <p>
-原因如下:
+这里选择 <a href="https://threejs.org/">three.js</a> 作为实践平台, 原因如下:
 </p>
 
 <ul class="org-ul">
@@ -399,6 +432,22 @@
 <p>
 一定程度上可以弥补文档上的不足.
 </p></li>
+
+<li><p>
+浏览器的拓展 <a href="https://spector.babylonjs.com/">spector.js</a> 是一个易上手的 <code>WebGL</code> 调试工具,
+</p>
+
+<p>
+很多效果的实现需要很多个阶段, 会经常遇到需要查看其中贴图的情况, 这个时候 <code>spector.js</code> 就能帮上忙了.
+</p>
+
+<p>
+旧版的 <code>Chrome</code> 是支持 <a href="https://renderdoc.org/">RenderDoc</a> 这样的工具调试 <code>WebGL</code> 的,
+</p>
+
+<p>
+后来 <code>Chrome</code> 的更新导致了 <code>RenderDoc</code> 难以实现注入, 于是 <code>RenderDoc</code> 的开发者就放弃了 <code>WebGL</code> 的调试.
+</p></li>
 </ul>
 
 
@@ -422,6 +471,42 @@
 保证示例的代码可以轻松的移至到其他框架上.
 </p>
 
+<p>
+本文有不少内容都是参考自 <a href="https://lettier.github.io/3d-game-shaders-for-beginners/">3D Game Shaders For Beginners By David Lettier</a> 的分享,
+</p>
+
+<p>
+如果读者本身有一定的 <code>C++</code> 基础, 可以去阅读该博客, 内容还是非常不错的.
+</p>
+
+</div>
+<div id="outline-container-org8e1c2e0" class="outline-2">
+<h2 id="org8e1c2e0">代码命名规范</h2>
+<div class="outline-text-2" id="text-org8e1c2e0">
+<p>
+文中 <code>shader</code> 代码的变量命名方式 <b>基本上</b> 是按照 <code>three.js</code> <a href="https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram">内置shader变量</a> 进行的, 但有一些调整:
+</p>
+
+<p>
+非 <code>sampler2D</code> 和 <code>samplerCube</code> 类型的 <code>uniforms</code> 变量的名字以 <code>u</code> 开头表示 <code>uniform</code>, 比如 <code>uTime</code>;
+</p>
+
+<p>
+<code>sampler2D</code> 和 <code>samplerCube</code> 的 <code>uniforms</code> 变量的名字以 <code>t</code> 开头表示 <code>texture</code>,
+</p>
+
+<p>
+比如法线贴图的名字一般是 <code>tNormal</code>;
+</p>
+
+<p>
+<code>varying</code> 变量的名字以 <code>v</code> 开头表示 <code>varying</code>, 比如 <code>vPosition</code>;
+</p>
+
+<p>
+<code>attribute</code> 变量的名字没有特别前缀.
+</p>
+</div>
 </div>
 <div id="outline-container-render-to-texture" class="outline-2">
 <h2 id="render-to-texture">渲染到贴图 (Render To Texture)</h2>
@@ -473,9 +558,9 @@
 不同项目有不同的深度值计算方式, 这只是最常见一种方式.
 </p>
 </div>
-<div id="outline-container-org08c22d3" class="outline-4">
-<h4 id="org08c22d3">实现</h4>
-<div class="outline-text-4" id="text-org08c22d3">
+<div id="outline-container-org407f03b" class="outline-4">
+<h4 id="org407f03b">实现</h4>
+<div class="outline-text-4" id="text-org407f03b">
 <p>
 <b>Vertex Shader</b>: <a id="orgf6306ce"></a>
 </p>
@@ -532,9 +617,9 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org1d0f070" class="outline-4">
-<h4 id="org1d0f070">应用例子</h4>
-<div class="outline-text-4" id="text-org1d0f070">
+<div id="outline-container-org850fad9" class="outline-4">
+<h4 id="org850fad9">应用例子</h4>
+<div class="outline-text-4" id="text-org850fad9">
 <p>
 这里演示在后处理中使用深度贴图,
 </p>
@@ -578,8 +663,8 @@
   <span style="color: #98fb98;">float</span> ndcZ = 2.0 * pixel.r - 1.0;
   <span style="color: #98fb98;">float</span> viewZ = 2.0 * uCameraNear * uCameraFar /
     (ndcZ * (uCameraFar - uCameraNear) - (uCameraFar + uCameraNear));
-  <span style="color: #98fb98;">float</span> modelZ = -viewZ;
-  <span style="color: #98fb98;">float</span> linearDepth = (modelZ - uCameraNear) / (uCameraFar - uCameraNear);
+  <span style="color: #98fb98;">float</span> linearViewDepth = -viewZ;
+  <span style="color: #98fb98;">float</span> linearDepth = (linearViewDepth - uCameraNear) / (uCameraFar - uCameraNear);
   <span style="color: #00ffff;">return</span> linearDepth;
 }
 
@@ -599,9 +684,9 @@
 这里演示在后处理中使用法线贴图,
 </p>
 </div>
-<div id="outline-container-org407f03b" class="outline-4">
-<h4 id="org407f03b">实现</h4>
-<div class="outline-text-4" id="text-org407f03b">
+<div id="outline-container-orgcb6eb45" class="outline-4">
+<h4 id="orgcb6eb45">实现</h4>
+<div class="outline-text-4" id="text-orgcb6eb45">
 <p>
 <b>Vertex Shader</b>:
 </p>
@@ -651,9 +736,9 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org850fad9" class="outline-4">
-<h4 id="org850fad9">应用例子</h4>
-<div class="outline-text-4" id="text-org850fad9">
+<div id="outline-container-org1aa759d" class="outline-4">
+<h4 id="org1aa759d">应用例子</h4>
+<div class="outline-text-4" id="text-org1aa759d">
 <p>
 <a href="#org97f04c8"><b>Vertex Shader</b></a>
 </p>
@@ -677,6 +762,24 @@
 <p>
 具体后处理流程参考 <a href="https://github.com/saltb0rn/shader-for-game-dev/blob/master/src/RenderToTexture/postProcessing/NormalPass.ts">src/RenderToTexture/postProcessing/NormalPass.ts</a>.
 </p>
+
+<blockquote>
+<p>
+想要从第三方法线贴图中读取贴图并且使用, 通常需要一个名为 <code>TBN</code> 的矩阵,
+</p>
+
+<p>
+因为法线贴图中的法线向量 <b>并非</b> 储存在物体坐标系/世界坐标系/视点坐标系上, 而是储存在切线空间上.
+</p>
+
+<p>
+根据选择的坐标系不同, 就有会无数种储存和读取向量的方法, 切线空间只是提供了一种向量的读写标准.
+</p>
+
+<p>
+并且切线空间是从物体坐标系推导出来的, 所以切线空间上的向量可以像顶点那样完成从物体坐标系到世界坐标系的变换.
+</p>
+</blockquote>
 </div>
 </div>
 </div>
@@ -818,15 +921,2340 @@
 </blockquote>
 </div>
 </div>
+<div id="outline-container-heightfield-water-simulation" class="outline-2">
+<h2 id="heightfield-water-simulation">高度场水面模拟 (Heightfield Water Simulation)</h2>
+<div class="outline-text-2" id="text-heightfield-water-simulation">
+<p>
+有很多种方法可实现水面模拟, 其中最简单的莫过于使用高度场(<code>heightfields</code>)进行模拟,
+</p>
+
+<p>
+每平面坐标都会有一个值来反应它的高度, 这些值的集合就是一个高度场.
+</p>
+
+<p>
+最常见的高度场应用例子就是使用柏林噪声生产地形, 本质上就是使用噪声算法生成高度场, 使得平面的不同位置上高度不一致.
+</p>
+
+<p>
+然而与地形不同, 水面是可以交互的, 比如对水面使力产生波纹, 还有光线照射到水面,
+</p>
+
+<p>
+所产生的折射(<code>refraction</code>)/反射(<code>reflection</code>)/焦散(<code>caustic</code>)的物理现象.
+</p>
+
+<p>
+鉴于高度场的特性, 这种方法并不能模拟所有水面, 比如巨浪, 因为巨浪不符合高度场的特性.
+</p>
+
+
+<div id="orge124277" class="figure">
+<p><img src="../../../files/heightfield.png" alt="heightfield.png">
+</p>
+<p><span class="figure-number">Figure 1: </span>高度场</p>
+</div>
+
+
+<div id="org45f5d4e" class="figure">
+<p><img src="../../../files/huge-waves.jpg" alt="huge-waves.jpg" width="500px">
+</p>
+<p><span class="figure-number">Figure 2: </span>翻卷巨浪</p>
+</div>
+
+<p>
+这将会是一场漫长而艰难的冒险, 完成之后会学到很多知识, 这些知识是后续学习的尝鲜.
+</p>
+
+<p>
+我会尽己所能把难啃的部分讲清楚, 带你一步一步地完成冒险.
+</p>
+
+<p>
+最早是被 <a href="https://madebyevan.com/webgl-water/">WebGL Water by Evan Wallace</a> 这个例子惊艳到了, 所以才对水面模拟产生了兴趣,
+</p>
+
+<p>
+在阅读了它的代码后发现了一些缺陷: 与水互动的物体只有一个规则的球体, 不规则的物体没法与该例子的水面进行合理的互动.
+</p>
+
+<p>
+后来找到 <a href="https://medium.com/@martinRenou/real-time-rendering-of-water-caustics-59cda1d74aa">Real-time rendering of water caustics by Martin Renou</a> 这篇文章, 发现这缺陷早已被提出并且找到解决方法了,
+</p>
+
+<p>
+但在阅读了新的代码后发现新代码并不通用也有一些问题: 模拟的水面并不通用.
+</p>
+
+<p>
+为此, 我开始着手解决不通用的问题, 并记录下每一步的思路.
+</p>
+
+<p>
+这个章节将会不可避免的涉及一些 <code>JavaScript</code> 代码, 由于想尽量减少实现方案与具体语言/框架之间的关联性,
+</p>
+
+<p>
+个人是不太情愿混入 <code>GLSL</code> 以外的代码, 但毕竟是无法避免的, 所以我的想法是不使用 <code>JavaScript</code> 的专有特性,
+</p>
+
+<p>
+只使用变量, 条件判断, 循环语句, 函数, 类这些大部分语言都有的通用特性.
+</p>
+
+<blockquote>
+<p>
+如果读者不熟悉 <code>JavaScript</code> 的面向对象编程, 可以阅读 <code>MDN</code> 教程快速熟悉一下: <a href="https://developer.mozilla.org/zh-CN/docs/Learn_web_development/Extensions/Advanced_JavaScript_objects/Classes_in_JavaScript">JavaScript 中的类</a>,
+</p>
+
+<p>
+基本上和其它语言的面向对象编程没太大区别. 也曾试不使用类这一特性, 但实现之后发现代码逻辑很"松散",
+</p>
+
+<p>
+对阅读不友好, 所以放弃了这一做法.
+</p>
+</blockquote>
+</div>
+<div id="outline-container-org8b226ce" class="outline-3">
+<h3 id="org8b226ce">整体实现思路</h3>
+<div class="outline-text-3" id="text-org8b226ce">
+<p>
+即便使用高度场实现水面也不是一件简单的事情, 我们要把整个实现划分为几步:
+</p>
+
+<ol class="org-ol">
+<li><p>
+计算水面的高度场
+</p>
+
+<p>
+水面平静时, 水面的高度为零. 对水面拍打时会形成在拍打位置(受力点)为圆心形成一股能量,
+</p>
+
+<p>
+把圆心周围的水面推高, 从而形成波纹; 随着时间推移, 越早形成波纹的水面位置, 越是快恢复平静;
+</p>
+
+<p>
+在停止受力后, 那股不断往外扩散的能量终究消失到其它地方, 水面最终回归平静.
+</p>
+
+<p>
+该规律正好符合一些平时见到的扩散环动画. 这估计就是人喜欢用扩散环来表示水面波纹的原因了.
+</p>
+
+
+<div id="org8989220" class="figure">
+<p><img src="../../../files/spreading-ring.gif" alt="spreading-ring.gif">
+</p>
+<p><span class="figure-number">Figure 3: </span>亮度表示水面高度, 越亮表示更高, 越暗表示更低 (图片来源于: <a href="https://blog.csdn.net/qq_29814417/article/details/113537498">threejs-shader-平面扩散波-demo</a>)</p>
+</div>
+
+<p>
+水面高度也是对能量大小的反映, 因此可以视为能量从高能量位置从低能量位置的方向进行转移,
+</p>
+
+<p>
+由于能量转移, 每推动一次波纹后能量就会减少, 可以看成把能量的转移分摊到扩散范围内的每个位置上.
+</p>
+
+<p>
+图像处理中 <a href="../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html#laplacian">拉普拉斯核</a> 能用来模拟扩散现象, 正好高度场是一张图片, 所以扩散的模拟成了图像处理问题.
+</p>
+
+<p>
+对高度场进行一次处理就相当于扩散一次, 对上一次扩散结果再进行一次处理就相当于又扩散一次, 如此类推, 直到扩散完毕.
+</p></li>
+
+<li><p>
+制作水面
+</p>
+
+<p>
+这一步需要使用前面计算得到的高度场实现水面波纹, 还需要一些其它贴图来实现水面反射和折射的效果.
+</p>
+
+<p>
+只要接触到透明物体, 那么反射和折射效果的实现是必须要学的.
+</p></li>
+
+<li><p>
+计算焦散
+</p>
+
+<p>
+所谓焦散是指光线经过折射发生聚散, 使得部分光线在击中场景时发生相交, 使得场景部分位置具备更高亮度.
+</p>
+
+
+<div id="org70f8c6a" class="figure">
+<p><img src="../../../files/Great_Barracuda_corals_sea_urchin_and_Caustic_optics_in_Kona_Hawaii_2009-640x619-2916379614.jpg" alt="Great_Barracuda_corals_sea_urchin_and_Caustic_optics_in_Kona_Hawaii_2009-640x619-2916379614.jpg" width="500px">
+</p>
+<p><span class="figure-number">Figure 4: </span>现实中的焦散</p>
+</div>
+
+<p>
+如同计算水面的高度场一样, 焦散的运算结果也是储存在贴图上, 再提供给水底物体的 <code>shader</code> 使用.
+</p></li>
+
+<li><p>
+为水底的场景编写 <code>shader</code>
+</p>
+
+<p>
+这里的水底物体只要一个要求: 只要求能正确渲染焦散效果和阴影.
+</p></li>
+</ol>
+</div>
+</div>
+<div id="outline-container-gpu-computation" class="outline-3">
+<h3 id="gpu-computation">使用 GPU 进行计算</h3>
+<div class="outline-text-3" id="text-gpu-computation">
+<p>
+在实现中我们需要借助 <code>GPU</code> 来完成水面高度场的运算, 计算结果被储存在贴图中提供给其它程序使用.
+</p>
+
+<p>
+与 <code>CPU</code> 不同, <code>GPU</code> 适用于并行计算, 我们的例子就是这种情况.
+</p>
+
+<p>
+那么应该如何使用 <code>GPU</code> 进行运算呢? <code>Three.js</code> 用于后处理的 <a href="../../2022/02/webgl-buffer-objects.html#extending-pass">Pass</a> 类就是一个使用 <code>GPU</code> 运算的例子:
+</p>
+
+<p>
+创建一个不会被添加到场景中的平面和一个视锥体大小能正好覆盖完平面的正交相机, 为作为计算上下文的平面编写 <code>Shader</code> 程序,
+</p>
+
+<p>
+渲染时把计算结果通过 <a href="../../2022/02/webgl-buffer-objects.html#fbo">帧缓冲(Framebuffer Object / FBO)</a> 写入到贴图中供下一次渲染使用.
+</p>
+
+<p>
+这其中使用了 <code>Ping-Pong</code> 渲染技巧: 使用两张贴图(或者 <code>FBO</code>)分别用于读和写, 并且每渲染一次就交换两者的读写职能.
+</p>
+
+
+<div id="orge01f2c2" class="figure">
+<p><img src="../../../files/ping-pong.svg" alt="ping-pong.svg" class="org-svg" width="500px">
+</p>
+<p><span class="figure-number">Figure 5: </span>Ping-Pong 渲染技巧</p>
+</div>
+
+<p>
+<code>Ping-Pong</code> 渲染技巧可以避免同一个资源的读写竞争, 而且每次渲染都能读取到上一次渲染的结果.
+</p>
+
+<p>
+以下是常用的 <code>GPU</code> 计算模板:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">class</span> GPUComputeExample {
+  constructor() {
+    <span style="color: #7fffd4;">this</span>._camera = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.OrthographicsCamera</span>(-1, 1, 1, -1, 0, 1)
+    <span style="color: #7fffd4;">this</span>._quad = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.Mesh</span>(
+      <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.PlaneGeometry</span>(2, 2), <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#23610;&#23544;&#26159; 2x2, &#19982;&#30456;&#26426;&#35270;&#38181;&#20307;&#30340;&#36828;&#35009;&#21098;&#24179;&#38754;&#23610;&#23544;&#21305;&#37197;
+</span>      <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.ShaderMaterial</span>({
+        uniforms: {
+          tLastFrame: { value: <span style="color: #7fffd4;">null</span> },
+          <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">your-uniforms</span><span style="color: #ff7f24;"> */</span>
+        },
+        vertexShader: <span style="color: #ffa07a;">`your-vertex-shader`</span>,
+        fragmentShader: <span style="color: #ffa07a;">`your-fragment-shader`</span>
+      }))
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#40664;&#35748;&#35774;&#32622;&#19979;, &#30456;&#26426;&#30340;&#20301;&#32622;&#21644;&#26041;&#21521;&#26159;&#23545;&#40784; this._quad &#30340;
+</span>
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20648;&#23384;&#28210;&#26579;&#32467;&#26524;&#30340;&#36148;&#22270;&#23610;&#23544;
+</span>    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">textureSizeX</span> = 512
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">textureSizeY</span> = 512
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36148;&#22270;&#31867;&#22411;&#38656;&#35201; THREE.FloatType, &#35745;&#31639;&#32467;&#26524;&#36890;&#24120;&#26159;&#36229;&#36807;&#40664;&#35748;&#20540; 255
+</span>    <span style="color: #7fffd4;">this</span>._targetA = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+      textureSizeX, textureSizeY, { type: THREE.FloatType })
+    <span style="color: #7fffd4;">this</span>._targetB = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+      textureSizeX, textureSizeY, { type: THREE.FloatType })
+    <span style="color: #7fffd4;">this</span>.target = <span style="color: #7fffd4;">this</span>._targetA
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25191;&#34892;&#28210;&#26579;&#21629;&#20196;, &#20351;&#29992; Ping-Pong &#28210;&#26579;&#25216;&#24039;
+</span>  render(renderer) {
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20132;&#25442;&#20004;&#20010; FBO &#30340;&#35835;&#20889;&#32844;&#33021;
+</span>    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">this.target &#20026;&#19978;&#19968;&#27425;&#28210;&#26579;&#25152;&#20351;&#29992;&#30340; FBO
+</span>    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">_newTarget</span> = <span style="color: #7fffd4;">this</span>.target === <span style="color: #7fffd4;">this</span>._targetA ? <span style="color: #7fffd4;">this</span>._targetB: <span style="color: #7fffd4;">this</span>._targetA
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32465;&#23450;&#26032; FBO &#29992;&#20110;&#28210;&#26579;
+</span>    renderer.setRenderTarget(_newTarget)
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#19978;&#19968;&#27425;&#30340;&#28210;&#26579;&#32467;&#26524;&#32473;&#21040;&#26032; FBO
+</span>    <span style="color: #7fffd4;">this</span>._quad.uniforms[<span style="color: #ffa07a;">'tLastFrame'</span>].value = <span style="color: #7fffd4;">this</span>.target.texture
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28210;&#26579;
+</span>    renderer.render(<span style="color: #7fffd4;">this</span>._quad, <span style="color: #7fffd4;">this</span>._camera)
+
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#26032; FBO &#26631;&#35760;&#20026;&#19978;&#19968;&#27425;&#20351;&#29992;&#30340; FBO
+</span>    <span style="color: #7fffd4;">this</span>.target = _newTarget
+  }
+}
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20351;&#29992;&#20363;&#23376;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">example</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">GPUComputeExample</span>()
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35843;&#29992;&#28210;&#26579;&#21629;&#20196;, renderer &#39033;&#30446;&#20013;&#30340;&#28210;&#26579;&#22120;&#23545;&#35937;
+</span>example.render(renderer)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35835;&#21462;&#28210;&#26579;&#32467;&#26524;
+</span>example.target.texture
+</pre>
+</div>
+
+<p>
+有一点还需要注意, 平面的尺寸不影响计算量, 这是受贴图尺寸影响的;
+</p>
+
+<p>
+也不影响贴图能否覆盖其它物体的表面, 这是受贴图映射 <code>UV</code> 的使用方式影响;
+</p>
+
+<p>
+因此, 平面尺寸是不值得关心的东西, 但是需要满足: 平面尺寸能正好能被相机视锥体的远裁剪平面覆盖,
+</p>
+
+<p>
+否则生成的贴图会有空白边.
+</p>
+</div>
+</div>
+<div id="outline-container-orgcdd867b" class="outline-3">
+<h3 id="orgcdd867b">计算水面的高度场</h3>
+<div class="outline-text-3" id="text-orgcdd867b">
+<p>
+水面高度场的计算调度比上面的模板复杂一点, 需要分成两个部分:
+</p>
+
+<ul class="org-ul">
+<li>给水面添加作用力</li>
+<li>波纹扩散计算</li>
+</ul>
+
+
+<p>
+这两个部分是不分先后顺序的, 换而言之它们是独立的, 为此需要两个平面作为计算上下文,
+</p>
+
+<p>
+但这两个部分的计算结果是共享的, 比方说, 扩散计算可以读取到给水面添加作用力后的渲染结果,
+</p>
+
+<p>
+反过来, 给水面添加作用力时也能读取到扩散计算的结果, 高度场的计算调度如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">import</span> * as THREE from <span style="color: #ffa07a;">'three'</span>
+<span style="color: #00ffff;">import</span> vertexShader from <span style="color: #ffa07a;">'./shader/vertex.glsl?raw'</span>
+<span style="color: #00ffff;">import</span> dropFragShader from <span style="color: #ffa07a;">'./shader/drop_frag.glsl?raw'</span>
+<span style="color: #00ffff;">import</span> updateFragShader from <span style="color: #ffa07a;">'./shader/update_frag.glsl?raw'</span>
+
+<span style="color: #00ffff;">export</span> <span style="color: #00ffff;">default</span> <span style="color: #00ffff;">class</span> {
+  constructor(textureSizeX, textureSizeY) {
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">_textureSizeX</span> = 512
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">_textureSizeY</span> = 512
+    <span style="color: #00ffff;">if</span> (!textureSizeX) textureSizeX = _textureSizeX
+    <span style="color: #00ffff;">if</span> (!textureSizeY) textureSizeY = _textureSizeY
+    <span style="color: #7fffd4;">this</span>._camera = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.OrthographicCamera</span>(-1, 1, 1, -1, 0, 1)
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">quadGeo</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.PlaneGeometry</span>(2, 2)
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#20316;&#29992;&#21147;&#30340;&#19978;&#19979;&#25991;
+</span>    <span style="color: #7fffd4;">this</span>._quadDrop = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.Mesh</span>(
+      quadGeo,
+      <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.RawShaderMaterial</span>({
+        uniforms: {
+          uDropUV: { value: [0, 0] },
+          uDropRadius: { value: 1 },
+          uDropStrength: { value: 0 },
+          tLastFrame: { value: <span style="color: #7fffd4;">null</span> } <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20256;&#36882;&#19978;&#19968;&#24103;&#30340;&#35745;&#31639;&#32467;&#26524;
+</span>        },
+        vertexShader: vertexShader,
+        fragmentShader: dropFragShader
+
+      })
+    )
+    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#27874;&#32441;&#25193;&#25955;&#30340;&#19978;&#19979;&#25991;
+</span>    <span style="color: #7fffd4;">this</span>._quadUpdate = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.Mesh</span>(
+      quadGeo,
+      <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.RawShaderMaterial</span>({
+        uniforms: {
+          uDelta: { value: [ 1 / textureSizeX, 1 / textureSizeY ] },
+          tLastFrame: { value: <span style="color: #7fffd4;">null</span> } <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20256;&#36882;&#19978;&#19968;&#24103;&#30340;&#35745;&#31639;&#32467;&#26524;
+</span>        },
+        vertexShader: vertexShader,
+        fragmentShader: updateFragShader
+      })
+    )
+
+    <span style="color: #7fffd4;">this</span>._targetA = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+      textureSizeX, textureSizeY, { type: THREE.FloatType })
+    <span style="color: #7fffd4;">this</span>._targetB = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+      textureSizeX, textureSizeY, { type: THREE.FloatType })
+    <span style="color: #7fffd4;">this</span>.target = <span style="color: #7fffd4;">this</span>._targetA
+  }
+
+  _render(renderer, mesh) {
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">_newTarget</span> = <span style="color: #7fffd4;">this</span>.target === <span style="color: #7fffd4;">this</span>._targetA ? <span style="color: #7fffd4;">this</span>._targetB: <span style="color: #7fffd4;">this</span>._targetA
+
+    renderer.setRenderTarget(_newTarget)
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">material</span> = mesh.material
+    material.uniforms[<span style="color: #ffa07a;">'tLastFrame'</span>].value = <span style="color: #7fffd4;">this</span>.target.texture
+    renderer.render(mesh, <span style="color: #7fffd4;">this</span>._camera)
+
+    <span style="color: #7fffd4;">this</span>.target = _newTarget
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32473;&#27700;&#38754;&#28155;&#21152;&#20316;&#29992;&#21147;, &#29992;&#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#20363;&#23376;
+</span>  <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+    u, v: &#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#30340;&#20301;&#32622;, &#35201;&#27714;&#26159; [0, 1] &#33539;&#22260;&#30340; uv &#22352;&#26631;
+    dropRadius: &#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#26102;&#25152;&#24433;&#21709;&#30340;&#33539;&#22260;
+    dropStrength: &#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#26102;&#26368;&#22823;&#30340;&#28293;&#36215;&#39640;&#24230;
+</span><span style="color: #ff7f24;">   */</span>
+  addDrop(renderer, u, v, dropRadius, dropStrength) {
+    <span style="color: #00ffff;">const</span> <span style="color: #eedd82;">material</span> = <span style="color: #7fffd4;">this</span>._quadDrop.material
+    material.uniforms[<span style="color: #ffa07a;">'uDropUV'</span>].value = [u, v]
+    material.uniforms[<span style="color: #ffa07a;">'uDropRadius'</span>].value = dropRadius
+    material.uniforms[<span style="color: #ffa07a;">'uDropStrength'</span>].value = dropStrength
+    <span style="color: #7fffd4;">this</span>._render(renderer, <span style="color: #7fffd4;">this</span>._quadDrop)
+  }
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#27874;&#32441;&#25193;&#25955;
+</span>  stepSimulation(renderer) {
+    <span style="color: #7fffd4;">this</span>._render(renderer, <span style="color: #7fffd4;">this</span>._quadUpdate)
+  }
+
+}
+</pre>
+</div>
+
+<p>
+接下来是 <code>Shader</code> 部分了, 它们是计算的重点, 我会在代码里面用注释进行解释.
+</p>
+
+<p>
+<code>./shader/vertex.glsl</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec2</span> uv;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vUV;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+    &#21442;&#32771;&#20363;&#23376;&#26159;&#20351;&#29992; position.xy * 0.5 + 0.5 &#20805;&#24403; UV &#22352;&#26631;,
+
+    &#36825;&#20040;&#20570;&#26159;&#26377;&#21069;&#25552;&#30340;: &#24179;&#38754;&#30340;&#23610;&#23544;&#24517;&#39035;&#20026; 2x2, &#23427;&#22235;&#20010;&#39030;&#28857;&#30340;&#22352;&#26631;&#22914;&#19979;:
+
+     v1    1     v2
+           |
+    -1 --- 0 --- 1
+           |
+     v3   -1     v4
+
+     &#22240;&#27492; position.xy * 0.5 + 0.5 &#24471;&#21040;&#30340;&#26159; [0, 1] &#33539;&#22260;&#30340; UV.
+
+     &#25105;&#20204;&#36825;&#37324;&#30452;&#25509;&#20351;&#29992; uv.
+</span><span style="color: #ff7f24;">   */</span>
+  vUV = uv;                     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#39640;&#24230;&#22330;&#30340;&#25152;&#26377;&#35745;&#31639;&#37117;&#26159;&#22522;&#20110; UV &#36827;&#34892;, &#36825;&#19968;&#28857;&#38750;&#24120;&#37325;&#35201;
+</span>  <span style="color: #eedd82;">gl_Position</span> = <span style="color: #98fb98;">vec4</span>(position.xyz, 1.0);
+}
+</pre>
+</div>
+
+<p>
+计算水面受力的 <code>./shader/drop_frag.glsl</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">float</span>;
+<span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">int</span>;
+
+<span style="color: #b0c4de;">#define</span> PI 3.141592653589793
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tLastFrame;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> uDropUV;      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#28404;&#30340;&#20013;&#24515;, &#35201;&#27714;&#26159; [0, 1] &#33539;&#22260;&#30340; uv &#22352;&#26631;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> uDropRadius; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#26102;&#24433;&#21709;&#30340;&#33539;&#22260;&#21322;&#24452;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">float</span> uDropStrength;   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#26102;&#26368;&#22823;&#30340;&#28293;&#23556;&#39640;&#24230;
+</span>
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vUV;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">info: &#39640;&#24230;&#22330;&#20449;&#24687;
+
+     &lt;r, g, b, a&gt; =&gt; &lt;&#27700;&#38754;&#39640;&#24230;, &#39640;&#24230;&#21464;&#21270;&#36895;&#24230;, &#27861;&#32447;&#30340; x &#20998;&#37327;, &#27861;&#32447;&#30340; y &#20998;&#37327;&gt;
+</span><span style="color: #ff7f24;">   */</span>
+  <span style="color: #98fb98;">vec4</span> info = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#28404;&#20301;&#32622;&#19982;&#24403;&#21069;&#29255;&#20803;&#30340;&#36317;&#31163;
+</span>  <span style="color: #98fb98;">float</span> dist = <span style="color: #b0c4de;">length</span>(uDropUV - vUV);
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#27700;&#28404;&#20987;&#20013;&#27700;&#38754;&#26102;&#23545;&#24403;&#21069;&#29255;&#20803;&#36896;&#25104;&#30340;&#24433;&#21709;&#31243;&#24230;
+
+     f(d, r) := 1.0 - d / r, &#24403; d = r &#26102;, f = 0;
+
+     &#24403; d = 0 &#26102;, f = 1, &#25152;&#20197; f &#23450;&#20041;&#22495;&#30340;&#20540;&#22495;&#33539;&#22260;&#26159;: [0, r] =&gt; [0, 1]
+</span><span style="color: #ff7f24;">   */</span>
+  <span style="color: #98fb98;">float</span> drop = <span style="color: #b0c4de;">max</span>(0.0, 1.0 - dist / uDropRadius);
+  <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+    &#30001;&#20110;&#19978;&#19968;&#27493;&#30340; drop &#33539;&#22260;&#26159; [0, 1], &#25152;&#20197; cos(drop * PI) &#30340;&#33539;&#22260;&#26159; [-1, 1],
+
+    &#22240;&#27492; 0.5 - cos(drop * PI) * 0.5 &#30340;&#33539;&#22260;&#26159; [0, 1]
+</span><span style="color: #ff7f24;">   */</span>
+  drop = 0.5 - <span style="color: #b0c4de;">cos</span>(drop * PI) * 0.5;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454;&#24433;&#21709;&#31243;&#24230;&#21644;&#26368;&#22823;&#28293;&#23556;&#39640;&#24230;&#35745;&#31639;&#24403;&#21069;&#29255;&#20803;&#30340;&#27700;&#38754;&#39640;&#24230;
+</span>  info.r += drop * uDropStrength;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#35745;&#31639;&#32467;&#26524;&#36755;&#20986;&#21040;&#36148;&#22270;
+</span>  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = info;
+}
+</pre>
+</div>
+
+<p>
+计算波纹扩散的 <code>./shader/update_frag.glsl</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">float</span>;
+<span style="color: #00ffff;">precision</span> <span style="color: #00ffff;">highp</span> <span style="color: #98fb98;">int</span>;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tLastFrame;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> uDelta;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vUV;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec4</span> info = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#30456;&#37051;&#32441;&#29702;&#30340;&#24179;&#22343;&#39640;&#24230;
+</span>  <span style="color: #98fb98;">vec2</span> dx = <span style="color: #98fb98;">vec2</span>(uDelta.x, 0.0);
+  <span style="color: #98fb98;">vec2</span> dy = <span style="color: #98fb98;">vec2</span>(0.0, uDelta.y);
+  <span style="color: #98fb98;">float</span> g = (
+             <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV - dx).r +
+             <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV - dy).r +
+             <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV + dx).r +
+             <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV + dy).r -
+             4.0 * <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV).r
+             ) * 0.25;
+  <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+    &#20351;&#29992;&#25289;&#26222;&#25289;&#26031;&#26680;&#27169;&#25311;&#25193;&#25955;
+
+    1 / 4 * [0 1 0
+             1 -4 1
+             0 1 0]
+</span><span style="color: #ff7f24;">  */</span>
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#27700;&#38754;&#39640;&#24230;&#21040;&#24179;&#22343;&#20540;&#30340;&#36895;&#24230;
+</span>  info.g += g;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27169;&#25311;&#33021;&#37327;&#36716;&#31227;, &#22240;&#27492;&#36895;&#24230;&#34987;&#34928;&#20943;
+</span>  info.g *= 0.98;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27839;&#30528;&#36895;&#24230;&#26041;&#21521;&#26356;&#26032;&#27700;&#38754;&#39640;&#24230;
+</span>  info.r += info.g;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#27861;&#32447;
+</span>  <span style="color: #98fb98;">float</span> ht = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV + dx).r;
+  <span style="color: #98fb98;">vec3</span> tangent = <span style="color: #98fb98;">vec3</span>(uDelta.x, 0.0, ht - info.r);
+  <span style="color: #98fb98;">float</span> hbt = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tLastFrame, vUV + dy).r;
+  <span style="color: #98fb98;">vec3</span> bitangent = <span style="color: #98fb98;">vec3</span>(0.0, uDelta.y, hbt - info.r);
+  info.ba = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">cross</span>(tangent, bitangent)).xy;
+
+
+  <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
+    &#27700;&#38754;&#30340;&#27874;&#32441;&#39030;&#28857;: (vUV.x, vUV.y, h), &#20197; UV &#22352;&#26631;&#24179;&#38754;&#20316;&#20026; XY &#24179;&#38754;,
+
+    &#36825;&#26159;&#22240;&#20026; threejs &#30340; PlaneGeometry &#26159;&#20174; XY &#24179;&#38754;&#26500;&#24314;&#30340;.
+
+    &#27700;&#24179;&#26041;&#21521;&#30456;&#37051;&#32441;&#29702;&#30340;&#39640;&#24230;: hx = texture2D(tLastFrame, vec2(vUV.x + uDelta.x, vUV.y)).r
+
+    &#27700;&#24179;&#26041;&#21521;&#30456;&#37051;&#32441;&#29702;&#23545;&#24212;&#30340;&#27700;&#38754;&#39030;&#28857;: (vUV.x + uDelta.x, UV.y, hx)
+
+    tagent = (vUV.x + uDelta.x, vUV.y, hx) - (vUV.x, vUV.y, h) = (uDelta.x, 0, hx - h)
+
+    &#22402;&#30452;&#26041;&#21521;&#30456;&#37051;&#32441;&#29702;&#30340;&#39640;&#24230;: hy = texture2D(tLastFrame, vec2(vUV.x, vUV.y + uDelta.y)).r
+
+    &#22402;&#30452;&#26041;&#21521;&#30456;&#37051;&#32441;&#29702;&#23545;&#24212;&#30340;&#27700;&#38754;&#39030;&#28857;: (vUV.x, vUV.y + uDelta.y, hy)
+
+    bitangent = (vUV.x, vUV.y + uDelta.y, hy) - (vUV.x, vUV.y, h) = (0, uDelta.y, hy - h)
+
+    normal = normalize(cross(bitangent, tangent))
+
+    [i, j, k
+    a, 0, b
+    0, c, d]
+
+    normal = [-bc, -ad, ac]: [ -(hx - h) * uDelta.y, uDelta.x * (hy - h), uDelta.x * Delta.y ]
+
+    &#20648;&#23384;&#26102;&#21482;&#38656;&#35201;&#20648;&#23384; nomral.xy &#21363;&#21487;, &#22240;&#20026; (normal.x)^2 + (normal.y)^2 + (normal.z)^2 = 1,
+
+    &#21487;&#20197;&#26681;&#25454; sqrt(1 - (normal.x)^2 - (normal.y)^2) = &#177;normal.z &#36824;&#21407;&#20986; normal,
+
+    &#38656;&#35201;&#27880;&#24847;&#27491;&#36127;&#21495;, &#25152;&#20197;:
+
+    (info.b, info.a, sqrt(1. - dot(info.ba, info.ba)))
+</span><span style="color: #ff7f24;">  */</span>
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = info;
+}
+</pre>
+</div>
+
+<p>
+该计算模块位于:
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/GPUComputation/WaterHeightfield/index.ts">src/HeightfieldWaterSimulation/GPUComputation/WaterHeightfield/index.ts</a>
+</p>
+</div>
+</div>
+<div id="outline-container-org87b4351" class="outline-3">
+<h3 id="org87b4351">制作水面</h3>
+<div class="outline-text-3" id="text-org87b4351">
+<p>
+水面的反射(<code>reflection</code>)和折射(<code>refraction</code>)现象都非常明显, 这使得水成为同类物质的代表.
+</p>
+
+<p>
+这两个现象不可避免得与环境发生交互, 比如反射的是水面上的环境, 折射的是水面下的场景,
+</p>
+
+<p>
+既然同时具备两种现象, 那么什么情况下显示反射的内容, 什么情况下显示折射的内容.
+</p>
+
+<p>
+这要分成两个部分进行讨论, 首先是采样的场景, 需要对环境进行采样分别获取反射和折射的内容,
+</p>
+
+<p>
+这项技术叫做环境映射(<code>environment mapping</code>). <b>通常</b> 需要天空盒(<code>skybox</code>)这种<a href="../../2020/08/graphics-opengl-light-and-material.org#positional-light-shadowmap">立方体贴图</a>来作为环境,
+</p>
+
+<p>
+也有的实时渲染生成环境贴图并从中进行采样, 这里我们同时使用两种方法.
+</p>
+
+<p>
+其次, 是反射和折射的选择, 两者可以共存, 一个被观察点的颜色, 有一部分源于反射射线击中的物体,
+</p>
+
+<p>
+一部分源于折射射线击中的物体, 在折射的部分大于反射时, 观察者可以看到水底下的场景;
+</p>
+
+<p>
+在反射的部分大于折射时, 观察者可以看到水面反射的景像.
+</p>
+
+<p>
+在 <a href="../../2020/08/graphics-opengl-light-and-material.html#fresnel-effect">图形学 - 光和材质: 菲涅耳效应</a> 有讨论菲涅耳反射系数的计算, 该系数就是被观察点颜色反射部分的比例.
+</p>
+</div>
+<div id="outline-container-org5ef0555" class="outline-4">
+<h4 id="org5ef0555">反射 (Reflection)</h4>
+<div class="outline-text-4" id="text-org5ef0555">
+<p>
+先来实现反射效果, 首先需要一个立方体贴图(<code>cubemap</code>)作为采样场景,
+</p>
+
+<p>
+在计算出反射射线 \(\overline{R}\) 后根据 \(\overline{R}\) 从立方体贴图中采样,
+</p>
+
+<p>
+<code>GLSL</code> 中提供 \(reflect\) 函数来计算反射方向 \(\overline{R}\), 具体思路如下:
+</p>
+
+
+<div id="org3e307c4" class="figure">
+<p><img src="../../../files/cubemaps_reflection_theory.png" alt="cubemaps_reflection_theory.png">
+</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> normal;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22330;&#26223;&#36148;&#22270;(&#31435;&#26041;&#20307;&#36148;&#22270;)
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">samplerCube</span> tSkyBox;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26159;&#20174;&#30456;&#26426;&#20986;&#21457;&#21040;&#34987;&#35266;&#23519;&#28857;
+</span><span style="color: #98fb98;">vec3</span> posWorld = (modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.0)).xyz;
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#36825;&#37324;&#20551;&#35774; modelMatrix =  translateMatrix * rotationMatrix * scaleMatrix &#30340;&#32553;&#25918;&#21464;&#25442; scaleMatrix &#26159;&#31561;&#27604;&#32553;&#25918;,
+   &#36825;&#26679;&#22312;&#19981;&#32771;&#34385;&#24179;&#31227;&#21464;&#25442;&#30340;&#24773;&#20917;&#19979; M = translateMatrix * rotationMatrix &#30340;&#36870;&#30697;&#38453;&#23601;&#26159;&#23427;&#33258;&#36523;&#30340;&#36716;&#32622;&#30697;&#38453; transpose(M)</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #98fb98;">vec3</span> normalWorld = (modelMatrix * <span style="color: #98fb98;">vec4</span>(normal, 0.0)).xyz;
+<span style="color: #98fb98;">vec3</span> I = <span style="color: #b0c4de;">normalize</span>(posWorld - cameraPosition);
+<span style="color: #98fb98;">vec3</span> N = <span style="color: #b0c4de;">normalize</span>(normalWorld);
+<span style="color: #98fb98;">vec3</span> R = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">reflect</span>(I, N));
+<span style="color: #98fb98;">vec4</span> reflectedColor = <span style="color: #ffc0cb; font-weight: bold;">textureCube</span>(tSkyBox, R);
+</pre>
+</div>
+
+<blockquote>
+<p>
+采样的场景可以是静态, 也可以是动态的, 不管是哪一种, 最后在 <code>shader</code> 中的读取都是一样的,
+</p>
+
+<p>
+关键在于动态的场景需要事实计算立方体贴图, <code>three.js</code> 的 <a href="https://threejs.org/docs/?q=CubeCamera#api/en/cameras/CubeCamera">CubeCamera</a> 就是用于把场景写入到立体贴图中.
+</p>
+
+<p>
+如果所使用的图形库没有同类接口, 可以参考 <a href="../../2020/08/graphics-opengl-light-and-material.html#positional-light-shadowmap">图形学 - 光和材质: 位置光源的阴影</a> 的阴影生成立方体贴图的思路.
+</p>
+</blockquote>
+
+<p>
+和使用 <code>GPU</code> 计算的 <code>shader</code> 不同, 作为场景物体材质所使用的 <code>shader</code> 需要注意坐标系的变换,
+</p>
+
+<p>
+比如这里计算如何光线 \(\overline{I}\) 是需要把顶点坐标 \(position\) 变换到世界坐标系上,
+</p>
+
+<p>
+因为相机位置 \(cameraPosition\) 就是世界坐标系的坐标.
+</p>
+</div>
+</div>
+<div id="outline-container-screen-space-refraction" class="outline-4">
+<h4 id="screen-space-refraction">折射 (Refraction)</h4>
+<div class="outline-text-4" id="text-screen-space-refraction">
+<p>
+大部分教程都会使用立方体贴图用于折射的采样, 但该例子的水底的样子并非由立方体贴图提供的,
+</p>
+
+
+<div id="org0c8bcc7" class="figure">
+<p><img src="../../../files/cubemaps_refraction_theory.png" alt="cubemaps_refraction_theory.png">
+</p>
+</div>
+
+<p>
+这么做是因为水底场景并非固定的, 可以按照自己的意愿添加物体, 所以这里只能实时生成环境贴图, 再从中取样.
+</p>
+
+<p>
+但这里并不需要实时计算立方体贴图, 因为相比反射的大幅度地让出射射线偏离入射射线, 折射只会造成轻微的偏离,
+</p>
+
+<p>
+换而言之, 透过水面观察到的景象与无视水面直接观察到的景象, 两者只是发生了轻微偏移,
+</p>
+
+<p>
+这意味着折射射线可以通过直接观察的景象中进行采样. 因此, 场景贴图的生成思路大概如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#19987;&#38376;&#20351;&#29992;&#19968;&#20010; FBO &#29992;&#20110;&#28210;&#26579;&#27700;&#38754;&#20197;&#22806;&#30340;&#22330;&#26223;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">underWaterEnvMapTarget</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.WebGLRenderTarget</span>(
+  heightfieldSizeX, heightfieldSizeY)
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">oldRenderTarget</span> = renderer.getRenderTarget()
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35774;&#32622; FBO &#29992;&#20110;&#25509;&#25910;&#28210;&#26579;&#32467;&#26524;&#29992;&#20316;&#22330;&#26223;&#36148;&#22270;
+</span>renderer.setRenderTarget(underWaterEnvMapTarget)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#38544;&#34255;&#27700;&#38754;
+</span>water.visible = <span style="color: #7fffd4;">false</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28210;&#26579;
+</span>renderer.render(scene, camera)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24674;&#22797;&#27700;&#38754;&#30340;&#26174;&#31034;
+</span>water.visible = <span style="color: #7fffd4;">true</span>
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24674;&#22797;&#21407;&#26412;&#30340; FBO
+</span>renderer.setRenderTarget(oldRenderTarget)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25226;&#22330;&#26223;&#36148;&#22270;&#25552;&#20379;&#32473;&#21040;&#27700;&#38754;&#30340;&#26448;&#36136;&#20351;&#29992;
+</span>water.material.uniforms[<span style="color: #ffa07a;">'tEnvMap'</span>].value = underWaterEnvMapTarget.target
+</pre>
+</div>
+
+<p>
+在得到环境贴图后, 可以先计算出折射方向 \(\overline{R}\) 再根据它从环境贴图中采样,
+</p>
+
+<p>
+<code>GLSL</code> 也提供了 \(refract\) 函数用于计算折射方向 \(\overline{R}\), 具体思路如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> normal;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tEnvMap;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #b0c4de;">#define</span> AIR_IOR 1.0
+<span style="color: #b0c4de;">#define</span> WATER_IOR 1.325
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26159;&#20174;&#30456;&#26426;&#20986;&#21457;&#21040;&#34987;&#35266;&#23519;&#28857;
+</span><span style="color: #98fb98;">vec3</span> posWorld = (modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.)).xyz;
+<span style="color: #98fb98;">vec3</span> normalWorld = (modelMatrix * <span style="color: #98fb98;">vec4</span>(normal, 0.0)).xyz;
+<span style="color: #98fb98;">vec3</span> I = <span style="color: #b0c4de;">normalize</span>(posWorld - cameraPosition);
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#36825;&#37324;&#20551;&#35774; modelMatrix =  translateMatrix * rotationMatrix * scaleMatrix &#30340;&#32553;&#25918;&#21464;&#25442; scaleMatrix &#26159;&#31561;&#27604;&#32553;&#25918;,
+   &#36825;&#26679;&#22312;&#19981;&#32771;&#34385;&#24179;&#31227;&#21464;&#25442;&#30340;&#24773;&#20917;&#19979; M = translateMatrix * rotationMatrix &#30340;&#36870;&#30697;&#38453;&#23601;&#26159;&#23427;&#33258;&#36523;&#30340;&#36716;&#32622;&#30697;&#38453; transpose(M)</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #98fb98;">vec3</span> N = <span style="color: #b0c4de;">normalize</span>(normalWorld);
+<span style="color: #98fb98;">float</span> eta = AIR_IOR / WATER_IOR;
+<span style="color: #98fb98;">vec3</span> R = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(I, N, eta));
+
+<span style="color: #98fb98;">mat4</span> VP = projectionMatrix * viewMatrix;
+<span style="color: #98fb98;">vec4</span> refractedPosNDC = MVP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(posWorld + R, 1.0));
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639; UV &#22352;&#26631;, &#29992;&#20110;&#20174;&#29615;&#22659;&#36148;&#22270;&#20013;&#37319;&#26679;
+</span><span style="color: #98fb98;">vec2</span> refractedUV = refractedPosNDC.xy / refractedPosNDC.w;
+<span style="color: #98fb98;">vec4</span> refractedColor = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, refractedUV);
+</pre>
+</div>
+
+<p>
+现实中的折射其实会形成色散(<code>dispersion</code>)现象:
+</p>
+
+<p>
+同一种光学材质对不同颜色的折射率(<code>refractive index</code>)有所差别, 波长越短的光, 折射率越大; 波长越长的光, 折射率越小.
+</p>
+
+<p>
+造成同一束光被分解成不同颜色的光显示在不同位置上. 色散有时候也被叫做色差(<code>chromatic aberration</code>). 彩虹就是色散形成的.
+</p>
+
+
+<div id="orgd45660c" class="figure">
+<p><img src="../../../files/dispersion.png" alt="dispersion.png">
+</p>
+<p><span class="figure-number">Figure 6: </span>色散 (图片来源于: <a href="http://www.myliushu.com/3020.html">http://www.myliushu.com/3020.html</a>)</p>
+</div>
+
+<p>
+因此, 可以这样模拟色散效果,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #98fb98;">float</span> etaGrad = 0.04;
+<span style="color: #98fb98;">vec3</span> refractedColor = <span style="color: #98fb98;">vec3</span>(1.);          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#33394;&#25955;&#36807;&#21518;&#30340;&#39068;&#33394;
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#32418;&#33394;&#20986;&#23556;&#25240;&#23556;&#29575;&#26368;&#23567;
+</span><span style="color: #98fb98;">vec4</span> refractedPosNDC = MVP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(position + R, 1.0));
+<span style="color: #98fb98;">vec2</span> refractedUV = refractedPosNDC.xy / refractedPosNDC.w;
+color = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, refractedUV);
+refractedColor.r = refractedColor.r;
+
+R = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(I, N, eta * (1.0 - etaGrad)));
+refractedPosNDC = MVP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(position + R, 1.0));
+refractedUV = refractedPosNDC.xy / refractedPosNDC.w;
+refractedColor = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, refractedUV);
+refractedColor.g = refractedColor.g;
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#34013;&#33394;&#30340;&#20986;&#23556;&#25240;&#23556;&#29575;&#26368;&#22823;
+</span>R = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(I, N, eta * (1.0 - etaGrad * 2.0)));
+refractedPosNDC = VP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(position + R, 1.0));
+refractedUV = refractedPosNDC.xy / refractedPosNDC.w;
+refractedColor = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, refractedUV);
+refractedColor.b = refractedColor.b;
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org485daba" class="outline-4">
+<h4 id="org485daba">综合反射与折射</h4>
+<div class="outline-text-4" id="text-org485daba">
+<p>
+计算出菲涅耳系数作为折射部分和反射部分之间的渐变系数, 最终渐变结果作为片元颜色. 具体实现如下:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">const</span> <span style="color: #98fb98;">float</span> f0 = <span style="color: #b0c4de;">pow</span>(AIR_IOR - WATER_IOR / AIR_IOR + WATER_IOR, 2.0);
+<span style="color: #98fb98;">float</span> fresnelFactor = f0 + (1.0 - f0) * <span style="color: #b0c4de;">pow</span>(1.0 - <span style="color: #b0c4de;">dot</span>(-eye, norm), 5.0);
+<span style="color: #98fb98;">float</span> fresnelScale = 0.8;
+<span style="color: #98fb98;">vec3</span> finalColor = <span style="color: #b0c4de;">mix</span>(refractedColor, reflectedColor, fresnelScale * <span style="color: #b0c4de;">clamp</span>(fresnelFactor, 0., 1.));
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd7d947d" class="outline-4">
+<h4 id="orgd7d947d">使用高度场制造波纹</h4>
+<div class="outline-text-4" id="text-orgd7d947d">
+<p>
+我们会使用一个 <code>3D</code> 平面, 配合高度场修改平面顶点的 \(z\) 分量来实现水面.
+</p>
+
+<p>
+就像使用<a href="https://codepen.io/charl0tee/pen/qgaEmZ">柏林噪声生成地形</a>一样, <code>3D</code> 平面需要有较相当数量的顶点才能让平面实现"弯曲":
+</p>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">width</span> = height = 2
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35201;&#35774;&#32622;&#22810;&#19968;&#28857;&#30340;&#20998;&#27573;&#25968;&#37327;
+</span><span style="color: #00ffff;">const</span> <span style="color: #eedd82;">segmentWidth</span> = segmentHeight = 100
+<span style="color: #00ffff;">const</span> <span style="color: #eedd82;">water</span> = <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.Mesh</span>(
+  <span style="color: #00ffff;">new</span> <span style="color: #98fb98;">THREE.PlaneGeometry</span>(width, height, segmentWidth, segmentHeight),
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">... your material
+</span>)
+</pre>
+</div>
+
+<p>
+以下该水面模型所使用的 <code>shader</code>,
+</p>
+
+<p>
+<b>Vertex Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> cameraPosition;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec2</span> uv;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelViewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tHeightfield;
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vFresnelFactor;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vReflectedDir;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vChromaticAberrationUV[3];
+
+<span style="color: #b0c4de;">#define</span> AIR_IOR 1.0
+<span style="color: #b0c4de;">#define</span> WATER_IOR 1.333
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">IOR &#21487;&#20197;&#20174;&#36825;&#37324;&#26597;&#25214; https://pixelandpoly.com/ior.html
+</span>
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">vec4</span> info = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tHeightfield, uv);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26681;&#25454;&#39640;&#24230;&#22330;&#35745;&#31639;&#20986;&#24403;&#21069;&#39030;&#28857;&#30340;&#22352;&#26631;
+</span>  <span style="color: #98fb98;">vec3</span> pos = <span style="color: #98fb98;">vec3</span>(position.xy, position.z + info.r);
+  <span style="color: #98fb98;">vec3</span> posWorld = (modelMatrix * <span style="color: #98fb98;">vec4</span>(pos, 1.)).xyz;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#20986;&#24403;&#21069;&#39030;&#28857;&#30340;&#27861;&#32447;&#21521;&#37327;: &#36825;&#31181;&#26041;&#27861;&#21482;&#38480;&#20110;&#27700;&#38754;&#30340;&#27169;&#22411;&#30340;&#32553;&#25918;&#20026;&#31561;&#27604;&#32553;&#25918;
+</span>  <span style="color: #98fb98;">vec3</span> normWorld = (modelMatrix * <span style="color: #98fb98;">vec4</span>(info.ba, <span style="color: #b0c4de;">sqrt</span>(1. - <span style="color: #b0c4de;">dot</span>(info.ba, info.ba)), 0.)).xyz;
+
+  <span style="color: #00ffff;">const</span> <span style="color: #98fb98;">float</span> eta = AIR_IOR / WATER_IOR;
+  <span style="color: #98fb98;">vec3</span> eye = <span style="color: #b0c4de;">normalize</span>(posWorld.xyz - cameraPosition);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#25240;&#23556;&#21521;&#37327;
+</span>  <span style="color: #98fb98;">vec3</span> refractedDir = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(eye, normWorld, eta));
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#21453;&#23556;&#21521;&#37327;
+</span>  vReflectedDir = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">reflect</span>(eye, normWorld));
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#33778;&#28037;&#32819;&#31995;&#25968;
+</span>  <span style="color: #00ffff;">const</span> <span style="color: #98fb98;">float</span> f0 = <span style="color: #b0c4de;">pow</span>((AIR_IOR - WATER_IOR) / (AIR_IOR + WATER_IOR), 2.0);
+  vFresnelFactor = f0 + (1.0 - f0) * <span style="color: #b0c4de;">pow</span>(1.0 - <span style="color: #b0c4de;">dot</span>(-eye, normWorld), 5.0);
+
+  <span style="color: #98fb98;">mat4</span> VP = projectionMatrix * viewMatrix;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#33394;&#24046; (chromatic aberration), &#27169;&#25311;&#19981;&#21516;&#27874;&#38271;&#30340;&#20809;&#23545;&#25240;&#23556;&#29575;&#30340;&#24433;&#21709;
+</span>  <span style="color: #98fb98;">float</span> etaGrad = 0.04;        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Chromatic Aberration Factor
+</span>  <span style="color: #98fb98;">vec4</span> refractedPos = VP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(posWorld + refractedDir, 1.0));
+  vChromaticAberrationUV[0] = refractedPos.xy / refractedPos.w * 0.5 + 0.5;
+
+  refractedPos = VP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(posWorld + <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(eye, normWorld, eta * (1.0 - etaGrad))), 1.0));
+  vChromaticAberrationUV[1] = refractedPos.xy / refractedPos.w * 0.5 + 0.5;
+
+  refractedPos = VP * <span style="color: #b0c4de;">normalize</span>(<span style="color: #98fb98;">vec4</span>(posWorld + <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(eye, normWorld, eta * (1.0 - etaGrad * 2.0))), 1.0));
+  vChromaticAberrationUV[2] = refractedPos.xy / refractedPos.w * 0.5 + 0.5;
+
+  <span style="color: #eedd82;">gl_Position</span> = VP * <span style="color: #98fb98;">vec4</span>(posWorld, 1.);
+
+}
+</pre>
+</div>
+
+<p>
+<b>Fragment Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">samplerCube</span> tSkyBox;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tEnvMap;
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vFresnelFactor;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vReflectedDir;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vChromaticAberrationUV[3];
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec3</span> reflectedColor = <span style="color: #ffc0cb; font-weight: bold;">textureCube</span>(tSkyBox, vReflectedDir).xyz;
+
+  <span style="color: #98fb98;">vec3</span> refractedColor = <span style="color: #98fb98;">vec3</span>(1.);
+  refractedColor.r = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, vChromaticAberrationUV[0]).r;
+  refractedColor.g = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, vChromaticAberrationUV[1]).g;
+  refractedColor.b = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvMap, vChromaticAberrationUV[2]).b;
+
+  <span style="color: #98fb98;">vec3</span> color = <span style="color: #b0c4de;">mix</span>(refractedColor, reflectedColor, <span style="color: #b0c4de;">clamp</span>(vFresnelFactor, 0., 1.));
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(color, 1.);
+}
+</pre>
+</div>
+
+<p>
+该材质位于:
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/materials/WaterMaterial/index.ts">src/HeightfieldWaterSimulation/materials/WaterMaterial/index.ts</a>
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org3b22734" class="outline-3">
+<h3 id="org3b22734">计算焦散 (Caustic)</h3>
+<div class="outline-text-3" id="text-org3b22734">
+<p>
+焦散的形成原因很简单, 光线在经过折射后分散在不同位置上,
+</p>
+
+<p>
+部分光线聚焦(<code>converging</code>)在相同位置上, 部分光线则是被散射(<code>diverging</code>)在不同位置上,
+</p>
+
+<p>
+光线聚焦在一起的位置的亮度更高, 相比之下, 没有光聚焦的位置的亮度相对低一些.
+</p>
+
+
+<div id="orgb8aab5f" class="figure">
+<p><img src="../../../files/caustics-impl.webp" alt="caustics-impl.webp">
+</p>
+<p><span class="figure-number">Figure 7: </span>图片来自于 <a href="https://medium.com/@martinRenou/real-time-rendering-of-water-caustics-59cda1d74aa">Real-time rendering of water caustics by Martin Renou</a></p>
+</div>
+</div>
+<div id="outline-container-org1b2c34b" class="outline-4">
+<h4 id="org1b2c34b">如何在程序中量化聚散程度</h4>
+<div class="outline-text-4" id="text-org1b2c34b">
+<p>
+<a href="https://medium.com/@evanwallace/rendering-realtime-caustics-in-webgl-2a99a29a0b2c">Evan Wallace 的 Rendering Realtime Caustics in WebGL</a> 介绍了光线在不同时刻上的投影面积比来量化聚散程度,
+</p>
+
+<p>
+其中使用到了波前(<code>wavefront</code>)的概念.
+</p>
+
+
+<div id="org550d706" class="figure">
+<p><img src="../../../files/caustics-area-ratio.webp" alt="caustics-area-ratio.webp">
+</p>
+</div>
+
+<p>
+所谓波前是指从波源(<code>source</code>)出发, 由波传播了相同时间的点所构成的面, 通俗点就是波在传播过程中某一刻的位置集合.
+</p>
+
+<p>
+波的传播方向与波前的局部垂直, 因此, 波前的形状可以反映出波的传播方向,
+</p>
+
+
+<div id="org217099b" class="figure">
+<p><img src="../../../files/optical-aberrattion.jpg" alt="optical-aberrattion.jpg">
+</p>
+<p><span class="figure-number">Figure 8: </span>光学像差和波前 (图片来源于 <a href="https://www.slideshare.net/slideshow/optical-aberrations-43245080/43245080">Slideshare</a>)</p>
+</div>
+
+<p>
+光学像差(<code>optical aberration</code>)是指由于光学系统不完美(<code>optics imperfection</code>)所导致的图像扭曲(<code>image distorition</code>).
+</p>
+
+<p>
+在理想的光学系统(<code>ideal optics</code>)中, 波前的形状很好的反映了透镜的厚度变化, 由于光在透镜要比在空气中的传播速度要慢,
+</p>
+
+<p>
+因此在相同时间内, 光在透镜较厚的部位要比较薄的部位的传播距离更小,
+</p>
+
+<p>
+在非理想情况下, 由于工艺不完善的导致透镜的密度不均匀, 使得非理想情况下与理想情况下的波前存在误差.
+</p>
+
+<p>
+量化聚散程度的方法很简单, 把水体看作是一个巨大的透镜, 把水面形状看作是折射发生时的波前形状,
+</p>
+
+<p>
+比较光在折射前的投影面积 \(A_1\) 和折射后的投影面积 \(A_2\) 之间的大小, 因折射的不同导致两者大小不一致:
+</p>
+
+<p>
+\(\frac{A(t_1)}{A(t_2)} \gt 1\) 说明发生了聚焦, \(\frac{A(t_1)}{A(t_2)} \lt 1\) 说明发生了散射.
+</p>
+
+<blockquote>
+<p>
+<code>Evan Wallace</code> 的做法稍微有些不同:
+</p>
+
+<p>
+分别计算水面平静时和不平静时光线在水底的投影面积 \(A_1\) 和 \(A_2\), 最后进行比较 \(\frac{A_1}{A_2}\).
+</p>
+</blockquote>
+
+<p>
+问题是如何计算投影面积呢? 想要在 <code>shader</code> 中根据顶点信息计算面积的前提是: 可以获得顶点所处面(三角形)的所有顶点信息.
+</p>
+
+<p>
+有三种方法可以做得到:
+</p>
+
+<p>
+一是通过 <a href="../../2022/02/webgl-buffer-objects.html#how-gl-use-data">调整 VAO 和 VBO</a> 来一次性把面的所有顶点传入到 <code>shader</code> 中再计算面积;
+</p>
+
+<p>
+二是在 <code>fragment shader</code> 中使用 <a href="../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html#dFdx-dFdy">求导函数 \(dFdx\) 和 \(dFdy\)</a> 分别获取当前片元在 \(x\) 和 \(y\) 方向上的属性差,
+</p>
+
+<p>
+如果是计算片元的顶点坐标差 \(\vec{v_x}\) 和 \(\vec{v_y}\), 那么就可以计算出三角面的面积: \(\frac{1}{2} |\vec{v_x}| |\vec{v_y}|\);
+</p>
+
+<p>
+三是分别把光与水面的交点写入贴图 \(A\) 和把折射光与水底交点写入贴图 \(B\), 再用在专门的 <code>shader</code> 中计算焦散,
+</p>
+
+<p>
+这种方法其实是第二种方法的变体, 区别在于不使用 \(dFdx\) 和 \(dFdy\) 两个函数,
+</p>
+
+<p>
+但显存和内存的占用会更高和渲染效率会更低, 开发也更为麻烦, 除非需要复用到这两张贴图, 否则不建议使用第三种方法.
+</p>
+
+<p>
+因此, 第二种方法会好一点. 正如第三种方法所言, 在计算面积比前要找出光线与水面的交点, 以及折射光线与水底的交点.
+</p>
+</div>
+</div>
+<div id="outline-container-find-hit-point-with-raymarching" class="outline-4">
+<h4 id="find-hit-point-with-raymarching">在光栅化渲染中使用 Ray Marching 找出射线与场景的交点</h4>
+<div class="outline-text-4" id="text-find-hit-point-with-raymarching">
+<p>
+找出光线与水面的交点非常简单, 当找出光线与水底的交点就不是一件容易的事情.
+</p>
+
+<p>
+我们的情况和 <code>Evan Wallace</code> 的例子不同,  <code>Evan Wallace</code> 的水底环境是由规则几何体构成的,
+</p>
+
+<p>
+这意味着很容易通过数学方法找出光线与水池的交点, 然后计算出光线在水底中的投影面积;
+</p>
+
+<p>
+而我们的水底环境是由不规则几何体构成的, 没法通过数学方法找出光线与它们的交点.
+</p>
+
+<p>
+对于不规则的场景, 通常是使用 <a href="../../2024/03/code-explains-for-fragment-shader-in-shadertoy.html#ray-marching">Ray Marching</a> 来找射线和场景的交点, 与 <code>SDF</code> 建模的场景不同,
+</p>
+
+<p>
+光栅化的场景需要配合深度贴图(深度 <code>buffer</code>)来找出光线与场景的交点,
+</p>
+
+
+<div id="org14a9638" class="figure">
+<p><img src="../../../files/raymarch-to-find-hitpoint-in-rasterization.png" alt="raymarch-to-find-hitpoint-in-rasterization.png" width="800px">
+</p>
+<p><span class="figure-number">Figure 9: </span>图片来源于<a href="https://zhuanlan.zhihu.com/p/1912925340386441129">知乎</a></p>
+</div>
+
+<p>
+上图中沿着射线 \(R\) 移动若干像素从深度贴图中读取深度信息,
+</p>
+
+<p>
+再比较深度贴图中的深度 \(d\) 与射线 \(R\) 当前位置的深度 \(z\), 如果 \(d \le z\), 那么射线 \(R\) 与场景相交.
+</p>
+
+<p>
+不过这个实现起来不简单:
+</p>
+
+<p>
+第一个问题, 如何实现沿着 \(R\) 在深度贴图上移动指定数量的像素;
+</p>
+
+<p>
+第二个问题, 如何计算出移动指定数量像素后的深度变化.
+</p>
+
+<p>
+接下来会花费较长的篇幅来探索这两个问题的答案.
+</p>
+
+<hr>
+
+<p>
+这一部分要求读者熟练掌握 <a href="../../2020/06/graphics-opengl-transformation.html">图形学 - OpenGL坐标变换</a> 的内容.
+</p>
+
+<p>
+先假设 \(r_{world}\) 是世界坐标系上的位移向量: \((x_r, y_r, z_r, 0)\), \(A_{world}\) 是世界坐标系上的一个顶点: \((x, y, z, 1)\).
+</p>
+
+<p>
+现在让该顶点沿着 \(r_{world}\) 平移: \(B_{world} = A_{world} + r_{world}\),
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} & B_{clip} \\ = & M_{viewproj} B_{world} \\ = & M_{viewproj} (A_{world} + r_{world}) \\ = & M_{viewproj} A_{world} + M_{viewproj} r_{world} \\ = & A_{clip} + r_{clip} \\ \rightarrow & r_{clip} = M_{viewproj} r_{world} = B_{clip} - A_{clip} \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+不管是正交投影还是透视投影, 在到 <code>NDC</code> 空间之前(不包括 <code>NDC</code> 空间)的所有变换都是线性的(变化是均匀的),
+</p>
+
+<p>
+所以才能对 \(r_{world}\) 进行变换就能得出 \(r_{world}\) 在其它空间 \(space\) 上的变化量 \(r_{space}\): \(B_{space} - A_{space}\).
+</p>
+
+<p>
+但是在 <code>NDC</code> 空间上则不一定成立, 比如正交投影中 \((r_{clip})_{w} = 0\) 使得 \(\frac{(r_{clip})_{xyz}}{(r_{clip})_{w}}\) 变成无效运算.
+</p>
+
+<p>
+唯一的做法是把 \(B_{clip}\) 和 \(A_{clip}\) 一同转换到其它空间 \(space\) 上, 然后计算两者之间的变化量 \(r_{space}\),
+</p>
+
+<p>
+从而找到 \(r_{clip}\) 转换到在空间 \(space\) 上的形式. 可以通过把 \(B_{clip}\) 转换到在 <code>NDC</code> 空间上得到该结论:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} & B_{ndc} \\ = & \frac{(B_{clip})_{xyz}}{(B_{clip})_{w}} \\ = & \frac{(A_{clip} + r_{clip})_{xyz}}{(A_{clip} + r_{clip})_{w}} \\ = & \frac{(A_{clip})_{xyz} + (r_{clip})_{xyz}}{(A_{clip})_{w} + (r_{clip})_{w}} \\ = & \frac{(A_{clip})_{xyz}}{(A_{clip})_{w} + (r_{clip})_{w}} + \frac{(r_{clip})_{xyz}}{(A_{clip})_{w} + (r_{clip})_{w}} \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+可以看到 \(r_{ndc} = B_{ndc} - A_{ndc} \ne \frac{(r_{clip})_{xyz}}{(r_{clip})_{w}}\), 换而言之 \(r_{ndc}\) 不符合 <code>NDC</code> 坐标定义.
+</p>
+
+<p>
+因此, 只能通过硬算 \(B_{ndc} - A_{ndc}\) 得出变化量 \(r_{clip}\) 在 <code>NDC</code> 上的形式 \(r_{ndc}\) 为:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} & r_{ndc} \\ = & B_{ndc} - A_{ndc} \\ = & \frac{(A_{clip})_{xyz} + (r_{clip})_{xyz}}{(A_{clip})_{w} + (r_{clip})_{w}} - \frac{(A_{clip})_{xyz}}{(A_{clip})_{w}} \\ = & \frac{(A_{clip})_{w} [(A_{clip})_{xyz} + (r_{clip})_{xyz}] - (A_{clip})_{xyz} [(A_{clip})_{w} + (r_{clip})_{w}]}{(A_{clip})_{w} [(A_{clip})_{w} + (r_{clip})_{xyz}]} \\ = & \frac{(A_{clip})_{w} (B_{clip})_{xyz} - (A_{clip})_{xyz} (B_{clip})_{w} }{(A_{clip})_{w} (B_{clip})_{w}} \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+\(r_{clip}\) 在 <code>UVW</code> 空间上的形式 \(r_{uvw}\) 为:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} & B_{uvw} \\ = & (B_{ndc} + 1) \div 2 \\ = & (A_{ndc} + r_{ndc} + 1) \div 2 \\ = & (A_{ndc} + 1) \div 2 + r_{ndc} \div 2 \\ = & A_{uvw} + r_{uvw} \\ \rightarrow & r_{uvw} = \frac{r_{ndc}}{2} = B_{uvw} - A_{uvw} \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+这里有一点意外, 在 <code>UVW</code> 空间上, \(A_{uvw}\) 和 \(B_{uvw}\) 居然只相差了 \(\frac{r_{ndc}}{2}\) 而不是 \(\frac{r_{ndc} + 1}{2}\).
+</p>
+
+<p>
+\(r_{clip}\) 在屏幕空间上的形式 \(r_{screen}\) 为:
+</p>
+
+<p>
+\(\begin{equation*}\begin{aligned} & B_{screen} \\ = & (B_{uvw})_{xy} \times uResolution \\ = & ((A_{uvw})_{xy} + (r_{uvw})_{xy}) \times uResolution \\ = & (A_{uvw})_{xy} \times uResolution + (r_{uvw})_{xy} \times uResolution \\ = & A_{screen} + r_{screen} \\ \rightarrow & r_{screen} = (r_{uvw})_{xy} \times uResolution \end{aligned}\end{equation*}\)
+</p>
+
+<p>
+根据 <code>Bresenham</code> 算法, 想要遍历直线上每个像素, 需要先找出 \(r_{screen}\) 当中最大分量的绝对值 \(maxComp\):
+</p>
+
+<p>
+\(xMain = \begin{cases} 1 & \text{if } |(r_{screen})_{x}| \ge |(r_{screen})_{y}| \\ 0 & \text{else} \end{cases}\)
+</p>
+
+<p>
+\(maxComp = mix(|(r_{screen})_{y}|, |(r_{screen})_{x}|, xMain) = max(|(r_{screen})_{x}|, |(r_{screen})_{y}|)\)
+</p>
+
+<p>
+\(maxComp\) 被称为切比雪夫距离 (<code>Chebyshev distance</code>), 根据该值对 \(r_{screen}\) 归一化,
+</p>
+
+<p>
+就能得出沿着 \(r_{screen}\) 方向移动到下一个像素的位移向量 \(d_{frag}\) 为:
+</p>
+
+<p>
+\(d_{frag} = \frac{r_{screen}}{maxComp}\)
+</p>
+
+<p>
+\(d_{frag}\) 在纹理坐标系上为 \(d_{uv}\):
+</p>
+
+<p>
+\(d_{uv} = d_{frag} \div uResolution\)
+</p>
+
+<p>
+在正交投影中, 存在这些关系 \(\begin{cases}\begin{aligned} (r_{world})_{w} & = 0 \rightarrow (r_{clip})_{w} = 0 \\ (A_{clip})_w & = (B_{clip})_w = 1 \end{aligned}\end{cases} \rightarrow \begin{cases} \begin{aligned} A_{ndc} &= A_{clip} \\ B_{ndc} &= B_{clip} \\ r_{ndc} &= r_{clip} \end{aligned} \end{cases}\),
+</p>
+
+<p>
+由此可发现正交投影中的 <code>NDC/UVW</code> 变化是线性的, 所以移动一个像素导致的深度变化 \(d_{w}\) 为:
+</p>
+
+<p>
+\(d_{w} = \frac{|d_{uv}|}{|(r_{uvw})_{xy}|} \times (r_{uvw})_{z} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp} = \frac{(r_{clip})_{z}}{2 \times maxComp}\)
+</p>
+
+<p>
+因此移动一个像素所产生的变化变换到 <code>UVW</code> 空间上为: \(d_{uvw} = (d_{uv}, d_{w})\)
+</p>
+
+<p>
+再可以还原回 <code>NDC</code> 上: \(d_{ndc} = d_{uvw} \times 2\)
+</p>
+
+<p>
+在透视投影中, <code>NDC/UVW</code> 的变化为非线性的, 并且存在这些关系:
+</p>
+
+<p>
+\(\begin{cases} (A_{clip})_{w} & = -(A_{view})_{z} \\ (B_{clip})_{w} & = -(B_{view})_{z} = - [(A_{view})_{z} + (r_{view})_{z} ] \\ (r_{view})_{w} & = -(r_{view})_{z} \end{cases}\)
+</p>
+
+<p>
+然后计算出透视投影下的 \(r_{ndc}\):
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned} & (r_{ndc})_{z} \\ = & \frac{(A_{clip})_{w} (B_{clip})_{z} - (A_{clip})_{z} (B_{clip})_{w}}{(A_{clip})_{w} (B_{clip})_{w}} \\ = & \frac{ -(A_{view})_{z} \times (B_{clip})_{z} - (A_{clip})_{z} \times -(B_{view})_{z} }{-(A_{view})_{z} \times -(B_{view})_{z}} \\ = & \frac{(B_{clip})_{z}}{-(B_{view})_{z}} - \frac{(A_{clip})_{z}}{-(A_{view})_{z}} \\ = & (B_{ndc})_{z} - (A_{ndc})_z \\ = & \frac{(A_{clip})_{z} + (r_{clip})_{z}}{(A_{view})_{z} + (r_{view})_{z}} - \frac{(A_{clip})_{z}}{(A_{view})_{z}} \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+但该等式没能找出什么有用的信息, 尝试使用透视投影矩阵的变化关系计算出 <code>NDC</code> 上的 \(z\) 分量变化 \((r_{ndc})_{z}\),
+</p>
+
+<p>
+其中 \(n\) 和 \(f\) 分别是相机的近裁剪平面和远裁剪平面的距离:
+</p>
+
+<p>
+\(\begin{cases}
+(A_{ndc})_{z} = \frac{ -\frac{f + n}{f - n} (A_{view})_{z} - \frac{2fn}{f - n} }{- (A_{view})_{z}} = \frac{ \frac{f + n}{f - n} (A_{view})_{z} + \frac{2fn}{f - n} }{(A_{view})_{z}} = \frac{f - n}{f + n} + \frac{2fn}{(f - n) (A_{view})_{z}} \\
+(B_{ndc})_{z} = \frac{f - n}{f + n} + \frac{2fn}{(f - n) (B_{view})_{z}}
+\end{cases}\)
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned}
+& (r_{ndc})_{z} \\
+= & (B_{ndc})_{z} - (A_{ndc})_{z} \\
+= & \frac{2fn}{(f - n) (B_{view})_{z}} - \frac{2fn}{(f - n) (A_{view})_{z}} \\
+= & \frac{2fn}{f - n} \left[ \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}} \right] \\
+= & \frac{2fn}{f - n} \left[ \frac{1}{(A_{view})_{z} + (r_{view})_{z}} - \frac{1}{(A_{view})_{z}}
+\right] \end{aligned} \end{equation*}\)
+</p>
+
+<p>
+通过上面的关系发现 <code>UVW</code> 空间上的 \(z\) 分量变化 \((r_{uvw})_{z}\), 也就是非线性深度的变化量:
+</p>
+
+<p>
+\(\begin{equation*} \begin{aligned}
+& \left[ \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}} \right] \\
+= & (r_{ndc})_{z} \div \frac{2fn}{f - n} \\
+= & (r_{ndc})_{z} \frac{f - n}{2fn} \\
+= & \frac{1}{2} (r_{ndc})_{z} \left[ \frac{1}{n} - \frac{1}{f} \right] \\
+\rightarrow & \frac{(r_{ndc})_{z}}{2} = \frac{ \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}} }{ \frac{1}{n} - \frac{1}{f} } = (r_{uvw})_{z}
+\end{aligned} \end{equation*}\)
+</p>
+
+<p>
+令 \(\Delta \frac{1}{z} = \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}}\), 可以发现 \((r_{uvw})_{z}\) 与 \(\Delta \frac{1}{z}\) 成线性关系, 即 \((r_{uvw})_{z}\) 随着 \(\Delta \frac{1}{z}\) 均匀变化而发生均匀变化.
+</p>
+
+<p>
+不幸的是, \((r_{uvw})_{x}\) 和 \((r_{uvw})_{y}\) 也是非线性的, 所以不能像正交投影那样使用 \(\frac{|d_{uv}|}{|(r_{uvw})_{xy}|} \times (r_{uvw})_{z}\) 来计算 \(d_{w}\),
+</p>
+
+<p>
+那要如何找出 \(d_{w}\) 呢?
+</p>
+
+<p>
+幸运的是, 在屏幕空间上是逐个像素移动的, 因此位移变化是均匀的, 再加上 \((r_{uvw})_{z}\) 与 \(\Delta \frac{1}{z}\) 是线性关系,
+</p>
+
+<p>
+凭借这两点就可以找出 \((r_{uvw})_{z}\) 如何随着像素移动而变化, 也就是可以得出 \(d_{w}\):
+</p>
+
+<p>
+\(d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp} = \frac{1}{\frac{1}{n} - \frac{1}{f}} \Delta \frac{1}{z} \frac{1}{maxComp} = \frac{fn}{f - n} \Delta \frac{1}{z} \frac{1}{maxComp}\)
+</p>
+</div>
+</div>
+<div id="outline-container-org2c22487" class="outline-4">
+<h4 id="org2c22487">生成焦散贴图</h4>
+<div class="outline-text-4" id="text-org2c22487">
+<p>
+焦散贴图是给水底的物体使用的, 同时还兼具阴影贴图的功能,
+</p>
+
+<p>
+焦散贴图的像素格式为: \((causticsIntensity, 0.0, 0.0, depth)\),
+</p>
+
+<p>
+其中 \(causticsIntensity\) 是焦散强度, \(depth\) 是光源深度, 它们都大于 0,
+</p>
+
+<p>
+在生成焦散贴图前, 别忘记了需要光源相机生成的水底深度贴图, 这一步需要 <b>单独</b> 为水底物体进行渲染, 从而生成深度贴图,
+</p>
+
+<p>
+所使用的 <code>shader</code> 如下,
+</p>
+
+<p>
+<b>Vertex Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#28304;&#30456;&#26426;&#30340;&#35270;&#28857;&#21464;&#25442;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#28304;&#30456;&#26426;&#30340;&#25237;&#24433;&#30697;&#38453;
+</span>
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec4</span> vWorldPos;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vDepth;
+
+<span style="color: #98fb98;">void</span> main() {
+  vWorldPos = modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.);
+  <span style="color: #98fb98;">vec4</span> projPos = projectionMatrix * viewMatrix * vWorldPos;
+  vDepth = projPos.z;
+  <span style="color: #eedd82;">gl_Position</span> = projPos;
+}
+</pre>
+</div>
+
+<p>
+<b>Fragment Shader</b>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec4</span> vWorldPos;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vDepth;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(vWorldPos.xyz, vDepth);
+}
+</pre>
+</div>
+
+<p>
+该计算模块位于:
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/GPUComputation/EnvMapShadowMapping/index.ts">src/HeightfieldWaterSimulation/GPUComputation/EnvMapShadowMapping/index.ts</a>
+</p>
+
+<hr>
+
+<p>
+在准备好阴影贴图后便可以着手于焦散贴图的生成, 正如前面所说的, 焦散贴图携带着焦散强度以及光源深度的信息.
+</p>
+
+<p>
+与计算高度贴图时使用专属相机的情况不同, 计算焦散贴图可直接用光源自带的相机进行渲染,
+</p>
+
+<p>
+但需要注意一点: 保证计算用的平面大小与光源相机的远裁剪平面的尺寸保持一致.
+</p>
+
+<p>
+因为光源对于场景来说是公用的, 一般来说不会单独为了某个渲染而修改视锥体,
+</p>
+
+<p>
+从而影响其它渲染, 所以只能调整计算用平面的尺寸, 使其能正好被相机的远裁剪平面覆盖.
+</p>
+
+<p>
+<b>Vertex Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tHeightfield;  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#38754;&#39640;&#24230;&#22330;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tEnvShadowMap; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#24213;&#28145;&#24230;&#36148;&#22270;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> uLightDir;          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#32447;&#22312;&#19990;&#30028;&#22352;&#26631;&#19978;&#30340;&#26041;&#21521;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uWaterModelMatrix;  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#38754;&#30340;&#27169;&#22411;&#21464;&#25442;&#30697;&#38453;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> uResolution;        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#24213;&#28145;&#24230;&#36148;&#22270; tEnvShadowMap &#30340;&#35299;&#26512;&#24230;
+</span>
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vOrigin;           <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25240;&#23556;&#20809;&#30340;&#36215;&#28857;
+</span><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vHitPoint;         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25240;&#23556;&#20809;&#19982;&#27700;&#24213;&#22330;&#26223;&#30340;&#20132;&#28857;
+</span><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vOriginDepth;     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25240;&#23556;&#20809;&#30340;&#36215;&#28857;&#30340;&#28145;&#24230;
+</span><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vHitPointDepth;   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20132;&#28857;&#30340;&#28145;&#24230;
+</span>
+<span style="color: #b0c4de;">#define</span> AIR_IOR 1.0
+<span style="color: #b0c4de;">#define</span> WATER_IOR 1.325
+<span style="color: #b0c4de;">#define</span> MAX_ITERATIONS 100
+
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">vec4</span> info = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tHeightfield, uv);
+  <span style="color: #98fb98;">vec3</span> waterPos = <span style="color: #98fb98;">vec3</span>(position.xy, position.z + info.r);
+  <span style="color: #98fb98;">vec3</span> waterNorm = <span style="color: #98fb98;">vec3</span>(info.ba, <span style="color: #b0c4de;">sqrt</span>(1.0 - <span style="color: #b0c4de;">dot</span>(info.ba, info.ba)));
+  <span style="color: #98fb98;">vec3</span> waterPosWorld = (uWaterModelMatrix * <span style="color: #98fb98;">vec4</span>(waterPos, 1.)).xyz;
+  <span style="color: #98fb98;">vec3</span> waterNormWorld = (uWaterModelMatrix * <span style="color: #98fb98;">vec4</span>(waterNorm, 0.)).xyz;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">projectionMatrix &#21644; viewMatrix &#26159;&#20809;&#28304;&#30456;&#26426;&#30340;&#30697;&#38453;
+</span>  <span style="color: #98fb98;">mat4</span> VP = projectionMatrix * viewMatrix;
+
+  vOrigin = waterPosWorld;
+  <span style="color: #98fb98;">vec4</span> waterPosClip = VP * <span style="color: #98fb98;">vec4</span>(waterPosWorld, 1.0);
+  vOriginDepth = waterPosClip.z / waterPosClip.w * 0.5 + 0.5; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#19982;&#27700;&#38754;&#20132;&#28857;&#30340; NDC &#28145;&#24230;
+</span>
+  <span style="color: #98fb98;">float</span> eta = AIR_IOR / WATER_IOR;
+  <span style="color: #98fb98;">vec3</span> refractedDirWorld = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(uLightDir, waterNormWorld, eta));
+  <span style="color: #98fb98;">vec4</span> refractedClip = VP * <span style="color: #98fb98;">vec4</span>(refractedDirWorld, 0.0);
+  <span style="color: #98fb98;">vec3</span> refractedNDC = refractedClip.xyz;
+  <span style="color: #98fb98;">vec3</span> refractedUVW = refractedNDC * 0.5;
+  <span style="color: #98fb98;">vec2</span> refractedScreen = refractedUVW.xy * uResolution;
+  <span style="color: #98fb98;">vec2</span> dFrag = refractedScreen / <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">abs</span>(refractedScreen.x), <span style="color: #b0c4de;">abs</span>(refractedScreen.y));
+  <span style="color: #98fb98;">float</span> dW = <span style="color: #b0c4de;">length</span>(dFrag) / <span style="color: #b0c4de;">length</span>(refractedScreen) * refractedUVW.z;
+  <span style="color: #98fb98;">vec3</span> delta = <span style="color: #98fb98;">vec3</span>(dFrag, dW * 2.0);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">tEnvShadowMap &#20197; ndc &#30340; z &#20998;&#37327;&#20316;&#20026;&#28145;&#24230;, &#30001;&#20110;&#26159;&#27491;&#20132;&#30456;&#26426;, ndc &#30340; z &#20998;&#37327;&#20043;&#38388;&#21487;&#20197;&#36827;&#34892;&#32447;&#24615;&#25554;&#20540;
+</span>  <span style="color: #98fb98;">vec2</span> currentPos = (waterPosClip.xy * 0.5 + 0.5) * uResolution;
+  <span style="color: #98fb98;">float</span> currentDepth = waterPosClip.z;
+  <span style="color: #98fb98;">vec2</span> deltaDirection = delta.xy;
+  <span style="color: #98fb98;">float</span> deltaDepth = delta.z;
+
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt; MAX_ITERATIONS; i++) {
+    <span style="color: #98fb98;">vec2</span> uv = currentPos.xy / uResolution;
+    <span style="color: #98fb98;">vec4</span> smInfo = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tEnvShadowMap, uv);
+    vHitPoint = smInfo.xyz;
+
+    <span style="color: #00ffff;">if</span> (smInfo.w &lt;= currentDepth) {
+      <span style="color: #00ffff;">break</span>;
+    }
+
+    currentPos += deltaDirection;
+    currentDepth += deltaDepth;
+  }
+
+  <span style="color: #98fb98;">vec4</span> hitPointClip = VP * <span style="color: #98fb98;">vec4</span>(vHitPoint, 1.);
+  vHitPointDepth = hitPointClip.z / hitPointClip.w * 0.5 + 0.5; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25240;&#23556;&#20809;&#19982;&#27700;&#24213;&#20132;&#28857;&#30340; NDC &#28145;&#24230;
+</span>
+  <span style="color: #eedd82;">gl_Position</span> = hitPointClip;
+}
+</pre>
+</div>
+
+<p>
+<b>Fragment Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vOrigin;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vHitPoint;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vOriginDepth;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vHitPointDepth;
+
+<span style="color: #98fb98;">void</span> main() {
+
+  <span style="color: #98fb98;">float</span> causticsIntensity = 0.;
+  <span style="color: #98fb98;">float</span> causticsFactor = 0.15;
+
+  <span style="color: #00ffff;">if</span> (vHitPointDepth &gt;= vOriginDepth) {
+    <span style="color: #98fb98;">float</span> oldArea = <span style="color: #b0c4de;">length</span>(<span style="color: #b0c4de;">dFdx</span>(vOrigin)) * <span style="color: #b0c4de;">length</span>(<span style="color: #b0c4de;">dFdy</span>(vOrigin));
+    <span style="color: #98fb98;">float</span> newArea = <span style="color: #b0c4de;">length</span>(<span style="color: #b0c4de;">dFdx</span>(vHitPoint)) * <span style="color: #b0c4de;">length</span>(<span style="color: #b0c4de;">dFdy</span>(vHitPoint));
+
+    <span style="color: #98fb98;">float</span> ratio;
+
+    <span style="color: #00ffff;">if</span> (newArea == 0.) {
+      ratio = 2.0e+20;
+    } <span style="color: #00ffff;">else</span> {
+      ratio = oldArea / newArea;
+    }
+
+    causticsIntensity = causticsFactor * ratio;
+  }
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(causticsIntensity, 0.0, 0.0, vHitPointDepth);
+}
+</pre>
+</div>
+
+
+<div id="org32a3345" class="figure">
+<p><img src="../../../files/caustics-for-watersimulation.png" alt="caustics-for-watersimulation.png" width="512px">
+</p>
+<p><span class="figure-number">Figure 10: </span>生成的焦散贴图</p>
+</div>
+
+<p>
+该计算模块位于:
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/GPUComputation/Caustics/index.ts">src/HeightfieldWaterSimulation/GPUComputation/Caustics/index.ts</a>
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orgea7100d" class="outline-3">
+<h3 id="orgea7100d">为水底的场景编写 shader</h3>
+<div class="outline-text-3" id="text-orgea7100d">
+<p>
+水底物体的 <code>shader</code> 还是比较简单的, 主要是渲染焦散纹理,
+</p>
+
+<p>
+这里根据物体法线和折射光的点积来决定物体受到的焦散强度, 为此还需要生成一个折射光贴图,
+</p>
+
+<p>
+使用到的 <code>shader</code> 如下,
+</p>
+
+<p>
+<b>Vertex Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tHeightfield;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec3</span> uLightDir;         <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#32447;&#22312;&#19990;&#30028;&#22352;&#26631;&#19978;&#30340;&#26041;&#21521;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uWaterModelMatrix; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#27700;&#38754;&#30340;&#27169;&#22411;&#21464;&#25442;&#30697;&#38453;
+</span>
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vRefracted;
+
+<span style="color: #b0c4de;">#define</span> AIR_IOR 1.0
+<span style="color: #b0c4de;">#define</span> WATER_IOR 1.325
+
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">vec4</span> info = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tHeightfield, uv);
+  <span style="color: #98fb98;">vec3</span> waterPos = <span style="color: #98fb98;">vec3</span>(position.xy, position.z + info.r);
+  <span style="color: #98fb98;">vec3</span> waterNorm = <span style="color: #98fb98;">vec3</span>(info.ba, <span style="color: #b0c4de;">sqrt</span>(1.0 - <span style="color: #b0c4de;">dot</span>(info.ba, info.ba)));
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">projectionMatrix &#21644; viewMatrix &#26159;&#20809;&#28304;&#30456;&#26426;&#30340;&#30697;&#38453;
+</span>  <span style="color: #98fb98;">mat4</span> VP = projectionMatrix * viewMatrix;
+  <span style="color: #98fb98;">vec4</span> waterPosWorld = uWaterModelMatrix * <span style="color: #98fb98;">vec4</span>(waterPos, 1.);
+  <span style="color: #98fb98;">vec4</span> waterNormWorld = uWaterModelMatrix * <span style="color: #98fb98;">vec4</span>(waterNorm, 0.);
+
+  <span style="color: #98fb98;">float</span> eta = AIR_IOR / WATER_IOR;
+  <span style="color: #98fb98;">vec3</span> refractedDirWorld = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">refract</span>(uLightDir, waterNormWorld.xyz, eta));
+
+  vRefracted = refractedDirWorld;
+
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#36825;&#37324;&#38656;&#35201;&#25552;&#19968;&#19979;, &#26368;&#21021;&#26159;&#20351;&#29992; gl_Position = VP * waterPosWorld;
+
+     &#20294;&#26159;&#21457;&#29616;&#27169;&#22411; *&#35980;&#20284;* &#19982;&#27700;&#38754;&#27169;&#22411;&#21457;&#29983;&#28145;&#24230;&#20914;&#31361;, &#20351;&#24471;&#36148;&#22270;&#21482;&#26377;&#19968;&#21322;&#26377;&#20869;&#23481;,
+
+     &#20026;&#20102;&#36991;&#20813;&#36825;&#20010;&#20026;&#38382;&#39064;&#25165;&#37325;&#26032;&#35745;&#31639;&#39030;&#28857;&#20449;&#24687;,
+
+     &#20854;&#20013;&#30340; vec4(position - vec3(0., 0., 0.001) &#20063;&#26159;&#20026;&#20102;&#36991;&#20813;&#27700;&#38754;&#24179;&#38745;&#26102;&#21457;&#29983;&#30340;&#28145;&#24230;&#20914;&#31361;.
+
+     (PS: &#28210;&#26579;&#27809;&#21152;&#20837;&#22330;&#26223;&#30340;&#27169;&#22411;&#20063;&#20250;&#21457;&#29983;&#28145;&#24230;&#20914;&#31361;&#21527;? &#19981;&#22826;&#26126;&#30333;)
+</span><span style="color: #ff7f24;">  */</span>
+  <span style="color: #eedd82;">gl_Position</span> = VP * uWaterModelMatrix * <span style="color: #98fb98;">vec4</span>(position - <span style="color: #98fb98;">vec3</span>(0., 0., 0.001), 1.);
+}
+</pre>
+</div>
+
+<p>
+<b>Fragment Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vRefracted;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(vRefracted * 0.5 + 0.5, 1.);
+}
+</pre>
+</div>
+
+<p>
+该计算模块位于:
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/GPUComputation/RefractedLight/index.ts">src/HeightfieldWaterSimulation/GPUComputation/RefractedLight/index.ts</a>
+</p>
+
+<hr>
+
+<p>
+最终水底物体的 <code>shader</code> 如下,
+</p>
+
+<p>
+<b>Vertex Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> normal;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelViewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uLightProjectionMatrix; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#28304;&#30456;&#26426;&#30340;&#27491;&#20132;&#25237;&#24433;&#30697;&#38453;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> uLightViewMatrix;     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20809;&#28304;&#30456;&#26426;&#30340;&#35270;&#28857;&#21464;&#25442;&#30697;&#38453;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tRefractedLight; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#25240;&#23556;&#20809;&#36148;&#22270;
+</span>
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vPosInLightNDC;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vLightDiffuse;
+
+<span style="color: #98fb98;">void</span> main () {
+
+  <span style="color: #98fb98;">vec3</span> normalWorld = <span style="color: #b0c4de;">normalize</span>((modelMatrix * <span style="color: #98fb98;">vec4</span>(normal, 0)).xyz);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#39030;&#28857;&#22312;&#20809;&#28304;&#30456;&#26426;&#20013;&#30340; NDC &#22352;&#26631;&#24471;&#20986;&#28145;&#24230;, &#29992;&#22312;&#21518;&#32493;&#30340;&#38452;&#24433;&#35745;&#31639;&#20013;
+</span>  <span style="color: #98fb98;">vec4</span> posInLightClip = uLightProjectionMatrix * uLightViewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.);
+  vPosInLightNDC = posInLightClip.xyz / posInLightClip.w;
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#37324;&#24212;&#35813;&#35745;&#31639;&#25240;&#23556;&#20809;&#19982;&#29289;&#20307;&#34920;&#38754;&#27861;&#32447;&#30340;&#28857;&#31215;
+</span>  <span style="color: #98fb98;">vec2</span> uvLight = vPosInLightNDC.xy * 0.5 + 0.5;
+  <span style="color: #98fb98;">vec3</span> refracted = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tRefractedLight, uvLight).xyz * 2. - 1.;
+  vLightDiffuse = <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(<span style="color: #b0c4de;">normalize</span>(-refracted), normalWorld), 0.);
+
+  <span style="color: #eedd82;">gl_Position</span> = projectionMatrix * modelViewMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.);
+}
+</pre>
+</div>
+
+<p>
+<b>Fragment Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tCaustics;    <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28966;&#25955;&#36148;&#22270;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> uResolution;       <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#28966;&#25955;&#36148;&#22270;&#30340;&#35299;&#26512;&#24230;
+</span>
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vPosInLightNDC;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">float</span> vLightDiffuse;
+
+<span style="color: #00ffff;">const</span> <span style="color: #98fb98;">vec3</span> underwaterColor = <span style="color: #98fb98;">vec3</span>(0.4, 0.9, 1.0);
+
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#39640;&#26031;&#27169;&#31946;
+</span><span style="color: #98fb98;">float</span> blur(<span style="color: #98fb98;">sampler2D</span> image, <span style="color: #98fb98;">vec2</span> uv, <span style="color: #98fb98;">vec2</span> resolution, <span style="color: #98fb98;">vec2</span> direction) {
+  <span style="color: #98fb98;">float</span> intensity = 0.;
+  <span style="color: #98fb98;">vec2</span> off1 = <span style="color: #98fb98;">vec2</span>(1.3846153846) * direction;
+  <span style="color: #98fb98;">vec2</span> off2 = <span style="color: #98fb98;">vec2</span>(3.2307692308) * direction;
+  intensity += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(image, uv).x * 0.2270270270;
+  intensity += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(image, uv + (off1 / resolution)).x * 0.3162162162;
+  intensity += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(image, uv - (off1 / resolution)).x * 0.3162162162;
+  intensity += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(image, uv + (off2 / resolution)).x * 0.0702702703;
+  intensity += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(image, uv - (off2 / resolution)).x * 0.0702702703;
+  <span style="color: #00ffff;">return</span> intensity;
+}
+
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">float</span> computedLightIntensity = 0.5;
+  <span style="color: #98fb98;">float</span> lightIntensity = 0.3;
+  computedLightIntensity += lightIntensity * vLightDiffuse;
+
+  <span style="color: #98fb98;">vec2</span> uv = vPosInLightNDC.xy * 0.5 + 0.5;
+  <span style="color: #98fb98;">float</span> depth = vPosInLightNDC.z * 0.5 + 0.5;
+  <span style="color: #98fb98;">vec4</span> info = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tCaustics, uv);
+  <span style="color: #98fb98;">float</span> closestDepth = info.w;
+
+  <span style="color: #98fb98;">float</span> bias = 0.01;
+  <span style="color: #00ffff;">if</span> (closestDepth &gt; depth - bias) {
+
+    <span style="color: #98fb98;">float</span> causticsIntensity = 0.5 * (
+      blur(tCaustics, uv, uResolution, <span style="color: #98fb98;">vec2</span>(0., 0.5)) +
+      blur(tCaustics, uv, uResolution, <span style="color: #98fb98;">vec2</span>(0.5, 0.))
+    );
+
+    computedLightIntensity += causticsIntensity * <span style="color: #b0c4de;">smoothstep</span>(0., 1., vLightDiffuse);
+  }
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(underwaterColor * computedLightIntensity, 1.0);
+}
+</pre>
+</div>
+
+<p>
+该材质位于:
+</p>
+
+<p>
+<a href="https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/materials/UnderWaterMaterial/index.ts">src/HeightfieldWaterSimulation/materials/UnderWaterMaterial/index.ts</a>
+</p>
+</div>
+</div>
+<div id="outline-container-org1b92a15" class="outline-3">
+<h3 id="org1b92a15">项目总结</h3>
+<div class="outline-text-3" id="text-org1b92a15">
+<p>
+虽然是参考 <a href="https://medium.com/@martinRenou/real-time-rendering-of-water-caustics-59cda1d74aa">Real-time rendering of water caustics by Martin Renou</a> 的项目, 但本文在很多地方都做了调整,
+</p>
+
+<p>
+主要是以下两点:
+</p>
+
+<ul class="org-ul">
+<li><p>
+原项目的 <code>shader</code> 是严重依赖于当前场景摆放, 没有考虑模型变换的情况.
+</p>
+
+<p>
+这也是为什么原项目的 <a href="https://github.com/martinRenou/threejs-caustics/issues/11">issue</a> 中会有人向作者提问如何正确地增加水面模型的大小.
+</p>
+
+<p>
+本文已经把这个问题解决掉了.
+</p></li>
+
+<li><p>
+原项目在计算折射光与场景的交点时, 在屏幕空间上的位移计算不准确.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">This factor will scale the delta parameters so that we move from one pixel to the other in the env map
+</span><span style="color: #98fb98;">float</span> factor = deltaEnvTexture / <span style="color: #b0c4de;">length</span>(refractedDirection.xy);
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">deltaEnvTexture &#20026;&#27491;&#26041;&#24418;&#28145;&#24230;&#36148;&#22270;&#23610;&#23544;&#30340;&#20498;&#25968;, &#27604;&#22914; 512x512 &#26102;, deltaEnvTexture = 1. / 512.
+</span><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">refractedDirection &#26159;&#22312;&#35009;&#21098;&#31354;&#38388;&#19978;&#30340;&#25240;&#23556;&#20809;
+</span>
+<span style="color: #98fb98;">vec2</span> deltaDirection = refractedDirection.xy * factor;
+<span style="color: #98fb98;">float</span> deltaDepth = refractedDirection.z * factor;
+</pre>
+</div>
+
+<p>
+在调整了模型和深度贴图解析度的情况下, 这两个值会使得生成焦散贴图的一些区域出现没有焦散的问题,
+</p>
+
+<p>
+这其实就是在屏幕空间并没有逐个像素移动所导致的情况.
+</p></li>
+</ul>
+
+
+<p>
+选择这个项目作为开篇例子的主要是其中运用了很多后续会学习到的知识点, 并且涉及程度不深,
+</p>
+
+<p>
+适用于熟悉感觉, 包括屏幕空间反射和屏幕空间折射, 其中水面的折射就 <b>完整地</b> 使用了<a href="#screen-space-refraction">屏幕空间折射</a>的技术,
+</p>
+
+<p>
+项目里头的屏幕空间反射技术实现倒是简单, 这种在屏幕空间上利用已渲染的场景信息创造复杂效果的技术还有很多,
+</p>
+
+<p>
+这里简称屏幕空间技术, 其中延迟渲染(<code>Deferred Rendering</code>)就是屏幕空间技术的其中一个例子;
+</p>
+
+<p>
+项目里还使用了图像处理方面的技术, 使用了拉普拉斯核来模拟了水波纹和使用了高斯模糊核来柔化焦散贴图;
+</p>
+
+<p>
+<a href="#gpu-computation">Ping-Pong 渲染技巧</a> 也常常出现在后处理中.
+</p>
+
+<p>
+其次, 这个项目完整地考核了读者对于渲染管线的理解, 确保读者有能力完成后续的学习.
+</p>
+
+<p>
+另外, 原项目还留有一些可优化的点, 它们都可以作为单独学习的知识点,
+</p>
+
+<p>
+其中在水底中构建可视光路是非常重要的知识点, 人们把这项技术称为体积光照(<code>Volumetric lighting</code>), 又称圣光(<code>godray</code>).
+</p>
+
+
+<div id="org44adaf0" class="figure">
+<p><img src="../../../files/volumetric-lighting-underwater.png" alt="volumetric-lighting-underwater.png" width="500px">
+</p>
+<p><span class="figure-number">Figure 11: </span>水底下的体积光</p>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-ssao" class="outline-2">
+<h2 id="ssao">屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)</h2>
+<div class="outline-text-2" id="text-ssao">
+<p>
+屏幕空间环境光遮蔽是屏幕空间技术的一种, 由 <code>Crytek</code> 开发的渲染技术, 于 <code>2007</code> 年首次应用在游戏  <code>Cyrsis</code> 中.
+</p>
+
+<p>
+用于估算场景中物体表面因遮挡形成的阴影区域, 可以简单概括为物体与物体之间接触的地方模拟阴影.
+</p>
+
+<p>
+计算过程是发生在屏幕空间(或称屏幕坐标系)中, 换而言之就是后处理:
+</p>
+
+<ol class="org-ol">
+<li>把场景部分几何信息(顶点坐标, 法线, 颜色, 深度等)写入贴图中,
+这些贴图被称为几何缓冲(<code>geometry buffer</code>) 或 <code>G-Buffer</code>;</li>
+<li>在全屏渲染着色器(<code>shader</code>)中按照 <code>UV</code> 坐标从 <code>G-Buffer</code> 中读取信息进行计算;</li>
+<li>把计算结果输出到屏幕上, 或者写入到贴图中给另外一个着色器使用.</li>
+</ol>
+
+
+<p>
+在计算环境遮蔽的阴影区域前, 需要视点空间(<code>view space</code>)的顶点坐标和法线两者的 <code>G-Buffers</code>.
+</p>
+</div>
+<div id="outline-container-org59db0c7" class="outline-3">
+<h3 id="org59db0c7">把视点空间的顶点储存在贴图中</h3>
+<div class="outline-text-3" id="text-org59db0c7">
+<p>
+需要视点空间的顶点坐标系, 是因为要以视点空间的顶点坐标 \(z\) 分量作为深度.
+</p>
+
+<p>
+生成顶点贴图的 <code>Shader</code> 如下,
+</p>
+
+<p>
+<b>Vertex Shader</b>: <a id="org1d7c6db"></a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec4</span> vPosInViewSpace;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  vPosInViewSpace = viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.0);
+  <span style="color: #eedd82;">gl_Position</span> = projectionMatrix * vPosInViewSpace;
+}
+</pre>
+</div>
+
+<p>
+<b>Fragment Shader</b>: <a id="org3c16a67"></a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec4</span> vPosInViewSpace;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = vPosInViewSpace;
+}
+</pre>
+</div>
+
+<p>
+生成视点空间上顶点坐标的贴图, 用在后续的 <code>tViewPosition</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-orgee43805" class="outline-3">
+<h3 id="orgee43805">把视点空间的法线储存在贴图中</h3>
+<div class="outline-text-3" id="text-orgee43805">
+<p>
+把视点空间的法线储存到贴图上, 用于后续构建出视点空间的 <code>TBN</code>.
+</p>
+
+<p>
+以下是生成法线贴图的 <code>Shader</code> 程序.
+</p>
+
+<p>
+<b>Vertex Shader</b>: <a id="org4e58765"></a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec2</span> uv;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> normal;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> tangent;
+<span style="color: #ffc0cb; font-weight: bold;">attribute</span> <span style="color: #98fb98;">vec3</span> position;
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vUV;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vNormal;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vTangent;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vBitangent;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> modelMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> viewMatrix;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #98fb98;">void</span> main() {
+  vNormal = <span style="color: #b0c4de;">normalize</span>((viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(normal, 0.0)).xyz);
+  vTangent = <span style="color: #b0c4de;">normalize</span>((viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(tangent, 0.0)).xyz);
+  vBitangent = <span style="color: #b0c4de;">normalize</span>(<span style="color: #b0c4de;">cross</span>(vNormal, vTangent));
+  vUV = uv;
+  <span style="color: #eedd82;">gl_Position</span> = projectionMatrix * viewMatrix * modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.);
+}
+</pre>
+</div>
+
+<blockquote>
+<p>
+如果所使用的图形库没有为用户计算 <code>aTagent</code> 和 <code>aBitangent</code> 或其中一个, 那么就需要自行手动计算,
+</p>
+
+<p>
+计算方法可以参考 <a href="../../2020/06/graphics-opengl-transformation.html#normal-texture">图形学 - OpenGL坐标变换: 法线贴图</a> 里面的 <code>TBN</code> 矩阵计算, 有提及到如何根据顶点计算出法线/切线以及副切线.
+</p>
+</blockquote>
+
+<p>
+<b>Fragment Shader</b>: <a id="org847ab4d"></a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vUV;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vNormal;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vTangent;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vBitangent;
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">int</span> useNormalTex;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tNormal;
+
+<span style="color: #98fb98;">void</span> main() {
+
+  <span style="color: #98fb98;">vec3</span> normal;
+
+  <span style="color: #00ffff;">if</span> (useNormalTex == 1) {
+    <span style="color: #98fb98;">vec3</span> normalInTangentSpace = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tNormal, vUV) * 2.0 - 1.0;
+    <span style="color: #98fb98;">mat3</span> tbn = <span style="color: #98fb98;">mat3</span>(vTangent, vBitangent, vNormal);
+    normal = <span style="color: #b0c4de;">normalize</span>(tbn * normalInTangentSpace);
+  } <span style="color: #00ffff;">else</span> {
+    normal = <span style="color: #b0c4de;">normalize</span>(vNormal);
+  }
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(normal * 0.5 + 0.5, 1.0);
+}
+</pre>
+</div>
+
+<p>
+生成视点空间上法线的贴图, 用在后续的 <code>tViewNormal</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org3f298cd" class="outline-3">
+<h3 id="org3f298cd">计算场景的环境光遮蔽程度并储存在贴图中</h3>
+<div class="outline-text-3" id="text-org3f298cd">
+<p>
+<code>SSAO</code> 的关键点在于如何判断一个片元是否被遮蔽, 以下是它的原理解释.
+</p>
+
+
+<div id="org205e80f" class="figure">
+<p><img src="../../../files/normal-oriented-hemisphere-ssao.jpg" alt="normal-oriented-hemisphere-ssao.jpg">
+</p>
+</div>
+
+<p>
+在视点空间上, 以当前片元 \(p\) 为原点构建出面向其法线 <code>normal</code> 的单位半球体, 在球体内进行随机采样,
+</p>
+
+<p>
+得到一个采样点集合 \(S\). 这里以其中两个采样点 <code>sample 1</code> 和 <code>sample 2</code> 作为后续的研究例子.
+</p>
+
+<p>
+首先在切线空间 (<code>tangent space</code>) 上进行采样, 把采样点变换到裁剪空间 (<code>clip space</code>) 上,
+</p>
+
+<p>
+再从裁剪坐标变换到 <code>NDC</code>, 最后把 <code>NDC</code> 坐标变换到屏幕空间 (<code>screen space</code>) 上得到屏幕坐标.
+</p>
+
+<p>
+根据屏幕坐标从顶点贴图 <code>tViewPosition</code> 获取实际成像的顶点坐标, 以该顶点的视点坐标 \(z\) 分量作为其深度值 <code>depth</code>.
+</p>
+
+<blockquote>
+<p>
+实际编码中是根据 <code>UV</code> 坐标从贴图上读取信息, 屏幕坐标和 <code>UV</code> 坐标就差一个线性变换.
+</p>
+</blockquote>
+
+<p>
+比如, 根据采样点 <code>sample 1</code> 和 <code>sample 2</code> 的屏幕坐标从顶点贴图上获得深度 <code>depth 1</code> 以及深度 <code>depth 2</code>.
+</p>
+
+<p>
+如图所示, 当深度值 <code>depth</code> 比其采样点 \(s \in S\) 的深度要小时, 那就说明采样点部分被遮蔽,
+</p>
+
+<p>
+所以 <code>sample 2</code> 被遮蔽, <code>sample 1</code> 没有被遮蔽, \(p\) 被部分遮蔽.
+</p>
+
+<p>
+那么如何计算 \(p\) 点的被遮蔽程度呢? 计算方法有很多种, 这里假设 \(p\) 点的被遮蔽程度的范围为 \([0, 1]\),
+</p>
+
+<p>
+当采样点 \(s \in S\) 被遮蔽时, 以 \(o(r) = smoothstep(0.0, 1.0, \frac{r}{|z - \mathrm{depth}|})\) 作为 \(s\) 的被遮蔽程度,
+</p>
+
+<p>
+其中 \(z\) 是采样点 \(s\) 的深度, \(\mathrm{depth}\) 是根据 \(s\) 在 <code>tViewPosition</code> 上获得的深度值, \(r\) 是半球体的半径.
+</p>
+
+<p>
+以此方法计算出 \(S\) 中所有采样点的被遮蔽程度, 并以它们平均值作为 \(p\) 点的被遮蔽程度:
+</p>
+
+<p>
+\(\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^{n-1} smoothstep(0.0, 1.0, \frac{r}{|z_{i} - \mathrm{depth}_{i}|})\).
+</p>
+
+<p>
+想要遮蔽效果准确, 需要采样点有足够多的数量和合适的分布, 当然采样点数量越多, 性能也越差.
+</p>
+
+<p>
+如果采样点数量过少, 遮蔽效果的精确度会下降, 生成的 <code>SSAO</code> 贴图会出现带状条纹(<code>banding</code>)的效果,
+</p>
+
+<p>
+成因是部分采样点过于靠近, 使得它们的遮蔽程度非常接近, 它们聚集在一起就形成了带状条纹.
+</p>
+
+
+<div id="orgfb38662" class="figure">
+<p><img src="../../../files/ssao_banding_noise.jpg" alt="ssao_banding_noise.jpg">
+</p>
+</div>
+
+<p>
+消除带状条纹效果也很简单, 让采样点的分散一点即可, 具体做法分两步:
+</p>
+
+<p>
+第一步, 让 \(p\) 的采样点集合 \(S\) (\(s \in S\)) 围绕法线进行统一的旋转, 不同的采样点集合的旋转是不一样的,
+</p>
+
+<p>
+比如 \(p_i\) 和 \(p_j\) 的采样点集合分别为 \(S_i\) 和 \(S_j\), 它们的旋转矩阵分别是 \(M_{i}\) 和 \(M_{j}\), 其中 \(i \ne j\).
+</p>
+
+<p>
+这样确实会获得更好的效果, 但也会引入一些噪点图案(<code>noise pattern</code>), 解决方法就是对结果模糊, 弱化噪点效果;
+</p>
+
+<p>
+第二步, 希望随着采样点索引的增加, 新增采样点与原点之间距离增加, 使得新采样点之间越分散, 最早的采样点在原点附近聚集.
+</p>
+
+<p>
+如下图的关系:
+</p>
+
+
+<div id="orge5c46eb" class="figure">
+<p><img src="../../../files/sample-distirbution.jpg" alt="sample-distirbution.jpg">
+</p>
+</div>
+
+<p>
+这个图的函数是 \(mix(0.1, 1.0, x) = 0.1 \times (1 - x) + x\), \(x = i^2 \in (0, 1]\),
+</p>
+
+<p>
+其中 \(i\) 是采样点索引 \(I\) 与采样点数量 \(N\) 之比: \(\frac{I}{N} \in (0, 1]\).
+</p>
+
+<p>
+因为采样点是 <code>TBN</code> 坐标, 所以只要能为不同 \(p\) 点生产随机的 <code>TBN</code> 矩阵就可以实现围绕法线进行统一的随机旋转.
+</p>
+
+<p>
+最简单的做法就是根据 \(p\) 的信息生成一个随机变量 \(R\) 来作为校准前 <code>TBN</code> 坐标的 <code>tangent</code> 分量, 再根据 \(R\) 和 \(N\) 计算出 <code>TBN</code> 矩阵.
+</p>
+
+<p>
+最终生成的实际是开放(<code>openness</code>)贴图, 而不是遮蔽(<code>occlusion</code>)贴图,
+</p>
+
+<p>
+因为计算一个片元被遮蔽后的颜色是 \(c \times \mathrm{openness}\), 其中 \(c\) 是片元的颜色,
+</p>
+
+<p>
+如果是遮蔽贴图, 那么就算方式变成 \(c \times (1.0 - \mathrm{occlusion})\), 生成开放贴图是为了方便后续运算.
+</p>
+
+<p>
+<b>Fragment Shader</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+
+<span style="color: #b0c4de;">#define</span> NUM_SAMPLES 8
+<span style="color: #b0c4de;">#define</span> NUM_NOISE   4
+
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> u_resolution;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tViewNormal;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tViewPosition;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrix;
+
+<span style="color: #98fb98;">float</span> hash11 ( <span style="color: #98fb98;">uint</span> n ) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">integer hash copied from Hugo Elias
+</span>  n = (n &lt;&lt; 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">float</span>( n &amp; <span style="color: #98fb98;">uint</span>(0x7fffffffU) ) / <span style="color: #98fb98;">float</span>(0x7fffffff);
+}
+
+<span style="color: #98fb98;">vec3</span> hash13( <span style="color: #98fb98;">uint</span> n ) {
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">integer hash copied from Hugo Elias
+</span>  n = (n &lt;&lt; 13U) ^ n;
+  n = n * (n * n * 15731U + 789221U) + 1376312589U;
+  <span style="color: #98fb98;">uvec3</span> k = n * <span style="color: #98fb98;">uvec3</span>(n, n*16807U, n*48271U);
+  <span style="color: #00ffff;">return</span> <span style="color: #98fb98;">vec3</span>( k &amp; <span style="color: #98fb98;">uvec3</span>(0x7fffffffU) ) / <span style="color: #98fb98;">float</span>(0x7fffffff);
+}
+
+<span style="color: #98fb98;">vec3</span> getSamplePoint( <span style="color: #98fb98;">uint</span> i ) {
+  <span style="color: #98fb98;">float</span> scale = <span style="color: #98fb98;">float</span>(i) / <span style="color: #98fb98;">float</span>(NUM_SAMPLES);
+  scale = <span style="color: #b0c4de;">mix</span>(0.1, 1.0, scale * scale);
+  <span style="color: #98fb98;">vec3</span> r = hash13(i);
+  r.x = r.x * 2.0 - 1.0;
+  r.y = r.y * 2.0 - 1.0;
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">normalize</span>(r) * scale;
+}
+
+<span style="color: #98fb98;">vec3</span> getNoise( <span style="color: #98fb98;">uint</span> n ) {
+  <span style="color: #98fb98;">vec3</span> r = <span style="color: #98fb98;">vec3</span>(hash11(n * 17) * 2.0 - 1.0,
+                hash11(n * 289) * 2.0 - 1.0,
+                0.0);
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">normalize</span>(r);
+}
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">float</span> radius = 0.6;
+  <span style="color: #98fb98;">float</span> bias = 0.01;
+
+  <span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / u_resolution.xy;
+  <span style="color: #98fb98;">vec3</span> origin = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tViewPosition, uv).xyz;
+  <span style="color: #98fb98;">vec3</span> normal = (<span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tViewNormal, uv) * 2.0 - 1.0).xyz;
+
+  <span style="color: #98fb98;">int</span>  noiseS = <span style="color: #98fb98;">int</span>(<span style="color: #b0c4de;">sqrt</span>(NUM_NOISE));
+  <span style="color: #98fb98;">int</span>  noiseX = <span style="color: #98fb98;">int</span>(<span style="color: #eedd82;">gl_FragCoord</span>.x - 0.5) % noiseS;
+  <span style="color: #98fb98;">int</span>  noiseY = <span style="color: #98fb98;">int</span>(<span style="color: #eedd82;">gl_FragCoord</span>.y - 0.5) % noiseS;
+  <span style="color: #98fb98;">vec3</span> rvec = getNoise(noiseX + (noiseY * noiseS));
+
+  <span style="color: #98fb98;">vec3</span> tangent = <span style="color: #b0c4de;">normalize</span>(rvec - <span style="color: #b0c4de;">dot</span>(rvec, normal) * normal);
+  <span style="color: #98fb98;">vec3</span> bitangent = <span style="color: #b0c4de;">cross</span>(normal, tangent);
+  <span style="color: #98fb98;">mat3</span> tbn = <span style="color: #98fb98;">mat3</span>(tangent, bitangent, normal);
+
+  <span style="color: #98fb98;">float</span> openness = NUM_SAMPLES;
+
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> i = 0; i &lt; NUM_SAMPLES; i++) {
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Transform the tangent space sampling points into world space
+</span>    <span style="color: #98fb98;">vec3</span> dir = tbn * getSamplePoint(i);
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Scale the sample points by radius of hemisphere (maybe not a unit hemisphere) in view space
+</span>    <span style="color: #98fb98;">vec3</span> surfaceView = origin.xyz + dir * radius;
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Clip Space
+</span>    <span style="color: #98fb98;">vec4</span> surfaceClip = projectionMatrix * <span style="color: #98fb98;">vec4</span>(surfaceView, 1.0);
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">NDC
+</span>    <span style="color: #98fb98;">vec3</span> surfaceNDC = surfaceClip.xyz / surfaceClip.w;
+     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Screen Space
+</span>    <span style="color: #98fb98;">vec2</span> surfaceUV = (surfaceNDC.xy * 0.5 + 0.5).xy;
+
+    <span style="color: #98fb98;">vec4</span> sampleDepth = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tViewPosition, surfaceUV).z;
+
+    <span style="color: #98fb98;">float</span> occluded = 0.0;
+    <span style="color: #00ffff;">if</span> (surfaceView.z + bias &lt;= sampleDepth) {
+      occluded = 0.0;
+    } <span style="color: #00ffff;">else</span> {
+      occluded = 1.0;
+    }
+    openness -= occluded * <span style="color: #b0c4de;">smoothstep</span>(0.0,
+                                      1.0,
+                                      radius / <span style="color: #b0c4de;">abs</span>(surfaceView.z - sampleDepth));
+  }
+
+  openness /= NUM_SAMPLES;
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(<span style="color: #98fb98;">vec3</span>(openness), origin.a);
+}
+</pre>
+</div>
+
+<p>
+开放贴图用在后续的 <code>tSSAO</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org25bdd6a" class="outline-3">
+<h3 id="org25bdd6a">对噪点进行模糊</h3>
+<div class="outline-text-3" id="text-org25bdd6a">
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #b0c4de;">#version</span> 130
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tSSAO;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> u_resolution;
+
+<span style="color: #98fb98;">void</span> main() {
+  <span style="color: #98fb98;">vec2</span> uv = <span style="color: #eedd82;">gl_FragCoord</span>.xy / u_resolution;
+  <span style="color: #98fb98;">vec2</span> texelSize = 1.0 / u_resolution;
+  <span style="color: #98fb98;">float</span> result = 0.0;
+  <span style="color: #00ffff;">for</span> (<span style="color: #98fb98;">int</span> row = -1; row &lt;= 1; row++) {
+    <span style="color: #98fb98;">float</span> y = <span style="color: #98fb98;">float</span>(row);
+    <span style="color: #98fb98;">vec2</span> left = <span style="color: #98fb98;">vec2</span>(-1.0, y) * texelSize;
+    <span style="color: #98fb98;">vec2</span> mid = <span style="color: #98fb98;">vec2</span>(0.0, y) * texelSize;
+    <span style="color: #98fb98;">vec2</span> right = <span style="color: #98fb98;">vec2</span>(1.0, y) * texelSize;
+
+    result += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tSSAO, left).r;
+    result += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tSSAO, mid).r;
+    result += <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tSSAO, right).r;
+  }
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = result / (3.0 * 3.0);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
 <div id="outline-container-curved-world" class="outline-2">
-<h2 id="curved-world">地平线视差</h2>
+<h2 id="curved-world">风格化渲染: 地平线视差 (Curved World)</h2>
 <div class="outline-text-2" id="text-curved-world">
+<p>
+有不少游戏使用了地平线视差, 使得游戏有着不错的视觉效果, 比如动物之森(<code>Animal Crossing</code>),
+</p>
+
+<p>
+这类视觉在远处会形成一个弯曲视觉.
+</p>
+
+
+<div id="org4701f72" class="figure">
+<p><img src="../../../files/animal-crossing-example.avif" alt="animal-crossing-example.avif">
+</p>
+</div>
+
 <p>
 很多人误以为, 这样的视觉效果可以通过把地面建模成圆柱状或球状就能实现.
 </p>
 
 <p>
-但是仔细想一下就能明白这不可能, 随着视野距离越远, 地面差越大, 换而言之就是随着视野距离变大, 地面曲率越大.
+但是仔细想一下就能明白这不可能, 随着视野距离越远, 地面高度差越大, 换而言之就是随着视野距离变大, 地面曲率越大.
 </p>
 
 <p>
@@ -838,11 +3266,11 @@
 </p>
 
 <p>
-我们需要一个数学函数来模拟地面差的行为, 幂函数正好符合要求:
+我们需要一个数学函数来模拟地面高度差的行为, 幂函数正好符合要求:
 </p>
 
 <p>
-\(f(x) = (\frac{x}{r})^{c}\), 其中 \(x \gt 0\) 为视野距离, \(c \gt 1\) 是曲率指数,
+\(f(x) = (\frac{x}{r})^{c}\), 其中 \(x \gt 0\) 为视野距离, \(c \gt 1\) 是曲率指数.
 </p>
 
 <p>
@@ -910,7 +3338,7 @@
 </div>
 </div>
 <div id="outline-container-outlining" class="outline-2">
-<h2 id="outlining">描边 (Outlining)</h2>
+<h2 id="outlining">风格化渲染: 描边 (Outlining)</h2>
 <div class="outline-text-2" id="text-outlining">
 <p>
 描边常用于卡通风格渲染和水墨画渲染上, 模拟现实中的笔画/线稿.
@@ -984,10 +3412,10 @@
 </p>
 
 
-<div id="org5931fd8" class="figure">
+<div id="orgafcdae0" class="figure">
 <p><img src="../../../files/outlining.webp" alt="outlining.webp" width="600px">
 </p>
-<p><span class="figure-number">Figure 1: </span>图片来源于 <a href="https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9">How to render outlines in WebGL</a></p>
+<p><span class="figure-number">Figure 12: </span>图片来源于 <a href="https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9">How to render outlines in WebGL</a></p>
 </div>
 
 <p>
@@ -1055,8 +3483,8 @@
   <span style="color: #98fb98;">float</span> ndcZ = 2.0 * <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(t, uv).r - 1.0;
   <span style="color: #98fb98;">float</span> viewZ = 2.0 * uCameraNear * uCameraFar /
     (ndcZ * (uCameraFar - uCameraNear) - (uCameraNear + uCameraFar));
-  <span style="color: #98fb98;">float</span> modelZ = -viewZ;
-  <span style="color: #98fb98;">float</span> linearDepth = (modelZ - uCameraNear) / (uCameraFar - uCameraNear);
+  <span style="color: #98fb98;">float</span> linearViewDepth = -viewZ;
+  <span style="color: #98fb98;">float</span> linearDepth = (linearViewDepth - uCameraNear) / (uCameraFar - uCameraNear);
   <span style="color: #00ffff;">return</span> linearDepth;
 }
 
@@ -1119,10 +3547,10 @@
 </div>
 
 
-<div id="orgddac0ba" class="figure">
+<div id="org2e6228a" class="figure">
 <p><img src="../../../files/outline-input-textures.png" alt="outline-input-textures.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 2: </span>从深度贴图提取外轮廓; 从法线贴图的亮度图中提取内轮廓</p>
+<p><span class="figure-number">Figure 13: </span>从深度贴图提取外轮廓; 从法线贴图的亮度图中提取内轮廓</p>
 </div>
 
 <p>
@@ -1138,10 +3566,10 @@
 </p>
 
 
-<div id="org5d70b15" class="figure">
+<div id="org8d5cbd2" class="figure">
 <p><img src="../../../files/depth+normal+almost-top.png" alt="depth+normal+almost-top.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 3: </span>从法线亮度图提取的轮廓图 (俯视角)</p>
+<p><span class="figure-number">Figure 14: </span>从法线亮度图提取的轮廓图 (俯视角)</p>
 </div>
 
 <p>
@@ -1173,10 +3601,10 @@
 </div>
 
 
-<div id="orgdfa7cdb" class="figure">
+<div id="orgaf77e1b" class="figure">
 <p><img src="../../../files/depth+normal+almost-top-with-large-depth.png" alt="depth+normal+almost-top-with-large-depth.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 4: </span>两贴图一同提取轮廓, 并增强后深度值后的权重 (俯视角)</p>
+<p><span class="figure-number">Figure 15: </span>两贴图一同提取轮廓, 并增强后深度值后的权重 (俯视角)</p>
 </div>
 </div>
 </div>
@@ -1196,10 +3624,10 @@
 </div>
 
 
-<div id="org1f40c10" class="figure">
+<div id="org9d57dc7" class="figure">
 <p><img src="../../../files/scene-outlining.png" alt="scene-outlining.png" width="400px">
 </p>
-<p><span class="figure-number">Figure 5: </span>对场景进行描边</p>
+<p><span class="figure-number">Figure 16: </span>对场景进行描边</p>
 </div>
 </div>
 </div>
@@ -1231,8 +3659,8 @@
   <span style="color: #98fb98;">float</span> ndcZ = 2.0 * <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(t, uv).r - 1.0;
   <span style="color: #98fb98;">float</span> viewZ = 2.0 * uCameraNear * uCameraFar /
     (ndcZ * (uCameraFar - uCameraNear) - (uCameraNear + uCameraFar));
-  <span style="color: #98fb98;">float</span> modelZ = -viewZ;
-  <span style="color: #98fb98;">float</span> linearDepth = (modelZ - uCameraNear) / (uCameraFar - uCameraNear);
+  <span style="color: #98fb98;">float</span> linearViewDepth = -viewZ;
+  <span style="color: #98fb98;">float</span> linearDepth = (linearViewDepth - uCameraNear) / (uCameraFar - uCameraNear);
   <span style="color: #00ffff;">return</span> linearDepth;
 }
 
@@ -1303,9 +3731,9 @@
 </div>
 </div>
 </div>
-<div id="outline-container-org649cb77" class="outline-2">
-<h2 id="org649cb77">莫比斯风格渲染 (Moebius Style Shading)</h2>
-<div class="outline-text-2" id="text-org649cb77">
+<div id="outline-container-org36e6cae" class="outline-2">
+<h2 id="org36e6cae">风格化渲染: 莫比斯风格渲染 (Moebius Style Shading)</h2>
+<div class="outline-text-2" id="text-org36e6cae">
 <blockquote>
 <p>
 在空余时间受 <a href="https://www.youtube.com/watch?v=jlKNOirh66E&amp;t=1s">Useless Game Dev - Moebius-style 3D Rendering</a> 的启发实现了莫比斯风格渲染,
@@ -1364,10 +3792,10 @@
 </p>
 
 
-<div id="orgfb9b2e0" class="figure">
+<div id="org7875484" class="figure">
 <p><img src="../../../files/moebius-outline-breaking.png" alt="moebius-outline-breaking.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 6: </span>原实现的效果: 描边断裂, 形成噪点</p>
+<p><span class="figure-number">Figure 17: </span>原实现的效果: 描边断裂, 形成噪点</p>
 </div>
 
 <blockquote>
@@ -1409,17 +3837,17 @@
 </div>
 
 
-<div id="org55f7204" class="figure">
+<div id="org810ed59" class="figure">
 <p><img src="../../../files/moebius-outline-handdraw.png" alt="moebius-outline-handdraw.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 7: </span>优化过后的描边没有颗粒感</p>
+<p><span class="figure-number">Figure 18: </span>优化过后的描边没有颗粒感</p>
 </div>
 
 
-<div id="org8081629" class="figure">
+<div id="orgf8b0163" class="figure">
 <p><img src="../../../files/moebius-outline-handdraw-larger-amplitude.png" alt="moebius-outline-handdraw-larger-amplitude.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 8: </span>扭曲幅度为 5.0 对齐原代码进行对比, 描边扭曲程度较大, 但依然没断裂</p>
+<p><span class="figure-number">Figure 19: </span>扭曲幅度为 5.0 对齐原代码进行对比, 描边扭曲程度较大, 但依然没断裂</p>
 </div>
 </div>
 </div>
@@ -1504,10 +3932,10 @@
 </p>
 
 
-<div id="org7ae4aae" class="figure">
+<div id="org9ce0581" class="figure">
 <p><img src="../../../files/moebius-shadow-line.png" alt="moebius-shadow-line.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 9: </span>绘制阴影线</p>
+<p><span class="figure-number">Figure 20: </span>绘制阴影线</p>
 </div>
 
 <blockquote>
@@ -1605,10 +4033,10 @@
 </p>
 
 
-<div id="orgea201b2" class="figure">
+<div id="orge613138" class="figure">
 <p><img src="../../../files/moebius-specular-outline.png" alt="moebius-specular-outline.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 10: </span>勾勒高亮反射区域</p>
+<p><span class="figure-number">Figure 21: </span>勾勒高亮反射区域</p>
 </div>
 
 <p>
@@ -1650,10 +4078,10 @@
 </div>
 
 
-<div id="org99129c9" class="figure">
+<div id="org8e38ba5" class="figure">
 <p><img src="../../../files/moebius-final-result.png" alt="moebius-final-result.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 11: </span>莫比斯风格渲染的最终效果</p>
+<p><span class="figure-number">Figure 22: </span>莫比斯风格渲染的最终效果</p>
 </div>
 
 <p>
@@ -1665,10 +4093,10 @@
 </p>
 
 
-<div id="org8082267" class="figure">
+<div id="org8bd94a9" class="figure">
 <p><img src="../../../files/moebius-normal-drawback.png" alt="moebius-normal-drawback.png" width="600px">
 </p>
-<p><span class="figure-number">Figure 12: </span>阴影区出现了高亮反射区的轮廓</p>
+<p><span class="figure-number">Figure 23: </span>阴影区出现了高亮反射区的轮廓</p>
 </div>
 
 <p>

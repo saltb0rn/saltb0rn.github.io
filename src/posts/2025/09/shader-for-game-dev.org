@@ -1475,7 +1475,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 在生成焦散贴图前, 别忘记了需要光源相机生成的水底深度贴图, 这一步需要 *单独* 为水底物体进行渲染, 从而生成深度贴图,
 
-它们所使用的 =shader= 如下:
+所使用的 =shader= 如下,
 
 *Vertex Shader*:
 
@@ -1628,6 +1628,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
   }
 #+END_SRC
 
+#+attr_html: :width 512px
 #+caption: 生成的焦散贴图
 [[../../../files/caustics-for-watersimulation.png]]
 
@@ -1641,7 +1642,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 这里根据物体法线和折射光的点积来决定物体受到的焦散强度, 为此还需要生成一个折射光贴图,
 
-使用到的 =shader= 如下:
+使用到的 =shader= 如下,
 
 *Vertex Shader*:
 
@@ -1843,17 +1844,16 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 #+caption: 水底下的体积光
 [[../../../files/volumetric-lighting-underwater.png]]
 
-*** COMMENT 屏幕空间反射 (Screen Space Reflection, SSR)
 *** 屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)
 :PROPERTIES:
 :CUSTOM_ID: ssao
 :END:
 
-屏幕空间环境光遮蔽是由 =Crytek= 开发的渲染技术, =2007= 年首次应用在游戏  =Cyrsis= 中,
+屏幕空间环境光遮蔽是屏幕空间技术的一种, 由 =Crytek= 开发的渲染技术, 于 =2007= 年首次应用在游戏  =Cyrsis= 中.
 
-用于估算场景中物体表面因遮挡形成的阴影区域, 计算过程是发生在屏幕空间(或称屏幕坐标系)中的,
+用于估算场景中物体表面因遮挡形成的阴影区域, 可以简单概括为物体与物体之间接触的地方模拟阴影.
 
-通俗点就是后处理:
+计算过程是发生在屏幕空间(或称屏幕坐标系)中, 换而言之就是后处理:
 
 1. 把场景部分几何信息(顶点坐标, 法线, 颜色, 深度等)写入贴图中,
    这些贴图被称为几何缓冲(=geometry buffer=) 或 =G-Buffer=;
@@ -1879,9 +1879,11 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
   uniform mat4 modelMatrix;
   uniform mat4 viewMatrix;
+  uniform mat4 projectionMatrix;
 
   void main() {
     vPosInViewSpace = viewMatrix * modelMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * vPosInViewSpace;
   }
 #+END_SRC
 
@@ -1913,6 +1915,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
   attribute vec2 uv;
   attribute vec3 normal;
   attribute vec3 tangent;
+  attribute vec3 position;
 
   varying vec2 vUV;
   varying vec3 vNormal;
@@ -1921,12 +1924,14 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
   uniform mat4 modelMatrix;
   uniform mat4 viewMatrix;
+  uniform mat4 projectionMatrix;
 
   void main() {
     vNormal = normalize((viewMatrix * modelMatrix * vec4(normal, 0.0)).xyz);
     vTangent = normalize((viewMatrix * modelMatrix * vec4(tangent, 0.0)).xyz);
     vBitangent = normalize(cross(vNormal, vTangent));
     vUV = uv;
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.);
   }
 #+END_SRC
 
@@ -1961,7 +1966,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
       normal = normalize(vNormal);
     }
 
-    gl_FragColor = vec4(normal, 1.0) * 0.5 + 0.5;
+    gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0);
   }
 #+END_SRC
 
@@ -1981,23 +1986,23 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 再从裁剪坐标变换到 =NDC=, 最后把 =NDC= 坐标变换到屏幕空间 (=screen space=) 上得到屏幕坐标.
 
-根据屏幕坐标从顶点贴图 =tViewPosition= 获取实际成像的顶点坐标, 该顶点坐标的 $z$ 分量就是实际成像的深度值 =depth=.
+根据屏幕坐标从顶点贴图 =tViewPosition= 获取实际成像的顶点坐标, 以该顶点的视点坐标 $z$ 分量作为其深度值 =depth=.
 
 #+begin_quote
 实际编码中是根据 =UV= 坐标从贴图上读取信息, 屏幕坐标和 =UV= 坐标就差一个线性变换.
 #+end_quote
 
-比如, 根据屏幕坐标从顶点贴图上获得 =sample 1= 的深度 =depth 1= 以及 =sample 2= 的深度 =depth 2=.
+比如, 根据采样点 =sample 1= 和 =sample 2= 的屏幕坐标从顶点贴图上获得深度 =depth 1= 以及深度 =depth 2=.
 
-如图所示, 当深度值 =depth= 比其采样点 $s \in S$ 的 $z$ 分量小, 那就说明 $p$ 点在 $\vec{ps} = s - p$ 方向上被遮蔽;
+如图所示, 当深度值 =depth= 比其采样点 $s \in S$ 的深度要小时, 那就说明采样点部分被遮蔽,
 
-所以 =sample 2= 被遮蔽, =sample 1= 没有被遮蔽.
+所以 =sample 2= 被遮蔽, =sample 1= 没有被遮蔽, $p$ 被部分遮蔽.
 
 那么如何计算 $p$ 点的被遮蔽程度呢? 计算方法有很多种, 这里假设 $p$ 点的被遮蔽程度的范围为 $[0, 1]$,
 
 当采样点 $s \in S$ 被遮蔽时, 以 $o(r) = smoothstep(0.0, 1.0, \frac{r}{|z - \mathrm{depth}|})$ 作为 $s$ 的被遮蔽程度,
 
-其中 $z$ 是 $s$ 的 $z$ 分量, $\mathrm{depth}$ 是根据 $s$ 在 =tViewPosition= 上获得的深度值, $r$ 是半球体的半径.
+其中 $z$ 是采样点 $s$ 的深度, $\mathrm{depth}$ 是根据 $s$ 在 =tViewPosition= 上获得的深度值, $r$ 是半球体的半径.
 
 以此方法计算出 $S$ 中所有采样点的被遮蔽程度, 并以它们平均值作为 $p$ 点的被遮蔽程度:
 
@@ -2007,17 +2012,19 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 
 如果采样点数量过少, 遮蔽效果的精确度会下降, 生成的 =SSAO= 贴图会出现带状条纹(=banding=)的效果,
 
+成因是部分采样点过于靠近, 使得它们的遮蔽程度非常接近, 它们聚集在一起就形成了带状条纹.
+
 [[../../../files/ssao_banding_noise.jpg]]
 
-为了消除带状条纹效果, 可以让 $p$ 的采样点集合 $S$ ($s \in S$) 围绕法线进行统一的旋转, 不同的采样点集合的旋转是不一样的,
+消除带状条纹效果也很简单, 让采样点的分散一点即可, 具体做法分两步:
+
+第一步, 让 $p$ 的采样点集合 $S$ ($s \in S$) 围绕法线进行统一的旋转, 不同的采样点集合的旋转是不一样的,
 
 比如 $p_i$ 和 $p_j$ 的采样点集合分别为 $S_i$ 和 $S_j$, 它们的旋转矩阵分别是 $M_{i}$ 和 $M_{j}$, 其中 $i \ne j$.
 
-这样确实会获得更好的效果, 但也会引入一些噪点图案(=noise pattern=), 解决方法就是对结果模糊, 弱化噪点效果.
+这样确实会获得更好的效果, 但也会引入一些噪点图案(=noise pattern=), 解决方法就是对结果模糊, 弱化噪点效果;
 
-在分布方面, 我们希望随着采样点索引的增加, 新增采样点与原点之间距离增加,
-
-使得新采样点之间越分散, 最早的采样点在原点附近聚集,
+第二步, 希望随着采样点索引的增加, 新增采样点与原点之间距离增加, 使得新采样点之间越分散, 最早的采样点在原点附近聚集.
 
 如下图的关系:
 
@@ -2159,6 +2166,7 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
   }
 #+END_SRC
 
+*** COMMENT 屏幕空间反射 (Screen Space Reflection, SSR)
 *** COMMENT 延迟渲染 (Deferred Rendering)
 
 使用了该技术的例子: 塞尔达旷野之息.

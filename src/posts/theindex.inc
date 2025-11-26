@@ -22,7 +22,6 @@
   - [[file:2024/08/godot-learning-diary.org][Godot 4 学习日记]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
-  - [[file:2025/05/how-to-read-and-do-proofs-notes.org][How to Read and Do Proofs 6th Edition 阅读笔记]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
 * I
   - [[file:2024/11/introduction-to-probability.org][Introduction To Probability 的阅读草稿纸]]
@@ -71,8 +70,8 @@
 * 同
   - [[file:2018/07/sync-async-blocking-non-blocking.org][同步?异步?阻塞?非阻塞?到底有没有异步阻塞和异步非阻塞?]]
 * 图
+  - [[file:2020/06/graphics-opengl-transformation.org][图形学 - OpenGL坐标变换]]
   - [[file:2020/08/graphics-opengl-light-and-material.org][图形学 - 光和材质]]
-  - [[file:2020/06/graphics-opengl-transformation.org][图形学-OpenGL坐标变换]]
   - [[file:2020/06/graphics-geometric-transformation.org][图形学-几何变换]]
   - [[file:2020/10/graphics-opengl-texture-mapping.org][图形学-纹理映射]]
 * 宝
@@ -81,6 +80,8 @@
   - [[file:2021/10/math-proofs.org][数学证明]]
 * 流
   - [[file:2025/02/fluid-typography.org][流式排版]]
+* 游
+  - [[file:2025/09/shader-for-game-dev.org][游戏 Shader 开发]]
 * 理
   - [[file:2021/02/understanding-perspective-in-css.org][理解CSS中的透视]]
   - [[file:2021/03/understanding-about-animation-in-css.org][理解CSS动画]]
