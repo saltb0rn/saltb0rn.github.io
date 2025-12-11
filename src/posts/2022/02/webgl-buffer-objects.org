@@ -70,7 +70,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 在这之前要了解一件事情, 随着 =OpenGL= 版本的变化, 渲染流程时会发生变化的, =WebGL= 也是一样.
 
-因此, 这篇文章里面的例子只关注特定版本的 =WebGL=: =WebGL 1.0=, 它对应的 =GLSL= 版本是 [[https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.1.20.pdf][1.20]].
+因此, 这篇文章里面的例子只关注特定版本的 =WebGL=: =WebGL 1.0=, =GLSL= 版本是 [[https://www.khronos.org/registry/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf][GLSL ES 1.00.17 (基于 GLSL 1.20)]].
 
 #+BEGIN_QUOTE
 由于历史原因, =OpenGL/OpenGL ES/WebGL= 和 =GLSL= 之间的版本对应关系挺混乱的, 幸好维基百科上有列出[[https://en.wikipedia.org/wiki/OpenGL_Shading_Language#Versions][对应关系]].
@@ -187,11 +187,11 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 #+CAPTION: 三个顶点所对应的片元坐标
 [[file:../../../files/trianglerast_f1_joshbeam.png]]
 
-线性插值的原理很简单, 就是 $y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times t(x_{1} - x_{0}),\ \mathrm{where}\ 0 \le t \le 1$.
+线性插值的原理很简单, 就是 $d = d_{0} + \frac{d_{1} - d_{0}}{i_{1} - i_{0}} \times t(i_{1} - i_{0}),\ \mathrm{where}\ 0 \le t \le 1$.
 
-也可以这么表述: $y = y_{0} + \frac{y_{1} - y_{0}}{x_{1} - x_{0}} \times (x - x_{0}),\ \mathrm{where}\ \min(x_{0}, x_{1}) \le x \le\ \max(x_{0}, x_{1})$.
+也可以这么表述: $d = d_{0} + \frac{d_{1} - d_{0}}{i_{1} - i_{0}} \times (i - x_{0}),\ \mathrm{where}\ \min(i_{0}, i_{1}) \le i \le\ \max(i_{0}, i_{1})$.
 
-换句话就是找出 $(x_{0}, y_{0})$ 和 $(x_{1}, y_{1})$ 两点线段上的一个点 $(x, y)$, 这个点就是缺失片元的坐标.
+换句话就是找出 $(i_{0}, d_{0})$ 和 $(i_{1}, d_{1})$ 两点线段上的一个点 $(i, d)$, 这个点就是缺失片元的坐标.
 
 由于片元是一格一格的, 因此两个相邻的片元必定在 $x$ 轴/$y$ 轴/同时在 $x$ 和 $y$ 轴方向上相差一个单位.
 
@@ -223,7 +223,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
   }
 #+END_SRC
 
-在传参时, 可以选择两个点的 $x$ 分量来作为 $i0$ 和 $i1$, 让 $y$ 分量作为 $d0$ 和 $d1$;
+在传参时, 可以选择两个点的 $x$ 分量来分别作为 $i0$ 和 $i1$, 让 $y$ 分量分别作为 $d0$ 和 $d1$;
 
 也可以选择 $y$ 分量作为 $i0$ 和 $i1$, 让 $x$ 分量作为 $d0$ 和 $d1$.
 
@@ -231,9 +231,11 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 观察代码, 如果 $\left|i1 - i0\right|$ 比 $\left|d1 - d0\right|$ 要小, 那么 $\left|a\right|$ 就要大于 1,
 
-因为函数 =interprolate= 的参数是坐标分量, 所以 $\left|a\right|$ 大于 1 表示这坐标之间相差至少两个单位, 与相邻片元相差一个单位矛盾.
+因为函数 =interprolate= 的参数是坐标分量, 所以 $\left|a\right|$ 大于 1 表示坐标之间相差至少两个单位,
 
-比如, 以 $x$ 分量作为 $i0$ 和 $i1$, 并且 $a = 2$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, 22)$;
+与相邻片元相差一个单位的事实矛盾.
+
+比如, 以 $x$ 分量作为 $i0$ 和 $i1$, 并且 $a = \frac{d1 - d0}{i1 - i0} = 2$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, 22)$;
 
 但如果以 $y$ 作为 $i0$ 和 $i1$, 那么 $a = \frac{1}{2}$, 那么 $(10, 20)$ 的下一个插值坐标是 $(11, \lfloor 20.5 \rfloor)$, 这种情况片元就是相邻的.
 
@@ -248,6 +250,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
     let ys01 = interpolate(p0.x | 0, p0.y, p1.x | 0, p1.y);
     for (let x = p0.x; x <= p1.x; x++) {
       putPixel(x | 0, ys01[(x - p0.x) | 0] | 0);
+      // putPixel(x, y) 以像素坐标作为输入, 对该位置上写入像素值
     }
   } else {
     let xs01 = interpolate(p0.y | 0, p0.x, p1.y | 0, p1.x);
@@ -290,7 +293,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 计算出每一层的两个端点, 再根据每层的两端点进行插值绘制出直线, 这些直线构成的就是目标三角形.
 
-#+CAPTION: 实心三角形
+#+CAPTION: 实心三角形 (有些情况下 Y 轴方向可能是相反的, 这不影响绘制结果)
 [[file:../../../files/trianglerast_f3_joshbeam_aux.png]]
 
 #+BEGIN_SRC javascript
@@ -397,23 +400,25 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 实情是每次以 $2 \times 2$ 的片元作为单位进行传递的, 也就是一次要同时调用 4 个 =Fragment Shaders=.
 #+END_QUOTE
 
-=OpenGL/WebGL= 会使用一些变量来传递片元数据, 比如 =gl_FragCoord= 会把片元对应的 $x$ 和 $y$ 分量一并传回;
+=OpenGL/WebGL= 会使用一些变量来传递片元数据, 比如 =gl_FragCoord= 会把片元对应的像素坐标 $x$ 和 $y$ 分量一并传回;
 
 =gl_FragCoord= 的类型是 =vec4=, 值是 $\left(x, y, z, 1/w\right)$, 其中 $x$ 和 $y$ 就是片元对应的 $x$ 和 $y$ 分量,
 
-上面的代码没有针对 $z$ 分量进行插值, 因为在透视投影中, $x$ 和 $y$ 分量的插值略微不一样,
+$z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-opengl-transformation.html#text-depth-buffer][深度值(depth value)]], =OpenGL= 以 =NDC= 坐标的 $z_{n}$ 分量的归一化结果 $z = \frac{z_{n} + 1}{2}$ 作为深度值,
 
-顶点之间的 $z$ 分量并不存在线性关系, 无法直接插值, 反而是 $\frac{1}{z}$ 之间成线性关系,
+上面的代码没有针对深度值 $z$ 分量进行插值, 因为在透视投影中, $x$ 和 $y$ 分量的插值略微不一样,
+
+深度值的的变化并非线性, 因此无法针 $z$ 使用线性插值, 反而 $\frac{1}{z}$ 的变化为线性,
 
 #+begin_quote
-在正交投影中顶点之间的 $z$ 分量到是存在线性关系
+正交投影的深度值变化为线性
 #+end_quote
 
-所以根据两个顶点的 $z$ 分量的倒数 $\frac{1}{z}$ 进行插值, 最后再倒回去:
+所以根据两个顶点的 $\frac{1}{z}$ 进行插值, 最后再倒回去:
 
 #+BEGIN_SRC js
   // ...
-  // 对可选数据按照竖向进行插值
+  // 对可选数据(深度值的倒数)按照竖向进行插值
   const iz01 = interpolate(p0.y | 0, 1 / p0.z, p1.y | 0, 1 / p1.z);
   const iz12 = interpolate(p1.y | 0, 1 / p1.z, p2.y | 0, 1 / p2.z);
   const iz02 = interpolate(p0.y | 0, 1 / p0.z, p2.y | 0, 1 / p2.z);
@@ -444,6 +449,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
     const izs = interpolate(xl, izl, xr, izr);
 
     for (let x = xl; x <= xr; x++) {
+      // 获取片元的深度值
       const iz = izs[x - xl];
       const z = 1 / iz;
       putPixel(x | 0, y | 0);
@@ -453,7 +459,9 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 同理, $1/w$ 是根据顶点插值得到的 $w$ 分量的倒数.
 
-=gl_FragCoord= 这种是 =OpenGL/WebGL= 的内置变量, 用来传递特定用途的数据, 后面会介绍更多这一类的内置变量, 因为它们可能会在 =Shader= 程序中用得上.
+=gl_FragCoord= 这种是 =OpenGL/WebGL= 的内置变量, 用来传递特定用途的数据,
+
+后面会介绍更多这一类的内置变量, 因为它们可能会在 =Shader= 程序中用得上.
 
 而可选数据 $h$ 则需要开发人员自定义 =varying= 类型或 =out= 类型变量进行传递, 我们马上就知道具体该怎么做.
 
@@ -468,7 +476,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 为了了解具体是怎么实现的, 我们来看一个例子(基于 =WebGL 1.0/GLSL 1.20= 版本).
 
 #+BEGIN_QUOTE
-在下面的绘制三角形的例子里面, =Vertex Shader= 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了);
+在下面的例子里面, =Vertex Shader= 根据三角形的顶点数据的坐标为它们定义颜色(, 这样每个顶点的颜色就不一样了);
 
 =Vertex Shader= 中的 =vColor= 则是作为与 =gl_Position= 关联的可选数据.
 
@@ -487,9 +495,11 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 [[iframe:width: 520px; height: 1060px; border: none; |../../../examples/fragment-shader-example.html]]
 #+END_QUOTE
 
-=Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定: 在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
+=Fragment Shader= [[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_inputs][输入]]和[[https://www.khronos.org/opengl/wiki/Fragment#Fragment_shader_outputs][输出]]的片元数据结构是不一样的, 从这里开始我们进行一个约定:
 
-相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和[[https://blog.darksalt.me/docs/posts/2020/06/graphics-opengl-transformation.html#text-depth-buffer][深度值]](depth value)这些信息.
+在没有特别声明的情况下, 片元就是指 =Fragment Shader= 输出的片元.
+
+相比于像素而言, 片元除了有 =RGBA= 格式的色值以外, 还有模板值(stencil value)和深度值这些信息.
 
 需要知道这些数据的含义, 或者说理解片元, 那么得先了解 =Fragment Shader= 后面的 =Per-Sample Processing= 阶段做了什么.
 
@@ -499,7 +509,77 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 这里就讨论剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test) 这三个测试(这里是它们的先后顺序).
 
-其中剪裁测试以及深度测试都比较好理解, 前者是丢弃剪裁框范围外的片元, 后者是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元;
+其中剪裁测试以及深度测试都比较好理解, 裁剪测试是丢弃剪裁框范围外的片元,
+
+深度测试是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元, 以下是深度测试的逻辑:
+
+#+begin_src javascript
+  // ...
+  // 生成深度缓冲(depth buffer), 在经过深度测试后, 深度缓冲会记录每个片元的深度
+  const canvasWidth = 1920;
+  const canvasHeight = 1080;
+  const depthBuffer = new Uint8Array(canvasWidth * canvasHeight);
+  depthBuffer.fill(0);
+  // depthBuffer 的默认初始数据为 0
+
+  // 深度测试以及更新深度缓冲
+  function updateDepthBufferIfCloser(x, y, invZ) {
+    /*
+      x: int
+      y: int
+      inv_z: float
+    ,*/
+
+    // 根据像素坐标 (x, y) 计算出其在深度缓冲中的元素索引
+    const index = y * canvasWidth + x;
+    // 确保像素坐标 (x, y) 属于成像画面中
+    if (x < 0 || x >=  canvasWidth ||
+        y < 0 || y >= canvasHeight ||
+        index < 0 || index > (canvasWidth * canvasHeight - 1)) {
+      return false;
+    }
+
+    // 对比深度缓冲在 (x, y) 上的深度值 d 和当前正在绘制的像素深度值 z
+    // 如果 z < d, 那么把 z 写入到深度缓冲的 (x, y)
+    if (0 === depthBuffer[index] ||
+        depthBuffer[index] < invZ) {
+      // depthBuffer[index] > (1.0 / invZ) 可能会更加容易理解
+      depthBuffer[index] = invZ;
+      return true;
+    }
+
+    return false;
+  }
+
+  // 深度测试的开关
+  const depthTestEnable = true;
+
+  // ...
+  for (let y = p0.y; y <= p2.y; y++) {
+    const xl = x_left[(y - p0.y) | 0];
+    const xr = x_right[(y - p0.y) | 0];
+
+    const izl = iz_left[(y - p0.y) | 0];
+    const izr = iz_right[(y - p0.y) | 0];
+
+    // 对可选数据按照横向进行插值
+    const izs = interpolate(xl, izl, xr, izr);
+
+    for (let x = xl; x <= xr; x++) {
+      // 获取片元的深度值
+      const iz = izs[x - xl];
+      const z = 1 / iz;
+
+      // 进行深度测试, 并且更新深度缓冲
+      if (depthTestEnable &&
+          updateDepthBufferIfCloser(x, y, iz)) {
+        continue;
+      }
+
+      putPixel(x | 0, y | 0);
+    }
+  }
+#+end_src
 
 而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
 
@@ -837,13 +917,13 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 在该过程中要声明好输入端 - =CPU= 的数据格式以及接收端 =GPU= 储存数据的格式, 这 3 个参数的总体作用就是声明格式:
 
-=internalformat= 指定 =GPU= 储存贴图像素的方式, 一个像素由哪些组件构成以及如何布局, 比如 =gl.RGBA= 表示依次有 =R/G/B/A= $4$ 个组件;
+=internalformat= 指定 =GPU= 储存贴图像素的方式, 一个像素由哪些通道(=channel=)构成以及如何布局, 比如 =gl.RGBA= 表示依次有 =R/G/B/A= $4$ 个通道;
 
-=format= 指定 =CPU= 储存贴图像素的方式, 比如 =gl.RGBA= 表示写入到 =GPU= 的像素依次有 =R/G/B/A= $4$ 个组件;
+=format= 指定 =CPU= 储存贴图像素的方式, 比如 =gl.RGBA= 表示写入到 =GPU= 的像素依次有 =R/G/B/A= $4$ 个通道;
 
-=type=  指定 =CPU= 这边像素的组件大小, 不同组件应该占多少位(=bits=), 比如 =gl.UNSIGNED_BYTE= 表示一个组件占 $8$ 位,
+=type=  指定 =CPU= 这边像素的通道大小, 不同通道应该占多少位(=bits=), 比如 =gl.UNSIGNED_BYTE= 表示一个通道占 $8$ 位,
 
-在比如 =gl.UNSIGNED_SHORT_5_5_5_1= 表示 =R/G/B/A= 4 个组件分别占 =5/5/5/1= 位.
+在比如 =gl.UNSIGNED_SHORT_5_5_5_1= 表示 =R/G/B/A= 4 个通道分别占 =5/5/5/1= 位.
 
 通常来说, =CPU= 和 =GPU= 两端的储存方式应该保持一致, 从而保证数据的一致性.
 #+end_quote
@@ -934,10 +1014,14 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 然而只有当 =OpenGL/WebGL= 发现渲染数据被关联了附件时, 输出的渲染数据才能被"接住".
 
-在帧缓冲里面, 渲染管线的任意一个步骤都不会被遗漏, 如果帧缓冲里面有储存深度缓冲和模板缓冲的附件, 那么深度测试和模板测试依然会进行.
+在帧缓冲里面, 渲染管线的任意一个步骤都不会被遗漏, 如果帧缓冲里面有储存深度缓冲和模板缓冲的附件,
+
+那么深度测试和模板测试就会正常进行, 只要物体的深度被写入到深度缓冲中, 写入了深度的物体之间就会进行深度测试.
 
 #+begin_quote
 [[https://webglfundamentals.org/webgl/lessons/webgl-framebuffers.html][WebGLFundamentals - FrameBuffers]] 里面用伪代码的形式把这个过程解释得非常清楚, 推荐阅读.
+
+还有关于如何深度测试的具体原理和写入可以参考 [[https://www.gabrielgambetta.com/computer-graphics-from-scratch/12-hidden-surface-removal.html#depth-buffering][Computer Graphics from Scratch - Hidden Surface Removal]].
 #+end_quote
 
 储存缓冲数据的附件可以是贴图, 也可以是渲染缓冲(=RenderBuffer=), 这两者在用法上存在一些区别.
@@ -954,6 +1038,7 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 
 #+BEGIN_SRC js
   const canvas = document.getElementById('#canvas');
+  const gl = canvas.getContext('webgl');
 
   gl.enable(gl.DEPTH_TEST);
   // 在把渲染结果输出到 fbo 上之前设置渲染尺寸
@@ -1025,6 +1110,128 @@ PS: 现在是 2023 年 12 月, 从今年的 6 月份才发现这本书已经写�
 个人把这种情况叫做多阶段后处理(=multipass post procesing=).
 
 在 =3D= 图形程序的开发中, 后处理的使用频率非常高, 特别是游戏开发, 想实现风格化的美术风格, 后处理是必不可少的手段.
+
+**** 多重渲染目标 (Multiple Rendering Targets, MRT)
+:PROPERTIES:
+:CUSTOM_ID: multiple-rendering-targets
+:END:
+
+在 =WebGL 2= 中支持只使用一组 =shader= 程序为 =FBO= 所绑定的不同附件输出不同结果.
+
+#+BEGIN_SRC javascript
+  const canvas = document.getElementById('#canvas');
+  const gl = canvas.getContext('webgl2');
+
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+  const attachments = [];
+  const level = 0;
+
+  for (let i = 0; i < 2; i++) {
+
+    const attachmentIndex = gl.COLOR_ATTACHMENT0 + i;
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+                  canvas.width, canvas.height, 0,
+                  gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentIndex,
+                            gl.TEXTURE_2D, texture, level);
+
+    attachments.push(attachmentIndex);
+  }
+
+  // 指定写入颜色缓冲的附件, MRT 的关键
+  gl.drawBuffers(attachments);
+
+  // 检查帧缓冲状态
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  if (status !== gl.FRAMEBUFFER_COMPLETE) {
+    console.error('Framebuffer is not complete:', status.toString());
+  }
+#+END_SRC
+
+下面是物体使用的 =Vertex Shader=:
+
+#+begin_src glsl
+  #version 300 es
+  precision highp float;
+
+  uniform mat4 uModelViewMatrix;
+  uniform mat4 uProjectionMatrix;
+
+  /*
+    in 变量指从上一个阶段传入的输入变量,
+
+    在 Vertex Shader 中相当于 GLSL ES 1 中的 attribute 变量;
+
+    在 Fragment Shader 中相当于 GLSL ES 1 中的 varying 变量.
+   ,*/
+  layout(location = 0) in vec4 aVertexPosition;
+  layout(location = 1) in vec3 aNormal;
+  layout(location = 2) in vec4 aColor;
+  /*
+    layout 关键字用于显示控制内存布局,
+
+    layout(location = n) 对应 JavaScript 中 gl.vertexAttributePointer 的第一个参数
+
+    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, offset0); // aVertexPosition
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, offset1); // aNormal
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, offset2); // aColor
+
+    在 Vertex Shader 中, 这个关键词的使用是可选的, 而且 Vertex Shader 的 out 变量不能使用 layout 关键字.
+   ,*/
+
+
+  /*
+    out 变量指输入到下一个阶段的输出变量,
+
+    在 Vertex Shader 中相当于 GLSL ES 1 中的 varying 变量;
+
+    在 Fragment Shader 中相当于 GLSL ES 1 中的 gl_FragColor 变量,
+
+    但比 GLSL ES 1 内置的 gl_FragColor 要高级, GLSL ES 2 支持同时多个输出,
+
+    可以说 GLSL ES 2 支持多个不同名的 gl_FragColor,
+
+    在 GLSL ES 2 的 Fragment Shader 中, 如果只有一个 out 变量,
+
+    这时的 out 变量相当于 GLSL ES 1 的 gl_FragColor.
+   ,*/
+  out vec3 vNormal;
+  out vec4 vColor;
+
+  void main() {
+    vNormal = normalize(aNormal);
+    vColor = aColor;
+
+    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  }
+#+end_src
+
+接下来的 =Fragment Shader= 是实现 =MRT= 的关键之一:
+
+#+BEGIN_SRC glsl
+  #version 300 es
+  precision highp float;
+
+  in vec3 vNormal;
+  in vec4 vColor;
+
+  layout(location = 0) out vec4 outColor;
+  layout(location = 1) out vec4 outNormal;
+  /*
+    这里的 layout(location = n) 中 n 是指 attachments 数组元素的索引,
+
+    在 MRT 时, layout 关键字是必须使用的.
+   ,*/
+
+  void main() {
+    outColor = vColor;
+    outNormal = vec4(vNormal * 0.5 + 0.5, 1.0);
+  }
+#+END_SRC
 
 *** 搭建自己的 Shadertoy
 

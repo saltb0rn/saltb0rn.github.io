@@ -72,6 +72,32 @@
   后来 =Chrome= 的更新导致了 =RenderDoc= 难以实现注入, 于是 =RenderDoc= 的开发者就放弃了 =WebGL= 的调试.
 
 
+=Three.js= 也不是没有缺点, 曾经让我纠结是否使用作为实践工具的主要原因是 [[https://github.com/mrdoob/three.js/wiki/Migration-Guide][API的变化太快]],
+
+而且它的在线官方文档是关于最新版的 =three.js= 的, 要想看老版本的文档只能克隆对应版本的代码,
+
+并且在代码的根目录运行静态服务器, 然后浏览它的文档目录 =/docs=.
+
+以浏览 =r180= 版本的文档为例子:
+
+#+BEGIN_SRC bash
+  git clone -b r180 git@github.com:mrdoob/three.js.git
+  cd three.js
+  python3 -m http.server
+  # 这里选择用 python 的 http.server 模块创建服务器,
+  # 也可以直接使用项目内置的 npm run dev 命令运行,
+  # 但众所周知, 老前端项目容易在 npm i 出现各种问题.
+  # 启动服务器后, 在浏览器的地址栏输入 http://localhost:8000/docs
+#+END_SRC
+
+至于为什么还是选择了 =three.js=, 其实是因为别无选择, 主流一点的 =WEB= 图形引擎都有这些问题,
+
+不选这些图形引擎就只能使用纯正的 =WebGL API= 了, 这只会更加痛苦.
+
+本文的代码将依赖于 =r180= 版本的 =three.js=, 在阅读前请准备好 =r180= 的文档.
+
+-----
+
 阅读时你会文章中的示例 =Shader= 与提供的 [[https://github.com/saltb0rn/shader-for-game-dev][项目代码: shader-for-game-dev]] 有所区别,
 
 这是因为 =three.js= 的 [[https://threejs.org/docs/?q=shader#api/en/materials/ShaderMaterial][ShaderMaterial]] 的 =Shader= 本身就内置了一些 [[https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram][uniforms/attributes]] 变量,
@@ -136,8 +162,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Vertex Shader*: {{{INNERLINK(app-vertex)}}}
 
 #+BEGIN_SRC glsl
-  #version 130
-
   attribute vec3 position;
   uniform mat4 modelViewMatrix;
   uniform mat4 projectionMatrix;
@@ -150,17 +174,15 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Fragment Shader*:
 
 #+BEGIN_SRC glsl
-  #version 130
-
   void main() {
     float depth = gl_FragCoord.z * 0.5 + 0.5;
     gl_FragColor = vec4(depth);
   }
 #+END_SRC
 
-把深度值归一化到 $[0, 1]$ 有利于储存, 因为默认情况下图片就是以 =RGBA= 储存像素,
+把深度值归一化到 $[0, 1]$ 有利于储存, 因为默认情况下图片就是以 =RGBA= 4 个颜色通道(=channel=)的形式储存像素,
 
-像素的每个组件可以被解释为在 $x \in [0, 255]$ 内的整数, 对应 =Shader= 里面对应 $\frac{x}{255} \in [0, 1]$.
+像素的每个通道可以被解释为在 $x \in [0, 255]$ 内的整数, 对应 =Shader= 里面被归一化为 $\frac{x}{255} \in [0, 1]$.
 
 当然可以[[../../2022/02/webgl-buffer-objects.html#texture][对贴图进行参数设置]]储存 $[0, 1]$ 范围外的数值, 这样就无须归一化.
 
@@ -177,8 +199,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Vertex Shader*:  {{{INNERLINK(app-vertex-uv)}}}
 
 #+BEGIN_SRC glsl
-  #version 130
-
   attribute vec3 position;
   attribute vec2 uv;
   uniform mat4 modelViewMatrix;
@@ -195,8 +215,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Fragment Shader*:
 
 #+BEGIN_SRC glsl
-  #version 130
-
   varying vec2 vUV;
   uniform sampler2D tDepth;
   uniform float uCameraNear;
@@ -228,8 +246,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Vertex Shader*:
 
 #+BEGIN_SRC glsl
-  #version 130
-
   attribute vec3 position;
   attribute vec3 normal;
   uniform mat4 modelViewMatrix;
@@ -253,8 +269,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Fragment Shader*:
 
 #+BEGIN_SRC glsl
-  #version 130
-
   varying vec3 vNormal;
 
   void main() {
@@ -263,7 +277,7 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
   }
 #+END_SRC
 
-就像深度贴图归一化深度值一样, 法线向量的每个组件的范围也是 $[-1, 1]$, 所以这里也进行了归一化.
+就像深度贴图归一化深度值一样, 法线向量的每个通道的范围也是 $[-1, 1]$, 所以这里也进行了归一化.
 
 ***** 应用例子
 
@@ -272,8 +286,6 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 *Fragment Shader*:
 
 #+BEGIN_SRC glsl
-  #version 130
-
   varying vec2 vUV;
   uniform sampler2D tNormal;
 
@@ -398,7 +410,7 @@ $f(x, y, z) = (u(x, y, z), v(x, y, z), w(x, y, z))$, 其中 $u, v, w$ 均为多�
 
 每平面坐标都会有一个值来反应它的高度, 这些值的集合就是一个高度场.
 
-最常见的高度场应用例子就是使用柏林噪声生产地形, 本质上就是使用噪声算法生成高度场, 使得平面的不同位置上高度不一致.
+最常见的高度场应用例子就是使用柏林噪声生成地形, 本质上就是使用噪声算法生成高度场, 使得平面的不同位置上高度不一致.
 
 然而与地形不同, 水面是可以交互的, 比如对水面使力产生波纹, 还有光线照射到水面,
 
@@ -975,8 +987,11 @@ z &= r \cos\theta
 #+END_SRC
 
 **** 制作水面
+:PROPERTIES:
+:CUSTOM_ID: translucent-object-water
+:END:
 
-水面的反射(=reflection=)和折射(=refraction=)现象都非常明显, 这使得水成为同类物质的代表.
+作为半透明物质(=translucent material=)的代表, 水面的反射(=reflection=)和折射(=refraction=)现象都非常明显.
 
 这两个现象不可避免得与环境发生交互, 比如反射的是水面上的环境, 折射的是水面下的场景,
 
@@ -1170,7 +1185,7 @@ z &= r \cos\theta
   )
 #+end_src
 
-以下该水面模型所使用的 =shader=,
+水面模型所使用的 =shader= 如下,
 
 *Vertex Shader*:
 
@@ -1386,7 +1401,7 @@ $r_{clip}$ 在 =UVW= 空间上的形式 $r_{uvw}$ 为:
 
 $\begin{equation*}\begin{aligned} & B_{uvw} \\ = & (B_{ndc} + 1) \div 2 \\ = & (A_{ndc} + r_{ndc} + 1) \div 2 \\ = & (A_{ndc} + 1) \div 2 + r_{ndc} \div 2 \\ = & A_{uvw} + r_{uvw} \\ \rightarrow & r_{uvw} = \frac{r_{ndc}}{2} = B_{uvw} - A_{uvw} \end{aligned}\end{equation*}$
 
-这里有一点意外, 在 =UVW= 空间上, $A_{uvw}$ 和 $B_{uvw}$ 居然只相差了 $\frac{r_{ndc}}{2}$ 而不是 $\frac{r_{ndc} + 1}{2}$.
+正如等式所示, $r_{uvw} = B_{uvw} - A_{uvw} \ne \frac{r_{ndc} + 1}{2}$, $r_{uvw}$ 不符合 =UVW= 坐标的定义.
 
 $r_{clip}$ 在屏幕空间上的形式 $r_{screen}$ 为:
 
@@ -1420,7 +1435,7 @@ $d_{w} = \frac{|d_{uv}|}{|(r_{uvw})_{xy}|} \times (r_{uvw})_{z} = \frac{|d_{frag
 
 在透视投影中, =NDC/UVW= 的变化为非线性的, 并且存在这些关系:
 
-$\begin{cases} (A_{clip})_{w} & = -(A_{view})_{z} \\ (B_{clip})_{w} & = -(B_{view})_{z} = - [(A_{view})_{z} + (r_{view})_{z} ] \\ (r_{view})_{w} & = -(r_{view})_{z} \end{cases}$
+$\begin{cases} (A_{clip})_{w} = -(A_{view})_{z} \\ (B_{clip})_{w} = -(B_{view})_{z} = - [(A_{view})_{z} + (r_{view})_{z} ] \\ (r_{view})_{w} = -(r_{view})_{z} \end{cases}$
 
 然后计算出透视投影下的 $r_{ndc}$:
 
@@ -1473,9 +1488,9 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 其中 $causticsIntensity$ 是焦散强度, $depth$ 是光源深度, 它们都大于 0,
 
-在生成焦散贴图前, 别忘记了需要光源相机生成的水底深度贴图, 这一步需要 *单独* 为水底物体进行渲染, 从而生成深度贴图,
+在生成焦散贴图前, 别忘记了需要光源相机生成的水底深度贴图, 这一步需要 *单独* 为水底物体进行渲染,
 
-所使用的 =shader= 如下,
+生成水底的深度贴图所使用的 =shader= 如下,
 
 *Vertex Shader*:
 
@@ -1484,16 +1499,15 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
   uniform mat4 viewMatrix;        // 光源相机的视点变换
   uniform mat4 projectionMatrix;  // 光源相机的投影矩阵
 
-  attribute vec3 position;
-
-  varying vec4 vWorldPos;
+  varying vec4 vPosWorld;
   varying float vDepth;
 
   void main() {
-    vWorldPos = modelMatrix * vec4(position, 1.);
-    vec4 projPos = projectionMatrix * viewMatrix * vWorldPos;
-    vDepth = projPos.z;
-    gl_Position = projPos;
+    vPosWorld = modelMatrix * vec4(position, 1.);
+    vec4 posClip = projectionMatrix * viewMatrix * vPosWorld;
+    // vDepth = posClip.z / posClip.w * 0.5 + 0.5;
+    vDepth = posClip.z;
+    gl_Position = posClip;
   }
 #+END_SRC
 
@@ -1524,6 +1538,8 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 从而影响其它渲染, 所以只能调整计算用平面的尺寸, 使其能正好被相机的远裁剪平面覆盖.
 
+生成焦散贴图所使用的 =shader= 如下,
+
 *Vertex Shader*:
 
 #+BEGIN_SRC glsl
@@ -1544,7 +1560,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
   #define AIR_IOR 1.0
   #define WATER_IOR 1.325
-  #define MAX_ITERATIONS 100
+  #define MAX_ITERATIONS 50
 
   void main () {
     vec4 info = texture2D(tHeightfield, uv);
@@ -1568,9 +1584,9 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
     vec2 refractedScreen = refractedUVW.xy * uResolution;
     vec2 dFrag = refractedScreen / max(abs(refractedScreen.x), abs(refractedScreen.y));
     float dW = length(dFrag) / length(refractedScreen) * refractedUVW.z;
+    // tEnvShadowMap 以裁剪坐标的 z 分量作为深度, 所以要把 NDC 中的深度变化还原到裁剪空间上
     vec3 delta = vec3(dFrag, dW * 2.0);
 
-    // tEnvShadowMap 以 ndc 的 z 分量作为深度, 由于是正交相机, ndc 的 z 分量之间可以进行线性插值
     vec2 currentPos = (waterPosClip.xy * 0.5 + 0.5) * uResolution;
     float currentDepth = waterPosClip.z;
     vec2 deltaDirection = delta.xy;
@@ -1637,12 +1653,15 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 [[https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/GPUComputation/Caustics/index.ts][src/HeightfieldWaterSimulation/GPUComputation/Caustics/index.ts]]
 
 **** 为水底的场景编写 shader
+:PROPERTIES:
+:CUSTOM_ID: shader-for-underwater
+:END:
 
 水底物体的 =shader= 还是比较简单的, 主要是渲染焦散纹理,
 
 这里根据物体法线和折射光的点积来决定物体受到的焦散强度, 为此还需要生成一个折射光贴图,
 
-使用到的 =shader= 如下,
+生成折射光贴图所使用的 =shader= 如下,
 
 *Vertex Shader*:
 
@@ -1705,7 +1724,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 -----
 
-最终水底物体的 =shader= 如下,
+水底物体的 =shader= 如下,
 
 *Vertex Shader*:
 
@@ -1775,6 +1794,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
     float closestDepth = info.w;
 
     float bias = 0.01;
+    // 只有未被遮蔽的情况下才应用焦散
     if (closestDepth > depth - bias) {
 
       float causticsIntensity = 0.5 * (
@@ -1793,6 +1813,24 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 [[https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/materials/UnderWaterMaterial/index.ts][src/HeightfieldWaterSimulation/materials/UnderWaterMaterial/index.ts]]
 
+实际上应用到水底物体时焦散却出现了很严重的锯齿/颗粒感.
+
+#+caption: 颗粒感
+[[../../../files/HeightfieldWaterSimulation.png]]
+
+我们可以通过减少位移向量 $delta$ 的大小来减轻这个问题:
+
+#+begin_src glsl
+  vec3 delta = vec3(dFrag, dW * 2.0) * 0.1;
+#+end_src
+
+#+caption: 通过减少像素遍历的位移减少锯齿感
+[[../../../files/HeightfieldWaterSimulation-2.png]]
+
+需要注意的是, 减少位移大小会多次对焦散贴图的一个像素进行重复采样, 这会使得交点查找的效率下降, 同时使得焦散宽度变小.
+
+在不考虑焦散准确度的情况下解决锯齿问题, 最好的解决办法是适当提高焦散贴图的解析度和适当减少位移向量的大小.
+
 **** 项目总结
 
 虽然是参考 [[https://medium.com/@martinRenou/real-time-rendering-of-water-caustics-59cda1d74aa][Real-time rendering of water caustics by Martin Renou]] 的项目, 但本文在很多地方都做了调整,
@@ -1805,7 +1843,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
   本文已经把这个问题解决掉了.
 
-- 原项目在计算折射光与场景的交点时, 在屏幕空间上的位移计算不准确.
+- 原项目在计算折射光与场景的交点时, 在屏幕空间上的位移计算方式不太准确.
 
   #+BEGIN_SRC glsl
     // This factor will scale the delta parameters so that we move from one pixel to the other in the env map
@@ -1817,9 +1855,9 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
     float deltaDepth = refractedDirection.z * factor;
   #+END_SRC
 
-  在调整了模型和深度贴图解析度的情况下, 这两个值会使得生成焦散贴图的一些区域出现没有焦散的问题,
+  在调整了模型和深度贴图解析度的情况下, *可能* 会使得生成焦散贴图的一些区域出现没有焦散的问题,
 
-  这其实就是在屏幕空间并没有逐个像素移动所导致的情况.
+  这其实就是在屏幕空间并没有逐个像素移动导致的, 而且作者并没有提供 $factor$ 计算方式的推导.
 
 
 选择这个项目作为开篇例子的主要是其中运用了很多后续会学习到的知识点, 并且涉及程度不深,
@@ -1828,21 +1866,346 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 项目里头的屏幕空间反射技术实现倒是简单, 这种在屏幕空间上利用已渲染的场景信息创造复杂效果的技术还有很多,
 
-这里简称屏幕空间技术, 其中延迟渲染(=Deferred Rendering=)就是屏幕空间技术的其中一个例子;
+这里简称屏幕空间技术;
 
 项目里还使用了图像处理方面的技术, 使用了拉普拉斯核来模拟了水波纹和使用了高斯模糊核来柔化焦散贴图;
 
 [[#gpu-computation][Ping-Pong 渲染技巧]] 也常常出现在后处理中.
 
-其次, 这个项目完整地考核了读者对于渲染管线的理解, 确保读者有能力完成后续的学习.
+其次, 这个项目完整地考核了读者对于渲染管线(=rendering pipeline=)的理解,
 
-另外, 原项目还留有一些可优化的点, 它们都可以作为单独学习的知识点,
+确保读者有能力完成后续的学习. 另外, 原项目还留有一些可优化的点, 它们都可以作为单独学习的知识点,
 
-其中在水底中构建可视光路是非常重要的知识点, 人们把这项技术称为体积光照(=Volumetric lighting=), 又称圣光(=godray=).
+其中在水底中构建可视光路是非常重要的知识点, 人们把这项技术称为体积光照(=Volumetric lighting=), 又称圣光(=God rays=).
 
 #+attr_html: :width 500px
 #+caption: 水底下的体积光
 [[../../../files/volumetric-lighting-underwater.png]]
+
+*** 屏幕空间技术 (Screen Space Techniques, SST)
+:PROPERTIES:
+:CUSTOM_ID: screen-space-techniques
+:END:
+
+屏幕空间技术是一类基于[[#render-to-texture][已渲染的 2D 屏幕图像(像素缓冲区)]]合成出最终图像, 整个合成的过程发生在屏幕空间上,
+
+换而言之, 整个合成过程不直接操作 =3D= 场景, 而是基于渲染得到的 =2D= 图像进行后处理.
+
+在 =2D= 空间上完成后处理并不意味着无法读取到 =3D= 场景的几何信息,
+
+在开始后处理之前, 使用对应的 =shader= 程序应用在场景物体上, 进行渲染并把渲染结果保持在贴图上,
+
+这一类包含了场景几何信息的贴图或缓冲区被叫做 =G-Buffer=, 常见的 =G-buffer= 如下:
+
+- 法线贴图 (=normal texture=): 包含场景的法线信息
+- 深度贴图 (=depth texture=): 包含场景的深度信息
+- 颜色贴图/漫反射贴图 (=color/albedo/diffuse texture=): 包含场景的基础色
+- 顶点贴图/位置贴图 (=vertex/position texture=): 包含场景的顶点信息
+- 镜面反射贴图 (=specular texture=): 包含场景的高光信息
+
+还有一些开发者自定义的 =G-Buffer=, 比如 [[#shader-for-underwater][高度场水面模拟 - 为水底的场景编写 shader]] 中的折射光贴图.
+
+生成 =G-Buffer= 的这个阶段被称为几何处理阶段(=Geometry Pass=).
+
+从 =OpenGL 2.0 / OpenGL ES 3.0 / WebGL 2.0= 开始就支持[[../../2022/02/webgl-buffer-objects.html#multiple-rendering-targets][多重渲染目标(MRT)]], 可以一次性生成多个 =G-Buffer=,
+
+从而提高性能. 由于本文的一切 =shader= 程序是使用 =GLSL 1.20= 编写的, 并不支持 =MRT= , 因此 =MRT= 就不讨论了.
+
+**** 从 G-Buffer 上正确地获取片元的几何信息
+:PROPERTIES:
+:CUSTOM_ID: how-to-read-info-from-gbuffer
+:END:
+
+不同的 =G-Buffer= 可能由不同的相机渲染生成, 比如 =tGBufferA= 由相机 =Camera A= 渲染生成,
+
+=tGBufferB= 使用相机 =Camera B= 渲染生成, 如此类推.
+
+想要正确地从 =G-Buffer= 上获取几何信息, *通常* 得根据对应的相机计算出 =UV= 坐标从对应 =G-Buffer= 上获取几何信息.
+
+比如想从 =tGBufferA= 上获取几何信息, 可从保存了视点坐标的位置贴图 =tPositionView= 获取片元的视点坐标 =pView=,
+
+=Camera A= 的投影矩阵为 =projectionMatrixA=, 这里需要强调一下, =Camera A= 并非生成 =tPositionView= 的相机.
+
+*但有一个例外*, 要从 =tPositionView= 获取 =pView= 得使用后处理的相机 =Camera O= 的 =UV= 坐标进行采样,
+
+=Camera O= 并非生成 =tPositionView= 的相机, 但它的 =UV= 坐标是屏幕空间技术的起点和标志.
+
+以下是从 =tGBufferA= 上正确获取片元几何信息的思路:
+
+#+BEGIN_SRC glsl
+  // 合成最终图像的 fragment shader
+  uniform vec2 uResolution;        // 最终图像的分辨率
+  uniform mat4 projectionMatrixA;  // Camera A 的投影矩阵
+  uniform sampler2D tGBufferA;     // G-Buffer A
+  uniform sampler2D tPositionView; // 保存了视点坐标的位置贴图
+
+  vec2 ssUV = gl_FragCoord.xy / uResolution.xy; // 最终图像的 UV 坐标
+  vec4 pView = texture2D(tPositionView, ssUV);  // 片元在视点空间上的顶点坐标
+  vec4 pClip = projectionMatrixA * pView;
+  vec3 pNDC = pClip.xyz / pClip.w;
+  vec3 pUVW = pNDC * 0.5 * 0.5;   // 片元在相机 Camera A 中的 UVW 坐标
+  vec4 pGinfo = texture2D(tGBufferA, pUVW.xy);
+#+END_SRC
+
+这里可以看出位置贴图 =tPositionView= 的重要性, 它能为不同 =G-Buffer= 提供了采样的 =UV= 坐标.
+
+**** 延迟渲染 (Deferred Rendering / Deferred Shading)
+:PROPERTIES:
+:CUSTOM_ID: deferred-shading
+:END:
+
+只要能在后处理时能够获得片元的几何信息, 就可实现各种视觉效果, 比如光照计算, 阴影生成, 等等.
+
+=Michael Deering= 在 =1988= 年的[[https://dl.acm.org/doi/10.1145/378456.378468][论文]]提出了一种在屏幕空间完成着色的技术, 该技术被称为延迟渲染, 是一种渲染流程.
+
+图形引擎的传统渲染流程可以简单概括为以下伪代码:
+
+#+BEGIN_SRC javascript
+  const scene = [ /* meshes in scene */ ];
+  const lights = [ /* lights in scene */ ];
+  const camera;    // 成像相机
+
+  function runShaderMaterial(fbo, mesh, camera, lights) {
+    // 给 mesh 的材质提供光源
+    mesh.material.uniforms.lights.value = lights;
+
+    // mesh 材质 shader 中光照计算的部分逻辑如下
+
+    /*
+      uniform vec4 lights[8];
+
+      float intensity = 0.0;
+
+      for (int i = 0; i < 8; i++) {
+        intensity += calcIntensity(lights[i]);
+        // calcIntensity 是计算物体受到的光照强度
+      }
+    ,*/
+
+    // ...
+
+    // 把渲染结果写入 FrameBuffer 对象 fbo 中
+
+  }
+
+  function render() {
+
+    // 按照距离对物体进行排序
+    let sortedScene = sortByDistance(scene, camera);
+    // 用于收集渲染结果的 FrameBuffer
+    const fbo;
+    for (let mesh of sortedScene) {
+      if (isInFrustum(mesh, camera)) { // 检查物体是否在视椎体中
+        runShaderMaterial(fbo, mesh, camera, lights); // 渲染物体
+      }
+    }
+
+    // 后处理
+    applyPostProcessing(fbo);
+  }
+#+END_SRC
+
+传统的渲染流程被称为向前渲染(=Forward Rendering / Forward Shading=),
+
+可以发现向前渲染在有 $m$ 个光源的情况下, 如果要渲染 $n$ 个物体, 那么整个过程的算法复杂度为 $O(m \cdot n)$.
+
+这是一个严重的性能问题, 而延迟渲染可以把光照计算延迟到后处理中完成, 整个渲染流程就变成如下:
+
+#+begin_src javascript
+  const scene = [ /* meshes in scene */ ];
+  const lights = [ /* lights in scene */ ];
+  const camera;    // 成像相机
+
+  function runShaderMaterial(fbo, mesh, camera, lights=[]) {
+    // 绘制物体, 但可以不进行光照计算, 并且生成和更新 G-Buffer
+    // 在调用 runShaderMaterial 时如果不传入参数 lights, 那么就不会进行光照计算
+  }
+
+  function lightingPass(fboLight, gBuffers, lights) {
+    // 在后处理中完成光照计算, 并把结果输出到屏幕中
+    const fullScreenQuadMesh;     // 覆盖屏幕的 3D 平面模型
+    const orthCamera;             // 视锥体正好覆盖完 fullScreenQuadMesh 的正交相机
+    // 给 fullScreenQuadMesh 的材质提供 G-Buffer 和光源
+    for (let buf of gBuffers) {
+      fullScreenQuadMesh.material.uniforms[buf.name].value = buf;
+    }
+    fullScreenQuadMesh.material.uniforms.lights.value = lights;
+    // 提供最终图像的解析度
+    fullScreenQuadMesh.material.uniforms.resolution.value = [ 1920, 1080 ];
+
+    // fullScreenQuadMesh 材质的 fragment shader 逻辑大概如下
+    /*
+      uniform vec4 lights[8];
+      uniform sampler2D tPosition;
+      uniform sampler2D tDiffuse;
+      uniform sampler2D tNormal;
+      uniform vec2 resolution;
+
+      vec2 uv = gl_FragCoord.xy / resolution.xy;
+      vec4 position = texture2D(tPosition, uv);
+      vec4 color = texture2D(tDiffuse, uv);
+      vec3 normal = texture2D(tNormal, uv).xyz * 2.0 - 1.0;
+
+      float intensity = 0.0;
+      for (int i = 1; i < 8; i++) {
+         intensity += calcIntensity(uv, position, normal, lights[i]);
+         // calcIntensity 是计算片元受到的光照强度
+      }
+
+      gl_FragColor = vec4(color.rgb * intensity, color.a);
+     ,*/
+
+    runShaderMaterial(fboLight, fullScreenQuadMesh, orthCamera);
+    // 把渲染结果写入到 fboLight 中
+  }
+
+  function render() {
+
+    // 按照距离对物体进行排序
+    let sortedScene = sortByDistance(scene, camera);
+
+    // 用于收集 G-Buffer 的 FrameBuffer 对象
+    const fboGBuffer;
+    for (let mesh of sortedScene) {
+      if (isInFrustum(mesh, camera)) { // 检查物体是否在视椎体中
+        runShaderMaterial(fboGBuffer, mesh, camera); // 渲染物体, 但不对这些物体进行光照计算
+      }
+    }
+
+    // 获取 G-Buffer
+    const gBuffers = geometryPass(fboGBuffer);
+    // 用于收集光照计算结果的 FrameBuffer 对象
+    const fboLight;
+    // 计算光照, 并把最终图像输出到 fboLight 的附件上
+    lightingPass(fboLight, gBuffers, lights);
+
+    // 后处理
+    applyPostProcessing(fboLight);
+  }
+#+end_src
+
+被推迟的光照计算被称为光照处理阶段(=Lighting Pass=). 整个渲染的复杂度变为 $O(m + n)$.
+
+[[../../../files/deferred_overview.png]]
+
+相比于抽象的算法复杂度, 延迟渲染减少的无效渲染要比人们想象的要多得多.
+
+由于向前渲染每次都是完整地绘制整个物体, 因此每绘制一个物体都得进行一次光照计算,
+
+又由于[[https://www.gabrielgambetta.com/computer-graphics-from-scratch/12-hidden-surface-removal.html#depth-buffering][深度测试]]存在, 渲染引擎不可避免地要对不可见的像素进行光照计算;
+
+延迟渲染则是在绘制物体时取消掉光照计算, 直接拿到经过深度测试后的几何信息,
+
+再根据这些信息在屏幕空间上进行光照计算, 因此, 延迟渲染的光照计算成本大小取决于最终图像的分辨率.
+
+#+attr_html: :width 500px
+#+caption: 向前渲染 VS 延迟渲染, 避免了对不可见的像素进行光照计算 (图片来源于 [[https://lettier.github.io/3d-game-shaders-for-beginners/deferred-rendering.html][3D Game Shaders For Beginners]])
+[[../../../files/forward-vs-deferred.png]]
+
+目前大多数图形引擎的默认渲染流程是向前渲染, 对比两者可发现能够在不修改渲染流程的前提下,
+
+在后处理阶段中实现延迟渲染:
+
+1. 把物体材质 =shader= 中光照计算逻辑给去掉;
+2. 把后处理的实现分开为几何处理阶段和光照处理阶段.
+
+
+延迟渲染的高效使得它非常适用于渲染复杂场景, 因此开放世界的游戏一般会用它实现光影计算,
+
+最典型的例子是《塞尔达传说 旷野之息》(=The Legend of Zelda: Breath of the Wild=), 具体可以看这一期[[https://www.bilibili.com/video/BV1Yk9bYLEvb/?spm_id_from=333.1387.favlist.content.click&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30][视频]],
+
+对于开发者和玩家而言, 这游戏最神奇的地方在于一个大型开放世界的游戏可以良好的运行在一台性能羸弱的机器上.
+
+在学术上, 延迟渲染并不属于屏幕空间技术, 它是一套渲染流程, 然而在后处理中实现一些效果的逻辑却和这个流程十分吻合:
+
+需要若干 =G-Buffer=, 在屏幕空间上使用这些 =G-Buffer= 实现效果.
+
+**** 延迟渲染的缺点
+
+延迟渲染在带来效率的同时也带来了一些缺点.
+
+比如把几何信息拆开储存到不同贴图上, 相比向前渲染需要更多的显存;
+
+加上 =G-Buffer= 需要多次读写, 可能会导致显存带宽的瓶颈;
+
+另外一个问题是对透明物体的渲染不友好, 因为在合成最终图像时, =G-Buffer= 所储存的是已经通过深度测试的片元的几何数据,
+
+而透明物体背后的场景是可以被观察到的, 但透明物体背后的场景的片元却因未能通过深度测试被丢弃掉了.
+
+以面的[[#translucent-object-water][高度场水面]]为例, 在向前渲染中, 要实现透过水面看到水底, 得先获得水底在成像相机中的渲染结果;
+
+但若按照延迟渲染的做法, 水底渲染结果和水面透视实现是同时发生在后处理阶段的,
+
+而透明的实现又依赖于水底渲染结果, 但此时水底渲染结果却还没合成完毕, 这在逻辑上就已经行不通了.
+
+正确的做法是让不透明物体和透明物体分开渲染:
+
+以延迟渲染的方式渲染不透明的物体, 获得透明物体背后场景的渲染结果;
+
+再对渲染透明的物体进行向前渲染, 获得透明物体的渲染结果;
+
+最后把两次渲染结果进行混合得到最终图像.
+
+在渲染透明物体是要注意深度检测问题, 否则最终图像就只是第二次渲染结果直接盖在第一次的渲染结果上.
+
+#+BEGIN_SRC javascript
+  function alphaBlending(dstFBO, srcFBO) {
+    /*
+      对 dstFBO 和 srcFBO 两个 FrameBuffer 对象的渲染结果进行alpha混合:
+
+      dst = src * alpha + dst * (1 - alpha);
+
+      并把混合结果写入到 dstFBO 上
+     ,*/
+  }
+
+  // 用于收集不透明物体渲染结果的 FrameBuffer 对象
+  const fboOpaque;
+  const fboTransparency;
+  const fboLight;
+  // 从场景中获取所有不透明物体
+  const opaqueObjs = getOpaqueObjs(scene);
+  // 从场景中获取所有透明的物体, 并按照深度从大到小进行排序
+  const transparencyObjs = getTransparencyObjsInZOrder(scene);
+
+  // 1. Geometry Pass
+  for (let mesh of opaqueObjs) {
+    runShaderMaterial(fboOpaque, mesh, camera);
+  }
+
+  // 获取 G-Buffer
+  const gBuffersForOpaque = geometryPass(fboOpaque);
+
+  // 2. Lighting Pass, 把最终图像输出到 fboLight 的附件上
+  lightingPass(fboLight, gBuffersForOpaque, lights);
+
+  // 3. TranslucentPass, 对透明物体使用向前渲染
+  /* 把 fboOpaque 的深度缓冲复制到 fboTransparency 上,
+     以保证接下来的透明物体渲染能正确完成深度测试 */
+  copyDepthBufferTo(fboOpaque, fboTransparency);
+  /* 禁止 fboTransparency 的深度缓冲写入,
+
+     因为透明物体之间之可以相互可见的, 透明物体之间无需做深度测试, 只需做 alpha 混合.
+
+     透明物体与不透明物体之间才做深度测试.
+  ,*/
+  disableDepthWrite(fboTransparency);
+
+  // 按照深度从大到小的顺序对透明物体进行渲染, 后面的透明物体会作为其前面透明物体的背景物
+  for (let mesh of transparencyObjs) {
+    runShaderMaterial(fboTransparency, mesh, camera, lights);
+    // 把延迟渲染的结果 fboLight 和向前渲染 fboTransparency 的结果进行混合, 并写入 fboLight
+    alphaBlending(fboLight, fboTransparency);
+  }
+
+  // 后处理
+  applyPostProcessing(fboLight);
+#+END_SRC
+
+# https://computergraphics.stackexchange.com/questions/6316/why-is-this-not-a-proper-solution-to-handling-transparency-in-deferred-rendering
+# https://martindevans.me/game-development/2015/10/09/Deferred-Transparency/
+# https://codesandbox.io/p/sandbox/deferred-rendering-1cfm5?file=%2Fsrc%2Fshaders%2Fcomposite.js
+# https://stackoverflow.com/questions/15994944/transparent-objects-in-three-js#15995475
 
 *** 屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)
 :PROPERTIES:
@@ -1851,29 +2214,53 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 屏幕空间环境光遮蔽是屏幕空间技术的一种, 由 =Crytek= 开发的渲染技术, 于 =2007= 年首次应用在游戏  =Cyrsis= 中.
 
-用于估算场景中物体表面因遮挡形成的阴影区域, 可以简单概括为物体与物体之间接触的地方模拟阴影.
+用于估算场景中物体表面因遮挡形成的阴影区域, 或者说模拟物体缝隙处的阴影.
 
-计算过程是发生在屏幕空间(或称屏幕坐标系)中, 换而言之就是后处理:
+#+begin_quote
+=SSAO= 的实现方式有很多, 每种实现方式在思路上整体是差不多的.
 
-1. 把场景部分几何信息(顶点坐标, 法线, 颜色, 深度等)写入贴图中,
-   这些贴图被称为几何缓冲(=geometry buffer=) 或 =G-Buffer=;
-2. 在全屏渲染着色器(=shader=)中按照 =UV= 坐标从 =G-Buffer= 中读取信息进行计算;
-3. 把计算结果输出到屏幕上, 或者写入到贴图中给另外一个着色器使用.
+本文主要以 =three.js= 的实现作为参考, 以 [[https://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html][John Chapman]] 的 =SSAO= 教程作为思路讲解,
 
+并以该思路对 =three.js= 的实现进行简化, 其中 =three.js= 的 =SSAO= 实现可以阅读这几个源文件:
+
+[[https://github.com/mrdoob/three.js/blob/2a11e57726cd93bf1a7ef03982849dc2c6680dbb/examples/jsm/shaders/SSAOShader.js#L4][SSAOShader.js]]
+
+[[https://github.com/mrdoob/three.js/blob/2a11e57726cd93bf1a7ef03982849dc2c6680dbb/examples/jsm/postprocessing/SSAOPass.js][SSAOPass.js]]
+#+end_quote
 
 在计算环境遮蔽的阴影区域前, 需要视点空间(=view space=)的顶点坐标和法线两者的 =G-Buffers=.
 
+选择视点空间的几何数据有以下几点好处:
+
+1. 容易通过视点坐标获得深度
+
+  不论透视投影还是正交投影, 视点空间上的变换是线性的, 视点空间上的顶点坐标的 $z$ 分量可以直接作为线性深度,
+
+  在知道视点空间顶点坐标 $z$ 分量的情况下, 有需要的话也很容易就可以计算出深度, 不论是线性深度还是非线性深度.
+
+2. 容易获得后续坐标系上的坐标
+
+   配合投影矩阵可以视点坐标变换到裁剪坐标, 从而也很容易获得裁剪坐标后可以 =NDC= 坐标以及后续的 =UV= 坐标,
+
+   而投影矩阵是非常容易获得的, 像 =three.js= 的 =ShaderMaterial= 就内置了投影矩阵 =projectionMatrix=.
+
+   但从后续的坐标反推出前面空间的坐标就不一定容易, =WebGL 1.0= 的 =glsl= 不支持求逆矩阵的 =inverse= 函数,
+
+   因此想从裁剪坐标反推到视点坐标, 需要先在 =CPU= 端计算出投影矩阵的逆矩阵作为 =uniform= 变量,
+
+   然后提供给 =shader= 使用, 而且哪怕使用的是支持 =inverse= 的 =WebGL 2.0=, 矩阵求逆也是有一定计算成本的.
+
+3. 世界坐标系以及视点空间是大部分计算会用到的参考系, 比如光照计算和阴影生成就用到了它们其中之一.
+
 **** 把视点空间的顶点储存在贴图中
 
-需要视点空间的顶点坐标系, 是因为要以视点空间的顶点坐标 $z$ 分量作为深度.
+需要视点空间的顶点坐标系, 是因为要以视点空间的顶点坐标 $z$ 分量作为线性深度.
 
 生成顶点贴图的 =Shader= 如下,
 
 *Vertex Shader*: {{{INNERLINK(app-vertex-position-view)}}}
 
 #+BEGIN_SRC glsl
-  #version 130
-
   attribute vec3 position;
   varying vec4 vPosInViewSpace;
 
@@ -1890,8 +2277,6 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 *Fragment Shader*: {{{INNERLINK(app-fragment-position-view)}}}
 
 #+BEGIN_SRC glsl
-  #version 130
-
   varying vec4 vPosInViewSpace;
 
   void main() {
@@ -1903,15 +2288,13 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 **** 把视点空间的法线储存在贴图中
 
-把视点空间的法线储存到贴图上, 用于后续构建出视点空间的 =TBN=.
+把视点空间的法线储存到贴图上, 用于后续构建出视点空间的 =TBN= 矩阵, 该矩阵可用于把切线空间的向量变换到视点空间中.
 
 以下是生成法线贴图的 =Shader= 程序.
 
 *Vertex Shader*: {{{INNERLINK(app-vertex-normal-view)}}}
 
 #+BEGIN_SRC glsl
-  #version 130
-
   attribute vec2 uv;
   attribute vec3 normal;
   attribute vec3 tangent;
@@ -1944,8 +2327,6 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 *Fragment Shader*: {{{INNERLINK(app-fragment-normal-view)}}}
 
 #+BEGIN_SRC glsl
-  #version 130
-
   varying vec2 vUV;
   varying vec3 vNormal;
   varying vec3 vTangent;
@@ -2034,7 +2415,7 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 
 其中 $i$ 是采样点索引 $I$ 与采样点数量 $N$ 之比: $\frac{I}{N} \in (0, 1]$.
 
-因为采样点是 =TBN= 坐标, 所以只要能为不同 $p$ 点生产随机的 =TBN= 矩阵就可以实现围绕法线进行统一的随机旋转.
+因为采样点是 =TBN= 坐标, 所以只要能为不同 $p$ 点生成随机的 =TBN= 矩阵就可以实现围绕法线进行统一的随机旋转.
 
 最简单的做法就是根据 $p$ 的信息生成一个随机变量 $R$ 来作为校准前 =TBN= 坐标的 =tangent= 分量, 再根据 $R$ 和 $N$ 计算出 =TBN= 矩阵.
 
@@ -2044,125 +2425,271 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 
 如果是遮蔽贴图, 那么就算方式变成 $c \times (1.0 - \mathrm{occlusion})$, 生成开放贴图是为了方便后续运算.
 
+-----
+
+整个遮蔽贴图是在屏幕空间中进行计算的, 和[[#gpu-computation][使用 GPU 进行计算]]类似, 需要一个平面以及正好完全覆盖平面的相机来完成计算,
+
+这里可以简化一些, =three.js= 内置的 [[https://github.com/mrdoob/three.js/blob/7a4f6b6637fbf10f1f36c9bb1f34b32452e516c6/examples/jsm/postprocessing/Pass.js#L138][FullScreenQuad]] 类实例就能提供了 =GPU= 计算所需的一切,
+
+开发者只要提供运算所用到的 =shader= 和调用实例的 =render= 方法即可完成 =GPU= 计算, 如下:
+
+#+begin_src javascript
+  import * as THREE from 'three'
+  import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
+  const yourShaderMaterial = new THREE.ShaderMaterial({
+    vertexShader: '/* your-vertex-shader */',
+    fragmentShader: '/* your-fragment-shader */'
+  })
+  const fsQuad = new FullScreenQuad(yourShaderMaterial)
+  fsQuad.render(renderer)         // renderer: THREE.WebGLRenderer
+#+end_src
+
+-----
+
+在计算 =SSAO= 之前还需要一个噪声贴图用来充当切线空间的随机旋转向量, 这个贴图不需要太高的解析度,
+
+一般来说 $4 \times 4$ 的大小即可, 因为最终目的是让这个贴图重复铺满整个屏幕, 根据屏幕空间的 =UV= 坐标进行取样.
+
+以下是该贴图生成的方式:
+
+#+begin_src javascript
+  function generateRandomKernelRotations() {
+
+    const width = 4, height = 4
+
+    const size = width * height * 2
+    const data = new Float32Array( size )
+
+    for ( let i = 0; i < size; i ++ ) {
+
+      const x = ( Math.random() * 2 ) - 1
+      const y = ( Math.random() * 2 ) - 1
+
+      data[ i ] = x
+      data[ i + 1 ] = y
+
+      // (x, y, z=0) 为围绕 z 轴旋转的向量, 因此向量的 z 分量固定为 0
+
+    }
+
+    /* 使用贴图储存随机旋转向量,
+
+       由于旋转向量的 z 分量固定为 0,
+
+       因此贴图的每个像素只需要两个元素即可储存旋转向量 */
+    const noiseTexture = new THREE.DataTexture( data, width, height, THREE.RGFormat, THREE.FloatType)
+    noiseTexture.wrapS = THREE.RepeatWrapping
+    noiseTexture.wrapT = THREE.RepeatWrapping
+    noiseTexture.needsUpdate = true
+
+    return noiseTexture
+
+  }
+#+end_src
+
+生成的贴图用在后续的 =tNoise=.
+
+实际上也可以无需额外生成噪声贴图, 可以在 =shader= 中定义一个随机函数 =getRandomVec=,
+
+该函数以屏幕空间的 =UV= 坐标作为输入, 以随机旋转向量作为输出:
+
+#+begin_src glsl
+  vec2 chash22(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+  }
+
+  vec3 getRandomVec( vec2 p ) {
+    vec2 noiseScale = uResolution / float(NUM_NOISE);
+    vec2 r2 = chash22(p * noiseScale) * 2. - 1.;
+    vec3 randomVec = vec3(r2, 0.);
+    return normalize(randomVec);
+  }
+#+end_src
+
+不过实际测试下来, 这种方法的运行效率比起直接使用贴图的要差一些.
+
+-----
+
+最后是计算 =SSAO= 贴图, 其 =shader= 如下,
+
+[[app-vertex][Vertex Shader]]
+
 *Fragment Shader*:
 
 #+BEGIN_SRC glsl
-  #version 130
-
   #define NUM_SAMPLES 8
   #define NUM_NOISE   4
 
-  uniform vec2 u_resolution;
-  uniform sampler2D tViewNormal;
-  uniform sampler2D tViewPosition;
-  uniform mat4 projectionMatrix;
+  varying vec2 vUV;
 
-  float hash11 ( uint n ) {
-    // integer hash copied from Hugo Elias
-    n = (n << 13U) ^ n;
-    n = n * (n * n * 15731U + 789221U) + 1376312589U;
-    return float( n & uint(0x7fffffffU) ) / float(0x7fffffff);
+  uniform sampler2D tViewNormal;   // 记录了视点空间法线的贴图
+  uniform sampler2D tViewPosition; // 记录了视点空间顶点的贴图
+  uniform sampler2D tNoise;        // 噪声贴图
+  uniform mat4 uProjectionMatrix; // 用于生成法线/顶点贴图的相机的投影矩阵
+  uniform float uNear;            // 近裁剪平面的深度
+  uniform float uFar;             // 远裁剪平面的深度
+  uniform vec2 uResolution;       // 噪声贴图的解析度
+
+  // 随机函数
+  // vec2 chash22(vec2 p)
+  // {
+  //   vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+  //   p3 += dot(p3, p3.yzx+33.33);
+  //   return fract((p3.xx+p3.yz)*p3.zy);
+  // }
+
+  vec3 chash13(float p)
+  {
+    vec3 p3 = fract(p * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xxy+p3.yzz)*p3.zyx);
   }
 
-  vec3 hash13( uint n ) {
-    // integer hash copied from Hugo Elias
-    n = (n << 13U) ^ n;
-    n = n * (n * n * 15731U + 789221U) + 1376312589U;
-    uvec3 k = n * uvec3(n, n*16807U, n*48271U);
-    return vec3( k & uvec3(0x7fffffffU) ) / float(0x7fffffff);
-  }
-
-  vec3 getSamplePoint( uint i ) {
+  // 生成随机位移向量 v, 配合顶点 p 和半球半径计算出采样点 p + v * radius
+  vec3 getSampleVec( float i ) {
     float scale = float(i) / float(NUM_SAMPLES);
     scale = mix(0.1, 1.0, scale * scale);
-    vec3 r = hash13(i);
+    vec3 r = chash13(i);
     r.x = r.x * 2.0 - 1.0;
     r.y = r.y * 2.0 - 1.0;
     return normalize(r) * scale;
   }
 
-  vec3 getNoise( uint n ) {
-    vec3 r = vec3(hash11(n * 17) * 2.0 - 1.0,
-                  hash11(n * 289) * 2.0 - 1.0,
-                  0.0);
-    return normalize(r);
+  // 生成随机向量
+  vec3 getRandomVec( vec2 p ) {
+    /*
+    // 不使用噪声贴图的方式
+
+    vec2 noiseScale = uResolution / float(NUM_NOISE);
+    vec2 r2 = chash22(p * noiseScale) * 2. - 1.;
+    vec3 randomVec = vec3(r2, 0.);
+    return normalize(randomVec);
+    ,*/
+
+    vec2 noiseScale = uResolution / float(NUM_NOISE);
+    vec3 randomVec = vec3(texture2D(tNoise, p * noiseScale).rg, 0.);
+    return normalize(randomVec);
   }
 
   void main() {
+
     float radius = 0.6;
-    float bias = 0.01;
 
-    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    vec3 origin = texture2D(tViewPosition, uv).xyz;
-    vec3 normal = (texture2D(tViewNormal, uv) * 2.0 - 1.0).xyz;
+    // 后处理相机的的 UV
+    vec2 uv = vUV;
+    vec4 origin = texture2D(tViewPosition, uv);
 
-    int  noiseS = int(sqrt(NUM_NOISE));
-    int  noiseX = int(gl_FragCoord.x - 0.5) % noiseS;
-    int  noiseY = int(gl_FragCoord.y - 0.5) % noiseS;
-    vec3 rvec = getNoise(noiseX + (noiseY * noiseS));
+    // 计算顶点在成像相机中的深度
+    vec4 posClip = uProjectionMatrix * origin;
+    float depth = (posClip.z / posClip.w) * .5 + .5;
 
-    vec3 tangent = normalize(rvec - dot(rvec, normal) * normal);
-    vec3 bitangent = cross(normal, tangent);
-    mat3 tbn = mat3(tangent, bitangent, normal);
+    if (depth >= 1.0) {
 
-    float openness = NUM_SAMPLES;
+      /*
+        找出背景片元(即并非根据顶点得到的片元), 不对背景做遮蔽处理.
 
-    for (int i = 0; i < NUM_SAMPLES; i++) {
-       // Transform the tangent space sampling points into world space
-      vec3 dir = tbn * getSamplePoint(i);
-       // Scale the sample points by radius of hemisphere (maybe not a unit hemisphere) in view space
-      vec3 surfaceView = origin.xyz + dir * radius;
-       // Clip Space
-      vec4 surfaceClip = projectionMatrix * vec4(surfaceView, 1.0);
-       // NDC
-      vec3 surfaceNDC = surfaceClip.xyz / surfaceClip.w;
-       // Screen Space
-      vec2 surfaceUV = (surfaceNDC.xy * 0.5 + 0.5).xy;
+        这里把深度接近远裁剪平面的片元认为是背景片元, 即深度为 1 的片元.
 
-      vec4 sampleDepth = texture2D(tViewPosition, surfaceUV).z;
+        做深度判断时, 如果是用正交相机成像, 用线性深度判断; 如果是用透视相机成像, 用非线性深度判断;
 
-      float occluded = 0.0;
-      if (surfaceView.z + bias <= sampleDepth) {
-        occluded = 0.0;
-      } else {
-        occluded = 1.0;
+        这里的深度已经完成了这种"适配".
+      ,*/
+      gl_FragColor = vec4(1.0);
+
+    } else {
+
+      vec3 normal = (texture2D(tViewNormal, uv) * 2. - 1.).xyz;
+
+      // 切线空间的随机 tagent 向量
+      vec3 rvec = getRandomVec(uv);
+
+      // 利用随机 tagent 向量构建出不同的 TBN 坐标系, 从而实现 TBN 坐标系围绕 z 轴随机旋转的效果
+      vec3 tangent = normalize(rvec - dot(rvec, normal) * normal);
+      vec3 bitangent = cross(normal, tangent);
+      mat3 tbn = mat3(tangent, bitangent, normal);
+
+      float openness = 1.0;
+      float avg = 1.0 / float(NUM_SAMPLES);
+
+      for (int i = 0; i < NUM_SAMPLES; i++) {
+        // 把切线空间上的采样变换到视点空间上
+        vec3 dir = tbn * getSampleVec(float(i) + 1.);
+        // 计算视点空间上的采样点
+        vec3 samplePointView = origin.xyz + dir * radius;
+        // 把视点空间上的采样点变换到裁剪空间上
+        vec4 samplePointClip = uProjectionMatrix * vec4(samplePointView, 1.);
+        // 从裁剪空间变换到 NDC 坐标系上
+        vec3 samplePointNDC = samplePointClip.xyz / samplePointClip.w;
+        // 从 NDC 坐标计算出 UV 坐标
+        vec2 samplePointUV = samplePointNDC.xy * .5 + .5;
+
+        vec4 info = texture2D(tViewPosition, samplePointUV);
+        /*
+          Three.js 中的视点变换并没有对 z 轴进行翻转, z 轴正方向指向屏幕外,
+
+          但相机是看向屏幕内的, 所以用视点坐标的 z 分量作为深度需要对它乘以 -1 进行翻转.
+        ,*/
+        float closestDepth = -info.z;
+        float samplePointDepth = -samplePointView.z;
+        // 结合采样点与顶点之间的距离计算被遮蔽的程度
+        float rangeCheck = smoothstep(1., 0., length(info.xyz - origin.xyz) / radius);
+        openness -= (closestDepth <= samplePointDepth ? 1.: 0.) * rangeCheck * avg;
       }
-      openness -= occluded * smoothstep(0.0,
-                                        1.0,
-                                        radius / abs(surfaceView.z - sampleDepth));
+
+      gl_FragColor = vec4(vec3(openness), 1.);
     }
-
-    openness /= NUM_SAMPLES;
-
-    gl_FragColor = vec4(vec3(openness), origin.a);
   }
 #+END_SRC
 
 开放贴图用在后续的 =tSSAO=.
 
-**** 对噪点进行模糊
+**** 把 SSAO 贴图引用在场景上
+
+=SSAO= 贴图的使用有两种方式:
+
+一种是用在场景渲染中, 把遮蔽系数应用到光照计算中;
+
+第二种是把遮蔽系数应用到上一帧的场景渲染的结果上, 对部分像素进行亮度控制.
+
+这里采用第二种方法, 我们的目标是以后处理的方式实现环境遮蔽效果.
 
 #+BEGIN_SRC glsl
-  #version 130
-  uniform sampler2D tSSAO;
-  uniform vec2 u_resolution;
+  uniform sampler2D tDiffuse;     // 场景的颜色贴图
+  uniform sampler2D tSSAO;        // SSAO 贴图
+  uniform vec2 uResolution;       // SSAO 贴图的解析度
+
+  varying vec2 vUV;
 
   void main() {
-    vec2 uv = gl_FragCoord.xy / u_resolution;
-    vec2 texelSize = 1.0 / u_resolution;
-    float result = 0.0;
-    for (int row = -1; row <= 1; row++) {
-      float y = float(row);
-      vec2 left = vec2(-1.0, y) * texelSize;
-      vec2 mid = vec2(0.0, y) * texelSize;
-      vec2 right = vec2(1.0, y) * texelSize;
+    vec2 uvDelta = 1.0 / uResolution;
 
-      result += texture2D(tSSAO, left).r;
-      result += texture2D(tSSAO, mid).r;
-      result += texture2D(tSSAO, right).r;
+    int blurSize = 5;
+    int halfSize = blurSize / 2;
+    float ssao = 0.0;
+    float avg = 1. / float(blurSize * blurSize);
+
+    // 盒装模糊
+    for (int row = -halfSize; row <= halfSize; row++) {
+
+      float y = float(row);
+
+      for (int col = -halfSize; col <= halfSize; col++) {
+
+        float x = float(col);
+        vec2 uv = vUV + vec2(x, y) * uvDelta;
+        ssao += texture2D(tSSAO, uv).r;
+
+      }
+
     }
 
-    gl_FragColor = result / (3.0 * 3.0);
+    ssao *= avg;
+
+    vec4 diffuse = texture2D(tDiffuse, vUV);
+
+    gl_FragColor = vec4(diffuse.rgb * ssao, diffuse.a);
   }
 #+END_SRC
 
@@ -2352,8 +2879,6 @@ $f$ 在 $x$ 上连续, 那么两个片元的属性连续, 至于多少为足够�
 由于连续的法线向量是相似的, 因此它们的灰阶值也是相似的, 同样可以很好地突显出轮廓线.
 
 #+BEGIN_SRC glsl
-  #version 130
-
   varying vec2 vUV;
   uniform sampler2D tDiffuse;
   uniform sampler2D tDepth;
