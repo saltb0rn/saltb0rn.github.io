@@ -148,6 +148,9 @@
 为了照顾文章篇幅, 这里列出来可用于后续的"复用".
 
 **** 深度贴图 (Depth Texture)
+:properties:
+:custom_id: depth-texture
+:end:
 
 根据 [[../../2020/06/graphics-opengl-transformation.html#depth-buffer][图形学 - OpenGL坐标变换: 透视投影 - Depth Buffer]] 可得知, 深度贴图的像素用于储存深度值,
 
@@ -175,8 +178,8 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
 #+BEGIN_SRC glsl
   void main() {
-    float depth = gl_FragCoord.z * 0.5 + 0.5;
-    gl_FragColor = vec4(depth);
+    // gl_FragCoord.z 的范围是 [0, 1]
+    gl_FragColor = vec4(gl_FragCoord.z);
   }
 #+END_SRC
 
@@ -243,7 +246,7 @@ $z_{ndc}$ 的范围是 $[-1, 1]$, $depth$ 的范围是 $[0, 1]$.
 
 ***** 实现
 
-*Vertex Shader*:
+*Vertex Shader*: {{{INNERLINK(app-vertex-vnormal)}}}
 
 #+BEGIN_SRC glsl
   attribute vec3 position;
@@ -1013,10 +1016,13 @@ z &= r \cos\theta
 
 
 ***** 反射 (Reflection)
+:PROPERTIES:
+:CUSTOM_ID: cubemap-reflection
+:END:
 
-先来实现反射效果, 首先需要一个立方体贴图(=cubemap=)作为采样场景,
+先来实现反射效果, 首先需要一个立方体贴图(=cubemap=)作为场景采样源,
 
-在计算出反射射线 $\overline{R}$ 后根据 $\overline{R}$ 从立方体贴图中采样,
+在计算出反射射线 $\overline{R}$ 后根据 $\overline{R}$ 从立方体贴图中采样, 采样结果作为水面反射的场景.
 
 =GLSL= 中提供 $reflect$ 函数来计算反射方向 $\overline{R}$, 具体思路如下:
 
@@ -1044,7 +1050,9 @@ z &= r \cos\theta
 #+begin_quote
 采样的场景可以是静态, 也可以是动态的, 不管是哪一种, 最后在 =shader= 中的读取都是一样的,
 
-关键在于动态的场景需要事实计算立方体贴图, =three.js= 的 [[https://threejs.org/docs/?q=CubeCamera#api/en/cameras/CubeCamera][CubeCamera]] 就是用于把场景写入到立体贴图中.
+要动态的反射动态场景, 需要根据场景实时生成立方体贴图用作采样,
+
+=three.js= 的 [[https://threejs.org/docs/?q=CubeCamera#api/en/cameras/CubeCamera][CubeCamera]] 就是用于把场景写入到立体贴图中.
 
 如果所使用的图形库没有同类接口, 可以参考 [[../../2020/08/graphics-opengl-light-and-material.html#positional-light-shadowmap][图形学 - 光和材质: 位置光源的阴影]] 的阴影生成立方体贴图的思路.
 #+end_quote
@@ -1423,6 +1431,8 @@ $d_{frag}$ 在纹理坐标系上为 $d_{uv}$:
 
 $d_{uv} = d_{frag} \div uResolution$
 
+*正交投影*
+
 在正交投影中, 存在这些关系 $\begin{cases}\begin{aligned} (r_{world})_{w} & = 0 \rightarrow (r_{clip})_{w} = 0 \\ (A_{clip})_w & = (B_{clip})_w = 1 \end{aligned}\end{cases} \rightarrow \begin{cases} \begin{aligned} A_{ndc} &= A_{clip} \\ B_{ndc} &= B_{clip} \\ r_{ndc} &= r_{clip} \end{aligned} \end{cases}$,
 
 由此可发现正交投影中的 =NDC/UVW= 变化是线性的, 所以移动一个像素导致的深度变化 $d_{w}$ 为:
@@ -1433,6 +1443,8 @@ $d_{w} = \frac{|d_{uv}|}{|(r_{uvw})_{xy}|} \times (r_{uvw})_{z} = \frac{|d_{frag
 
 再可以还原回 =NDC= 上: $d_{ndc} = d_{uvw} \times 2$
 
+*透视投影*
+
 在透视投影中, =NDC/UVW= 的变化为非线性的, 并且存在这些关系:
 
 $\begin{cases} (A_{clip})_{w} = -(A_{view})_{z} \\ (B_{clip})_{w} = -(B_{view})_{z} = - [(A_{view})_{z} + (r_{view})_{z} ] \\ (r_{view})_{w} = -(r_{view})_{z} \end{cases}$
@@ -1441,7 +1453,9 @@ $\begin{cases} (A_{clip})_{w} = -(A_{view})_{z} \\ (B_{clip})_{w} = -(B_{view})_
 
 $\begin{equation*} \begin{aligned} & (r_{ndc})_{z} \\ = & \frac{(A_{clip})_{w} (B_{clip})_{z} - (A_{clip})_{z} (B_{clip})_{w}}{(A_{clip})_{w} (B_{clip})_{w}} \\ = & \frac{ -(A_{view})_{z} \times (B_{clip})_{z} - (A_{clip})_{z} \times -(B_{view})_{z} }{-(A_{view})_{z} \times -(B_{view})_{z}} \\ = & \frac{(B_{clip})_{z}}{-(B_{view})_{z}} - \frac{(A_{clip})_{z}}{-(A_{view})_{z}} \\ = & (B_{ndc})_{z} - (A_{ndc})_z \\ = & \frac{(A_{clip})_{z} + (r_{clip})_{z}}{(A_{view})_{z} + (r_{view})_{z}} - \frac{(A_{clip})_{z}}{(A_{view})_{z}} \end{aligned} \end{equation*}$
 
-但该等式没能找出什么有用的信息, 尝试使用透视投影矩阵的变化关系计算出 =NDC= 上的 $z$ 分量变化 $(r_{ndc})_{z}$,
+但该等式没能找出什么有用的信息, 但视点坐标的 $z$ 分量的出现告诉我们,
+
+可尝试根据透视投影矩阵计算出 =NDC= 上的 $z$ 分量变化 $(r_{ndc})_{z}$,
 
 其中 $n$ 和 $f$ 分别是相机的近裁剪平面和远裁剪平面的距离:
 
@@ -1465,20 +1479,40 @@ $\begin{equation*} \begin{aligned}
 = & (r_{ndc})_{z} \div \frac{2fn}{f - n} \\
 = & (r_{ndc})_{z} \frac{f - n}{2fn} \\
 = & \frac{1}{2} (r_{ndc})_{z} \left[ \frac{1}{n} - \frac{1}{f} \right] \\
-\rightarrow & \frac{(r_{ndc})_{z}}{2} = \frac{ \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}} }{ \frac{1}{n} - \frac{1}{f} } = (r_{uvw})_{z}
+\rightarrow & \frac{(r_{ndc})_{z}}{2} \\
+= & \frac{ \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}} }{ \frac{1}{n} - \frac{1}{f} } \\
+= & \frac{1}{\frac{1}{f} - \frac{1}{n}} \left[ \left( -\frac{1}{(B_{view}){z}} - \frac{1}{n} \right) - \left( -\frac{1}{(A_{view}){z}} - \frac{1}{n} \right) \right] \\
+= & B_{depth} - A_{depth} \\
+= & (r_{uvw})_{z}
 \end{aligned} \end{equation*}$
 
-令 $\Delta \frac{1}{z} = \frac{1}{(B_{view})_{z}} - \frac{1}{(A_{view})_{z}}$, 可以发现 $(r_{uvw})_{z}$ 与 $\Delta \frac{1}{z}$ 成线性关系, 即 $(r_{uvw})_{z}$ 随着 $\Delta \frac{1}{z}$ 均匀变化而发生均匀变化.
+沿着方向 $\overrightarrow{AB}$ 在移动一个像素时, 起点 $A$ 和 $k = \frac{1}{\frac{1}{n} - \frac{1}{f}} = \frac{f - n}{fn}$ 都是固定的,
 
-不幸的是, $(r_{uvw})_{x}$ 和 $(r_{uvw})_{y}$ 也是非线性的, 所以不能像正交投影那样使用 $\frac{|d_{uv}|}{|(r_{uvw})_{xy}|} \times (r_{uvw})_{z}$ 来计算 $d_{w}$,
+可以把 $(r_{uvw})_{z}$ 看作是一个函数 $(r_{uvw})_{z} = f((B_{view})_z) = k \left(\frac{1}{(B_{view})_z} - \frac{1}{(A_{view})_z} \right)$,
 
-那要如何找出 $d_{w}$ 呢?
+函数 $f$ 是一个倒数函数 (=reciprocal function=), 每次移动一个像素的距离时, $(B_{view})_z$ 的变化是线性的,
 
-幸运的是, 在屏幕空间上是逐个像素移动的, 因此位移变化是均匀的, 再加上 $(r_{uvw})_{z}$ 与 $\Delta \frac{1}{z}$ 是线性关系,
+但深度变化 $(r_{uvw})_{z}$ 不是, 因此关系 $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp}$ *不成立*.
 
-凭借这两点就可以找出 $(r_{uvw})_{z}$ 如何随着像素移动而变化, 也就是可以得出 $d_{w}$:
+因此在透视投影中, 只能在移动像素时想办法拿到像素所对应视点坐标的 $z$ 分量, 从而计算出深度. 这挺简单的,
 
-$d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp} = \frac{1}{\frac{1}{n} - \frac{1}{f}} \Delta \frac{1}{z} \frac{1}{maxComp} = \frac{fn}{f - n} \Delta \frac{1}{z} \frac{1}{maxComp}$
+假设有一个片元坐标 $P_{screen} = A_{screen} + i \times d_{frag}, i \in [0, maxComp]$,
+
+$P_{screen}$ 为从 $A_{view}$ 向 $B_{view}$ 移动时某个中间点 $P_{view} = (1 - t) \times A_{view} + t \times B_{view}, t = \frac{i}{maxComp} \in [0, 1]$ 在屏幕空间上的片元坐标,
+
+(视点坐标的变化也是均匀的,) 一旦拿到了 $P_{view}$ 就能很容易根据 $(P_{view})_{z}$ 计算出 $P_{screen}$ 对应的非线性深度:
+
+$P_{depth} = \frac{-\frac{1}{(p_{view})_z} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}$
+
+如果要计算线性深度则可以:
+
+$P_{linearDepth} = \frac{-(p_{view})_z - n}{f - n}$
+
+数学上只要是可以线性插值的情况, 那必然可以外推, 因此 $P_{view}$ 的计算在 $t \in [0, 1]$ 之外的情况也成立.
+
+#+begin_quote
+这种计算深度的方法也适用于正交投影的情况, 只不过没有必要, 除非需要计算非线性深度.
+#+end_quote
 
 ***** 生成焦散贴图
 
@@ -1651,6 +1685,21 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 该计算模块位于:
 
 [[https://github.com/saltb0rn/shader-for-game-dev/tree/master/src/HeightfieldWaterSimulation/GPUComputation/Caustics/index.ts][src/HeightfieldWaterSimulation/GPUComputation/Caustics/index.ts]]
+
+#+begin_quote
+如果要实现动态根据投影类型适配求交点的算法, 可以在不引入而外变量的情况下用如下方法进行适配:
+
+#+begin_src glsl
+  uniform mat4 projectionMatrix;
+
+  if (0. == projectionMatrix[2][3]) {
+    // 正交投影矩阵的第三列第四行的元素是 0, 以正交投影的情况求交点
+  } else {
+    // 透视投影矩阵的第三列第四行的元素为非 0, 以透视投影的情况求交点
+  }
+
+#+end_src
+#+end_quote
 
 **** 为水底的场景编写 shader
 :PROPERTIES:
@@ -2120,6 +2169,8 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
 需要若干 =G-Buffer=, 在屏幕空间上使用这些 =G-Buffer= 实现效果.
 
+# https://www.reddit.com/r/NintendoSwitch/comments/7ed1ny/new_tech_analysis_of_botw_graphics_engine_local/
+
 **** 延迟渲染的缺点
 
 延迟渲染在带来效率的同时也带来了一些缺点.
@@ -2232,7 +2283,7 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 [[https://github.com/mrdoob/three.js/blob/2a11e57726cd93bf1a7ef03982849dc2c6680dbb/examples/jsm/postprocessing/SSAOPass.js][SSAOPass.js]]
 #+end_quote
 
-环境遮蔽阴影的实现需要视点空间(=view space=)的顶点坐标和法线两者的 =G-Buffer=.
+环境遮蔽阴影的实现需要视点空间(=view space=) 的顶点坐标和法线两者的 =G-Buffer=,
 
 选择视点空间的几何数据有以下几点好处:
 
@@ -2242,7 +2293,9 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
   在知道视点空间顶点坐标 $z$ 分量的情况下, 有需要的话也很容易就可以计算出深度, 不论是线性深度还是非线性深度.
 
-2. 容易获得后续坐标系上的坐标
+2. 视点坐标系是以相机位置 $O$ 作为原点, 所以 $P = \overrightarrow{OP} = P - O$, $|P|$ 等于世界坐标系上顶点与相机之间的距离.
+
+3. 容易获得后续坐标系上的坐标
 
    配合投影矩阵可以视点坐标变换到裁剪坐标, 从而也很容易获得裁剪坐标后可以 =NDC= 坐标以及后续的 =UV= 坐标,
 
@@ -2254,9 +2307,14 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 
    然后提供给 =shader= 使用, 而且哪怕使用的是支持 =inverse= 的 =WebGL 2.0=, 矩阵求逆也是有一定计算成本的.
 
-3. 世界坐标系以及视点空间是大部分计算会用到的参考系, 比如光照计算和阴影生成就用到了它们其中之一.
+4. 世界坐标系以及视点空间是大部分计算会用到的参考系, 比如光照计算和阴影生成就用到了它们其中之一,
+
+   同样也适用于计算出顶点被遮蔽的程度.
 
 **** 把视点空间的顶点储存在贴图中
+:properties:
+:CUSTOM_ID: view-pos-buf
+:end:
 
 需要视点空间的顶点坐标系, 是因为要以视点空间的顶点坐标 $z$ 分量作为线性深度.
 
@@ -2291,6 +2349,9 @@ $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_
 生成视点空间上顶点坐标的贴图, 用在后续的 =tViewPosition=.
 
 **** 把视点空间的法线储存在贴图中
+:properties:
+:CUSTOM_ID: view-normal-buf
+:end:
 
 把视点空间的法线储存到贴图上, 用于后续构建出视点空间的 =TBN= 矩阵, 该矩阵可用于把切线空间的向量变换到视点空间中.
 
@@ -2647,6 +2708,9 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
   }
 #+END_SRC
 
+#+caption: 根据场景生成缝隙处的阴影
+[[../../../files/ssao-of-scene.png]]
+
 开放贴图用在后续的 =tSSAO=.
 
 **** 把 SSAO 贴图引用在场景上
@@ -2674,7 +2738,7 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
     float ssao = 0.0;
     float avg = 1. / float(blurSize * blurSize);
 
-    // 盒装模糊
+    // 盒状模糊
     for (int row = -halfSize; row <= halfSize; row++) {
 
       float y = float(row);
@@ -2697,22 +2761,115 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
   }
 #+END_SRC
 
-*** COMMENT 屏幕空间反射 (Screen Space Reflection, SSR)
-*** COMMENT 延迟渲染 (Deferred Rendering)
+[[../../../files/ssao-diff-2.png]]
 
-使用了该技术的例子: 塞尔达旷野之息.
+*** 屏幕空间反射 (Screen Space Reflection, SSR)
 
-这项技术非常适用于开发世界类型的游戏.
+[[#cubemap-reflection][高度场水面模拟中的反射]]的实现是根据反射光线的方向从立方体贴图中进行采样, 把采样结果作为水面的反射景象.
 
-https://www.reddit.com/r/NintendoSwitch/comments/7ed1ny/new_tech_analysis_of_botw_graphics_engine_local/
+这种反射实现叫做立方体贴图反射(=Cubemap reflection=), 这种实现很简单, 但是例子中反射的场景不是动态的,
 
-https://www.resetera.com/threads/zelda-breath-of-the-wild-the-technical-analysis.8197/
+如果水面上有会运动的物体, 那么就需要为动态场景实时生成立方体贴图并从中采样, 立方体贴图有 6 张贴图构成,
 
-https://lettier.github.io/3d-game-shaders-for-beginners/deferred-rendering.html
+由于入射光 $I$ 和反射光 $R$ 之间的夹角不会超过 $180^{\circ}$, 因此用得上的贴图最多只有 2 张,
 
-https://baijiahao.baidu.com/s?id=1804272498713334704&wfr=spider&for=pc
+有 4 张贴图是完全无用的, 实际只从其中 1 张贴图进行采样, 最终有 5 张贴图用不上.
 
-https://learnopengl.com/Advanced-Lighting/Deferred-Shading
+简而言之, 立方体贴图反射的实现代码很昂贵.
+
+#+caption: 虚线之间相互垂直, 反射光的活动范围为法线和平面之间
+[[../../../files/ssr-ir-diag.png]]
+
+为此学习一种新技巧来解决资源浪费的问题, 就是接下来介绍的屏幕空间反射.
+
+**** 整体实现思路
+
+[[../../../files/ssr-ir-diag-2.png]]
+
+整体实现分为 4 步:
+
+1. 把当前相机看到的景象保存为颜色贴图 =tDiffuse=, 用于反射采样
+2. 找出 $O$ 点上的反射光 $R_0$ 与场景的交点 $P$
+3. 计算出交点 $P$ 在相机中的 =UV= 坐标, 并根据该 =UV= 坐标从 =tDiffuse= 获取反射信息
+4. 利用反射信息对 $O$ 点进行着色, 从而实现反射
+
+
+其中第 2 步找反射光 $R_0$ 和场景的交点是屏幕空间反射实现的重点与难点,
+
+可以不夸张地说, 如果能够发展出一种算法复杂度为 $O(1)$ 的求交点算法,
+
+图形学一大堆技术的性能问题都可以被解决, 比如实时光追.
+
+求交点的技术在计算焦散中的 [[#find-hit-point-with-raymarching][在光栅化渲染中使用 Ray Marching 找出射线与场景的交点]] 一节中有介绍逐个像素移动求交点的方法,
+
+但这种方法的效率不太好, 用于求交点的深度贴图分辨率越高, 找到交点所需的循环次数越多.
+
+后面在实现屏幕空间反射时会在这个方法的基础上做出一些调整以提高效率.
+
+整个屏幕空间反射的实现需要以下贴图:
+
+1. 求射线与场景的交点需要用到深度贴图 =tDepth=;
+
+2. 求反射光线要用到视点空间上的顶点贴图 =tViewPosition= 和法线贴图 =tViewNormal=;
+
+3. 场景采样 =tDiffuse=;
+
+4. 用于标识片元是否支持反射的贴图 =tMirror=.
+
+
+其中 [[#view-pos-buf][tViewPosition]] 和 [[#view-normal-buf][tViewNormal]] 的生成方法和屏幕环境遮蔽中用到的同名贴图是一致的, 就不赘述了;
+
+由于深度贴图是用来查找交点, 因此可以把片元深度顺便储存到 =tViewPosition= 的 =w= 通道上;
+
+片元反射的标识也只需要一个通道, 可以把 =tViewNormal= 的 =w= 通道用上, 完全没必要额外生成 =tMirror=.
+
+**** 调整后的视点空间贴图生成程序
+
+[[app-vertex-position-view][*Vertex Shader*]]
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+  varying vec4 vPosInViewSpace;
+
+  void main() {
+    // gl_FragCoord.z 的范围是 [0, 1]
+    gl_FragColor = vec4(vPosInViewSpace.xyz, gl_FragCoord.z);
+  }
+#+END_SRC
+
+**** 调整后的法线贴图生成程序
+
+[[app-vertex-vnormal][*Vertex Shader*]]
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+  varying vec3 vNormal;
+  uniform bool uIsMirror;
+
+  void main() {
+    vec3 normal = vNormal * 0.5 + 0.5;
+    gl_FragColor = vec4(normal, uIsMirror ? 1.: 0.);
+  }
+#+END_SRC
+
+**** 屏幕空间反射的缺陷
+
+屏幕空间虽然有性能优势, 但屏幕空间反射只能反射当前相机可见的场景内容, 反射光线与场景的交点出现在相机视野外时无法被反射.
+
+视野外的情况可以分为两类: 相机背后的场景, 反射光线与场景的交点在相机中的 =UV= 坐标超出场景采样的范围.
+
+#+caption: 入射射线 $I_1$ 和法线之间的夹角小于 $45^{\circ}$ 时应当反射相机背后的场景
+[[../../../files/ssr-ir-diag-3.png]]
+
+#+caption: 反射光线 $R_0$ 与场景的交点 $P$ 在相机中的 UV 坐标超出场景采样的范围
+[[../../../files/ssr-ir-diag-4.png]]
+
+第二类情况还比较好解决, 只要扩大采样相机的视野范围即可.
+
+
+****
 
 *** COMMENT 查找表 (Lookup Table, LUT Shader)
 
@@ -3130,19 +3287,21 @@ void main () {
   ) * amplitude /resolution.xy;   // hash 是随机函数
 #+end_src
 
-但有一个问题, 随机函数的过渡不平滑, 在描边的扭曲幅度(=amplitude=)稍大(实际上不需要很大)时呈现雪崩效应, 描边会出现断开并形成噪点.
+但有一个问题, 随机函数的随机性是基于雪崩效应(=avalanche effect=)实现的, 所谓雪崩效应是指:
+
+函数的输入值只要产生很小的变化就能导致输出值产生较大的变化.
+
+因此, 描边在扭曲幅度(=amplitude=)变得稍大时会出现断开并形成噪点.
 
 #+attr_html: :width 600px
 #+caption: 原实现的效果: 描边断裂, 形成噪点
 [[../../../files/moebius-outline-breaking.png]]
 
-#+begin_quote
-雪崩效应是指, 函数的输入值只要产生很小的变化就能导致输出值产生较大的变化,
+想解决这个问题很简单, 理论上用连续函数替代随机函数就可以解决问题.
 
-这与函数的连续定义相违背: 连续的函数就是当输入值的变化足够小的时候，输出的变化也会随之足够小的函数.
-#+end_quote
+连续函数是当输入值的变化足够小的时候, 输出的变化也会随之足够小的函数, 正好与雪崩效应相反.
 
-为了解决这个问题, 我换成了用梯度噪声生成偏移, 强行保证即便描边的扭曲幅度再大也不会断开.
+所以这里换成梯度噪声生成偏移, 强行保证即便描边的扭曲幅度再大也不会断开.
 
 #+BEGIN_SRC glsl
   vec2 texelSize = 1. / uResolution;
@@ -3372,3 +3531,13 @@ void main () {
 Blinn-Phong Shading Model + Fresnel Light
 
 https://www.bilibili.com/video/BV1YA4m1c79b?spm_id_from=333.788.videopod.sections&vd_source=9fdcd332c2d3e867a2fe257ff4f28e30
+
+#+BEGIN_SRC maxima
+  f(b, a, n, f) := (b - a) / (n - f)$
+
+  plot2d(f(x, 1, 1 / 0.1, 1 / 200), [x, 1/200, 1]);
+#+END_SRC
+
+视点坐标 $pos_{a}$ 和 $pos_{b}$;
+
+=NDC= 坐标 $\frac{(pos_{a})_{xyz}}{(pos_{a})_{w}}$ 和 $\frac{(pos_{b})_{xyz}}{(pos_{a})_{w}}$;

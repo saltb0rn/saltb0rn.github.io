@@ -2,6 +2,7 @@
 #+date: 2020-06-19
 #+index: 图形学 - OpenGL坐标变换
 #+tags: Graphics
+#+options: auto-id:t
 #+begin_abstract
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 =OpenGL= 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 =OpenGL= 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 
@@ -16,8 +17,14 @@
 
 
 ** 几个该清楚的概念
+:PROPERTIES:
+:CUSTOM_ID: h-08a9bbb6-87bd-4499-bb6a-f2bcd7af4918
+:END:
 
 *** 齐次空间
+:PROPERTIES:
+:CUSTOM_ID: h-d94e2b1c-531b-4763-9627-7b5267b0c950
+:END:
 
 欧几里得空间+笛卡尔坐标系这样的组合中,两条平行的直线是永远不可能相交的,这是不符合人的视觉的,但在人看来,也就是在投影空间(projective space)却会相交.
 
@@ -152,6 +159,9 @@ $ax + by + cz + dw = 0$, 其中 $d = \frac{-\left(\vec{n} \cdot p\right)}{w}$, �
 
 
 ** OpenGL 中对象的变换历程
+:PROPERTIES:
+:CUSTOM_ID: h-483037b0-7c15-42d8-bfb8-1490821da4ed
+:END:
 
 #+attr_html: :width 700px
 #+CAPTION: OpenGL vertex transformation
@@ -174,6 +184,9 @@ $ax + by + cz + dw = 0$, 其中 $d = \frac{-\left(\vec{n} \cdot p\right)}{w}$, �
 因此, 本文的矩阵不一定与库实现的矩阵一致, 在参考本文时需要注意坐标系区别, 当然矩阵的推导思路基本上是一样的.
 
 *** 对象坐标系
+:PROPERTIES:
+:CUSTOM_ID: h-91530c69-157a-4c03-af73-d8fa077e0ee4
+:END:
 
 用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
 
@@ -192,6 +205,9 @@ $ax + by + cz + dw = 0$, 其中 $d = \frac{-\left(\vec{n} \cdot p\right)}{w}$, �
 我们假设在该坐标系下有一个点 $p_{o} = \left(x_{o}, y_{o}, z_{o}\right)$, 让我们来探讨一下这个点会经历过哪些变化.
 
 *** 世界坐标系
+:PROPERTIES:
+:CUSTOM_ID: h-8d15afa4-8baf-48d1-970a-9e9b00ebe19c
+:END:
 
 在 =OpenGL= 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
 
@@ -208,6 +224,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 #+end_quote
 
 *** 从对象坐标系到世界坐标系的变换
+:PROPERTIES:
+:CUSTOM_ID: h-4d15c6d7-b964-46c7-b2fa-cc1a9a7d54f1
+:END:
 
 上面中, $A$ 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, $B$ 过程是对象经历了从对象坐标系到世界坐标系的变换,
 
@@ -236,6 +255,9 @@ B. 把对象放到场景(scene)/世界(world)中.
 这个阶段结束后会得到一个变换过的点 $p_{m} = M_{model}p_{o} = \left(x_{m}, y_{m}, z_{m}\right)$.
 
 *** 视点坐标系
+:PROPERTIES:
+:CUSTOM_ID: h-d956954f-12dd-4c6e-a8b3-f63e88b2b7f2
+:END:
 
 在现实中,一个人看到的东西是由他的位置以及看的方向所决定的,在 =OpenGL= 中也有类似的存在,叫做 =viewer=,
 
@@ -352,6 +374,9 @@ https://registry.khronos.org/OpenGL-Refpages/gl2.1/xhtml/gluLookAt.xml
 最后会得到一个新的坐标点 $p_{e} = M_{view}p_{m} = \left(x_{e}, y_{e}, z_{e}\right)$.
 
 **** 法线向量变换
+:PROPERTIES:
+:CUSTOM_ID: h-35374513-d847-4421-92d0-f240f025245f
+:END:
 
 别忘记还有光线的存在,如果开发人员启用了光照(lighting)那么就得计算光线,
 
@@ -614,8 +639,14 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 #+end_quote
 
 **** COMMENT 视差贴图 (Parallax Map)
+:PROPERTIES:
+:CUSTOM_ID: h-2c049853-8690-4db2-8319-bd37bbf2fca9
+:END:
 
 *** 3D转化成2D图像
+:PROPERTIES:
+:CUSTOM_ID: h-f1f030d6-c287-43c6-9834-8099243f1039
+:END:
 
 当求出对象的视点坐标后,就需要把 3D 场景转化为 2D 图像了,因为计算机显示器就是一个 2D 平面,这需要把 3D 投影到计算机屏幕上成为一张 2D 图片.
 
@@ -703,6 +734,9 @@ $z_{w}$ 是深度值, 在许多场景发挥着非常重要的作用. 实际上 $
 
 
 **** 从视点坐标到裁剪坐标的变换,再到标准化设备坐标.
+:PROPERTIES:
+:CUSTOM_ID: h-4fc5321b-c9b4-4007-9080-ec29e6b81543
+:END:
 
 先看一下如何选择相机看到的内容,有两种选择方案,如下,
 
@@ -739,6 +773,9 @@ $z_{w}$ 是深度值, 在许多场景发挥着非常重要的作用. 实际上 $
 #+end_quote
 
 **** 透视投影
+:PROPERTIES:
+:CUSTOM_ID: h-85469068-5c60-40f4-91d2-c2be1aaf9a2e
+:END:
 
 这种投影符合人的视觉: 两条平行线会随着距离边远而慢慢靠近,最后在无限的远处进行相交(可以参考上面齐次方程里面的那张图).
 
@@ -778,17 +815,29 @@ $z_{w}$ 是深度值, 在许多场景发挥着非常重要的作用. 实际上 $
 
 而原点加上 $p_{p}$ 配合 $z$ 轴同样可组成一个三角形,并且两个三角形是相似三角形.
 
-根据这个关系可以得到 $\frac{x_{p}}{x_{e}} = \frac{-n}{z_{e}}$,所以 $x_{p} = \frac{-nx_{e}}{z_{e}} = \frac{nx_{e}}{-z_{e}}$.
+根据这个关系可以得到 $\frac{x_{p}}{x_{e}} = \frac{-n}{z_{e}}$, 所以 $x_{p} = \frac{-nx_{e}}{z_{e}} = \frac{nx_{e}}{-z_{e}}$, 这么一来 $p_e$ 就被投影到近裁剪平面上了.
 
 从侧视图也可以看出两个相似三角形, $y_{e}$ 投影到 $y_{p}$ 上,根据关系可以的 $\frac{y_{p}}{y_{e}} = \frac{-n}{z_{e}}$,所以 $y_{p} = \frac{-ny_{e}}{z_{e}} = \frac{ny_{e}}{-z_{e}}$.
 
 注意, $x_{p}$ 和 $y_{p}$ 都取决于 $z_{e}$,且成反比关系,考虑到后面还有 =NDC= 转换: $\left(\begin{array}{c}x_{n} \\ y_{n} \\ z_{n}\end{array}\right) = \left(\begin{array}{c}\frac{x_{p}}{w_{p}} \\ \frac{y_{p}}{w_{p}} \\ \frac{z_{p}}{w_{p}} \end{array}\right)$,
 
-为了方便归一化以及反转 $z$ 轴的正负方向, 可以把 $w_{p}$ 取为 $-z_{e}$,
+还有为了反转 $z$ 轴的正负方向, 可以把 $w_{p}$ 取为 $-z_{e}$,
 
 透视投影过程变成 $\left(\begin{array}{c} x_{p} \\ y_{p} \\ z_{p} \\ w_{p} \end{array}\right) = \left(\begin{array}{c} x_{l} & x_{u} & x_{f} & x \\ y_{l} & y_{u} & y_{f} & y \\ z_{l} & z_{u} & z_{f} & z \\ 0 & 0 & -1 & 0 \end{array}\right) \left(\begin{array}{c}x_{e} \\ y_{e} \\ z_{e} \\ w_{e}\end{array}\right)$, 这样透视投影矩阵的第4行就确定了.
 
-既然如此,那么 $x_{p}$ 以及 $y_{p}$ 是不是可以分别取 $nx_{e}$ 以及 $ny_{e}$ 了吗?
+既然如此,那么 $x_{p}$ 以及 $y_{p}$ 是不是可以分别取 $\frac{nx_{e}}{-z_e}$ 以及 $\frac{ny_{e}}{-z_e}$ 了吗?
+
+#+begin_quote
+一些简单的渲染引擎会使用这样的投影公式 $f(p = (x, y, z), d) = (\frac{x \cdot d}{z}, \frac{y \cdot d}{z})$ 实现投影,
+
+其中 $p$ 是世界坐标或视点坐标, $d$ 是相机和投影平面之间的距离, $f$ 的结果 $c$ 是投影平面上的一个坐标点,
+
+这是实现透视效果的最简单模型. 但是这个模型有一个问题, 坐标 $c$ 的分量范围是不固定的, 这不方便于储存, 也难以处理.
+
+这就是 =OpenGL= 的透视投影不采用这个模型的原因: 投影坐标需要被限定在一个范围内.
+
+可以肯定的是, =OpenGL= 透视投影的核心思想就是这个投影公式.
+#+end_quote
 
 还不能这么断言, 仍然需要找到 $p_{p}$ 到 $p_{n}$ 之间映射关系来进行验证, 也就是找出 $x_{p}$, $y_{p}$ 和 $z_{p}$ 分别到 $x_{n}$, $y_{n}$ 和 $z_{n}$ 的关系:
 
@@ -868,6 +917,7 @@ $\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot
 - [[https://learnopengl.com/Advanced-OpenGL/Depth-testing][=LearnOpenGL - Depth Testing=]]
 - [[https://stackoverflow.com/questions/63096579/how-does-opengl-come-to-the-formula-f-depth-and-and-is-this-the-window-viewport/63098220#63098220][=How does openGL come to the formula F_depth and and is this the window viewport transformation=]]
 - [[https://feepingcreature.github.io/math.html][=How to go from device coordinates back to worldspace in OpenGL (with explanation)=]]
+- [[../../../files/lowk_persp_interp_techrep.pdf][=Perspective-Correct Interpolation=]]
 
 =Depth Buffer= 又叫 =Depth Texture=, =Z-Buffer=.
 
@@ -884,6 +934,9 @@ $\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot
 =OpenGL= 根据其对应的 $d$ 选出最靠近相机的坐标点进行绘制,
 
 同时 =OpenGL= 会把这个坐标点的所对应的深度值 $d$ 储存到 =Depth Buffer= 数组索引 $y_{n} \times width_{screen} + x_{n}$ 的位置上.
+
+-----
+*何谓非线性深度*
 
 透视投影所产生的 $d$ 被称为非线性深度(=non-linear depth=), 我会通过公式变换来进一步说明为什么.
 
@@ -905,7 +958,13 @@ $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 &= \frac{-\frac{1}{z_{e}} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}
 \end{aligned} \end{equation*}$
 
-如变换结果所示, $d$ 不仅不与 $z_{e}$ 成线性关系, 反而与 $\frac{1}{z_{e}}$ 成线性关系, 这就是为什么 $d$ 被称为非线性深度.
+在上述等式中, 可以把 $\frac{1}{\frac{1}{f} - \frac{1}{n}}$ 看作是一个常数 $k$, $d$ 看作是以 $\frac{1}{z_e}$ 为参数的函数 $d(\frac{1}{z_e}) = k(-\frac{1}{z_e} - \frac{1}{n})$,
+
+可以发现, $d$ 不仅不与 $z_{e}$ 成线性关系, 反而与 $\frac{1}{z_{e}}$ 成线性关系, 这就是为什么 $d$ 被称为非线性深度.
+
+-----
+
+*根据非线性深度反推视点坐标的 z 分量*
 
 有时候, 我们需要根据深度值 $d$ 来获得像素对应的视点坐标的 $z_{e}$ 分量来编写 =Fragment Shader= 来实现一些效果,
 
@@ -951,13 +1010,15 @@ $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 
   这个方法比起第一种方法就简单很多了, 直接通过 $M_{projection}$ 的第三行反推:
 
-  $z_{n} = \frac{z_{p}}{w_{p}} = \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}} = \frac{f+n}{f-n} + \frac{2fn}{f-n} \times \frac{1}{z_{e}}$
-
-  $z_{n}(f - n) = (f + n) + \frac{2fn}{z_{e}}$
-
-  $z_{n}(f - n) - (f + n) = \frac{2fn}{z_{e}}$
-
-  $z_{e} = \frac{2nf}{z_{n}(f - n) - (f + n)}$
+  $\begin{equation*} \begin{aligned}
+  & z_{n} \\
+  = & \frac{z_{p}}{w_{p}} \\
+  = & \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}} \\
+  = & \frac{f+n}{f-n} + \frac{2fn}{f-n} \times \frac{1}{z_{e}} \\
+  \rightarrow & z_{n}(f - n) = (f + n) + \frac{2fn}{z_{e}} \\
+  \rightarrow & \frac{2fn}{z_{e}} = z_{n}(f - n) - (f + n) \\
+  \rightarrow & z_{e} = \frac{2nf}{z_{n}(f - n) - (f + n)}
+  \end{aligned} \end{equation*}$
 
   也可以把 $z_n$ 转换成非线性深度 $d = z_n \times 2 - 1$, 然后直接从 $d$ 反推 $z_e = \frac{nf}{(f - n) \times d - f}$.
 
@@ -974,7 +1035,75 @@ $d_{linear} = \frac{-z_{e} - n}{f - n}$, $d_{linear} \in [0, 1]$
 
 线性的 =depth buffer= 原本就在正交投影中产生, 在学习正交投影矩阵后就可以知道 $d_{linear}$ 的定义怎么来了.
 
+-----
+*不止于深度* @@html: <a id="arbitrary-attr-interp"></a>@@
+
+把 $d = \frac{-\frac{1}{z_e} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}$ 变换一下可以得到一个形式符合线性插值定义的等式:
+
+$\begin{equation*}\begin{aligned} -\frac{1}{z_e} & = \frac{1}{n} + d \times (\frac{1}{f} - \frac{1}{n}) \\
+\rightarrow \frac{1}{z_e} & = -\frac{1}{n} + d \times (\frac{1}{n} - \frac{1}{f}) \\
+& = -\frac{1}{n} + d \times \left[\left(-\frac{1}{f}\right) - \left(-\frac{1}{n}\right)\right]
+\end{aligned}\end{equation*} d \in [0, 1]$
+
+回想一下, $z_{p} \in [-n, -f]$, 所以 $-\frac{1}{f}$ 和 $-\frac{1}{n}$ 分别是远近裁剪平面在裁剪空间中的 $z$ 分量的倒数,
+
+根据线性插值的定义, 可发现 $-\frac{1}{f}$ 和 $-\frac{1}{n}$ 分别是视锥体范围内视点坐标的 $z_e$ 的倒数 $\frac{1}{z_e}$ 的最大和最小值,
+
+我们可以把这个插值函数推广到任意范围 $z_e = [Z_{p1}, Z_{p2}]$ 上,
+
+用来求任意两个裁剪坐标 $\begin{cases} p1 = (X_{p1}, Y_{p1}, Z_{p1}) \\ p2 = (X_{p2}, Y_{p2}, Z_{p2}) \end{cases}$ 中间某个裁剪坐标所对应的视点坐标 $z$ 分量 $z_e$ 的倒数 $\frac{1}{z_e}$:
+
+$\frac{1}{z_e} = f(t) = \frac{1}{Z_{p1}} + t \times \left(\frac{1}{Z_{p2}} - \frac{1}{Z_{p1}}\right), t \in [0, 1]$.
+
+这正是透视投影公式 $f(p = (x, y, z)) = ( \frac{x \cdot d}{z}, \frac{y \cdot d}{z} )$ 用来插值获得两片元中间某个片元深度值的方法,
+
+这个经典的模型使用世界坐标或视点坐标 $p$ 的 $z$ 分量作为深度值, $d$ 是投影平面 (近裁剪平面) 与相机之间的距离.
+
+能够通过投影矩阵推导出这个插值函数, 说明投影矩阵与这条投影公式的本质是一样的,
+
+与直接使用视点坐标的 $z$ 分量作为深度值不同, 投影矩阵计算出插值函数 $\frac{1}{z_e} = f(t)$ 的参数 $t = f^{-1}(\frac{1}{z_e})$ 作为深度值,
+
+后者的深度值在限定范围中, 非常适合储存和用于编程处理.
+
+我们可以更进一步, 通过插值函数 $f(t)$ 可以快速得到视点坐标的 $z$ 分量 $z_e = \frac{1}{f(t)}$:
+
+$\begin{equation*} \begin{aligned} & z_e \\ = & \frac{1}{\frac{1}{Z_{p1}} + t \times \left( \frac{1}{Z_{p2}} - \frac{1}{Z_{p1}} \right) } \\
+= & \frac{1}{ \frac{1}{Z_{p1}} + t \times \frac{Z_{p1} - Z_{p2}}{Z_{p1} Z_{p2}} } \\
+= & \frac{1}{ \frac{Z_{p2}}{Z_{p1}Z_{p2}} + t \times \frac{Z_{p1} - Z_{p2}}{Z_{p1} Z_{p2}} } \\
+= & \frac{1}{ \frac{Z_{p2} + t \times (Z_{p1} - Z_{p2})}{Z_{p1}Z_{p2}} } \\
+= & \frac{Z_{p1}Z_{p2}}{Z_{p2} + t \times (Z_{p1} - Z_{p2})}
+\end{aligned} \end{equation*}$
+
+因为视点空间上的变化是线性的, 包括坐标位置以及坐标关联的其它属性,
+
+假设裁剪坐标 $p1$ 和 $p2$ 所对应的视点坐标分别为 $p_{e1}$ 和 $p_{e2}$,
+
+那么存在线性插值函数 $p_{e} = (x_e, y_e, z_e) = p_{e1} + s \times (p_{e2} - p_{e1}), s \in [0, 1]$,
+
+只要知道其中一个分量的插值规律, 便能推广到其它分量上, 以 $z_e$ 的插值为例:
+
+$\begin{equation*} \begin{aligned} & z_e \\
+= & Z_{p1} + s \times (Z_{p2} - Z_{p1}) \\
+= & \frac{Z_{p1}Z_{p2}}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} \\
+\rightarrow & s \\
+= & \left( \frac{Z_{p1}Z_{p2}}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} - Z_{p1} \right) \times \frac{1}{Z_{p2} - Z_{p1}} \\
+= & \left( \frac{Z_{p1}Z_{p2}}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} - \frac{Z_{p1}(Z_{p2} + t \times (Z_{p1} - Z_{p2}))}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} \right) \times \frac{1}{Z_{p2} - Z_{p1}} \\
+= & \frac{Z_{p1}(Z_{p2} - Z_{p2} - t \times (Z_{p1} - Z_{p2}))}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} \times \frac{1}{Z_{p2} - Z_{p1}} \\
+= & \frac{Z_{p1}(- t \times (Z_{p1} - Z_{p2}))}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} \times \frac{1}{Z_{p2} - Z_{p1}} \\
+= & \frac{t \times Z_{p1}}{Z_{p2} + t \times (Z_{p1} - Z_{p2})} \\
+= & \frac{t \times Z_{p1}}{(1 - t) \times Z_{p2} + t \times Z_{p1}}
+\end{aligned} \end{equation*}$
+
+最终得到 $p_e = p_{e1} + \frac{t \times Z_{p1}}{(1 - t) \times Z_{p2} + t \times Z_{p1}} \times (p_{e2} - p_{e1}), t \in [0, 1]$,
+
+并且这个关系还可以推广到 $p_{e1}$ 和 $p_{e2}$ 的其它关联属性上, 假设 $I_1$ 和 $I_2$ 分别是 $p_{e1}$ 和 $p_{e2}$ 关联的属性,
+
+那么该插值函数成立: $I = I_1 + \frac{t \times Z_{p1}}{(1 - t) \times Z_{p2} + t \times Z_{p1}} \times (I_2 - I_1), t \in [0, 1]$.
+
 **** 透视投影 - FOV (Field of View)
+:PROPERTIES:
+:CUSTOM_ID: h-a913a590-aa66-401f-90cd-5cc1d85ded0d
+:END:
 
 很多图形库的设定投影相机的函数需要视场角(fov), 裁剪平面的宽高比(aspect)以及近裁剪平面(n)以及远裁剪平面(f)作为输入参数.
 
@@ -1113,6 +1242,9 @@ $k_z$ 就有点特殊, 因为是从 $[-n, -f]$ 映射到 $[-1, 1]$, 所以 $\beg
 在绘制 =UI= 元素时需要根据这个坐标系来对元素进行定位.
 
 ** 接下来
+:PROPERTIES:
+:CUSTOM_ID: h-869471b1-15fa-4b8b-a3b0-38a2a56aab0d
+:END:
 
 这篇笔记涵盖了大部分 =OpenGL= 中所发生基底变换以及如何构建它们所对应的矩阵,
 
