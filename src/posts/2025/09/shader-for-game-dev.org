@@ -8,7 +8,7 @@
 #+begin_abstract
 这篇文章主要是收集一些 =3D= 游戏开发常用的 =Shader= 技术, 以及一些风格化渲染实现.
 
-总得来说是一篇应用类的文章, 这些应用使用了很多"基础理论", 可以从以下文章找到:
+总的来说是一篇应用类的文章, 这些应用使用了很多"基础理论", 可以从以下文章找到:
 
 1. [[../../2020/06/graphics-geometric-transformation.html][图形学 - 几何变换]]
 
@@ -1344,7 +1344,7 @@ $\frac{A(t_1)}{A(t_2)} \gt 1$ 说明发生了聚焦, $\frac{A(t_1)}{A(t_2)} \lt 
 
 因此, 第二种方法会好一点. 正如第三种方法所言, 在计算面积比前要找出光线与水面的交点, 以及折射光线与水底的交点.
 
-***** 在光栅化渲染中使用 Ray Marching 找出射线与场景的交点
+***** 在光栅化渲染中使用 Ray Marching 逐个像素找出射线与场景的交点
 :properties:
 :custom_id: find-hit-point-with-raymarching
 :end:
@@ -1361,21 +1361,60 @@ $\frac{A(t_1)}{A(t_2)} \gt 1$ 说明发生了聚焦, $\frac{A(t_1)}{A(t_2)} \lt 
 
 光栅化的场景需要配合深度贴图(深度 =buffer=)来找出光线与场景的交点,
 
-#+attr_html: :width 800px
-#+caption: 图片来源于[[https://zhuanlan.zhihu.com/p/1912925340386441129][知乎]]
+#+caption: 光线步进配合深度贴图找出光线 $R$ 与场景的交点
 [[../../../files/raymarch-to-find-hitpoint-in-rasterization.png]]
 
 上图中沿着射线 $R$ 移动若干像素从深度贴图中读取深度信息,
 
-再比较深度贴图中的深度 $d$ 与射线 $R$ 当前位置的深度 $z$, 如果 $d \le z$, 那么射线 $R$ 与场景相交.
+再比较深度贴图中的深度 $d$ 与射线 $R$ 当前位置(=Step X=)的深度 $z$, 如果 $d \le z$, 那么射线 $R$ 与场景相交.
 
-不过这个实现起来不简单:
+比如上图中点 $S$ 的深度 $d$ 要小于点 =Step 3= 的深度 $z$, 因此 $R$ 与场景相交,
 
-第一个问题, 如何实现沿着 $R$ 在深度贴图上移动指定数量的像素;
+但是射线明显进入物体内部了, 显然 $P$ 才是我们想要的结果.
 
-第二个问题, 如何计算出移动指定数量像素后的深度变化.
+为了使射线不进入物体中, 人们通常会添加容错范围 $\epsilon$ 进行判断: $0 \le d - z \le \epsilon$,
 
-接下来会花费较长的篇幅来探索这两个问题的答案.
+只要满足该条件就认为射线与场景相交. 如下图, 在 =Step 2= 时会认为 $B$ 是 $R$ 与场景的交点.
+
+[[../../../files/raymarch-to-find-hitpoint-in-rasterization-epsilon.png]]
+
+$\epsilon$ 要与步长成正比, 步长越大, $\epsilon$ 也应该越大, 这样才容易保证射线不进入物体中.
+
+#+begin_quote
+保证射线不进入物体中不是必须的, 但在判定是否相交时最好统一要么进入, 要么统一不进入,
+
+从图中可以发现, 这个容错会导致交点发生偏移, 进入与不进入两者所导致的偏移方向是不一致的,
+
+应尽量保持一致. 如果是允许进入物体内部, $\epsilon$ 就是可进入的最大范围了.
+#+end_quote
+
+$\epsilon$ 在这里的几何含义是物体表面的厚度(=thickness=).
+
+# 在步长不变的情况下, $\epsilon$ 越大, 越是容易导致反射被拉伸; 越小容易导致光线无法命中物体表面.
+
+$\epsilon$ 并不一定要作为深度差的容错范围, 也可以作为交点与射线之间的距离最大值,
+
+[[../../../files/raymarch-to-find-hitpoint-in-rasterization-2.png]]
+
+以上图为例, 在 =Step 2= 中, 点 $B$ 与射线 $R$ 的距离 $h_{B}$ 小于 $\epsilon$, 那么就认为 $B$ 是 $R$ 与场景的交点.
+
+以 [[https://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html][点与线段之间的距离]] 来衡量顶点是否为交点不是一个很常见的方法, 它的存在告诉我们判断是否相交的并非只能用深度.
+
+甚至结合两者进行判断: 先判断是否满足 $d \le z$, 如果满足就进一步判断点与线段的距离是否小于 $\epsilon$, 如果是那么就认为相交.
+
+[[../../../files/raymarch-to-find-hitpoint-in-rasterization-mixed.png]]
+
+上图中, 在 =Step 3= 时, $S$ 的深度 $d$ 小于点 =Step 3= 的深度 $z$, 并且 $S$ 与射线 $R$ 的距离 $h_{S}$ 小于 $\epsilon$, 因此 $S$ 为交点.
+
+不管如果判断, 都要面临着两个问题:
+
+第一个问题, 如何实现沿着 $R$ 在深度/位置贴图上移动一个像素;
+
+第二个问题, 如何计算出移动一个像素后的深度变化.
+
+只要知道这两个问题的答案, 我们就能知道视点空间上的长度和屏幕空间中的长度是如何对应的,
+
+便能以像素为单位指定 =Ray Marching= 的步长. 接下来会花费较长的篇幅来探索这两个问题的答案.
 
 -----
 
@@ -1427,15 +1466,39 @@ $maxComp$ 被称为切比雪夫距离 (=Chebyshev distance=), 根据该值对 $r
 
 $d_{frag} = \frac{r_{screen}}{maxComp}$
 
+#+begin_quote
+需要强调一点, 切比雪夫距离 $maxComp$ 有可能会为 0:
+
+比如 $r_{ndc} = \left(0, 0, 0\right)$;
+
+或者 $r_{ndc} = \left(0, 0, z\right)$ 且 $z \ne 0$;
+
+又或者 $r_{ndc} = \left(0, y, z \right)$ 且 $y \le 0$ 和 $z \ne 0$;
+
+又或者 $r_{ndc} = \left(x, 0, z \right)$ 且 $x \le 0$ 和 $z \ne 0$.
+
+也就是 $r_{world}$ 几乎与相机近裁剪平面垂直时, $maxComp$ 就趋向于 0.
+
+也有可能为一个近乎无限大的值:
+
+在 $(A_{view})_z (B_{view})_z$ 很小时, $maxComp$ 就会趋向无限大.
+
+换句话说就是 $r_{world}$ 几乎与近裁剪平面平行时, $maxComp$ 就会趋向无限大.
+
+在实际开发中, 需要保证 $maxComp$ 要小于 $max(uResolution.x, uResolution.y)$.
+#+end_quote
+
 $d_{frag}$ 在纹理坐标系上为 $d_{uv}$:
 
 $d_{uv} = d_{frag} \div uResolution$
+
+接下来就是讨论移动一个像素时的深度变化 $d_{w}$ 了.
 
 *正交投影*
 
 在正交投影中, 存在这些关系 $\begin{cases}\begin{aligned} (r_{world})_{w} & = 0 \rightarrow (r_{clip})_{w} = 0 \\ (A_{clip})_w & = (B_{clip})_w = 1 \end{aligned}\end{cases} \rightarrow \begin{cases} \begin{aligned} A_{ndc} &= A_{clip} \\ B_{ndc} &= B_{clip} \\ r_{ndc} &= r_{clip} \end{aligned} \end{cases}$,
 
-由此可发现正交投影中的 =NDC/UVW= 变化是线性的, 所以移动一个像素导致的深度变化 $d_{w}$ 为:
+由此可发现正交投影中的 =NDC/UVW= 变化是线性的, 所以 $d_{w}$ 为:
 
 $d_{w} = \frac{|d_{uv}|}{|(r_{uvw})_{xy}|} \times (r_{uvw})_{z} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp} = \frac{(r_{clip})_{z}}{2 \times maxComp}$
 
@@ -1490,31 +1553,213 @@ $\begin{equation*} \begin{aligned}
 
 可以把 $(r_{uvw})_{z}$ 看作是一个函数 $(r_{uvw})_{z} = f((B_{view})_z) = k \left(\frac{1}{(B_{view})_z} - \frac{1}{(A_{view})_z} \right)$,
 
-函数 $f$ 是一个倒数函数 (=reciprocal function=), 每次移动一个像素的距离时, $(B_{view})_z$ 的变化是线性的,
+把 $(B_{view})_{z}$ 看作是当前像素位置所对应的视点空间 $z$ 分量, $f$ 是一个倒数函数 (=reciprocal function=),
 
-但深度变化 $(r_{uvw})_{z}$ 不是, 因此关系 $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp}$ *不成立*.
+每次 $(B_{view})_{z}$ 发生固定变化时, 深度变化 $(r_{uvw})_{z}$ 不是固定的, 因此关系 $d_{w} = \frac{|d_{frag}|}{|r_{screen}|} \times (r_{uvw})_{z} = \frac{(r_{uvw})_{z}}{maxComp}$ *不成立*.
 
-因此在透视投影中, 只能在移动像素时想办法拿到像素所对应视点坐标的 $z$ 分量, 从而计算出深度. 这挺简单的,
+现在剩下的唯一办法就是: 先计算出当前像素所对应的视点空间 $z$ 分量, 再根据该 $z$ 分量计算出深度.
 
-假设有一个片元坐标 $P_{screen} = A_{screen} + i \times d_{frag}, i \in [0, maxComp]$,
+但问题是, 要如何计算出当前像素所对应的视点空间 $z$ 分量呢?
 
-$P_{screen}$ 为从 $A_{view}$ 向 $B_{view}$ 移动时某个中间点 $P_{view} = (1 - t) \times A_{view} + t \times B_{view}, t = \frac{i}{maxComp} \in [0, 1]$ 在屏幕空间上的片元坐标,
+假设屏幕空间上的变化量为 $D_{screen} = m \times r_{screen} = i \times d_{frag}$, 其中 $m = \frac{i}{maxComp}$, $i \in [0, maxComp]$,
 
-(视点坐标的变化也是均匀的,) 一旦拿到了 $P_{view}$ 就能很容易根据 $(P_{view})_{z}$ 计算出 $P_{screen}$ 对应的非线性深度:
+其所对应的视点空间上的变化量为 $D_{view} = n \times r_{view} = n \times M_{view}r_{world}$, 其中 $n \in \mathbb{R}$,
+
+假设当前的像素坐标为 $P_{screen} = A_{screen} + D_{screen}$,
+
+其对应的视点空间坐标为 $P_{view} = A_{view} + D_{view}$.
+
+由于视点空间和屏幕空间上各自的变化都是线性的, 很容易就会认为 $D_{view}$ 和 $D_{screen}$ 之间也是线性关系,
+
+如果 $m$ 与 $n$ 成线性关系的话, 那么它们之间就存在一个常数比例 $k = \frac{n}{m}$,
+
+然后可以通过 $m$ 进行线性插值得出 $(P_{view})_{z} = (A_{view})_{z} + km \times (r_{view})_{z}$,
+
+并且应该是 $k = 1$, 因为 $\overrightarrow{AP}_{screen}$ 是 $\overrightarrow{AP}_{view}$ 的投影, 所以 $\frac{\left|\overrightarrow{AP}_{screen}\right|}{\left|\overrightarrow{AB}_{screen}\right|} = \frac{\left|\overrightarrow{AP}_{view}\right|}{\left|\overrightarrow{AB}_{view}\right|}$ 理应成立.
+
+直觉终究要被进行验证:
+
+$P_{screen}$ 对应的纹理坐标为 $P_{uv} = P_{screen} \div uResolution$,
+
+其对应的 =NDC= 坐标的 $xy$ 分量为 $(P_{ndc})_{xy} = P_{uv} \div 2 - 1$,
+
+其对应的裁剪坐标的 $xy$ 分量为 $(P_{clip})_{xy} = (P_{ndc})_{xy} \times (P_{view})_{z}$,
+
+至此可以得到 $D_{screen}$ 与 $(D_{view})_{z}$ 之间的联系,
+
+$\begin{equation*}\begin{aligned}
+& (P_{clip})_{xy} \\
+= & (P_{ndc})_{xy} \times (P_{view})_{z} \\
+= & \left( \left[ (A_{screen} + D_{screen}) \div uResolution \right] \div 2 - 1 \right) \times \left[ (A_{view})_{z} + (D_{view})_z \right] \\
+\rightarrow & \frac{(P_{clip})_{xy}}{(A_{view})_{z} + (D_{view})_z} = \left[ (A_{screen} + D_{screen}) \div uResolution \right] \div 2 - 1 \\
+\rightarrow & D_{screen} = \left[ \frac{(P_{clip})_{xy}}{(A_{view})_{z} + (D_{view})_z} + 1 \right] \times 2 \times uResolution - A_{screen} \\
+\rightarrow & m = \frac{\left[ \frac{(P_{clip})_{xy}}{(A_{view})_{z} + n \times (r_{view})_{z}} + 1 \right] \times 2 \times uResolution - A_{screen}}{r_{screen}}
+\end{aligned}\end{equation*}$
+
+把 $m$ 看作一个以 $n$ 为参数的函数: $m = f(n)$. 如你所见, 两者之间并非线性关系,
+
+也就是说常数 $k$ 是不存在的, 这意味着 $(P_{view})_{z} \ne (A_{view})_{z} + km \times (r_{view})_{z}$.
+
+# $n = f^{-1}(m) = \left[ (P_{clip})_{xy} \times \frac{2 \times uResolution}{m \times r_{screen} + A_{screen} - 2 \times uResolution} - (A_{view})_{z} \right] \times \frac{1}{(r_{view})_{z}}$
+
+那么还有其它办法吗? 其实 [[../../2020/06/graphics-opengl-transformation.html#arbitrary-attr-interp][在透视投影中对任意属性进行插值]] 就告诉了我们方法,
+
+受限于篇幅, 这里直接针对上下文给出调整过的结论:
+
+$(P_{view})_{z} = \frac{(A_{view})_{z} (B_{view})_{z}}{(B_{view})_{z} + t \times \left[ (A_{view})_{z} - (B_{view})_{z} \right]}$, 其中 $t = \frac{i}{maxComp}$, $i \in [0, maxComp]$.
+
+一旦拿到了 $(P_{view})_{z}$ 就可以计算出 $P_{screen}$ 对应的非线性深度 $P_{depth}$:
 
 $P_{depth} = \frac{-\frac{1}{(p_{view})_z} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}$
 
-如果要计算线性深度则可以:
+如果要计算线性深度 $P_{linearDepth}$:
 
 $P_{linearDepth} = \frac{-(p_{view})_z - n}{f - n}$
 
-数学上只要是可以线性插值的情况, 那必然可以外推, 因此 $P_{view}$ 的计算在 $t \in [0, 1]$ 之外的情况也成立.
+数学上只要是可以线性插值的情况, 那必然可以外推, 因此 $(P_{view})_{z}$ 的计算在 $t \in [0, 1]$ 之外的情况也成立.
 
 #+begin_quote
 这种计算深度的方法也适用于正交投影的情况, 只不过没有必要, 除非需要计算非线性深度.
 #+end_quote
 
+
+***** 查找交点时提高浮点数比较时的容错率
+:PROPERTIES:
+:CUSTOM_ID: floating-number-comparation-with-tolerance
+:END:
+
+*计算机浮点数的精度限制*
+
+计算机的数据是通过二进制的形式储存的, 有些浮点数在二进制中是一个无限循环小数, 比如:
+
+$\begin{cases} \text{0.1}_{10} &= \text{0.0001100110011001100...}_{2} \\ \text{0.2}_{10} &= \text{0.001100110011001100...}_{2} \\ \text{0.3}_{10} &= \text{0.0100110011001100...}_{2} \end{cases}$,
+
+由于储存的限制, 这导致了十进制运算和二进制运算的结果不一致, 假设计算机中浮点数只能用 6 个位进行储存,
+
+在十进制中运算 $\text{0.1}_{10} + \text{0.2}_{10} = \text{0.3}_{10}$, 但实际上二进制中的运算过程是这样:
+
+$\begin{cases} \text{0.1}_{10} & \approx \text{0.000110}_{2} \\ \text{0.2}_{10} & \approx \text{0.001100}_{2} \\ \text{0.1}_{10} + \text{0.2}_{10} & \approx \text{0.010010}_{2} \\ \text{0.3}_{10} & \approx \text{0.010011}_{2} \end{cases}$
+
+如你所见, 在二进制中 $\text{0.1}_{10} + \text{0.2}_{10} \ne \text{0.3}_{10}$. 由于储存限制的存在, 运算精度也会出现问题.
+
+这个问题也出现在通过比较深度找交点的情况中: 当两个浮点数的大小越接近, 两者之间就越难得出正确的大小关系.
+
+正如上面所展示的, 在数学上两个相同大小的深度会因为精度问题出现大小不等的情况, 在查找交点时会导致自相交的情况: 点与自己相交;
+
+当然, 在数学上大小接近, 也有可能会却因为精度问题得出错误的大小关系. 这些都不是开发者想要的.
+
+因此在做深度比较时, 选用线性深度还是非线性深度用作比较是非常重要的一个话题.
+
+*深度贴图类型的选择*
+
+以下图作为研究例子:
+
+#+attr_html: :width 600px
+[[../../../files/linear-vs-nonlinear-depth.png]]
+
+#+begin_quote
+图片由 =Maxima= 生成:
+
+#+BEGIN_SRC maxima
+  linearDepth(z, n, f) := (-z - n) / (f - n);
+  nonLinearDepth(z, n, f) := (-1/z - 1/n) / (1/f - 1/n);
+  plot2d([linearDepth(-z, 1, 10), nonLinearDepth(-z, 1, 10)],
+    [z, 1, 10],
+    [xlabel, "视点坐标 z 分量"],
+    [ylabel, "深度"],
+    /* [xtics, 1, 1, 10], */
+    [gnuplot_preamble, "
+        set xtics 1,1,10
+        set format x '-%g'
+        set tmargin 0
+        set bmargin 0
+    "],
+    [legend, "线性深度", "非线性深度"]
+    );
+#+END_SRC
+#+end_quote
+
+假设有两个深度 $a$ 和 $b$, $b$ 是贴图中的深度, $a$ 是沿着反射方向移动时当前位置 $P$ 的深度,
+
+由于精度原因, 是不可能因为 $b = a$ 就断定 $P$ 就是反射光线与场景的交点, 一般是 $b \le a$ 才能断言.
+
+在物体与相机的距离较小时, 比如图像 $z \in [-1, -4]$ 时, 非线性深度的变化范围为 $[0, \frac{5}{6}]$,
+
+非线性深度的变化要比线性深度的变化要大, 如果 $a$ 和 $b$ 都在这个范围内, 容易得出它们之间的大小关系,
+
+那么应该采用非线性深度; 在物体与相机的距离较大, 比如图像中 $z \in [-9, -10]$ 时,
+
+非线性深度的变化范围为 $[\frac{80}{81}, 1]$, 如果 $a$ 和 $b$ 在这个范围内, 就不太容易正确地得出大小关系, 这个时候应该采取线性深度.
+
+如果采用线性深度进行比较, 最好使用视点坐标的 $z$ 分量进行比较, 相比于比较在 $[0, 1]$ 之间的深度,
+
+比较在 $[-10, -1]$ 之间的深度更容易得出正确的大小关系. 因此结论是: *最好选择线性深度, 且以视点坐标的 $z$ 分量作为深度*.
+
+对微积分有一定基础的读者可以通过深度 $d$ 与视点坐标 $z$ 分量关系式的导数进行了解.
+
+$d$ 与 $z$ 的关系: $d(z) = \frac{f}{f - n} + \frac{1}{z} \frac{n}{f - n}$, $\begin{cases} C = \frac{f}{f - n} \\ K = \frac{n}{f - n} \end{cases} \rightarrow d(-z) = \frac{K}{z} + C$.
+
+$d$ 关于 $z$ 的导数: $d^{'}(z) = \frac{-K}{(z)^2}$;
+
+$d$ 的变化: $\Delta d \approx |d^{'}(z)| \Delta z$.
+
+$z_{e}$ 的变化: $\Delta z \approx \frac{\Delta d}{|d^{'}(z)|} = \frac{\Delta d \cdot (z)^{2}}{K}$.
+
+可以发现 $z$ 越大, $\Delta d$ 越小.
+
+*容忍误差比较法*
+
+为了对抗精度问题, 还可以使用容忍误差比较法对比浮点数, 具体有三种比较法.
+
+#+BEGIN_SRC glsl
+  // 绝对误差容忍: 当两个浮点数之差在一个指定范围内, 则被认为两者相等
+  bool absoluteTolerance(float a, float b, float epsilon) {
+    return abs(a - b) < epsilon;
+  }
+
+  /* 绝对误差有一个问题: 不同量级的差别大小 abs(a - b) 需要不同的容错大小 epsilon.
+
+     比如说 100 元和 100 元零 1 分钱相比, 1 分钱相对于 100 元来说可以忽略不计,
+
+     所以可以认为这两个金额是一样的.
+
+     当 500 千万亿元和 500 千亿万零一万元相比, 一万元与 500 千万亿元来说可以忽略不计,
+
+     所以这两个金额可以认为是一样的, 哪怕是一百万在庞大的金额面前也是可以忽略不计的.
+
+     相对容差容错就是为了解决这个问题而生的.
+   ,*/
+
+  // 相对误差容忍: 基于两个浮点数的规模来动态决定容错范围
+  bool relativeTolerance(float a, float b, float epsilon) {
+    float scale = max(max(abs(a), abs(b)), 1.); // 避免 a 和 b 中有一个值为 0
+    return absoluteTolerance(a, b, epsilon * scale); // epsilon 应为量级规模较小的浮点数的误差
+  }
+
+  /* 绝对误差容忍相比相对误差容错更适合于那些零值或接近零值的比较,
+
+     对于通用计算适合使用两者的组合, 只要满足其中一个比较法即可,
+
+     在实现过程中可以先使用绝对误差容忍比较, 如果比较结果为两者不相等, 那么再采取相对误差容忍比较.
+   ,*/
+  bool combineTolerance(float a, float b, float absEpsilon, float relEpsilon) {
+    if (absoluteTolerance(a, b, absEpsilon)) {
+      return true;
+    }
+    return relativeTolerance(a, b, relEpsilon);
+  }
+#+END_SRC
+
+查找交点的情况比较适合使用相对误差容忍进行深度比较, 假设 $\epsilon$ 是作为深度差的容错范围,
+
+那么可以配合关系 $\Delta d = |d^{'}(z)| \Delta z$ 动态调整容错 $\epsilon$,
+
+$\epsilon$ 需要与 $z^2$ 或至少与 $z$ 成正比, 比如: $0 \le d - z \le z^2 \times \epsilon$.
+
 ***** 生成焦散贴图
+:properties:
+:CUSTOM_ID: generate-caustics-texture
+:end:
 
 焦散贴图是给水底的物体使用的, 同时还兼具阴影贴图的功能,
 
@@ -1631,7 +1876,14 @@ $P_{linearDepth} = \frac{-(p_{view})_z - n}{f - n}$
       vec4 smInfo = texture2D(tEnvShadowMap, uv);
       vHitPoint = smInfo.xyz;
 
-      if (smInfo.w <= currentDepth) {
+      /*
+        在一些场景布局中, 当 i = 0 时, currentPos = (waterPosClip.xy * 0.5 + 0.5) * uResolution,
+
+        这时候使用 smInfo.w <= currentDepth 进行深度判断容易出现自相交的情况,
+
+        因此尽量使用 smInfo.w < currentDepth 进行深度判断
+      ,*/
+      if (smInfo.w < currentDepth) {
         break;
       }
 
@@ -1930,6 +2182,10 @@ $P_{linearDepth} = \frac{-(p_{view})_z - n}{f - n}$
 #+attr_html: :width 500px
 #+caption: 水底下的体积光
 [[../../../files/volumetric-lighting-underwater.png]]
+
+#+BEGIN_QUOTE
+经过个人测试后, 在生成焦散贴图时把 =magFilter= 和 =minFilter= 设置成 =NearestFilter= 效果会更好.
+#+END_QUOTE
 
 *** 屏幕空间技术 (Screen Space Techniques, SST)
 :PROPERTIES:
@@ -2646,20 +2902,14 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
     vec2 uv = vUV;
     vec4 origin = texture2D(tViewPosition, uv);
 
-    // 计算顶点在成像相机中的深度
-    vec4 posClip = uProjectionMatrix * origin;
-    float depth = (posClip.z / posClip.w) * .5 + .5;
-
-    if (depth >= 1.0) {
+    if (origin.w <= 0.0) {
 
       /*
         找出背景片元(即并非根据顶点得到的片元), 不对背景做遮蔽处理.
 
-        这里把深度接近远裁剪平面的片元认为是背景片元, 即深度为 1 的片元.
+        在生成位置贴图时需要设置默认透明度通道为 0, 如果片元的透明度不为 0,
 
-        做深度判断时, 如果是用正交相机成像, 用线性深度判断; 如果是用透视相机成像, 用非线性深度判断;
-
-        这里的深度已经完成了这种"适配".
+        那么就说明片元上存在顶点信息, 否则片元就为背景片元.
       ,*/
       gl_FragColor = vec4(1.0);
 
@@ -2763,6 +3013,10 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 
 [[../../../files/ssao-diff-2.png]]
 
+完整的 =SSAO= 实现逻辑位于:
+
+[[https://github.com/saltb0rn/shader-for-game-dev/blob/master/src/SSAO/postProcessing/SSAOPass.ts][src/SSAO/postProcessing/SSAOPass.ts]]
+
 *** 屏幕空间反射 (Screen Space Reflection, SSR)
 
 [[#cubemap-reflection][高度场水面模拟中的反射]]的实现是根据反射光线的方向从立方体贴图中进行采样, 把采样结果作为水面的反射景象.
@@ -2788,57 +3042,135 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
 
 整体实现分为 4 步:
 
-1. 把当前相机看到的景象保存为颜色贴图 =tDiffuse=, 用于反射采样
+1. 把相机当前看到的景象保存为颜色贴图 =tDiffuse=, 用于反射采样
 2. 找出 $O$ 点上的反射光 $R_0$ 与场景的交点 $P$
 3. 计算出交点 $P$ 在相机中的 =UV= 坐标, 并根据该 =UV= 坐标从 =tDiffuse= 获取反射信息
 4. 利用反射信息对 $O$ 点进行着色, 从而实现反射
 
 
-其中第 2 步找反射光 $R_0$ 和场景的交点是屏幕空间反射实现的重点与难点,
+具体实现方式各有差异, 可以把计算出来的反射信息储存到贴图中,
 
-可以不夸张地说, 如果能够发展出一种算法复杂度为 $O(1)$ 的求交点算法,
+之后可以选择在向前渲染完成着色实现反射, 也可以选择在后处理中完成反射.
 
-图形学一大堆技术的性能问题都可以被解决, 比如实时光追.
+整体看上去好像很简单, 但其中涉及非常多具体的细节, 特别是保护了很多 =shader= 以外的细节.
 
-求交点的技术在计算焦散中的 [[#find-hit-point-with-raymarching][在光栅化渲染中使用 Ray Marching 找出射线与场景的交点]] 一节中有介绍逐个像素移动求交点的方法,
+本人前期就是按照这个思路自己去实现, 但因为细节处理得不好导致最终效果不可用.
 
-但这种方法的效率不太好, 用于求交点的深度贴图分辨率越高, 找到交点所需的循环次数越多.
+在一番对比后发生 =three.js= 的实现思路很直观, 并且 *也是* 逐个像素遍历的屏幕空间反射:
 
-后面在实现屏幕空间反射时会在这个方法的基础上做出一些调整以提高效率.
+[[../../../files/SSRPass.js][https://github.com/mrdoob/three.js/blob/dev/examples/jsm/postprocessing/SSRPass.js]]
 
-整个屏幕空间反射的实现需要以下贴图:
+[[../../../files/SSRShader.js][https://github.com/mrdoob/three.js/blob/dev/examples/jsm/shaders/SSRShader.js]]
 
-1. 求射线与场景的交点需要用到深度贴图 =tDepth=;
+因此要理解接下来的内容, 请务必先理解 [[#find-hit-point-with-raymarching][在光栅化渲染中使用 Ray Marching 逐个像素找出射线与场景的交点]] 的内容.
 
-2. 求反射光线要用到视点空间上的顶点贴图 =tViewPosition= 和法线贴图 =tViewNormal=;
+#+begin_quote
+选择 =three.js= 的实现作为参考还有因为它是参考 [[https://lettier.github.io/3d-game-shaders-for-beginners/screen-space-reflection.html][3D Game Shader For Beginners - Screen Space Reflection (SSR)]],
 
-3. 场景采样 =tDiffuse=;
+这也是我最开始的参考, 并且在一些方面做出了非常好的处理.
+#+end_quote
 
-4. 用于标识片元是否支持反射的贴图 =tMirror=.
+**** 屏幕空间反射的缺陷
+
+屏幕空间虽然有性能优势, 但反射效果有很明显的缺陷, 算是一种取舍吧.
+
+***** 反射信息不足
+
+屏幕空间反射只能反射当前相机可见的场景内容, 反射光线与场景的交点出现在相机视野外时无法被反射.
+
+视野外的情况可以分为两类: 相机背后的场景, 反射光线与场景的交点在相机中的 =UV= 坐标超出场景采样的范围.
+
+#+caption: 入射射线 $I_1$ 和法线之间的夹角小于 $45^{\circ}$ 时应当反射相机背后的场景
+[[../../../files/ssr-ir-diag-3.png]]
+
+#+caption: 反射光线 $R_0$ 与场景的交点 $P$ 在相机中的 UV 坐标超出场景采样的范围
+[[../../../files/ssr-ir-diag-4.png]]
+
+在实现屏幕空间反射时需要考虑视野外的情况要如何处理, 在这之前需要了解如何识别两者:
+
+*第一种情况:* $P$ 点在相机后面, 根据渲染管线, 出现在视野中的顶点其视点坐标的 $z$ 分量 $z_e$ 是小于 0 的,
+
+并且满足关系 $n \le -z_e \le f$, 其中 $n$ 和 $f$ 分别是近裁剪平面和远裁剪平面到相机的距离,
+
+所以只要 $-z_e$ 超出 $[n, f]$ 这个范围就是第一种情况. 不过这种方法处理不了一种类似的变种问题:
+
+#+caption: 反射光线 $R_0$ 与场景的交点 $P$ 在相机前, 但正确的反射内容在相机背后
+[[../../../files/ssr-ir-diag-5.png]]
+
+这种情况应该量化 $O$ 点的反射程度 $d$, 它跟 $I_{1}$ 与 $N(ormal)$ (或者 $R_{1}$ 与 $N$) 之间的夹角 $\theta$ 大小有关, $\theta$ 的范围是 $[0^{\circ}, 90^{\circ}]$,
+
+当 $\theta$ 越小, 反射程度越低, 反之越高, 反射程度 $d$ 与 $\theta$ 的关系有点类似于 [[../../2020/08/graphics-opengl-light-and-material.html#fresnel-effect][菲涅耳效应]] 的简单建模:
+
+$d = 1 - max\left(\frac{I_{1}}{|I_{1}|} \cdot \frac{N}{|N|}, 0\right) = 1 - max(\cos\theta, 0)$, 反射程度的范围为 $[0, 1]$, 当 $I_{1}$ 和 $N$ 方向一致时, 反射程度为 0.
+
+此外, 对比第一种方法只有 *可反射* 与 *不可反射* 两种判断结果, 反射程度可以用于在这两种结果之间进行 *过渡*;
+
+当然, 反射程度不是物理正确的, 比如上图中在 $\theta \lt 45^{\circ} \rightarrow d < 0.293$ 时,
+
+按物理关系来说, 反射内容在相机后面应该属于不可反射, 也就是 $d = 0$.
+
+*第二种情况:* $P$ 点的 =UV= 坐标超出 $[0, 1]^2$ 的范围.
+
+***** 交点误判
+:properties:
+:custom_id: ssr-false-positive
+:end:
+
+交点误判是屏幕空间算法本身的缺陷所造成的, 在某些情况下会得到一些错误的交点, 从而产生我们不想要的反射效果.
+
+这里从其中一种情况开始作为出发点, 找出不同情况下交点误判的共同特点, 如下图.
+
+#+caption: 球体的前景被无限反射, 从 $O_0$ 开始地面上形成球体的拖影
+[[../../../files/ssr-ir-diag-infinite-fg.png]]
+
+因为我们的求交点算法是沿着反射光线 $R$ 逐个像素移动的, 所以会出现图中情况的判断,
+
+$P_{1}$ 和 $P_{2}$ 都是误判的交点, 首先 $P_{1}$ 位于球体的背后,
+
+其信息没有出现在 =tDiffuse= 中, 由于它与 $P_{0}$ 的 =UV= 坐标一样, 所以反射 $P_0$ 而并非 $P_{1}$ 的内容;
+
+其次 $P_{2}$ 并没有真正地与任何物体相交, 同样, 它的 =UV= 坐标和 $P_{0}$ 的一样, 所以反射 $P_0$ 而并非 $P_{1}$ 的内容.
+
+第一点, 物体背面无法被反射无解的, 毕竟 =tDiffuse= 不可能有物体背后的信息.
+
+第二点, 拖影问题只能通过某种判断来进行取消: 判断交点反射光线与场景的交点是否为误判结果, 如果是就取消反射.
+
+假设 $i \in \mathbb{Z^{+}}$, $Q_i$ 是那些出现拖影的地方, 并且随着 $i$ 的增大, $Q_i$ 距离相机越远,
+
+$P_i$ 为从 $O_i$ 开始沿着反射光线 $R_i$ 出发所找到的场景交点. 这些出现拖影的地方都有一些共同特征:
+
+*$P_0$ 是 $Q_i$ 的反射内容, $P_{0}$ 的深度 $(P_{0})_{depth}$ 要小于 $P_{i}$ 的深度 $(P_{i})_{depth}$: $(P_{0})_{depth} - (P_{i})_{depth} \lt 0$*,
+
+*并且随着 $O_{i}$ 与相机距离的增加, $(P_{0})_{depth} - (P_{i})_{depth}$ 趋向无穷小.*
+
+因此, 解决拖影思路也很简单: 把 $(P_{0})_{depth} - (P_{i})_{depth}$ 限定在一个范围内才允许反射.
+
+或者说, 只要 $P_{0}$ 与反射光线 $R_{i}$ 的距离在一定范围内 $O_{i}$ 才能进行反射.
+
+**** 实现中的具体细节
+
+这里会对 =three.js= 的实现进行分析, 会与原本的实现有些许差别, 但重要部分还是会保留下来,
+
+原本实现有一些地方不是很好, 这里保留下来了, 并且会着重提醒. 下图是本文的实现流程.
+
+#+caption: 屏幕空间反射 - 后处理实现流程
+[[../../../files/ssr-pipeline.png]]
+
+=SSR= 是接下来重点介绍的内容, 它的计算过程依赖 4 种几何数据:
+
+1. 颜色贴图
+2. 视点坐标
+3. 视点法线
+4. 反射标记
 
 
-其中 [[#view-pos-buf][tViewPosition]] 和 [[#view-normal-buf][tViewNormal]] 的生成方法和屏幕环境遮蔽中用到的同名贴图是一致的, 就不赘述了;
+前面 3 种贴图在屏幕空间环境遮蔽中就有提到过, 这里就不赘述了.
 
-由于深度贴图是用来查找交点, 因此可以把片元深度顺便储存到 =tViewPosition= 的 =w= 通道上;
+反射标记是用来对可反射的片元进行标记, 用 =1= 标记可反射, =0= 标记不可反射,
 
-片元反射的标识也只需要一个通道, 可以把 =tViewNormal= 的 =w= 通道用上, 完全没必要额外生成 =tMirror=.
+由于 =RGBA= 格式的法线贴图只用了 =RGB= 3 个通道储存法线, 因此可用空闲的 =alpha= 通道储存反射标记.
 
-**** 调整后的视点空间贴图生成程序
-
-[[app-vertex-position-view][*Vertex Shader*]]
-
-*Fragment Shader*:
-
-#+BEGIN_SRC glsl
-  varying vec4 vPosInViewSpace;
-
-  void main() {
-    // gl_FragCoord.z 的范围是 [0, 1]
-    gl_FragColor = vec4(vPosInViewSpace.xyz, gl_FragCoord.z);
-  }
-#+END_SRC
-
-**** 调整后的法线贴图生成程序
+本文的示例项目只有白色平面可以进行反射, 以下是调整过的法线贴图生成程序:
 
 [[app-vertex-vnormal][*Vertex Shader*]]
 
@@ -2854,22 +3186,413 @@ $\frac{1}{n} \sum \limits_{i=0}^{n-1} o_{i}(r) = \frac{1}{n} \sum \limits_{i=0}^
   }
 #+END_SRC
 
-**** 屏幕空间反射的缺陷
+其中 =Uniform= 变量 =uIsMirror= 是用来决定物体是否可以反射.
 
-屏幕空间虽然有性能优势, 但屏幕空间反射只能反射当前相机可见的场景内容, 反射光线与场景的交点出现在相机视野外时无法被反射.
+***** =Three.js= 的 =SSR= 计算流程
 
-视野外的情况可以分为两类: 相机背后的场景, 反射光线与场景的交点在相机中的 =UV= 坐标超出场景采样的范围.
+为了学习接下来的细节分析, 需要先了解 =three.js= 的整个屏幕空间反射(=SSR=)实现流程是怎么样的,
 
-#+caption: 入射射线 $I_1$ 和法线之间的夹角小于 $45^{\circ}$ 时应当反射相机背后的场景
-[[../../../files/ssr-ir-diag-3.png]]
+以下是其实现的伪代码以及说明.
 
-#+caption: 反射光线 $R_0$ 与场景的交点 $P$ 在相机中的 UV 坐标超出场景采样的范围
-[[../../../files/ssr-ir-diag-4.png]]
+#+BEGIN_SRC glsl
+  float normalView;              // 片元的法线
+  vec3 startPosView;             // 反射光线的起点, 为视点坐标, 同时也是相机到顶点的方向
+  vec3 incidentView = normalize(startPosView);           // 入射光线的方向
+  float reflectView = normalize(reflect(startPosView, normalView)); // 反射光线的方向
+  float maxReflectDistance = getMaxRefDist(-incidentView, normalView); // 计算反射光线的最大长度
+  vec3 endPosView = startPosView + maxReflectDistance * reflectView; // 反射光线最远能到达的终点, 为视点坐标
+  if (endPosView.z > -uNear) { // 如果 envPosView 超出近裁剪屏幕则进行裁剪, 把 endPosView 限定在视锥体内
+    endPosView = clip(endPosView);
+  }
+  vec2 startPosScreen = convertViewToScreen(startPosView); // 计算起点的屏幕空间坐标
+  vec2 endPosScreen = convertViewToScreen(endPosView);     // 计算终点的屏幕空间坐标
+  // 计算起点与终点之间的切比雪夫距离
+  float stepCount = chebySchevDist(startPosScreen, endPosScreen);
+  // 计算以反射光线在屏幕空间上移动一个像素时的位移向量
+  vec2 onePixelOffset = (endPosScreen - startPosScreen) / stepCount;
 
-第二类情况还比较好解决, 只要扩大采样相机的视野范围即可.
+  for (float i = 0; i < stepCount; i++) {
+    vec2 currentPosScreen = startPosScreen + onePixelOffset * i;
+    vec2 currentPosUV = getUV(currentPosScreen);
+    // 从深度贴图中获取采样点的视点坐标 z 分量
+    float samplingViewZ = getViewZFromDepthBuffer(currentPosUV);
+    // 计算出反射光线当前位置的视点坐标 z 分量
+    float currentViewZ = getCurrentViewZ(i / stepCount, startPosView, endPosView);
+    // 反射方向当前位置的深度大于采样点的深度
+    if (currentViewZ <= samplingViewZ) {
+      // 计算出采样点的视点坐标
+      vec3 samplingPointView = getSamplingPointView(currentPosUV, samplingViewZ);
+      // 计算出采样点与反射光线的距离
+      vec3 dist1 = distPointToLine(samplingPointView, startPosView, endPosView);
+      // 计算出容错范围
+      float thickness = calcThickness(samplingPointView);
+      // 如果采样点与反射光线的距离在容错范围内, 则认为是反射光线 *可能* 与场景相交, 这里把该交点称为嫌疑交点
+      bool hit = dist1 <= thickness;
 
+      // 检验嫌疑交点的合法性
+      if (hit) {
+        // 从法线贴图获取出采样点的法线
+        vec3 samplingNormalView = getSamplingNormalView(currentPosUV);
+        // 保证反射光线是向着嫌疑交点所处表面射去, 而不是从内部往外射
+        if (dot(endPosView - startPosView, samplingNormalView)) continue;
+        /*
+          这个判断可以规避掉 *自反射* 的情况: 嫌疑交点在"镜子"自身上.
 
-****
+          在 i = 0 时  currentPosScreen = startPosScreen,
+          即反射光线的起点和第一个采样点是同一个位置, 因此,
+          在深度比较时 currentViewZ <= samplingViewZ 为 true,
+          当然容错比较也会通过, 所以导致出现自相交和自反射的问题.
+
+          这个是实现的设计问题了, 可以把 i 的初始值设置为 1. 来解决这个问题.
+          但不清楚是否有其它出现自反射出现的情况, 把这个判断留下来会保险一点.
+         ,*/
+        // 保证交点与反射平面的距离不超过最大距离, 超过了就认为找不到交点
+        float dist2 = pointToPlaneDistance(samplingPointView, startPosView, normalView);
+        // uMaxDistance 为最大距离
+        if (dist > uMaxDistance) break;
+
+        // 到这里基本上认为嫌疑交点是真交点
+        vec4 color = texture2D(tDiffuse, currentPosUV);
+
+        float op = color.a;
+        // 根据交点与反射平面的距离计算衰减系数
+        float auttenuationCoe = getAuttenuationCoe(dist2 / uMaxDistance);
+        op *= autenuationCoe;
+
+        // 计算菲涅耳系数
+        float fresnelCoe = getFresnelCoe();
+        op *= fresnelCoe;
+
+        color.a = op;
+
+        // 给反射点设置反射色
+        gl_FragColor = color;
+        break;
+
+      }
+    }
+  }
+#+END_SRC
+
+[[../../../files/ssr-ir-diag-self-reflection.png]]
+
+***** 反射光线的最大长度
+
+为什么要计算 =maxReflectDistance=?
+
+这是为了尽可能地保证能反射光线与场景相交, 应该选择一个适当的值作为反射光线的最大长度.
+
+#+caption: 计算最大反射距离 $|R_{var}|$, 保证在最大距离时的位置 $P$ 与反射平面的距离固定为 $|R|$
+[[../../../files/ssr-ir-diag-maxdistance.png]]
+
+根据上图可以得知反射光线的最大长度不应该为固定值, 否则会出现:
+
+在入射光线 $I$ 垂直与 $O$ 点的法线 $N$ 时, 可见的反射内容为最多; 其它时候反射内容比较少.
+
+图中 $R_{var}$ 为最大长度可变的反射光线, $R$ 为最大长度固定的反射光线, $P$ 和 $B$ 分别是它们所能到达的最远位置,
+
+$|R_{var}|$ 与入射角 $\theta$ 有关: $|R_{var}| = |R| \div \cos\theta$.
+
+该关系可以保证点 $P$ 与平面的距离始终保持在 $|R|$, $|R|$ 同时也是 $|R_{var}|$ 最小值.
+
+# https://imanolfotia.com/blog/1
+
+# https://maorachow.github.io/3d/graphics/2024/09/11/a-high-performance-screen-space-reflection-algorithm.html
+
+# [[../../../files/Report_INF584.pdf]]
+
+***** 对超出近裁剪平面的反射光线进行裁剪
+
+[[../../../files/ssr-ir-diag-truncate-reflect-ray.png]]
+
+# 在学习屏幕空间反射的缺陷时就提到过: 当反射光线与场景的交点超出近裁剪平面时也允许在一定程度上的反射.
+
+# 这种情况下, 我们需要对反射光线进行裁剪, 如上图把反射光线 $\overrightarrow{OP}$ 裁剪为 $\overrightarrow{OB}$,
+
+如上图所示, 把反射光线 $\overrightarrow{OP}$ 裁剪为 $\overrightarrow{OB}$, 把 $B$ 作为反射光线最远能到达的位置 =endPosView=, 那么该如何求出 $B$ 呢?
+
+假设 $I$ 和 $R$ 是单位向量, 分别是入射光线和反射光线的方向, 可得到 $\begin{cases} \overrightarrow{OB} = O + t \times R \\ |\overrightarrow{OB}| = t \times |R| \end{cases}$, 只要求出 $t$ 就能求出 $B$.
+
+根据三角函数和相似三角形的关系可得出 $\cos(\angle AOB) = \frac{|\overrightarrow{OA}|}{|\overrightarrow{OB}|} = \frac{|I| \times \cos(\angle AOB)}{|R|} = \frac{t \times |I| \times \cos(\angle AOB)}{t \times |R|}$.
+
+其中 $|I| \times \cos(\angle AOB)$ 正好等于 $I$ 在视点空间上的 $z$ 分量 $(I_{view})_z$;
+
+$|\overrightarrow{OA}|$ 等于点 $O$ 与点 $A$ 的视点坐标 $z$ 分量差, 其中点 $A$ 的视点坐标 $z$ 分量为 $-n$, 并且 $n \gt 0$,
+
+由于可被相机观察到的顶点坐标 $z$ 分量都小于 0, 所以 $O$ 的视点坐标 $z$ 分量 $(O_{view})_z$ 也小于 0, 得到 $|\overrightarrow{OA}| = -n - (O_{view})_z$;
+
+最终 $t = \frac{|\overrightarrow{OA}|}{|I| \times \cos(\angle AOB)} = \frac{-n - (O_{view})_{z}}{(I_{view})_{z}}$.
+
+***** 动态计算容错 $\epsilon$
+
+相比 =three.js= 所参考的实现而言, 动态计算交点容错 $\epsilon$ 是 =three.js= 实现的一大亮点, 其实现思路如下:
+
+在当前步进位置 $P$ 的深度 $z$ 大于采样深度 $d$ 时,
+
+计算出 $P$ 对应的屏幕坐标 $P_{screen}$ 的相邻屏幕坐标 $Q_{screen} = P_{screen} + \left(1, 0\right)$,
+
+结合 *$P$ 的深度* 与 $Q_{screen}$ 的纹理坐标 $Q_{uv}$ 构建出 $Q_{screen}$ 的视点坐标 $Q_{view}$,
+
+以同样的方式反推出 $P$ 的视点坐标 $P_{view}$, 使用两者的 $x$ 分量差 $D = (Q_{view})_x - (P_{view})_x$ 来定义最小容错 $\epsilon_{min} = kD$,
+
+其中 $k$ 是常数, 且 $D \gt 0$. 最终容错为 $\epsilon = max(\epsilon_{min}, \epsilon_{candidate})$, 其中 $\epsilon_{candidate}$ 为自定义容错.
+
+这个思路本质上是计算 *在视点空间的深度 $z$ 中*, 水平方向上一个像素的变化会在视点空间上产生距离变化 $D$, 所以 $k$ 表示像素数量.
+
+[[../../../files/ssr-auto-thickness.png]]
+
+用 $D$ 来定义 $\epsilon$ 是因为在屏幕空间上最小的移动距离是一像素(屏幕空间上最小单位),
+
+在视点空间的深度 $z$ 中, 只要两个点之间的水平距离不超过 $D$, 那么它们会投影在同一个像素上.
+
+根据 [[../../2020/06/graphics-opengl-transformation.html#h-85469068-5c60-40f4-91d2-c2be1aaf9a2e][透视投影的矩阵]] 可得出 $D$ 与 $d$ 的关系:
+
+$D = d \times z \times \frac{r - l}{n} \times \frac{1}{(uResolution)_{x}}$, 其中 $(uResolution)_{x}$ 是屏幕空间的宽度.
+
+可以发现 $D$ 与视点坐标分量 $z$ 成正比关系, 这与 [[#floating-number-comparation-with-tolerance][查找交点时提高浮点数比较时的容错率]] 提到的内容吻合.
+
+***** =SSR= 完整代码
+
+[[app-vertex-uv][*Vertex Shader*]]
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+  uniform vec2 uResolution;
+  uniform sampler2D tViewNormal;
+  uniform sampler2D tViewPosition;
+  uniform sampler2D tDiffuse;
+  uniform mat4 uProjectionMatrix;
+  uniform mat4 uInverseProjectionMatrix;
+  uniform float uNear;
+  uniform float uFar;
+  uniform float uMaxDistance;  // 可以反射的最大像素距离
+  uniform float uThickness;
+
+  varying vec2 vUV;
+
+  float pointToLineDistance(vec3 x0, vec3 x1, vec3 x2) {
+    //x0: point, x1: linePointA, x2: linePointB
+    // https://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+    return length(cross(x0 - x1, x0 - x2)) / length(x2 - x1);
+  }
+
+  float pointToPlaneDistance(vec3 point, vec3 planePoint, vec3 planeNormal){
+    // https://mathworld.wolfram.com/Point-PlaneDistance.html
+    //// https://en.wikipedia.org/wiki/Plane_(geometry)
+    //// http://paulbourke.net/geometry/pointlineplane/
+    float a = planeNormal.x,
+      b = planeNormal.y,
+      c = planeNormal.z;
+    float x0 = point.x,
+      y0 = point.y,
+      z0 = point.z;
+    float x = planePoint.x,
+      y = planePoint.y,
+      z = planePoint.z;
+    float d = -(a * x + b * y + c * z);
+    float dist = (a * x0 + b * y0 + c * z0 + d) / sqrt(a * a + b * b + c * c);
+    return dist;
+  }
+
+  vec3 getViewPosition( vec2 uv, float viewZ ) {
+    // https://blog.darksalt.me/docs/posts/2020/06/graphics-opengl-transformation.html#depth-buffer
+    float iN = 1.0 / uNear,
+      iF = 1.0 / uFar,
+      iViewZ = 1.0 / viewZ;
+    float depth = (-iViewZ - iN) / (iF - iN);
+    float clipW = -viewZ;
+
+    vec4 ndc = vec4( vec3( uv, depth ) * 2. - 1., 1.0 );
+    vec4 clip = ndc * clipW;
+    return ( uInverseProjectionMatrix * clip ).xyz;
+  }
+
+  void main() {
+    vec4 normalInfo = texture2D(tViewNormal, vUV);
+    vec3 normalView = normalize(normalInfo.xyz * 2. - 1.);
+    float mirrorFlag = normalInfo.w;
+
+    vec4 positionInfo = texture2D(tViewPosition, vUV);
+    vec3 startPosView = positionInfo.xyz;
+
+    if (mirrorFlag < 1.0 ||      // 不能反射的片元
+        positionInfo.w <= 0.0 ) {  // 背景片元
+      return;
+    }
+
+    vec3 incidentView = normalize(startPosView); // 入射光线 I 的方向
+    vec3 reflectView = normalize(reflect(incidentView, normalView)); // O 点的反射光线 R
+
+    // 计算当前反射方向最大的长度
+    float maxReflectDistance =  uMaxDistance / dot(-incidentView, normalView);
+
+    // 计算位移向量, 移动一个单位像素
+    vec4 startPosClip = uProjectionMatrix * vec4(startPosView, 1.0);
+    vec3 startPosNDC = startPosClip.xyz / startPosClip.w;
+    vec2 startPosScreen = (startPosNDC.xy * 0.5 + 0.5) * uResolution;
+
+    vec3 endPosView = startPosView + reflectView * maxReflectDistance;
+    // 如果反射光线往近裁剪平面射去, 并且超出近裁剪平面, 那么就对射线进行截断
+    if (endPosView.z > -uNear) {
+      float t = (-uNear - startPosView.z) / reflectView.z;
+      endPosView = startPosView + reflectView * t;
+    }
+    vec4 endPosClip = uProjectionMatrix * vec4(endPosView, 1.);
+    vec3 endPosNDC = endPosClip.xyz / endPosClip.w;
+    vec2 endPosScreen = (endPosNDC.xy * 0.5 + 0.5) * uResolution;
+
+    // 在屏幕空间上的位置差
+    vec2 offsetScreen = endPosScreen - startPosScreen;
+    float maxComp = max(abs(offsetScreen.x), abs(offsetScreen.y));
+    vec2 dFrag = offsetScreen / maxComp;
+
+    for (float i = 0.; i < maxComp; i++) {
+      vec2 currentPosScreen = startPosScreen + i * dFrag;
+      vec2 uv = currentPosScreen / uResolution;
+      if (currentPosScreen.x < 0. || currentPosScreen.x > uResolution.x ||
+          currentPosScreen.y < 0. || currentPosScreen.y > uResolution.y) break;
+      float t = i / maxComp;
+      vec3 samplingPosView = texture2D(tViewPosition, uv).xyz;
+      float currentPosViewZ = (startPosView.z * endPosView.z /
+                               mix(endPosView.z, startPosView.z, t));
+
+      // float s = dot(-incidentView, normalView);
+      // float epsilon = 0.5 * s * samplingPosView.z * samplingPosView.z * uThickness;
+      // float depthDiff = samplingPosView.z - currentPosViewZ;
+      // 不知道为何这样会有性能问题
+      // if (depthDiff > 0. && depthDiff < epsilon) {
+      if (currentPosViewZ <= samplingPosView.z) {
+          bool hit;
+
+          float distSampPosLine = pointToLineDistance(samplingPosView, startPosView, endPosView);
+          vec2 neighborPosScreen = currentPosScreen + vec2(1., 0.);
+          vec2 neighborUV = neighborPosScreen / uResolution;
+          vec3 neighborView = getViewPosition(neighborUV, samplingPosView.z);
+          float minThickness = (neighborView.x - samplingPosView.x) * 3.;
+          float tk = max(uThickness, minThickness);
+          hit = distSampPosLine <= tk;
+          // 这种判断方法容易出现自反射的情况: 交点在镜子自身上
+
+          if (hit) {
+            vec3 samplingNormalView = normalize(texture2D(tViewNormal, uv).xyz * 2. - 1.);
+            // 保证反射光线 reflectView 是向着场景的交点 samplingPosView 所处的表面射去, 而不是从内部往外射
+            // 以及避免自反射, 自反射的出现通常在 i = 0. 时
+            // 因为当前位置的屏幕空间坐标计算为 vec2 currentPosScreen = startPosScreen + i * dFrag;
+            // 这个时候 currentPosScreen 和 startPosScreen 是一样的
+            // 通常反射光线的起点和第一个采样点是同一个位置, 大概率发生自相交的情况
+            if (dot(reflectView, samplingNormalView) >= 0.) continue;
+            // 保证交点与反射平面的距离不超过最大距离
+            float dist = pointToPlaneDistance(samplingPosView, startPosView, normalView);
+            if (dist > uMaxDistance) break;
+
+            float opacity = 0.5;
+            float op = opacity;
+            float ratio = 1. - (dist / uMaxDistance);
+            float attenuation = ratio * ratio;
+            op = opacity * attenuation;
+
+            float fresnelCoe = (dot(incidentView, reflectView) + 1.) * 0.5;
+            op *= fresnelCoe;
+
+            vec4 color = texture2D(tDiffuse, uv);
+            color.a = op;
+            gl_FragColor = color;
+            break;
+          }
+
+      }
+
+    }
+
+  }
+#+END_SRC
+
+***** =Three.js= 的 =SSR= 所使用的模糊算法
+:PROPERTIES:
+:CUSTOM_ID: blur-filter-in-photoshop
+:END:
+
+在生成 =SSR= 的过程中, 很容易出现反射影像存在空隙的情况, 如下图所示.
+
+#+attr_html: :width 500px
+#+caption: 厚度过小导致 SSR 间隙的出现
+[[../../../files/ssr-gaps.png]]
+
+存在空隙是因为厚度 =tk= 过小导致反射光线与场景的相交判定没有通过,
+
+即便知道厚度自适应的方法, 也很难精确得到一个合适厚度.
+
+而在厚度过大时会出现拖影问题, 如下图所示.
+
+#+attr_html: :width 500px
+#+caption: 厚度过大导致 SSR 拖影的出现.
+[[../../../files/ssr-smear.png]]
+
+这两种问题导致反射影像的质量难以接受, 但相对于拖影问题, 空隙问题则更加容易解决: 通过模糊算法来把空隙补上.
+
+=Three.js= 的 =SSR= 模糊算法是从 =PhotoShop= 中逆向得到的, 实测效果非常不错.
+
+[[app-vertex-uv][*Vertex Shader*]]
+
+*Fragment Shader*:
+
+#+BEGIN_SRC glsl
+uniform sampler2D tDiffuse;
+uniform vec2 uResolution;
+
+varying vec2 vUV;
+
+void main() {
+  //reverse engineering from PhotoShop blur filter, then change coefficient
+
+  vec2 texelSize = ( 1.0 / uResolution );
+
+  vec4 c = texture2D(tDiffuse, vUV);
+
+  vec2 offset;
+
+  offset = (vec2(-1,0)) * texelSize;
+  vec4 cl = texture2D(tDiffuse, vUV + offset);
+
+  offset = (vec2(1,0)) * texelSize;
+  vec4 cr = texture2D(tDiffuse, vUV + offset);
+
+  offset = (vec2(0, -1)) * texelSize;
+  vec4 cb = texture2D(tDiffuse, vUV + offset);
+
+  offset = (vec2(0,1)) * texelSize;
+  vec4 ct = texture2D(tDiffuse, vUV + offset);
+
+  // float coeCenter=.5;
+  // float coeSide=.125;
+  float coeCenter = .2;
+  float coeSide = .2;
+  float a = (c.a * coeCenter +
+             cl.a * coeSide +
+             cr.a * coeSide +
+             cb.a * coeSide +
+             ct.a * coeSide);
+  vec3 rgb = (c.rgb * c.a * coeCenter +
+              cl.rgb * cl.a * coeSide +
+              cr.rgb * cr.a * coeSide +
+              cb.rgb * cb.a * coeSide +
+              ct.rgb * ct.a * coeSide) / a;
+  gl_FragColor = vec4(rgb, a);
+}
+#+END_SRC
+
+#+attr_html: :width 500px
+#+caption: 对 SSR 间隙进行一次模糊处理
+[[../../../files/ssr-gaps-blur.png]]
+
+可以看到做了一次模糊处理之后的 =SSR= 少了很多间隙, 做多几次处理可以得到更好的效果.
+
+***** 完整的后处理流程
+
+整个实现流程其实涉及了不少 =shader= 以外的细节, 因此如果在尝试实现时遇到问题, 请务必参考以下模块:
+
+[[https://github.com/saltb0rn/shader-for-game-dev/blob/master/src/SSR/postProcessing/SSRPass.ts][src/SSR/postProcessing/SSRPass.ts]]
 
 *** COMMENT 查找表 (Lookup Table, LUT Shader)
 
@@ -2885,9 +3608,19 @@ https://zhuanlan.zhihu.com/p/548799663
 
 大气散射能用于实现体积光照.
 
-*** COMMENT 体积光照 (Volumetric Lighting)
+*** 体积光照 (Volumetric Lighting)
 
 https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and-shadows/chapter-13-volumetric-light-scattering-post-process
+
+https://blog.maximeheckel.com/posts/shaping-light-volumetric-lighting-with-post-processing-and-raymarching/
+
+*** COMMENT 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)
+
+https://github.com/gkjohnson/three-mesh-bvh
+
+https://discourse.threejs.org/t/datatexture3d-generation-three-mesh-bvh/29190/3
+
+[[../../../files/SDF-threejs.zip]]
 
 *** 风格化渲染: 地平线视差 (Curved World)
 :properties:
