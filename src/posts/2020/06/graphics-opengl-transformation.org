@@ -938,9 +938,13 @@ $\frac{f+n}{f-n} \cdot n + z = -n \longrightarrow z = -n - \frac{f+n}{f-n} \cdot
 -----
 *何谓非线性深度*
 
-透视投影所产生的 $d$ 被称为非线性深度(=non-linear depth=), 我会通过公式变换来进一步说明为什么.
+透视投影所产生的 $d$ 被称为非线性深度(=non-linear depth=),
 
-在这个变换会演示如何通过视点坐标的 $z$ 分量 $z_{e}$ 快速计算出顶点的非线性深度:
+=OpenGL= 中的线性深度(=linear depth=)是指深度指 $d$ 与视点坐标的 $z$ 分量 $z_{e}$ 成线性关系: $d = k \cdot z_{e} + c$, 其中 $k, c$ 为任意常数.
+
+通俗点说就是 $z_{e}$ 每增加或减少一个单位 $\Delta$ 时: $z_{e} \pm \Delta$, $d$ 都会以固定比例 $k$ 发生变化: $d \pm k \cdot \Delta$;
+
+否则 $d$ 与 $z_{e}$ 成非线性关系. 接下来会通过公式变换来展示出 $d$ 与 $z_{e}$ 成非线性关系:
 
 $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 &= \left( \frac{-\frac{f+n}{f-n}z_{e} - \frac{2fn}{f-n}}{-z_{e}} + 1 \right) \div 2 \\
@@ -955,12 +959,21 @@ $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 &= \frac{n + z_{e}}{z_{e}n} \div \frac{f-n}{fn} \\
 &= (\frac{1}{z_{e}} + \frac{1}{n}) \div (\frac{1}{n} - \frac{1}{f}) \\
 &= \frac{\frac{1}{z_{e}} + \frac{1}{n}}{\frac{1}{n} - \frac{1}{f}} \\
-&= \frac{-\frac{1}{z_{e}} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}
+&= \frac{-\frac{1}{z_{e}} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}} \\
+&= \frac{1}{\frac{1}{f} - \frac{1}{n}} \left( -\frac{1}{z_{e}} - \frac{1}{n} \right)
 \end{aligned} \end{equation*}$
 
-在上述等式中, 可以把 $\frac{1}{\frac{1}{f} - \frac{1}{n}}$ 看作是一个常数 $k$, $d$ 看作是以 $\frac{1}{z_e}$ 为参数的函数 $d(\frac{1}{z_e}) = k(-\frac{1}{z_e} - \frac{1}{n})$,
+在上述等式中, 可以把 $\frac{1}{\frac{1}{f} - \frac{1}{n}}$ 看作是常数 $k$, 把 $k \cdot \left( - \frac{1}{n} \right)$ 看作常数 $c$, 把 $d$ 看作是以 $z_e$ 为参数的函数 $d(z_e) = k(-\frac{1}{z_e}) + c$.
 
-可以发现, $d$ 不仅不与 $z_{e}$ 成线性关系, 反而与 $\frac{1}{z_{e}}$ 成线性关系, 这就是为什么 $d$ 被称为非线性深度.
+可以发现, $d$ 不仅不与 $z_{e}$ 成线性关系, 反而与 $\frac{1}{z_{e}}$ 成线性关系.
+
+有些效果需要使用线性深度, 相比非线性深度反映物体与相机在视觉中的距离, 线性深度更能反映物体与相机之间在世界中的距离,
+
+线性深度 $d_{linear}$ 的定义如下:
+
+$d_{linear} = \frac{-z_{e} - n}{f - n}$, $d_{linear} \in [0, 1]$
+
+线性的 =depth buffer= 原本就在正交投影中产生, 在学习正交投影矩阵后就可以知道 $d_{linear}$ 的定义怎么来了.
 
 -----
 
@@ -1022,21 +1035,8 @@ $\begin{equation*} \begin{aligned} d &= (z_{n} + 1) \div 2 \\
 
   也可以把 $z_n$ 转换成非线性深度 $d = z_n \times 2 - 1$, 然后直接从 $d$ 反推 $z_e = \frac{nf}{(f - n) \times d - f}$.
 
-
-有些效果需要使用线性深度(=linear depth=), 比如物体阴影(shadow map), 雾效(fog),
-
-相比非线性深度反映物体与相机在视觉中的距离, 线性深度更能反映物体与相机之间在世界中的距离,
-
-这也是为什么这些效果会采用线性深度. 所谓线性深度的定义如下:
-
-$d_{linear} = \frac{-z_{e} - n}{f - n}$, $d_{linear} \in [0, 1]$
-
-这就是掌握把透视投影的深度 $d$ 还原成 $z_{e}$ 的方法的其中一个理由: 计算出线性深度 $d_{linear}$.
-
-线性的 =depth buffer= 原本就在正交投影中产生, 在学习正交投影矩阵后就可以知道 $d_{linear}$ 的定义怎么来了.
-
 -----
-*不止于深度* @@html: <a id="arbitrary-attr-interp"></a>@@
+*从深度值计算出发, 学习在透视投影下的属性插值计算* @@html: <a id="arbitrary-attr-interp"></a>@@
 
 把 $d = \frac{-\frac{1}{z_e} - \frac{1}{n}}{\frac{1}{f} - \frac{1}{n}}$ 变换一下可以得到一个形式符合线性插值定义的等式:
 
@@ -1048,6 +1048,8 @@ $\begin{equation*}\begin{aligned} -\frac{1}{z_e} & = \frac{1}{n} + d \times (\fr
 回想一下, $z_{p} \in [-n, -f]$, 所以 $-\frac{1}{f}$ 和 $-\frac{1}{n}$ 分别是远近裁剪平面在裁剪空间中的 $z$ 分量的倒数,
 
 根据线性插值的定义, 可发现 $-\frac{1}{f}$ 和 $-\frac{1}{n}$ 分别是视锥体范围内视点坐标的 $z_e$ 的倒数 $\frac{1}{z_e}$ 的最大和最小值,
+
+即 $\frac{1}{z_e} \in [-\frac{1}{n}, -\frac{1}{f}]$, 由于 $0 \lt n \lt f$, 可以得出 $z_e \in [-f, -n]$.
 
 我们可以把这个插值函数推广到任意范围 $z_e = [Z_{p1}, Z_{p2}]$ 上,
 
@@ -1063,7 +1065,7 @@ $\frac{1}{z_e} = f(t) = \frac{1}{Z_{p1}} + t \times \left(\frac{1}{Z_{p2}} - \fr
 
 与直接使用视点坐标的 $z$ 分量作为深度值不同, 投影矩阵计算出插值函数 $\frac{1}{z_e} = f(t)$ 的参数 $t = f^{-1}(\frac{1}{z_e})$ 作为深度值,
 
-后者的深度值在限定范围中, 非常适合储存和用于编程处理.
+由于后者的深度值在限定范围中, 因此非常适合储存和用于编程处理.
 
 我们可以更进一步, 通过插值函数 $f(t)$ 可以快速得到视点坐标的 $z$ 分量 $z_e = \frac{1}{f(t)}$:
 
