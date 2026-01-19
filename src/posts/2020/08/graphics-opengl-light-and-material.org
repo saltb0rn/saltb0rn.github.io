@@ -26,6 +26,8 @@
 
 ** 现实与计算机中颜色
 
+# ../../files/../real-time-global-illumination-using-opengl-and-voxel-cone-tracing.pdf
+
 *在物理学上,我们之所以能够看到一件物体是因为光照射到物体上,然后物体再反射光,最后被我们眼睛接收到.*
 
 光据有波动性(运动规率图类似 $\cos\theta$ 函数图像),平时的可见光是由不同波长(wavelength,单位是米)的光按照不同比例混合而成,
@@ -815,7 +817,7 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
 #+caption: 微表面和宏表面, $n$ 是宏表面的法线, $m$ 是微表面的法线
 [[../../../files/micro-vs-macro-surface.png]]
 
-在图形学中, 对于几何体外观的建模, 总会假设一定的建模尺度和观察尺度:
+在图形学中, 对于几何体外观的建模, 可把建模分为三种尺度:
 
 - 宏观尺度 (Macroscale): 通过三角形网格(mesh)对几何体外观进行建模, 由顶点法线(Vertex Normal)给每个顶点提供法线信息.
 
@@ -851,7 +853,17 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
 
 $L_{o}(p, \omega_{o}) = \int_{\Omega}f_{r}(p, \omega_{i}, \omega_{o})L_{i}(p, \omega_{i})|w_{i} \cdot n|d\omega_{i}$
 
-**** 辐射度量(radiometric quantities): $L_{i}(p, \omega_{i})|\omega_{i} \cdot n|$
+#+begin_quote
+这里用下标 $i$ 表示入射光, $o$ 表示出射光.
+#+end_quote
+
+**** 辐射度(Irradiance): $L_{i}(p, \omega_{i})|\omega_{i} \cdot n|$
+
+辐射度是辐射度量(=radiometric quantities=)之一.
+
+辐射度量是辐射度学(=radiometry=)中用于描述电磁辐射能量客观物理特性的物理量.
+
+辐射度量之间有着联系, 因此想理解什么是辐射度还得一同理解其它辐射度量的含义.
 
 ***** 能量 (energy)
 
@@ -904,7 +916,9 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 整个半径为 $r$ 球体的辐射度是: $E_{\mathrm{sphere}} = \frac{\Phi}{4 \pi r^{2}}$.
 
-把 $E$ 定义成是一个函数, 计算 $p$ 点的辐射度: $E(p) = \lim\limits_{\Delta A \to 0}\frac{\Delta \Phi (p)}{\Delta A}$, 其中 $\Delta A$ 是 $p$ 点的辐射区域面积.
+把 $E$ 定义成是一个函数, 计算 $p$ 点的辐射度: $E(p) = \lim\limits_{\Delta A \to 0}\frac{\Delta \Phi (p)}{\Delta A} = \frac{d \Phi(p)}{dA}$,
+
+其中 $\Delta A$ 是 $p$ 点的辐射区域面积.
 
 可以对辐射度进行积分算出照射面的功率: $\Phi = \int_{A}E(p)dA$.
 
@@ -914,13 +928,15 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 根据三角函数关系, 可以得到 $\frac{M}{N} = \cos\theta = \frac{\omega \cdot n}{|\omega||n|}$, 因为 $\omega$ 和 $n$ 都是单位向量, 所以 $|\omega| = |n| = 1$.
 
-所以平面 $N$ 的辐射度为 $E_{N} = \frac{\Phi}{N} = \frac{\Phi \cos\theta}{M} = E_{M} \times \cos\theta$.
+所以平面 $N$ 的辐射度为 $E_{N} = \frac{\Phi}{N} = \frac{\Phi \cos\theta}{M} = E_{M} \times \cos\theta$, 其中 $E_{M}$ 是平面 $M$ 的辐射度.
 
 # 把 $E$ 定义成是一个函数, 计算 $p$ 点在 $\omega$ 方向上受到的辐射度: $E(p) = \lim\limits_{\Delta A \to 0}\frac{\Delta \Phi (p)}{\Delta A} = \frac{d\Phi (p)}{dA} = \frac{d\Phi \times \cos\theta}{dA}$.
 
 ***** 辐射强度(Intensity)
 
-辐射强度是描述每一个立体角(=solid angle=)受到的辐射通量 $\Phi$ 是多少, 单位是 $\mathrm{W/sr}$, 用 $I$ 表示: $I(\omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta \phi}{\Delta \omega} = \frac{d\phi}{d\omega}$.
+辐射强度是描述每一个立体角(=solid angle=)受到的辐射通量 $\Phi$ 是多少, 单位是 $\mathrm{W/sr}$, 用 $I$ 表示:
+
+$I(\omega) = \lim\limits_{\Delta \omega \to 0}\frac{\Delta \phi}{\Delta \omega} = \frac{d\phi}{d\omega}$
 
 可以对强度进行积分反求出辐射通量 $\Phi = \int_{\Omega}I(\omega)d\omega$.
 
@@ -929,7 +945,7 @@ angle of incidence of illumination, since illumination is over a larger area at 
 
 # 平面角: 弧度(rad)/弧长(l)/半径(r)之间的关系: $l = \mathrm{rad} \times r$.
 
-1 立体角大小是指在球面上所截取的面积等于以球半径为边长的平方, 单位为球面度 $\mathrm{sr}$.
+1 立体角大小是球面上所截取的面积等于以球半径为边长的平方, 单位为球面度 $\mathrm{sr}$.
 
 #+attr_html: :width 504px
 #+caption: $1\ \mathrm{sr}$
@@ -1017,34 +1033,42 @@ $E(p, n) = \int_{\Omega}L(p, \omega)|\omega \cdot n|d\omega = \int_{\Omega}L(p, 
 
 不过在目前介绍的 =PBR= 模型中会假设折射光被全部吸收, 忽视散射光在离开表面后的远处消失的效果,
 
-不过有一项叫做次表面散射(subsurface scattering)的着色技术可以实现这些效果, 但伴随而来的是性能代价.
+有一项叫做次表面散射(subsurface scattering)的技术可以实现这些效果, 但伴随而来的是性能代价.
 
 因为遵守能量守恒, 所以满足该关系: $k_{\mathrm{specular}} + k_{\mathrm{diffuse}} = 1.0$,
 
 其中 $k_{\mathrm{specular}}$ 和 $k_{\mathrm{diffuse}}$ 分别是镜面反射光占总能量的比例, 以及漫反射光占总能量的比例.
 
-金属表面(metallic surface)只有反射光, 没有折射光, 换句话就是金属表面只显示镜面反射色, 不显示漫反射色;
+金属表面(metallic surface)只有反射光, 没有折射光, 换句话就是金属表面只显示镜面反射色,
 
-非金属表面(non-metallic surface), 或者叫电解质(dielectric)
+不显示漫反射色; 非金属表面(non-metallic surface), 或者叫电解质(dielectric)
 
 
 =BRDF= 是一个以入射光方向 $\omega_{i}$, 出射光方向 $\omega_{o}$, 宏表面法线 $n$ 以及表面粗糙度 $\alpha$ 为参数的函数,
 
 计算出每个光线 $\omega_{i}$ 在特定材质的不透明表面光上产生多少反射光.
 
-如果一个表面和镜子一样光滑, 那么 =BRDF= 函数就会返回 $0.0$ 来表示入射光的角度和出射光的角度是一样的,
+如果一个表面和镜子一样光滑, 那么 =BRDF= 函数就会返回 $0.0$ 来表示入射光和出射光的角度是一样的,
 
-=BRDF= 并不是一个具体的函数, 可以有很多种选择, 最早的 =BRDF= 是由 =Fred Nicodemus= 在 =1965= 年提出: $f_r(\omega_i, \omega_o) = \frac{d L_o (\omega_o)}{d E_i(\omega_i)} = \frac{d L_o(\omega_o)}{L_i(\omega_i) \cos\theta_i d\omega_i}$.
+=BRDF= 并不是一个具体的函数, 有很多选择, 最早的 =BRDF= 是由 =Fred Nicodemus= 在 =1965= 年提出:
+
+$f_r(\omega_i, \omega_o) = \frac{d L_o (\omega_o)}{d E_i(\omega_i)} = \frac{d L_o(\omega_o)}{L_i(\omega_i) \cos\theta_i d\omega_i}$
 
 这个公式之所以定义为辐射 $L_o$ 和辐射度 $E_i$ 之比, 而不是 $L_o$ 和 $L_i$ 或者 $E_o$ 与 $E_i$ 之比,
 
 是因为在入射时需要考虑照射面积, 在反射时需要考虑每立体角的辐射通量, 反射角度以及投影面积.
 
-目前业界主流的 =PBR= 渲染管线所使用的 =BRDF= 是 =Cook-Torrance BRDF=: $f_{r} = k_{\mathrm{diffuse}}f_{\mathrm{lambert}} + k_{\mathrm{specular}}f_{\mathrm{cook-torrance}}$.
+目前业界主流的 =PBR= 渲染管线所使用的 =BRDF= 是 =Cook-Torrance BRDF=:
 
-$f_{\mathrm{lambert}} = \frac{c}{\pi}$, $c$ 是表面颜色(surface color) 或者反射率(albedo), 就像 $\mathrm{GL\_DIFFUSE}_{\mathrm{material}}$ 一样决定了反射多少漫反射光.
+$f_{r} = k_{\mathrm{diffuse}}f_{\mathrm{lambert}} + k_{\mathrm{specular}}f_{\mathrm{cook-torrance}}$
 
-$f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}$ 计算反射光, $f_{\mathrm{cook-torrance}}$ 的定义源于最早的 =BRDF=, 其中 $D$ 是法线分布函数, $G$ 是几何函数, $F$ 是菲涅耳方程.
+$f_{\mathrm{lambert}} = \frac{c}{\pi}$, $c$ 是表面颜色(surface color) 或者反射率(albedo),
+
+就像 $\mathrm{GL\_DIFFUSE}_{\mathrm{material}}$ 一样决定了反射多少漫反射光.
+
+$f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot n)}$ 计算反射光, $f_{\mathrm{cook-torrance}}$ 的定义源于最早的 =BRDF=,
+
+其中 $D$ 是法线分布函数, $G$ 是几何函数, $F$ 是菲涅耳方程.
 
 接下来分别学习这 3 个部分, 并在最后介绍 $f_{\mathrm{cook-torrance}}$ 是怎么推导出来的.
 
@@ -1083,7 +1107,7 @@ $\alpha$ 是微平面的粗糙度
 - [[https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf][Bruce Walter: Microfacet Models for Refraction through Rough Surfaces]]
 #+END_QUOTE
 
-$DFG$ 中的 $D$ 就是一个 =NDF=,  =NDF= 并不是一个具体的函数, 是一类函数的统称, 有很多种选择.
+$DFG$ 中的 $D$ 就是一个 =NDF=,  =NDF= 并不是一个具体的函数, 而是一类函数的统称.
 
 它描述的是: 在以 $m$ 为中心的立体角 $d\omega_{m}$ 和无穷小宏表面区域 $dA$ 内, 面向 $m$ 的微平面面积 $dA_m$ 的密度: $D(m) = \frac{dA_m}{d\omega_m dA}$, 单位是 $1 / \mathrm{steradians}$.
 
@@ -1633,8 +1657,6 @@ $L_o(p, \omega_o) = \int_{\Omega} (k_{\mathrm{diffuse}} \frac{c}{\pi} + k_{\math
 
 $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{diffuse}} \frac{c}{\pi} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + \int_{\Omega} k_{\mathrm{specular}} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \\ &= k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i + k_{\mathrm{specular}} \int_{\Omega} \frac{F(\omega_i, h, F_0) D(m) G(\omega_o, \omega_i, h)}{4(\omega_o \cdot n)(\omega_i \cdot n)} L_i(p, \omega_i) n \cdot \omega_i d\omega_i \end{aligned} \end{equation*}$
 
-
-
 **** 创作 =PBR= 材质 (Authoring PBR Materials)
 
 #+attr_html: :width 504px
@@ -1669,7 +1691,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
   严格来说, $F_0$ 是由反射率 $c$ 和金属度 $m$ 共同影响的: $F_0 = c_0 + (c - c_0) \times m$.
 
-  其中 $c_0$ 为默认反射率, 这个值通常表示是 $(0.03, 0.03, 0.03)$, $c$ 和 $c_0$ 均为向量.
+  其中 $c_0$ 为默认反射率, 这个值通常在 $[0.02, 0.04]$ 之间, 可以说是 $F_0$ 的最小值.
 
   #+begin_quote
   这条公式实际上是近似计算, 在原本的计算中, 需要讨论材质是金属才是非金属,
@@ -1680,7 +1702,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
   通常 $n_1$ 是空气的折射率 1, $n_2$ 为非金属表面的折射率,  $F_0$ 意味着从空气射入到表面中时的镜面反射率.
 
-  要找出特定非金属材质的金属度, 先在 [[https://pixelandpoly.com/ior.html][IOR LIST]] 找到该材质的折射率 $n_2$ 算出 $F_0$, 最后计算出金属度 $m = \frac{F_0 - s}{c - s}$.
+  要找出特定非金属材质的金属度, 先在 [[https://pixelandpoly.com/ior.html][IOR LIST]] 找到该材质的折射率 $n_2$ 算出 $F_0$, 最后计算出金属度 $m = \frac{F_0 - c_0}{c - c_0}$.
 
   # https://gamedev.net/forums/topic/669443-pbr-g-buffer-parameters-metalness/
   #+end_quote
@@ -1689,9 +1711,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 - 粗糙度贴图 (=Roughness map=)
 
-  粗糙度贴图以逐纹素的方式定义表面的粗糙度. 粗糙贴图是 =BRDF= 中 $D$ 和 $G$ 项粗糙度 $\alpha$ 的来源.
+  粗糙度贴图以逐纹素的方式定义表面的粗糙度, 粗糙贴图是 =BRDF= 中 $D$ 和 $G$ 项粗糙度 $\alpha$ 的来源.
 
-  表面越粗糙, 反射越宽泛且模糊, 而越光滑, 反射越集中且清晰, 简单点说就是影响高亮光圈的大小以及亮度.
+  表面越粗糙, 反射越宽泛且模糊; 而越光滑, 反射越集中且清晰, 简单点说就是影响高亮光圈的大小以及亮度.
 
   部分引擎使用光滑度贴图 (=Smoothness map=) 而非粗糙度贴图, 可以通过 $1.0 - \alpha$ 转换成粗糙度.
 
@@ -1700,37 +1722,6 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
   环境光遮蔽贴图为表面以及其周围几何体设置额外的阴影因子 $ao$ , 给反射贴图补充阴影信息, 模拟几何遮挡导致的环境光衰减.
 
   注意, 是只影响环境光部分, 不影响直接光照, 大概为 $ao \times ambient$, 其中 $ambient$ 是环境光.
-
-# **** IBL
-# https://zhuanlan.zhihu.com/p/288112896
-# https://blog.csdn.net/weixin_43803133/article/details/110385305
-# #+begin_quote
-# 这方面的内容偏实现, 以后有空时就再补上, 或者单独写一篇笔记进行记录.
-# #+end_quote
-
-# http://www.codinglabs.net/article_physically_based_rendering.aspx
-
-# $L_o(p, \omega_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i$
-
-# 转换成极坐标
-
-# $\cos\theta_i = n \cdot \omega_i$
-
-# $d\omega_i = \sin\theta_i d\phi_i d\theta_i$
-
-# $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\phi_i = 0}^{2\pi} \int_{\theta_i = 0}^{\frac{\pi}{2}} L_i(p, \phi_i, \theta_i) \cos\theta_i \sin\theta_i d\phi_i d\theta_i$
-
-# 黎曼和
-
-# $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \sum\limits_{\phi_i = 0}^{n_1} \sum\limits_{\theta_i = 0}^{n_2} L_i(p, \phi_i, \theta_i)\cos\theta_i \sin\theta_i \Delta\phi_i \Delta\theta_i$
-
-# $\Delta\phi_i = \frac{2 \pi}{n_1}$
-
-# $\Delta\theta_i = \frac{\pi}{2 n_2}$
-
-# $\Delta\phi_i \Delta\theta_i = \frac{\pi^2}{n_1 n_2}$
-
-# 因为 $\Delta\phi_i \Delta\theta_i = \frac{\pi^2}{n_1 n_2}$ 是常数, 所以独立于求和运算之外: $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c \pi}{n_1 n_2} \sum\limits_{\phi_i = 0}^{n_1} \sum\limits_{\theta_i = 0}^{n_2} L_i(p, \phi_i, \theta_i)\cos\theta_i \sin\theta_i$.
 
 # ***** *立方体贴图卷积 (=Cubemap convolution=)*
 
@@ -1918,6 +1909,37 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 #+END_SRC
 
 
+**** COMMENT IBL
+https://zhuanlan.zhihu.com/p/288112896
+https://blog.csdn.net/weixin_43803133/article/details/110385305
+#+begin_quote
+这方面的内容偏实现, 以后有空时就再补上, 或者单独写一篇笔记进行记录.
+#+end_quote
+
+http://www.codinglabs.net/article_physically_based_rendering.aspx
+
+$L_o(p, \omega_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\Omega} L_i(p, \omega_i) n \cdot \omega_i d\omega_i$
+
+转换成极坐标
+
+$\cos\theta_i = n \cdot \omega_i$
+
+$d\omega_i = \sin\theta_i d\phi_i d\theta_i$
+
+$L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \int_{\phi_i = 0}^{2\pi} \int_{\theta_i = 0}^{\frac{\pi}{2}} L_i(p, \phi_i, \theta_i) \cos\theta_i \sin\theta_i d\phi_i d\theta_i$
+
+黎曼和
+
+$L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c}{\pi} \sum\limits_{\phi_i = 0}^{n_1} \sum\limits_{\theta_i = 0}^{n_2} L_i(p, \phi_i, \theta_i)\cos\theta_i \sin\theta_i \Delta\phi_i \Delta\theta_i$
+
+$\Delta\phi_i = \frac{2 \pi}{n_1}$
+
+$\Delta\theta_i = \frac{\pi}{2 n_2}$
+
+$\Delta\phi_i \Delta\theta_i = \frac{\pi^2}{n_1 n_2}$
+
+因为 $\Delta\phi_i \Delta\theta_i = \frac{\pi^2}{n_1 n_2}$ 是常数, 所以独立于求和运算之外: $L_o(p, \phi_o, \theta_o) = k_{\mathrm{diffuse}} \frac{c \pi}{n_1 n_2} \sum\limits_{\phi_i = 0}^{n_1} \sum\limits_{\theta_i = 0}^{n_2} L_i(p, \phi_i, \theta_i)\cos\theta_i \sin\theta_i$.
+
 ** 阴影 (Shadow)
 :properties:
 :custom_id: shadow-mapping
@@ -2099,13 +2121,13 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 红色虚实线表示在 =fragment shader= 中实时计算的深度值 $P_{normal}.z$.
 
-图像 =Shadow Func= 反映了一个区域上若干像素的实时深度值在不同位置上的变化, 以及阴影贴图深度值在不同位置上都是一致的,
+图像 =Shadow Func= 反映了一个区域上若干像素的实时深度值在不同位置上的变化,
 
-这是阴影贴图是对连续对象进行采样(离散化)的结果, 对连续对象进行离散化后, 离散结果与连续对象相比必然会有精度差异的,
+可以发现阴影贴图深度值在局部区域内的不同位置上都是一致的, 这是阴影贴图是对连续对象进行采样(离散化)的结果,
 
-无法避免的, 提升采样精度也不可能解决这个问题, 这就是自遮挡产生的原因:
+对连续对象进行离散化后, 离散结果与连续对象相比必然会有精度差异的, 即便提升采样精度也不可能解决这个问题,
 
-同一个区域的像素有一部分的实时深度值 $P_{normal}.z$ 大于贴图上的深度值 $d_{c}$.
+这就是自遮挡产生的原因: 同一个区域的像素有一部分的实时深度值 $P_{normal}.z$ 大于贴图上的深度值 $d_{c}$.
 
 因此, 可以立马想到一个解决自遮挡问题的方法: 让实时深度值 $P_{normal}.z$ 减去一个偏移值 $b$ 后再与贴图深度值 $d_{c}$ 进行对比,
 
@@ -2528,9 +2550,9 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
 它同样进行 6 次渲染, 只不过把每次渲染结果分别按照不同位置储存在同一张 =2D= 贴图里面,
 
-读取的时候根据光照计算出 =UV= 坐标在进行读取. 就像是立方体映射的张开图那样.
+读取的时候根据光照计算出 =UV= 坐标在进行读取. 就像是立方体映射的展开图那样.
 
-#+caption: 立方体映射张开
+#+caption: 立方体映射展开
 [[../../../files/cubemap-unfold.jpg]]
 
 但 =three.js= 没有采用这套布局, 该布局需要 $4 \times 3$ 个 $2 \times 2$ 规格的方块储存 6 张贴图的内容,
