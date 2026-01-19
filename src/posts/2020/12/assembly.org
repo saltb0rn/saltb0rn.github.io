@@ -5726,9 +5726,9 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 此外, =main2.c= 也使用了 =libc.a= 中 =printf.o= 的 =printf= 函数, 所以也把 =printf.o= 复制到可执行文件中.
 
-链接器会根据静态库来解析外部引用.
+链接器会根据静态库来解析外部引用. 在符号解析阶段中, 链接器会从左往右对 *编译器命令* 中出现的
 
-在符号解析阶段中, 链接器会从左往右对编译器命令中出现的可重定位目标文件, =.c= 文件(会被自动编译成对应的目标文件 =.o=)以及 =archive= 进行扫描,
+可重定位目标文件, =.c= 文件(会被自动编译成对应的目标文件 =.o=)以及 =archive= 进行扫描.
 
 链接器在扫描过程中会维护三个集合:
 
@@ -5744,11 +5744,15 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 - 如果输入文件 =f= 是一个目标文件, 那么链接器会把 =f= 添加到集合 =E= 中, 并且更新 =D= 和 =U= 来分别反映 =f= 的符号定义和引用.
 
-- 如果输入文件 =f= 是一个 =archive=, 链接器会尝试让未定义符号集合 =U= 和 =f= 中成员所定义的符号进行匹配,
+  举个例子, 假设 =f= 中定义了一个符号 $a$ 和引用了一个符号 $b$, 那么 $a$ 和 $b$ 就会分别被添加到 =D= 和 =U= 中,
 
-  如果 =f= 的成员 =m= 定义了符号可以解析得了 =U= 里面的符号, 那么就把 =m= 添加到 =E= 中, 并且更新 =D= 和 =U= 来反映 =m= 的符号定义和引用.
+  在添加 $a$ 到 =D= 时, 如果 =U= 中已经有 $a$, 那么 =U= 中的 $a$ 会被移除, 简单来说一个符号不可能同时出现在 =D= 和 =U= 中.
 
-  这个过程会遍历 =f= 中的模块文件直到 =U= 和 =D= 不再发生改变为止. 没有被包含在 =E= 中的模块 =m= 将会被忽略.
+- 如果输入文件 =f= 是一个 =archive=, 链接器会尝试让未定义符号集合 =U= 和 =f= 中成员模块所定义的符号进行匹配,
+
+  如果 =f= 的成员模块 =m= 定义了可以在 =U= 里找到的符号, 那么就把 =m= 添加到 =E= 中, 并且更新 =D= 和 =U= 来反映 =m= 的符号定义和引用.
+
+  这个过程会遍历 =f= 中的成员模块直到 =U= 和 =D= 不再发生改变为止. 没有被包含在 =E= 中的模块 =m= 将会被忽略.
 
 - 在结束对所有输入文件的扫描时, 如果 =U= 是还是非空集合, 那么链接器会输出错误并且中止链接.
 
@@ -5828,7 +5832,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 这种无需重定位的可加载代码叫做位置无关代码(Position-Independent Code, PIC),
 
-在 =GNU= 编译系统中, 用户需要给 =GCC= 提供 =-fpic= 选项来编译生成共享库.
+在 =GNU= 编译系统中, 用户需要给 =GCC= 提供 =-shared -fPIC= 选项来编译生成位置无关的共享库, =-shared= 默认选项可以不写,
 
 在 =x86-64= 系统中, 一个可执行目标模块(same executable object module, 共享库也是其中一种)内部之间的符号引用是不需要处理成 =PIC= 的,
 
@@ -5889,6 +5893,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
 =GOT= 位于数据段的起始位置, 类似地, =PLT= 位于代码段的起始位置, 两者合作解析出函数的运行时地址.
 
+#+attr_html: :width 600px
 #+CAPTION: 使用 PLT 和 GOT 调用外部函数, 图(a) 第一次调用 addvec, 图(b) 后续调用 addvec
 [[../../../files/use-got-and-plt-to-call-extern-func.png]]
 
@@ -6104,7 +6109,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 #+BEGIN_SRC makefile
   # Makefile-run-time
   mymalloc.so: mymalloc.c
-          gcc -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
+          gcc -DRUNTIME -shared -fPIC -o mymalloc.so mymalloc.c -ldl
 
   mainr: main.c
           gcc -o mainr main.c
@@ -6233,7 +6238,7 @@ ld: i386 architecture of input file `eatsyscall.o' is incompatible with i386:x86
 
   #+BEGIN_SRC makefile
     mymalloc.so: mymalloc.c
-            gcc -g -DRUNTIME -shared -fpic -o mymalloc.so mymalloc.c -ldl
+            gcc -g -DRUNTIME -shared -fPIC -o mymalloc.so mymalloc.c -ldl
 
     mainr: main.c
             gcc -g -o mainr main.c
