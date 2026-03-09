@@ -1464,7 +1464,6 @@ $\lim\limits_{(\Delta x, \Delta y) \to (0, 0)} \frac{\left|\epsilon_1 \Delta x +
 
 *** {{{directional-derivate}}} (Directional Derivates): 描述多元{{{scalar-func}}}在特定方向上的变化率
 
-
 ** {{{integral}}} (Integration): 以微求全, 根据{{{derivate}}}求出总体
 
 主要对象为{{{scalar-func}}}.
@@ -1483,421 +1482,6 @@ $\lim\limits_{(\Delta x, \Delta y) \to (0, 0)} \frac{\left|\epsilon_1 \Delta x +
   /* 应用克莱罗定理再进行运算 */
   integrate(integrate(x - 3 * y^2, x, 0, 2), y, 1, 2);
 #+END_SRC
-** 无穷{{{sequence}}}和{{{series}}} (Infinite Sequences and Series): 把函数分解成级数
-*** {{{sequence}}}和级数{{{series}}}
-
-*{{{sequence}}}*
-
-{{{sequence}}}(或无穷{{{sequence}}})是按照特定顺序排列的一列数字: $\{ a_1, a_2, a_3, a_4, \cdots, a_n, \cdots \}$.
-
-$a_n$ 表示第 $n$ 项, {{{sequence}}}可以表示为 $\{ a_n \}$ 或 $\{ a_n \}_{n=1}^{\infty}$.
-
-一些{{{sequence}}}可以通过给出第 $n$ 项的公式来进行定义, 比如,
-
-$a_n = \frac{n}{n + 1} \Rightarrow \left\{ \frac{1}{2}, \frac{1}{3}, \frac{3}{4}, \frac{4}{5}, \cdots, \frac{n}{n + 1}, \cdots \right\} = \{ a_n \}_{n=1}^{\infty}$.
-
-需要注意, $n$ 不一定要从 1 开始, 比如,a
-
-$a_n = \sqrt{n - 3}, n \ge 3 \Rightarrow \left\{ 0, 1, \sqrt{2}, \sqrt{3}, \cdots, \sqrt{n - 3}, \cdots \right\} \Rightarrow \{ \sqrt{n - 3} \}_{n=3}^{\infty}$.
-
-默认情况下都是默认 $n \ge 1$.
-
-可以看出 $a_n$ 是一个以整数 $n$ 作为自变量的离散函数.
-
-使用该命令绘制 $a_n = \frac{n}{n + 1}$ 图像:
-
-#+BEGIN_SRC maxima
-  a(n) := n / (n + 1);
-  points2d: makelist([n, a(n)], n, 1, 50);
-  plot2d([discrete, points2d],
-    [style, points],
-    [xlabel, "n"],
-    [ylabel, "a(n)"],
-    [gnuplot_preamble, "
-        set tmargin 0
-        set bmargin 0
-    "]
-    );
-#+END_SRC
-
-#+attr_html: :width 600px
-#+caption: ${ \frac{n}{n + 1} }$
-[[../../../files/sequence-func-image.png]]
-
-可以发现随着 $n$ 变大, $\{ \frac{n}{n + 1} \}$ 趋近 1, 这说明{{{sequence}}}也是有{{{limit}}}的.
-
-如果{{{sequence}}} $\{ a_n \}$ 有{{{limit}}} $L$, 那么可以记作:
-
-$\lim\limits_{n \to \infty} a_n = L$ 或随着 $n \to \infty$, $a_n \to L$.
-
-其 $\epsilon-\delta$ 定义:
-
-对于任意给定 $\epsilon \gt 0$, 总存在一个整数 $N \gt 0$, 使得只要 $n \gt N$, 就一定有 $|a_n - L| \lt \epsilon$.
-
-如果 $\lim\limits_{n \to \infty} a_n$ 存在, 那么就说 {{{sequence}}} $\{ a_n \}$ {{{converges}}}(=converges=); 否则说 {{{sequence}}} $\{ a_n \}$ {{{diverges}}}(=diverges=).
-
-[[../../../files/sequence-limit.png]]
-
-$\lim\limits_{n \to \infty} a_n$ 的定义与 [[#limits-at-infty][$\lim\limits_{x \to \infty}f(x)$ 的定义]] 差别在于: $f$ 是一个连续函数, 不要求 $x$ 为整数.
-
-[[../../../files/sequence-vs-cont.png]]
-
-对于{{{series}}} $\{ a_n \}_{n=1}^{\infty}$, 如果 $a_n \lt a_{n+1}$ 成立, 那么 $\{ a_n \}_{n=1}^{\infty}$ 就是递增; 如果 $a_n \gt a_{n+1}$ 成立, 那么 $\{ a_n \}_{n=1}^{\infty}$ 是递减.
-
-当一个{{{series}}}为递增或递减时, 那么称呼{{{series}}}是单调的(=monotonic=).
-
-*{{{series}}}*
-
-{{{sequence}}} $\{ a_n \}_{n=1}^{\infty}$ 的 *所有* 项之和 $\sum\limits_{n=1}^{\infty} a_n = a_1 + a_2 + a_3 + a_4 + \cdots + a_n + \cdots$ (或用 $\sum a_n$ 表示) 就是{{{series}}}, 或称为无穷{{{series}}}.
-
-{{{series}}}的值被称为{{{series}}}之和(=sum of series=).
-
-由于{{{sequence}}} $\{ a_n \}_{n=1}^{\infty}$ 有无穷个元素, 所以通常只研究前 $n$ 项之和, 称为{{{sequence}}}部分和(=partial sums=) $\sum\limits_{i=1}^{n} a_i$.
-
-#+begin_quote
-为了区分{{{series}}}和{{{sequence}}}部分和, 这里分别用下标 $n$ 和 $i$ 进行区分, 后面也一样.
-#+end_quote
-
-令 $\begin{equation*}\begin{cases} S_n = \sum\limits_{i=1}^{n} a_i \\ S = \sum\limits_{n=1}^{\infty} a_n \end{cases}\end{equation*}$, 如果{{{sequence}}} $\{ S_n \}_{n=1}^{\infty}$ {{{converges}}}且 $\lim\limits_{n \to \infty} S_n = L$, 那么{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{converges}}}, 且 $S = L$.
-
-如果{{{sequence}}} $\{ S_n \}_{n=1}^{\infty}$ {{{diverges}}}, 那么{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{diverges}}}.
-
-只要项的数量足够多, 部分和越接近级数. 可以表示为 $\sum\limits_{n=1}^{\infty} a_n = \lim\limits_{n \to \infty} \sum\limits_{i=1}^{n} a_i$.
-
-因此, 如果{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{converges}}}, 那么{{{sequence}}} $\{ a_n \}_{n=1}^{\infty}$ {{{converges}}}且{{{limit}}} $\lim\limits_{n \to \infty} a_n = 0$.
-
-*需要注意*, $\lim\limits_{n \to \infty} a_n = 0$ 并不能说明{{{series}}} $\sum\limits_{n=1}^{n} a_n$ {{{converges}}}, 比如调和级数 $\sum\limits_{n=1}^{\infty} \frac{1}{n}$ 就是 $\lim\limits_{n \to \infty} \frac{1}{n} = 0$ 但{{{diverges}}}.
-
-不过如果 $\lim\limits_{n \to \infty} a_n$ 不存在或 $\lim\limits_{n \to \infty} a_n \ne 0$ 倒是可以说明{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{diverges}}}.
-
-#+BEGIN_SRC maxima
-  /* 在 Maxima 中, 对发散级数进行简化 simpsum, 会得到报错. 可以利用这一点判断级数是否发散 */
-  convergent(series) := if errcatch(ev(series, simpsum)) = [] then false else true;
-
-  s1: sum(1/n, n, 1, inf);
-  s2: sum(1/n^2, n, 1, inf);
-  convergent(s1);                          /* false */
-  convergent(s2);                          /* true */
-#+END_SRC
-
-*** {{{series}}}类型
-
-**** 调和{{{series}}} (Harmonic series)
-
-$\sum\limits_{n=1}^{\infty} \frac{1}{n} = 1 + \frac{1}{2} + \frac{1}{3} + \frac{1}{4} + \cdots$
-
-**** 几何{{{series}}} (Geometric series)
-
-$\sum\limits_{n=1}^{\infty} a r^{n-1} = a + ar + ar^2 + ar^3 + \cdots + ar^{n-1} + \cdots$, 其中 $a \ne 0$, $r$ 为公比(=common ratio=).
-
-如果 $r = 1$, 那么 $S_n = \sum\limits_{i=1}^{n} = a + a + a + \cdots + a = na \to \pm\infty$, 所以 $\lim\limits_{n \to \infty} S_n = \pm \infty$,
-
-这种情况下, 几何{{{series}}}{{{diverges}}}.
-
-如果 $r \ne 1$, 可以有 $\begin{equation*} \begin{cases} \begin{aligned} S_n & = a + ar + ar^2 + \cdots + ar^{n-1} \\ rS_n & = \phantom{ a + } ar + ar^2 + ar^3 + \cdots + ar^{n-1} + ar^n \end{aligned} \end{cases} \end{equation*}$,
-
-两者相减得到 $S_n - rS_n = a - ar^n \rightarrow S_n = \frac{a(1 - r^n)}{1 - r}$.
-
-**** p{{{series}}} (p-series)
-
-$\sum\limits_{n=1}^{\infty} \frac{1}{n^p}$
-
-**** 幂{{{series}}} (Power series)
-
-*** {{{series}}}的敛性测试策略
-
-**** 积分判别法 (The Integral Test)
-
-级数和估计
-
-
-*** {{{taylor}}}{{{series}}}和{{{maclaurin}}}{{{series}}} (Taylor and Maclaurin Series)
-*** 有限差分形式 (Finite Difference Form)
-
-**** 一元{{{scalar-func}}}{{{derivate}}}的有限差分形式
-
-在图形学里面导数近似很有用, 这里介绍如何求解一元标量值函数的常用导数近似.
-
-我们所学的导数是基于极限进行定义的, 把极限符号去掉就是导数的近似了.
-
-$y = f(x)$ 在 $a$ 上的一阶导数为 $f^{'}(a) = \lim\limits_{x \to a} \frac{f(x) - f(a)}{x - a}$, 令 $h = x - a$, $\lim\limits_{h \to 0} \frac{f(a + h) - f(a)}{h}$.
-
-根据一阶泰勒展开或线性近似(后面会说到), 可得 $f^{'}_{f}(a) \approx \frac{f(a + h) - f(a)}{h}$, 这是向前差商近似,
-
-还有向后差商近似 $f^{'}_{b}(a) \approx \frac{f(a) - f(a - h)}{h}$. 为了准确性可以使用中心差商近似: $f^{'}(a) \approx \frac{f(a + h) - f(a - h)}{2h}$.
-
-中心差分近似实际上是前后差分两者的算术平均: $f^{'}(a) \approx \frac{1}{2} (\frac{f(a + h) - f(a)}{h} + \frac{f(a) - f(a - h)}{h})$,
-
-实际上这些结论都是通过泰勒展开式得到的:
-
-首先有 $\begin{cases} f(a + h) = f(a) + h f^{'}(a) + \frac{h^2}{2!} f^{''}(a) + \frac{h^3}{3!} f^{'''}(a) + \dots + \frac{h^n}{n!} f^{(n)}(a) \\ f(a - h) = f(a) - h f^{'}(a) + \frac{h^2}{2!} f^{''}(a) - \frac{h^3}{3!} f^{'''}(a) + \dots + \frac{h^n}{n!} f^{(n)}(a) \end{cases}$,
-
-想要求一阶导数的近似, 可以把两个一阶展开多项式相减得到:
-
-$\begin{equation*} \begin{aligned} & f(a + h) - f(a - h) \\ = & f(a) + hf^{'}(a) - f(a) + hf^{'}(a) \\ = & 2h f^{'}(a) \\ \rightarrow & f^{'}(a) \approx \frac{f(a + h) - f(a - h)}{2h} \end{aligned} \end{equation*}$
-
-想要求二阶导数的近似, 可以把两个二阶展开多项式相加得到:
-
-$\begin{equation*} \begin{aligned} & f(a + h) + f(a - h) \\ = & f(a) + hf^{'}(a) + \frac{h^2}{2!}f^{''}(a) + f(a) - hf^{'}(a) + \frac{h^2}{2!}f^{''}(a) \\ = & 2 f(a) + h^2 f^{''}(a) \\ \rightarrow & f^{''}(a) \approx \frac{f(a + h) + f(a - h) - 2f(a)}{h^2} \end{aligned} \end{equation*}$
-
-想要求三阶导数的近似, 还需要 $f(a + 2h)$ 和 $f(a - 2h)$ 的展开,
-
-因为仅靠 $f(a + h)$ 和 $f(a - h)$ 无法消去 $f^{'''}(a)$ 以外导数项, 把两个三阶展开多项式相减去得到:
-
-$\begin{equation*} \begin{aligned} & f(a + h) - f(a - h) \\ = & f(a) + hf^{'}(a) + \frac{h^2}{2!}f^{''}(a) + \frac{h^3}{3!}f^{'''}(a) - f(a) + hf^{'}(a) - \frac{h^2}{2!}f^{''}(a) + \frac{h^3}{3!}f^{'''}(a) \\ = & 2h f^{'}(a) + 2 \frac{h^3}{3!} f^{'''}(a) \\ \rightarrow & f^{'''}(a) \approx \frac{3f(a + h) - 3f(a - h) - 6 hf^{'}(a)}{h^3} \end{aligned} \end{equation*}$
-
-可以发现最终结果保留了 $f^{'}(a)$ 和 $f^{'''}(a)$ 项, 这就是为啥需要额外的方程组了:
-
-$\begin{cases} f(a + 2h) = f(a) + 2h f^{'}(a) + \frac{(2h)^2}{2!} f^{''}(a) + \frac{(2h)^3}{3!} f^{'''}(a) + \dots + \frac{(2h)^n}{n!} f^{(n)}(a) \\ f(a - 2h) = f(a) - 2h f^{'}(a) + \frac{(2h)^2}{2!} f^{''}(a) - \frac{(2h)^3}{3!} f^{'''}(a) + \dots + \frac{(2h)^n}{n!} f^{(n)}(a) \end{cases}$
-
-同样 $f(a + 2h) - f(a - 2h) = 4hf^{'}(a) + 2 \frac{(2h)^3}{3!} f^{'''}(a)$, 对 $\begin{cases} 2h f^{'}(a) + 2 \frac{h^3}{3!} f^{'''}(a) \\ 4hf^{'}(a) + 2\frac{(2h)^3}{3!} f^{'''}(a) \end{cases}$ 的 $f^{'}(a)$ 进行消元得到:
-
-$\begin{equation*} \begin{aligned} & f(a + 2h) - f(a - 2h) - 2(f(a + h) - f(a - h)) \\ = & \frac{12 h^3}{3!} f^{'''}(a) \rightarrow f^{'''}(a) \approx \frac{f(a + 2h) - f(a - 2h) - 2f(a + h) + 2f(a - h)}{2h^3} \end{aligned} \end{equation*}$
-
-也可以使用更高阶的泰勒展开式来近似低阶导数, 这样会让近似结果更准确,
-
-但相比使用同阶展开式近似同阶导数而言, 计算复杂度更高.
-
-这种近似也被称作有限微分形式(=Finite Difference Form=), 在图形学和流体模拟中计算导数有着重要作用.
-
-
-**** 多元{{{scalar-func}}}方向{{{derivate}}}的有限差分形式
-
-如同一元变量值函数的导数近似, 多元标量值函数的导数近似也是通过泰勒展开式推导得出, 其泰勒展开式为:
-
-令 $\begin{cases} x = a + h \\ y = b + k \end{cases}$, 其中 $\langle h, k \rangle = \alpha \mathbf{u}$, $\mathbf{u}$ 是一个单位向量: $\frac{\langle h, k \rangle}{\alpha}$.
-
-$\begin{equation*} \begin{aligned} & f(x, y) \\ = & f(a + h, b + k) \\ = & f(a, b) \\ + & f_x(a, b)h + f_y(a, b)k \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & \frac{f_{xxx}(a, b)h^3}{3!} + \frac{f_{xxy}(a, b)h^2k}{3!} + \frac{f_{xyx}(a, b)h^2k}{3!} + \frac{f_{xyy}(a, b)hk^2}{3!}  + \frac{f_{yxx}(a, b)h^2k}{3!} + \frac{f_{yxy}(a, b)hk^2}{3!} + \frac{f_{yyx}(a, b)hk^2}{3!} + \frac{f_{yyy}(a, b)k^3}{3!} \\ + & \dots \end{aligned} \end{equation*}$
-
-每当多一阶展开, 展开式会比上一阶展开式多出 $d^n$ 项, 其中 $n$ 是阶数, $d$ 是函数的变量数, 新增项本质上是放回抽样的全排列,
-
-或者说把 $n$ 作为次数如何分配到每个自变量的 $\Delta$ 值(即这里 $h$ 与 $k$)上, 展开式的每一项都可以通过多项式定理推出来:
-
-$\begin{equation*}\begin{aligned} & (C_{n}^{n_1}C_{n-n_1}^{n_2}C_{n-(n_1 + n_2)}^{n_3} \dots C_{n- \sum_{i=1}^{d-1} n_i}^{n_d})(\Delta_{1}^{n_1} \Delta_{2}^{n_2} \Delta_{3}^{n_3} \dots \Delta_{d}^{n_d}) \\ = & \frac{n!}{n_1!n_2!n_3!\dots n_d!} (\Delta_{1}^{n_1} \Delta_{2}^{n_2} \Delta_{3}^{n_3} \dots \Delta_{d}^{n_d}) \\ = & \frac{n!}{\prod_{i=1}^{d} (n_i!)} \prod_{j=1}^{d} \Delta_j^{n_j} \end{aligned}\end{equation*}$.
-
-比如 $f(x, y)$ 的三阶泰勒展开比它的二阶泰勒展开多出 $2^3$ 项,
-
-求导顺序的组合排列为: $(x + y)^3 = x^3 + 3x^2y + 3xy^2 + y^3 \rightarrow \left(\begin{array}{c} xxx & xxy & xyx & xyy & yxx & yxy & yyx & yyy \end{array}\right)$,
-
-其中 $3x^2y$ 的系数 3 是这么计算出来的, $\begin{equation*}\begin{cases} x^2 \rightarrow n_1 = 2 \\ y \rightarrow n_2 = 1 \end{cases}\end{equation*} \Rightarrow \frac{3!}{2!1!} = 3$.
-
-$h$ 与 $k$ 的组合排列为: $(h + k)^3 = h^3 + 3h^2k + 3hk^2 + k^3 \rightarrow \left(\begin{array}{c} hhh & hhk & hkh & hkk & khh & khk & kkh & kkk \end{array}\right)$.
-
-每一阶的新增项之和就是一个点积运算, 以一阶展开的新增项为例:
-
-$f_x(a, b)h + f_y(a, b)k \rightarrow D_{\mathbf{u}} f(\mathbf{x}) = \langle f_x(a, b), f_y(a, b) \rangle \cdot \frac{1}{\alpha} \langle h, k \rangle$, 对 $\langle h, k \rangle$ 进行单位化后就是一个方向导数.
-
-因此很难不能联想到二阶展开的新增项之和是一个二阶方向导数, 第 $n$ 阶的新增项之和是一个 $n$ 阶方向导数,
-
-多元标量值函数的泰勒展开是使用 *方向导数* 对 $f(x, y)$ 进行逼近.
-
-不过目前从展开式上看不出来新增项之和是否为高阶方向导数, 可以尝试方向导数的定义作为切入点进行观察:
-
-$D_{\mathbf{u}}f(\mathbf{x_0}) = \lim\limits_{\alpha \to 0}\frac{f(\mathbf{x_0} + \alpha \mathbf{u}) - f(\mathbf{x_0})}{\alpha}$,
-
-#+begin_quote
-需要注意, $\mathbf{x_0}$ 和 $\mathbf{u}$ 是向量, 这里采用了粗体与变量 $x$ 和 $u$ 进行区分.
-#+end_quote
-
-其中 $\mathbf{x} = \mathbf{x_0} + \mathbf{u}$, $\mathbf{x_0} = \langle x_0, y_0 \rangle$, 由于 $\mathbf{u}$ 是平面上的单位向量, 不妨设为 $\mathbf{u} = \langle \cos\theta, \sin\theta \rangle$,
-
-由此, 方向导数的定义变为:
-
-$\begin{equation*} \begin{aligned} & D_{\mathbf{u}}f(\mathbf{x_0}) \\ = & \lim\limits_{\alpha \to 0}\frac{f(\mathbf{x_0} + \alpha \langle \cos\theta, \sin\theta \rangle) - f(\mathbf{x_0})}{\alpha |\mathbf{u}|} \\ = & \lim\limits_{\alpha \to 0}\frac{f(\mathbf{x_0} + \alpha \langle \cos\theta, \sin\theta \rangle) - f(\mathbf{x_0})}{\alpha \sqrt{\cos^2\theta + \sin^2\theta}} \\ = & \lim\limits_{\alpha \to 0} \frac{f(x_0 + \alpha \cos\theta, y_0 + \alpha \sin\theta) - f(x_0, y_0)}{\alpha} \\ = & \lim\limits_{\alpha \to 0} \frac{f(x_0 + a\cos\theta, y_0 + \alpha \sin\theta) - f(x_0, y_0 + \alpha \sin\theta) + f(x_0, y_0 + \alpha \sin\theta) - f(x_0, y_0)}{\alpha} \\ = & \lim\limits_{\alpha \to 0} \frac{f(x_0 + a\cos\theta, y_0 + \alpha \sin\theta) - f(x_0, y_0 + \alpha \sin\theta)}{\alpha} + \lim\limits_{\alpha \to 0} \frac{f(x_0, y_0 + \alpha \sin\theta) - f(x_0, y_0)}{\alpha} \\ = & \frac{\partial f(\mathbf{x_0})}{\partial x} \cos\theta + \frac{\partial f(\mathbf{x_0})}{\partial y} \sin\theta \\ = & \langle \frac{\partial f(\mathbf{x_0})}{\partial x}, \frac{\partial f(\mathbf{x_0})}{\partial y} \rangle \cdot \langle \cos\theta, \sin\theta \rangle = \left(\begin{array}{c} \frac{\partial f(\mathbf{x_0})}{\partial x} & \frac{\partial f(\mathbf{x_0})}{\partial y} \end{array}\right) \left( \begin{array}{c} \cos\theta \\ \sin\theta \end{array} \right) = \left(\begin{array}{c} \cos\theta & \sin\theta \end{array}\right) \left( \begin{array}{c} \frac{\partial f(\mathbf{x_0})}{\partial x} \\ \frac{\partial f(\mathbf{x_0})}{\partial y} \end{array} \right) \\ = & \nabla f(\mathbf{x_0}) \cdot \mathbf{u} = \nabla^{T} f(\mathbf{x_0})\mathbf{u} = \mathbf{u}^{T} \nabla f(\mathbf{x_0}) \end{aligned} \end{equation*}$
-
-这里需要先说明一些向量表示说明, 在没有任何说明时,
-
-点积运算中所涉及的所有向量统一默认为行向量, 并且会用 $\langle \rangle$ 进行标注; 在矩阵运算所涉及的向量均默认列向量.
-
-这里令 $\frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} = D_{\mathbf{u}}f(\mathbf{x}) =\sum\limits_{i=1}^{d} \frac{\partial f(\mathbf{x})}{\partial x_i} u_i$, 其中 $x_i$ 和 $u_i$ 分别是 $\mathbf{x}$ 和 $\mathbf{u}$ 的第 $i$ 个分量, $1 \le i \le d$, $d$ 是 $f$ 的参数数量.
-
-二阶方向导数的定义则为:
-
-$\begin{equation*} \begin{aligned} & D^{(2)}_{\mathbf{u}}f(\mathbf{x}) \\ = & \frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{u}^2} \\ = & \frac{\partial}{\partial \mathbf{u}}\left( \frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} \right) \\ = & \mathbf{u}^{T} \nabla\left( \frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} \right) \\ = & \mathbf{u}^{T} \nabla \left(\nabla^{T} f(\mathbf{x}) \mathbf{u} \right) \\ = & \mathbf{u}^{T} \nabla \left( \mathbf{u}^{T} \nabla f(\mathbf{x}) \right) \\ = & \mathbf{u}^{T} \left( \nabla \mathbf{u}^{T} \nabla f(\mathbf{x}) + (\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} \right) \\ = & \mathbf{u}^{T} (\nabla \nabla^{T} f(\mathbf{x}))\mathbf{u} \end{aligned} \end{equation*}$
-
-推导过程用到了两点:
-
-1. 常向量的梯度是零向量, 所以 $\nabla \mathbf{u}^{T} = \langle 0, 0 \rangle$
-
-2. $\nabla\left(\mathbf{a}^{T}\mathbf{b}\right) = \nabla \mathbf{a}^{T} \mathbf{b} + \nabla \mathbf{b}^{T} \mathbf{a}$
-
-   证明过程如下:
-
-   $\mathbf{a}$ 和 $\mathbf{b}$ 都是 $n$ 维未知向量, 因此, 点积 $\mathbf{a}^{T}\mathbf{b} = \sum\limits_{i=1}^{n} a_i b_i$ 是一个多元多项式: $a_1 b_1 + a_2 b_2 + \dots + a_n b_n$,
-
-   $\begin{equation*} \begin{aligned} & \nabla \left( \mathbf{a}^T \mathbf{b} \right) \\ = & \nabla \left( \sum\limits_{i=1}^{n} a_i b_i \right) \\ = & \sum\limits_{i=1}^{n} \nabla\left( a_i b_i \right) \\ = & \sum\limits_{i=1}^{n} [ (\nabla a_i)b_i + a_i(\nabla b_i) ] \\ = & \left(\begin{array}{c} \nabla a_1 & \dots & \nabla a_n \end{array}\right) \mathbf{b} + \left( \begin{array}{c} \nabla b_1 & \dots & \nabla b_n \end{array} \right) \mathbf{a} \\ = & \nabla \mathbf{a}^{T} \mathbf{b} + \nabla \mathbf{b}^{T} \mathbf{a} \end{aligned} \end{equation*}$
-
-   $\nabla\left( a_i b_i \right) = (\nabla a_i)b_i + a_i(\nabla b_i)$ 是导数乘积运算得到的:
-
-   把 $a_i$ 和 $b_i$ 分别看作函数 $f(x_i)$ 和 $g(x_i)$, $\frac{d}{dx}\left[ f(x_i) g(x_i) \right] = f(x_i) \frac{d}{dx_i} g(x_i) + g(x_i) \frac{d}{dx_i} f(x_i)$.
-
-   假设有 $\begin{cases} y = p(x_1, x_2, \dots, x_n) \\ y = q(x_1, x_2, \dots, x_n) \end{cases}$, $p$ 与 $q$ 组合函数 $(pq)(x_1, x_2, \dots, x_n)$ 的梯度向量为:
-
-   $\nabla (pq) = \langle \frac{\partial (pq)}{\partial x_1}, \frac{\partial (pq)}{\partial x_2}, \dots, \frac{\partial (pq)}{\partial x_n} \rangle$. 根据导数的乘法法则 $\frac{\partial (pq)}{\partial x_i} = \frac{\partial p}{\partial x_i} q + p \frac{\partial q}{\partial x_i}$, 其中 $i = (1, 2, \dots, n)$.
-
-   把多元的情况推广到一元上, 令 $p$ 和 $q$ 变为一元标量值函数, 组合函数 $pq$ 的梯度向量就只有一个偏导数,
-
-   从而得出以下关系:
-
-   $\begin{cases} \frac{\partial p}{\partial x} = \nabla p \\ \frac{\partial g}{\partial x} = \nabla g \end{cases} \rightarrow \nabla (pq) = (\nabla p) g + p(\nabla g)$.
-
-   最后, 把 $a_i$ 和 $b_i$ 看做是一元标量值函数就可以得出证明中的关系.
-
-其中 $\nabla \nabla^{T}f(\mathbf{x}) = \left( \begin{array}{c} \frac{\partial f(\mathbf{x})}{\partial x} \\ \frac{\partial f(\mathbf{x})}{\partial y} \end{array} \right) \left( \begin{array}{c} \frac{\partial f(\mathbf{x})}{\partial x} & \frac{\partial f(\mathbf{x})}{\partial y} \end{array} \right) = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} & \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y} \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} & \frac{\partial^2 f(\mathbf{x})}{\partial y^2} \end{array} \right)$,
-
-$(\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} & \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y} \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} & \frac{\partial^2 f(\mathbf{x})}{\partial y^2} \end{array} \right) \left( \begin{array}{c} \cos\theta \\ \sin\theta \end{array} \right) = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right)$
-
-$\mathbf{u}^{T} (\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} = \left(\begin{array}{c} \cos\theta & \sin\theta \end{array}\right) \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right) = \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos^2\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\cos\theta\sin\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \sin\theta\cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin^2\theta$
-
-对比可以发现二阶方向导数比二阶展开的新增项之和相差了一个 $\frac{1}{2!}$ 的缩放以及单位化:
-
-$\begin{equation*}\begin{aligned} & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ = & \frac{1}{2!} \langle f_{xx}(a, b), f_{xy}(a, b), f_{yx}(a, b), f_{yy}(a, b) \rangle \cdot \langle h^2, hk, kh, k^2 \rangle \\ = & \frac{1}{2!} \left( \begin{array}{c} h & k \end{array} \right) \left( \begin{array}{c} f_{xx}(a, b) & f_{xy}(a, b) \\ f_{yx}(a, b) & f_{yy}(a, b) \end{array} \right) \left( \begin{array}{c} h \\ k \end{array} \right) \\ \rightarrow & \frac{1}{2!} D_{\mathbf{u}}^{(2)}f(\mathbf{x}) = \frac{1}{2!} \frac{1}{a^2} \left( \begin{array}{c} h & k \end{array} \right) \left( \begin{array}{c} f_{xx}(a, b) & f_{xy}(a, b) \\ f_{yx}(a, b) & f_{yy}(a, b) \end{array} \right) \left( \begin{array}{c} h \\ k \end{array} \right) \end{aligned}\end{equation*}$
-
-因此, 我们的猜想非常接近事实.
-
-而这个由二阶偏导数构成的矩阵 $\nabla \nabla^{T} f(\mathbf{x})$ 被称为黑塞矩阵(=Hessian matrix=), 在判定驻点是否为极值点的场景大有用处.
-
-稍后会做介绍, 现在我们再往更高阶的方向导数观察一下, 把二阶方向导数看作一个函数, 对其求方向导数:
-
-$D_{\mathbf{u}}^{(3)}f(\mathbf{x}) = \frac{\partial^3 f(\mathbf{x})}{\partial \mathbf{u}^3} = \frac{\partial}{\partial \mathbf{u}} \left(\frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{u}^2} \right) = \mathbf{u}^{T} \nabla \left(\frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{u}^2} \right) = \mathbf{u}^{T} \nabla \left( \mathbf{u}^{T} (\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u} \right)$
-
-因为 $\nabla \nabla^{T} f(\mathbf{x})$ 是一个矩阵, 所以 $(\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u}$ 是一个列向量,
-
-令 $\mathbf{v} = (\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u} \rightarrow \mathbf{u}^{T} \nabla \left( \mathbf{u}^{T} \mathbf{v} \right) = \mathbf{u}^{T} \left( \nabla \mathbf{u}^{T} \mathbf{v} + \nabla\mathbf{v}^{T}\mathbf{u} \right) = \mathbf{u}^{T} \nabla \mathbf{v}^{T} \mathbf{u} = \mathbf{u}^{T}(\nabla [(\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u}])\mathbf{u}$,
-
-$(\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} & \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y} \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} & \frac{\partial^2 f(\mathbf{x})}{\partial y^2} \end{array} \right) \left( \begin{array}{c} \cos\theta \\ \sin\theta \end{array} \right) = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right)$
-
-$\nabla [(\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u}] = \left( \begin{array}{c} \frac{\partial^3 f(\mathbf{x})}{\partial x^3} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{\partial x \partial y \partial x} \sin\theta & \frac{\partial^3 f(\mathbf{x})}{\partial x^2 \partial y} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{\partial x \partial y^2} \sin\theta \\ \frac{\partial^3 f(\mathbf{x})}{\partial y \partial x^2} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{\partial y^2 \partial x} \sin\theta & \frac{\partial^3 f(\mathbf{x})}{\partial y \partial x \partial y} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{ \partial y^3} \sin\theta \end{array} \right)$
-
-对于二阶方向导数而言, $(\nabla \nabla^{T} f(\mathbf{x}))$ 就是一个黑塞矩阵.
-
-# 对矢量场进行微分运算会得到一个雅可比矩阵, 所以 $\nabla \mathbf{v}$ 是一个矩阵, 并且该矩阵也满足二次型.
-
-为了方便学习, 之后用 $D_{\mathbf{u}}^{(n)}f(\mathbf{x}) = \nabla^{n} f(\mathbf{x}) \cdot \mathbf{u}^n$ 表示任意阶的方向导数,
-
-其中 $\nabla^{n}f(\mathbf{x})$ 示 $n$ 阶梯度向量, $\mathbf{u}^{n}$ 表示多项式展开项排列.
-
-通过观察可以得出二阶方向导数的计算公式:
-
-$\frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{x}} = \sum\limits_{i=1}^{d} \frac{\partial}{\partial x_i} \left( \sum\limits_{j=1}^{d} \frac{\partial f}{\partial x_j} u_j \right) u_i = \sum\limits_{i=1}^{d} \sum\limits_{j=1}^{d} \frac{\partial^2 f(\mathbf{x})}{\partial x_{i} \partial x_{j}} u_i u_j$, 其中 $d$ 是 $f$ 的参数数量.
-
-利用在一阶方向导数基础上推出二阶方向导数的思路,
-
-设 $n$ 阶方向导数 $\frac{\partial^n f(\mathbf{x})}{\partial \mathbf{u}^{n}}$ 是 $n - 1$ 阶方向导数 $\frac{\partial^{n-1} f(\mathbf{x})}{\partial \mathbf{u}^{n-1}}$ 的一阶方向导数,
-
-设 $\frac{\partial^{n-1}}{\partial \mathbf{u}^{n-1}}f(\mathbf{x}) = \sum\limits_{i_1=1}^{d} \dots \sum\limits_{i_{n-1}}^{d} \frac{\partial^{n-1}f(\mathbf{x})}{\partial x_{i_1} \dots \partial x_{i_{n-1}}} u_{i_{1}} \dots u_{i_{n-1}}$, 通过归纳得到 $\frac{\partial^{n}}{\partial \mathbf{u}^{n}}f(\mathbf{x}) = \sum\limits_{i_1=1}^{d} \dots \sum\limits_{i_{n}}^{d} \frac{\partial^{n}f(\mathbf{x})}{\partial x_{i_1} \dots \partial x_{i_{n}}} u_{i_{1}} \dots u_{i_{n}}$.
-
-#+begin_quote
-参考文献: [[https://journal.bjut.edu.cn/bjgydxxb/cn/article/pdf/preview/734924f5-255c-4051-8e1c-2a50b44a3f5b.pdf][高阶方向导数及其应用]]
-#+end_quote
-
-接下来找出一阶和二阶方向导数的近似, 就像一元变量值函数那样, 需要额外的泰勒展开式得出近似:
-
-令 $\begin{cases} x = a - h \\ y = b - k \end{cases}$, 其中 $\langle h, k \rangle = \alpha \mathbf{u}$, $\mathbf{u}$ 是一个单位向量: $\frac{\langle h, k \rangle}{\alpha}$.
-
-$\begin{equation*} \begin{aligned} & f(x, y) \\ = & f(a - h, b - k) \\ = & f(a, b) \\ - & (f_x(a, b)h + f_y(a, b)k) \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ - & (\frac{f_{xxx}(a, b)h^3}{3!} + \frac{f_{xxy}(a, b)h^2k}{3!} + \frac{f_{xyx}(a, b)h^2k}{3!} + \frac{f_{xyy}(a, b)hk^2}{3!}  + \frac{f_{yxx}(a, b)h^2k}{3!} + \frac{f_{yxy}(a, b)hk^2}{3!} + \frac{f_{yyx}(a, b)hk^2}{3!} + \frac{f_{yyy}(a, b)k^3}{3!}) \\ + & \dots \end{aligned} \end{equation*}$
-
-让两个一阶泰勒展开进行相减, 得出一阶方向导数的近似:
-
-$\begin{equation*}\begin{aligned} & f(a + h, b + k) - f(a - h, b - k) \\ = & f(a, b) + f_x(a, b)h + f_y(a, b)k - f(a, b) + f_x(a, b)h + f_y(a, b)k \\ = & 2(f_x(a, b)h + f_y(a, b)k) \\ \rightarrow & f_x(a, b)h + f_y(a, b)k = \frac{f(a + h, b + k) - f(a - h, b - k)}{2} \end{aligned}\end{equation*}$
-
-按照方向导数定义, $\langle h, k \rangle$ 需要被单位化, 所以:
-
-$D_{\mathbf{u}}f(\mathbf{x}) = f_x(a, b)\frac{h}{\alpha} + f_y(a, b)\frac{k}{\alpha} = \frac{f(a + h, b + k) - f(a - h, b - k)}{2\alpha}$.
-
-让两个二阶泰勒展开进行相加, 得出二阶方向导数的近似:
-
-$\begin{equation*}\begin{aligned} & f(a + h, b + k) + f(a - h, b - k) \\ = & f(a, b) + f_x(a, b)h + f_y(a, b)k + \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & f(a, b) - f_x(a, b)h - f_y(a, b)k + \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ = & 2f(a, b) + f_{xx}(a, b)h^2 + f_{xy}(a, b)hk + f_{yx}(a, b)hk + f_{yy}(a, b)k^2 \\ \rightarrow & f_{xx}(a, b)h^2 + f_{xy}(a, b)hk + f_{yx}(a, b)hk + f_{yy}(a, b)k^2 = f(a + h, b + k) + f(a - h, b - k) - 2f(a, b) \end{aligned}\end{equation*}$
-
-# 分别令 $h$ 和 $k$ 为 0 可以消去 $f_{xy}(a, b)hk$ 和 $f_{yx}(a, b)hk$, 从而得出拉普拉斯运算的近似.
-
-按照方向导数定义, $\langle h, k \rangle$ 需要被单位化, 所以:
-
-$D_{\mathbf{u}}^{(2)}f(\mathbf{x}) = f_{xx}(a, b)(\frac{h}{\alpha})^2 + f_{xy}(a, b)\frac{h}{\alpha}\frac{k}{\alpha} + f_{yx}(a, b)\frac{h}{\alpha}\frac{k}{\alpha} + f_{yy}(a, b)(\frac{k}{\alpha})^2 = \frac{f(a + h, b + k) + f(a - h, b - k) - 2f(a, b)}{\alpha^2}$.
-
-*** 笛卡尔坐标系与泰勒展开
-
-# 参考: https://blog.csdn.net/2401_87618156/article/details/152560078
-
-笛卡尔坐标系是一个联系几何和代数的工具:
-
-通过 2 根垂直的数轴定位点 $p$ 的位置, 把 $p$ 的位置分解成 2 个代数 $x$ 和 $y$, 最后用代数的组合 $\langle x, y \rangle$ 来表示位置.
-
-笛卡尔最初只是想找出一个用代数表示位置的方法, 但后来的数学家们却突发奇想:
-
-能不能用定义不同类型的数轴来分解位置? 于是诞生了极坐标系(=polar coordinates=).
-
-#+attr_html: :width 600px
-[[../../../files/cartesian-vs-polar-l-1503367406.jpg]]
-
-后来数学家们不再满足于分解组合位置了, 开始把这种分解与组合的思路推广到各个方面上.
-
-比如可以把多项式函数 $f(x) = \sum\limits_{i=0}^{n}a_{i}x^{i}$ 进行分解和组合:
-
-以 $x^i$ 为"数轴", $a_i$ 为根据"数轴" $x^i$ 定点的代数, 所以 $f(x)$ 可以用组合 $\langle a_0, a_1, a_2, \dots, a_{n-1}, a_{n}\rangle$ 来表示.
-
-从这个角度来看, 泰勒展开就是一种对函数的分解方法, 以 $f(x)$ 在 $x = a$ 处展开的泰勒级数 $f(x) = \sum\limits_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x - a)^{n}$ 为例,
-
-以 $(x - a)^{n}$ 为"数轴"对泰勒级数进行分解, 可以得到组合 $\langle f(a), \frac{f^{(1)}(a)}{1!}, \frac{f^{(2)}(a)}{2!}, \dots \rangle$.
-
-从线性代数的角度出发, "数轴" 就是基向量(基底), 组合由于支持线性运算, 所以被称为线性组合.
-
-分解的好处在于可以把一个难以处理的对象变得容易处理. 比如有理数函数的积分通常比较难以求解,
-
-但是如果先对有理数函数进行分解再处理会变得很简单, 举个例子 $\frac{1}{x + 1}$,
-
-可以通过 *多项式长除法(polynomial long division)* 将 $1$ 除以 $1 + x$ 得到级数表示:
-
-$\frac{1}{x + 1} = 1 - x + x^2 - x^3 + x^4 + \dots$
-
-有了这个分解就能轻松地计算出 $\frac{1}{x + 1}$ 的{{{anti-derivate}}}:
-
-$\begin{equation*}\begin{aligned} & \int_{0}^{x} \frac{1}{t + 1} dt \\ = & \int_{0}^{x} \left(1 - t + t^2 - t^3 + t^4 + \dots\right)dt \\ = & \left. \left( t - \frac{1}{2} t^2 + \frac{1}{3} t^3 - \frac{1}{4} t^4 + \frac{1}{5}t^5 + \dots\right) \right]_{0}^{x} \\ = & x - \frac{1}{2} x^2 + \frac{1}{3} x^3 - \frac{1}{4} x^4 + \frac{1}{5} x^5 + \dots \\ = & \ln(x + 1) \ \end{aligned}\end{equation*}$
-
-有了反导数就能很轻松地求出积分. 把求反导数的过程反过来看就能发现 $\frac{d}{dx}\ln(x + 1) = \frac{1}{x + 1}$.
-
-这就是人类发现{{{calculus-theorem}}}的过程.
-
-数学家们在分解研究对象时 *通常* 会让基向量正交, 因为在非正交基下, 基向量之间存在耦合,
-
-因此在计算点积时必须考虑这种基向量之间的耦合.
-
-假设有两个 $n$ 维向量 $\vec{u} = \langle u_1, u_2, \dots, u_n \rangle$ 和 $\vec{v} = \langle v_1, v_2, \dots, v_n \rangle$,
-
-它们的点积为 $\vec{u} \cdot \vec{v} = (u_1 v_1 + u_1 v_2 \cos \theta_{12} + \dots + u_1 v_n \cos\theta_{1n}) + \dots + (u_n v_1 \cos \theta_{1n} + u_n v_2 \cos \theta_{2n} + \dots + u_n v_n)$,
-
-是一个有 $n^2$ 项多项式, 其中 $\theta_{ij}$ 表示基向量 $\vec{\epsilon}_{i}$ 和 $\vec{\epsilon}_{j}$ 之间夹角, $i$ 和 $j$ 是小于等于 $n$ 的正整数.
-
-这才是原本的点积计算, 比起平时的点积计算 $\vec{u} \cdot \vec{v} = u_1 v_1 + u_2 v_2 + \dots + u_n v_n$ 要复杂,
-
-因为平时点积计算都默认一个条件: 基向量之间正交, 即 $\cos\theta_{ij} = 0$. 这使得原本复杂的点积计算变得十几简单.
-
-#+begin_quote
-点积可以写出矩阵乘法的形式: $\vec{u} \cdot \vec{v} = \vec{u}^{T} G \vec{v}$, 其中 $G$ 是格拉姆矩阵(=gram matrix=):
-
-$G = \left( \begin{array}{c} |\vec{\epsilon}_1||\vec{\epsilon}_1| \cos\theta_{11} &  |\vec{\epsilon}_1||\vec{\epsilon}_2|\cos\theta_{12} & \dots & |\vec{\epsilon}_1||\vec{\epsilon}_n| \cos\theta_{1n} \\ \vdots & \vdots & \vdots & \vdots \\ |\vec{\epsilon}_n||\vec{\epsilon}_1| \cos\theta_{1n}  & |\vec{\epsilon}_n||\vec{\epsilon}_2| \cos\theta_{2n} & \dots & |\vec{\epsilon}_n||\vec{\epsilon}_n| \cos\theta_{nn} \end{array} \right) = \left( \begin{array}{c} \vec{\epsilon}_1 \cdot \vec{\epsilon}_1 & \vec{\epsilon}_1 \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_1 \cdot \vec{\epsilon}_n \\ \vdots & \vdots & \vdots & \vdots \\ \vec{\epsilon}_n \cdot \vec{\epsilon}_1 & \vec{\epsilon}_n \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_n \cdot \vec{\epsilon}_n \end{array} \right)$
-
-其中 $\vec{\epsilon}_i \cdot \vec{\epsilon}_j$ 就是基向量 $\vec{\epsilon}_i$ 和 $\vec{\epsilon}_j$ 之间的耦合度.
-
-在标准正交坐标系(基向量正交且均为单位向量)下, $G$ 是一个单位矩阵 $I^n$.
-#+end_quote
-
-函数也有正交的说法, 比如说 $f(x)$ 和 $g(x)$ 在定义域 $[a, b]$ 上正交, 就是指 $\int_{a}^{b} f(x) g(x) dx = 0$，
-
-其中 $\int_{a}^{b} f(x) g(x) dx$ 是函数 $f$ 和 $g$ 之间的点积.
-
-当然只是一般会优先按照正交基进行分解, 泰勒级数就是一个反例, 它是按照导数进行分解:
-
-假设 $f(x)$ 在 $a = 0$ 处展开, 在 $x \in [-1, 1]$ 上,
-
-$\int_{-1}^{1} 1 \cdot x^2 dx = \left. \frac{x^3}{3} \right]_{-1}^{1} = \frac{2}{3} \ne 0$; 但 $\int_{-1}^{1} x \cdot x^2 dx = \left. \frac{x^4}{4} \right]_{-1}^{1} = 0$.
-
-在了解了数学家们的思路后, 就会自然得了解到一些数学工具为什么是这样.
-
-**** 傅立叶级数 (Fourier Series)
-
-# $\left( \begin{array}{c} |\vec{\epsilon}_1||\vec{\epsilon}_1| \cos\theta_{11} &  |\vec{\epsilon}_1||\vec{\epsilon}_2|\cos\theta_{12} & \dots & |\vec{\epsilon}_1||\vec{\epsilon}_n| \cos\theta_{1n} \\ \vdots & \vdots & \vdots & \vdots \\ |\vec{\epsilon}_n||\vec{\epsilon}_1| \cos\theta_{1n}  & |\vec{\epsilon}_n||\vec{\epsilon}_2| \cos\theta_{2n} & \dots & |\vec{\epsilon}_n||\vec{\epsilon}_n| \cos\theta_{nn} \end{array} \right) = \left( \begin{array}{c} \vec{\epsilon}_1 \cdot \vec{\epsilon}_1 & \vec{\epsilon}_1 \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_1 \cdot \vec{\epsilon}_n \\ \vdots & \vdots & \vdots & \vdots \\ \vec{\epsilon}_n \cdot \vec{\epsilon}_1 & \vec{\epsilon}_n \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_n \cdot \vec{\epsilon}_n \end{array} \right)$
-
 ** {{{vector-func}}}微积分: 针对多元向量的微分和积分
 
 *** 向量微分算子 (Vector differential operator): $\nabla$
@@ -2030,11 +1614,19 @@ $\nabla \cdot F = \langle \frac{\partial}{\partial x}, \frac{\partial}{\partial 
 
 # 把{{{scalar-func}}} $F$ 看作一个向量, 那么散度计算本质上就是向量点积.
 
-有些资料会使用矩阵乘法来替代点积:
+该运算符有其它表示方式: $\nabla \cdot F = \nabla^{T}F = \text{div }F$.
 
-$\nabla \cdot F = \nabla^{T}F = F^{T}\nabla$
+另外, $\nabla \cdot F \ne F \cdot \nabla$, $F \cdot \nabla = f_1 \frac{\partial}{\partial x} + f_2 \frac{\partial}{\partial y}$ 是一个新的运算符:
 
-有时候也会用 $\text{div } F$ 来表示 $\nabla \cdot F$.
+$(F \cdot \nabla) u = F \cdot (\nabla u) = f_1\frac{\partial u}{\partial x} + f_2\frac{\partial u}{\partial y}$ 求多元{{{scalar-func}}} $u$ 在方向 $F$ 上的{{{directional-derivate}}};
+
+$(F \cdot \nabla) G = F^{T}(\nabla G)^{T}$ 求多元{{{vector-func}}} $G$ 在方向 $F$ 上的{{{directional-derivate}}},
+
+假设 $G = \langle g_1(x, y), g_2(x, y) \rangle$, 那么 $(F \cdot \nabla) G = \left(f_1\frac{\partial}{\partial x} + f_2\frac{\partial}{\partial y}\right) \langle g_1, g_2 \rangle = \langle f_1\frac{\partial g_1}{\partial x} + f_2\frac{\partial g_1}{\partial y}, f_1\frac{\partial g_2}{\partial x} + f_2\frac{\partial g_2}{\partial y} \rangle$.
+
+# $\nabla G = \left(\begin{array}{c} \frac{\partial g_1}{\partial x} & \frac{\partial g_1}{\partial y} \\ \frac{\partial g_2}{\partial x} & \frac{\partial g_2}{\partial y} \end{array}\right)$
+
+# $\left(f_1\frac{\partial}{\partial x} + f_2\frac{\partial}{\partial y}\right) \langle g_1, g_2 \rangle = \langle f_1\frac{\partial g_1}{\partial x} + f_2\frac{\partial g_1}{\partial y}, f_1\frac{\partial g_2}{\partial x} + f_2\frac{\partial g_2}{\partial y} \rangle$
 
 散度 $\nabla^{T}F$ 可用于描述{{{vector-func}}} $F$ 在点 $(a, b)$ 是发散或汇聚的程度.
 
@@ -2149,6 +1741,15 @@ $\begin{equation*}\begin{aligned}
 
 但 *不能* 与{{{vector-func}}}直接写在一起: $\nabla^{T} \nabla F$, 因为里面的 $\nabla F$ 是矩阵乘法, 而 $\nabla$ 是向量, 除非这么写 $(\nabla^{T} \nabla) F = F \nabla^{T} \nabla$.
 
+#+BEGIN_SRC maxima
+  f(x, y, z) := [sin(x), cos(y), %e^z];
+  coord: setify(makelist(k, k, -4, 4));
+  points3d: listify(cartesian_product(coord, coord, coord));
+  vf3d(x, y, z) := vector([x, y, z], f(x, y, z) / 8);
+  vect3: makelist(vf3d(k[1], k[2], k[3]), k, points3d);
+  apply(draw3d, append([color=blue, head_length=0.1, line_width=2], vect3));
+#+END_SRC
+
 **** 旋度 (Curl)
 
 对多元{{{vector-func}}} $F(x, y) = \langle f_1(x, y), f_2(x, y) \rangle$ 进行向量叉积运算可以得到一个名为旋度的向量:
@@ -2173,6 +1774,10 @@ $\nabla \times F = \langle \frac{\partial}{\partial x}, \frac{\partial}{\partial
 #+caption: 3D 旋度
 [[../../../files/3d-curl.png]]
 
+另外, $F \times \nabla = \langle f_2\frac{\partial}{\partial z} - f_3\frac{\partial}{\partial y}, f_3\frac{\partial}{\partial x} - f_1\frac{\partial}{\partial z}, f_1\frac{\partial}{\partial y} - f_2\frac{\partial}{\partial x} \rangle$ 是一个新的运算符, 并非一个向量,
+
+$(F \times \nabla) u = F \times (\nabla u)$ 表示求 $F$ 与梯度 $\nabla u$ 的叉积, 其中 $u$ 是多元{{{scalar-func}}}.
+
 #+begin_quote
 如果在向量叉积运算的记忆上有困难, 那么可以按照以下方法进行记忆.
 
@@ -2187,7 +1792,193 @@ $\langle x, y, z \rangle \times \langle a, b, c \rangle = \left| \begin{array}{c
 
 *** 计算
 
-**** 运算规则
+$\nabla$ 运算在向量分析中有着大量运用, 想要从事这方面的学习最好熟悉 $\nabla$ 运算符的运算规律.
+
+$\nabla$ 运算符是一个向量形式的一元运算符, 数学中的一元运算符是指只作用于一个运算对象的运算符.
+
+#+begin_quote
+再举个例子, 加法运算符 $+$ 是二元运算符, 需要两个元算对象: $a + b$.
+
+可以把运算符看作函数, 定义了从一个集合到另一个集合的映射.
+
+那么一元运算符是一个一元函数, 二元运算符是一个二元函数.
+#+end_quote
+
+$\nabla$ 运算符同时具备微分运算性质和部分向量运算性质,
+
+只具备部分向量运算性质是因为 $\nabla$ 运算符虽然在形式上是向量, 但本质上是运算符.
+
+比如前面说过的, $\nabla \cdot F \ne F \cdot \nabla$, 这不符合向量的运算性质 $\vec{a} \cdot \vec{b} = \vec{b} \cdot \vec{a}$.
+
+因为 $\nabla \cdot F$ 的结果是一个标量, 但 $F \cdot \nabla$ 是一个运算符, 其后面必须跟着一个运算对象.
+
+所谓的微分运算性质是指{{{derivate}}}的乘积运算: $\frac{d}{dx}(fg) = \frac{df}{dx}g + f\frac{dg}{dx}$, 其中 $f$ 和 $g$ 是{{{scalar-func}}}, 可以看作标量.
+
+按照该性质, 对 $fg$ 进行 $\nabla$ 运算, 结果如下:
+
+$\nabla(fg) = \nabla(f g_{c}) + \nabla(f_c g) = g \nabla f + f \nabla g$
+
+带下标 $c$ 的变量表示并非 $\nabla$ 的运算对象, 因此需要确保这种变量不会出项在运算符的运算对象位置上.
+
+*注意, 这里的 $\nabla$ 运算符包括了与它相关的复合运算符, 比如 $F \cdot \nabla$ 以及 $F \times \nabla$.*
+
+以下是上面运算的证明:
+
+$\begin{equation*}\begin{aligned}
+& \nabla (fg) \\
+= & \langle \frac{\partial (fg)}{\partial x_1}, \frac{\partial (fg)}{\partial x_2}, \dots, \frac{\partial (fg)}{\partial x_n} \rangle \\
+= & \langle \frac{d f}{d x_1} \cdot g + \frac{d g}{d x_1} \cdot f, \frac{d f}{d x_2} \cdot g + \frac{d g}{d x_2} \cdot f, \dots, \frac{d f}{d x_n} \cdot g + \frac{d g}{d x_n} \cdot f \rangle && \text{根据导数的乘法法则} \\
+= & \langle \frac{d f}{d x_1} \cdot g, \frac{d f}{d x_2} \cdot g, \dots, \frac{d f}{d x_n} \cdot g \rangle + \langle \frac{d g}{d x_1} \cdot f, \frac{d g}{d x_2} \cdot f, \dots, \frac{d g}{d x_n} \cdot f \rangle \\
+= & g \nabla f + f \nabla g
+\end{aligned}\end{equation*}$
+
+当运算对象涉及向量时, $\nabla$ 的运算就变得复杂起来, 可以想上面的证明那样把运算对象的具体形式写出来进行运算,
+
+最后通过调整确保 $\nabla$ 运算符右边跟着运算对象, 保证运算结果的合法性.
+
+虽然这种硬算的方式的确可以得出结果, 但计算过程会冗长, 并不利于记忆.
+
+况且大部分数学资料不会给出详细的计算过程, 而是在宏观上基于符号的变化推导出结果.
+
+这里就以宏观角度了解 $\nabla$ 的运算规律, 这个过程中不会涉及任何运算对象具体的形式.
+
+$\nabla$ 的运算规律总结为三步:
+
+1. 先应用微分运算性质
+2. 应用向量运算性质对上一步的结果进行变形
+3. 应用向量运算性质确保 $\nabla$ 运算符后必须跟着运算对象, 保证运算结果的合法性
+
+以下是 5 个常用的公式以及它们变化过程:
+
+$\begin{equation*}\begin{aligned}
+& \nabla \cdot (f \vec{u}) \\
+= & \nabla \cdot (f \vec{u}_{c}) + \nabla \cdot (f_{c} \vec{u}) && \text{应用微分运算性质} \\
+= & \nabla f \cdot \vec{u} + f \nabla \cdot \vec{u} && \text{应用向量运算性质 } (c\vec{a}) \cdot \vec{b} = c(\vec{a} \cdot \vec{b}) = \vec{a} \cdot (c\vec{b})
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla \times (f \vec{u}) \\
+= & \nabla \times (f \vec{u}_{c}) + \nabla \times (f_{c} \vec{u}) && \text{应用微分运算性质} \\
+= & \nabla f \times \vec{u} + f \nabla \times \vec{u} && \text{应用向量运算性质 } (c \vec{a}) \times \vec{b} = c(\vec{a} \times \vec{b}) = \vec{a} \times (c \vec{b})
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla \cdot (\vec{u} \times \vec{v}) \\
+= & \nabla \cdot (\vec{u} \times \vec{v}_{c}) + \nabla \cdot (\vec{u}_{c} \times \vec{v}) && \text{应用微分运算性质} \\
+= & \nabla \cdot (\vec{u} \times \vec{v}_{c}) - \nabla \cdot (\vec{v} \times \vec{u}_{c}) && \text{应用向量运算性质 } \vec{a} \cdot \vec{b} = \vec{b} \cdot \vec{a} \\
+= & (\nabla \times \vec{u}) \cdot \vec{v} - (\nabla \times \vec{v}) \cdot \vec{u} && \text{应用向量运算性质 } \vec{a} \cdot (\vec{b} \times \vec{c}) = (\vec{a} \times \vec{b}) \cdot \vec{c} = \vec{b} \cdot (\vec{c} \times \vec{a})
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla \times (\vec{u} \times \vec{v}) \\
+= & \nabla \times (\vec{u} \times \vec{v}_{c}) + \nabla \times (\vec{u}_{c} \times \vec{v}) && \text{应用微分运算性质} \\
+= & (\vec{v} \cdot \nabla) \vec{u} - (\nabla \cdot \vec{u}) \vec{v} + (\nabla \cdot \vec{v}) \vec{u} - (\vec{u} \cdot \nabla) \vec{v} && \text{应用向量运算性质 } \vec{a} \times (\vec{b} \times \vec{c}) = (\vec{a} \cdot \vec{c}) \vec{b} - (\vec{a} \cdot \vec{b}) \vec{c}
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla (\vec{u} \cdot \vec{v}) \\
+= & \nabla (\vec{u} \cdot \vec{v}_{c}) + \nabla (\vec{u}_{c} \cdot \vec{v}) && \text{应用微分运算性质} \\
+= & \nabla (\vec{v}_{c} \cdot \vec{u}) + \nabla (\vec{u}_{c} \cdot \vec{v}) && \text{应用向量运算性质 } \vec{a} \cdot \vec{b} = \vec{b} \cdot \vec{a} \\
+= & (\vec{v} \cdot \nabla) \vec{u} - \vec{v} \times (\vec{u} \times \nabla) + (\vec{u} \cdot \nabla)\vec{v} - \vec{u} \times (\vec{v} \times \nabla) && \text{应用向量运算性质 } (\vec{a} \cdot \vec{b}) \vec{c} = (\vec{a} \cdot \vec{c})\vec{b} - \vec{a} \times (\vec{b} \times \vec{c}) \\
+= & (\vec{v} \cdot \nabla) \vec{u} + \vec{v} \times (\nabla \times \vec{u}) + (\vec{u} \cdot \nabla)\vec{v} + \vec{u} \times (\nabla \times \vec{v}) && \text{应用向量运算性质 } \vec{a} \times \vec{b} = -\vec{b} \times \vec{a} \text{ 确保结果合法性}
+\end{aligned}\end{equation*}$
+
+其中 $(\vec{a} \cdot \vec{b}) \vec{c} = (\vec{a} \cdot \vec{c})\vec{b} - \vec{a} \times (\vec{b} \times \vec{c})$ 是通过 $\vec{a} \times (\vec{b} \times \vec{c}) = (\vec{a} \cdot \vec{c}) \vec{b} - (\vec{a} \cdot \vec{b}) \vec{c}$ 推导出来的.
+
+#+begin_quote
+实际上这个关系用矩阵乘法更好记忆, 但需要稍微"触碰"一下向量的分量:
+
+$\begin{equation*}\begin{aligned}
+& \nabla (\vec{u} \cdot \vec{v}) \\
+= & \nabla \left(\sum\limits_{i=1}^{n} u_i v_i\right) && u_i \text{ 和 } v_i \text{ 分别是向量 } \vec{u} \text{ 和 } \vec{i} \text{ 的分量, 均是多元标量函数} \\
+= & \sum\limits_{i=1}^{n} \nabla (u_i v_i) \\
+= & \sum\limits_{i=1}^{n} \left[ (\nabla u_i) v_i + (\nabla v_i) u_i \right]  && u_i \text{ 和 } v_i \text{ 是多元标量函数, 应用微分运算性质} \\
+= & \sum\limits_{i=1}^{n} (\nabla u_i) v_i + \sum\limits_{i=1}^{n} (\nabla v_i) u_i \\
+= & \left(\begin{array}{c} \nabla u_1 & \nabla u_2 & \dots & \nabla u_n \end{array}\right) \left(\begin{array}{c} v_1 \\ v_2 \\ \vdots \\ v_n \end{array}\right) + \left(\begin{array}{c} \nabla v_1 & \nabla v_2 & \dots & \nabla v_n \end{array}\right) \left(\begin{array}{c} u_1 \\ u_2 \\ \vdots \\ u_n \end{array}\right) \\
+= & \left(\begin{array}{c} \nabla u_1 \\ \nabla u_2 \\ \vdots \\ \nabla u_n \end{array}\right)^{T} \left(\begin{array}{c} v_1 \\ v_2 \\ \vdots \\ v_n \end{array}\right) + \left(\begin{array}{c} \nabla v_1 \\ \nabla v_2 \\ \vdots \\ \nabla v_n \end{array}\right)^{T} \left(\begin{array}{c} u_1 \\ u_2 \\ \vdots \\ u_n \end{array}\right) \\
+= & (\nabla \vec{u})^{T}\vec{v} + (\nabla \vec{v})^{T}\vec{u} && \nabla \vec{u} \text{ 和 } \nabla \vec{v} \text{ 是雅可比矩阵} \\
+= & \nabla \vec{u}^{T}\vec{c} + \nabla \vec{v}^{T} \vec{u}
+\end{aligned}\end{equation*}$
+#+end_quote
+
+但并非所运算都需要严格按照步骤进行, 有时候并不需要先应用微分运算性质, 比如下面的情况:
+
+$\begin{equation*}\begin{aligned}
+& \nabla \cdot (\nabla f) \\
+= & f (\nabla \cdot \nabla) && \text{应用向量运算性质 } (c\vec{a}) \cdot \vec{b} = c(\vec{a} \cdot \vec{b}) = \vec{a} \cdot (c\vec{b}) \\
+= & (\nabla \cdot \nabla) f && \text{确保结果合法性}
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla \times (\nabla \times \vec{u}) \\
+= & (\nabla \cdot \vec{u}) \nabla - (\nabla \cdot \nabla) \vec{u} && \text{应用向量运算性质 } \vec{a} \times (\vec{b} \times \vec{c}) = (\vec{a} \cdot \vec{c})\vec{b} - (\vec{a} \cdot \vec{c})\vec{b} \\
+= & \nabla (\nabla \cdot \vec{u}) - (\nabla \cdot \nabla) \vec{u} && \text{确保结果合法性} \\
+= & \nabla (\nabla \cdot \vec{u}) - \nabla^2 \vec{u}
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla \times (\nabla f) \\
+= & f(\nabla \times \nabla) && \text{应用向量运算性质 } (c \vec{a}) \times \vec{b} = c(\vec{a} \times \vec{b}) = \vec{a} \times (c \vec{b}) \\
+= & (\nabla \times \nabla) f && \text{确保结果合法性} \\
+= & 0 && \text{应用向量运算性质 } \vec{a} \times \vec{a} = \mathbf{0}
+\end{aligned}\end{equation*}$
+
+$\begin{equation*}\begin{aligned}
+& \nabla \cdot (\nabla \times \vec{u}) \\
+= & (\nabla \times \nabla) \cdot \vec{u} && \text{应用向量运算性质 } \vec{a} \cdot (\vec{b} \times \vec{c}) = (\vec{a} \times \vec{b}) \cdot \vec{c} = \vec{b} \cdot (\vec{c} \times \vec{a}) \\
+= & 0 && \text{应用向量运算性质 } \vec{a} \times \vec{a} = \mathbf{0}
+\end{aligned}\end{equation*}$
+
+这些运算都只涉及一个运算对象, 所以不需要先应用微分运算性质.
+
+$\nabla$ 运算符也具备{{{chain-rule}}}:
+
+$\nabla f(g) = (\nabla g) \frac{d f}{d g}$, 其中 $f$ 和 $g$ 分别是一元{{{scalar-func}}}和多元{{{scalar-func}}}.
+
+$\vec{u} = \langle u_1(s), u_2(s), u_3(s) \rangle$, 其中 $s$ 是标量,
+
+# $\vec{v} \cdot \nabla \times \vec{u} - \vec{u} \cdot \nabla \times \vec{v}$
+
+# $\vec{u} = \langle u_1, u_2, u_3 \rangle$, $\vec{v} = \langle v_1, v_2, v_3 \rangle$
+
+# $\vec{u} \times \vec{v} = \langle u_2 v_3 - u_3 v_2, u_3 v_1 - u_1 v_3, u_1v_2 - u_2v_1 \rangle$
+
+# $\begin{equation*}\begin{aligned}
+# & \nabla \cdot (\vec{u} \times \vec{v}) \\
+# = & \frac{\partial}{\partial x}(u_2 v_3 - u_3 v_2) + \frac{\partial}{\partial y}(u_3 v_1 - u_1 v_3) + \frac{\partial}{\partial z}(u_1v_2 - u_2v_1) \\
+# = & v_1 \left( \frac{\partial u_3}{\partial y} - \frac{\partial u_2}{\partial z} \right) + v_2 \left( \frac{\partial u_1}{\partial z} - \frac{\partial u_3}{\partial x} \right) + v_3 \left( \frac{\partial u_2}{\partial x} - \frac{\partial u_1}{\partial y} \right) - \left[ u_1 \left( \frac{\partial v_3}{\partial y} - \frac{\partial v_2}{\partial z} \right) + u_2 \left( \frac{\partial v_1}{\partial z} - \frac{\partial v_3}{\partial x} \right) + u_3 \left( \frac{\partial v_2}{\partial x} - \frac{\partial v_1}{\partial y} \right) \right] \\
+# = & \vec{v} \cdot (\nabla \times \vec{u}) - \vec{u} \cdot (\nabla \times \vec{v})
+# \end{aligned}\end{equation*}$
+
+#+begin_quote
+向量运算性质如下:
+
+$\vec{a} \cdot \vec{a} = |\vec{a}|^2$
+
+$\vec{a} \cdot \vec{b} = \vec{b} \cdot \vec{a}$
+
+$\vec{a} \cdot (\vec{b} + \vec{c}) = \vec{a} \cdot \vec{b} + \vec{a} \cdot \vec{c}$
+
+$(c\vec{a}) \cdot \vec{b} = c(\vec{a} \cdot \vec{b}) = \vec{a} \cdot (c\vec{b})$
+
+$\mathbf{0} \cdot \vec{a} = 0$
+
+$\vec{a} \times \vec{a} = \mathbf{0}$
+
+$\vec{a} \times \vec{b} = -\vec{b} \times \vec{a}$
+
+$(c \vec{a}) \times \vec{b} = c(\vec{a} \times \vec{b}) = \vec{a} \times (c \vec{b})$
+
+$\vec{a} \times (\vec{b} + \vec{c}) = \vec{a} \times \vec{b} + \vec{a} \times \vec{c}$
+
+$(\vec{a} + \vec{b}) \times \vec{c} = \vec{a} \times \vec{c} + \vec{b} \times \vec{c}$
+
+$\vec{a} \cdot (\vec{b} \times \vec{c}) = (\vec{a} \times \vec{b}) \cdot \vec{c} = \vec{b} \cdot (\vec{c} \times \vec{a})$
+
+$\vec{a} \times (\vec{b} \times \vec{c}) = (\vec{a} \cdot \vec{c}) \vec{b} - (\vec{a} \cdot \vec{b}) \vec{c}$
+#+end_quote
+
+**** COMMENT 运算规则
 
 1. $\nabla (fg) = f \nabla g + g \nabla f$
 
@@ -2217,6 +2008,7 @@ $\langle x, y, z \rangle \times \langle a, b, c \rangle = \left| \begin{array}{c
 
    $\nabla (U \cdot V) = \nabla (u_1 v_1 + u_2 v_2 + \dots + u_n v_n) = \frac{\partial (u_1 v_1)}{\partial x_1}$
 
+
 **** Maxima
 
 在 =Maxima= 中做微分运算, 需要加载 "vect" 库的 =express= 函数.
@@ -2244,3 +2036,604 @@ load(vect);
   ''a(1), nouns;     /* 输出 1, '' 是 ev 语法糖, 后面跟着的 ev 的参数 */
   remove(a, noun);   /* 异常 a 的 noun 属性使之重行变回 verb */
 #+END_SRC
+** 无穷{{{sequence}}}和{{{series}}} (Infinite Sequences and Series): 把函数分解成级数
+*** {{{sequence}}}和级数{{{series}}}
+
+*{{{sequence}}}*
+
+{{{sequence}}}(或无穷{{{sequence}}})是按照特定顺序排列的一列数字: $\{ a_1, a_2, a_3, a_4, \cdots, a_n, \cdots \}$.
+
+$a_n$ 表示第 $n$ 项, {{{sequence}}}可以表示为 $\{ a_n \}$ 或 $\{ a_n \}_{n=1}^{\infty}$.
+
+一些{{{sequence}}}可以通过给出第 $n$ 项的公式来进行定义, 比如,
+
+$a_n = \frac{n}{n + 1} \Rightarrow \left\{ \frac{1}{2}, \frac{1}{3}, \frac{3}{4}, \frac{4}{5}, \cdots, \frac{n}{n + 1}, \cdots \right\} = \{ a_n \}_{n=1}^{\infty}$.
+
+需要注意, $n$ 不一定要从 1 开始, 比如,a
+
+$a_n = \sqrt{n - 3}, n \ge 3 \Rightarrow \left\{ 0, 1, \sqrt{2}, \sqrt{3}, \cdots, \sqrt{n - 3}, \cdots \right\} \Rightarrow \{ \sqrt{n - 3} \}_{n=3}^{\infty}$.
+
+默认情况下都是默认 $n \ge 1$.
+
+可以看出 $a_n$ 是一个以整数 $n$ 作为自变量的离散函数.
+
+使用该命令绘制 $a_n = \frac{n}{n + 1}$ 图像:
+
+#+BEGIN_SRC maxima
+  a(n) := n / (n + 1);
+  points2d: makelist([n, a(n)], n, 1, 50);
+  plot2d([discrete, points2d],
+    [style, points],
+    [xlabel, "n"],
+    [ylabel, "a(n)"],
+    [gnuplot_preamble, "
+        set tmargin 0
+        set bmargin 0
+    "]
+    );
+#+END_SRC
+
+#+attr_html: :width 600px
+#+caption: ${ \frac{n}{n + 1} }$
+[[../../../files/sequence-func-image.png]]
+
+可以发现随着 $n$ 变大, $\{ \frac{n}{n + 1} \}$ 趋近 1, 这说明{{{sequence}}}也是有{{{limit}}}的.
+
+如果{{{sequence}}} $\{ a_n \}$ 有{{{limit}}} $L$, 那么可以记作:
+
+$\lim\limits_{n \to \infty} a_n = L$ 或随着 $n \to \infty$, $a_n \to L$.
+
+其 $\epsilon-\delta$ 定义:
+
+对于任意给定 $\epsilon \gt 0$, 总存在一个整数 $N \gt 0$, 使得只要 $n \gt N$, 就一定有 $|a_n - L| \lt \epsilon$.
+
+如果 $\lim\limits_{n \to \infty} a_n$ 存在, 那么就说 {{{sequence}}} $\{ a_n \}$ {{{converges}}}(=converges=); 否则说 {{{sequence}}} $\{ a_n \}$ {{{diverges}}}(=diverges=).
+
+[[../../../files/sequence-limit.png]]
+
+$\lim\limits_{n \to \infty} a_n$ 的定义与 [[#limits-at-infty][$\lim\limits_{x \to \infty}f(x)$ 的定义]] 差别在于: $f$ 是一个连续函数, 不要求 $x$ 为整数.
+
+[[../../../files/sequence-vs-cont.png]]
+
+对于{{{series}}} $\{ a_n \}_{n=1}^{\infty}$, 如果 $a_n \lt a_{n+1}$ 成立, 那么 $\{ a_n \}_{n=1}^{\infty}$ 就是递增; 如果 $a_n \gt a_{n+1}$ 成立, 那么 $\{ a_n \}_{n=1}^{\infty}$ 是递减.
+
+当一个{{{series}}}为递增或递减时, 那么称呼{{{series}}}是单调的(=monotonic=).
+
+*{{{series}}}*
+
+{{{sequence}}} $\{ a_n \}_{n=1}^{\infty}$ 的 *所有* 项之和 $\sum\limits_{n=1}^{\infty} a_n = a_1 + a_2 + a_3 + a_4 + \cdots + a_n + \cdots$ (或用 $\sum a_n$ 表示) 就是{{{series}}}, 或称为无穷{{{series}}}.
+
+{{{series}}}的值被称为{{{series}}}之和(=sum of series=).
+
+由于{{{sequence}}} $\{ a_n \}_{n=1}^{\infty}$ 有无穷个元素, 所以通常只研究前 $n$ 项之和, 称为{{{sequence}}}部分和(=partial sums=) $\sum\limits_{i=1}^{n} a_i$.
+
+#+begin_quote
+为了区分{{{series}}}和{{{sequence}}}部分和, 这里分别用下标 $n$ 和 $i$ 进行区分, 后面也一样.
+#+end_quote
+
+令 $\begin{equation*}\begin{cases} S_n = \sum\limits_{i=1}^{n} a_i \\ S = \sum\limits_{n=1}^{\infty} a_n \end{cases}\end{equation*}$, 如果{{{sequence}}} $\{ S_n \}_{n=1}^{\infty}$ {{{converges}}}且 $\lim\limits_{n \to \infty} S_n = L$, 那么{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{converges}}}, 且 $S = L$.
+
+如果{{{sequence}}} $\{ S_n \}_{n=1}^{\infty}$ {{{diverges}}}, 那么{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{diverges}}}.
+
+只要项的数量足够多, 部分和越接近级数. 可以表示为 $\sum\limits_{n=1}^{\infty} a_n = \lim\limits_{n \to \infty} \sum\limits_{i=1}^{n} a_i$.
+
+因此, 如果{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{converges}}}, 那么{{{sequence}}} $\{ a_n \}_{n=1}^{\infty}$ {{{converges}}}且{{{limit}}} $\lim\limits_{n \to \infty} a_n = 0$.
+
+*需要注意*, $\lim\limits_{n \to \infty} a_n = 0$ 并不能说明{{{series}}} $\sum\limits_{n=1}^{n} a_n$ {{{converges}}}, 比如调和级数 $\sum\limits_{n=1}^{\infty} \frac{1}{n}$ 就是 $\lim\limits_{n \to \infty} \frac{1}{n} = 0$ 但{{{diverges}}}.
+
+不过如果 $\lim\limits_{n \to \infty} a_n$ 不存在或 $\lim\limits_{n \to \infty} a_n \ne 0$ 倒是可以说明{{{series}}} $\sum\limits_{n=1}^{\infty} a_n$ {{{diverges}}}.
+
+#+BEGIN_SRC maxima
+  /* 在 Maxima 中, 对发散级数进行简化 simpsum, 会得到报错. 可以利用这一点判断级数是否发散 */
+  convergent(series) := if errcatch(ev(series, simpsum)) = [] then false else true;
+
+  s1: sum(1/n, n, 1, inf);
+  s2: sum(1/n^2, n, 1, inf);
+  convergent(s1);                          /* false */
+  convergent(s2);                          /* true */
+#+END_SRC
+
+*** {{{series}}}类型
+
+**** 调和{{{series}}} (Harmonic series)
+
+$\sum\limits_{n=1}^{\infty} \frac{1}{n} = 1 + \frac{1}{2} + \frac{1}{3} + \frac{1}{4} + \cdots$
+
+**** 几何{{{series}}} (Geometric series)
+
+$\sum\limits_{n=1}^{\infty} a r^{n-1} = a + ar + ar^2 + ar^3 + \cdots + ar^{n-1} + \cdots$, 其中 $a \ne 0$, $r$ 为公比(=common ratio=).
+
+如果 $r = 1$, 那么 $S_n = \sum\limits_{i=1}^{n} = a + a + a + \cdots + a = na \to \pm\infty$, 所以 $\lim\limits_{n \to \infty} S_n = \pm \infty$,
+
+这种情况下, 几何{{{series}}}{{{diverges}}}.
+
+如果 $r \ne 1$, 可以有 $\begin{equation*} \begin{cases} \begin{aligned} S_n & = a + ar + ar^2 + \cdots + ar^{n-1} \\ rS_n & = \phantom{ a + } ar + ar^2 + ar^3 + \cdots + ar^{n-1} + ar^n \end{aligned} \end{cases} \end{equation*}$,
+
+两者相减得到 $S_n - rS_n = a - ar^n \rightarrow S_n = \frac{a(1 - r^n)}{1 - r}$.
+
+**** p{{{series}}} (p-series)
+
+$\sum\limits_{n=1}^{\infty} \frac{1}{n^p}$
+
+**** 幂{{{series}}} (Power series)
+
+*** {{{series}}}的敛性测试策略
+
+**** 积分判别法 (The Integral Test)
+
+级数和估计
+
+*** 用幂{{{series}}}表示函数
+
+{{{series}}}需要收敛至函数 $f(x)$ 才能表示函数 $f(x)$.
+
+*** {{{taylor}}}{{{series}}}和{{{maclaurin}}}{{{series}}} (Taylor and Maclaurin Series)
+*** 有限差分形式 (Finite Difference Form)
+**** 一元{{{scalar-func}}}{{{derivate}}}的有限差分形式
+
+在图形学里面导数近似很有用, 这里介绍如何求解一元标量值函数的常用导数近似.
+
+我们所学的导数是基于极限进行定义的, 把极限符号去掉就是导数的近似了.
+
+$y = f(x)$ 在 $a$ 上的一阶导数为 $f^{'}(a) = \lim\limits_{x \to a} \frac{f(x) - f(a)}{x - a}$, 令 $h = x - a$, $\lim\limits_{h \to 0} \frac{f(a + h) - f(a)}{h}$.
+
+根据一阶泰勒展开或线性近似, 可得 $f^{'}_{f}(a) \approx \frac{f(a + h) - f(a)}{h}$, 这是向前差商近似,
+
+还有向后差商近似 $f^{'}_{b}(a) \approx \frac{f(a) - f(a - h)}{h}$. 为了准确性可以使用中心差商近似: $f^{'}(a) \approx \frac{f(a + h) - f(a - h)}{2h}$.
+
+中心差分近似实际上是前后差分两者的算术平均: $f^{'}(a) \approx \frac{1}{2} (\frac{f(a + h) - f(a)}{h} + \frac{f(a) - f(a - h)}{h})$,
+
+实际上这些结论都是通过泰勒展开式得到的:
+
+首先有 $\begin{cases} f(a + h) = f(a) + h f^{'}(a) + \frac{h^2}{2!} f^{''}(a) + \frac{h^3}{3!} f^{'''}(a) + \dots + \frac{h^n}{n!} f^{(n)}(a) \\ f(a - h) = f(a) - h f^{'}(a) + \frac{h^2}{2!} f^{''}(a) - \frac{h^3}{3!} f^{'''}(a) + \dots + \frac{h^n}{n!} f^{(n)}(a) \end{cases}$,
+
+想要求一阶导数的近似, 可以把两个一阶展开多项式相减得到:
+
+$\begin{equation*} \begin{aligned} & f(a + h) - f(a - h) \\ = & f(a) + hf^{'}(a) - f(a) + hf^{'}(a) \\ = & 2h f^{'}(a) \\ \rightarrow & f^{'}(a) \approx \frac{f(a + h) - f(a - h)}{2h} \end{aligned} \end{equation*}$
+
+想要求二阶导数的近似, 可以把两个二阶展开多项式相加得到:
+
+$\begin{equation*} \begin{aligned} & f(a + h) + f(a - h) \\ = & f(a) + hf^{'}(a) + \frac{h^2}{2!}f^{''}(a) + f(a) - hf^{'}(a) + \frac{h^2}{2!}f^{''}(a) \\ = & 2 f(a) + h^2 f^{''}(a) \\ \rightarrow & f^{''}(a) \approx \frac{f(a + h) + f(a - h) - 2f(a)}{h^2} \end{aligned} \end{equation*}$
+
+想要求三阶导数的近似, 还需要 $f(a + 2h)$ 和 $f(a - 2h)$ 的展开,
+
+因为仅靠 $f(a + h)$ 和 $f(a - h)$ 无法消去 $f^{'''}(a)$ 以外导数项, 把两个三阶展开多项式相减去得到:
+
+$\begin{equation*} \begin{aligned} & f(a + h) - f(a - h) \\ = & f(a) + hf^{'}(a) + \frac{h^2}{2!}f^{''}(a) + \frac{h^3}{3!}f^{'''}(a) - f(a) + hf^{'}(a) - \frac{h^2}{2!}f^{''}(a) + \frac{h^3}{3!}f^{'''}(a) \\ = & 2h f^{'}(a) + 2 \frac{h^3}{3!} f^{'''}(a) \\ \rightarrow & f^{'''}(a) \approx \frac{3f(a + h) - 3f(a - h) - 6 hf^{'}(a)}{h^3} \end{aligned} \end{equation*}$
+
+可以发现最终结果保留了 $f^{'}(a)$ 和 $f^{'''}(a)$ 项, 这就是为啥需要额外的方程组了:
+
+$\begin{cases} f(a + 2h) = f(a) + 2h f^{'}(a) + \frac{(2h)^2}{2!} f^{''}(a) + \frac{(2h)^3}{3!} f^{'''}(a) + \dots + \frac{(2h)^n}{n!} f^{(n)}(a) \\ f(a - 2h) = f(a) - 2h f^{'}(a) + \frac{(2h)^2}{2!} f^{''}(a) - \frac{(2h)^3}{3!} f^{'''}(a) + \dots + \frac{(2h)^n}{n!} f^{(n)}(a) \end{cases}$
+
+同样 $f(a + 2h) - f(a - 2h) = 4hf^{'}(a) + 2 \frac{(2h)^3}{3!} f^{'''}(a)$, 对 $\begin{cases} 2h f^{'}(a) + 2 \frac{h^3}{3!} f^{'''}(a) \\ 4hf^{'}(a) + 2\frac{(2h)^3}{3!} f^{'''}(a) \end{cases}$ 的 $f^{'}(a)$ 进行消元得到:
+
+$\begin{equation*} \begin{aligned} & f(a + 2h) - f(a - 2h) - 2(f(a + h) - f(a - h)) \\ = & \frac{12 h^3}{3!} f^{'''}(a) \rightarrow f^{'''}(a) \approx \frac{f(a + 2h) - f(a - 2h) - 2f(a + h) + 2f(a - h)}{2h^3} \end{aligned} \end{equation*}$
+
+也可以使用更高阶的泰勒展开式来近似低阶导数, 这样会让近似结果更准确,
+
+但相比使用同阶展开式近似同阶导数而言, 计算复杂度更高.
+
+这种近似也被称作有限微分形式(=Finite Difference Form=), 在图形学和流体模拟中计算导数有着重要作用.
+
+**** 多元{{{scalar-func}}}方向{{{derivate}}}的有限差分形式
+
+如同一元变量值函数的导数近似, 多元标量值函数的{{{directional-derivate}}}近似也是通过泰勒展开式推导得出, 其泰勒展开式为:
+
+令 $\begin{cases} x = a + h \\ y = b + k \end{cases}$, 其中 $\langle h, k \rangle = \alpha \mathbf{u}$, $\mathbf{u}$ 是一个单位向量: $\frac{\langle h, k \rangle}{\alpha}$.
+
+$\begin{equation*} \begin{aligned} & f(x, y) \\ = & f(a + h, b + k) \\ = & f(a, b) \\ + & f_x(a, b)h + f_y(a, b)k \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & \frac{f_{xxx}(a, b)h^3}{3!} + \frac{f_{xxy}(a, b)h^2k}{3!} + \frac{f_{xyx}(a, b)h^2k}{3!} + \frac{f_{xyy}(a, b)hk^2}{3!}  + \frac{f_{yxx}(a, b)h^2k}{3!} + \frac{f_{yxy}(a, b)hk^2}{3!} + \frac{f_{yyx}(a, b)hk^2}{3!} + \frac{f_{yyy}(a, b)k^3}{3!} \\ + & \dots \end{aligned} \end{equation*}$
+
+每当多一阶展开, 展开式会比上一阶展开式多出 $d^n$ 项, 其中 $n$ 是阶数, $d$ 是函数的变量数, 新增项本质上是放回抽样的全排列,
+
+或者说把 $n$ 作为次数如何分配到每个自变量的 $\Delta$ 值(即这里 $h$ 与 $k$)上, 展开式的每一项都可以通过多项式定理推出来:
+
+$\begin{equation*}\begin{aligned} & (C_{n}^{n_1}C_{n-n_1}^{n_2}C_{n-(n_1 + n_2)}^{n_3} \dots C_{n- \sum_{i=1}^{d-1} n_i}^{n_d})(\Delta_{1}^{n_1} \Delta_{2}^{n_2} \Delta_{3}^{n_3} \dots \Delta_{d}^{n_d}) \\ = & \frac{n!}{n_1!n_2!n_3!\dots n_d!} (\Delta_{1}^{n_1} \Delta_{2}^{n_2} \Delta_{3}^{n_3} \dots \Delta_{d}^{n_d}) \\ = & \frac{n!}{\prod_{i=1}^{d} (n_i!)} \prod_{j=1}^{d} \Delta_j^{n_j} \end{aligned}\end{equation*}$.
+
+比如 $f(x, y)$ 的三阶泰勒展开比它的二阶泰勒展开多出 $2^3$ 项,
+
+求导顺序的组合排列为: $(x + y)^3 = x^3 + 3x^2y + 3xy^2 + y^3 \rightarrow \left(\begin{array}{c} xxx & xxy & xyx & xyy & yxx & yxy & yyx & yyy \end{array}\right)$,
+
+其中 $3x^2y$ 的系数 3 是这么计算出来的, $\begin{equation*}\begin{cases} x^2 \rightarrow n_1 = 2 \\ y \rightarrow n_2 = 1 \end{cases}\end{equation*} \Rightarrow \frac{3!}{2!1!} = 3$.
+
+$h$ 与 $k$ 的组合排列为: $(h + k)^3 = h^3 + 3h^2k + 3hk^2 + k^3 \rightarrow \left(\begin{array}{c} hhh & hhk & hkh & hkk & khh & khk & kkh & kkk \end{array}\right)$.
+
+每一阶的新增项之和就是一个点积运算, 以一阶展开的新增项为例:
+
+$f_x(a, b)h + f_y(a, b)k \rightarrow D_{\mathbf{u}} f(\mathbf{x}) = \langle f_x(a, b), f_y(a, b) \rangle \cdot \frac{1}{\alpha} \langle h, k \rangle$, 对 $\langle h, k \rangle$ 进行单位化后就是一个{{{directional-derivate}}}.
+
+因此很难不能联想到二阶展开的新增项之和是一个二阶{{{directional-derivate}}}, 第 $n$ 阶的新增项之和是一个 $n$ 阶{{{directional-derivate}}},
+
+多元标量值函数的泰勒展开是使用 *{{{directional-derivate}}}* 对 $f(x, y)$ 进行逼近.
+
+不过目前从展开式上看不出来新增项之和是否为高阶{{{directional-derivate}}}, 可以尝试{{{directional-derivate}}}的定义作为切入点进行观察:
+
+$D_{\mathbf{u}}f(\mathbf{x_0}) = \lim\limits_{\alpha \to 0}\frac{f(\mathbf{x_0} + \alpha \mathbf{u}) - f(\mathbf{x_0})}{\alpha}$,
+
+#+begin_quote
+需要注意, $\mathbf{x_0}$ 和 $\mathbf{u}$ 是向量, 这里采用了粗体与变量 $x$ 和 $u$ 进行区分.
+#+end_quote
+
+其中 $\mathbf{x} = \mathbf{x_0} + \mathbf{u}$, $\mathbf{x_0} = \langle x_0, y_0 \rangle$, 由于 $\mathbf{u}$ 是平面上的单位向量, 不妨设为 $\mathbf{u} = \langle \cos\theta, \sin\theta \rangle$,
+
+由此, {{{directional-derivate}}}的定义变为:
+
+$\begin{equation*} \begin{aligned}
+& D_{\mathbf{u}}f(\mathbf{x_0}) \\
+= & \lim\limits_{\alpha \to 0}\frac{f(\mathbf{x_0} + \alpha \langle \cos\theta, \sin\theta \rangle) - f(\mathbf{x_0})}{\alpha |\mathbf{u}|} \\
+= & \lim\limits_{\alpha \to 0}\frac{f(\mathbf{x_0} + \alpha \langle \cos\theta, \sin\theta \rangle) - f(\mathbf{x_0})}{\alpha \sqrt{\cos^2\theta + \sin^2\theta}} \\
+= & \lim\limits_{\alpha \to 0} \frac{f(x_0 + \alpha \cos\theta, y_0 + \alpha \sin\theta) - f(x_0, y_0)}{\alpha} \\
+= & \lim\limits_{\alpha \to 0} \frac{f(x_0 + a\cos\theta, y_0 + \alpha \sin\theta) - f(x_0, y_0 + \alpha \sin\theta) + f(x_0, y_0 + \alpha \sin\theta) - f(x_0, y_0)}{\alpha} \\
+= & \lim\limits_{\alpha \to 0} \frac{f(x_0 + a\cos\theta, y_0 + \alpha \sin\theta) - f(x_0, y_0 + \alpha \sin\theta)}{\alpha} + \lim\limits_{\alpha \to 0} \frac{f(x_0, y_0 + \alpha \sin\theta) - f(x_0, y_0)}{\alpha} \\ = & \frac{\partial f(\mathbf{x_0})}{\partial x} \cos\theta + \frac{\partial f(\mathbf{x_0})}{\partial y} \sin\theta \\
+= & \langle \frac{\partial f(\mathbf{x_0})}{\partial x}, \frac{\partial f(\mathbf{x_0})}{\partial y} \rangle \cdot \langle \cos\theta, \sin\theta \rangle = \left(\begin{array}{c} \frac{\partial f(\mathbf{x_0})}{\partial x} & \frac{\partial f(\mathbf{x_0})}{\partial y} \end{array}\right) \left( \begin{array}{c} \cos\theta \\ \sin\theta \end{array} \right) = \left(\begin{array}{c} \cos\theta & \sin\theta \end{array}\right) \left( \begin{array}{c} \frac{\partial f(\mathbf{x_0})}{\partial x} \\ \frac{\partial f(\mathbf{x_0})}{\partial y} \end{array} \right) \\
+= & \nabla f(\mathbf{x_0}) \cdot \mathbf{u} = \nabla^{T} f(\mathbf{x_0})\mathbf{u} = \mathbf{u}^{T} \nabla f(\mathbf{x_0})
+\end{aligned} \end{equation*}$
+
+这里需要先声明一下, 在没有任何说明时, 点积运算中所涉及的所有向量统一默认为行向量,
+
+并且会用 $\langle \rangle$ 强调点积运算; 在矩阵运算所涉及的向量均默认列向量, 用括号强调矩阵运算.
+
+这里令 $\frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} = D_{\mathbf{u}}f(\mathbf{x}) =\sum\limits_{i=1}^{d} \frac{\partial f(\mathbf{x})}{\partial x_i} u_i$, 其中 $x_i$ 和 $u_i$ 分别是 $\mathbf{x}$ 和 $\mathbf{u}$ 的第 $i$ 个分量, $1 \le i \le d$, $d$ 是 $f$ 的参数数量.
+
+二阶{{{directional-derivate}}}的定义则为:
+
+$\begin{equation*} \begin{aligned}
+& D^{(2)}_{\mathbf{u}}f(\mathbf{x}) \\
+= & \frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{u}^2} \\
+= & \frac{\partial}{\partial \mathbf{u}}\left( \frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} \right) \\
+= & \nabla\left( \frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} \right) \cdot \mathbf{u} \\
+= & \mathbf{u}^{T} \nabla\left( \frac{\partial f(\mathbf{x})}{\partial \mathbf{u}} \right) \\
+= & \mathbf{u}^{T} \nabla\left( \nabla f(\mathbf{x}) \cdot \mathbf{u} \right) \\
+= & \mathbf{u}^{T} \nabla \left(\nabla^{T} f(\mathbf{x}) \mathbf{u} \right) && \nabla^{T} f(\mathbf{x}) = \left[ \nabla f(\mathbf{x}) \right]^{T} \\
+= & \mathbf{u}^{T} \nabla \left( \mathbf{u}^{T} \nabla f(\mathbf{x}) \right) \\
+= & \mathbf{u}^{T} \left( \nabla \mathbf{u}^{T} \nabla f(\mathbf{x}) + (\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} \right) && \text{应用} \nabla \text{算子的运算性质 } \nabla (\vec{u}^{T}\vec{v}) = \nabla (\vec{u} \cdot \vec{u}) = \nabla \vec{u}^{T} \vec{v} + \nabla \vec{v}^{T} \vec{u} \\
+= & \mathbf{u}^{T} (\nabla \nabla^{T} f(\mathbf{x}))\mathbf{u} && \text{常向量的雅可比矩阵是零向量, 所以} \nabla \mathbf{u}^{T} = \mathbf{0} \\
+= & \nabla (\nabla f(\mathbf{x}) \cdot \mathbf{u}) \cdot \mathbf{u}
+\end{aligned} \end{equation*}$
+
+其中 $\nabla \nabla^{T}f(\mathbf{x}) = \left( \begin{array}{c} \frac{\partial}{\partial x} \\ \frac{\partial}{\partial y} \end{array} \right) \left( \begin{array}{c} \frac{\partial f(\mathbf{x})}{\partial x} & \frac{\partial f(\mathbf{x})}{\partial y} \end{array} \right) = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} & \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y} \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} & \frac{\partial^2 f(\mathbf{x})}{\partial y^2} \end{array} \right)$,
+
+$(\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} & \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y} \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} & \frac{\partial^2 f(\mathbf{x})}{\partial y^2} \end{array} \right) \left( \begin{array}{c} \cos\theta \\ \sin\theta \end{array} \right) = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right)$
+
+$\mathbf{u}^{T} (\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} = \left(\begin{array}{c} \cos\theta & \sin\theta \end{array}\right) \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right) = \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos^2\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\cos\theta\sin\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \sin\theta\cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin^2\theta$
+
+对比可以发现二阶{{{directional-derivate}}}比二阶展开的新增项之和相差了一个 $\frac{1}{2!}$ 的缩放以及单位化:
+
+$\begin{equation*}\begin{aligned} & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ = & \frac{1}{2!} \langle f_{xx}(a, b), f_{xy}(a, b), f_{yx}(a, b), f_{yy}(a, b) \rangle \cdot \langle h^2, hk, kh, k^2 \rangle \\ = & \frac{1}{2!} \left( \begin{array}{c} h & k \end{array} \right) \left( \begin{array}{c} f_{xx}(a, b) & f_{xy}(a, b) \\ f_{yx}(a, b) & f_{yy}(a, b) \end{array} \right) \left( \begin{array}{c} h \\ k \end{array} \right) \\ \rightarrow & \frac{1}{2!} D_{\mathbf{u}}^{(2)}f(\mathbf{x}) = \frac{1}{2!} \frac{1}{a^2} \left( \begin{array}{c} h & k \end{array} \right) \left( \begin{array}{c} f_{xx}(a, b) & f_{xy}(a, b) \\ f_{yx}(a, b) & f_{yy}(a, b) \end{array} \right) \left( \begin{array}{c} h \\ k \end{array} \right) \end{aligned}\end{equation*}$
+
+因此, 我们的猜想非常接近事实.
+
+而这个由二阶偏导数构成的矩阵 $\nabla \nabla^{T} f(\mathbf{x})$ 被称为黑塞矩阵(=Hessian matrix=), 在判定驻点是否为极值点的场景大有用处.
+
+稍后会做介绍, 现在我们再往更高阶的{{{directional-derivate}}}观察一下, 把二阶{{{directional-derivate}}}看作一个函数, 对其求{{{directional-derivate}}}:
+
+$D_{\mathbf{u}}^{(3)}f(\mathbf{x}) = \frac{\partial^3 f(\mathbf{x})}{\partial \mathbf{u}^3} = \frac{\partial}{\partial \mathbf{u}} \left(\frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{u}^2} \right) = \mathbf{u}^{T} \nabla \left(\frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{u}^2} \right) = \mathbf{u}^{T} \nabla \left( \mathbf{u}^{T} (\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u} \right)$
+
+因为 $\nabla \nabla^{T} f(\mathbf{x})$ 是一个矩阵, 所以 $(\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u}$ 是一个列向量,
+
+令 $\mathbf{v} = (\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u} \rightarrow \mathbf{u}^{T} \nabla \left( \mathbf{u}^{T} \mathbf{v} \right) = \mathbf{u}^{T} \left( \nabla \mathbf{u}^{T} \mathbf{v} + \nabla\mathbf{v}^{T}\mathbf{u} \right) = \mathbf{u}^{T} \nabla \mathbf{v}^{T} \mathbf{u} = \mathbf{u}^{T}(\nabla [(\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u}])^{T}\mathbf{u}$,
+
+$(\nabla \nabla^{T}f(\mathbf{x})) \mathbf{u} = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} & \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y} \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} & \frac{\partial^2 f(\mathbf{x})}{\partial y^2} \end{array} \right) \left( \begin{array}{c} \cos\theta \\ \sin\theta \end{array} \right) = \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta \\ \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right)$
+
+$\nabla [(\nabla \nabla^{T} f(\mathbf{x})) \mathbf{u}]^{T} = \left( \begin{array}{c} \frac{\partial}{\partial x} \\ \frac{\partial}{\partial y} \end{array} \right) \left( \begin{array}{c} \frac{\partial^2 f(\mathbf{x})}{\partial x^2} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial x \partial y}\sin\theta & \frac{\partial^2 f(\mathbf{x})}{\partial y \partial x} \cos\theta + \frac{\partial^2 f(\mathbf{x})}{\partial y^2}\sin\theta \end{array} \right) = \left( \begin{array}{c} \frac{\partial^3 f(\mathbf{x})}{\partial x^3} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{\partial x \partial y \partial x} \sin\theta & \frac{\partial^3 f(\mathbf{x})}{\partial x^2 \partial y} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{\partial x \partial y^2} \sin\theta \\ \frac{\partial^3 f(\mathbf{x})}{\partial y \partial x^2} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{\partial y^2 \partial x} \sin\theta & \frac{\partial^3 f(\mathbf{x})}{\partial y \partial x \partial y} \cos\theta + \frac{\partial^3 f(\mathbf{x})}{ \partial y^3} \sin\theta \end{array} \right)$
+
+以上就是三阶{{{directional-derivate}}}的推导思路.
+
+# 对矢量场进行微分运算会得到一个雅可比矩阵, 所以 $\nabla \mathbf{v}$ 是一个矩阵, 并且该矩阵也满足二次型.
+
+为了方便学习, 之后用 $D_{\mathbf{u}}^{(n)}f(\mathbf{x}) = \nabla^{n} f(\mathbf{x}) \cdot \mathbf{u}^n$ 表示任意阶的{{{directional-derivate}}},
+
+其中 $\nabla^{n}f(\mathbf{x})$ 示 $n$ 阶梯度向量, $\mathbf{u}^{n}$ 表示多项式展开项排列.
+
+通过观察可以得出二阶{{{directional-derivate}}}的计算公式:
+
+$\frac{\partial^2 f(\mathbf{x})}{\partial \mathbf{x}} = \sum\limits_{i=1}^{d} \frac{\partial}{\partial x_i} \left( \sum\limits_{j=1}^{d} \frac{\partial f}{\partial x_j} u_j \right) u_i = \sum\limits_{i=1}^{d} \sum\limits_{j=1}^{d} \frac{\partial^2 f(\mathbf{x})}{\partial x_{i} \partial x_{j}} u_i u_j$, 其中 $d$ 是 $f$ 的参数数量.
+
+利用在一阶{{{directional-derivate}}}基础上推出二阶{{{directional-derivate}}}的思路,
+
+设 $n$ 阶{{{directional-derivate}}} $\frac{\partial^n f(\mathbf{x})}{\partial \mathbf{u}^{n}}$ 是 $n - 1$ 阶{{{directional-derivate}}} $\frac{\partial^{n-1} f(\mathbf{x})}{\partial \mathbf{u}^{n-1}}$ 的一阶{{{directional-derivate}}},
+
+设 $\frac{\partial^{n-1}}{\partial \mathbf{u}^{n-1}}f(\mathbf{x}) = \sum\limits_{i_1=1}^{d} \dots \sum\limits_{i_{n-1}}^{d} \frac{\partial^{n-1}f(\mathbf{x})}{\partial x_{i_1} \dots \partial x_{i_{n-1}}} u_{i_{1}} \dots u_{i_{n-1}}$, 通过归纳得到 $\frac{\partial^{n}}{\partial \mathbf{u}^{n}}f(\mathbf{x}) = \sum\limits_{i_1=1}^{d} \dots \sum\limits_{i_{n}}^{d} \frac{\partial^{n}f(\mathbf{x})}{\partial x_{i_1} \dots \partial x_{i_{n}}} u_{i_{1}} \dots u_{i_{n}}$.
+
+# #+begin_quote
+# 参考文献: [[https://journal.bjut.edu.cn/bjgydxxb/cn/article/pdf/preview/734924f5-255c-4051-8e1c-2a50b44a3f5b.pdf][高阶{{{directional-derivate}}}及其应用]]
+# #+end_quote
+
+接下来找出一阶和二阶{{{directional-derivate}}}的近似, 就像一元变量值函数那样, 需要额外的泰勒展开式得出近似:
+
+令 $\begin{cases} x = a - h \\ y = b - k \end{cases}$, 其中 $\langle h, k \rangle = \alpha \mathbf{u}$, $\mathbf{u}$ 是一个单位向量: $\frac{\langle h, k \rangle}{\alpha}$.
+
+$\begin{equation*} \begin{aligned} & f(x, y) \\ = & f(a - h, b - k) \\ = & f(a, b) \\ - & (f_x(a, b)h + f_y(a, b)k) \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ - & (\frac{f_{xxx}(a, b)h^3}{3!} + \frac{f_{xxy}(a, b)h^2k}{3!} + \frac{f_{xyx}(a, b)h^2k}{3!} + \frac{f_{xyy}(a, b)hk^2}{3!}  + \frac{f_{yxx}(a, b)h^2k}{3!} + \frac{f_{yxy}(a, b)hk^2}{3!} + \frac{f_{yyx}(a, b)hk^2}{3!} + \frac{f_{yyy}(a, b)k^3}{3!}) \\ + & \dots \end{aligned} \end{equation*}$
+
+让两个一阶泰勒展开进行相减, 得出一阶{{{directional-derivate}}}的近似:
+
+$\begin{equation*}\begin{aligned} & f(a + h, b + k) - f(a - h, b - k) \\ = & f(a, b) + f_x(a, b)h + f_y(a, b)k - f(a, b) + f_x(a, b)h + f_y(a, b)k \\ = & 2(f_x(a, b)h + f_y(a, b)k) \\ \rightarrow & f_x(a, b)h + f_y(a, b)k = \frac{f(a + h, b + k) - f(a - h, b - k)}{2} \end{aligned}\end{equation*}$
+
+按照{{{directional-derivate}}}定义, $\langle h, k \rangle$ 需要被单位化, 所以:
+
+$D_{\mathbf{u}}f(\mathbf{x}) = f_x(a, b)\frac{h}{\alpha} + f_y(a, b)\frac{k}{\alpha} = \frac{f(a + h, b + k) - f(a - h, b - k)}{2\alpha}$.
+
+让两个二阶泰勒展开进行相加, 得出二阶{{{directional-derivate}}}的近似:
+
+$\begin{equation*}\begin{aligned} & f(a + h, b + k) + f(a - h, b - k) \\ = & f(a, b) + f_x(a, b)h + f_y(a, b)k + \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & f(a, b) - f_x(a, b)h - f_y(a, b)k + \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ = & 2f(a, b) + f_{xx}(a, b)h^2 + f_{xy}(a, b)hk + f_{yx}(a, b)hk + f_{yy}(a, b)k^2 \\ \rightarrow & f_{xx}(a, b)h^2 + f_{xy}(a, b)hk + f_{yx}(a, b)hk + f_{yy}(a, b)k^2 = f(a + h, b + k) + f(a - h, b - k) - 2f(a, b) \end{aligned}\end{equation*}$
+
+# 分别令 $h$ 和 $k$ 为 0 可以消去 $f_{xy}(a, b)hk$ 和 $f_{yx}(a, b)hk$, 从而得出拉普拉斯运算的近似.
+
+按照{{{directional-derivate}}}定义, $\langle h, k \rangle$ 需要被单位化, 所以:
+
+$D_{\mathbf{u}}^{(2)}f(\mathbf{x}) = f_{xx}(a, b)(\frac{h}{\alpha})^2 + f_{xy}(a, b)\frac{h}{\alpha}\frac{k}{\alpha} + f_{yx}(a, b)\frac{h}{\alpha}\frac{k}{\alpha} + f_{yy}(a, b)(\frac{k}{\alpha})^2 = \frac{f(a + h, b + k) + f(a - h, b - k) - 2f(a, b)}{\alpha^2}$.
+
+#+begin_quote
+既然说到了二阶{{{directional-derivate}}}的近似, 不妨看一下二元{{{scalar-func}}} $f$ 在 $(a, b)$ 上的拉普拉斯 $\frac{\partial^2}{\partial x^2} f + \frac{\partial}{\partial y^2} f$ 近似吧,
+
+它可以被看作是在 $\mathbf{u}_1 = \langle 1, 0 \rangle$ 和 $\mathbf{u}_2 = \langle 0, 1 \rangle$ 两个方向上的{{{directional-derivate}}}之和 $D_{\mathbf{u}_1}^{(2)} f(x, y) + D_{\mathbf{u}_2}^{(2)} f(x, y)$:
+
+$D_{\mathbf{u}_1}^{(2)} f(x, y) = f(a + 1, b) + f(a - 1, b) - 2f(a, b)$
+
+$D_{\mathbf{u}_2}^{(2)} f(x, y) = f(a, b + 1) + f(a, b - 1) - 2f(a, b)$
+
+$\nabla^2 f(x, y) = D_{\mathbf{u}_1}^{(2)} f(x, y) + D_{\mathbf{u}_2}^{(2)} f(x, y) = f(a + 1, b) + f(a - 1, b) + f(a, b + 1) + f(a, b - 1) - 4f(a, b)$
+
+仔细观察可以发在 $(a, b)$ 上下左右四个方向的函数值总和与在 $(a, b)$ 的函数值之差就是标量拉普拉斯,
+
+$\frac{1}{4} \nabla^2 f(x, y)$ 则是 $f(a, b)$ 与其上下左右函数值的平均差.
+
+这也就是为什么标量拉普拉斯可以用来判断{{{scalar-func}}}的凹凸.
+#+end_quote
+
+**** {{{partial-derivates}}}的有限差分形式
+
+在学习{{{scalar-func}}}的{{{directional-derivate}}}近似后, 掌握{{{partial-derivates}}}也是易如反掌,
+
+总体思路就是在{{{directional-derivate}}}的近似上进一步消项, 这意味着需要对更多不同情况进行泰勒展开用于消项.
+
+以求出混合{{{partial-derivates}}} $\frac{\partial f(x, y)}{\partial x \partial y}$ 的近似为例, 我们需要从 $f(x, y)$ 在 $(a, b)$ 上进行泰勒展开, 求出 $\frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!}$,
+
+这里假设混合{{{partial-derivates}}}连续, 所以 $\frac{f_{xy}(a, b)hk}{2!} = \frac{f_{yx}(a, b)hk}{2!}$.
+
+$\begin{equation*} \begin{aligned} & f(x, y) \\ = & f(a + h, b + k) \\ = & f(a, b) \\ + & f_x(a, b)h + f_y(a, b)k \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & \frac{f_{xxx}(a, b)h^3}{3!} + \frac{f_{xxy}(a, b)h^2k}{3!} + \frac{f_{xyx}(a, b)h^2k}{3!} + \frac{f_{xyy}(a, b)hk^2}{3!}  + \frac{f_{yxx}(a, b)h^2k}{3!} + \frac{f_{yxy}(a, b)hk^2}{3!} + \frac{f_{yyx}(a, b)hk^2}{3!} + \frac{f_{yyy}(a, b)k^3}{3!} \\ + & \dots \end{aligned} \end{equation*}$
+
+显然只有一次泰勒展开是不够的, 需要四次不同的泰勒展开才足够:
+
+$\begin{cases} f(a + h, b + k) \\ f(a - h, b - k) \\ f(a + h, b - k) \\ f(a - h, b + k) \end{cases}$
+
+# 这里就不演示消项的过程了, 直接给出最终结果:
+
+由于 $f_{xy}(a, b)$ 和 $f_{yx}(a, b)$ 是二阶{{{partial-derivates}}}, 所以泰勒展开只需要到二阶:
+
+$\begin{equation*} \begin{aligned}
+& f(x, y) \\
+= & f(a + h, b + k) \\
+= & f(a, b) \\ + & f_x(a, b)h + f_y(a, b)k \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & \dots \end{aligned} \end{equation*}$
+
+$\begin{equation*} \begin{aligned}
+& f(x, y) \\
+= & f(a - h, b - k) \\
+= & f(a, b) \\ - & (f_x(a, b)h + f_y(a, b)k) \\ + & \frac{f_{xx}(a, b)h^2}{2!} + \frac{f_{xy}(a, b)hk}{2!} + \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & \dots \end{aligned} \end{equation*}$
+
+$\begin{equation*} \begin{aligned}
+& f(x, y) \\
+= & f(a + h, b - k) \\
+= & f(a, b) \\ + & f_x(a, b)h - f_y(a, b)k \\ + & \frac{f_{xx}(a, b)h^2}{2!} - \frac{f_{xy}(a, b)hk}{2!} - \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\  + & \dots
+\end{aligned} \end{equation*}$
+
+$\begin{equation*} \begin{aligned}
+& f(x, y) \\
+= & f(a - h, b + k) \\
+= & f(a, b) \\ - & f_x(a, b)h + f_y(a, b)k \\ + & \frac{f_{xx}(a, b)h^2}{2!} - \frac{f_{xy}(a, b)hk}{2!} - \frac{f_{yx}(a, b)hk}{2!} + \frac{f_{yy}(a, b)k^2}{2!} \\ + & \dots
+\end{aligned} \end{equation*}$
+
+这里就不演示消项的过程了, 直接给出结果:
+
+$f(a + h, b + k) - f(a + h, b - k) - f(a - h, b + k) + f(a - h, b - k) = 2\left[ f_{xy}(a, b) + f_{yx}(a, b) \right]hk$
+
+又因为 $f_{xy}(x, y) = f_{yx}(a, b)$, 所以 $f_{xy}(a, b) = f_{yx}(a, b) = \frac{f(a + h, b + k) - f(a + h, b - k) - f(a - h, b + k) + f(a - h, b - k)}{4hk}$.
+
+另外 $f_{xx}$ 和 $f_{yy}$ 的求解方法也一样, 不过可以看到这种消项法比较麻烦, 可以利用二阶{{{directional-derivate}}}的近似轻松进行求解,
+
+因为 $f_{xx}(x, y)$ 正好为方向 $\mathbf{u}_1 = \langle 1, 0 \rangle$ 的二阶{{{directional-derivate}}}, $f_{yy}(a, b)$ 也正好为方向 $\mathbf{u}_2 = \langle 0, 1 \rangle$ 上的二阶{{{directional-derivate}}},
+
+所以 $\begin{cases} f_{xx}(x, y) = D_{\mathbf{u}_1}^{(2)}f(x, y) = f(a + 1, b) + f(a - 1, b) - 2f(a, b) \\ f_{yy}(x, y) = D_{\mathbf{u}_2}^{(2)}f(x, y) = f(a, b + 1) + f(a, b - 1) - 2f(a, b) \end{cases}$.
+
+# https://chat.deepseek.com/a/chat/s/ee21a373-2b32-4d61-8c53-7fed1c076c60
+
+
+*** 笛卡尔坐标系与{{{series}}}
+
+# 参考: https://blog.csdn.net/2401_87618156/article/details/152560078
+
+笛卡尔坐标系是一个联系几何和代数的工具:
+
+通过 2 根垂直的数轴定位点 $p$ 的位置, 把 $p$ 的位置分解成 2 个代数 $x$ 和 $y$, 最后用代数的组合 $\langle x, y \rangle$ 来表示位置.
+
+笛卡尔最初只是想找出一个用代数表示位置的方法, 但后来的数学家们却突发奇想:
+
+能不能用定义不同类型的数轴来分解位置? 于是诞生了极坐标系(=polar coordinates=).
+
+#+attr_html: :width 600px
+[[../../../files/cartesian-vs-polar-l-1503367406.jpg]]
+
+后来数学家们不再满足于分解组合位置了, 开始把这种分解与组合的思路推广到各个方面上.
+
+比如可以把多项式函数 $f(x) = \sum\limits_{i=0}^{n}a_{i}x^{i}$ 进行分解和组合:
+
+以 $x^i$ 为"数轴", $a_i$ 为根据"数轴" $x^i$ 定点的代数, 所以 $f(x)$ 可以用组合 $\langle a_0, a_1, a_2, \dots, a_{n-1}, a_{n}\rangle$ 来表示.
+
+从这个角度来看, 泰勒展开就是一种对函数的分解方法, 以 $f(x)$ 在 $x = a$ 处展开的泰勒{{{series}}} $f(x) = \sum\limits_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x - a)^{n}$ 为例,
+
+以 $(x - a)^{n}$ 为"数轴"对泰勒{{{series}}}进行分解, 可以得到组合 $\langle f(a), \frac{f^{(1)}(a)}{1!}, \frac{f^{(2)}(a)}{2!}, \dots \rangle$.
+
+从线性代数的角度出发, "数轴" 就是基向量(基底), 组合由于支持线性运算, 所以被称为线性组合.
+
+分解的好处在于可以把一个难以处理的对象变得容易处理. 比如有理数函数的积分通常比较难以求解,
+
+但是如果先对有理数函数进行分解再处理会变得很简单, 举个例子 $\frac{1}{x + 1}$,
+
+可以通过 *多项式长除法(polynomial long division)* 将 $1$ 除以 $1 + x$ 得到{{{series}}}表示 (假设 $x$ 满足收敛条件):
+
+$\frac{1}{x + 1} = 1 - x + x^2 - x^3 + x^4 + \dots$
+
+这就是一个公比为 $-x$ 的几何{{{series}}}, 或说是 $\frac{1}{x + 1}$ 在 $x = 0$ 处的麦克劳林{{{series}}}.
+
+有了这个分解就能轻松地计算出 $\frac{1}{x + 1}$ 的{{{anti-derivate}}}:
+
+$\begin{equation*}\begin{aligned} & \int_{0}^{x} \frac{1}{t + 1} dt \\ = & \int_{0}^{x} \left(1 - t + t^2 - t^3 + t^4 + \dots\right)dt \\ = & \left. \left( t - \frac{1}{2} t^2 + \frac{1}{3} t^3 - \frac{1}{4} t^4 + \frac{1}{5}t^5 + \dots\right) \right]_{0}^{x} \\ = & x - \frac{1}{2} x^2 + \frac{1}{3} x^3 - \frac{1}{4} x^4 + \frac{1}{5} x^5 + \dots \\ = & \ln(x + 1) \ \end{aligned}\end{equation*}$
+
+有了反导数就能很轻松地求出积分. 把求反导数的过程反过来看就能发现 $\frac{d}{dx}\ln(x + 1) = \frac{1}{x + 1}$.
+
+这就是人类发现{{{calculus-theorem}}}的过程.
+
+数学家们在分解研究对象时 *通常* 会让基向量正交, 因为在非正交基下, 基向量之间存在耦合,
+
+因此在计算点积时必须考虑这种基向量之间的耦合.
+
+假设有两个 $n$ 维向量 $\vec{u} = \langle u_1, u_2, \dots, u_n \rangle$ 和 $\vec{v} = \langle v_1, v_2, \dots, v_n \rangle$,
+
+它们的点积为 $\vec{u} \cdot \vec{v} = (u_1 v_1 + u_1 v_2 \cos \theta_{12} + \dots + u_1 v_n \cos\theta_{1n}) + \dots + (u_n v_1 \cos \theta_{1n} + u_n v_2 \cos \theta_{2n} + \dots + u_n v_n)$,
+
+是一个有 $n^2$ 项多项式, 其中 $\theta_{ij}$ 表示基向量 $\vec{\epsilon}_{i}$ 和 $\vec{\epsilon}_{j}$ 之间夹角, $i$ 和 $j$ 是小于等于 $n$ 的正整数.
+
+这才是原本的点积计算, 比起平时的点积计算 $\vec{u} \cdot \vec{v} = u_1 v_1 + u_2 v_2 + \dots + u_n v_n$ 要复杂,
+
+因为平时点积计算都默认一个条件: 基向量之间正交, 即 $\cos\theta_{ij} = 0$. 这使得原本复杂的点积计算变得十几简单.
+
+#+begin_quote
+点积可以写出矩阵乘法的形式: $\vec{u} \cdot \vec{v} = \vec{u}^{T} G \vec{v}$, 其中 $G$ 是格拉姆矩阵(=gram matrix=):
+
+$G = \left( \begin{array}{c} |\vec{\epsilon}_1||\vec{\epsilon}_1| \cos\theta_{11} &  |\vec{\epsilon}_1||\vec{\epsilon}_2|\cos\theta_{12} & \dots & |\vec{\epsilon}_1||\vec{\epsilon}_n| \cos\theta_{1n} \\ \vdots & \vdots & \vdots & \vdots \\ |\vec{\epsilon}_n||\vec{\epsilon}_1| \cos\theta_{1n}  & |\vec{\epsilon}_n||\vec{\epsilon}_2| \cos\theta_{2n} & \dots & |\vec{\epsilon}_n||\vec{\epsilon}_n| \cos\theta_{nn} \end{array} \right) = \left( \begin{array}{c} \vec{\epsilon}_1 \cdot \vec{\epsilon}_1 & \vec{\epsilon}_1 \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_1 \cdot \vec{\epsilon}_n \\ \vdots & \vdots & \vdots & \vdots \\ \vec{\epsilon}_n \cdot \vec{\epsilon}_1 & \vec{\epsilon}_n \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_n \cdot \vec{\epsilon}_n \end{array} \right)$
+
+其中 $\vec{\epsilon}_i \cdot \vec{\epsilon}_j$ 就是基向量 $\vec{\epsilon}_i$ 和 $\vec{\epsilon}_j$ 之间的耦合.
+
+在标准正交坐标系(基向量正交且均为单位向量)下, $G$ 是一个单位矩阵 $I^n$.
+#+end_quote
+
+函数也有正交的说法, 比如说 $f(x)$ 和 $g(x)$ 在定义域 $[a, b]$ 上正交, 就是指 $\int_{a}^{b} f(x) g(x) dx = 0$,
+
+其中 $\int_{a}^{b} f(x) g(x) dx$ 是函数 $f$ 和 $g$ 之间的点积.
+
+当然只是一般会优先按照正交基进行分解, 泰勒{{{series}}}就是一个反例, 它是按照导数进行分解:
+
+假设 $f(x)$ 在 $a = 0$ 处展开, 在 $x \in [-1, 1]$ 上,
+
+$\int_{-1}^{1} 1 \cdot x^2 dx = \left. \frac{x^3}{3} \right]_{-1}^{1} = \frac{2}{3} \ne 0$; 但 $\int_{-1}^{1} x \cdot x^2 dx = \left. \frac{x^4}{4} \right]_{-1}^{1} = 0$.
+
+在了解了数学家们的思路后, 就会自然得了解到一些数学工具为什么是这样.
+
+**** 傅立叶{{{series}}} (Fourier Series)
+
+在 =1753= 年, 丹尼尔·伯努利和莱昂哈德·欧拉在研究有关振动弦(=vibrating strings=)和天文学(=astronomy=)的问题时就想到:
+
+这些问题都是周期运动, 可以用周期函数 $f(t) = A \sin(\omega t + \psi)$ 来描述, 其中 $t$ 表示时间, $\omega$ 为频率, $\psi$ 为相位.
+
+于是提出了一个猜想: $f(t)$ 的解可以写成一系列的正弦函数之和, 即 $f(t) = \sum\limits_{n=0}^{\infty} A_n \sin(n \omega t + \psi_n)$.
+
+这就是三角{{{series}}}(=trigonometric series=), 它还可以进行变形:
+
+$\begin{equation*}\begin{aligned}
+& f(t) = \sum\limits_{n=0}^{\infty} A_n (n \omega t + \psi_n) \\
+= & \sum\limits_{n=0}^{\infty} A_n\left[\cos(n \omega t)\sin(\psi_n) + \sin(n \omega t)\cos(\psi_n)\right] && \text{根据和角公式} \sin(\alpha + \beta) = \sin(\alpha)\cos(\beta) + \cos(\alpha)\sin(\beta) \\
+= & \sum\limits_{n=0}^{\infty} \left[ A_n \cos(n \omega t)\sin(\psi_n) + A_n \sin(n \omega t)\cos(\psi_n) \right] \\
+= & \sum\limits_{n=0}^{\infty} \left[ a_n \cos(n \omega t) + b_n \sin(n \omega t) \right] && \sin(\psi_n) \text{和} \cos(\psi_n) \text{是常数项, 令} \begin{cases} a_n = A_n \sin(\psi_n) \\ b_n = A_n \cos(\psi_n) \end{cases} \\
+= & a_0\cos(0 \cdot \omega t) + b_0\sin(0 \cdot \omega t) + \sum\limits_{n=1}^{\infty} \left[ a_n \cos(n \omega t) + b_n \sin(n \omega t) \right] \\
+= & a_0 + \sum\limits_{n=1}^{\infty} \left[ a_n \cos(n \omega t) + b_n \sin(n \omega t) \right]
+\end{aligned}\end{equation*}$
+
+因此伯努利的猜想变成: $f(t)$ 的解可以写出一些列正弦和余弦函数之和.
+
+由于想法过于超前, 遭到了当时欧拉等人的质疑. 后来在法国数学家乔瑟夫·傅立叶在尝试解决热传导问题时也有同样的问题,
+
+需要用一个三角{{{series}}}表示初始温度函数, 只要能够解出三角{{{series}}}的系数 $a_0$, $a_n$ 以及 $b_n$ 的通式, 那么伯努利的猜想就成立,
+
+于是傅立叶巧用了三角函数的正交性解出结果, 并大胆断言:
+
+在满足一定条件下, 任意周期函数都可以展开成三角{{{series}}}.
+
+后来由狄利克雷和黎曼等人进一步完善, 解答了两个问题: 哪些函数可以进行展开, 以及展开后是否收敛.
+
+而最终得到的{{{series}}}被称为傅立叶{{{series}}}.
+
+#+begin_quote
+三角函数的正交性是指:
+
+在完整的周期 $[-\pi, \pi]$ 或 $[0, \pi]$ 内,
+
+- 任意频率的正弦和余弦函数都是正交的.
+
+  $\int\limits_{-\pi}^{\pi} \sin(mx) \cos(nx) dx = 0$, 其中 $m$, $n$ 为任意整数.
+
+- 不同频率的正弦函数之间都是正交的.
+
+  $\int_{-\pi}^{\pi} \sin(mx)\sin(nx) dx = 0$, 其中 $m \ne n$.
+
+- 不同频率的余弦函数之间都是正交的.
+
+  $\int_{-\pi}^{\pi} \cos(mx)\cos(nx) dx = 0$, 其中 $m \ne n$.
+
+
+简单来说, 在一个完整的周期内, 不同的三角函数之间的乘积积分为 0, 相同的三角函数之间的乘积积分不为 0.
+
+这里的相同是指频率以及函数种类(正弦/余弦)完全一致.
+
+上面的关系可以通过积化和差公式推导出来.
+
+积化和差公式:
+
+$\begin{cases} \sin A \cos B = \frac{1}{2} \left[ \sin(A + B) + \sin(A - B) \right] \\ \cos A \sin B = \frac{1}{2} \left[ \sin(A + B) - \sin(A - B) \right] \\ \sin A \sin B = \frac{1}{2} \left[ \cos(A - B) - \cos(A + B) \right] \\ \cos A \cos B = \frac{1}{2} \left[ \cos(A - B) + \cos(A + B) \right] \end{cases}$.
+
+以 $\int_{-\pi}^{\pi} \cos (mx) \cos (nx) dx$ 的推导为例:
+
+$\begin{equation*}\begin{aligned}
+& \cos (mx) \cos (nx) \\
+= & \frac{1}{2} \left[ \cos((m - n)x) + \cos((m + n)x) \right] \\
+\rightarrow & \int_{-\pi}^{\pi} \frac{1}{2} \left[ \cos((m - n)x) + \cos((m + n)x) \right] dx \\
+\rightarrow & \int_{-\pi}^{\pi} \frac{1}{2} \cos((m - n)x) dx + \int_{-\pi}^{\pi} \frac{1}{2} \cos((m + n)x) dx
+\end{aligned}\end{equation*}$
+
+对于正弦函数 $\sin(kx)$ 和 $\cos(kx)$ 来说, 如果 $k \ne 0$ 为整数, 那么在一个完整周期 $T$ 内,
+
+它们的函数图像会在 $x$ 轴上方和下方的面积相等, 所以它们在周期 $T$ 内上的积分分别为 0.
+
+用公式表达如下:
+
+如果 $k \ne 0$, 那么 $\begin{cases} \int_{0}^{T} \sin(kx)dx = 0 \\ \int_{0}^{T} \cos(kx) = 0 \end{cases}$. 然而, $k = 0$ 时结果就不太一样, $\begin{cases} \int_{0}^{T} \sin(kx)dx = 0 \\ \int_{0}^{T} \cos(kx) = 1 \end{cases}$.
+
+因此, $\int_{-\pi}^{\pi}\cos (mx) \cos (nx) dx$ 有两种结果 $\begin{cases} \pi, & m = n \ne 0 \\ 0, & m \ne n \end{cases}$.
+
+又因为 $m \ne n$, 所以 $\int_{-\pi}^{\pi} \cos(mx)\cos(nx) dx = 0$.
+#+end_quote
+
+某些情况下, 傅立叶{{{series}}}要比幂{{{series}}}更加好用, 像前面提到的热传导, 振动弦以及天文学的问题通常属于周期函数,
+
+而傅立叶{{{series}}}又正好是一个由周期函数构成的无穷{{{series}}}, 所以使用它分解周期函数就显得非常合理.
+
+但这不意味着傅立叶{{{series}}}不能用来分解非周期函数, 之后也会学习对非周期函数的分解.
+
+目前先从简单的情况入手, 假设傅立叶{{{series}}}是收敛的, 其次 $f(x)$ 是一个连续函数, 为了方便学习, 先假设 $-\pi \le x \le \pi$;
+
+接下来的目标是求出系数 $a_n$ 和 $b_n$.
+
+幂{{{series}}} $f(x) = \sum C_n(x - a)^n$ 的系数与导数有密切关系: $C_n = \frac{f^{(a)}(x)}{n!}$, 而傅立叶{{{series}}}的系数则是与积分有密切关系.
+
+对傅立叶{{{series}}}进行积分可以得到:
+
+$\begin{equation*}\begin{aligned} & \int_{-\pi}^{\pi} f(x) dx \\ = & \int_{-\pi}^{\pi}a_0 dx + \int_{-\pi}^{\pi} \sum\limits_{n=1}^{\infty} (a_n \cos n x + b_n \sin n x)dx \\ = & 2 \pi a_0 + \sum\limits_{n=1}^{\infty}\int_{-\pi}^{\pi}a_n \cos nx + \sum\limits_{n=1}^{\infty}\int_{-\pi}^{\pi}b_n \sin nx \\ = & 2 \pi a_0 + \sum\limits_{n=1}^{\infty}\frac{a_n}{n}(\sin n\pi - \sin(-n\pi)) - \sum\limits_{n=1}^{\infty}\frac{b_n}{n}(\cos n\pi - \cos(-n\pi)) \end{aligned} \end{equation*}$
+
+其中 $\sin n\pi - \sin(-n\pi) = \cos n\pi - \cos(-n\pi) = 0$, 所以 $a_0 = \frac{\int_{-\pi}^{\pi}f(x)dx}{2 \pi}$.
+
+为了确定系数 $a_n$ ($n \ge 1$), 我们可以在等式两边同时乘以 $\cos mx$, $m$ 为大于 1 的整数:
+
+$\begin{equation*}\begin{aligned} \cos mx \int_{-\pi}^{\pi} f(x) dx & = \cos mx \int_{-\pi}^{\pi} \left[ a_0 + \sum\limits_{n=1}^{\infty} (a_n \cos nx + b_n \sin nx) \right] dx \\ \rightarrow \int_{-\pi}^{\pi} f(x) \cos mx dx & = \int_{-\pi}^{\pi} \left[ a_0 + \sum\limits_{n=1}^{\infty} (a_n \cos nx + b_n \sin nx) \right] \cos mx dx \\ & = a_0 \int_{-\pi}^{\pi} \cos mx dx + \sum\limits_{n=1}^{\infty} a_n \int_{-\pi}^{\pi} \cos nx \cos mx dx + \sum\limits_{n=1}^{\infty} b_n \int_{-\pi}^{\pi} \sin nx \cos mx dx\end{aligned} \end{equation*}$
+
+其中 $a_0 \int_{-\pi}^{\pi} \cos mx dx = \frac{a_0}{m}(\sin m\pi - sin(-m\pi)) = 0$,
+
+$\begin{cases} \cos nx \cos mx = \frac{1}{2} \left[ \cos((n - m)x) + \cos((n + m)x) \right] \rightarrow \int_{-\pi}^{\pi} \frac{1}{2} \left[ \cos((n - m)x) + \cos((n + m)x) \right] dx = \begin{cases} \pi, & \text{if}\ n = m \\ 0, & \text{if}\ n \ne m \end{cases} \\ \sin nx \cos mx = \frac{1}{2} \left[ \sin((n - m)x) + \sin((n + m)x) \right] \rightarrow \int_{-\pi}^{\pi} \frac{1}{2} \left[ \sin((n - m)x) + \sin((n + m)x) \right] dx = 0 \end{cases}$
+
+所以 $\int_{-\pi}^{\pi} f(x) \cos mx dx = \begin{cases} a_m \pi, & \text{if}\ n = m \\ 0, & \text{if}\ n \ne m \end{cases} \rightarrow a_n = \frac{1}{\pi} \int_{-\pi}^{\pi} f(x) \cos nx dx$.
+
+用类似的思路让等式两边同时乘以 $\sin mx$, 可以得出 $b_n = \frac{1}{n} \int_{-\pi}^{\pi} f(x) \sin nx dx$.
+
+到目前为止已经掌握了系数的求解, 但我们假设的函数 $f$ 是一个分段连续的函数且区间为 $[-\pi, \pi]$,
+
+因为周期并不只限于 $2 \pi$, 因此不能说 $f(x)$ 等同于傅立叶{{{series}}}.
+
+# $\left( \begin{array}{c} |\vec{\epsilon}_1||\vec{\epsilon}_1| \cos\theta_{11} &  |\vec{\epsilon}_1||\vec{\epsilon}_2|\cos\theta_{12} & \dots & |\vec{\epsilon}_1||\vec{\epsilon}_n| \cos\theta_{1n} \\ \vdots & \vdots & \vdots & \vdots \\ |\vec{\epsilon}_n||\vec{\epsilon}_1| \cos\theta_{1n}  & |\vec{\epsilon}_n||\vec{\epsilon}_2| \cos\theta_{2n} & \dots & |\vec{\epsilon}_n||\vec{\epsilon}_n| \cos\theta_{nn} \end{array} \right) = \left( \begin{array}{c} \vec{\epsilon}_1 \cdot \vec{\epsilon}_1 & \vec{\epsilon}_1 \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_1 \cdot \vec{\epsilon}_n \\ \vdots & \vdots & \vdots & \vdots \\ \vec{\epsilon}_n \cdot \vec{\epsilon}_1 & \vec{\epsilon}_n \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_n \cdot \vec{\epsilon}_n \end{array} \right)$
+
