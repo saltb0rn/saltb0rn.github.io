@@ -282,7 +282,9 @@ $f(x)$ 是一个显函数.
 
 如果函数的输出是三维向量, 那么函数图像是一条三维曲线. 因为 =Maxima= 不支持三维以上的图像绘制, 所以就不讨论了.
 
-一元{{{scalar-func}}}的还有另外一个名字: 一元参数函数.
+{{{vector-func}}}属于参数函数(=parametric functions=).
+
+# 一元{{{scalar-func}}}的还有另外一个名字: 一元参数函数.
 
 *draw2d*
 
@@ -517,6 +519,163 @@ $y = f(x) \rightarrow F(x, y) = f(x) - y = 0$
 #+attr_html: :width 600px
 #+caption: 在曲面上 $f(x, y) = x^2 - y^2 - 10$ 标记等值线
 [[../../../files/contour-example.png]]
+
+
+*** 函数变换
+
+函数变换包含了基变换(basis transformation)和坐标变换(coordinate transformatione).
+
+基变换是对坐标系本身进行变换, 而坐标变换则是对坐标点本身进行变换, 两者是互逆的.
+
+#+begin_quote
+这块已经是线性变换的内容了, 实际上微积分和线性代数是不分家的.
+
+因此, 在修完微积分后一定要修一下线性代数.
+#+end_quote
+
+函数变换包括平移, 缩放和旋转三种变换.
+
+*平移*
+
+想要使坐标 $\langle x, f(x) \rangle$ 沿 $x$ 轴的正方向移动 $c$ 个单位, 有两种方法:
+
+第一种是 $\langle x, f(x - c) \rangle$, 第二种是 $\langle x + c, f(x) \rangle$.
+
+前者是基变换, 把坐标系往 $x$ 轴的负方向移动 $c$ 个单位, 视觉上就能把坐标往 $x$ 轴的正方向移动 $c$ 个单位;
+
+后者是坐标变换, 把坐标往 $x$ 轴的正方向移动 $c$ 个单位.
+
+*有些情况下* 只能进行坐标变换, 比如想要使坐标 $\langle x, f(x) \rangle$ 沿 $y$ 轴的正方向移动 $c$ 个单位,
+
+那么只能 $\langle x, f(x) + c \rangle$, 因为坐标点的 $y$ 分量平移并不会对 $x$ 产生影响, 应该反过来说 $y$ 分量受到自变量 $x$ 的影响.
+
+很难概括有哪些情况只能使用坐标变换, 只能具体问题具体分析.
+
+#+begin_quote
+还可以通过线性代数去实现平移变换, 假设把函数 $f(x)$ 往 $x$ 轴的正方形平移 $h$ 个单位,
+
+往 $y$ 轴的正方向平移 $v$ 个单位, 那么函数变换应该是: $f(x - h) + v$.
+
+其对应的矩阵变换为: $\left(\begin{array}{c}x_{g} \\ g(x) \\ 1\end{array}\right) = \left(\begin{array}{c} 1 & 0 & h \\ 0 & 1 & v \\ 0 & 0 & 1 \end{array}\right) \left(\begin{array}{c} x \\ f(x) \\ 1 \end{array}\right) \Rightarrow \begin{equation*}\left\{ \begin{aligned} x_{g} &= x + h \\ g(x) &= f(x) + v \end{aligned} \right.\end{equation*}$.
+
+*因为变换对象是{{{scalar-func}}} $f$ 所对应的{{{vector-func}}}形式 $\langle x, f(x) \rangle$, 这是一个点坐标, 所以这里的矩阵是坐标变换.*
+
+#+BEGIN_src maxima
+  f(x) := x / 4 * sin(x);
+  g(x) := [ x + 10, f(x) + 10 ];
+
+  draw2d(nticks=200,
+    color=blue,
+    explicit(f(x), x, -100, 100),
+    color=red,
+    explicit(f(x - 10) + 10, x, -100, 100), /* 向右平移 10 个单位, 向上移动 10 个单位 */
+    color=green,
+    apply(parametric, append(g(x), [x, -100, 100])) /* 向右平移 10 个单位, 向上移动 10 个单位 */
+    );
+
+  /* plot2d( [ f(x), f(x-10) + 10, [ parametric, g(x)[1], g(x)[2], [ 'x, -100, 100 ] ] ], ['x, -100, 100] ); */
+#+END_src
+
+#+attr_html: :width 600
+#+caption: 让 $f(x) = \frac{x}{4} \sin(x)$ 往 $x$ 轴正方向移动 10 个单位, 往 $y$ 轴正方向移动 10 个单位
+[[../../../files/translate-func.png]]
+#+end_quote
+
+*缩放*
+
+想要使坐标 $\langle x, f(x) \rangle$ 在 $x$ 轴上缩放 $c$ 倍, 有两种方法:
+
+第一种是 $\langle cx, f(x) \rangle$, 第二种是 $\langle x, f(\frac{1}{c}x) \rangle$.
+
+#+begin_quote
+通过线性代数实现缩放, 假设让函数 $f(x)$ 在 $x$ 沿着 $x$ 轴方向放大 $s_{x}$ 倍,
+
+沿着 $y$ 轴方向放大 $s_{y}$ 倍, 那么函数变换应该是 $s_y f(\frac{x}{s_{x}})$.
+
+其对应的矩阵变换为: $\left(\begin{array}{c}x_{g} \\ g(x_{g})\end{array}\right) = \left(\begin{array}{c} \frac{1}{s_{x}} & 0 \\ 0 & s_{y} \end{array}\right) \left(\begin{array}{c} x \\ f(x) \end{array}\right)$, $s_{x} > 0, s_{y} > 0 \Rightarrow \begin{equation*}\left\{ \begin{aligned} x_{g} &= \frac{x}{s_{x}} \\ g(x) &= s_{y}f(x) \end{aligned} \right.\end{equation*}$
+
+#+BEGIN_src maxima
+  f(x) := x / 4 * sin(x);
+  g(x) := [x * 2, f(x) / 10];
+
+  draw2d(nticks=200,
+    color=blue,
+    explicit(f(x), x, -100, 100),
+    color=red,
+    explicit(f(x / 2) / 10, x, -100, 100), /* 水平方向上放大 2 倍, 垂直向上缩小 10 倍 */
+    color=green,
+    apply(parametric, append(g(x), [x, -50, 50])) /* 水平方向上放大 2 倍, 垂直向上缩小 10 倍 */
+    );
+
+  /* plot2d( [ f(x), f(x / 2) / 10, [ parametric, g(x)[1], g(x)[2], [ 'x, -100, 100 ] ] ], ['x, -100, 100] ); */
+#+END_src
+
+#+attr_html: :width 600
+#+caption: 让 $f(x) = \frac{x}{4} \sin(x)$ 沿着 $x$ 轴放大 2 倍, 沿着 $y$ 轴缩小 10 倍
+[[../../../files/scale-func.png]]
+#+end_quote
+
+*旋转*
+
+要实现函数的旋转, 只能对函数的坐标点进行旋转. 假设让 $y = f(x)$ 往逆时针方向旋转 $\theta$ 度,
+
+那么其对应矩阵变换为: $\left(\begin{array}{c}x_{g} \\ g(x_{g})\end{array}\right) = \left(\begin{array}{c} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{array}\right) \left(\begin{array}{c} x \\ f(x) \end{array}\right) \Rightarrow \begin{equation*}\left\{ \begin{aligned} x_{g} &= x\cos\theta - f(x)\sin\theta \\ g(x) &= x\sin\theta + f(x)\cos\theta \end{aligned} \right.\end{equation*}$
+
+#+begin_quote
+#+begin_src maxima
+  f(x) := x / 4 * sin(x);
+  g(x) := [x * cos(%pi / 6) - f(x) * sin(%pi / 6), x * sin(%pi / 6) + f(x) * cos(%pi / 6)];
+
+  draw2d(nticks=200,
+    color=blue,
+    explicit(f(x), x, -100, 100),
+    color=red,
+    apply(parametric, append(g(x), [x, -100, 100])) /* 往逆时针方向旋转 30 度 */
+    );
+#+end_src
+
+#+attr_html: :width 600px
+#+caption: 让函数 $f(x) = \frac{x}{4} \sin(x)$ 往逆时针方向旋转 30 角
+[[../../../files/rotate-func.png]]
+#+end_quote
+
+*混合变换*
+
+一个函数可以同时进行不同的变换, 最常见的是平移和缩放混合.
+
+对 $y = f(x)$ 分别在 $x$ 和 $y$ 轴方向上进行 $s_x$ 和 $s_y$ 倍放大, 并且分别沿着 $x$ 轴和 $y$ 轴的正方向移动 $\frac{h}{s_x}$ 和 $v$ 个单位,
+
+得到一个新函数 $g(x) = s_y f(s_x x - h) + v = s_y f(s_x(x - \frac{h}{s_x})) + v$.
+
+实现变换混合时需要注意一点: 变换之间是会相互影响的. 可以看到上面在 $x$ 轴方向上的平移受到了缩放的影响.
+
+为了想要清晰地分析出 $f(x)$ 的平移大小, 应以 $s_x$ 为公因数进行对 $s_y x - h$ 提取,
+
+得到一个结构清晰的函数 $g(x) = s_y f(s_x(x - \frac{h}{s_x})) + v$, 可以得出 $x$ 轴方向上的平移距离是 $\frac{h}{s_x}$, 而不是 $h$.
+
+#+begin_src maxima
+  f(x) := x^2;
+
+  draw2d(nticks=200,
+    color=blue,
+    explicit(f(x), x, -5, 5),
+    color=red,
+    explicit(0.5 * (f(2 * x - 5)) + 20, x, -5, 5));
+#+end_src
+
+#+attr_html: :width 600px
+#+caption: 让函数 $f(x)$ 分别在 $x$ 和 $y$ 轴方向进行 2 和 0.5 倍放大, 并分别往正方向移动 2.5 和 20 个单位.
+[[../../../files/transform-func.png]]
+
+也可以以 $s_y$ 作为公因数对 $s_y f(s_x x - h) + v$ 也进行提取, 得到 $s_y [f(s_x x - h) + \frac{v}{s_y}]$,
+
+但 $\frac{h}{s_y}$ 并非在 $y$ 轴上的平移距离, $v$ 才是, 因此没有这个必要.
+
+根本原因是 $f_1(x) = f(s_x x - h)$ 是基变换, 而 $f_2(x) = s_y f_1(x) + v$ 是坐标变换,
+
+在坐标系发生了变换的前提下, 后续的其它基变换需要考虑先前坐标系变换所带来的影响;
+
+而坐标变换并不会对坐标系产生影响, 这就是为什么 $v$ 是平移距离, 而 $h$ 不是.
 
 ** {{{limit}}} (Limits)
 *** {{{limit}}}的定义
@@ -2434,8 +2593,33 @@ $f(a + h, b + k) - f(a + h, b - k) - f(a - h, b + k) + f(a - h, b - k) = 2\left[
 
 所以 $\begin{cases} f_{xx}(x, y) = D_{\mathbf{u}_1}^{(2)}f(x, y) = f(a + 1, b) + f(a - 1, b) - 2f(a, b) \\ f_{yy}(x, y) = D_{\mathbf{u}_2}^{(2)}f(x, y) = f(a, b + 1) + f(a, b - 1) - 2f(a, b) \end{cases}$.
 
-# https://chat.deepseek.com/a/chat/s/ee21a373-2b32-4d61-8c53-7fed1c076c60
+#+begin_quote
+一阶{{{partial-derivates}}}就更简单, 只需要泰勒展开的一阶展开,
 
+推导很简单, 就不详细说了:
+
+$\begin{cases} f(a + h, b + 0) = f(a, b) + f_{x}(a, b)h \\ f(a - h, b + 0) = f(a, b) - f_{x}(a, b)h \end{cases} \rightarrow f_{x}(a, b) = \frac{f(a + h, b + 0) - f(a - h, b + 0)}{2h}$
+
+$\begin{cases} f(a + 0, b + h) = f(a, b) + f_{y}(a, b)h \\ f(a + 0, b - h) = f(a, b) - f_{y}(a, b)h \end{cases} \rightarrow f_{y}(a, b) = \frac{f(a + 0, b + h) - f(a + 0, b - h)}{2h}$
+#+end_quote
+
+**** {{{vector-func}}}的有限差分形式
+
+在学习过前面的有限差分形式后, {{{vector-func}}}的有限差分形式就是手到擒来, 基本上就是对前面知识的应用.
+
+对于一元{{{vector-func}}} $\mathbf{F}(t) = \langle f_1(t), f_2(t) \rangle$, 它的每个分量都是一元{{{scalar-func}}},
+
+因此 $\mathbf{F}(t)$ 的导数(也就是切向量) $F^{'}(t) = \langle \frac{\partial f_1}{\partial t}, \frac{\partial f_2}{\partial t} \rangle$, 这时可以应用导数的有限差分形式求解:
+
+$F^{'}(t) = \langle \frac{f(a + h) - f(a - h)}{2h}, \frac{g(a + h) - f(a - h)}{2h} \rangle$.
+
+对于多元{{{vector-func}}} $\mathbf{F}(x, y) = \langle f_1(x, y), f_2(x, y) \rangle$, $\nabla F(x, y) = \left(\begin{array}{c} \frac{\partial f_1}{\partial x} & \frac{\partial f_1}{\partial y} \\ \frac{\partial f_2}{\partial x} & \frac{\partial f_2}{\partial y} \end{array}\right)$ 是一个雅可比矩阵,
+
+这时可以应用{{{partial-derivates}}}的有限差分形式求解:
+
+$\nabla F(x, y) = \left( \begin{array}{c} \frac{f_1(a + h, b) - f_1(a - h, b)}{2h} & \frac{f_1(a, b + h) - f_1(a, b - h)}{2h} \\ \frac{f_2(a + h, b) - f_2(a - h, b)}{2h} & \frac{f_2(a, b + h) - f_2(a, b - h)}{2h} \end{array} \right)$
+
+# $\left( \begin{array}{c}  \end{array} \right)$
 
 *** 笛卡尔坐标系与{{{series}}}
 
@@ -2636,4 +2820,3 @@ $\begin{cases} \cos nx \cos mx = \frac{1}{2} \left[ \cos((n - m)x) + \cos((n + m
 因为周期并不只限于 $2 \pi$, 因此不能说 $f(x)$ 等同于傅立叶{{{series}}}.
 
 # $\left( \begin{array}{c} |\vec{\epsilon}_1||\vec{\epsilon}_1| \cos\theta_{11} &  |\vec{\epsilon}_1||\vec{\epsilon}_2|\cos\theta_{12} & \dots & |\vec{\epsilon}_1||\vec{\epsilon}_n| \cos\theta_{1n} \\ \vdots & \vdots & \vdots & \vdots \\ |\vec{\epsilon}_n||\vec{\epsilon}_1| \cos\theta_{1n}  & |\vec{\epsilon}_n||\vec{\epsilon}_2| \cos\theta_{2n} & \dots & |\vec{\epsilon}_n||\vec{\epsilon}_n| \cos\theta_{nn} \end{array} \right) = \left( \begin{array}{c} \vec{\epsilon}_1 \cdot \vec{\epsilon}_1 & \vec{\epsilon}_1 \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_1 \cdot \vec{\epsilon}_n \\ \vdots & \vdots & \vdots & \vdots \\ \vec{\epsilon}_n \cdot \vec{\epsilon}_1 & \vec{\epsilon}_n \cdot \vec{\epsilon}_2 & \dots & \vec{\epsilon}_n \cdot \vec{\epsilon}_n \end{array} \right)$
-
