@@ -1079,7 +1079,7 @@ $f_{\mathrm{cook-torrance}} = \frac{DFG}{4(\omega_{o} \cdot n)(\omega_{i} \cdot 
 
 $l$ 是入射光方向;
 
-$v$ 是出射光方向;
+$v$ 是出射光/视线方向;
 
 $m$ 是微平面的法线向量, 使用 $v$ 和 $l$ 的半角向量 $h$ 作为微平面的法线向量, 也就是 $m = h$;
 
@@ -1685,9 +1685,11 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
   通常为灰度值(=grayscale value=), 或直接使用非黑即白的二值化形式.
 
-  如果金属度不为 1, 那么材质就被认为是非金属材质, 通常渲染引擎会采用一个表示非金属材质的值作为默认值.
+  如果金属度不为 1, 那么材质就被认为是非金属材质, 为 1 那代表金属材质.
 
   金属度影响的是 =PBR= 菲涅耳反射 $F$ 中的镜面反射率 $F_0$ 的计算, 以及漫反射系数 $k_{\mathrm{diffuse}}$ 的计算.
+
+  如果渲染引擎还涉及透射方面的计算, 那么金属度还影响透射率的计算, 金属度为 1 表示材质的透射率为 0.
 
   严格来说, $F_0$ 是由反射率 $c$ 和金属度 $m$ 共同影响的: $F_0 = c_0 + (c - c_0) \times m$.
 
@@ -1709,11 +1711,19 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
 
   $k_{\mathrm{diffuse}}$ 也存在类似关系, 如果金属度为 1, 那么就认为漫反射为 0: $k_{\mathrm{diffuse}} = c + ((0, 0, 0) - c) \times m$.
 
+  #+attr_html: :width 600px
+  #+caption: 金属度 $\alpha$ 从 0 到 1 的变化过程
+  [[../../../files/render_shader-nodes_shader_principled-metallic.webp]]
+
 - 粗糙度贴图 (=Roughness map=)
 
   粗糙度贴图以逐纹素的方式定义表面的粗糙度, 粗糙贴图是 =BRDF= 中 $D$ 和 $G$ 项粗糙度 $\alpha$ 的来源.
 
-  表面越粗糙, 反射越宽泛且模糊; 而越光滑, 反射越集中且清晰, 简单点说就是影响高亮光圈的大小以及亮度.
+  表面越粗糙, 反射越模糊; 而越光滑, 反射越清晰.
+
+  #+attr_html: :width 600px
+  #+caption: 粗糙度 $\alpha$ 从 0 到 1 的变化过程
+  [[../../../files/render_shader-nodes_shader_principled-roughness.webp]]
 
   部分引擎使用光滑度贴图 (=Smoothness map=) 而非粗糙度贴图, 可以通过 $1.0 - \alpha$ 转换成粗糙度.
 
@@ -1901,7 +1911,7 @@ $\begin{equation*} \begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} k_{\mathrm{
     vec3 ambient = vec3(0.03) * albedo * ao;
     vec3 color = ambient + Lo;
 
-    color = color / (color + vec3(1.0));
+    color = color / (color + vec3(1.0)); // Reinhard Tone Mapping
     color = pow(color, vec3(1.0/2.2)); // Gamma Correction
 
     gl_FragColor = vec4(color, 1.0);
