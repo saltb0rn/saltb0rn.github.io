@@ -524,11 +524,41 @@ $z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-ope
 
 该阶段会使用上片元的这些额外值来进行[[https://www.khronos.org/opengl/wiki/Per-Sample_Processing][一系列的测试]], 来决定是否把该片元的色值输出到屏幕上成为像素,
 
-这里就讨论剪裁测试(scissor test), 模板测试(stencil test) 以及深度测试(depth test) 这三个测试(这里是它们的先后顺序).
+这里就讨论剪裁测试(scissor test), 模板测试(stencil test / stencil buffer test) 以及深度测试(depth test / z buffer test) 这三个测试(这里是它们的先后顺序).
 
 其中剪裁测试以及深度测试都比较好理解, 裁剪测试是丢弃剪裁框范围外的片元,
 
-深度测试是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元, 以下是深度测试的逻辑:
+深度测试是丢弃那些被其它片元挡住的片元, 留下没被遮挡住的片元.
+
+其中模板测试和深度测试是开发者需要重点理解的,
+
+#+attr_html: :width 600px
+#+caption: 模板测试以及深度测试流程
+[[../../../files/stencil-buffer-z-buffer-test.jpg]]
+
+#+begin_src javascript
+  const fragments = [{ x, y, z }, ... ]
+  // (x, y) 是像素坐标, z 是深度值
+  for (let { x, y, z } of fragments) {
+    if (stencilTest()) {
+      if (depthTest()) {
+        RenderPixel(x, y);        // 把片元输出到屏幕中
+        DepthBufferOp(z);         // 更新深度缓冲
+        StencilOpZPass();         // 通过模板测试以及深度测试时, 更新模板缓冲
+      } else {
+        StencilOpZFail();         // 通过模板测试但深度测试不通过时, 更新模板缓冲
+      }
+    } else {
+      StencilOpFail();            // 模板测试不通过时, 更新模板缓冲
+    }
+  }
+#+end_src
+
+接下来会分开了解模板测试以及深度测试的具体逻辑, 先从较为简单的深度测试开始.
+
+*深度测试*
+
+以下是深度测试的逻辑:
 
 #+begin_src javascript
   // ...
@@ -540,12 +570,14 @@ $z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-ope
   // depthBuffer 的默认初始数据为 0
 
   // 深度测试以及更新深度缓冲
-  function updateDepthBufferIfCloser(x, y, invZ) {
+  function updateDepthBufferIfCloser(x, y, invZ, depthUpdate) {
     /*
       x: int
       y: int
       inv_z: float
+      depthUpdate: boolean
     ,*/
+    if (!depthUpdate) { return false }
 
     // 根据像素坐标 (x, y) 计算出其在深度缓冲中的元素索引
     const index = y * canvasWidth + x;
@@ -570,6 +602,7 @@ $z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-ope
 
   // 深度测试的开关
   const depthTestEnable = true;
+  const depthMask = true;
 
   // ...
   for (let y = p0.y; y <= p2.y; y++) {
@@ -589,7 +622,7 @@ $z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-ope
 
       // 进行深度测试, 并且更新深度缓冲
       if (depthTestEnable &&
-          updateDepthBufferIfCloser(x, y, iz)) {
+          updateDepthBufferIfCloser(x, y, iz, depthMask)) {
         continue;
       }
 
@@ -598,11 +631,13 @@ $z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-ope
   }
 #+end_src
 
-而模板测试你可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
+*模板测试*
+
+模板测试可以理解为位屏蔽(bit masking)的类似, 使用一个模板缓冲(stencil buffer)作为遮罩层, 把模板值不符合条件的片元都丢弃,
 
 为了更直观地理解, 我直接从 [[https://learnopengl.com/Advanced-OpenGL/Stencil-testing][LearnOpenGL]] 上把图给扒下来, 来看看模板测试以及模板缓冲是怎么样的:
 
-#+CAPTION: 模板测试
+#+CAPTION: 模板测试: 未启用模板测试(左), 要使用的模板缓冲(中), 启用模板测试后(右)
 [[../../../files/stencil_test.png]]
 
 可以看到上模板缓冲就是一张模板图片, 该图片每一个像素都是 8 位大小的数据, 也就是每一个像素实际上就是一个从 0 到 255 的值.
@@ -611,7 +646,142 @@ $z$ 分量是片元的[[https://blog.darksalt.me/docs/posts/2020/06/graphics-ope
 
 当然判断方法也有可能是大于等于 1, 判断方法不是唯一的, 其他方法可以看[[https://www.khronos.org/opengl/wiki/Stencil_Test#Stencil_test][官方文档]].
 
-最后 =OpenGL/WebGL= 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
+模板测试的重点在于它的 =API= 使用流程, 各种渲染引擎仍然采用这套 =API= 设计.
+
+#+begin_src javascript
+  // 渲染管线中有一个默认的模板缓冲, 这些 API 都是这对这个缓冲进行更新
+
+  enable(STENCIL_TEST)            // 开启模板测试
+
+  const mask = 0x01               // [0, 255]
+  stencilMask(mask) // 当 mask = 0 时, 模板缓冲被禁止更新; 其它情况就是按照
+
+  const func = ALWAYS
+  const ref = 0x01
+  stencilFunc(func, ref, mask) // 设置模板测试的方式
+  /*
+    @func 测试用的比较运算符, 对参考值 (ref & mask) 和 (stencil & mask) 进行比较, 有以下选择
+
+
+    NEVER: 永不通过
+    ALWAYS: 总是通过
+    EQUAL: 当 (ref & mask) == (stencil & mask) 成立, 测试通过
+    NOTEQUAL: 当 (ref & mask) !== (stencil & mask) 成立, 测试通过
+    LESS: 当 (ref & mask) < (stencil & mask) 成立, 测试通过
+    LEQUAL: 当 (ref & mask) <= (stencil & mask) 成立, 测试通过
+    GREATER: 当 (ref & mask) > (stencil & mask) 成立, 测试通过
+    GEQUAL: 当 (ref & mask) >= (stencil & mask) 成立, 测试通过
+
+    @ref 参考值
+
+    @mask 对参考值 ref 和模板值 stencil 的位屏蔽码
+  ,*/
+
+
+  const fail = KEEP
+  const zfail = KEEP
+  const zpass = REPLACE
+  stencilOp(fail, zfail, zpass)   // 在不同测试结果下, 对模板缓冲的更新动作
+  /*
+    @fail StencilOpFail
+    @zfail StencilOpZFail
+    @zpass StencilOpZPass
+
+    KEEP: 保持当前 stencil
+    ZERO: 清零 stencil = 0
+    REPLACE: 使用 stencilFunc 中的 ref 并配合 mask 进行替换, stencil = (ref & mask)
+    INCR: 对当前 stencil++, 当 stencil 大于 255, 那么 stencil 就被限定为 255
+    INCR_WRAP: 对当前 stencil++, 当 stencil 大于 255, 那么 stencil = 0
+    DECR: 对当前 stencil--, 当 stencil 小于 0, 那么 stencil = 0
+    DECR_WRAP: 对当前 stencil--, 当 stencil 小于 0, 那么 stencil = 255
+    INVERT: stencil = ~stencil, 比如
+  ,*/
+
+  depthMask(false)                // 关闭深度缓冲更新, 避免绘制蒙版用途的物体对深度缓冲造成影响
+  clear(STENCIL_BUFFER_BIT)       // 模板缓冲默认值是不确定的, 因此这里手动清除缓冲可以使得默认值固定为0
+
+  /*
+
+    假设输出图像是 4 x 4 的分辨率, 清除过后的模板缓冲的数据如下
+
+    0x00 0x00 0x00 0x00
+    0x00 0x00 0x00 0x00
+    0x00 0x00 0x00 0x00
+    0x00 0x00 0x00 0x00
+
+  ,*/
+
+  // colorMask(false, false, false, false)
+
+  /*
+    现在要得到一个如下的模板缓冲:
+
+    0x00 0x00 0x00 0x00
+    0x00 0x01 0x01 0x00
+    0x00 0x01 0x01 0x00
+    0x00 0x00 0x00 0x00
+
+    那么蒙版物体应该占图像中间的四个像素(- 代表空白区域, + 代表物体的片元):
+
+    - - - -
+    - + + -
+    - + + -
+    - - - -
+
+    也就是说物体片元在平面中的位置为 (x, y), 那么模板缓冲在 (x, y) 上的模板值就是该片元的模板值
+
+    然后调用绘制命令, 绘制充当蒙版用途的物体 maskMesh
+  ,*/
+  drawElements(maskMesh)
+
+  /*
+    在调用绘制命令后, 会按照前面的设置更新模板缓冲.
+
+    现在可以使用这个缓冲作为后续绘制的物体的蒙版.
+
+    但首先要保证后续绘制命令不会修改当前的模板缓冲,
+
+    所以要关闭缓冲更新.
+  ,*/
+  stencilMask(0x00)
+
+  // 在绘制前, 要先决定好接下来模板测试的方式
+  stencilFunc(EQUAL, 0x01, 0xFF) // (0x01 & 0xFF) == (stencil & 0xFF)
+  // 由于关闭了模板测试更新, 所以不需要设置 stencilOp 来调整模板更新的动作
+  // 开启深度缓冲更新
+  depthMask(true)
+
+  /*
+    绘制物体, 未启用模板测试时, 新物体 targetMesh 的片元 a,b,c,d 在的排列如下:
+
+    - - - -
+    a b - -
+    - c d -
+    - - - -
+
+    根据测试设置, 在启用测试户, 此时物体片元参考值为 0x01,
+
+    对比模板缓冲, a/b/c/d 这4个位置上的模板值分别为 0x00, 0x01, 0x01, 0x01
+
+    其中片元 a 的测试为 (0x01 & 0xFF) !== (0x00 & 0xFF), 测试不通过, 所以 a 不能显示在屏幕上;
+
+    而 b/c/d 的测试都为 (0x01 & 0xFF) == (0x01 & 0xFF), 测试通过, 所以 b/c/d 会出现在屏幕上;
+
+    最总结果为:
+
+    - - - -
+    - b - -
+    - c d -
+    - - - -
+    
+   ,*/
+  drawElements(targetMesh)
+
+  // 结束模板测试
+  disable(STENCIL_TEST)
+#+end_src
+
+# 最后 =OpenGL/WebGL= 再对经过筛选的片元进行一些处理就能输出到屏幕上了.
 
 *** 一个简单而完整的 Shader 程序
 :PROPERTIES:
