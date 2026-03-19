@@ -3793,25 +3793,31 @@ $\sqrt{\max(|x| - \frac{W}{2}, 0)^2 + \max(|y| - \frac{H}{2}, 0)^2} + \min(\max(
 
 而环绕数算法是计算判定点对于多边形的环绕数, 如果环绕数不为 0, 那么判定点就在多边形内, 所以环绕数算法也被称做非零规则算法(=nonzero-rule algorithm=).
 
-所谓环绕数是指平面上的闭合曲线/多边形绕过判定点的总次数, 如果一个闭合曲线/多边形往逆时针方向绕过判定点 $n$ 次, 那么判定点的环绕数为 $n$, 如果是往顺时针方向旋转 $n$ 次, 那么环绕数是 $-n$.
+所谓环绕数是指平面上的闭合曲线/多边形绕过判定点的总次数, 如果一个闭合曲线/多边形往逆时针方向绕过判定点 $\omega$ 次,
+
+那么判定点的环绕数为 $\omega$, 如果是往顺时针方向旋转 $\omega$ 次, 那么环绕数是 $-\omega$.
 
 #+caption: 环绕数为 2
 [[../../../files/Winding_Number_Animation_Small.gif]]
 
 [[../../../files/winding-number.png]]
 
-因此, 环绕数 $\omega$ 的计算方式大概是沿着闭合曲线/多边形围绕着判定点走过的角度和 $\varphi$ 除以 $2 \pi$: $\omega = \frac{\varphi}{2 \pi}$.
+因此, 环绕数 $\omega$ 的计算方式大概是沿着闭合曲线/多边形围绕着判定点走过的角度和 $\Delta \varphi$ 除以 $2 \pi$: $\omega = \frac{\Delta \varphi}{2 \pi}$.
 
-现在问题就变成如何求解角度和 $\omega$, 先假设闭合曲线的参数方程为 $C(t) = (x(t), y(t))$, $t \in [a, b]$, $C(a) = C(b)$,
+现在问题就变成如何求解角度和 $\Delta \varphi$, 先假设闭合曲线的参数方程为 $C(t) = (x(t), y(t))$, $t \in [a, b]$, $C(a) = C(b)$,
 
 当沿着曲线移动到点 $C(t)$ 上时, 想知道该点到判定点 $R = (x_0, y_0)$ 的角度, 可以通过 $\varphi(t) = \mathrm{atan} (\frac{y(t) - y_0}{x(t) - x_0})$ 求得.
 
 #+caption: $R$ 是判定点, $C(t)$ 是曲线上的点
 [[../../../files/subtended-angle.png]]
 
-计算角度和 $\varphi$ 就是一个连续问题, 因此需要用到积分, 为了让公式看起来简洁, 这里假设判定点 $R$ 在 $(0, 0)$ 上,
+计算角度和 $\Delta \varphi = \varphi(b) - \varphi(a)$ 就是一个连续问题, 可以用积分求解:
 
-首先需要求出 $\frac{d}{d t}(\varphi(t))$, 然后运用积分 $\varphi(t) = \int_{a}^{b} \frac{d}{d t} (\varphi(t)) dt$.
+$\Delta \varphi(t) = \varphi(b) - \varphi(a) = \int_{a}^{b} \frac{d}{d t} (\varphi(t)) dt$
+
+为了让公式看起来简洁, 这里假设判定点 $R$ 在 $(0, 0)$ 上, 得到 $\varphi(t) = \mathrm{atan}(\frac{y(t)}{x(t)})$.
+
+# 首先需要求出 $\frac{d}{d t}(\varphi(t))$, 然后运用积分 $\varphi(t) = \int_{a}^{b} \frac{d}{d t} (\varphi(t)) dt$.
 
 令 $g(t) = \frac{y(t)}{x(t)}$, 分别计算出 $\frac{d}{d t} (g(t))$ 和 $\frac{d}{d t} (\mathrm{atan}(g))$, 再使用链式法则求的 $\frac{d}{dt} (\varphi(t))$:
 
@@ -3831,7 +3837,7 @@ $L_{P_i P_{i+1}}(t) = (x_{i}(t - i), y_{i}(t - i))$, $t \in [i, i + 1]$, 在边 
 
 [[../../../files/signed-angle-for-polygons.png]]
 
-$\omega(R, P) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{R P_i} \cdot \vec{P_{i+1} R}}{|\vec{R P_i}| |\vec{R P_{i+1}}|} \mathrm{sign}(\vec{R P_{i}} \times \vec{R P_{i+1}}) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \varphi_{i}$, 其中 $\mathrm{sign}(x) = \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{if } x = 0 \\ -1 & \text{if } x < 0 \end{cases}$.
+$\omega(R, P) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \mathrm{acos} \frac{\overrightarrow{R P_i} \cdot \overrightarrow{RP_{i+1}}}{|\overrightarrow{R P_i}| |\overrightarrow{R P_{i+1}}|} \mathrm{sign}(\overrightarrow{R P_{i}} \times \overrightarrow{R P_{i+1}}) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \varphi_{i}$, 其中 $\mathrm{sign}(x) = \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{if } x = 0 \\ -1 & \text{if } x < 0 \end{cases}$.
 
 #+begin_quote
 多边形的环绕数公式可以从直觉上看出来, 但这样不够严谨, 它的证明过程来自 [[../../../files/The-point-in-polygon-problem-for-arbitrary-polygons.pdf][参考资料]], 这里进行一些总结和补充.
@@ -3844,39 +3850,41 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum\limits_{i = 0}^{n - 1} \mathrm{acos} \frac{
 
 $R = (0, 0)$
 
-$\begin{cases} \vec{RP} = (x_p, y_p) \\ \vec{RQ} = (x_q, y_q) \\ \vec{RP} \cdot \vec{RQ} = x_p x_q + y_p y_q \\ \vec{RP} \times \vec{RQ} = x_p y_q - x_q y_p \\ \cos \alpha = \frac{\vec{RP} \cdot \vec{RQ}}{|\vec{RP}| |\vec{RQ}|} \end{cases}$
+$\begin{cases} \overrightarrow{RP} = (x_p, y_p) \\ \overrightarrow{RQ} = (x_q, y_q) \\ \overrightarrow{RP} \cdot \overrightarrow{RQ} = x_p x_q + y_p y_q \\ \overrightarrow{RP} \times \overrightarrow{RQ} = x_p y_q - x_q y_p \\ \cos \alpha = \frac{\overrightarrow{RP} \cdot \overrightarrow{RQ}}{|\overrightarrow{RP}| |\overrightarrow{RQ}|} \end{cases}$
 
-$\begin{cases} \vec{QP} = (x_{p} - x_{q}, y_{p} - y_{q}) \\ \vec{RP} = (x_{p}, y_{p}) \\ \vec{QP} \times \vec{RP} = (x_{p} - x_{q})y_{p} - (y_{p} - y_{q})x_{p} = x_{p}y_{p} - x_{q}y_{p} - y_{p}x_{p} + y_{q}x_{p} = x_{p}y_{q} - x_{q}y_{p} \\ \cot \beta = \frac{\vec{QP} \cdot \vec{RP}}{|\vec{QP} \times \vec{RP}|} = \frac{|\vec{QP}| |\vec{RP}| \cos \beta}{|\vec{QP}| |\vec{RP}| \sin \beta} \end{cases}$
+$\begin{cases} \overrightarrow{QP} = (x_{p} - x_{q}, y_{p} - y_{q}) \\ \overrightarrow{RP} = (x_{p}, y_{p}) \\ \overrightarrow{QP} \times \overrightarrow{RP} = (x_{p} - x_{q})y_{p} - (y_{p} - y_{q})x_{p} = x_{p}y_{p} - x_{q}y_{p} - y_{p}x_{p} + y_{q}x_{p} = x_{p}y_{q} - x_{q}y_{p} \\ \cot \beta = \frac{\overrightarrow{QP} \cdot \overrightarrow{RP}}{|\overrightarrow{QP} \times \overrightarrow{RP}|} = \frac{|\overrightarrow{QP}| |\overrightarrow{RP}| \cos \beta}{|\overrightarrow{QP}| |\overrightarrow{RP}| \sin \beta} \end{cases}$
 
-$\begin{cases} \vec{PQ} = (x_{q} - x_{p}, y_{q} - y_{p}) \\ \vec{RQ} = (x_{q}, y_{q}) \\ \vec{PQ} \times \vec{RQ} = (x_{q} - x_{p})y_{q} - (y_{q} - y_{p})x_{q} = x_{q}y_{q} - x_{p}y_{q} - x_{q}y_{q} + x_{q}y_{p} = -(x_{p}y_{q} - x_{q}y_{p}) \\ \vec{RQ} \times \vec{PQ} = x_p y_q - x_q y_p \\ \cot \gamma = \frac{\vec{PQ} \cdot \vec{RQ}}{|\vec{PQ} \times \vec{RQ}|} = \frac{|\vec{PQ}||\vec{RQ}|\cos \gamma}{|\vec{PQ}||\vec{RQ}|\sin \gamma} \end{cases}$
+$\begin{cases} \overrightarrow{PQ} = (x_{q} - x_{p}, y_{q} - y_{p}) \\ \overrightarrow{RQ} = (x_{q}, y_{q}) \\ \overrightarrow{PQ} \times \overrightarrow{RQ} = (x_{q} - x_{p})y_{q} - (y_{q} - y_{p})x_{q} = x_{q}y_{q} - x_{p}y_{q} - x_{q}y_{q} + x_{q}y_{p} = -(x_{p}y_{q} - x_{q}y_{p}) \\ \overrightarrow{RQ} \times \overrightarrow{PQ} = x_p y_q - x_q y_p \\ \cot \gamma = \frac{\overrightarrow{PQ} \cdot \overrightarrow{RQ}}{|\overrightarrow{PQ} \times \overrightarrow{RQ}|} = \frac{|\overrightarrow{PQ}||\overrightarrow{RQ}|\cos \gamma}{|\overrightarrow{PQ}||\overrightarrow{RQ}|\sin \gamma} \end{cases}$
 
-可以发现 $\vec{RP} \times \vec{RQ} = \vec{QP} \times \vec{RP} = \vec{RQ} \times \vec{PQ} = x_{p}y_{q} - x_{q}y_{p}$.
+可以发现 $\overrightarrow{RP} \times \overrightarrow{RQ} = \overrightarrow{QP} \times \overrightarrow{RP} = \overrightarrow{RQ} \times \overrightarrow{PQ} = x_{p}y_{q} - x_{q}y_{p}$.
 
 令 $D = x_{p}y_{q} - x_{q}y_{p}$,
 
 在整个环绕数计算中, 会运用大量的 =2D= 向量叉积运算,
 
-比如 $\vec{RP} \times \vec{RQ}$ 的结果可以用来判断 $\vec{RP}$ 围绕点 $R$ 往哪个方向旋转最小的角度可以到达 $\vec{RQ}$ 上:
+比如 $\overrightarrow{RP} \times \overrightarrow{RQ}$ 的行列式可以用来判断 $\overrightarrow{RP}$ 围绕点 $R$ 往哪个方向旋转最小的角度可以到达 $\overrightarrow{RQ}$ 上:
 
-如果 $\vec{RP} \times \vec{RQ} \gt 0$, 那么 $\vec{RP}$ 需要往逆时针方向旋转;
+如果 $\overrightarrow{RP} \times \overrightarrow{RQ} \gt 0$, 那么 $\overrightarrow{RP}$ 需要往逆时针方向旋转;
 
-如果 $\vec{RP} \times \vec{RQ} \lt 0$, 那么 $\vec{RP}$ 需要往顺时针方向旋转;
+如果 $\overrightarrow{RP} \times \overrightarrow{RQ} \lt 0$, 那么 $\overrightarrow{RP}$ 需要往顺时针方向旋转;
 
-如果 $\vec{RP} \times \vec{RQ} = 0$, 那么 $\vec{RP}$ 和 $\vec{RQ}$ 对齐.
+如果 $\overrightarrow{RP} \times \overrightarrow{RQ} = 0$, 那么 $\overrightarrow{RP}$ 和 $\overrightarrow{RQ}$ 对齐.
 
-对于线性曲线 $PQ = (x(t), y(t)) = t Q + (1 - t)P$, $t \in [0, 1]$,
+对于线性曲线 $PQ$ 上的点 $(x(t), y(t)) = t Q + (1 - t)P$, $t \in [0, 1]$, 有
 
-$\begin{equation*} \begin{aligned} & tQ + (1 - t)P \\ = & tQ + P - tP \\ = & t(Q - P) + P \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \cdot (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \\ = & [t(x_q - x_p) + x_p]^2 + [t(y_q - y_p) + y_p]^2 \\ = & t^2 (x_q - x_p)^2 + 2t (x_q - x_p) x_p + x_p^2 + t^2 (y_q - y_p)^2 + 2t(y_q - y_p)y_p + y_p^2 \\ = & t^2 [(x_q - x_p)^2 - (y_q - y_p)^2] + 2t [(x_q - x_p)x_p + (y_q - y_p)y_p] + x_p^2 + y_p^2 \end{aligned} \end{equation*}$
+$\begin{equation*} \begin{aligned} & tQ + (1 - t)P \\ = & tQ + P - tP \\ = & t(Q - P) + P \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p)\end{aligned} \end{equation*}$
+
+曲线上的点与点 $R$ 的距离为
 
 $\begin{equation*} \begin{aligned} & [x(t)]^2 + [y(t)]^2 \\ = & (t(x_q - x_p) + x_p, t(y_q - y_p) - y_p) \cdot (t(x_q - x_p) + x_p, t(y_q - y_p) + y_p) \\ = & [t(x_q - x_p) + x_p]^2 + [t(y_q - y_p) + y_p]^2 \\ = & t^2 (x_q - x_p)^2 + 2t (x_q - x_p) x_p + x_p^2 + t^2 (y_q - y_p)^2 + 2t(y_q - y_p)y_p + y_p^2 \\ = & t^2 [(x_q - x_p)^2 - (y_q - y_p)^2] + 2t [(x_q - x_p)x_p + (y_q - y_p)y_p] + x_p^2 + y_p^2 \end{aligned} \end{equation*}$
 
-令 $\vec{PQ} = Q - P = (x_q - x_p, y_q - y_p)$, 对上面的等式进行化简:
+令 $\overrightarrow{PQ} = Q - P = (x_q - x_p, y_q - y_p)$, 对上面的等式进行化简:
 
-$\begin{equation*} \begin{aligned} & t^2 (\vec{PQ} \cdot \vec{PQ}) + 2t (\vec{PQ} \cdot \vec{RP}) + \vec{RP} \cdot \vec{RP} \\ = & t^2 [(Q - P) \cdot (Q - P)] + 2t [(Q - P) \cdot (P - R)] + [(P - R) \cdot (P - R)] \\ = & t^2 |Q - P|^2 + 2t [(Q - P) \cdot (P - R)] + |P - R|^2 \end{aligned} \end{equation*}$
+$\begin{equation*} \begin{aligned} & t^2 (\overrightarrow{PQ} \cdot \overrightarrow{PQ}) + 2t (\overrightarrow{PQ} \cdot \overrightarrow{RP}) + \overrightarrow{RP} \cdot \overrightarrow{RP} \\ = & t^2 [(Q - P) \cdot (Q - P)] + 2t [(Q - P) \cdot (P - R)] + [(P - R) \cdot (P - R)] \\ = & t^2 |Q - P|^2 + 2t [(Q - P) \cdot (P - R)] + |P - R|^2 \end{aligned} \end{equation*}$
 
 求 $(x(t), y(t)) = t Q + (1 - t) P$ 的梯度向量: $\begin{cases} x(t) = t x_q + (1 - t) x_p \\ y(t) = t y_q + (1 - t) y_p \end{cases} \xrightarrow [\text{derivate}] t \begin{cases} x^{'}(t) = x_q - x_p \\ y^{'}(t) = y_q - y_p \end{cases}$,
 
-可以发现正好 $\vec{PQ} = (x^{'}(t), y^{'}(t)) = (x_q - x_p, y_q - y_p)$, 而 $\vec{RQ} = (x(t), y(t))$, 所以 $D = \vec{RQ} \times \vec{PQ}$.
+可以发现正好 $\overrightarrow{PQ} = (x^{'}(t), y^{'}(t)) = (x_q - x_p, y_q - y_p)$, 而 $\overrightarrow{RQ} = (x(t), y(t))$, 所以 $D = \overrightarrow{RQ} \times \overrightarrow{PQ}$.
 
 $\begin{equation*} \begin{aligned} & \int_{0}^{1} \frac{y^{'}(t) x(t) - y(t)x^{'}(t)}{x(t)^2 + y(t)^2} dt \\ = & \int_{0}^{1} \frac{D}{t^2 \langle Q - P | Q - P \rangle + 2t \langle Q - P | P - R \rangle + \langle P - R | P - R \rangle} dt \\ = & D \int_{0}^{1} \frac{1}{t^2 \langle Q - P | Q - P \rangle + 2t \langle Q - P | P - R \rangle + \langle P - R | P - R \rangle} dt \end{aligned} \end{equation*}$
 
@@ -3924,17 +3932,17 @@ $\begin{equation*} \begin{aligned} & D \int_{0}^{1} \frac{1}{t^2 \langle Q - P |
 
 其中 $a + b = \langle Q - P | Q - P \rangle + \langle Q - P | P - R \rangle = \langle Q - P | (Q - P + P - R) \rangle = \langle Q - P | Q - R \rangle$,
 
-$\begin{equation*}\begin{aligned} & \tan^{-1} \frac{a + b}{D} - \tan^{-1} \frac{b}{D} \\ = & \tan^{-1} \frac{\langle Q - P|Q - R \rangle}{D} - \tan^{-1} \frac{\langle Q - P | P - R \rangle}{D} \\ = & \tan^{-1} \frac{\langle Q - P|Q - R \rangle}{D} + \tan^{-1} \frac{\langle P - Q | P - R \rangle}{D} \\ = & \tan^{-1} \frac{\vec{PQ} \cdot \vec{RQ}}{D} + \tan^{-1} \frac{ \vec{QP} \cdot \vec{RP} }{D} \\ = & \mathrm{sign}(D) (\tan^{-1}\cot \gamma + \tan^{-1}\cot \beta) \end{aligned} \end{equation*}$
+$\begin{equation*}\begin{aligned} & \tan^{-1} \frac{a + b}{D} - \tan^{-1} \frac{b}{D} \\ = & \tan^{-1} \frac{\langle Q - P|Q - R \rangle}{D} - \tan^{-1} \frac{\langle Q - P | P - R \rangle}{D} \\ = & \tan^{-1} \frac{\langle Q - P|Q - R \rangle}{D} + \tan^{-1} \frac{\langle P - Q | P - R \rangle}{D} \\ = & \tan^{-1} \frac{\overrightarrow{PQ} \cdot \overrightarrow{RQ}}{D} + \tan^{-1} \frac{ \overrightarrow{QP} \cdot \overrightarrow{RP} }{D} \\ = & \mathrm{sign}(D) (\tan^{-1}\cot \gamma + \tan^{-1}\cot \beta) \end{aligned} \end{equation*}$
 
 根据三角函数的关系: $\tan(\frac{\pi}{2} - \phi) = \cot \phi$, 可以得到:
 
 $\begin{equation*} \begin{aligned} & \mathrm{sign}(D)(\tan^{-1} \cot \gamma + \tan^{-1} \cot \beta) \\ = & \mathrm{sign}(D)(\pi - \gamma - \beta) \\ = & \mathrm{sign}(D) \alpha \end{aligned} \end{equation*}$
 
-其中, $\alpha = \mathrm{acos} \frac{\vec{RP} \cdot \vec{RQ}}{|\vec{RP}||\vec{RQ}|}$, 所以 $\int_0^1 \frac{y^{'}(t) \cdot x(t) - y(t) \cdot x^{'}(t)}{x(t)^2 + y(t)^2} dt = \mathrm{sign}(\vec{RP} \times \vec{RQ}) \mathrm{acos} \frac{\vec{RP} \cdot \vec{RQ}}{|\vec{RP}||\vec{RQ}|}$.
+其中, $\alpha = \mathrm{acos} \frac{\overrightarrow{RP} \cdot \overrightarrow{RQ}}{|\overrightarrow{RP}||\overrightarrow{RQ}|}$, 所以 $\int_0^1 \frac{y^{'}(t) \cdot x(t) - y(t) \cdot x^{'}(t)}{x(t)^2 + y(t)^2} dt = \mathrm{sign}(\overrightarrow{RP} \times \overrightarrow{RQ}) \mathrm{acos} \frac{\overrightarrow{RP} \cdot \overrightarrow{RQ}}{|\overrightarrow{RP}||\overrightarrow{RQ}|}$.
 
 最后, 对多边形的每条边关于判定点的环绕角度进行统计, 并得出环绕数:
 
-$\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP_i} \cdot \vec{RQ}}{|\vec{RP_i}||\vec{RQ}|} \mathrm{sign}(\vec{RP_i} \times \vec{RQ})$, 其中 $Q = P_{i + 1}$.
+$\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\overrightarrow{RP_i} \cdot \overrightarrow{RQ}}{|\overrightarrow{RP_i}||\overrightarrow{RQ}|} \mathrm{sign}(\overrightarrow{RP_i} \times \overrightarrow{RQ})$, 其中 $Q = P_{i + 1}$.
 #+end_quote
 
 但是, 使用环绕角来计算环绕数的算法存在一些性能缺陷, 因为需要用到三角函数以及算一整圈的角度.
@@ -3948,13 +3956,13 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+attr_html: :width 504px
 [[../../../files/Winding_number_algorithm_example.svg.png]]
 
-以上图的点 $R$ 为例子, 以它为起点的水平射线与线段 $P_iP_{i+1}$ 发生了一次相交, 于是计算 $\vec{P_{i}P_{i+1}} \times \vec{P_{i}R}$,
+以上图的点 $R$ 为例子, 以它为起点的水平射线与线段 $P_iP_{i+1}$ 发生了一次相交, 于是计算 $\overrightarrow{P_{i}P_{i+1}} \times \overrightarrow{P_{i}R}$,
 
-这里令 $\vec{P_i P_{i+1}} = (x_1, y_1)$, $\vec{P_{i} R} = (x_2, y_2)$, 所以 $\vec{P_{i}P_{i+1}} \times \vec{P_{i}R} = x_1 y_2 - x_2 y_1$,
+这里令 $\overrightarrow{P_i P_{i+1}} = (x_1, y_1)$, $\overrightarrow{P_{i} R} = (x_2, y_2)$, 所以 $\overrightarrow{P_{i}P_{i+1}} \times \overrightarrow{P_{i}R} = x_1 y_2 - x_2 y_1$,
 
 如果计算结果为负数, 那么环绕数减一; 如果计算结果为正数, 那么环绕数加一; 如果计算结果是零, 那么环绕数不变.
 
-显然, $R$ 点的环绕数为 $-1$, 因为 $\vec{P_{i}P_{i+1}}$ 要往顺时针方向旋转到 $\vec{P_{i}R}$.
+显然, $R$ 点的环绕数为 $-1$, 因为 $\overrightarrow{P_{i}P_{i+1}}$ 要往顺时针方向旋转到 $\overrightarrow{P_{i}R}$.
 
 #+BEGIN_SRC glsl
   #define N 5
@@ -4056,9 +4064,9 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+attr_html: :width 504px
 [[../../../files/ray-tracing.jpg]]
 
-从相机 $O$ 发出数条视觉射线(=view ray=), 假设其中一条视觉射线穿过投影平面(也就是最终成像的图像)上位于位置 $P$ 的像素, 所以射线的方向为 $P - O = \vec{OP}$, 判断该视觉射线是否和物体相交, 如果存在多个交点 $i_0, i_1$, 便从物体在离相机最近的相交点上获取颜色来作为位于 $P$ 点像素的颜色; 如果不存在交点, 那么 $P$ 上的像素将不设置任何颜色或设置默认色.
+从相机 $O$ 发出数条视觉射线(=view ray=), 假设其中一条视觉射线穿过投影平面(也就是最终成像的图像)上位于位置 $P$ 的像素, 所以射线的方向为 $P - O = \overrightarrow{OP}$, 判断该视觉射线是否和物体相交, 如果存在多个交点 $i_0, i_1$, 便从物体在离相机最近的相交点上获取颜色来作为位于 $P$ 点像素的颜色; 如果不存在交点, 那么 $P$ 上的像素将不设置任何颜色或设置默认色.
 
-接着是阴影的形成, 原理类似, 从光源视觉射线与物体的交点 $S$ 往光源发出一条阴影射线 $\vec{SL} = L - S$, 再找出这条阴影射线上离 $S$ 最近的交点 $J_0$, 如果 $|J_0 - S| \lt |L - S|$, 那么 $S$ 就处于阴影之中, 在视觉射线所对应的像素上设置阴影色; 如果 $|J_0 - S| \ge |L - S|$ (不存在交点也属于这种情况), 那么 $S$ 不再阴影之中, 便无需设置阴影色.
+接着是阴影的形成, 原理类似, 从光源视觉射线与物体的交点 $S$ 往光源发出一条阴影射线 $\overrightarrow{SL} = L - S$, 再找出这条阴影射线上离 $S$ 最近的交点 $J_0$, 如果 $|J_0 - S| \lt |L - S|$, 那么 $S$ 就处于阴影之中, 在视觉射线所对应的像素上设置阴影色; 如果 $|J_0 - S| \ge |L - S|$ (不存在交点也属于这种情况), 那么 $S$ 不再阴影之中, 便无需设置阴影色.
 
 #+begin_quote
 上面介绍内容只是比较简单的成像实现, 比如没有考虑物体投影和光线反射的情况, 但本文专注于基本的成像原理,
@@ -4079,7 +4087,7 @@ $\omega(R, P) = \frac{1}{2 \pi} \sum_{i = 0}^{n - 1} \mathrm{acos} \frac{\vec{RP
 #+caption: 光线步进
 [[../../../files/08_displacement_05.png]]
 
-假设要判断位于 $p_0$ 的相机在方向 $\vec{rd}$ (是单位向量) 上发射出的一条视角射线是否与物体相交, 先在 $p_0$ 上找到距离步长 $d_1$ 并沿着方向 $\vec{rd}$ 前进到 $p_1$, 只有这个步长可以保证所有从 $p_0$ 沿着任意方向发出的射线不会进入物体内部, 比如步长 $e_1$ 会让某些方向的射线进入物体内, $d_1$ 的特点是所有可选步长中最短, 后续 $d_2$, $d_3$ 和 $d_4$ 的计算同理. 前进后的坐标计算为 $p_n = p_0 + \vec{rd} \cdot \sum\limits_{i=0}^{n} d_i$, 其中 $d_0 = 0$.
+假设要判断位于 $p_0$ 的相机在方向 $\overrightarrow{rd}$ (是单位向量) 上发射出的一条视角射线是否与物体相交, 先在 $p_0$ 上找到距离步长 $d_1$ 并沿着方向 $\overrightarrow{rd}$ 前进到 $p_1$, 只有这个步长可以保证所有从 $p_0$ 沿着任意方向发出的射线不会进入物体内部, 比如步长 $e_1$ 会让某些方向的射线进入物体内, $d_1$ 的特点是所有可选步长中最短, 后续 $d_2$, $d_3$ 和 $d_4$ 的计算同理. 前进后的坐标计算为 $p_n = p_0 + \overrightarrow{rd} \cdot \sum\limits_{i=0}^{n} d_i$, 其中 $d_0 = 0$.
 
 由于光线在前进时不断形成球体检查相交情况, 所以光线步进也被称为球体追踪(=sphere tracing=).
 

@@ -3604,6 +3604,13 @@ void main() {
 
 [[https://github.com/saltb0rn/shader-for-game-dev/blob/master/src/SSR/postProcessing/SSRPass.ts][src/SSR/postProcessing/SSRPass.ts]]
 
+
+# *** 全局光照
+
+# https://cybereality.com/screen-space-indirect-lighting-with-visibility-bitmask-improvement-to-gtao-ssao-real-time-ambient-occlusion-algorithm-glsl-shader-implementation/
+
+# https://threejs.org/examples/webgl_simple_gi.html
+
 *** 辉光 (Bloom)
 
 # 大概思路
@@ -3674,7 +3681,7 @@ https://zhuanlan.zhihu.com/p/548799663
 
 是一种屏幕空间技术, 一般用来实现天气系统, 昼夜系统.
 
-*** COMMENT 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)
+*** 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)
 
 https://github.com/gkjohnson/three-mesh-bvh
 
@@ -3687,6 +3694,126 @@ https://github.com/gkjohnson/three-mesh-bvh/blob/91be8eb38b434835108e435b0731211
 https://discourse.threejs.org/t/datatexture3d-generation-three-mesh-bvh/29190/3
 
 [[../../../files/SDF-threejs.zip]]
+
+使用 =MeshBvh= 构建出 =bvh=.
+
+先生成 =BVH=, 再根据 =BVH= 生成 =SDF=.
+
+比起 =three-mesh-bvh= 更简单的 =BVH= 实现
+
+https://github.com/benraziel/bvh-tree?tab=readme-ov-file
+
+=three-mesh-bvh= 生成 =SDF= 的算法:
+
+https://github.com/gkjohnson/three-mesh-bvh/blob/master/example/sdfGeneration.js
+
+=updateSDF= 的 =CPU= 生成.
+
+**** 计算判定点与三角形所处平面的有向距离
+
+假设判定点 $Q$ 与三角形 $\Delta ABC$ 不处于同一个平面,
+
+首先需要清楚平面的朝向, 它等于三角形的法向量:
+
+$\vec{N} = \overrightarrow{AB} \times \overrightarrow{AC}$, 其中 $\begin{cases} \overrightarrow{AB} = B - A \\ \overrightarrow{AC} = C - A \end{cases}$
+
+其单位向量为 $\hat{N} = \frac{\vec{N}}{\left| N \right|}$, 
+
+点 $Q$ 到平面的有限距离为 $d = \overrightarrow{AP} \cdot \hat{N}$,
+
+点 $Q$ 在平面上的投影点为 $P = Q - d \times \hat{N}$.
+
+**** 判断投影点是否在三角形内部 - 重心坐标法(Barycentric Coordinate Method)
+
+判断点是否在三角形内有很多种方法, 比较常用的有同向法和接下来要学习重心坐标法.
+
+已知 $P$ 是 $Q$ 在三角形 $\Delta ABC$ 所处平面上的一个投影点,
+
+同向法的原理要比重心坐标法更加直观一点, 但有适用条件: 需要提前确定三角形顶点的渲染顺序.
+
+相比之下, 重心坐标法是所有情况通用的. 其实如果对线性代数有了解的话, 重心坐标法也是挺直观的:
+
+把 $\overrightarrow{AB} = B - A$ 和 $\overrightarrow{AC} = C - A$ 分别看作坐标轴, 以 $A$ 为原点共同构成一个平面坐标系,
+
+$(u, v)$ 就是 $P$ 该坐标系上的一个线性组合
+
+$\begin{equation*}\begin{aligned}
+& P = A + u \overrightarrow{AC} + v \overrightarrow{AB} \\
+= & A + u (C - A) + v (B - A) \\
+= & (1 - u - v) A + vB + uC \\
+\rightarrow & P - A = \overrightarrow{AP} = u \overrightarrow{AC} + v \overrightarrow{AB}
+\end{aligned}\end{equation*}$
+
+[[../../../files/barycoord.png]]
+
+令 $\begin{cases} \beta = v \\ \gamma = u \\ \alpha = 1 - u - v = 1 - \beta - \gamma \end{cases}$, 得到的 $P = \alpha A + \beta B + \gamma C$ 就是常见的重心坐标定义.
+
+当 $\begin{cases} v + u \le 0 \\ v \gt 0 \\ u \gt 0 \end{cases}$ 同时满足, 那就 $P$ 处于三角形内; 否则 $P$ 在三角形之外, 这就是重心坐标法的原理.
+
+如果不理解, 可以想象一下 $v \lt 0$, $P$ 就处于 $\overrightarrow{AC}$ 反方向, 这必然在三角形之外;
+
+如果 $\begin{cases} v = 1.5 \\ u = 0\end{cases} \rightarrow v + u \gt 1$, $P$ 就超出三角形的范围.
+
+#+begin_quote
+还可以从从三角形面积的角度出发, 我们知道 $\vec{a} \times \vec{b}$ 模长等于 $\vec{a}$ 和 $\vec{b}$ 所张成的平行四边形面积,
+
+而三角形的面积正是平行四边形的一半. 我们可以让点 $P$ 分别与点 $A$ / $B$ / $C$ 之间连接线段,
+
+构造出 $\Delta APB$ / $\Delta APC$ / $\Delta BPC$ 三个子三角形: $S_{\Delta APB} + S_{\Delta APC} + S_{\Delta BPC} = S_{\Delta ABC}$.
+
+接下来分别计算出它们的面积关系:
+
+$S_{\Delta ABC} = \frac{1}{2}\left| \overrightarrow{AC} \times \overrightarrow{AB} \right|$
+
+$\begin{equation*}\begin{aligned}
+& S_{\Delta APB} \\
+= & \frac{1}{2}\left| \overrightarrow{AP} \times \overrightarrow{AB} \right| \\
+= & \frac{1}{2}\left|(u\overrightarrow{AC} + v\overrightarrow{AB}) \times \overrightarrow{AB}\right| \\
+= & \frac{1}{2}\left| u \overrightarrow{AC} \times \overrightarrow{AB} + v \overrightarrow{AB} \times \overrightarrow{AB} \right| && \text{应用向量运算性质} (\vec{a} + \vec{b}) \times \vec{c} = \vec{a} \times \vec{c} + \vec{b} \times \vec{c} \\
+= & \frac{1}{2}\left| u \overrightarrow{AC} \times \overrightarrow{AB} \right| && \text{应用向量运算性质} \vec{a} \times \vec{a} = \vec{0} \\
+= & \frac{1}{2} \left| u \right| \left| \overrightarrow{AC} \times \overrightarrow{AB} \right|
+\end{aligned}\end{equation*}$
+
+$S_{\Delta APC} = \frac{1}{2}\left| \overrightarrow{AC} \times \overrightarrow{AP} \right| = \left| \overrightarrow{AC} \times (u \overrightarrow{AC} + v \overrightarrow{AB}) \right| = \frac{1}{2} \left| v \right| \left| \overrightarrow{AC} \times \overrightarrow{AB} \right|$
+
+$S_{\Delta BPC} = S_{\Delta ABC} - S_{\Delta APB} - S_{\Delta APC} = \left(1 - \left| u \right| - \left| v \right|\right) \frac{1}{2} \left| \overrightarrow{AC} \times \overrightarrow{AB} \right|$
+
+可以得到 $\begin{cases} \frac{S_{\Delta BPC}}{S_{\Delta ABC}} = 1 - \left| u \right| - \left| v \right| \\ \frac{S_{\Delta APB}}{S_{\Delta ABC}} = \left| u \right|  \\ \frac{S_{\Delta APC}}{S_{\Delta ABC}} = \left| v \right| \end{cases}$
+
+由于上面的推导是基于 $P$ 在三角形内的前提, 所以 $u$ 和 $v$ 都大于 0, 且 $u + v \le 1$. 可以发现与线性组合的定义是一样的.
+#+end_quote
+
+因此, 现在的目标变成了解方程 $\begin{cases}  \overrightarrow{AP} \cdot \overrightarrow{AC} = (u\overrightarrow{AC} + v\overrightarrow{AB}) \cdot \overrightarrow{AC} = u \overrightarrow{AC} \cdot \overrightarrow{AC} + v \overrightarrow{AB} \cdot \overrightarrow{AC} \\ \overrightarrow{AP} \cdot \overrightarrow{AB} = (u\overrightarrow{AC} + v\overrightarrow{AB}) \cdot \overrightarrow{AB} = u \overrightarrow{AC} \cdot \overrightarrow{AB} + v \overrightarrow{AB} \cdot \overrightarrow{AB}\end{cases}$,
+
+#+begin_quote
+由于 $\overrightarrow{AB}$ 和 $\overrightarrow{AC}$ 并不一定正交, 所以 $\begin{cases} \overrightarrow{AP} \cdot \overrightarrow{AB} = v \\ \overrightarrow{AP} \cdot \overrightarrow{AC} = u \end{cases}$ *不一定* 成立.
+#+end_quote
+
+为了方便阅读, 令 $\begin{cases} \mathbf{a} = \overrightarrow{AC} \cdot \overrightarrow{AC} \\ \mathbf{b} = \overrightarrow{AB} \cdot \overrightarrow{AC} = \overrightarrow{AC} \cdot \overrightarrow{AB} \\ \mathbf{c} = \overrightarrow{AB} \cdot \overrightarrow{AB} \\ \mathbf{d} = \overrightarrow{AP} \cdot \overrightarrow{AC} \\ \mathbf{e} = \overrightarrow{AP} \cdot \overrightarrow{AB} \end{cases} \rightarrow \begin{cases} \mathbf{d} = \mathbf{a}u + \mathbf{b}v \\ \mathbf{e} = \mathbf{b}u + \mathbf{c}v \end{cases}$.
+
+在计算时还需要注意三角形的退化情况, 即三个点共线无法构成具有二维区域的平面图形, 而是退化成为一条线段, 三角形的面值为 0.
+
+方法也很简单, 矩阵的行列式表示变换所带来面积/体积的变化, 而坐标系可以用矩阵表示, 因此可以通过行列式进行判断三角形是否退化:
+
+$\mathbf{D} = \left| \begin{array}{c} \mathbf{a} & \mathbf{b} \\ \mathbf{b} & \mathbf{c} \end{array} \right| = \mathbf{a}\mathbf{c} - \mathbf{b}^2$
+
+如果 $\mathbf{D} \ne 0$, 那么三角形就是非退化的情况, 可以通过可莱姆法则来解出 $\begin{cases} u = \frac{\mathbf{d}\mathbf{c} - \mathbf{b}\mathbf{e}}{\mathbf{D}} \\ v = \frac{\mathbf{a}\mathbf{e} - \mathbf{b}\mathbf{d}}{\mathbf{D}} \end{cases}$;
+
+如果 $\mathbf{D} = 0$, 那么三角形就是退化的情况, 需要把问题转化成求点 $Q$ 与线段距离的问题.
+
+# $\Delta = $
+
+# https://blog.csdn.net/chaser30/article/details/141993529
+
+# https://chat.deepseek.com/a/chat/s/d5b99b2a-5ec1-44d2-983e-5518ae55d6be
+
+*方法二*
+
+构建出一个由 $\overrightarrow{AC}$, $\overrightarrow{AB}$ 和 $\overrightarrow{AC} \times \overrightarrow{AB}$ 组成的参考系,
+
+$\overrightarrow{AQ} = u \overrightarrow{AC} + v \overrightarrow{AB} + w \left(\overrightarrow{AC} \times \overrightarrow{AB}\right)$
+
+
 
 *** 风格化渲染: 地平线视差 (Curved World)
 :properties:
