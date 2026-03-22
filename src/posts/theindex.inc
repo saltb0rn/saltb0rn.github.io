@@ -22,6 +22,7 @@
   - [[file:2024/08/godot-learning-diary.org][Godot 4 学习日记]]
 * H
   - [[file:2018/05/hello-world.org][Hello, world]]
+  - [[file:2025/05/how-to-read-and-do-proofs-notes.org][How to Read and Do Proofs 6th Edition 阅读笔记]]
   - [[file:2019/01/http-headers-tutorial-notes.org][HTTP Headers 学习笔记]]
 * I
   - [[file:2024/11/introduction-to-probability.org][Introduction To Probability 的阅读草稿纸]]
@@ -46,6 +47,7 @@
 * T
   - [[file:2018/11/eopl-interpreter.org][The Interpreter]]
   - [[file:2018/11/eopl-sllgen.org][The Sllgen Parser]]
+  - [[file:2025/12/tlpi-notes.org][TLPI 阅读笔记]]
 * W
   - [[file:2018/11/warframe-damage-cal.org][Warframe伤害计算]]
   - [[file:2024/07/wasm-in-practice.org][WASM实践]]
@@ -89,6 +91,8 @@
   - [[file:2018/08/tornado-with-docker.org][用Docker打包Tornado羡慕]]
 * 直
   - [[file:2018/11/eopl-techniques-to-imp-interpreter.org][直译器的实现技术总结]]
+* 简
+  - [[file:2024/10/calculus-notes-simplified.org][简体微积分]]
 * 线
   - [[file:2019/12/linear-algebra-notes.org][线性代数读书随笔]]
 * 网
@@ -104,3 +108,5 @@
 * 设
   - [[file:2018/07/how-to-block-ip-addresses-from-countries.org][设置Nginx禁止某些地区IP的访问]]
   - [[file:2018/09/design-patterns.org][设计模式总结]]
+* 阅
+  - [[file:2026/01/the-strategy-to-read-code-base.org][阅读源代码的策略]]

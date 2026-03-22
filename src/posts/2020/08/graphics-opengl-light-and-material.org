@@ -1377,7 +1377,7 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
        vec3 lightDir = -normalize(lightToFrag);
        float currentFragDepth = length(lightToFrag);
        float shadow = 0.0;
-       float offset = 1.0;
+       float offset = 0.1;
        float samples = 4.0;
        float increment = offset / (samples * 0.5);
        for (int x = -offset; x < offset; x += increment) {
@@ -1409,26 +1409,63 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
 
 读取的时候根据光照计算出 =UV= 坐标在进行读取. 就像是立方体映射的展开图那样.
 
-#+caption: 立方体映射展开
+#+caption: 立方体映射展开: 一个平面对应一张图
 [[../../../files/cubemap-unfold.jpg]]
 
-但 =three.js= 没有采用这套布局, 该布局需要 $4 \times 3$ 个 $2 \times 2$ 规格的方块储存 6 张贴图的内容,
+仔细观察的话可以发现不同面的映射之间存在缝隙, 并非连续的.
 
-每个方块的纹理范围是 $[-1, 1]^2$ 的范围, 整个贴图的有效利用率只有 $\frac{1}{2}$.
+这不是为了教学目的而设置的, 实践工程中通常就是这样的,
+
+人们把一个连续的独立映射称为 =UV= 岛 (=UV Islands=).
+
+这些空白的作用是防止跨岛采样的问题, 要想理解这个问题得先了解贴图采样的本质:
+
+1. 根据采样点的 =UV= 坐标 $(u, v)$ 以及贴图尺寸 $w \times h$ 计算出采样点在贴图中像素坐标 $(x_0, y_0)$: $\begin{cases} x_0 = \lfloor u \times w \rfloor \\ y_0 = \lfloor v \times h \rfloor \end{cases}$
+
+2. 根据 $(x_0, y_0)$ 计算出其周围的像素坐标 $(x_1, y_0)$, $(x_0, y_1)$ 以及 $(x_1, y_1)$: $\begin{cases} x_1 = x_0 + 1 \\ y_1 = y_0 + 1 \end{cases}$
+
+3. 分别获取这四个位置上的像素值 $p_{00}$, $p_{10}$, $p_{01}$ 以及 $p_{11}$
+
+4. 以某种插值算法 $f$ 计算出结果 $p = f(p_{00}, p_{10}, p_{01}, p_{11})$ 作为采样点的像素值
+
+
+假设现在有一张没有缝隙的映射贴图如下:
+
+#+caption: 红框为岛的边界, 边界之间没有缝隙, $S = (0.499, 0.6)$ 是采样点, 贴图尺寸为 $400 \times 200$
+[[../../../files/uv-islands-without-seams.png]]
+
+其中岛 $A$ 和 岛 $B$ 的大小和形状都是一样的, 岛 $A$ 占贴图的左半部分 ($u \in [0, 0.5), x \in [0, 200)$), 岛 $B$ 占右半部分 ($u \in [0.5, 1.0], x \in [200, 400)$),
+
+按照前面的步骤计算出要用到的像素坐标分量 $\begin{cases} x_0 = \lfloor 0.499 \times 400 \rfloor = 199 \\ y_0 = \lfloor 0.6 \times 200 \rfloor = 120 \\ x_1 = x_0 + 1 = 200 \\ y_1 = y_0 + 1 = 121 \end{cases}$
+
+可以发现虽然采样点在岛 $A$, 但在插值计算用到了岛 $B$ 的像素值.
+
+因此, 正确的 =UV= 映射贴图布局是每个 =UV= 岛之间留一部分空隙,
+
+并且 =UV= 岛边界外的一两个像素坐标会额外储存边界的颜色, 当采样点在边界时就能获得相对正确的采样结果.
+
+#+caption: 带缝隙的映射贴图, 且 =UV= 岛外有额外像素储存边界的颜色
+[[../../../files/uv-islands-with-seams.png]]
+
+但 =three.js= 没有采用上面立方体映射的这套布局, 因为这套布局需要 $4 \times 3$ 个 $2 \times 2$ 规格的方块储存 6 张贴图的内容,
+
+整个贴图的有效利用率只有 $\frac{1}{2}$.
 
 为了节省空间, 从 =three.js= 的 =shader= 函数 [[https://github.com/mrdoob/three.js/blob/r179/src/renderers/shaders/ShaderChunk/shadowmap_pars_fragment.glsl.js#L224][cubeToUV (r179)]] 的描述中可以发现它的布局是这样的,
 
 #+caption: three.js 阴影贴图的布局
 [[../../../files/cubemap-unfold-in-threejs.jpg]]
 
-以 $-Z$ 作为中心, 只需要用到 $4 \times 2$ 个 $2 \times 2$ 规格的方块, 还能把有效利用率提高到 $\frac{3}{4}$.
+以 $-Z$ 作为中心, 只需要用到 $4 \times 2$ 个 $2 \times 2$ 规格的方块, 能把有效利用率提高到 $\frac{3}{4}$.
+
+每个纹理坐标是根据 =TBN= 空间的顶点坐标计算出来, 即便成为世界坐标之前的顶点坐标, 每个方块的纹理范围是 $[-1, 1]^2$,
 
 这是 =three.js= 的实现:
 
 #+BEGIN_SRC glsl
   vec2 cubeToUV( vec3 v, float texelSizeY ) {
-    // v 是射线方向, 一般经过单位化
-    // texelSizeY 是纹数尺寸
+    // v 是 TBN 空间上的顶点坐标, 同时也是射线方向, 需要经过单位化
+    // texelSizeY 是在垂直方向上的纹素尺寸, 即 1.0 / h
 
     // Number of texels to avoid at the edge of each square
 
@@ -1440,23 +1477,6 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
     absV *= scaleToCube;
 
     // Apply scale to avoid seams
-    // 划分过的边界纹理坐标是不等于整数的, 比如
-    //      |
-    //      |     方格 A
-    //      |
-    //    0.99    <--- 决策边界
-    //      |
-    //      |     安全边界, 不做处理
-    //      |
-    //      1(0)  <--- 理论边界, 自身方格的结束边界, 相邻方格的起始边界
-    //      |
-    //      |
-    //      |     方格 B
-    //      |
-    //    0.01
-    // 需要创建一个安全边界来防止采样错误
-
-    // 这里的安全边界宽度为 2 个纹素大小, NEAREST 滤波只需要一个纹素
     // two texels less per square (one texel will do for NEAREST)
     v *= scaleToCube * ( 1.0 - 2.0 * texelSizeY );
 
@@ -1503,6 +1523,13 @@ $\mathrm{result\_color} = (\mathrm{ambient} + \mathrm{diffuse} + \mathrm{specula
 官方给出不使用 =CubeMap= 理由在这个 =2017= 年的 [[https://github.com/mrdoob/three.js/issues/11189][PR]] 中可以找到.
 #+end_quote
 
+假设使用 =three.js= 的方案, 那么
+
+#+begin_src glsl
+  uniform vec2 shadowMapSize;
+
+  vec4 closestDepth = texture2D(shadowMap, cubeToUV(lightDir, 1.0 / shadowMapSize.y));
+#+end_src
 
 ** 基于物理的渲染 - PBR (Physically Based Rendering)
 

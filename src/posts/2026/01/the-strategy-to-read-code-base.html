@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-03-17 Tue 13:14 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>阅读源代码的策略</title>
+<meta name="author" content="saltb0rn" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="/home/saltb0rn/.emacs.d/assets/mathjax/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">阅读源代码的策略</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#h-fd84d7a4-b422-4b02-ba11-444dc11163c7">1. 理清楚自己阅读代码的目的</a></li>
+<li><a href="#h-ed093b79-039b-41c8-85a7-975fe98f763f">2. 如何阅读开源项目</a>
+<ul>
+<li><a href="#h-1d6b982f-947b-4c95-acd1-23e2217fcaa8">2.1. 找到项目起点</a></li>
+<li><a href="#h-0c0939bd-7175-4475-9581-acc8c6d71cf4">2.2. 边阅读边做笔记</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="abstract" id="org025cf0c">
+<p>
+"如何正确阅读源代码?" 是本人多年以前的疑问, 在网络上找了很久也没有想要的答案, 因为每个答案都不太一样.
+</p>
+
+<p>
+在多年后的今天才想起这个问题, 然而此刻心中已有了一个比较明确的答案.
+</p>
+
+</div>
+<div id="outline-container-h-fd84d7a4-b422-4b02-ba11-444dc11163c7" class="outline-2">
+<h2 id="h-fd84d7a4-b422-4b02-ba11-444dc11163c7"><span class="section-number-2">1.</span> 理清楚自己阅读代码的目的</h2>
+<div class="outline-text-2" id="text-h-fd84d7a4-b422-4b02-ba11-444dc11163c7">
+<p>
+现在想起来每个答案背后不一样是因为回答的人阅读代码的目的不一样, 或者阅读代码的时机不一样.
+</p>
+
+<p>
+比如说在工作上发现同事的业务代码有问题, 想要阅读他的代码去解决这个问题;
+</p>
+
+<p>
+又比如说对编译原理比较感兴趣, 于是想要通过阅读编译器的源代码来学习编译原理.
+</p>
+
+<p>
+因此, <b>要读懂别人的代码, 总需要有一些前置知识</b>.
+</p>
+
+<p>
+比如第一种情况需要了解业务流程, 第二种情况需要具备一定的编译/解释原理结构的知识;
+</p>
+
+<p>
+这两种情况的差别在于阅读门槛, 第二种情况比起第一种情况需要特定领域的专业知识.
+</p>
+
+<p>
+我相信大部分人阅读源代码的目的都是为了学习某个领域的专业知识, 然而,
+</p>
+
+<p>
+直接通过阅读源代码来掌握专业知识, 很容易会出现为什么这么写的疑问,
+</p>
+
+<p>
+即便有意识地去检索, 最后大概会发现会连他人对代码的解释也看得不懂,
+</p>
+
+<p>
+就像代码一样, 知识之间也会有依赖, 没有这个知识 \(B\) 的前置知识 \(A\), 那就理解不了 \(B\).
+</p>
+
+<p>
+因此, 我是不赞同网络上那么二话不说就让新手阅读源代码的做法, 阅读代码之前得保证新手是业内人士,
+</p>
+
+<p>
+我对业内人士的定义是具备该领域内一定的专业知识, 可以达到看得懂这方面代码的水平,
+</p>
+
+<p>
+这种情况下去阅读代码才有所收获, 但这么一来阅读代码的目的就变成了学习实践, 加强对知识理论的巩固,
+</p>
+
+<p>
+而不是学习知识理论了, 也就是说阅读代码并非学习知识理论的手段.
+</p>
+</div>
+</div>
+<div id="outline-container-h-ed093b79-039b-41c8-85a7-975fe98f763f" class="outline-2">
+<h2 id="h-ed093b79-039b-41c8-85a7-975fe98f763f"><span class="section-number-2">2.</span> 如何阅读开源项目</h2>
+<div class="outline-text-2" id="text-h-ed093b79-039b-41c8-85a7-975fe98f763f">
+</div>
+<div id="outline-container-h-1d6b982f-947b-4c95-acd1-23e2217fcaa8" class="outline-3">
+<h3 id="h-1d6b982f-947b-4c95-acd1-23e2217fcaa8"><span class="section-number-3">2.1.</span> 找到项目起点</h3>
+<div class="outline-text-3" id="text-h-1d6b982f-947b-4c95-acd1-23e2217fcaa8">
+<p>
+通常开源项目都有做版本管理, 比如使用 <code>git</code> 做版本管理.
+</p>
+
+<p>
+版本管理信息可以给读者提供很有用的信息, 比如想要学习项目中某个功能的实现,
+</p>
+
+<p>
+可以使用版本控制工具浏览相关功能源代码的提交历史, 从该文件的第一个提交历史开始阅读.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">git log --oneline -- /path/to/file
+</pre>
+</div>
+
+<p>
+因为功能的第一版实现通常都是最简单的, 阅读起来会比较轻松.
+</p>
+
+<p>
+同理, 整个项目的阅读也可以这么做: 从第一版开始阅读.
+</p>
+
+<p>
+通常整个项目的第一版可以通过 <code>git-tag</code> 来找到.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">git tag
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-h-0c0939bd-7175-4475-9581-acc8c6d71cf4" class="outline-3">
+<h3 id="h-0c0939bd-7175-4475-9581-acc8c6d71cf4"><span class="section-number-3">2.2.</span> 边阅读边做笔记</h3>
+<div class="outline-text-3" id="text-h-0c0939bd-7175-4475-9581-acc8c6d71cf4">
+<p>
+大部分开源项目都有着自己的项目结构, 这是开发者们为了提高项目的维护性所产生的结果.
+</p>
+
+<p>
+然而, 项目结构对于非项目的开发者来说是陌生的. 有时候你只想阅读某个代码文件中的一个函数 \(A\),
+</p>
+
+<p>
+但发现 \(A\) 调用了另一个函数 \(B\), 且 \(B\) 本身也调用了另一个函数 \(C\), 如此类推有着一系列依赖.
+</p>
+
+<p>
+这种情况最好通过笔记来理清楚调用关系, 特别是当这些函数被定义在不同的代码文件中,
+</p>
+
+<p>
+如果熟悉作图, 那么可以绘制出调用链; 如果不熟悉, 那么按照调用顺序列出即可.
+</p>
+
+<p>
+从调用链中选取想要阅读的函数, 理解函数的定义: 函数的执行流程是怎么样的, 为什么这么写, 等等; 把这些东西记录下来.
+</p>
+
+<p>
+做笔记需要达到一个标准: 在隔了一段时间后自己能阅读明白.
+</p>
+
+<p>
+这是最低标准, 有更高追求可以尝试把笔记写成供众人阅读的教程, 这往往要求内容通俗易懂.
+</p>
+
+<p>
+对于不同专业领域, 做笔记的手法也不同, 比如一些情况下需要专门分析几何关系, 那这特别需要作图理解;
+</p>
+
+<p>
+这里只想说明别妄想只用纯文字就像把东西说明白, 文字最大的缺点就是不直观, 因为每个人的知识不同,
+</p>
+
+<p>
+同一段话在不同人大脑中的成像可能是不一样的, 把东西准确地转述给他人的最佳方法就是把东西给他.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 2026-01-08</p>
+<p class="author">Author: saltb0rn</p>
+<p class="date">Created: 2026-03-17 Tue 13:14</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

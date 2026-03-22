@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-10-11 Sat 14:46 -->
+<!-- 2026-01-17 Sat 20:55 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>关于使用C语言开发的那些事</title>
@@ -201,50 +201,50 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orga267578">1. GNU Binutils</a></li>
-<li><a href="#org59181d5">2. 关于使用 GCC 的须知事项</a>
+<li><a href="#org25f0ad8">1. GNU Binutils</a></li>
+<li><a href="#org2333374">2. 关于使用 GCC 的须知事项</a>
 <ul>
-<li><a href="#org387bddc">2.1. 预处理阶段的一些细节</a>
+<li><a href="#org4689315">2.1. 预处理阶段的一些细节</a>
 <ul>
-<li><a href="#org578893a">2.1.1. 宏定义时的一些惯例</a></li>
+<li><a href="#org5df3578">2.1.1. 宏定义时的一些惯例</a></li>
 </ul>
 </li>
-<li><a href="#orgb8ea50c">2.2. 头文件以及库文件的一些细节</a></li>
+<li><a href="#org0aa0d9b">2.2. 头文件以及库文件的一些细节</a></li>
 </ul>
 </li>
-<li><a href="#orgdd5175c">3. 构建工具之 CMake</a></li>
-<li><a href="#org3abac57">4. 构建工具之 Docker</a></li>
-<li><a href="#org6b0550d">5. 内存检测工具</a></li>
-<li><a href="#org51e7d32">6. 交叉编译 (cross compilation)</a></li>
+<li><a href="#org3ef79fa">3. 构建工具之 CMake</a></li>
+<li><a href="#orga0e61b5">4. 构建工具之容器</a></li>
+<li><a href="#orgd0509db">5. 内存检测工具</a></li>
+<li><a href="#org265edac">6. 交叉编译 (cross compilation)</a></li>
 <li><a href="#about-c">7. 关于 C 语言</a>
 <ul>
 <li><a href="#how-to-read-c-declarations">7.1. 读懂 C 的声明语法</a></li>
 <li><a href="#how-to-master-c-pointer">7.2. 指针</a>
 <ul>
-<li><a href="#org348f2e2">7.2.1. 泛型指针</a></li>
+<li><a href="#orgea062cd">7.2.1. 泛型指针</a></li>
 </ul>
 </li>
 <li><a href="#what-is-undefined-behavior">7.3. 未定义行为 (undefined behavior, UB)</a></li>
 <li><a href="#arguments-in-function-declaration">7.4. 函数的参数声明</a></li>
-<li><a href="#orgf3ec68f">7.5. 不透明结构体 (Opaque Structures)</a></li>
-<li><a href="#orga0ee24a">7.6. 标签联合体 (Tagged Union)</a></li>
-<li><a href="#org147d75f">7.7. Async/Await</a></li>
-<li><a href="#orgac2d275">7.8. X Macro</a></li>
+<li><a href="#orgc11f2e2">7.5. 不透明结构体 (Opaque Structures)</a></li>
+<li><a href="#orgab4adad">7.6. 标签联合体 (Tagged Union)</a></li>
+<li><a href="#org43e57e1">7.7. Async/Await</a></li>
+<li><a href="#org7cab083">7.8. X Macro</a></li>
 <li><a href="#difference-between-c-and-cpp">7.9. 对比 C++, C 的优点</a></li>
-<li><a href="#org9103758">7.10. 一些编码习惯和理由</a></li>
-<li><a href="#org1c04028">7.11. C 语言应用教材</a></li>
+<li><a href="#orgac57d2b">7.10. 一些编码习惯和理由</a></li>
+<li><a href="#orgbe8a723">7.11. C 语言应用教材</a></li>
 </ul>
 </li>
-<li><a href="#org4e19dd7">8. 关于调试</a></li>
-<li><a href="#org2f8e6a6">9. GCC flags 的最佳实践</a>
+<li><a href="#orgee8e222">8. 关于调试</a></li>
+<li><a href="#orgdfc17ad">9. GCC flags 的最佳实践</a>
 <ul>
-<li><a href="#orgfd0e7bd">9.1. 禁止单精度/双精度/整型之间的隐藏式装换</a></li>
+<li><a href="#org09101d8">9.1. 禁止单精度/双精度/整型之间的隐藏式装换</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="orgd1d0ca8">
+<div class="abstract" id="org2d149e3">
 <p>
 <b>注意</b>, 看这篇笔记时请务必先学习 <code>x86</code> 汇编, 因为 <code>C</code> 代码会被编译成汇编,
 </p>
@@ -302,8 +302,8 @@
 </p>
 
 </div>
-<div id="outline-container-orga267578" class="outline-2">
-<h2 id="orga267578"><span class="section-number-2">1.</span> GNU Binutils</h2>
+<div id="outline-container-org25f0ad8" class="outline-2">
+<h2 id="org25f0ad8"><span class="section-number-2">1.</span> GNU Binutils</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 学 <code>C</code> 语言时除了掌握 <code>GCC</code> 以及相关的构建工具意外, 还需要掌握一些工具用于使用/调试/分析二进制文件.
@@ -318,12 +318,12 @@
 </p>
 </div>
 </div>
-<div id="outline-container-org59181d5" class="outline-2">
-<h2 id="org59181d5"><span class="section-number-2">2.</span> 关于使用 GCC 的须知事项</h2>
+<div id="outline-container-org2333374" class="outline-2">
+<h2 id="org2333374"><span class="section-number-2">2.</span> 关于使用 GCC 的须知事项</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org387bddc" class="outline-3">
-<h3 id="org387bddc"><span class="section-number-3">2.1.</span> 预处理阶段的一些细节</h3>
+<div id="outline-container-org4689315" class="outline-3">
+<h3 id="org4689315"><span class="section-number-3">2.1.</span> 预处理阶段的一些细节</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 我们从一个简单的例子出发:
@@ -345,7 +345,7 @@
 </p>
 
 
-<div id="org98db45d" class="figure">
+<div id="org15183ba" class="figure">
 <p><img src="../../../files/how-gcc-builds-linux-executables.png" alt="how-gcc-builds-linux-executables.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>GCC编译C语言并生成程序</p>
@@ -710,7 +710,7 @@
 </pre>
 </div>
 
-<pre class="example" id="orgad04a3d">
+<pre class="example" id="orgfc015a7">
 // right-bracket
 }
 </pre>
@@ -889,8 +889,8 @@
 </div></li>
 </ul>
 </div>
-<div id="outline-container-org578893a" class="outline-4">
-<h4 id="org578893a"><span class="section-number-4">2.1.1.</span> 宏定义时的一些惯例</h4>
+<div id="outline-container-org5df3578" class="outline-4">
+<h4 id="org5df3578"><span class="section-number-4">2.1.1.</span> 宏定义时的一些惯例</h4>
 <div class="outline-text-4" id="text-2-1-1">
 <ul class="org-ul">
 <li><code>do {} while(0)</code> 定义: <a href="https://stackoverflow.com/a/2687595">https://stackoverflow.com/a/2687595</a></li>
@@ -912,8 +912,8 @@
 </div>
 </div>
 </div>
-<div id="outline-container-orgb8ea50c" class="outline-3">
-<h3 id="orgb8ea50c"><span class="section-number-3">2.2.</span> 头文件以及库文件的一些细节</h3>
+<div id="outline-container-org0aa0d9b" class="outline-3">
+<h3 id="org0aa0d9b"><span class="section-number-3">2.2.</span> 头文件以及库文件的一些细节</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 通常情况下, 头文件(<code>.h</code>)的内容都是一些宏/变量的定义以及变量/函数的声明(declarations),
@@ -1075,7 +1075,11 @@ collect2: error: ld returned 1 exit status</span>
 </p>
 
 <p>
-解决这个问题除了把注释解除掉外, 还可以在使用 <code>GCC</code> 编译时让它链接到一个提供定义的二进制文件, 这种提供定义的二进制文件就是人们口中的库.
+解决这个问题除了把注释解除掉外, 还可以在使用 <code>GCC</code> 编译时让它链接到一个提供定义的二进制文件,
+</p>
+
+<p>
+这种提供定义的二进制文件就是人们口中的库.
 </p>
 
 <p>
@@ -1121,43 +1125,86 @@ collect2: error: ld returned 1 exit status</span>
 </pre>
 </div>
 
+<hr />
 <p>
 <b>静态链接</b> 有两种方法:
 </p>
 
-<ul class="org-ul">
-<li><p>
-<b>静态链接-1</b>
+<p>
+<b>静态链接: 常用链接方式</b>
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">gcc -o simple-c simple-c.c simple-c-func.c
+<pre class="src src-sh">gcc -o simple-c simple-c.c simple-c-func.c -static
 </pre>
 </div>
 
 <p>
-这种方法会把中间生成若干个 <code>.o</code> 的目标文件, 然后链接器再它们链接起来得到一个程序, 这个过程其实并未使用到静态库.
-</p>
-
-<p>
-这条命令等价于以下:
+等价于以下:
 </p>
 
 <div class="org-src-container">
 <pre class="src src-sh">gcc -c simple-c-func.c
 gcc -c simple-c.c
-gcc -o simple-c simple-c.o simple-c-func.o
+gcc -o simple-c simple-c.o simple-c-func.o -static
 </pre>
-</div></li>
+</div>
 
-<li><p>
-<b>静态链接-2</b>
+<p>
+<code>-static</code> 是 <code>GCC</code> 告诉其调用的链接器把外部引用全部打包编译结果中.
+</p>
+
+<p>
+举一个简单的例子, 如果 <code>simple-c-func.c</code> 有引用到 <code>libc</code> 里面的 <code>printf</code> 等函数,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">simple-c-func.c
+</span><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">func</span> ( <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span> ) {
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">res</span> = a + b;
+  printf(<span style="color: #ffa07a;">"%d\n"</span>, res);
+  <span style="color: #00ffff;">return</span> res;
+}
+</pre>
+</div>
+
+<p>
+那么 <code>printf</code> 会从 <code>libc</code> 中被提取出来, 成为不包含任何外部引用的独立存在, 这是一个递归的过程,
+</p>
+
+<p>
+这里以一个 <b>假设</b> 的过程来表面思路:
+</p>
+
+<ol class="org-ol">
+<li><code>main</code> 只调用了 <code>simple-c-func.c</code> 的 <code>func()</code></li>
+
+<li><code>func()</code> 只调用了 <code>libc.a</code> 的 <code>printf()</code></li>
+
+<li><code>printf()</code> 由 <code>libc.a</code> 中的 <code>printf.o</code> 提供</li>
+
+<li><code>printf()</code> 只调用了 <code>libc.a</code> 的 <code>write()</code></li>
+
+<li><code>write()</code> 由 <code>libc.a</code> 中 <code>write.o</code> 提供</li>
+
+<li><code>write()</code> 没有任何外部引用</li>
+
+<li>把检索到的模块链接在一起 <code>ld -o simple-c.o simple-c-func.o print.o write.o</code></li>
+</ol>
+
+<p>
+<b>静态链接: 创建静态库, 与静态库链接</b>
 </p>
 
 <div class="org-src-container">
 <pre class="src src-sh">gcc -c -o simple-c-func.o simple-c-fun.c
-ar rcs libsimple-c-func.a simple-c-func.o
-gcc -o simple-c simple-c.c -lsimple-c-func -L.
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#21019;&#24314;&#38745;&#24577;&#24211;: &#20351;&#29992;&#24402;&#26723;&#21629;&#20196; ar &#25226;&#27169;&#22359;&#25991;&#20214;&#25171;&#21253;
+</span>ar rcs libsimple-c-func.a simple-c-func.o
+gcc -o simple-c simple-c.c -lsimple-c-func -L. -static
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20026;&#20102;&#31243;&#24207;&#23433;&#20840;, &#21487;&#25226; simple-c &#32534;&#35793;&#25104;&#38745;&#24577;&#20301;&#32622;&#26080;&#20851;&#21487;&#25191;&#34892;&#31243;&#24207;(PIE)
+</span>gcc -static-pie -fPIE -pie -o simple-c simple-c.c -lsimple-c-func -L. -static
 </pre>
 </div>
 
@@ -1166,22 +1213,58 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L.
 </p>
 
 <p>
-<code>GCC</code> 的 <code>-l</code> 选项就是用来指定要链接的链接库名; <code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
+<code>GCC</code> 的 <code>-l</code> 选项就是用来指定要链接的链接库名;
 </p>
 
 <p>
-<br />
+<code>-L</code> 指定在哪个路径下找链接库, 如果库在系统默认位置上, 那么不需要该选项指定.
+</p>
+
+<hr />
+<p>
+<b>动态链接</b> 也有两种方法:
 </p>
 
 <p>
-<b>动态链接</b> 如下:
+<b>动态链接: 常用链接方式</b>
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">gcc -shared simple-c-func.c -o libsimple-c-func.so
-gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+<pre class="src src-sh">gcc -o simple-c simple-c.c simple-c-func.c -dynamic
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#25110;
+</span>gcc -o simple-c simple-c.c simple-c-func.c
 </pre>
 </div>
+
+<p>
+默认情况下就是动态链接.
+</p>
+
+<p>
+<b>动态链接: 创建动态库, 与动态库链接</b>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#21019;&#24314;&#21160;&#24577;&#24211;
+</span>gcc -shared simple-c-func.c -o libsimple-c-func.so
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#25110;&#20026;&#20102;&#20445;&#38505;&#36215;&#35265;, &#29983;&#25104;&#20301;&#32622;&#26080;&#20851;&#20195;&#30721;(PIC)&#30340;&#21160;&#24577;&#24211;, &#19978;&#38754;&#30340;&#21160;&#24577;&#24211;&#26377;&#21487;&#33021;&#26080;&#27861;&#27491;&#24120;&#24037;&#20316;
+</span>gcc -shared -fPIC simple-c-func.c -o libsimple-c-func.so
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20063;&#21487;&#20197;&#36825;&#20040;&#20570;
+</span>gcc -fPIC simple-c-func.c -o simple-c-func.o
+gcc -shared simple-c-func.o -o libsimple-c-func.so
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#25191;&#34892;&#38142;&#25509;
+</span>gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20026;&#20102;&#31243;&#24207;&#23433;&#20840;, &#21487;&#25226; simple-c &#32534;&#35793;&#25104;&#21487;&#21160;&#24577;&#38142;&#25509;&#30340;&#20301;&#32622;&#26080;&#20851;&#21487;&#25191;&#34892;&#31243;&#24207;(PIE),
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#36825;&#31181;&#31243;&#24207;&#27599;&#27425;&#25191;&#34892;&#30340;&#20869;&#23384;&#22320;&#22336;&#37117;&#19981;&#19968;&#26679;
+</span>gcc -fPIE -pie -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
+</pre>
+</div>
+
+<p>
+<code>-shared</code> 告诉 <code>GCC</code> 把代码编译成动态链接库,
+</p>
 
 <p>
 需要注意这里用上了 <code>GCC</code> 的 <code>-Xlinker</code> 选项来给 <code>ld</code> 传入 <code>-rpath .</code>,
@@ -1192,7 +1275,7 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
 </p>
 
 <p>
-因此我们需要告诉 <code>ld</code> 该链接生成的程序在 <b>运行时</b> 需要从自身当前位置查找 <code>libsimple-c-func.so</code>,
+因此我们需要告诉 <code>ld</code> 该链接生成的程序在 <b>运行时</b> 需要从 <code>-rpath</code> 给定的位置 <code>.</code> 上查找 <code>libsimple-c-func.so</code>,
 </p>
 
 <p>
@@ -1200,21 +1283,23 @@ gcc -o simple-c simple-c.c -lsimple-c-func -L. -Xlinker -rpath -Xlinker .
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh">gcc -shared simple-c-func.c -o libsimple-c-func.so
+<pre class="src src-sh">gcc -shared -fPIC simple-c-func.c -o libsimple-c-func.so
 gcc -o simple-c simple-c.c -lsimple-c-func
 </pre>
 </div>
 
-<p>
-<br />
-</p>
+<hr />
 
 <p>
-这里有一个地方值得思考一下, 动态和静态两种链接除了生成库的方式不同以外, 在生成编译程序的命令上都是一样的,
+部分动态链接, 部分静态链接
 </p>
 
+
+
+<hr />
+
 <p>
-如果 <code>ld</code> 默认的库查找路径上同时存在一个库的动静态两个版本的库, <code>ld</code> 又是如何选择的呢?
+这里有一个地方值得思考一下, 如果 <code>ld</code> 默认的库查找路径上同时存在一个库的动静态两个版本的库, <code>ld</code> 又是如何选择的呢?
 </p>
 
 <p>
@@ -1241,10 +1326,7 @@ If both static and shared libraries are found, the linker gives preference to li
 可以在编译时给 <code>GCC</code> 添加一个 <code>-v</code> 选项来看看 <code>GCC</code> 给 <code>ld</code> 传了什么参数, <code>collect2</code> 接受的参数就是 <code>ld</code> 的参数.
 </p>
 
-<p>
-<br />
-</p>
-
+<hr />
 <p>
 还有另外一个地方值得思考, 现在我们的 <code>simple-c-func</code> 已经是一个库了, 也就是说可以用在其它程序的源代码上了.
 </p>
@@ -1314,7 +1396,11 @@ If both static and shared libraries are found, the linker gives preference to li
 </p>
 
 <p>
-你没办法在系统路径上找到 <code>libstdio.a</code> 或者 <code>libstdio.so</code> 的文件, 你可以 <code>ldd</code> 命令看一个可执行程序或者动态链接库链接了哪些动态链接库,
+你没办法在系统路径上找到 <code>libstdio.a</code> 或者 <code>libstdio.so</code> 的文件,
+</p>
+
+<p>
+你可以 <code>ldd</code> 命令看一个可执行程序或者动态链接库链接了哪些动态链接库,
 </p>
 
 <p>
@@ -1426,13 +1512,12 @@ nm: sigvec.o: no symbols
 <div class="org-src-container">
 <pre class="src src-sh">ar x /lib/x86_64-linux-gnu/libc.a printf.o --output .
 </pre>
-</div></li>
-</ul>
 </div>
 </div>
 </div>
-<div id="outline-container-orgdd5175c" class="outline-2">
-<h2 id="orgdd5175c"><span class="section-number-2">3.</span> 构建工具之 CMake</h2>
+</div>
+<div id="outline-container-org3ef79fa" class="outline-2">
+<h2 id="org3ef79fa"><span class="section-number-2">3.</span> 构建工具之 CMake</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 在构建工具这一块, <code>C/C++</code> 相对于其它语言来说有很多选择, 什么 <code>make</code>, <code>CMake</code>, <code>automake</code> 等等, 都能用来构建项目.
@@ -1507,8 +1592,8 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-<div id="outline-container-org3abac57" class="outline-2">
-<h2 id="org3abac57"><span class="section-number-2">4.</span> 构建工具之 Docker</h2>
+<div id="outline-container-orga0e61b5" class="outline-2">
+<h2 id="orga0e61b5"><span class="section-number-2">4.</span> 构建工具之容器</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 <code>Unix</code> 系统之所以适合用于开发 <code>C</code> 程序是因为它能够把库的头文件和二进制文件做好分类, 并且自动设置好环境变量提供访问.
@@ -1527,7 +1612,11 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-但这种方法不方便对库进行管理, 也增加手动操作的情况. 后来有一家公司想到了把系统轻量化后打包到容器中, 把容器当作程序运行在真正的系统上,
+但这种方法不方便对库进行管理, 也增加手动操作的情况.
+</p>
+
+<p>
+后来有人想到了把系统轻量化后打包到容器中, 把容器当作程序运行在真正的系统上,
 </p>
 
 <p>
@@ -1535,24 +1624,72 @@ gcc -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-部署时就无需担心真系统的环境是否满足程序要求. 这项技术就是 <code>Docker</code>.
+部署时就无需担心真系统的环境是否满足程序要求. 容器管理的技术有很多, 比如 <code>Docker</code> 公司的 <code>docker</code>,
 </p>
 
 <p>
-到目前为此 <code>C</code> 语言不像 <code>Rust/JavaScript</code> 那样每个项目都有自己的的依赖管理, 因此 <code>Docker</code> 在一定程度上可以解决这个问题.
+<code>docker</code> 早期所使用的容器技术是 <code>2008</code> 年的 <code>Linux Containers (LXC)</code>.
 </p>
 
 <p>
-<code>Docker</code> 还是有一点点上手难度的, 不仅要求会写 <code>shell</code> 和 <code>Dockerfile</code>, 还要求对操作系统有一些了解.
+传统虚拟机技术, 是通过模拟出完整的虚拟硬件(CPU/内存/网卡,等等)为某个操作系统提供完整的运行环境,
 </p>
 
 <p>
-这里以 <code>Docker</code> 构建运行 <a href="https://github.com/patriciogonzalezvivo/glslViewer">glslViewer</a> 为例子, 作为应用部署的代表.
+要运行多少个操作系统, 就需要模拟出多少个运行环境, 运行环境之间的资源是相互隔离的;
+</p>
+
+<p>
+<code>LXC</code> 是通过 <code>Linux</code> 内核提供的 <code>Namespace</code> 和控制组(<code>cgroups</code>)实现进程与资源的隔离, 从而形成独立的运行环境,
+</p>
+
+<p>
+所有的这些运行环境都是在同一个 <code>Linux</code> 内核上.
+</p>
+
+<p>
+相比于传统虚拟机技术, <code>LXC</code> 的启动更快, 资源占用更少, 但配置复杂, 用户体验不佳,
+</p>
+
+<p>
+起初 <code>docker</code> 是为了降低 <code>LXC</code> 的使用门槛, 后来 <code>Docker</code> 公司去掉了对 <code>LXC</code> 的依赖,
+</p>
+
+<p>
+自己实现了 <code>libcontainer</code> (后来改名成 <code>runc</code>)来实现虚拟化, 其原理与 <code>LXC</code> 的一样,
+</p>
+
+<p>
+并在 <code>2015</code> 年 <code>6</code> 月 <code>22</code> 日牵头其他商业公司共同成立了基金会,
+</p>
+
+<p>
+定制了一套 <b>容器运行时</b> 和 <b>镜像格式</b> 的标准规范: <code>Open Container Initiative (OCI)</code>,
+</p>
+
+<p>
+把 <code>libcontainer</code> 捐赠出去成为标准的一部分, 但这一波技术开源成为 <code>Docker</code> 公司在与大公司的商业竞争中落败的原因.
+</p>
+
+<p>
+有意思的是, 作为 <code>docker</code> 创建容器的配置文件 <code>Dockerfile</code> 虽然没成为标准的一部分, 但依然被 <code>docker</code> 的竞品所使用.
+</p>
+
+<p>
+因此, 开发者想要学习容器的使用, 主要去学 <code>Dockerfile</code> 的编写即可.
+</p>
+
+<p>
+目前为此, <code>C</code> 语言不像 <code>Rust/JavaScript</code> 那样每个项目都有自己的的依赖管理, <code>docker</code> 在一定程度上解决了这个问题.
+</p>
+
+<p>
+这里以 <code>docker</code> 构建运行 <a href="https://github.com/patriciogonzalezvivo/glslViewer">glslViewer</a> 为例子, 作为应用部署的代表.
 </p>
 
 <blockquote>
 <p>
-其实我很早之前就有写过两篇关于 <code>Docker</code> 文章, 定位更偏入门:
+其实我很早之前就有写过两篇关于 <code>docker</code> 文章, 定位更偏入门:
 </p>
 
 <p>
@@ -1663,7 +1800,7 @@ sudo docker build . -t $(<span style="color: #fa8072;">cat image-tag.txt</span>)
 </p>
 
 <p>
-<code>Docker</code> 通常用来运行 <code>CLI</code> 程序, 而 <code>glslViewer</code> 是一个 <code>GUI</code> 程序,
+<b>docker</b> 通常用来运行 <code>CLI</code> 程序, 而 <code>glslViewer</code> 是一个 <code>GUI</code> 程序,
 </p>
 
 <p>
@@ -1675,7 +1812,9 @@ sudo docker build . -t $(<span style="color: #fa8072;">cat image-tag.txt</span>)
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#21551;&#21160;&#23481;&#22120;&#30340;&#21629;&#20196;
+<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20462;&#25913; X server &#30340;&#35775;&#38382;&#25511;&#21046;
+</span>xhost +local:docker             <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#20801;&#35768; Docker &#19982; X server &#36890;&#20449;, &#21518;&#38754;&#20250;&#20171;&#32461;&#20160;&#20040;&#26159; X server
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#21551;&#21160;&#23481;&#22120;&#30340;&#21629;&#20196;
 </span>sudo docker run <span style="color: #ffa07a;">\</span>
      --rm <span style="color: #ffa07a;">\ </span>                    <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">&#23481;&#22120;&#20572;&#27490;&#26102;&#21024;&#38500;&#23481;&#22120;
 </span>     -it <span style="color: #ffa07a;">\ </span>                     <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">-it &#20197;&#20132;&#20114;&#24418;&#24335;&#36816;&#34892;&#23481;&#22120;
@@ -1713,7 +1852,7 @@ sudo docker build . -t $(<span style="color: #fa8072;">cat image-tag.txt</span>)
 </p>
 
 
-<div id="org9d654ff" class="figure">
+<div id="org26820fd" class="figure">
 <p><img src="../../../files/x-server-and-x-clients.png" alt="x-server-and-x-clients.png" width="400px" />
 </p>
 <p><span class="figure-number">Figure 2: </span>X Server and X Clients</p>
@@ -1759,7 +1898,7 @@ docker run --rm -it -e <span style="color: #eedd82;">DISPLAY</span>=$<span style
 </p>
 
 <p>
-只是 <code>glslViewer</code> 目录要换成自己的程序代码, 假设我们现在就是 <code>glslViewer</code> 的开发者.
+只是 <code>glslViewer</code> 目录要换成自己的程序代码, 不过现在就假设我们是 <code>glslViewer</code> 的开发者吧.
 </p>
 
 <p>
@@ -1873,8 +2012,8 @@ sudo docker ps -a -q | sudo xargs docker rm
 </div>
 </div>
 </div>
-<div id="outline-container-org6b0550d" class="outline-2">
-<h2 id="org6b0550d"><span class="section-number-2">5.</span> 内存检测工具</h2>
+<div id="outline-container-orgd0509db" class="outline-2">
+<h2 id="orgd0509db"><span class="section-number-2">5.</span> 内存检测工具</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 <code>C</code> 并不是一门内存安全型编程语言, 因此在使用 <code>C</code> 开发时最好使用一些工具来检测是否有内存问题.
@@ -1897,8 +2036,8 @@ sudo docker ps -a -q | sudo xargs docker rm
 </p>
 </div>
 </div>
-<div id="outline-container-org51e7d32" class="outline-2">
-<h2 id="org51e7d32"><span class="section-number-2">6.</span> 交叉编译 (cross compilation)</h2>
+<div id="outline-container-org265edac" class="outline-2">
+<h2 id="org265edac"><span class="section-number-2">6.</span> 交叉编译 (cross compilation)</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 所谓交叉编译是在一个平台上为另外一个平台编译得到可执行代码, 我们把前者叫做编译平台, 后者叫做目标平台.
@@ -1984,7 +2123,11 @@ sudo docker ps -a -q | sudo xargs docker rm
 <h3 id="how-to-read-c-declarations"><span class="section-number-3">7.1.</span> 读懂 C 的声明语法</h3>
 <div class="outline-text-3" id="text-how-to-read-c-declarations">
 <p>
-<code>C/C++</code> 语言的声明语法基本上都是一样, 并且都很难阅读, 个人觉得直接看它们的声明语法也不太直观, 你可以在<a href="https://www.open-std.org/jtc1/sc22/wg14/www/projects#9899">这里</a>找到 C 语言的标准, 看看里面的 <code>Language-Declarations</code> 那一节.
+<code>C/C++</code> 语言的声明语法基本上都是一样, 并且都很难阅读, 个人觉得直接看它们的声明语法也不太直观,
+</p>
+
+<p>
+你可以在<a href="https://www.open-std.org/jtc1/sc22/wg14/www/projects#9899">这里</a>找到 C 语言的标准, 看看里面的 <code>Language-Declarations</code> 那一节.
 </p>
 
 <p>
@@ -2069,8 +2212,8 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 最后, 个人建议任何人都应该仔细看一遍 <code>Valgrind</code> 的<a href="https://valgrind.org/docs/manual/quick-start.html">上手教程</a>, 特别是 <code>Caveats</code> 部分.
 </p>
 </div>
-<div id="outline-container-org348f2e2" class="outline-4">
-<h4 id="org348f2e2"><span class="section-number-4">7.2.1.</span> 泛型指针</h4>
+<div id="outline-container-orgea062cd" class="outline-4">
+<h4 id="orgea062cd"><span class="section-number-4">7.2.1.</span> 泛型指针</h4>
 <div class="outline-text-4" id="text-7-2-1">
 <p>
 在声明或定义指针变量时, 开发人员都要告诉编译器指针指向的内存区域上储存什么类型的数据.
@@ -2111,11 +2254,19 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-之所以可行, 是因为在固定架构下, <code>CPU</code> 寻址大小是固定的, 也就是说, 既然指针变量储存的是内存地址, 那么所有类型的指针变量的大小都是一致的.
+之所以可行, 是因为在固定架构下, <code>CPU</code> 寻址大小是固定的, 所谓内存寻址是指 <code>CPU</code> 允许支持的内存大小,
 </p>
 
 <p>
-而指针变量的类型则是告诉编译器: 指针指向的内存区块有多大. 内存区块的大小只有在解引时才有意义, 因为需要知道应该读多少个字节的连续内存, 而不是把区块以外的数据也读取了.
+内存地址本身的大小是固定的, 既然指针变量储存的是内存地址, 那么所有类型的指针变量的大小都是一致的.
+</p>
+
+<p>
+而指针变量的类型则是告诉编译器: 指针指向的内存区块有多大. 内存区块的大小只有在解引时才有意义,
+</p>
+
+<p>
+因为需要知道应该读多少个字节的连续内存, 而不是把区块以外的数据也读取了.
 </p>
 
 <p>
@@ -2123,7 +2274,11 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 
 <p>
-<code>C</code> 语言的标准定义了一种专门储存内存地址的非指针类型 <code>uintptr_t</code> 以及 <code>intptr_t</code>, 不用 <code>int</code> 来储存则是因为 <code>int</code> 的大小不适合用来储存内存地址.
+<code>C</code> 语言的标准定义了一种专门储存内存地址的非指针类型 <code>uintptr_t</code> 以及 <code>intptr_t</code>,
+</p>
+
+<p>
+不用 <code>int</code> 来储存则是因为 <code>int</code> 的大小不适合用来储存内存地址.
 </p>
 
 <p>
@@ -2411,8 +2566,8 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </ul>
 </div>
 </div>
-<div id="outline-container-orgf3ec68f" class="outline-3">
-<h3 id="orgf3ec68f"><span class="section-number-3">7.5.</span> 不透明结构体 (Opaque Structures)</h3>
+<div id="outline-container-orgc11f2e2" class="outline-3">
+<h3 id="orgc11f2e2"><span class="section-number-3">7.5.</span> 不透明结构体 (Opaque Structures)</h3>
 <div class="outline-text-3" id="text-7-5">
 <p>
 不透明结构体就是把结构体的声明和定义分开, 声明放在头文件(.h)里面, 定义则是放在实现的源文件(.c)里面, 以达到结构体定义可以被隐藏的目的.
@@ -2659,8 +2814,8 @@ gcc -g -shared simple-c-func.c -o libsimple-c-func.so
 </p>
 </div>
 </div>
-<div id="outline-container-orga0ee24a" class="outline-3">
-<h3 id="orga0ee24a"><span class="section-number-3">7.6.</span> 标签联合体 (Tagged Union)</h3>
+<div id="outline-container-orgab4adad" class="outline-3">
+<h3 id="orgab4adad"><span class="section-number-3">7.6.</span> 标签联合体 (Tagged Union)</h3>
 <div class="outline-text-3" id="text-7-6">
 <p>
 一个联合体是一个可以储存任意类型的内存区域. 比如一个联合体可以储存 <code>int</code> 或 <code>char</code> 类型, 那么这个联合体的大小就是 <code>sizeof(int)</code>,
@@ -2759,16 +2914,16 @@ example.c = <span style="color: #ffa07a;">'c'</span>;
 </p>
 </div>
 </div>
-<div id="outline-container-org147d75f" class="outline-3">
-<h3 id="org147d75f"><span class="section-number-3">7.7.</span> Async/Await</h3>
+<div id="outline-container-org43e57e1" class="outline-3">
+<h3 id="org43e57e1"><span class="section-number-3">7.7.</span> Async/Await</h3>
 <div class="outline-text-3" id="text-7-7">
 <p>
 <a href="https://hackaday.com/2019/09/24/asynchronous-routines-for-c/">https://hackaday.com/2019/09/24/asynchronous-routines-for-c/</a>
 </p>
 </div>
 </div>
-<div id="outline-container-orgac2d275" class="outline-3">
-<h3 id="orgac2d275"><span class="section-number-3">7.8.</span> X Macro</h3>
+<div id="outline-container-org7cab083" class="outline-3">
+<h3 id="org7cab083"><span class="section-number-3">7.8.</span> X Macro</h3>
 <div class="outline-text-3" id="text-7-8">
 <p>
 <a href="https://en.wikipedia.org/wiki/X_macro">https://en.wikipedia.org/wiki/X_macro</a>
@@ -2905,8 +3060,8 @@ systems in which this is possible, but I'm not aware of them.
 </ul>
 </div>
 </div>
-<div id="outline-container-org9103758" class="outline-3">
-<h3 id="org9103758"><span class="section-number-3">7.10.</span> 一些编码习惯和理由</h3>
+<div id="outline-container-orgac57d2b" class="outline-3">
+<h3 id="orgac57d2b"><span class="section-number-3">7.10.</span> 一些编码习惯和理由</h3>
 <div class="outline-text-3" id="text-7-10">
 <ul class="org-ul">
 <li><p>
@@ -2965,8 +3120,8 @@ systems in which this is possible, but I'm not aware of them.
 </ul>
 </div>
 </div>
-<div id="outline-container-org1c04028" class="outline-3">
-<h3 id="org1c04028"><span class="section-number-3">7.11.</span> C 语言应用教材</h3>
+<div id="outline-container-orgbe8a723" class="outline-3">
+<h3 id="orgbe8a723"><span class="section-number-3">7.11.</span> C 语言应用教材</h3>
 <div class="outline-text-3" id="text-7-11">
 <p>
 如果想学习 <code>C</code> 标准库的使用, 或者说 <code>Linux</code> 系统编程, 那么 <a href="https://www.man7.org/tlpi/">The Linux Programming Interface</a> 这本书就是必看的.
@@ -2978,8 +3133,8 @@ systems in which this is possible, but I'm not aware of them.
 </div>
 </div>
 </div>
-<div id="outline-container-org4e19dd7" class="outline-2">
-<h2 id="org4e19dd7"><span class="section-number-2">8.</span> 关于调试</h2>
+<div id="outline-container-orgee8e222" class="outline-2">
+<h2 id="orgee8e222"><span class="section-number-2">8.</span> 关于调试</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 在调试方面来说, 个人认为编译型语言要比解释型语言复杂.
@@ -3006,12 +3161,12 @@ systems in which this is possible, but I'm not aware of them.
 </p>
 </div>
 </div>
-<div id="outline-container-org2f8e6a6" class="outline-2">
-<h2 id="org2f8e6a6"><span class="section-number-2">9.</span> GCC flags 的最佳实践</h2>
+<div id="outline-container-orgdfc17ad" class="outline-2">
+<h2 id="orgdfc17ad"><span class="section-number-2">9.</span> GCC flags 的最佳实践</h2>
 <div class="outline-text-2" id="text-9">
 </div>
-<div id="outline-container-orgfd0e7bd" class="outline-3">
-<h3 id="orgfd0e7bd"><span class="section-number-3">9.1.</span> 禁止单精度/双精度/整型之间的隐藏式装换</h3>
+<div id="outline-container-org09101d8" class="outline-3">
+<h3 id="org09101d8"><span class="section-number-3">9.1.</span> 禁止单精度/双精度/整型之间的隐藏式装换</h3>
 <div class="outline-text-3" id="text-9-1">
 <p>
 在 <code>C</code> 语言里面, 可以对数据进行隐式转换(implicit conversion). 比如:
@@ -3132,7 +3287,7 @@ warning: conversion from ‘float’ to ‘int’ may change value [-Wfloat-conv
 <div id="postamble" class="status">
 <p class="date">Date: 2021-06-13</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2025-10-11 Sat 14:46</p>
+<p class="date">Created: 2026-01-17 Sat 20:55</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
