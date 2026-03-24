@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-03-21 Sat 23:05 -->
+<!-- 2026-03-23 Mon 22:37 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>游戏 Shader 开发</title>
@@ -233,19 +233,19 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orga6c4004">1. 代码命名规范</a></li>
+<li><a href="#orga76d927">1. 代码命名规范</a></li>
 <li><a href="#render-to-texture">2. 渲染到贴图 (Render To Texture)</a>
 <ul>
 <li><a href="#depth-texture">2.1. 深度贴图 (Depth Texture)</a>
 <ul>
-<li><a href="#org7cc8531">2.1.1. 实现</a></li>
-<li><a href="#orga3e622e">2.1.2. 应用例子</a></li>
+<li><a href="#org6a87c3b">2.1.1. 实现</a></li>
+<li><a href="#org7f11ec0">2.1.2. 应用例子</a></li>
 </ul>
 </li>
-<li><a href="#org835003f">2.2. 法线贴图 (Normal Texture)</a>
+<li><a href="#orgec3136a">2.2. 法线贴图 (Normal Texture)</a>
 <ul>
-<li><a href="#org8e9e495">2.2.1. 实现</a></li>
-<li><a href="#org6825e9e">2.2.2. 应用例子</a></li>
+<li><a href="#org5955068">2.2.1. 实现</a></li>
+<li><a href="#org48ab5cf">2.2.2. 应用例子</a></li>
 </ul>
 </li>
 </ul>
@@ -253,101 +253,106 @@
 <li><a href="#recompute-normal-after-disp">3. 重新计算法线向量</a></li>
 <li><a href="#heightfield-water-simulation">4. 高度场水面模拟 (Heightfield Water Simulation)</a>
 <ul>
-<li><a href="#org2a11f9d">4.1. 整体实现思路</a></li>
+<li><a href="#org3f93be5">4.1. 整体实现思路</a></li>
 <li><a href="#gpu-computation">4.2. 使用 GPU 进行计算</a></li>
-<li><a href="#org74c9a86">4.3. 计算水面的高度场</a></li>
+<li><a href="#org7656a1c">4.3. 计算水面的高度场</a></li>
 <li><a href="#translucent-object-water">4.4. 制作水面</a>
 <ul>
 <li><a href="#cubemap-reflection">4.4.1. 反射 (Reflection)</a></li>
 <li><a href="#screen-space-refraction">4.4.2. 折射 (Refraction)</a></li>
-<li><a href="#org358e342">4.4.3. 综合反射与折射</a></li>
-<li><a href="#orge2dc836">4.4.4. 使用高度场制造波纹</a></li>
+<li><a href="#orgb3f9a16">4.4.3. 综合反射与折射</a></li>
+<li><a href="#org405bda4">4.4.4. 使用高度场制造波纹</a></li>
 </ul>
 </li>
-<li><a href="#org38e1874">4.5. 计算焦散 (Caustic)</a>
+<li><a href="#orgc5accbe">4.5. 计算焦散 (Caustic)</a>
 <ul>
-<li><a href="#org2064274">4.5.1. 如何在程序中量化聚散程度</a></li>
+<li><a href="#orgcaa10f5">4.5.1. 如何在程序中量化聚散程度</a></li>
 <li><a href="#find-hit-point-with-raymarching">4.5.2. 在光栅化渲染中使用 Ray Marching 逐个像素找出射线与场景的交点</a></li>
 <li><a href="#floating-number-comparation-with-tolerance">4.5.3. 查找交点时提高浮点数比较时的容错率</a></li>
 <li><a href="#generate-caustics-texture">4.5.4. 生成焦散贴图</a></li>
 </ul>
 </li>
 <li><a href="#shader-for-underwater">4.6. 为水底的场景编写 shader</a></li>
-<li><a href="#orgd0c08bc">4.7. 项目总结</a></li>
+<li><a href="#org289e83c">4.7. 项目总结</a></li>
 </ul>
 </li>
 <li><a href="#screen-space-techniques">5. 屏幕空间技术 (Screen Space Techniques, SST)</a>
 <ul>
 <li><a href="#how-to-read-info-from-gbuffer">5.1. 从 G-Buffer 上正确地获取片元的几何信息</a></li>
 <li><a href="#deferred-shading">5.2. 延迟渲染 (Deferred Rendering / Deferred Shading)</a></li>
-<li><a href="#org3b06834">5.3. 延迟渲染的缺点</a></li>
+<li><a href="#org0e40924">5.3. 延迟渲染的缺点</a></li>
 </ul>
 </li>
 <li><a href="#ssao">6. 屏幕空间环境光遮蔽 (Screen Space Ambient Occlusion, SSAO)</a>
 <ul>
 <li><a href="#view-pos-buf">6.1. 把视点空间的顶点储存在贴图中</a></li>
 <li><a href="#view-normal-buf">6.2. 把视点空间的法线储存在贴图中</a></li>
-<li><a href="#org6964fd6">6.3. 计算场景的环境光遮蔽程度并储存在贴图中</a></li>
-<li><a href="#org2a2c7aa">6.4. 把 SSAO 贴图引用在场景上</a></li>
+<li><a href="#org6a05d78">6.3. 计算场景的环境光遮蔽程度并储存在贴图中</a></li>
+<li><a href="#orga097b15">6.4. 把 SSAO 贴图引用在场景上</a></li>
 </ul>
 </li>
-<li><a href="#org334c049">7. 屏幕空间反射 (Screen Space Reflection, SSR)</a>
+<li><a href="#org5bd79e6">7. 屏幕空间反射 (Screen Space Reflection, SSR)</a>
 <ul>
-<li><a href="#org1d50bbb">7.1. 整体实现思路</a></li>
-<li><a href="#orgd0c4c3e">7.2. 屏幕空间反射的缺陷</a>
+<li><a href="#org430a498">7.1. 整体实现思路</a></li>
+<li><a href="#org56c5668">7.2. 屏幕空间反射的缺陷</a>
 <ul>
-<li><a href="#org954ff7b">7.2.1. 反射信息不足</a></li>
+<li><a href="#orgcded97a">7.2.1. 反射信息不足</a></li>
 <li><a href="#ssr-false-positive">7.2.2. 交点误判</a></li>
 </ul>
 </li>
-<li><a href="#org8a9b5c0">7.3. 实现中的具体细节</a>
+<li><a href="#org22ee6d5">7.3. 实现中的具体细节</a>
 <ul>
-<li><a href="#org37bfc1c">7.3.1. <code>Three.js</code> 的 <code>SSR</code> 计算流程</a></li>
-<li><a href="#org5995392">7.3.2. 反射光线的最大长度</a></li>
-<li><a href="#org04197d6">7.3.3. 对超出近裁剪平面的反射光线进行裁剪</a></li>
-<li><a href="#org2708f85">7.3.4. 动态计算容错 \(\epsilon\)</a></li>
-<li><a href="#orgd7373fb">7.3.5. <code>SSR</code> 完整代码</a></li>
+<li><a href="#org5f28782">7.3.1. <code>Three.js</code> 的 <code>SSR</code> 计算流程</a></li>
+<li><a href="#orgf78a6ec">7.3.2. 反射光线的最大长度</a></li>
+<li><a href="#orgd8610e8">7.3.3. 对超出近裁剪平面的反射光线进行裁剪</a></li>
+<li><a href="#orgf08ce92">7.3.4. 动态计算容错 \(\epsilon\)</a></li>
+<li><a href="#orgfb9b148">7.3.5. <code>SSR</code> 完整代码</a></li>
 <li><a href="#blur-filter-in-photoshop">7.3.6. <code>Three.js</code> 的 <code>SSR</code> 所使用的模糊算法</a></li>
-<li><a href="#org01ec28f">7.3.7. 完整的后处理流程</a></li>
+<li><a href="#org6a28915">7.3.7. 完整的后处理流程</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org96e0286">8. 辉光 (Bloom)</a></li>
-<li><a href="#org6583cf8">9. 动态模糊 (Motion Blur)</a></li>
-<li><a href="#org5415651">10. 景深 (Depth of Field)</a></li>
-<li><a href="#orgee3ce6f">11. 体积光照 (Volumetric Lighting)</a>
+<li><a href="#orgbf3964a">8. 辉光 (Bloom)</a></li>
+<li><a href="#orgc38895b">9. 动态模糊 (Motion Blur)</a></li>
+<li><a href="#org969a187">10. 景深 (Depth of Field)</a></li>
+<li><a href="#org4452cc0">11. 体积光照 (Volumetric Lighting)</a>
 <ul>
-<li><a href="#orge3a2faa">11.1. 整体思路</a></li>
+<li><a href="#org4f90334">11.1. 整体思路</a></li>
 </ul>
 </li>
-<li><a href="#org0ef2101">12. 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)</a>
+<li><a href="#org5515f52">12. 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)</a>
 <ul>
-<li><a href="#org4226c6b">12.1. 计算判定点与三角形所处平面的有向距离</a></li>
-<li><a href="#org004d89d">12.2. 判断投影点是否在三角形内部 - 重心坐标法(Barycentric Coordinate Method)</a></li>
+<li><a href="#org0878cb4">12.1. 计算判定点与三角形所处平面的有向距离</a></li>
+<li><a href="#org91f22f7">12.2. 判断投影点是否在三角形内部 - 重心坐标法(Barycentric Coordinate Method)</a></li>
 </ul>
 </li>
 <li><a href="#curved-world">13. 风格化渲染: 地平线视差 (Curved World)</a></li>
 <li><a href="#outlining">14. 风格化渲染: 描边 (Outlining)</a>
 <ul>
-<li><a href="#orgb710271">14.1. 判断片元是处于轮廓上</a></li>
-<li><a href="#orgcd86197">14.2. 提取描边</a></li>
-<li><a href="#org358971f">14.3. 对场景进行描边</a></li>
-<li><a href="#org6e5bea2">14.4. 完整代码</a></li>
+<li><a href="#org6b152af">14.1. 判断片元是处于轮廓上</a></li>
+<li><a href="#org50775dd">14.2. 提取描边</a></li>
+<li><a href="#orgd142c68">14.3. 对场景进行描边</a></li>
+<li><a href="#orgb40fd40">14.4. 完整代码</a></li>
 </ul>
 </li>
-<li><a href="#orgb73cfbc">15. 风格化渲染: 莫比斯风格渲染 (Moebius Style Shading)</a>
+<li><a href="#orgb7396ed">15. 风格化渲染: 莫比斯风格渲染 (Moebius Style Shading)</a>
 <ul>
-<li><a href="#org94c139f">15.1. 整体思路</a></li>
-<li><a href="#orgc4e0a27">15.2. 描边处理</a></li>
-<li><a href="#org7b3785e">15.3. 找出场景的阴影区域</a></li>
-<li><a href="#org7af939d">15.4. 绘制高亮反射区域</a></li>
+<li><a href="#orga257f3f">15.1. 整体思路</a></li>
+<li><a href="#org2d3165a">15.2. 描边处理</a></li>
+<li><a href="#org42e88cc">15.3. 找出场景的阴影区域</a></li>
+<li><a href="#orgbd10eb8">15.4. 绘制高亮反射区域</a></li>
+</ul>
+</li>
+<li><a href="#org648ac25">16. 风格化渲染: 卡通着色 (Cel Shading / Toon Shading / Carton Shading)</a>
+<ul>
+<li><a href="#org2b802fe">16.1. 构成</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div class="abstract" id="org123f9ee">
+<div class="abstract" id="org77513ca">
 <p>
 这篇文章主要是收集一些 <code>3D</code> 游戏开发常用的 <code>Shader</code> 技术, 以及一些风格化渲染实现.
 </p>
@@ -414,7 +419,11 @@
 </p>
 
 <p>
-有很多人说 <code>ShaderToy</code> 的代码对游戏开发没有帮助, 其实是不对的, 前面这些举例在实际开发中很常见.
+有很多人说 <code>ShaderToy</code> 的代码对游戏开发没有帮助, 其实是不对的, 前面举例的这些知识点很常见,
+</p>
+
+<p>
+我们需要学会如何把问题分解成多个更小的问题, 再利用这些知识去解决小问题, 从而解决原本的问题.
 </p></li>
 </ol>
 
@@ -550,8 +559,8 @@ python3 -m http.server
 </p>
 
 </div>
-<div id="outline-container-orga6c4004" class="outline-2">
-<h2 id="orga6c4004"><span class="section-number-2">1.</span> 代码命名规范</h2>
+<div id="outline-container-orga76d927" class="outline-2">
+<h2 id="orga76d927"><span class="section-number-2">1.</span> 代码命名规范</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 文中 <code>shader</code> 代码的变量命名方式 <b>基本上</b> 是按照 <code>three.js</code> <a href="https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram">内置shader变量</a> 进行的, 但有一些调整:
@@ -628,11 +637,11 @@ python3 -m http.server
 不同项目有不同的深度值计算方式, 这只是最常见一种方式.
 </p>
 </div>
-<div id="outline-container-org7cc8531" class="outline-4">
-<h4 id="org7cc8531"><span class="section-number-4">2.1.1.</span> 实现</h4>
+<div id="outline-container-org6a87c3b" class="outline-4">
+<h4 id="org6a87c3b"><span class="section-number-4">2.1.1.</span> 实现</h4>
 <div class="outline-text-4" id="text-2-1-1">
 <p>
-<b>Vertex Shader</b>: <a id="org5098256"></a>
+<b>Vertex Shader</b>: <a id="orgf7edfc4"></a>
 </p>
 
 <div class="org-src-container">
@@ -683,15 +692,15 @@ python3 -m http.server
 </p>
 </div>
 </div>
-<div id="outline-container-orga3e622e" class="outline-4">
-<h4 id="orga3e622e"><span class="section-number-4">2.1.2.</span> 应用例子</h4>
+<div id="outline-container-org7f11ec0" class="outline-4">
+<h4 id="org7f11ec0"><span class="section-number-4">2.1.2.</span> 应用例子</h4>
 <div class="outline-text-4" id="text-2-1-2">
 <p>
 这里演示在后处理中使用深度贴图,
 </p>
 
 <p>
-<b>Vertex Shader</b>:  <a id="org3baf6c6"></a>
+<b>Vertex Shader</b>:  <a id="org6e654ee"></a>
 </p>
 
 <div class="org-src-container">
@@ -739,18 +748,18 @@ python3 -m http.server
 </div>
 </div>
 </div>
-<div id="outline-container-org835003f" class="outline-3">
-<h3 id="org835003f"><span class="section-number-3">2.2.</span> 法线贴图 (Normal Texture)</h3>
+<div id="outline-container-orgec3136a" class="outline-3">
+<h3 id="orgec3136a"><span class="section-number-3">2.2.</span> 法线贴图 (Normal Texture)</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 这里演示在后处理中使用法线贴图,
 </p>
 </div>
-<div id="outline-container-org8e9e495" class="outline-4">
-<h4 id="org8e9e495"><span class="section-number-4">2.2.1.</span> 实现</h4>
+<div id="outline-container-org5955068" class="outline-4">
+<h4 id="org5955068"><span class="section-number-4">2.2.1.</span> 实现</h4>
 <div class="outline-text-4" id="text-2-2-1">
 <p>
-<b>Vertex Shader</b>: <a id="org20949d8"></a>
+<b>Vertex Shader</b>: <a id="org8bdbd49"></a>
 </p>
 
 <div class="org-src-container">
@@ -794,11 +803,11 @@ python3 -m http.server
 </p>
 </div>
 </div>
-<div id="outline-container-org6825e9e" class="outline-4">
-<h4 id="org6825e9e"><span class="section-number-4">2.2.2.</span> 应用例子</h4>
+<div id="outline-container-org48ab5cf" class="outline-4">
+<h4 id="org48ab5cf"><span class="section-number-4">2.2.2.</span> 应用例子</h4>
 <div class="outline-text-4" id="text-2-2-2">
 <p>
-<a href="#org3baf6c6"><b>Vertex Shader</b></a>
+<a href="#org6e654ee"><b>Vertex Shader</b></a>
 </p>
 
 <p>
@@ -1005,14 +1014,14 @@ python3 -m http.server
 </p>
 
 
-<div id="org611d669" class="figure">
+<div id="org99136d1" class="figure">
 <p><img src="../../../files/heightfield.png" alt="heightfield.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>高度场</p>
 </div>
 
 
-<div id="orgdd826a5" class="figure">
+<div id="org9ad8d66" class="figure">
 <p><img src="../../../files/huge-waves.jpg" alt="huge-waves.jpg" width="500px" />
 </p>
 <p><span class="figure-number">Figure 2: </span>翻卷巨浪</p>
@@ -1072,8 +1081,8 @@ python3 -m http.server
 </p>
 </blockquote>
 </div>
-<div id="outline-container-org2a11f9d" class="outline-3">
-<h3 id="org2a11f9d"><span class="section-number-3">4.1.</span> 整体实现思路</h3>
+<div id="outline-container-org3f93be5" class="outline-3">
+<h3 id="org3f93be5"><span class="section-number-3">4.1.</span> 整体实现思路</h3>
 <div class="outline-text-3" id="text-4-1">
 <p>
 即便使用高度场实现水面也不是一件简单的事情, 我们要把整个实现划分为几步:
@@ -1101,7 +1110,7 @@ python3 -m http.server
 </p>
 
 
-<div id="orgd839ec3" class="figure">
+<div id="org1ce4a13" class="figure">
 <p><img src="../../../files/spreading-ring.gif" alt="spreading-ring.gif" />
 </p>
 <p><span class="figure-number">Figure 3: </span>亮度表示水面高度, 越亮表示更高, 越暗表示更低 (图片来源于: <a href="https://blog.csdn.net/qq_29814417/article/details/113537498">threejs-shader-平面扩散波-demo</a>)</p>
@@ -1144,7 +1153,7 @@ python3 -m http.server
 </p>
 
 
-<div id="orge899642" class="figure">
+<div id="org70e7b64" class="figure">
 <p><img src="../../../files/Great_Barracuda_corals_sea_urchin_and_Caustic_optics_in_Kona_Hawaii_2009-640x619-2916379614.jpg" alt="Great_Barracuda_corals_sea_urchin_and_Caustic_optics_in_Kona_Hawaii_2009-640x619-2916379614.jpg" width="500px" />
 </p>
 <p><span class="figure-number">Figure 4: </span>现实中的焦散</p>
@@ -1192,7 +1201,7 @@ python3 -m http.server
 </p>
 
 
-<div id="orgbbab495" class="figure">
+<div id="org3d5c35c" class="figure">
 <p><img src="../../../files/ping-pong.svg" alt="ping-pong.svg" class="org-svg" width="500px" />
 </p>
 <p><span class="figure-number">Figure 5: </span>Ping-Pong 渲染技巧</p>
@@ -1277,8 +1286,8 @@ python3 -m http.server
 </p>
 </div>
 </div>
-<div id="outline-container-org74c9a86" class="outline-3">
-<h3 id="org74c9a86"><span class="section-number-3">4.3.</span> 计算水面的高度场</h3>
+<div id="outline-container-org7656a1c" class="outline-3">
+<h3 id="org7656a1c"><span class="section-number-3">4.3.</span> 计算水面的高度场</h3>
 <div class="outline-text-3" id="text-4-3">
 <p>
 水面高度场的计算调度比上面的模板复杂一点, 需要分成两个部分:
@@ -1624,7 +1633,7 @@ python3 -m http.server
 </p>
 
 
-<div id="orgb4afbc3" class="figure">
+<div id="orgbdf7d0a" class="figure">
 <p><img src="../../../files/cubemaps_reflection_theory.png" alt="cubemaps_reflection_theory.png" />
 </p>
 </div>
@@ -1688,7 +1697,7 @@ python3 -m http.server
 </p>
 
 
-<div id="org535d6c3" class="figure">
+<div id="orgcf532e0" class="figure">
 <p><img src="../../../files/cubemaps_refraction_theory.png" alt="cubemaps_refraction_theory.png" />
 </p>
 </div>
@@ -1780,7 +1789,7 @@ python3 -m http.server
 </p>
 
 
-<div id="org0b44cc1" class="figure">
+<div id="org9785ab0" class="figure">
 <p><img src="../../../files/dispersion.png" alt="dispersion.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>色散 (图片来源于: <a href="http://www.myliushu.com/3020.html">http://www.myliushu.com/3020.html</a>)</p>
@@ -1815,8 +1824,8 @@ refractedColor.b = refractedColor.b;
 </div>
 </div>
 </div>
-<div id="outline-container-org358e342" class="outline-4">
-<h4 id="org358e342"><span class="section-number-4">4.4.3.</span> 综合反射与折射</h4>
+<div id="outline-container-orgb3f9a16" class="outline-4">
+<h4 id="orgb3f9a16"><span class="section-number-4">4.4.3.</span> 综合反射与折射</h4>
 <div class="outline-text-4" id="text-4-4-3">
 <p>
 计算出菲涅耳系数作为折射部分和反射部分之间的渐变系数, 最终渐变结果作为片元颜色. 具体实现如下:
@@ -1831,8 +1840,8 @@ refractedColor.b = refractedColor.b;
 </div>
 </div>
 </div>
-<div id="outline-container-orge2dc836" class="outline-4">
-<h4 id="orge2dc836"><span class="section-number-4">4.4.4.</span> 使用高度场制造波纹</h4>
+<div id="outline-container-org405bda4" class="outline-4">
+<h4 id="org405bda4"><span class="section-number-4">4.4.4.</span> 使用高度场制造波纹</h4>
 <div class="outline-text-4" id="text-4-4-4">
 <p>
 我们会使用一个 <code>3D</code> 平面, 配合高度场修改平面顶点的 \(z\) 分量来实现水面.
@@ -1954,8 +1963,8 @@ refractedColor.b = refractedColor.b;
 </div>
 </div>
 </div>
-<div id="outline-container-org38e1874" class="outline-3">
-<h3 id="org38e1874"><span class="section-number-3">4.5.</span> 计算焦散 (Caustic)</h3>
+<div id="outline-container-orgc5accbe" class="outline-3">
+<h3 id="orgc5accbe"><span class="section-number-3">4.5.</span> 计算焦散 (Caustic)</h3>
 <div class="outline-text-3" id="text-4-5">
 <p>
 焦散的形成原因很简单, 光线在经过折射后分散在不同位置上,
@@ -1970,14 +1979,14 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="orge12793b" class="figure">
+<div id="org0ee5a86" class="figure">
 <p><img src="../../../files/caustics-impl.webp" alt="caustics-impl.webp" />
 </p>
 <p><span class="figure-number">Figure 7: </span>图片来自于 <a href="https://medium.com/@martinRenou/real-time-rendering-of-water-caustics-59cda1d74aa">Real-time rendering of water caustics by Martin Renou</a></p>
 </div>
 </div>
-<div id="outline-container-org2064274" class="outline-4">
-<h4 id="org2064274"><span class="section-number-4">4.5.1.</span> 如何在程序中量化聚散程度</h4>
+<div id="outline-container-orgcaa10f5" class="outline-4">
+<h4 id="orgcaa10f5"><span class="section-number-4">4.5.1.</span> 如何在程序中量化聚散程度</h4>
 <div class="outline-text-4" id="text-4-5-1">
 <p>
 <a href="https://medium.com/@evanwallace/rendering-realtime-caustics-in-webgl-2a99a29a0b2c">Evan Wallace 的 Rendering Realtime Caustics in WebGL</a> 介绍了光线在不同时刻上的投影面积比来量化聚散程度,
@@ -1988,7 +1997,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="orgffa5b9f" class="figure">
+<div id="orgd5c3296" class="figure">
 <p><img src="../../../files/caustics-area-ratio.webp" alt="caustics-area-ratio.webp" />
 </p>
 </div>
@@ -2002,7 +2011,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="org8cfab3b" class="figure">
+<div id="orgd5ea3c7" class="figure">
 <p><img src="../../../files/optical-aberrattion.jpg" alt="optical-aberrattion.jpg" />
 </p>
 <p><span class="figure-number">Figure 8: </span>光学像差和波前 (图片来源于 <a href="https://www.slideshare.net/slideshow/optical-aberrations-43245080/43245080">Slideshare</a>)</p>
@@ -2111,7 +2120,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="org74036ad" class="figure">
+<div id="orgc46a9ec" class="figure">
 <p><img src="../../../files/raymarch-to-find-hitpoint-in-rasterization.png" alt="raymarch-to-find-hitpoint-in-rasterization.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>光线步进配合深度贴图找出光线 \(R\) 与场景的交点</p>
@@ -2142,7 +2151,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="orgc19a80f" class="figure">
+<div id="org68ca268" class="figure">
 <p><img src="../../../files/raymarch-to-find-hitpoint-in-rasterization-epsilon.png" alt="raymarch-to-find-hitpoint-in-rasterization-epsilon.png" />
 </p>
 </div>
@@ -2174,7 +2183,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="org2f3a011" class="figure">
+<div id="org48d6936" class="figure">
 <p><img src="../../../files/raymarch-to-find-hitpoint-in-rasterization-2.png" alt="raymarch-to-find-hitpoint-in-rasterization-2.png" />
 </p>
 </div>
@@ -2192,7 +2201,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="orgcb439d5" class="figure">
+<div id="org91c7deb" class="figure">
 <p><img src="../../../files/raymarch-to-find-hitpoint-in-rasterization-mixed.png" alt="raymarch-to-find-hitpoint-in-rasterization-mixed.png" />
 </p>
 </div>
@@ -2654,7 +2663,7 @@ refractedColor.b = refractedColor.b;
 </p>
 
 
-<div id="org5ff9c2d" class="figure">
+<div id="org2ade97e" class="figure">
 <p><img src="../../../files/linear-vs-nonlinear-depth.png" alt="linear-vs-nonlinear-depth.png" width="600px" />
 </p>
 </div>
@@ -3012,7 +3021,7 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </div>
 
 
-<div id="orge3f1bfe" class="figure">
+<div id="org3530385" class="figure">
 <p><img src="../../../files/caustics-for-watersimulation.png" alt="caustics-for-watersimulation.png" width="512px" />
 </p>
 <p><span class="figure-number">Figure 10: </span>生成的焦散贴图</p>
@@ -3238,7 +3247,7 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 
 
-<div id="org864c747" class="figure">
+<div id="orgcce4e87" class="figure">
 <p><img src="../../../files/HeightfieldWaterSimulation.png" alt="HeightfieldWaterSimulation.png" />
 </p>
 <p><span class="figure-number">Figure 11: </span>颗粒感</p>
@@ -3254,7 +3263,7 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </div>
 
 
-<div id="org4dd8b22" class="figure">
+<div id="orgc3ac534" class="figure">
 <p><img src="../../../files/HeightfieldWaterSimulation-2.png" alt="HeightfieldWaterSimulation-2.png" />
 </p>
 <p><span class="figure-number">Figure 12: </span>通过减少像素遍历的位移减少锯齿感</p>
@@ -3269,8 +3278,8 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 </div>
 </div>
-<div id="outline-container-orgd0c08bc" class="outline-3">
-<h3 id="orgd0c08bc"><span class="section-number-3">4.7.</span> 项目总结</h3>
+<div id="outline-container-org289e83c" class="outline-3">
+<h3 id="org289e83c"><span class="section-number-3">4.7.</span> 项目总结</h3>
 <div class="outline-text-3" id="text-4-7">
 <p>
 虽然是参考 <a href="https://medium.com/@martinRenou/real-time-rendering-of-water-caustics-59cda1d74aa">Real-time rendering of water caustics by Martin Renou</a> 的项目, 但本文在很多地方都做了调整,
@@ -3355,7 +3364,7 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 
 
-<div id="org0aa9e18" class="figure">
+<div id="org5b526b4" class="figure">
 <p><img src="../../../files/volumetric-lighting-underwater.png" alt="volumetric-lighting-underwater.png" width="500px" />
 </p>
 <p><span class="figure-number">Figure 13: </span>水底下的体积光</p>
@@ -3373,23 +3382,30 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 <h2 id="screen-space-techniques"><span class="section-number-2">5.</span> 屏幕空间技术 (Screen Space Techniques, SST)</h2>
 <div class="outline-text-2" id="text-screen-space-techniques">
 <p>
-屏幕空间技术是一类基于<a href="#render-to-texture">已渲染的 2D 屏幕图像(像素缓冲区)</a>合成出最终图像, 整个合成的过程发生在屏幕空间上,
+屏幕空间技术是一类基于<a href="#render-to-texture">已渲染的 2D 屏幕图像(像素缓冲区)</a>合成出最终图像, 整个合成的过程发生在屏幕空间上.
 </p>
 
 <p>
-换而言之, 整个合成过程不直接操作 <code>3D</code> 场景, 而是基于渲染得到的 <code>2D</code> 图像进行后处理.
+整个合成过程不直接操作 <code>3D</code> 场景, 而是基于渲染得到的 <code>2D</code> 图像进行后处理.
 </p>
+
+
+<div id="orgc4cb3db" class="figure">
+<p><img src="../../../files/postprocessing.png" alt="postprocessing.png" width="700px" />
+</p>
+<p><span class="figure-number">Figure 14: </span>后处理流程, 这里称"把内容输出到屏幕上的相机"为 <b>后处理相机</b>, 称"平面 \(P\)"为 <b>后处理平面</b></p>
+</div>
 
 <p>
 在 <code>2D</code> 空间上完成后处理并不意味着无法读取到 <code>3D</code> 场景的几何信息,
 </p>
 
 <p>
-在开始后处理之前, 使用对应的 <code>shader</code> 程序应用在场景物体上, 进行渲染并把渲染结果保持在贴图上,
+在开始后处理之前, 使用对应的 <code>shader</code> 程序应用在场景物体上, 进行渲染并把渲染结果保存在不同贴图上,
 </p>
 
 <p>
-这一类包含了场景几何信息的贴图或缓冲区被叫做 <code>G-Buffer</code>, 常见的 <code>G-buffer</code> 如下:
+这一类包含了场景几何信息的贴图或缓冲区被叫做 <code>G-Buffer</code>, 常见的 <code>G-Buffer</code> 如下:
 </p>
 
 <ul class="org-ul">
@@ -3428,47 +3444,104 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 
 <p>
-想要正确地从 <code>G-Buffer</code> 上获取几何信息, <b>通常</b> 得根据对应的相机计算出 <code>UV</code> 坐标从对应 <code>G-Buffer</code> 上获取几何信息.
+这里先定义一个概念: 一个顶点坐标在经过相机投影所得的 <code>NDC</code> 坐标被称为相机 <code>UV</code>.
 </p>
 
 <p>
-比如想从 <code>tGBufferA</code> 上获取几何信息, 可从保存了视点坐标的位置贴图 <code>tPositionView</code> 获取片元的视点坐标 <code>pView</code>,
+相机 <code>UV</code> 是用来从相机生成的 <code>G-Buffer</code> 获取数据的,
 </p>
 
 <p>
-<code>Camera A</code> 的投影矩阵为 <code>projectionMatrixA</code>, 这里需要强调一下, <code>Camera A</code> 并非生成 <code>tPositionView</code> 的相机.
+<b>一般</b> 是哪个相机生成的 <code>G-Buffer</code> 就得用哪个相机的 <code>UV</code> 去获取数据.
 </p>
 
 <p>
-<b>但有一个例外</b>, 要从 <code>tPositionView</code> 获取 <code>pView</code> 得使用后处理的相机 <code>Camera O</code> 的 <code>UV</code> 坐标进行采样,
+而模型的几何数据通常也有一个名为 <code>uv</code> 的 <code>attribute</code>, 这里把这个 <code>attribute</code> 称为材质 <code>UV</code>.
 </p>
 
 <p>
-<code>Camera O</code> 并非生成 <code>tPositionView</code> 的相机, 但它的 <code>UV</code> 坐标是屏幕空间技术的起点和标志.
+通常在建模时模型都会配备一张贴图用于着色, 材质 <code>UV</code> 就是用来从这样贴图上获取数据用于着色,
 </p>
 
 <p>
-以下是从 <code>tGBufferA</code> 上正确获取片元几何信息的思路:
+这里把这个贴图称为 <b>材质贴图</b>, 材质 <code>UV</code> 与材质贴图之间的映射关系 <b>通常</b> 是在建模时就定好的.
+</p>
+
+<p>
+换而言之, 一个顶点坐标可以同时有两类 <code>UV</code> 坐标, 这也导致 <b>初学者很容易在编写 <code>shader</code> 时用错 <code>UV</code> 进行采样.</b>
+</p>
+
+<blockquote>
+<p>
+为了减少这种问题的发生, 应该养成采样前自检的习惯, 第一个问题:
+</p>
+
+<p>
+<b>贴图是否为材质贴图?</b>
+</p>
+
+<p>
+如果是, 那么就是用材质 <code>UV</code> 采样; 否则, 进入下一个问题:
+</p>
+
+<p>
+<b>贴图由哪个相机生成的?</b>
+</p>
+
+<p>
+找出对应相机, 并计算出对应的相机 <code>UV</code> 坐标用于采样.
+</p>
+</blockquote>
+
+<p>
+接下来演示一个例子.
+</p>
+
+<p>
+比如想从 <code>tGBufferA</code> 上获取几何信息, 可以让 <code>Camera A</code> 生成保存了视点坐标的位置贴图 <code>tPositionView</code>,
+</p>
+
+<p>
+<code>Camera A</code> 的投影矩阵为 <code>projectionMatrixA</code>, <code>Camera O</code> 为后处理相机,
+</p>
+
+<p>
+我们可以用 <code>Camera O</code> 的相机 <code>UV</code> 从 <code>tPositionView</code> 中获取视点坐标 <code>pView</code>,
+</p>
+
+<p>
+再根据 <code>pView</code> 和 <code>projectionMatrixA</code> 计算出 <code>pView</code> 在 <code>Camera A</code> 的相机 <code>UV</code>,
+</p>
+
+<p>
+利用该相机 <code>UV</code> 从 <code>tGBufferA</code> 中获取数据:
 </p>
 
 <div class="org-src-container">
 <pre class="src src-glsl"><span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#21512;&#25104;&#26368;&#32456;&#22270;&#20687;&#30340; fragment shader
-</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> uResolution;        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26368;&#32456;&#22270;&#20687;&#30340;&#20998;&#36776;&#29575;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec2</span> uResolution;        <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26368;&#32456;&#30011;&#38754;&#30340;&#20998;&#36776;&#29575;
 </span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">mat4</span> projectionMatrixA;  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">Camera A &#30340;&#25237;&#24433;&#30697;&#38453;
 </span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tGBufferA;     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">G-Buffer A
-</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tPositionView; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20445;&#23384;&#20102;&#35270;&#28857;&#22352;&#26631;&#30340;&#20301;&#32622;&#36148;&#22270;
+</span><span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tPositionView; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20445;&#23384;&#20102;&#35270;&#28857;&#22352;&#26631;&#30340;&#20301;&#32622;&#36148;&#22270;, &#30001; Camera A &#29983;&#25104;
 </span>
-<span style="color: #98fb98;">vec2</span> ssUV = <span style="color: #eedd82;">gl_FragCoord</span>.xy / uResolution.xy; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26368;&#32456;&#22270;&#20687;&#30340; UV &#22352;&#26631;
-</span><span style="color: #98fb98;">vec4</span> pView = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tPositionView, ssUV);  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29255;&#20803;&#22312;&#35270;&#28857;&#31354;&#38388;&#19978;&#30340;&#39030;&#28857;&#22352;&#26631;
-</span><span style="color: #98fb98;">vec4</span> pClip = projectionMatrixA * pView;
+<span style="color: #98fb98;">vec2</span> ssUV = <span style="color: #eedd82;">gl_FragCoord</span>.xy / uResolution.xy; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#26368;&#32456;&#30011;&#38754;&#30340; UV &#22352;&#26631;, &#26159;&#26448;&#36136; UV
+</span><span style="color: #98fb98;">vec4</span> pView = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tPositionView, ssUV);
+<span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">&#26681;&#25454;&#21518;&#22788;&#29702;&#27969;&#31243;, G-Buffer &#26412;&#36136;&#19978;&#23601;&#26159;&#21518;&#22788;&#29702;&#24179;&#38754;&#30340;&#26448;&#36136;&#36148;&#22270;,
+   &#22240;&#27492;, &#21363;&#20415; tPositionView &#19981;&#26159;&#30001; Camera O &#29983;&#25104;&#30340;,
+   &#36825;&#37324;&#20381;&#28982;&#21487;&#20197;&#29992;&#21518;&#22788;&#29702;&#24179;&#38754;&#30340;&#26448;&#36136; UV &#36827;&#34892;&#37319;&#26679;</span><span style="color: #ff7f24;"> */</span>
+<span style="color: #98fb98;">vec4</span> pClip = projectionMatrixA * pView;
 <span style="color: #98fb98;">vec3</span> pNDC = pClip.xyz / pClip.w;
-<span style="color: #98fb98;">vec3</span> pUVW = pNDC * 0.5 * 0.5;   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29255;&#20803;&#22312;&#30456;&#26426; Camera A &#20013;&#30340; UVW &#22352;&#26631;
-</span><span style="color: #98fb98;">vec4</span> pGinfo = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tGBufferA, pUVW.xy);
+<span style="color: #98fb98;">vec3</span> pUVW = pNDC * 0.5 + 0.5;   <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29255;&#20803;&#22312; Camera A &#30340;&#30456;&#26426; UV
+</span><span style="color: #98fb98;">vec4</span> pGinfo = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tGBufferA, pUVW.xy); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">tGBufferA &#26159; Camera A &#29983;&#25104;&#30340;, &#25152;&#20197;&#24471;&#29992;&#23427;&#30340;&#30456;&#26426; UV</span>
 </pre>
 </div>
 
 <p>
-这里可以看出位置贴图 <code>tPositionView</code> 的重要性, 它能为不同 <code>G-Buffer</code> 提供了采样的 <code>UV</code> 坐标.
+可以看出不同相机生成的位置贴图 <code>tPositionView</code> 的重要性, 它能为同一个相机生成的不同 <code>G-Buffer</code> 提供相机 <code>UV</code>;
+</p>
+
+<p>
+在屏幕空间技术中, 后处理相机的 <code>UV</code> 坐标可以说是一切的起点.
 </p>
 </div>
 </div>
@@ -3624,7 +3697,7 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 
 
-<div id="orgb5610fe" class="figure">
+<div id="org2e066a2" class="figure">
 <p><img src="../../../files/deferred_overview.png" alt="deferred_overview.png" />
 </p>
 </div>
@@ -3650,10 +3723,10 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 
 
-<div id="org034a0c2" class="figure">
+<div id="org5790289" class="figure">
 <p><img src="../../../files/forward-vs-deferred.png" alt="forward-vs-deferred.png" width="500px" />
 </p>
-<p><span class="figure-number">Figure 14: </span>向前渲染 VS 延迟渲染, 避免了对不可见的像素进行光照计算 (图片来源于 <a href="https://lettier.github.io/3d-game-shaders-for-beginners/deferred-rendering.html">3D Game Shaders For Beginners</a>)</p>
+<p><span class="figure-number">Figure 15: </span>向前渲染 VS 延迟渲染, 避免了对不可见的像素进行光照计算 (图片来源于 <a href="https://lettier.github.io/3d-game-shaders-for-beginners/deferred-rendering.html">3D Game Shaders For Beginners</a>)</p>
 </div>
 
 <p>
@@ -3691,8 +3764,8 @@ nonLinearDepth(z, n, f) <span style="color: #00ffff;">:=</span> (<span style="co
 </p>
 </div>
 </div>
-<div id="outline-container-org3b06834" class="outline-3">
-<h3 id="org3b06834"><span class="section-number-3">5.3.</span> 延迟渲染的缺点</h3>
+<div id="outline-container-org0e40924" class="outline-3">
+<h3 id="org0e40924"><span class="section-number-3">5.3.</span> 延迟渲染的缺点</h3>
 <div class="outline-text-3" id="text-5-3">
 <p>
 延迟渲染在带来效率的同时也带来了一些缺点.
@@ -3815,10 +3888,10 @@ disableDepthWrite(fboTransparency);
 </p>
 
 
-<div id="org69f412c" class="figure">
+<div id="orgcf0bd72" class="figure">
 <p><img src="../../../files/ssao-diff.jpg" alt="ssao-diff.jpg" width="600px" />
 </p>
-<p><span class="figure-number">Figure 15: </span>禁用 SSAO VS 启用 SSAO, 启用的一方的缝隙处阴影更加明显 (<a href="https://dev.epicgames.com/community/learning/tutorials/5PkM/unreal-engine-how-to-use-ssao-with-lumen">图片来源</a>)</p>
+<p><span class="figure-number">Figure 16: </span>禁用 SSAO VS 启用 SSAO, 启用的一方的缝隙处阴影更加明显 (<a href="https://dev.epicgames.com/community/learning/tutorials/5PkM/unreal-engine-how-to-use-ssao-with-lumen">图片来源</a>)</p>
 </div>
 
 <blockquote>
@@ -3911,7 +3984,7 @@ disableDepthWrite(fboTransparency);
 </p>
 
 <p>
-<b>Vertex Shader</b>: <a id="org3e58b50"></a>
+<b>Vertex Shader</b>: <a id="org19a4453"></a>
 </p>
 
 <div class="org-src-container">
@@ -3930,7 +4003,7 @@ disableDepthWrite(fboTransparency);
 </div>
 
 <p>
-<b>Fragment Shader</b>: <a id="org3f1879f"></a>
+<b>Fragment Shader</b>: <a id="org7190012"></a>
 </p>
 
 <div class="org-src-container">
@@ -3959,7 +4032,7 @@ disableDepthWrite(fboTransparency);
 </p>
 
 <p>
-<b>Vertex Shader</b>: <a id="orgb2051bd"></a>
+<b>Vertex Shader</b>: <a id="org51aa2f7"></a>
 </p>
 
 <div class="org-src-container">
@@ -3998,7 +4071,7 @@ disableDepthWrite(fboTransparency);
 </blockquote>
 
 <p>
-<b>Fragment Shader</b>: <a id="org72f2a01"></a>
+<b>Fragment Shader</b>: <a id="orga7dcd03"></a>
 </p>
 
 <div class="org-src-container">
@@ -4032,15 +4105,15 @@ disableDepthWrite(fboTransparency);
 </p>
 </div>
 </div>
-<div id="outline-container-org6964fd6" class="outline-3">
-<h3 id="org6964fd6"><span class="section-number-3">6.3.</span> 计算场景的环境光遮蔽程度并储存在贴图中</h3>
+<div id="outline-container-org6a05d78" class="outline-3">
+<h3 id="org6a05d78"><span class="section-number-3">6.3.</span> 计算场景的环境光遮蔽程度并储存在贴图中</h3>
 <div class="outline-text-3" id="text-6-3">
 <p>
 <code>SSAO</code> 的关键点在于如何判断一个片元是否被遮蔽, 以下是它的原理解释.
 </p>
 
 
-<div id="org6d8ccea" class="figure">
+<div id="orgedcc2a7" class="figure">
 <p><img src="../../../files/normal-oriented-hemisphere-ssao.jpg" alt="normal-oriented-hemisphere-ssao.jpg" />
 </p>
 </div>
@@ -4116,7 +4189,7 @@ disableDepthWrite(fboTransparency);
 </p>
 
 
-<div id="org61a8248" class="figure">
+<div id="org6c354af" class="figure">
 <p><img src="../../../files/ssao_banding_noise.jpg" alt="ssao_banding_noise.jpg" />
 </p>
 </div>
@@ -4146,7 +4219,7 @@ disableDepthWrite(fboTransparency);
 </p>
 
 
-<div id="org85ca006" class="figure">
+<div id="orge477bea" class="figure">
 <p><img src="../../../files/sample-distirbution.jpg" alt="sample-distirbution.jpg" />
 </p>
 </div>
@@ -4294,7 +4367,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-<a href="#org5098256">Vertex Shader</a>
+<a href="#orgf7edfc4">Vertex Shader</a>
 </p>
 
 <p>
@@ -4422,10 +4495,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="orgfbcfdea" class="figure">
+<div id="org3221fb1" class="figure">
 <p><img src="../../../files/ssao-of-scene.png" alt="ssao-of-scene.png" />
 </p>
-<p><span class="figure-number">Figure 16: </span>根据场景生成缝隙处的阴影</p>
+<p><span class="figure-number">Figure 17: </span>根据场景生成缝隙处的阴影</p>
 </div>
 
 <p>
@@ -4433,8 +4506,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org2a2c7aa" class="outline-3">
-<h3 id="org2a2c7aa"><span class="section-number-3">6.4.</span> 把 SSAO 贴图引用在场景上</h3>
+<div id="outline-container-orga097b15" class="outline-3">
+<h3 id="orga097b15"><span class="section-number-3">6.4.</span> 把 SSAO 贴图引用在场景上</h3>
 <div class="outline-text-3" id="text-6-4">
 <p>
 <code>SSAO</code> 贴图的使用有两种方式:
@@ -4492,7 +4565,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="orgf538dbc" class="figure">
+<div id="orgd355006" class="figure">
 <p><img src="../../../files/ssao-diff-2.png" alt="ssao-diff-2.png" />
 </p>
 </div>
@@ -4507,8 +4580,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 </div>
 </div>
-<div id="outline-container-org334c049" class="outline-2">
-<h2 id="org334c049"><span class="section-number-2">7.</span> 屏幕空间反射 (Screen Space Reflection, SSR)</h2>
+<div id="outline-container-org5bd79e6" class="outline-2">
+<h2 id="org5bd79e6"><span class="section-number-2">7.</span> 屏幕空间反射 (Screen Space Reflection, SSR)</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 <a href="#cubemap-reflection">高度场水面模拟中的反射</a>的实现是根据反射光线的方向从立方体贴图中进行采样, 把采样结果作为水面的反射景象.
@@ -4535,21 +4608,21 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgcadc15e" class="figure">
+<div id="org69c3c9f" class="figure">
 <p><img src="../../../files/ssr-ir-diag.png" alt="ssr-ir-diag.png" />
 </p>
-<p><span class="figure-number">Figure 17: </span>虚线之间相互垂直, 反射光的活动范围为法线和平面之间</p>
+<p><span class="figure-number">Figure 18: </span>虚线之间相互垂直, 反射光的活动范围为法线和平面之间</p>
 </div>
 
 <p>
 为此学习一种新技巧来解决资源浪费的问题, 就是接下来介绍的屏幕空间反射.
 </p>
 </div>
-<div id="outline-container-org1d50bbb" class="outline-3">
-<h3 id="org1d50bbb"><span class="section-number-3">7.1.</span> 整体实现思路</h3>
+<div id="outline-container-org430a498" class="outline-3">
+<h3 id="org430a498"><span class="section-number-3">7.1.</span> 整体实现思路</h3>
 <div class="outline-text-3" id="text-7-1">
 
-<div id="orgd3e4351" class="figure">
+<div id="orgf98b43a" class="figure">
 <p><img src="../../../files/ssr-ir-diag-2.png" alt="ssr-ir-diag-2.png" />
 </p>
 </div>
@@ -4609,15 +4682,15 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orgd0c4c3e" class="outline-3">
-<h3 id="orgd0c4c3e"><span class="section-number-3">7.2.</span> 屏幕空间反射的缺陷</h3>
+<div id="outline-container-org56c5668" class="outline-3">
+<h3 id="org56c5668"><span class="section-number-3">7.2.</span> 屏幕空间反射的缺陷</h3>
 <div class="outline-text-3" id="text-7-2">
 <p>
 屏幕空间虽然有性能优势, 但反射效果有很明显的缺陷, 算是一种取舍吧.
 </p>
 </div>
-<div id="outline-container-org954ff7b" class="outline-4">
-<h4 id="org954ff7b"><span class="section-number-4">7.2.1.</span> 反射信息不足</h4>
+<div id="outline-container-orgcded97a" class="outline-4">
+<h4 id="orgcded97a"><span class="section-number-4">7.2.1.</span> 反射信息不足</h4>
 <div class="outline-text-4" id="text-7-2-1">
 <p>
 屏幕空间反射只能反射当前相机可见的场景内容, 反射光线与场景的交点出现在相机视野外时无法被反射.
@@ -4628,17 +4701,17 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgdc3307c" class="figure">
+<div id="org7f32565" class="figure">
 <p><img src="../../../files/ssr-ir-diag-3.png" alt="ssr-ir-diag-3.png" />
 </p>
-<p><span class="figure-number">Figure 18: </span>入射射线 \(I_1\) 和法线之间的夹角小于 \(45^{\circ}\) 时应当反射相机背后的场景</p>
+<p><span class="figure-number">Figure 19: </span>入射射线 \(I_1\) 和法线之间的夹角小于 \(45^{\circ}\) 时应当反射相机背后的场景</p>
 </div>
 
 
-<div id="org798595e" class="figure">
+<div id="org9c7c47b" class="figure">
 <p><img src="../../../files/ssr-ir-diag-4.png" alt="ssr-ir-diag-4.png" />
 </p>
-<p><span class="figure-number">Figure 19: </span>反射光线 \(R_0\) 与场景的交点 \(P\) 在相机中的 UV 坐标超出场景采样的范围</p>
+<p><span class="figure-number">Figure 20: </span>反射光线 \(R_0\) 与场景的交点 \(P\) 在相机中的 UV 坐标超出场景采样的范围</p>
 </div>
 
 <p>
@@ -4658,34 +4731,18 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org846ba59" class="figure">
+<div id="orga429978" class="figure">
 <p><img src="../../../files/ssr-ir-diag-5.png" alt="ssr-ir-diag-5.png" />
 </p>
-<p><span class="figure-number">Figure 20: </span>反射光线 \(R_0\) 与场景的交点 \(P\) 在相机前, 但正确的反射内容在相机背后</p>
+<p><span class="figure-number">Figure 21: </span>反射光线 \(R_1\) 与场景的交点 \(P\) 在相机前, 但正确的反射内容在相机背后</p>
 </div>
 
 <p>
-这种情况应该量化 \(O\) 点的反射程度 \(d\), 它跟 \(I_{1}\) 与 \(N(ormal)\) (或者 \(R_{1}\) 与 \(N\)) 之间的夹角 \(\theta\) 大小有关, \(\theta\) 的范围是 \([0^{\circ}, 90^{\circ}]\),
+可以现这两种情况都是入射射线 \(I\) 与反射射线 \(R\) 之间的夹角 \(\theta \in [0^{\circ}, 180^{\circ}]\) 在 \([0^{\circ}, 90^{\circ}]\) 内才出现的,
 </p>
 
 <p>
-当 \(\theta\) 越小, 反射程度越低, 反之越高, 反射程度 \(d\) 与 \(\theta\) 的关系有点类似于 <a href="../../2020/08/graphics-opengl-light-and-material.html#fresnel-effect">菲涅耳效应</a> 的简单建模:
-</p>
-
-<p>
-\(d = 1 - max\left(\frac{I_{1}}{|I_{1}|} \cdot \frac{N}{|N|}, 0\right) = 1 - max(\cos\theta, 0)\), 反射程度的范围为 \([0, 1]\), 当 \(I_{1}\) 和 \(N\) 方向一致时, 反射程度为 0.
-</p>
-
-<p>
-此外, 对比第一种方法只有 <b>可反射</b> 与 <b>不可反射</b> 两种判断结果, 反射程度可以用于在这两种结果之间进行 <b>过渡</b>;
-</p>
-
-<p>
-当然, 反射程度不是物理正确的, 比如上图中在 \(\theta \lt 45^{\circ} \rightarrow d < 0.293\) 时,
-</p>
-
-<p>
-按物理关系来说, 反射内容在相机后面应该属于不可反射, 也就是 \(d = 0\).
+因此, 当 \(\theta \in [0^{\circ}, 90^{\circ}]\) 时, \(\cos \theta \ge 0\), 说明 \(R\) 是否往近裁剪平面方向移动.
 </p>
 
 <p>
@@ -4705,10 +4762,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgf961643" class="figure">
+<div id="org0e45850" class="figure">
 <p><img src="../../../files/ssr-ir-diag-infinite-fg.png" alt="ssr-ir-diag-infinite-fg.png" />
 </p>
-<p><span class="figure-number">Figure 21: </span>球体的前景被无限反射, 从 \(O_0\) 开始地面上形成球体的拖影</p>
+<p><span class="figure-number">Figure 22: </span>球体的前景被无限反射, 从 \(O_0\) 开始地面上形成球体的拖影</p>
 </div>
 
 <p>
@@ -4756,13 +4813,17 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-或者说, 只要 \(P_{0}\) 与反射光线 \(R_{i}\) 的距离在一定范围内 \(O_{i}\) 才能进行反射.
+或者说, 只要 \(P_{0}\) 与反射光线 \(R_{i}\) 的距离在一定范围内 \(O_{i}\) 才能进行反射,
+</p>
+
+<p>
+正好可以把这个范围设定为浮点数比较时的容错大小.
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org8a9b5c0" class="outline-3">
-<h3 id="org8a9b5c0"><span class="section-number-3">7.3.</span> 实现中的具体细节</h3>
+<div id="outline-container-org22ee6d5" class="outline-3">
+<h3 id="org22ee6d5"><span class="section-number-3">7.3.</span> 实现中的具体细节</h3>
 <div class="outline-text-3" id="text-7-3">
 <p>
 这里会对 <code>three.js</code> 的实现进行分析, 会与原本的实现有些许差别, 但重要部分还是会保留下来,
@@ -4773,10 +4834,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgd83c64a" class="figure">
+<div id="org30fe129" class="figure">
 <p><img src="../../../files/ssr-pipeline.png" alt="ssr-pipeline.png" />
 </p>
-<p><span class="figure-number">Figure 22: </span>屏幕空间反射 - 后处理实现流程</p>
+<p><span class="figure-number">Figure 23: </span>屏幕空间反射 - 后处理实现流程</p>
 </div>
 
 <p>
@@ -4808,7 +4869,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-<a href="#org20949d8"><b>Vertex Shader</b></a>
+<a href="#org8bdbd49"><b>Vertex Shader</b></a>
 </p>
 
 <p>
@@ -4830,8 +4891,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 其中 <code>Uniform</code> 变量 <code>uIsMirror</code> 是用来决定物体是否可以反射.
 </p>
 </div>
-<div id="outline-container-org37bfc1c" class="outline-4">
-<h4 id="org37bfc1c"><span class="section-number-4">7.3.1.</span> <code>Three.js</code> 的 <code>SSR</code> 计算流程</h4>
+<div id="outline-container-org5f28782" class="outline-4">
+<h4 id="org5f28782"><span class="section-number-4">7.3.1.</span> <code>Three.js</code> 的 <code>SSR</code> 计算流程</h4>
 <div class="outline-text-4" id="text-7-3-1">
 <p>
 为了学习接下来的细节分析, 需要先了解 <code>three.js</code> 的整个屏幕空间反射(<code>SSR</code>)实现流程是怎么样的,
@@ -4880,8 +4941,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </span>    <span style="color: #00ffff;">if</span> (hit) {
       <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20174;&#27861;&#32447;&#36148;&#22270;&#33719;&#21462;&#20986;&#37319;&#26679;&#28857;&#30340;&#27861;&#32447;
 </span>      <span style="color: #98fb98;">vec3</span> samplingNormalView = getSamplingNormalView(currentPosUV);
-      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20445;&#35777;&#21453;&#23556;&#20809;&#32447;&#26159;&#21521;&#30528;&#23244;&#30097;&#20132;&#28857;&#25152;&#22788;&#34920;&#38754;&#23556;&#21435;, &#32780;&#19981;&#26159;&#20174;&#20869;&#37096;&#24448;&#22806;&#23556;
-</span>      <span style="color: #00ffff;">if</span> (<span style="color: #b0c4de;">dot</span>(endPosView - startPosView, samplingNormalView)) <span style="color: #00ffff;">continue</span>;
+      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20445;&#35777;&#21453;&#23556;&#20809;&#32447;&#26159;&#21521;&#30528;&#23244;&#30097;&#20132;&#28857;&#25152;&#22788;&#34920;&#38754;&#23556;&#21435;, &#32780;&#19981;&#26159;&#24448;&#36817;&#35009;&#21098;&#24179;&#38754;&#23556;&#21435;
+</span>      <span style="color: #00ffff;">if</span> (<span style="color: #b0c4de;">dot</span>(endPosView - startPosView, samplingNormalView) &gt;= 0.0) <span style="color: #00ffff;">continue</span>;
       <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">
         &#36825;&#20010;&#21028;&#26029;&#21487;&#20197;&#35268;&#36991;&#25481; *&#33258;&#21453;&#23556;* &#30340;&#24773;&#20917;: &#23244;&#30097;&#20132;&#28857;&#22312;"&#38236;&#23376;"&#33258;&#36523;&#19978;.
 
@@ -4923,14 +4984,14 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="orgbaeb983" class="figure">
+<div id="orgf782fc6" class="figure">
 <p><img src="../../../files/ssr-ir-diag-self-reflection.png" alt="ssr-ir-diag-self-reflection.png" />
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org5995392" class="outline-4">
-<h4 id="org5995392"><span class="section-number-4">7.3.2.</span> 反射光线的最大长度</h4>
+<div id="outline-container-orgf78a6ec" class="outline-4">
+<h4 id="orgf78a6ec"><span class="section-number-4">7.3.2.</span> 反射光线的最大长度</h4>
 <div class="outline-text-4" id="text-7-3-2">
 <p>
 为什么要计算 <code>maxReflectDistance</code>?
@@ -4941,10 +5002,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org482a4cd" class="figure">
+<div id="orga02f067" class="figure">
 <p><img src="../../../files/ssr-ir-diag-maxdistance.png" alt="ssr-ir-diag-maxdistance.png" />
 </p>
-<p><span class="figure-number">Figure 23: </span>计算最大反射距离 \(|R_{var}|\), 保证在最大距离时的位置 \(P\) 与反射平面的距离固定为 \(|R|\)</p>
+<p><span class="figure-number">Figure 24: </span>计算最大反射距离 \(|R_{var}|\), 保证在最大距离时的位置 \(P\) 与反射平面的距离固定为 \(|R|\)</p>
 </div>
 
 <p>
@@ -4968,11 +5029,11 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org04197d6" class="outline-4">
-<h4 id="org04197d6"><span class="section-number-4">7.3.3.</span> 对超出近裁剪平面的反射光线进行裁剪</h4>
+<div id="outline-container-orgd8610e8" class="outline-4">
+<h4 id="orgd8610e8"><span class="section-number-4">7.3.3.</span> 对超出近裁剪平面的反射光线进行裁剪</h4>
 <div class="outline-text-4" id="text-7-3-3">
 
-<div id="org36edbb6" class="figure">
+<div id="orga37bad8" class="figure">
 <p><img src="../../../files/ssr-ir-diag-truncate-reflect-ray.png" alt="ssr-ir-diag-truncate-reflect-ray.png" />
 </p>
 </div>
@@ -5024,8 +5085,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org2708f85" class="outline-4">
-<h4 id="org2708f85"><span class="section-number-4">7.3.4.</span> 动态计算容错 \(\epsilon\)</h4>
+<div id="outline-container-orgf08ce92" class="outline-4">
+<h4 id="orgf08ce92"><span class="section-number-4">7.3.4.</span> 动态计算容错 \(\epsilon\)</h4>
 <div class="outline-text-4" id="text-7-3-4">
 <p>
 相比 <code>three.js</code> 所参考的实现而言, 动态计算交点容错 \(\epsilon\) 是 <code>three.js</code> 实现的一大亮点, 其实现思路如下:
@@ -5056,7 +5117,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgb9f1079" class="figure">
+<div id="org39260cf" class="figure">
 <p><img src="../../../files/ssr-auto-thickness.png" alt="ssr-auto-thickness.png" />
 </p>
 </div>
@@ -5082,11 +5143,11 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-orgd7373fb" class="outline-4">
-<h4 id="orgd7373fb"><span class="section-number-4">7.3.5.</span> <code>SSR</code> 完整代码</h4>
+<div id="outline-container-orgfb9b148" class="outline-4">
+<h4 id="orgfb9b148"><span class="section-number-4">7.3.5.</span> <code>SSR</code> 完整代码</h4>
 <div class="outline-text-4" id="text-7-3-5">
 <p>
-<a href="#org3baf6c6"><b>Vertex Shader</b></a>
+<a href="#org6e654ee"><b>Vertex Shader</b></a>
 </p>
 
 <p>
@@ -5212,7 +5273,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </span>
         <span style="color: #00ffff;">if</span> (hit) {
           <span style="color: #98fb98;">vec3</span> samplingNormalView = <span style="color: #b0c4de;">normalize</span>(<span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tViewNormal, uv).xyz * 2. - 1.);
-          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20445;&#35777;&#21453;&#23556;&#20809;&#32447; reflectView &#26159;&#21521;&#30528;&#22330;&#26223;&#30340;&#20132;&#28857; samplingPosView &#25152;&#22788;&#30340;&#34920;&#38754;&#23556;&#21435;, &#32780;&#19981;&#26159;&#20174;&#20869;&#37096;&#24448;&#22806;&#23556;
+          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20445;&#35777;&#21453;&#23556;&#20809;&#32447; reflectView &#26159;&#21521;&#30528;&#22330;&#26223;&#30340;&#20132;&#28857; samplingPosView &#25152;&#22788;&#30340;&#34920;&#38754;&#23556;&#21435;, &#32780;&#19981;&#26159;&#24448;&#36817;&#35009;&#21098;&#24179;&#38754;&#23556;&#21435;
 </span>          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#20197;&#21450;&#36991;&#20813;&#33258;&#21453;&#23556;, &#33258;&#21453;&#23556;&#30340;&#20986;&#29616;&#36890;&#24120;&#22312; i = 0. &#26102;
 </span>          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22240;&#20026;&#24403;&#21069;&#20301;&#32622;&#30340;&#23631;&#24149;&#31354;&#38388;&#22352;&#26631;&#35745;&#31639;&#20026; vec2 currentPosScreen = startPosScreen + i * dFrag;
 </span>          <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36825;&#20010;&#26102;&#20505; currentPosScreen &#21644; startPosScreen &#26159;&#19968;&#26679;&#30340;
@@ -5254,10 +5315,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org9bfb538" class="figure">
+<div id="orgd1fa3fc" class="figure">
 <p><img src="../../../files/ssr-gaps.png" alt="ssr-gaps.png" width="500px" />
 </p>
-<p><span class="figure-number">Figure 24: </span>厚度过小导致 SSR 间隙的出现</p>
+<p><span class="figure-number">Figure 25: </span>厚度过小导致 SSR 间隙的出现</p>
 </div>
 
 <p>
@@ -5273,10 +5334,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgd29a83c" class="figure">
+<div id="org8b807c2" class="figure">
 <p><img src="../../../files/ssr-smear.png" alt="ssr-smear.png" width="500px" />
 </p>
-<p><span class="figure-number">Figure 25: </span>厚度过大导致 SSR 拖影的出现.</p>
+<p><span class="figure-number">Figure 26: </span>厚度过大导致 SSR 拖影的出现.</p>
 </div>
 
 <p>
@@ -5288,7 +5349,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-<a href="#org3baf6c6"><b>Vertex Shader</b></a>
+<a href="#org6e654ee"><b>Vertex Shader</b></a>
 </p>
 
 <p>
@@ -5342,10 +5403,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="org090cad0" class="figure">
+<div id="org59eea01" class="figure">
 <p><img src="../../../files/ssr-gaps-blur.png" alt="ssr-gaps-blur.png" width="500px" />
 </p>
-<p><span class="figure-number">Figure 26: </span>对 SSR 间隙进行一次模糊处理</p>
+<p><span class="figure-number">Figure 27: </span>对 SSR 间隙进行一次模糊处理</p>
 </div>
 
 <p>
@@ -5353,8 +5414,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org01ec28f" class="outline-4">
-<h4 id="org01ec28f"><span class="section-number-4">7.3.7.</span> 完整的后处理流程</h4>
+<div id="outline-container-org6a28915" class="outline-4">
+<h4 id="org6a28915"><span class="section-number-4">7.3.7.</span> 完整的后处理流程</h4>
 <div class="outline-text-4" id="text-7-3-7">
 <p>
 整个实现流程其实涉及了不少 <code>shader</code> 以外的细节, 因此如果在尝试实现时遇到问题, 请务必参考以下模块:
@@ -5367,8 +5428,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 </div>
 </div>
-<div id="outline-container-org96e0286" class="outline-2">
-<h2 id="org96e0286"><span class="section-number-2">8.</span> 辉光 (Bloom)</h2>
+<div id="outline-container-orgbf3964a" class="outline-2">
+<h2 id="orgbf3964a"><span class="section-number-2">8.</span> 辉光 (Bloom)</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 生成场景贴图, 对场景贴图中每个区域的像素进行亮度筛选, 当通过筛选, 那么该像素就纳入统计, 得出该区域内的平均亮度.
@@ -5379,8 +5440,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org6583cf8" class="outline-2">
-<h2 id="org6583cf8"><span class="section-number-2">9.</span> 动态模糊 (Motion Blur)</h2>
+<div id="outline-container-orgc38895b" class="outline-2">
+<h2 id="orgc38895b"><span class="section-number-2">9.</span> 动态模糊 (Motion Blur)</h2>
 <div class="outline-text-2" id="text-9">
 <p>
 生成视点空间的顶点贴图, 根据后处理相机的 <code>UV</code> 从顶点贴图中获取视点坐标 \(p_1\),
@@ -5395,8 +5456,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org5415651" class="outline-2">
-<h2 id="org5415651"><span class="section-number-2">10.</span> 景深 (Depth of Field)</h2>
+<div id="outline-container-org969a187" class="outline-2">
+<h2 id="org969a187"><span class="section-number-2">10.</span> 景深 (Depth of Field)</h2>
 <div class="outline-text-2" id="text-10">
 <p>
 生成场景贴图作为 <code>FocusTexture</code>, 使用 <code>Dilation</code> 算法生成 <code>FocusOutTexture</code>.
@@ -5411,15 +5472,15 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-orgee3ce6f" class="outline-2">
-<h2 id="orgee3ce6f"><span class="section-number-2">11.</span> 体积光照 (Volumetric Lighting)</h2>
+<div id="outline-container-org4452cc0" class="outline-2">
+<h2 id="org4452cc0"><span class="section-number-2">11.</span> 体积光照 (Volumetric Lighting)</h2>
 <div class="outline-text-2" id="text-11">
 <p>
 体积光照是指模拟光线在进入雾/尘埃等介质所产生的散射现象.
 </p>
 </div>
-<div id="outline-container-orge3a2faa" class="outline-3">
-<h3 id="orge3a2faa"><span class="section-number-3">11.1.</span> 整体思路</h3>
+<div id="outline-container-org4f90334" class="outline-3">
+<h3 id="org4f90334"><span class="section-number-3">11.1.</span> 整体思路</h3>
 <div class="outline-text-3" id="text-11-1">
 <p>
 当物体出现在视野中时, 计算从物体到相机(视线)的过程中经过了多少个光源,
@@ -5435,17 +5496,17 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 
 
 
-<div id="org09bb2d9" class="figure">
+<div id="orgbff0edf" class="figure">
 <p><img src="../../../files/god-ray-spotlight.png" alt="god-ray-spotlight.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 27: </span>点光源的体积光</p>
+<p><span class="figure-number">Figure 28: </span>点光源的体积光</p>
 </div>
 
 
-<div id="org42b6e72" class="figure">
+<div id="org1a2a2be" class="figure">
 <p><img src="../../../files/god-ray-parallel.png" alt="god-ray-parallel.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 28: </span>平行光源的体积光</p>
+<p><span class="figure-number">Figure 29: </span>平行光源的体积光</p>
 </div>
 
 <p>
@@ -5458,8 +5519,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 </div>
 </div>
-<div id="outline-container-org0ef2101" class="outline-2">
-<h2 id="org0ef2101"><span class="section-number-2">12.</span> 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)</h2>
+<div id="outline-container-org5515f52" class="outline-2">
+<h2 id="org5515f52"><span class="section-number-2">12.</span> 为光栅化场景生成有向距离场 (Generate SDF in Rasterization)</h2>
 <div class="outline-text-2" id="text-12">
 <p>
 <a href="https://github.com/gkjohnson/three-mesh-bvh">https://github.com/gkjohnson/three-mesh-bvh</a>
@@ -5513,8 +5574,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 <code>updateSDF</code> 的 <code>CPU</code> 生成.
 </p>
 </div>
-<div id="outline-container-org4226c6b" class="outline-3">
-<h3 id="org4226c6b"><span class="section-number-3">12.1.</span> 计算判定点与三角形所处平面的有向距离</h3>
+<div id="outline-container-org0878cb4" class="outline-3">
+<h3 id="org0878cb4"><span class="section-number-3">12.1.</span> 计算判定点与三角形所处平面的有向距离</h3>
 <div class="outline-text-3" id="text-12-1">
 <p>
 假设判定点 \(Q\) 与三角形 \(\Delta ABC\) 不处于同一个平面,
@@ -5529,7 +5590,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-其单位向量为 \(\hat{N} = \frac{\vec{N}}{\left| N \right|}\), 
+其单位向量为 \(\hat{N} = \frac{\vec{N}}{\left| N \right|}\),
 </p>
 
 <p>
@@ -5541,8 +5602,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-org004d89d" class="outline-3">
-<h3 id="org004d89d"><span class="section-number-3">12.2.</span> 判断投影点是否在三角形内部 - 重心坐标法(Barycentric Coordinate Method)</h3>
+<div id="outline-container-org91f22f7" class="outline-3">
+<h3 id="org91f22f7"><span class="section-number-3">12.2.</span> 判断投影点是否在三角形内部 - 重心坐标法(Barycentric Coordinate Method)</h3>
 <div class="outline-text-3" id="text-12-2">
 <p>
 判断点是否在三角形内有很多种方法, 比较常用的有同向法和接下来要学习重心坐标法.
@@ -5578,7 +5639,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org3c97f1b" class="figure">
+<div id="org904a960" class="figure">
 <p><img src="../../../files/barycoord.png" alt="barycoord.png" />
 </p>
 </div>
@@ -5708,7 +5769,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org9622fde" class="figure">
+<div id="org1363093" class="figure">
 <p><img src="../../../files/animal-crossing-example.avif" alt="animal-crossing-example.avif" />
 </p>
 </div>
@@ -5812,8 +5873,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 其中比较有名的游戏例子: <code>Borderlands</code> 系列.
 </p>
 </div>
-<div id="outline-container-orgb710271" class="outline-3">
-<h3 id="orgb710271"><span class="section-number-3">14.1.</span> 判断片元是处于轮廓上</h3>
+<div id="outline-container-org6b152af" class="outline-3">
+<h3 id="org6b152af"><span class="section-number-3">14.1.</span> 判断片元是处于轮廓上</h3>
 <div class="outline-text-3" id="text-14-1">
 <p>
 对场景的物体进行描边, 需要先找出物体的轮廓线, 然后对轮廓线进行加黑和加粗实现描边.
@@ -5840,8 +5901,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-orgcd86197" class="outline-3">
-<h3 id="orgcd86197"><span class="section-number-3">14.2.</span> 提取描边</h3>
+<div id="outline-container-org50775dd" class="outline-3">
+<h3 id="org50775dd"><span class="section-number-3">14.2.</span> 提取描边</h3>
 <div class="outline-text-3" id="text-14-2">
 <p>
 比较的属性一般为片元的深度值(<code>depth</code>)或法线(<code>normal</code>).
@@ -5852,10 +5913,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org540a105" class="figure">
+<div id="org29fe430" class="figure">
 <p><img src="../../../files/outlining.webp" alt="outlining.webp" width="600px" />
 </p>
-<p><span class="figure-number">Figure 29: </span>图片来源于 <a href="https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9">How to render outlines in WebGL</a></p>
+<p><span class="figure-number">Figure 30: </span>图片来源于 <a href="https://omar-shehata.medium.com/how-to-render-outlines-in-webgl-8253c14724f9">How to render outlines in WebGL</a></p>
 </div>
 
 <p>
@@ -5872,15 +5933,15 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-所以它的视点坐标的 \(y\) 分量就是片元的线性深度.
+与我们使用视点坐标的 \(z\) 分量作为线性深度不同, 它的视点坐标的 \(y\) 分量才是片元的线性深度.
 </p>
 </blockquote>
 
 
-<div id="orgccc23ec" class="figure">
+<div id="org01028d3" class="figure">
 <p><img src="../../../files/FRBkSm1.png" alt="FRBkSm1.png" />
 </p>
-<p><span class="figure-number">Figure 30: </span>图片来源于 3D Game Shaders For Beginners</p>
+<p><span class="figure-number">Figure 31: </span>图片来源于 3D Game Shaders For Beginners</p>
 </div>
 
 <p>
@@ -6004,10 +6065,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="org5c503d1" class="figure">
+<div id="org2fcecde" class="figure">
 <p><img src="../../../files/outline-input-textures.png" alt="outline-input-textures.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 31: </span>从深度贴图提取外轮廓; 从法线贴图的亮度图中提取内轮廓</p>
+<p><span class="figure-number">Figure 32: </span>从深度贴图提取外轮廓; 从法线贴图的亮度图中提取内轮廓</p>
 </div>
 
 <p>
@@ -6023,10 +6084,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="orgcb14bed" class="figure">
+<div id="org89ac3f4" class="figure">
 <p><img src="../../../files/depth+normal+almost-top.png" alt="depth+normal+almost-top.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 32: </span>从法线亮度图提取的轮廓图 (俯视角)</p>
+<p><span class="figure-number">Figure 33: </span>从法线亮度图提取的轮廓图 (俯视角)</p>
 </div>
 
 <p>
@@ -6058,15 +6119,15 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="orgf31dd66" class="figure">
+<div id="orge31d921" class="figure">
 <p><img src="../../../files/depth+normal+almost-top-with-large-depth.png" alt="depth+normal+almost-top-with-large-depth.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 33: </span>两贴图一同提取轮廓, 并增强后深度值后的权重 (俯视角)</p>
+<p><span class="figure-number">Figure 34: </span>两贴图一同提取轮廓, 并增强后深度值后的权重 (俯视角)</p>
 </div>
 </div>
 </div>
-<div id="outline-container-org358971f" class="outline-3">
-<h3 id="org358971f"><span class="section-number-3">14.3.</span> 对场景进行描边</h3>
+<div id="outline-container-orgd142c68" class="outline-3">
+<h3 id="orgd142c68"><span class="section-number-3">14.3.</span> 对场景进行描边</h3>
 <div class="outline-text-3" id="text-14-3">
 <p>
 最后就是让描边图与场景图结合在一起, 做法是让场景图的像素和描边像素混合.
@@ -6081,22 +6142,22 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="org44b5a61" class="figure">
+<div id="org923dc31" class="figure">
 <p><img src="../../../files/scene-outlining.png" alt="scene-outlining.png" width="400px" />
 </p>
-<p><span class="figure-number">Figure 34: </span>对场景进行描边</p>
+<p><span class="figure-number">Figure 35: </span>对场景进行描边</p>
 </div>
 </div>
 </div>
-<div id="outline-container-org6e5bea2" class="outline-3">
-<h3 id="org6e5bea2"><span class="section-number-3">14.4.</span> 完整代码</h3>
+<div id="outline-container-orgb40fd40" class="outline-3">
+<h3 id="orgb40fd40"><span class="section-number-3">14.4.</span> 完整代码</h3>
 <div class="outline-text-3" id="text-14-4">
 <p>
 这组 <code>Shader</code> 要应用在后处理上, 深度贴图和法线贴图的生成可以参考 <a href="#render-to-texture">Render To Texture</a>.
 </p>
 
 <p>
-<a href="#org5098256">Vertex Shader</a>
+<a href="#orgf7edfc4">Vertex Shader</a>
 </p>
 
 <p>
@@ -6188,8 +6249,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 </div>
 </div>
-<div id="outline-container-orgb73cfbc" class="outline-2">
-<h2 id="orgb73cfbc"><span class="section-number-2">15.</span> 风格化渲染: 莫比斯风格渲染 (Moebius Style Shading)</h2>
+<div id="outline-container-orgb7396ed" class="outline-2">
+<h2 id="orgb7396ed"><span class="section-number-2">15.</span> 风格化渲染: 莫比斯风格渲染 (Moebius Style Shading)</h2>
 <div class="outline-text-2" id="text-15">
 <blockquote>
 <p>
@@ -6205,8 +6266,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </blockquote>
 </div>
-<div id="outline-container-org94c139f" class="outline-3">
-<h3 id="org94c139f"><span class="section-number-3">15.1.</span> 整体思路</h3>
+<div id="outline-container-orga257f3f" class="outline-3">
+<h3 id="orga257f3f"><span class="section-number-3">15.1.</span> 整体思路</h3>
 <div class="outline-text-3" id="text-15-1">
 <p>
 整个实现分为 3 个步骤来完成对莫比斯风格的复刻:
@@ -6225,8 +6286,8 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 </div>
 </div>
-<div id="outline-container-orgc4e0a27" class="outline-3">
-<h3 id="orgc4e0a27"><span class="section-number-3">15.2.</span> 描边处理</h3>
+<div id="outline-container-org2d3165a" class="outline-3">
+<h3 id="org2d3165a"><span class="section-number-3">15.2.</span> 描边处理</h3>
 <div class="outline-text-3" id="text-15-2">
 <p>
 描边的具体实现就不赘述了, 不过我们要在原有代码上做一些调整, 使得描边类似与手绘那样带有一些扭曲.
@@ -6257,10 +6318,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org8cfc0a1" class="figure">
+<div id="org0f31d19" class="figure">
 <p><img src="../../../files/moebius-outline-breaking.png" alt="moebius-outline-breaking.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 35: </span>原实现的效果: 描边断裂, 形成噪点</p>
+<p><span class="figure-number">Figure 36: </span>原实现的效果: 描边断裂, 形成噪点</p>
 </div>
 
 <p>
@@ -6300,25 +6361,67 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="org5cb40ad" class="figure">
+<div id="orgaca9a39" class="figure">
 <p><img src="../../../files/moebius-outline-handdraw.png" alt="moebius-outline-handdraw.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 36: </span>优化过后的描边没有颗粒感</p>
+<p><span class="figure-number">Figure 37: </span>优化过后的描边没有颗粒感</p>
 </div>
 
 
-<div id="orge5dcbc7" class="figure">
+<div id="org3982619" class="figure">
 <p><img src="../../../files/moebius-outline-handdraw-larger-amplitude.png" alt="moebius-outline-handdraw-larger-amplitude.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 37: </span>扭曲幅度为 5.0 对齐原代码进行对比, 描边扭曲程度较大, 但依然没断裂</p>
+<p><span class="figure-number">Figure 38: </span>扭曲幅度为 5.0 对齐原代码进行对比, 描边扭曲程度较大, 但依然没断裂</p>
 </div>
 </div>
 </div>
-<div id="outline-container-org7b3785e" class="outline-3">
-<h3 id="org7b3785e"><span class="section-number-3">15.3.</span> 找出场景的阴影区域</h3>
+<div id="outline-container-org42e88cc" class="outline-3">
+<h3 id="org42e88cc"><span class="section-number-3">15.3.</span> 找出场景的阴影区域</h3>
 <div class="outline-text-3" id="text-15-3">
 <p>
-我们不需要使用阴影贴图就可以大概找出场景的阴影区域, 思路是使用亮度函数把场景渲染结果转换成亮度灰阶图:
+看到阴影区域这个词, 通常第一反应是阴影贴图, 然而阴影贴图只能找到 <b>直射光线</b> 被遮蔽的区域.
+</p>
+
+<p>
+物体的亮度是由直射光线和 <b>间接光线</b> 一同贡献的, 这就是为什么能够观察到那些没受到直射光线照射的区域.
+</p>
+
+<p>
+因此, 本章节范围内重新定义阴影区域: 低亮度的区域, 或者说受到较少光照的区域.
+</p>
+
+<p>
+为了直观理解低亮度与直射光线被遮蔽之间的区别, 可以看以下图片.
+</p>
+
+
+<div id="orgb730fb6" class="figure">
+<p><img src="../../../files/luma-vs-shadow.png" alt="luma-vs-shadow.png" />
+</p>
+<p><span class="figure-number">Figure 39: </span>原场景 (左), 原场景中光线被遮蔽的区域 (右)</p>
+</div>
+
+<p>
+根据图像, 物体较暗的地方并不是直射光线被遮蔽造成的, 而是光照计算结果偏低的结果.
+</p>
+
+<p>
+也可以把物体的阴影选项关闭进行对比, 可以发现去掉阴影后, 物体的低亮度区域依然存在.
+</p>
+
+
+<div id="orgb3f4b71" class="figure">
+<p><img src="../../../files/scene-without-shadow.png" alt="scene-without-shadow.png" width="600px" />
+</p>
+<p><span class="figure-number">Figure 40: </span>关闭物体的阴影选项</p>
+</div>
+
+<p>
+那么该如何找出阴影区域呢? 思路如下:
+</p>
+
+<p>
+首先要使用亮度函数把场景渲染结果转换成亮度灰阶图:
 </p>
 
 <div class="org-src-container">
@@ -6333,11 +6436,19 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-当阴影区域的亮度达到最大等, 在阴影区域上绘制斜线作为阴影线; 如果亮度达到中级, 在原有阴影线上 <b>添加</b> 垂直线作为阴影线;
+当阴影区域的亮度达到最大等级, 在阴影区域上绘制斜线作为阴影线;
 </p>
 
 <p>
-如果亮度达到最小等级, 在原有阴影线 <b>添加</b> 水平线作为阴影线; 总而言之, 就是阴影区域亮度越底阴影线越多.
+如果亮度达到中级, 在原有阴影线上 <b>添加</b> 垂直线作为阴影线;
+</p>
+
+<p>
+如果亮度达到最小等级, 在原有阴影线 <b>添加</b> 水平线作为阴影线;
+</p>
+
+<p>
+总的来说就是阴影区域亮度越底阴影线越多.
 </p>
 
 <div class="org-src-container">
@@ -6379,7 +6490,15 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 <p>
-这里的阴影并不是光照计算意义上的阴影, 只是对场景色彩暗部的筛选结果, 因此, 阴影的等级划分取决于场景色彩,
+这里的亮度并非光照计算的结果, 而是基于场景色彩计算的筛选结果,
+</p>
+
+<p>
+有些场景区域的表面本来就深色, 哪怕是处于直射光线之下也有可能被判定为阴影区域.
+</p>
+
+<p>
+因此, 阴影的等级划分取决于场景色彩,
 </p>
 
 <p>
@@ -6395,33 +6514,41 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org00c4ae3" class="figure">
+<div id="org53411c9" class="figure">
 <p><img src="../../../files/moebius-shadow-line.png" alt="moebius-shadow-line.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 38: </span>绘制阴影线</p>
+<p><span class="figure-number">Figure 41: </span>绘制阴影线</p>
 </div>
 
 <blockquote>
 <p>
-既然这里的阴影不是真阴影, 那么可以通过真正的光照计算得出阴影再绘制阴影线吗?
+<b>TODO</b>
 </p>
 
 <p>
-如果想完全精确的绘制阴影线, 通过阴影贴图来判断片元是否处于阴影区是非常正确的做法.
+针对场景颜色过深导致被误判为阴影区域的问题, 本人有一种未经实践的想法:
 </p>
 
 <p>
-不过我们这种方法本身也能真阴影绘制阴影线, 还能通过控制某处的颜色深浅来决定是否绘制阴影线.
+计算出光照计算中的 <b>漫反射系数</b> 以及 <b>镜面反射系数</b> 之和 \(S \ge 0\) 作为亮度, 基于此亮度判断是否处于阴影区域.
 </p>
 
 <p>
-用哪种方法取决于开发者.
+但 \(S\) 并没有一个固定的范围, 不好划分阴影等级, 或许可以使用 <code>Reinhard</code> 映射来把 \(S\) 映射到 \([0, 1)\) 中,
+</p>
+
+<p>
+并生成亮度贴图.
+</p>
+
+<p>
+这个想法就等之后有空再尝试了.
 </p>
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org7af939d" class="outline-3">
-<h3 id="org7af939d"><span class="section-number-3">15.4.</span> 绘制高亮反射区域</h3>
+<div id="outline-container-orgbd10eb8" class="outline-3">
+<h3 id="orgbd10eb8"><span class="section-number-3">15.4.</span> 绘制高亮反射区域</h3>
 <div class="outline-text-3" id="text-15-4">
 <p>
 大体思路是通过光照计算找出高亮反射区域, 并使用特殊值对高亮反射区域内的片元进行标记.
@@ -6496,10 +6623,10 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 
-<div id="org24ad0b5" class="figure">
+<div id="org2cad823" class="figure">
 <p><img src="../../../files/moebius-specular-outline.png" alt="moebius-specular-outline.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 39: </span>勾勒高亮反射区域</p>
+<p><span class="figure-number">Figure 42: </span>勾勒高亮反射区域</p>
 </div>
 
 <p>
@@ -6507,7 +6634,7 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </p>
 
 <p>
-第一, 考虑光照计算的结果是否应该参与渲染, 参与的话如何参与; 第二, 只有非阴影区域才有能高亮反射区域.
+第一, 考虑光照计算结果是否参与进行素的亮度计算, 如果参与该如何计算; 第二, 只有非阴影区域才有能高亮反射区域.
 </p>
 
 <p>
@@ -6541,45 +6668,100 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 
 
-<div id="org14a4c36" class="figure">
+<div id="org7a090ed" class="figure">
 <p><img src="../../../files/moebius-final-result.png" alt="moebius-final-result.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 40: </span>莫比斯风格渲染的最终效果</p>
+<p><span class="figure-number">Figure 43: </span>莫比斯风格渲染的最终效果</p>
 </div>
 
 <p>
-高亮反射区域的描边在刚进入阴影区时没有完全消失,
-</p>
-
-<p>
-原因是在计算法线贴图时没有正确的方法来计算亮度, 导致高亮区的标记除了一点偏差;
+可以发现高亮反射区域的描边在刚进入阴影区时没有完全消失.
 </p>
 
 
-<div id="org1fc39e5" class="figure">
+<div id="org790e01b" class="figure">
 <p><img src="../../../files/moebius-normal-drawback.png" alt="moebius-normal-drawback.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 41: </span>阴影区出现了高亮反射区的轮廓</p>
+<p><span class="figure-number">Figure 44: </span>阴影区出现了高亮反射区的轮廓</p>
 </div>
 
 <p>
-解决方法有两种:
+解决办法是根据场景亮度在标记高亮区域, 只有不在阴影区才能有机会标记为高亮.
 </p>
 
 <p>
-第一种方法是在渲染法线贴图时, 使用场景贴图配合光照计算得出片元的颜色, 计算该片元亮度后再进行标记;
+<b>修改后的法线贴图生成用的 Vertex Shader</b>:
 </p>
 
-<p>
-第二种方法是在渲染法线贴图时, 使用阴影贴图判断片元是否在阴影区, 只有不在阴影区才有机会片元进行高亮标记.
-</p>
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vNormal;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vPosition;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vScreenUV;
+
+<span style="color: #98fb98;">void</span> main () {
+  <span style="color: #98fb98;">vec4</span> modelPosition = modelMatrix * <span style="color: #98fb98;">vec4</span>(position, 1.0);
+  <span style="color: #98fb98;">vec4</span> clip = projectionMatrix * viewMatrix * modelPosition;
+  <span style="color: #eedd82;">gl_Position</span> = clip;
+
+  vNormal = <span style="color: #b0c4de;">normalize</span>(normalMatrix * normal);
+  vPosition = modelPosition.xyz;
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#35745;&#31639;&#20986;&#39030;&#28857;&#30340;&#30456;&#26426; UV, &#22240;&#20026;&#26159;&#35201;&#22312;&#22330;&#26223;&#36148;&#22270;&#19978;&#37319;&#26679;,
+</span>  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#29983;&#25104;&#22330;&#26223;&#36148;&#22270;&#30340;&#30456;&#26426;&#27491;&#22909;&#26159;&#24403;&#21069;&#25104;&#20687;&#29992;&#30340;&#30456;&#26426;
+</span>  vScreenUV = clip.xy / clip.w * 0.5 + 0.5;
+}
+</pre>
+</div>
 
 <p>
-第二种方法比较准确一点, 然而这两种方法都需要使用额外贴图, 这意味着需要额外多一个阶段的渲染.
+<b>修改后的法线贴图生成用的 Fragment Shader</b>:
 </p>
 
+<div class="org-src-container">
+<pre class="src src-glsl"><span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vNormal;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec3</span> vPosition;
+<span style="color: #ffc0cb; font-weight: bold;">varying</span> <span style="color: #98fb98;">vec2</span> vScreenUV;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">vec4</span> uLightPos;
+<span style="color: #00ffff;">uniform</span> <span style="color: #98fb98;">sampler2D</span> tDiffuse;     <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#22330;&#26223;&#30340;&#39068;&#33394;&#36148;&#22270;
+</span>
+<span style="color: #98fb98;">float</span> luma(<span style="color: #98fb98;">vec3</span> color) {
+  <span style="color: #00ffff;">return</span> <span style="color: #b0c4de;">dot</span>(<span style="color: #98fb98;">vec3</span>(0.2125, 0.7154, 0.0721), color);
+}
+
+<span style="color: #98fb98;">void</span> main () {
+
+  <span style="color: #98fb98;">vec3</span> viewDir = <span style="color: #b0c4de;">normalize</span>(cameraPosition - vPosition);
+  <span style="color: #98fb98;">vec3</span> lightDir = <span style="color: #b0c4de;">normalize</span>(uLightPos.w &gt; 0.0 ? uLightPos.xyz - vPosition: uLightPos.xyz);
+  <span style="color: #98fb98;">vec3</span> halfDir = <span style="color: #b0c4de;">normalize</span>(viewDir + lightDir);
+  <span style="color: #98fb98;">float</span> shiness = uLightPos.w &gt; 0.0 ? <span style="color: #b0c4de;">length</span>(uLightPos.xyz - vPosition) * 4.0: 60.0;
+  <span style="color: #98fb98;">float</span> kSpecular = <span style="color: #b0c4de;">pow</span>(<span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(halfDir, vNormal), .0), shiness);
+  <span style="color: #98fb98;">float</span> kDiffuse = <span style="color: #b0c4de;">max</span>(<span style="color: #b0c4de;">dot</span>(vNormal, lightDir), .0);
+
+  <span style="color: #98fb98;">vec4</span> sceneColor = <span style="color: #ffc0cb; font-weight: bold;">texture2D</span>(tDiffuse, vScreenUV);
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#36827;&#34892;&#20142;&#24230;&#35745;&#31639;, &#38656;&#35201;&#19982;&#21069;&#38754;&#30340;&#20142;&#24230;&#35745;&#31639;&#36827;&#34892;&#32479;&#19968;
+</span>  <span style="color: #98fb98;">float</span> pixelLuma = <span style="color: #b0c4de;">clamp</span>(luma(sceneColor.xyz) + kDiffuse * 0.17, 0., 1.);
+
+  <span style="color: #98fb98;">vec3</span> color = <span style="color: #98fb98;">vec3</span>(vNormal * 0.5 + 0.5);
+
+  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">&#24403;&#20142;&#24230;&#23567;&#20110; LOW_LUMA_1 (&#20551;&#35774;&#20026; 0.32) &#23601;&#35748;&#20026;&#36827;&#20837;&#38452;&#24433;&#21306;&#22495;, &#36825;&#37324;&#21435;&#25481;&#20102;&#20351;&#29992; kDiffuse &#36827;&#34892;&#21028;&#26029;
+</span>  <span style="color: #00ffff;">if</span> (pixelLuma &gt; 0.32 &amp;&amp; kSpecular &gt;= .5) {
+    color = <span style="color: #98fb98;">vec3</span>(0.0);
+  }
+
+  <span style="color: #ffc0cb; font-weight: bold;">gl_FragColor</span> = <span style="color: #98fb98;">vec4</span>(color, kDiffuse);
+
+}
+</pre>
+</div>
+
+
+<div id="org97cdbc6" class="figure">
+<p><img src="../../../files/moebius-normal-drawback-fixed.png" alt="moebius-normal-drawback-fixed.png" width="600px" />
+</p>
+<p><span class="figure-number">Figure 45: </span>修复高亮区域出现在阴影区的问题: 高亮区域逐渐消失在阴影边缘附近</p>
+</div>
+
 <p>
-妥协于篇幅有限, 到此为此整个莫比斯风格渲染完成.
+至此, 整个莫比斯风格渲染完成.
 </p>
 
 <p>
@@ -6588,11 +6770,51 @@ fsQuad.render(renderer)         <span style="color: #ff7f24;">// </span><span st
 </div>
 </div>
 </div>
+<div id="outline-container-org648ac25" class="outline-2">
+<h2 id="org648ac25"><span class="section-number-2">16.</span> 风格化渲染: 卡通着色 (Cel Shading / Toon Shading / Carton Shading)</h2>
+<div class="outline-text-2" id="text-16">
+</div>
+<div id="outline-container-org2b802fe" class="outline-3">
+<h3 id="org2b802fe"><span class="section-number-3">16.1.</span> 构成</h3>
+<div class="outline-text-3" id="text-16-1">
+<p>
+光照
+</p>
+
+<p>
+Blinn-Phong Shading Model + Fresnel Light
+</p>
+
+<p>
+<a href="https://www.bilibili.com/video/BV1YA4m1c79b?spm_id_from=333.788.videopod.sections&amp;vd_source=9fdcd332c2d3e867a2fe257ff4f28e30">https://www.bilibili.com/video/BV1YA4m1c79b?spm_id_from=333.788.videopod.sections&amp;vd_source=9fdcd332c2d3e867a2fe257ff4f28e30</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-maxima">f(b, a, n, f) <span style="color: #00ffff;">:=</span> (b <span style="color: #00ffff;">-</span> a) <span style="color: #00ffff;">/</span> (n <span style="color: #00ffff;">-</span> f)$
+
+<span style="color: #b0c4de;">plot2d</span>(f(x, <span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">/</span> <span style="color: #7fffd4;">0</span><span style="color: #00ffff;">.</span><span style="color: #7fffd4;">1</span>, <span style="color: #7fffd4;">1</span> <span style="color: #00ffff;">/</span> <span style="color: #7fffd4;">200</span>), <span style="color: #00ffff;">[</span>x, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">/</span><span style="color: #7fffd4;">200</span>, <span style="color: #7fffd4;">1</span><span style="color: #00ffff;">]</span>);
+</pre>
+</div>
+
+<p>
+视点坐标 \(pos_{a}\) 和 \(pos_{b}\);
+</p>
+
+<p>
+<code>NDC</code> 坐标 \(\frac{(pos_{a})_{xyz}}{(pos_{a})_{w}}\) 和 \(\frac{(pos_{b})_{xyz}}{(pos_{a})_{w}}\);
+</p>
+
+<p>
+\(L_{d} = \frac{L_{w}}{1 + L_{w}} \rightarrow L_{w} = \frac{L_{d}}{1 - L_{d}}\)
+</p>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="date">Date: 2025-09-03</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2026-03-21 Sat 23:05</p>
+<p class="date">Created: 2026-03-23 Mon 22:37</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

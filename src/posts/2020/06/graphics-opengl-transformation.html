@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-03-08 Sun 01:58 -->
+<!-- 2026-03-24 Tue 11:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>图形学 - OpenGL坐标变换</title>
+<title>图形学 - OpenGL坐标系变换</title>
 <meta name="author" content="saltb0rn" />
 <meta name="generator" content="Org Mode" />
 <style type="text/css">
@@ -228,7 +228,7 @@
 </head>
 <body>
 <div id="content" class="content">
-<h1 class="title">图形学 - OpenGL坐标变换</h1>
+<h1 class="title">图形学 - OpenGL坐标系变换</h1>
 <div id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
@@ -266,7 +266,7 @@
 </ul>
 </div>
 </div>
-<div class="abstract" id="org67e12fe">
+<div class="abstract" id="org6adf8a2">
 <p>
 之前只讲了几何变换,也就是最简单的变换,本文主要透过 <code>OpenGL</code> 的各种坐标系来讲解图形学的渲染管线的坐标系是如何转换的,这对于理解 <code>OpenGL</code> 的渲染管线/渲染流水线(rendering pipeline)很有必要.
 </p>
@@ -300,7 +300,7 @@
 </p>
 
 
-<div id="org10eb198" class="figure">
+<div id="orgf0f68c2" class="figure">
 <p><img src="../../../files/road.jpg" alt="road.jpg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>马路两边的两条平行线在原处相交(图片来源于网络)</p>
@@ -435,7 +435,7 @@
 </p>
 
 
-<div id="org80608ef" class="figure">
+<div id="org5c9bc91" class="figure">
 <p><img src="../../../files/planeGraph01.png" alt="planeGraph01.png" />
 </p>
 </div>
@@ -554,7 +554,7 @@
 <h2 id="h-483037b0-7c15-42d8-bfb8-1490821da4ed"><span class="section-number-2">2.</span> OpenGL 中对象的变换历程</h2>
 <div class="outline-text-2" id="text-h-483037b0-7c15-42d8-bfb8-1490821da4ed">
 
-<div id="orga6558f0" class="figure">
+<div id="orgd802efc" class="figure">
 <p><img src="../../../files/gl_transform02.png" alt="gl_transform02.png" width="700px" />
 </p>
 <p><span class="figure-number">Figure 2: </span>OpenGL vertex transformation</p>
@@ -596,30 +596,24 @@
 <h3 id="h-91530c69-157a-4c03-af73-d8fa077e0ee4"><span class="section-number-3">2.1.</span> 对象坐标系</h3>
 <div class="outline-text-3" id="text-h-91530c69-157a-4c03-af73-d8fa077e0ee4">
 <p>
-用来画对象(object),或者说指定顶点(vertex)的坐标系叫做对象坐标系(object coordinate system).
-</p>
-
-<blockquote>
-<p>
-也有人称之为局部坐标系(local coordinate system), 其实我更跟喜欢这个叫法, 因为局部这个词语更突出个体和环境之间的关系.
+<code>3D</code> 模型文件的顶点(vertex)数据所使用的坐标系就叫做对象坐标系(object coordinate system).
 </p>
 
 <p>
-对象/局部坐标系其实是一个统称, 只要一个坐标系和所描述对象的相对位置始终保持不变, 那么这个坐标系就可以被称为局部坐标系.
+每个模型都有独属自己的对象坐标系, <b>对于一个模型的顶点来说</b>, 它的对象坐标系是固定不变的,
 </p>
 
 <p>
-这个对象(个体)并不一定只能是顶点, 还可以是其它对象, 前面之所以把描述 <code>3D</code> 物体的顶点的坐标系等同于对象/局部坐标系,
+这就是为什么对象坐标系也被叫做局部坐标系(local coordinate system).
 </p>
 
 <p>
-是因为后面的一些列变换都是针对顶点进行的. 但为了杜绝以后出现概念上误解的一切可能性, 我觉得这里有必要强调一番,
+永远都是以 \((0, 0, 0)\) 为原点, \(x/y/z\) 三轴正交, 坐标轴的指向因图形软件而不同,
 </p>
 
 <p>
-而且后面还会见到其它类型的局部坐标系.
+本文的是 \(X\) 轴向右, \(Y\) 轴向上, \(Z\) 轴向屏幕外.
 </p>
-</blockquote>
 
 <p>
 我们假设在该坐标系下有一个点 \(p_{o} = \left(x_{o}, y_{o}, z_{o}\right)\), 让我们来探讨一下这个点会经历过哪些变化.
@@ -630,45 +624,61 @@
 <h3 id="h-8d15afa4-8baf-48d1-970a-9e9b00ebe19c"><span class="section-number-3">2.2.</span> 世界坐标系</h3>
 <div class="outline-text-3" id="text-h-8d15afa4-8baf-48d1-970a-9e9b00ebe19c">
 <p>
-在 <code>OpenGL</code> 中,复杂的对象是由简单的对象构成的,最简单的对象叫做图元(primitive),一旦画出对象接下来就由两种可能,
+在 <code>3D</code> 的世界中, 若干个简单模型可以构成一个复杂的模型, 然后又可以使用若干个复杂模型构成更加复杂的模型.
 </p>
 
 <p>
-A. 把不同对象组装成更加复杂的对象.
+我们把那个最复杂的模型称为场景(scene)或者世界(world), 这个模型的对象坐标系被称为世界坐标系(world coordinate system).
 </p>
 
 <p>
-B. 把对象放到场景(scene)/世界(world)中.
+对于场景来说, 世界坐标系本质上就是它的对象坐标系; 对简单模型来说, 世界坐标系是全局的,
 </p>
 
 <p>
-场景/世界就是所有对象里面最复杂,最大的那个对象,定义场景/世界的坐标系叫做世界坐标系(world coordinate system),
+因此世界坐标系又被称为全局坐标系(global coordinate system), 并且是固定不变的:
 </p>
 
 <p>
-本质就是一个对象坐标系. 我们把这个坐标系统上的所有的点的集合叫做世界空间(world space).
+以 \((0, 0, 0)\) 为原点, \(x/y/z\) 三轴正交且指向固定方向.
 </p>
-
-<blockquote>
-<p>
-和局部坐标系相对应, 世界坐标系也被称为全局坐标系(global coordinate system).
-</p>
-</blockquote>
 </div>
 </div>
 <div id="outline-container-h-4d15c6d7-b964-46c7-b2fa-cc1a9a7d54f1" class="outline-3">
 <h3 id="h-4d15c6d7-b964-46c7-b2fa-cc1a9a7d54f1"><span class="section-number-3">2.3.</span> 从对象坐标系到世界坐标系的变换</h3>
 <div class="outline-text-3" id="text-h-4d15c6d7-b964-46c7-b2fa-cc1a9a7d54f1">
 <p>
-上面中, \(A\) 过程中对象是经历了从一个对象坐标系到另外一个对象坐标系的变换, \(B\) 过程是对象经历了从对象坐标系到世界坐标系的变换,
+图形软件加载模型时, 模型会被放置在世界坐标系的原点上.
 </p>
 
 <p>
-本质都是从 <b>一个对象坐标系到另外一个对象坐标系的变换,这种变换叫做模型变换(modeling transformation)</b>,
+在模型没有经过旋转/平移/缩放等变换时, 模型的对象坐标系和世界坐标系是一样的.
+</p>
+
+
+<div id="orgfe7cb85" class="figure">
+<p><img src="../../../files/global-vs-local-coordinate.png" alt="global-vs-local-coordinate.png" width="600px" />
+</p>
+<p><span class="figure-number">Figure 3: </span>对模型进行平移后, 模型的对象坐标系和世界坐标系的关系</p>
+</div>
+
+
+<div id="org9a95aaf" class="figure">
+<p><img src="../../../files/global-vs-local-coordinate-2.png" alt="global-vs-local-coordinate-2.png" width="600px;" />
+</p>
+<p><span class="figure-number">Figure 4: </span>先旋转再平移模型, 模型的对象坐标系和世界坐标系的关系</p>
+</div>
+
+<p>
+在渲染模型成像的过程中, 需要计算出顶点坐标 \(p_{o}\) 在世界坐标系上的坐标 \(p_{m}\).
 </p>
 
 <p>
-因此在 <code>OpenGL</code> 中对象坐标系以及世界坐标系只是概念上的区别,没有这两种概念的对应实现.
+从图形中可以看出, 这本质上就是求 \(p_{o}\) 的坐标变换结果, 坐标变换的内容在 <a href="./graphics-geometric-transformation.html">图形学 - 几何变换</a> 中有详细讲解, 就不赘述了.
+</p>
+
+<p>
+<b>从对象坐标系到世界坐标系的变换称为做模型变换(modeling transformation)</b>,
 </p>
 
 <p>
@@ -676,34 +686,12 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 <p>
-其中 \(\left(\begin{array}{c}m_{1x} \\ m_{1y} \\ m_{1z}\end{array}\right)\), \(\left(\begin{array}{c}m_{2x} \\ m_{2y} \\ m_{2z}\end{array}\right)\) 以及 \(\left(\begin{array}{c}m_{3x} \\ m_{3y} \\ m_{3z}\end{array}\right)\) 分别是 \(x\), \(y\) 以及 \(z\) 轴, 至于 \(\left(\begin{array}{c}d_{x} \\ d_{y} \\ d_{z} \end{array}\right)\) 是负责平移.
-</p>
-
-<blockquote>
-<p>
-通过一个 2D 例子想象一下 ,我们已经画了一个三角形,要把它放到已经画好的正方形上,它们都有各自的坐标系,
+其中 \(\left(\begin{array}{c}m_{1x} \\ m_{1y} \\ m_{1z}\end{array}\right)\), \(\left(\begin{array}{c}m_{2x} \\ m_{2y} \\ m_{2z}\end{array}\right)\) 以及 \(\left(\begin{array}{c}m_{3x} \\ m_{3y} \\ m_{3z}\end{array}\right)\) 分别是对象坐标系的 \(x\), \(y\) 以及 \(z\) 轴,
 </p>
 
 <p>
-也就是上面提到的对象坐标系, 通常来说都希望系统对象都是居中到坐标系的中心, 也就是原点上,
+而 \(\left(\begin{array}{c}d_{x} \\ d_{y} \\ d_{z} \end{array}\right)\) 是对象坐标系原点的在世界坐标系上的坐标.
 </p>
-
-<p>
-或者至少使用原点作为参考点(reference point), 首先把三角形放到正方形的原点上,然后 <b>通常</b> 按照缩放,
-</p>
-
-<p>
-旋转以及平移这个顺序参考正方形的坐标系原点进行几何变换, 按照这个顺序变换是因为缩放和旋转不会让三角形偏移参考点,
-</p>
-
-<p>
-而平移是会偏移参考点的,如果先平移再缩放和旋转的话, 直接按照参考点进行缩放和旋转会出现问题.
-</p>
-
-<p>
-本质上来说, 模型变换属于几何变换/坐标变换, 并不属于基底变换.
-</p>
-</blockquote>
 
 <p>
 这个阶段结束后会得到一个变换过的点 \(p_{m} = M_{model}p_{o} = \left(x_{m}, y_{m}, z_{m}\right)\).
@@ -742,10 +730,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgafb36a7" class="figure">
+<div id="orgc858e97" class="figure">
 <p><img src="../../../files/gl_camera01.png" alt="gl_camera01.png" />
 </p>
-<p><span class="figure-number">Figure 3: </span>视点坐标系</p>
+<p><span class="figure-number">Figure 5: </span>视点坐标系</p>
 </div>
 </div>
 </div>
@@ -781,24 +769,24 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgf41f79d" class="figure">
+<div id="orgce04263" class="figure">
 <p><img src="../../../files/camera-opposite-to-object.png" alt="camera-opposite-to-object.png" width="504px" />
 </p>
-<p><span class="figure-number">Figure 4: </span>物体平移上在视觉上的相反: 当相机往原点平移时, 物体在视觉上也是往原点平移, 双方平移的方向相反.</p>
+<p><span class="figure-number">Figure 6: </span>物体平移上在视觉上的相反: 当相机往原点平移时, 物体在视觉上也是往原点平移, 双方平移的方向相反.</p>
 </div>
 
 
-<div id="org895065b" class="figure">
+<div id="org6e498b2" class="figure">
 <p><img src="../../../files/gl_camera03.gif" alt="gl_camera03.gif" />
 </p>
-<p><span class="figure-number">Figure 5: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(x\) 轴往逆时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(x\) 轴往顺时针方向旋转.</p>
+<p><span class="figure-number">Figure 7: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(x\) 轴往逆时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(x\) 轴往顺时针方向旋转.</p>
 </div>
 
 
-<div id="orgd4a0a1a" class="figure">
+<div id="orgda72009" class="figure">
 <p><img src="../../../files/gl_camera04.gif" alt="gl_camera04.gif" />
 </p>
-<p><span class="figure-number">Figure 6: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(y\) 轴往顺时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(y\) 轴往逆时针方向旋转.</p>
+<p><span class="figure-number">Figure 8: </span>固定相机的位置使它看着原来的方向(浅色橙线), 让小黄鸭围绕自身对象坐标系的 \(y\) 轴往顺时针方向旋转, 相当于相机围绕小黄鸭的对象坐标系 \(y\) 轴往逆时针方向旋转.</p>
 </div>
 
 <p>
@@ -953,7 +941,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgea9acc0" class="figure">
+<div id="orge96d234" class="figure">
 <p><img src="../../../files/flat-vs-smooth-2.png" alt="flat-vs-smooth-2.png" />
 </p>
 </div>
@@ -967,7 +955,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orge77cd6a" class="figure">
+<div id="org6e9ea40" class="figure">
 <p><img src="../../../files/flat-vs-smooth.png" alt="flat-vs-smooth.png" />
 </p>
 </div>
@@ -1001,7 +989,7 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="org881e5df" class="figure">
+<div id="org17800d2" class="figure">
 <p><img src="../../../files/gl_normaltransform02.png" alt="gl_normaltransform02.png" width="500px" />
 </p>
 </div>
@@ -1217,10 +1205,10 @@ B. 把对象放到场景(scene)/世界(world)中.
 </p>
 
 
-<div id="orgfa10431" class="figure">
+<div id="org9fdbd9c" class="figure">
 <p><img src="../../../files/surface-texture-coordinate-system.png" alt="surface-texture-coordinate-system.png" />
 </p>
-<p><span class="figure-number">Figure 7: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
+<p><span class="figure-number">Figure 9: </span>三角形俯视图 - 三角形顶点与其纹理坐标的对应关系</p>
 </div>
 
 <p>
@@ -1290,10 +1278,10 @@ N = n_{plane} &= (x_{N}, y_{N}, z_{N}) \\
 </p>
 
 
-<div id="org29f68f5" class="figure">
+<div id="org7507aef" class="figure">
 <p><img src="../../../files/normal_mapping_tbn_vectors.png" alt="normal_mapping_tbn_vectors.png" />
 </p>
-<p><span class="figure-number">Figure 8: </span>TBN 坐标系</p>
+<p><span class="figure-number">Figure 10: </span>TBN 坐标系</p>
 </div>
 
 <p>
@@ -1575,17 +1563,17 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org9352dc7" class="figure">
+<div id="org1f597ab" class="figure">
 <p><img src="../../../files/gl_perspective.png" alt="gl_perspective.png" />
 </p>
-<p><span class="figure-number">Figure 9: </span>透视投影(投影相机看到的内容)</p>
+<p><span class="figure-number">Figure 11: </span>透视投影(投影相机看到的内容)</p>
 </div>
 
 
-<div id="orge41b155" class="figure">
+<div id="org57652ab" class="figure">
 <p><img src="../../../files/gl_orthographic.png" alt="gl_orthographic.png" />
 </p>
-<p><span class="figure-number">Figure 10: </span>正交投影(正交相机看到的内容)</p>
+<p><span class="figure-number">Figure 12: </span>正交投影(正交相机看到的内容)</p>
 </div>
 
 <p>
@@ -1661,10 +1649,10 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 
 
 
-<div id="org3bb9295" class="figure">
+<div id="orga365889" class="figure">
 <p><img src="../../../files/gl_projectionmatrix01.png" alt="gl_projectionmatrix01.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 11: </span>透视投影2</p>
+<p><span class="figure-number">Figure 13: </span>透视投影2</p>
 </div>
 
 <p>
@@ -1704,7 +1692,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org50dd3d4" class="figure">
+<div id="org67e9cd5" class="figure">
 <p><img src="../../../files/gl_projectiomat.png" alt="gl_projectiomat.png" />
 </p>
 </div>
@@ -1776,10 +1764,10 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org5c33ac6" class="figure">
+<div id="org99bacd2" class="figure">
 <p><img src="../../../files/gl_projectionmatrix05.png" alt="gl_projectionmatrix05.png" />
 </p>
-<p><span class="figure-number">Figure 12: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
+<p><span class="figure-number">Figure 14: </span>Mapping from \(x_{p}\) to \(x_{n}\)</p>
 </div>
 
 <p>
@@ -1803,10 +1791,10 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="orgb356e04" class="figure">
+<div id="orgac6cf64" class="figure">
 <p><img src="../../../files/gl_projectionmatrix06.png" alt="gl_projectionmatrix06.png" />
 </p>
-<p><span class="figure-number">Figure 13: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
+<p><span class="figure-number">Figure 15: </span>Mapping from \(y_{p}\) to \(y_{n}\)</p>
 </div>
 
 <p>
@@ -2064,7 +2052,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 <p>
-最终, 得到 \(p_{e} = \frac{p^{'}_{e}}{(p^{'}_{e})_w} = \frac{M^{-1}_{projection} p^{'}_{n}}{ (M^{-1}_{projection} p^{'}_{n})_w } = \left(\begin{array}{c} \frac{(p^{'}_{e})_x}{(p^{'}_{e})_w} \\ \frac{(p^{'}_{e})_y}{(p^{'}_{e})_w} \\ \frac{(p^{'}_{e})_z}{(p^{'}_{e})_w} \\ \frac{(p^{'}_{e})_w}{(p^{'}_{e})_w} = 1 \end{array}\right)\).
+最终整个计算过程为 \(p_{e} = \frac{p^{'}_{e}}{(p^{'}_{e})_w} = \frac{M^{-1}_{projection} p^{'}_{n}}{ (M^{-1}_{projection} p^{'}_{n})_w } = \left(\begin{array}{c} \frac{(p^{'}_{e})_x}{(p^{'}_{e})_w} \\ \frac{(p^{'}_{e})_y}{(p^{'}_{e})_w} \\ \frac{(p^{'}_{e})_z}{(p^{'}_{e})_w} \\ \frac{(p^{'}_{e})_w}{(p^{'}_{e})_w} = 1 \end{array}\right)\).
 </p></li>
 
 <li><p>
@@ -2228,7 +2216,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 </p>
 
 
-<div id="org11ae501" class="figure">
+<div id="org23e0297" class="figure">
 <p><img src="../../../files/gl_projectiomat-fov.png" alt="gl_projectiomat-fov.png" />
 </p>
 </div>
@@ -2332,10 +2320,10 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 <h4 id="orthographic-projection"><span class="section-number-4">2.6.5.</span> 正交投影</h4>
 <div class="outline-text-4" id="text-orthographic-projection">
 
-<div id="orga68d9b6" class="figure">
+<div id="orgf1edfd5" class="figure">
 <p><img src="../../../files/gl_projectionmatrix02.png" alt="gl_projectionmatrix02.png" width="600px" />
 </p>
-<p><span class="figure-number">Figure 14: </span>正交投影2</p>
+<p><span class="figure-number">Figure 16: </span>正交投影2</p>
 </div>
 
 <p>
@@ -2530,7 +2518,7 @@ D \cdot N = & x_{1} \times x_{2} - (x_{1} \times x_{2} + y_{1} \times y_{2} + z_
 <div id="postamble" class="status">
 <p class="date">Date: 2020-06-19</p>
 <p class="author">Author: saltb0rn</p>
-<p class="date">Created: 2026-03-08 Sun 01:58</p>
+<p class="date">Created: 2026-03-24 Tue 11:19</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
